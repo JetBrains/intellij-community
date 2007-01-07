@@ -116,7 +116,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
           ((ProgressManagerImpl)progressManager).executeProcessUnderProgress(new Runnable(){
             public void run() {
               @NonNls final String name = "LocalInspections from " + index + " to " + (index + chunkSize);
-              PassExecutorService.info(progress, "Started " , name);
+              PassExecutorService.log(progress, "Started " , name);
               ApplicationManager.getApplication().runReadAction(new Runnable(){
                 public void run() {
                   ProblemsHolder holder = new ProblemsHolder(iManager);
@@ -135,11 +135,11 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
                     }
                   }
                   catch (ProcessCanceledException e) {
-                    PassExecutorService.info(progress, "Canceled " , name);
+                    PassExecutorService.log(progress, "Canceled " , name);
                   }
                 }
               });
-              PassExecutorService.info(progress, "Finished ", name);
+              PassExecutorService.log(progress, "Finished ", name);
             }
           },progress);
           return true;
