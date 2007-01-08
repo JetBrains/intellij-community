@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.performance;
+package com.siyeh.ig.j2me;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -24,17 +24,37 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
 
 public class MultiplyOrDivideByPowerOfTwoInspection
         extends ExpressionInspection {
 
+    /** @noinspection PublicField*/
+    public boolean checkDivision = false;
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "multiply.or.divide.by.power.of.two.display.name");
+    }
+
     public String getGroupDisplayName() {
-        return GroupNames.PERFORMANCE_GROUP_NAME;
+        return GroupNames.J2ME_GROUP_NAME;
+    }
+
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "multiply.or.divide.by.power.of.two.divide.option"), this,
+                "checkDivision");
     }
 
     @NotNull
@@ -92,11 +112,23 @@ public class MultiplyOrDivideByPowerOfTwoInspection
         return expString;
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ConstantShiftVisitor();
-    }
-
     public InspectionGadgetsFix buildFix(PsiElement location) {
+        if (location instanceof PsiBinaryExpression) {
+            final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)location;
+            final IElementType operationTokenType =
+                    binaryExpression.getOperationTokenType();
+            if (JavaTokenType.DIV.equals(operationTokenType)) {
+                return null;
+            }
+        } else if (location instanceof PsiAssignmentExpression) {
+            final PsiAssignmentExpression assignmentExpression =
+                    (PsiAssignmentExpression)location;
+            final IElementType operationTokenType =
+                    assignmentExpression.getOperationTokenType();
+            if (JavaTokenType.DIVEQ.equals(operationTokenType)) {
+                return null;
+            }
+        }
         return new MultiplyByPowerOfTwoFix();
     }
 
@@ -116,7 +148,11 @@ public class MultiplyOrDivideByPowerOfTwoInspection
         }
     }
 
-    private static class ConstantShiftVisitor extends BaseInspectionVisitor {
+    public BaseInspectionVisitor buildVisitor() {
+        return new ConstantShiftVisitor();
+    }
+
+    private class ConstantShiftVisitor extends BaseInspectionVisitor {
 
         public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
@@ -128,9 +164,10 @@ public class MultiplyOrDivideByPowerOfTwoInspection
             final PsiJavaToken sign = expression.getOperationSign();
 
             final IElementType tokenType = sign.getTokenType();
-            if (!tokenType.equals(JavaTokenType.ASTERISK) &&
-                    !tokenType.equals(JavaTokenType.DIV)) {
-                return;
+            if (!tokenType.equals(JavaTokenType.ASTERISK)) {
+                if (!checkDivision || !tokenType.equals(JavaTokenType.DIV)) {
+                    return;
+                }
             }
             if (!ShiftUtils.isPowerOfTwo(rhs)) {
                 return;
@@ -153,9 +190,10 @@ public class MultiplyOrDivideByPowerOfTwoInspection
             }
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
-            if (!tokenType.equals(JavaTokenType.ASTERISKEQ) &&
-                    !tokenType.equals(JavaTokenType.DIVEQ)) {
-                return;
+            if (!tokenType.equals(JavaTokenType.ASTERISKEQ)) {
+                if (!checkDivision || !tokenType.equals(JavaTokenType.DIVEQ)) {
+                    return;
+                }
             }
             final PsiExpression rhs = expression.getRExpression();
             if (!ShiftUtils.isPowerOfTwo(rhs)) {

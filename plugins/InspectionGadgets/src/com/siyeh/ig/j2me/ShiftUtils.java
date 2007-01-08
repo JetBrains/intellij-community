@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.performance;
+package com.siyeh.ig.j2me;
 
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 
 class ShiftUtils {
+
     private ShiftUtils() {
         super();
     }
@@ -56,5 +57,4 @@ class ShiftUtils {
         }
         return log;
     }
-
 }
