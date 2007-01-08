@@ -76,7 +76,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(myFile);
     final LocalInspectionTool[] tools = profile.getHighlightingLocalInspectionTools();
 
-    inspect(tools, progress, iManager);
+    inspect(tools, progress, iManager, true);
   }
 
   public void doInspectInBatch(final InspectionManagerEx iManager, InspectionTool[] toolWrappers, final ProgressIndicator progress) {
@@ -89,7 +89,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       tool2Wrapper.put(((LocalInspectionToolWrapper)toolWrapper).getTool(), ((LocalInspectionToolWrapper)toolWrapper));
     }
     LocalInspectionTool[] tools = tool2Wrapper.keySet().toArray(new LocalInspectionTool[tool2Wrapper.size()]);
-    inspect(tools, progress, iManager);
+    inspect(tools, progress, iManager, false);
     for (int i = 0; i < myTools.size(); i++) {
       final LocalInspectionTool tool = myTools.get(i);
       ProblemDescriptor descriptor = myDescriptors.get(i);
@@ -99,7 +99,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     }
   }
 
-  public void inspect(final LocalInspectionTool[] tools, final ProgressIndicator progress, final InspectionManagerEx iManager) {
+  public void inspect(final LocalInspectionTool[] tools, final ProgressIndicator progress, final InspectionManagerEx iManager, final boolean isOnTheFly) {
     final PsiElement[] elements = getElementsIntersectingRange(myFile, myStartOffset, myEndOffset);
 
     final int chunkSize = Math.max(10, tools.length / Runtime.getRuntime().availableProcessors() / 10); //about 10 chunks per thread, in case some inspections are faster than others
@@ -123,7 +123,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
                   try {
                     for (int i = index; i < index + chunkSize && i < tools.length; i++) {
                       LocalInspectionTool tool = tools[i];
-                      PsiElementVisitor elementVisitor = tool.buildVisitor(holder, true);
+                      PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
                       for (PsiElement element : elements) {
                         progressManager.checkCanceled();
                         element.accept(elementVisitor);
