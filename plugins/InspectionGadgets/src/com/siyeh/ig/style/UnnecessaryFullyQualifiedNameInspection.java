@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -31,12 +33,17 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.HighlightUtil;
 import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
 
@@ -115,11 +122,30 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
             } else if (importList.findSingleClassImportStatement(
                     qualifiedName) == null &&
                     importList.findOnDemandImportStatement(
-                    packageName) == null) {
+                            packageName) == null) {
                 addImport(importList, aClass);
             }
             final String fullyQualifiedText = referenceElement.getText();
-            file.accept(new QualificationRemover(fullyQualifiedText));
+            final QualificationRemover qualificationRemover =
+                    new QualificationRemover(fullyQualifiedText);
+            file.accept(qualificationRemover);
+            final Collection<PsiJavaCodeReferenceElement> shortenedElements =
+                    qualificationRemover.getShortenedElements();
+            HighlightUtil.highlightElements(shortenedElements);
+            showStatusMessage(file.getProject(), shortenedElements.size());
+        }
+
+        private static void showStatusMessage(Project project, int elementCount) {
+            final WindowManager windowManager = WindowManager.getInstance();
+            final StatusBar statusBar = windowManager.getStatusBar(project);
+            if (elementCount == 1) {
+                statusBar.setInfo(InspectionGadgetsBundle.message(
+                        "unnecessary.fully.qualified.name.status.bar.escape.highlighting.message1"));
+            } else {
+                statusBar.setInfo(InspectionGadgetsBundle.message(
+                        "unnecessary.fully.qualified.name.status.bar.escape.highlighting.message2",
+                        Integer.valueOf(elementCount - 1)));
+            }
         }
 
         private static void addImport(PsiImportList importList, PsiClass aClass)
@@ -136,9 +162,14 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
                 extends PsiRecursiveElementVisitor {
 
             private final String fullyQualifiedText;
+            private final List shortenedElements = new ArrayList();
 
             QualificationRemover(String fullyQualifiedText) {
                 this.fullyQualifiedText = fullyQualifiedText;
+            }
+
+            public Collection<PsiJavaCodeReferenceElement> getShortenedElements() {
+                return Collections.unmodifiableCollection(shortenedElements);
             }
 
             public void visitReferenceElement(
@@ -163,6 +194,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
                         final Logger logger = Logger.getInstance(className);
                         logger.error(e);
                     }
+                    shortenedElements.add(reference);
                 }
             }
         }
