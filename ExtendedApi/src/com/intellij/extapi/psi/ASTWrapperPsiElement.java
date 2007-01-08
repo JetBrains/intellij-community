@@ -24,7 +24,7 @@ import java.util.List;
 public class ASTWrapperPsiElement extends PsiElementBase {
   private ASTNode myNode;
 
-  public ASTWrapperPsiElement(final ASTNode node) {
+  public ASTWrapperPsiElement(@NotNull final ASTNode node) {
     myNode = node;
   }
 
@@ -133,6 +133,7 @@ public class ASTWrapperPsiElement extends PsiElementBase {
     myNode.putCopyableUserData(key, value);
   }
 
+  @NotNull
   public ASTNode getNode() {
     return myNode;
   }
