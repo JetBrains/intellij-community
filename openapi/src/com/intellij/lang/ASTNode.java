@@ -91,7 +91,6 @@ public interface ASTNode extends UserDataHolder {
    *
    * @return the first child node.
    */
-  @Nullable
   ASTNode getFirstChildNode();
 
   /**
@@ -99,7 +98,6 @@ public interface ASTNode extends UserDataHolder {
    *
    * @return the last child node.
    */
-  @Nullable
   ASTNode getLastChildNode();
 
   /**
@@ -107,7 +105,6 @@ public interface ASTNode extends UserDataHolder {
    *
    * @return the previous sibling node.
    */
-  @Nullable
   ASTNode getTreeNext();
 
   /**
@@ -115,7 +112,6 @@ public interface ASTNode extends UserDataHolder {
    *
    * @return the next sibling node.
    */
-  @Nullable
   ASTNode getTreePrev();
 
   /**
