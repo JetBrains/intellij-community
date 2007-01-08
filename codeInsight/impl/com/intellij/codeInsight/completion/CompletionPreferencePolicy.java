@@ -12,16 +12,16 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.TObjectIntHashMap;
 
 import java.util.Map;
 
 class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionPreferencePolicy");
 
-  private final PsiManager myManager;
   private final ExpectedTypeInfo[] myExpectedInfos;
 
-  private Map<LookupItem, Integer> myItemToIndexMap = new HashMap<LookupItem, Integer>();
+  private final TObjectIntHashMap<LookupItem> myItemToIndexMap = new TObjectIntHashMap<LookupItem>();
 
   private CodeStyleManager myCodeStyleManager;
   private String myPrefix;
@@ -34,10 +34,9 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
 
   public CompletionPreferencePolicy(PsiManager manager, LookupItem[] allItems, ExpectedTypeInfo[] expectedInfos, String prefix) {
     setPrefix( prefix );
-    myManager = manager;
-    myCodeStyleManager = CodeStyleManager.getInstance(myManager.getProject());
+    myCodeStyleManager = manager.getCodeStyleManager();
     if(expectedInfos != null){
-      final Map<PsiType, ExpectedTypeInfo> map = new java.util.HashMap<PsiType, ExpectedTypeInfo>(expectedInfos.length);
+      final Map<PsiType, ExpectedTypeInfo> map = new HashMap<PsiType, ExpectedTypeInfo>(expectedInfos.length);
       for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
         if (!map.containsKey(expectedInfo.getType())) {
           map.put(expectedInfo.getType(), expectedInfo);
@@ -48,7 +47,7 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     else myExpectedInfos = null;
     synchronized(myItemToIndexMap){
       for(int i = 0; i < allItems.length; i++){
-        myItemToIndexMap.put(allItems[i], new Integer(i + 1));
+        myItemToIndexMap.put(allItems[i], i + 1);
       }
     }
   }
@@ -118,11 +117,11 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
       if(!(o2 instanceof PsiLocalVariable ||
            o2 instanceof PsiParameter)) return -1;
       synchronized(myItemToIndexMap){
-        int index1 = myItemToIndexMap.get(item1).intValue() - 1;
+        int index1 = myItemToIndexMap.get(item1) - 1;
         if (index1 < 0){
           LOG.error("index1 < 0 : " + item1);
         }
-        int index2 = myItemToIndexMap.get(item2).intValue() - 1;
+        int index2 = myItemToIndexMap.get(item2) - 1;
         if (index2 < 0){
           LOG.error("index2 < 0 : " + item2);
         }
