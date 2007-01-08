@@ -42,6 +42,12 @@ public class MultiplePsiFilesPerDocumentFileViewProvider extends SingleRootFileV
     return roots;
   }
 
+  protected void removeFile(final Language language) {
+    synchronized (PsiLock.LOCK) {
+      myRoots.remove(language);
+    }
+  }
+
   protected PsiFile getPsiInner(final Language target) {
     synchronized (PsiLock.LOCK) {
       PsiFile file = myRoots.get(target);
@@ -136,11 +142,5 @@ public class MultiplePsiFilesPerDocumentFileViewProvider extends SingleRootFileV
       }
     }
     return ret;
-  }
-
-  public void loadAllRoots() {
-    for (Language lang : getRelevantLanguages()) {
-      getPsi(lang);
-    }
   }
 }
