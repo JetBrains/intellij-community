@@ -81,11 +81,6 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
     return node.getText();
   }
 
-  @NotNull
-  public ASTNode getNode() {
-    return super.getNode();
-  }
-
   public @Nullable ASTNode getKeyNode() {
     return getNode().findChildByType(PropertiesTokenTypes.KEY_CHARACTERS);
   }
@@ -167,7 +162,10 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
   }
 
   public void delete() throws IncorrectOperationException {
-    getParent().getNode().removeChild(getNode());
+    final ASTNode parentNode = getParent().getNode();
+    assert parentNode != null;
+
+    parentNode.removeChild(getNode());
   }
 
   public PropertiesFile getContainingFile() {
