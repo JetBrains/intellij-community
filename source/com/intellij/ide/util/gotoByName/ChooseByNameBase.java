@@ -304,7 +304,6 @@ public abstract class ChooseByNameBase{
 
     myCheckBox.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
-        ensureNamesLoaded(myCheckBox.isSelected());
         rebuildList(0, REBUILD_DELAY, null, ModalityState.current());
       }
     });
@@ -313,7 +312,6 @@ public abstract class ChooseByNameBase{
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
         rebuildList(0, REBUILD_DELAY, null, ModalityState.current());
-        choosenElementMightChange();
       }
     });
 
@@ -394,8 +392,6 @@ public abstract class ChooseByNameBase{
     UIUtil.installPopupMenuColorAndFonts(myTextFieldPanel);
 
     showTextFieldPanel();
-
-    ensureNamesLoaded(myCheckBox.isSelected());
 
     if (modalityState != null) {
       rebuildList(0, 0, null, modalityState);
@@ -510,7 +506,7 @@ public abstract class ChooseByNameBase{
     myListIsUpToDate = false;
     myAlarm.cancelAllRequests();
     myListUpdater.cancelAll();
-    choosenElementMightChange();
+
     tryToCancel();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
@@ -707,18 +703,18 @@ public abstract class ChooseByNameBase{
 
     final String text = myTextField.getText();
     final boolean checkBoxState = myCheckBox.isSelected();
-    ensureNamesLoaded(checkBoxState);
+    //ensureNamesLoaded(checkBoxState);
     final String[] names = checkBoxState ? myNames[1] : myNames[0];
+    if (names == null) return Collections.emptyList();
+
     Object uniqueElement = null;
 
-    for (int i = 0; names != null && i < names.length; i++) {
-      final String name = names[i];
-
-      if (name != null && name.equalsIgnoreCase(text)) {
+    for (final String name : names) {
+      if (text.equalsIgnoreCase(name)) {
         final Object[] elements = myModel.getElementsByName(name, checkBoxState);
-        if (elements.length > 1) return null;
+        if (elements.length > 1) return Collections.emptyList();
         if (elements.length == 0) continue;
-        if (uniqueElement != null) return null;
+        if (uniqueElement != null) return Collections.emptyList();
         uniqueElement = elements[0];
       }
     }
