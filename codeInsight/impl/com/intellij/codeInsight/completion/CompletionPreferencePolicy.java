@@ -132,10 +132,10 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
       boolean equalsName1 = false;
       boolean equalsName2 = false;
       if(o1 instanceof PsiNamedElement){
-        equalsName1 = ((PsiNamedElement)o1).getName().equals(myPrefix);
+        equalsName1 = myPrefix.equals(((PsiNamedElement)o1).getName());
       }
       if(o2 instanceof PsiNamedElement){
-        equalsName2 = ((PsiNamedElement)o2).getName().equals(myPrefix);
+        equalsName2 = myPrefix.equals(((PsiNamedElement)o2).getName());
       }
 
       if(equalsName2){
