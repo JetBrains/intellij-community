@@ -590,16 +590,7 @@ public class TypeConversionUtil {
           return "java.io.Serializable".equals(qualifiedName) || "java.lang.Cloneable".equals(qualifiedName);
         }
         else {
-          if (lClass instanceof PsiTypeParameter) {
-            final PsiClassType[] superTypes = lClass.getSuperTypes();
-            for (PsiClassType type : superTypes) {
-              if (!isAssignable(type, right, allowUncheckedConversion)) return false;
-            }
-            return true;
-          }
-          else {
-            return left.equalsToText("java.lang.Object");
-          }
+          return left.equalsToText("java.lang.Object");
         }
       }
       PsiType lCompType = ((PsiArrayType)left).getComponentType();
