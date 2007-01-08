@@ -49,16 +49,6 @@ public class VisibilityInspectionTest extends InspectionTestCase {
     doTest();
   }
 
-  public void testDisabledInCurrentProfile() throws Exception{
-    myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
-    myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
-    myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
-
-    getManager().createNewGlobalContext(true).RUN_WITH_EDITOR_PROFILE = true;
-    doTest();
-  }
-
-
   public void testIDEADEV10312() throws Exception {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
