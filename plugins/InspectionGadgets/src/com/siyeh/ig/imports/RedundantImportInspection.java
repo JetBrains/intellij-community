@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,18 +137,26 @@ public class RedundantImportInspection extends ClassInspection {
                         continue;
                     }
                     final PsiClass targetClass = (PsiClass)element;
-                    final PsiJavaFile targetFile =
+                    final PsiNamedElement namedElement =
                             PsiTreeUtil.getParentOfType(targetClass,
-                                    PsiJavaFile.class);
-                    if (targetFile == null) {
+                                    PsiPackage.class, PsiClass.class);
+                    if (namedElement == null) {
                         continue;
                     }
-                    final String parentName = targetFile.getPackageName();
-                    if(imports.contains(parentName)) {
-                        if(!ImportUtils.hasOnDemandImportConflict(text,
-                                javaFile)) {
-                            registerError(importStatement);
-                        }
+                    final String parentName;
+                    if (namedElement instanceof PsiPackage) {
+                        final PsiPackage aPackage = (PsiPackage)namedElement;
+                        parentName = aPackage.getQualifiedName();
+                    } else if (namedElement instanceof PsiClass) {
+                        final PsiClass aClass = (PsiClass)namedElement;
+                        parentName = aClass.getQualifiedName();
+                    } else {
+                        continue;
+                    }
+                    if (imports.contains(parentName) &&
+                            !ImportUtils.hasOnDemandImportConflict(text,
+                                    javaFile)) {
+                        registerError(importStatement);
                     }
                 }
                 imports.add(text);
