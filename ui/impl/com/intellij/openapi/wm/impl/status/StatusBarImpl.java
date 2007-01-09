@@ -4,20 +4,17 @@ import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.ProcessInfo;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.EdgeBorder;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class StatusBarImpl extends JPanel implements StatusBarEx {
@@ -36,7 +33,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   private final Icon myUnlockedIcon = myLockedIcon != null ? new EmptyIcon(myLockedIcon.getIconWidth(), myLockedIcon.getIconHeight()) : null;
 
   protected final MyUISettingsListener myUISettingsListener;
-  protected JPanel myInfoAndProgressPanel;
+  protected InfoAndProgressPanel myInfoAndProgressPanel;
 
   private UISettings myUISettings;
 
@@ -59,10 +56,8 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     myInfoPanel.setBorder(emptyBorder);
     myInfoPanel.setOpaque(false);
 
-    myInfoAndProgressPanel = new JPanel();
+    myInfoAndProgressPanel = new InfoAndProgressPanel(this);
     myInfoAndProgressPanel.setBorder(compoundBorder);
-    myInfoAndProgressPanel.setOpaque(false);
-    removeAllIndicators();
 
     add(myInfoAndProgressPanel, BorderLayout.CENTER);
 
@@ -113,50 +108,9 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   }
 
   public void add(final ProgressIndicatorEx indicator, ProcessInfo info) {
-    final InlineProgressIndicator inline = new InlineProgressIndicator(true, info) {
-      public void cancel() {
-        super.cancel();
-        removeAllIndicators();
-      }
-
-      protected void cancelRequest() {
-        indicator.cancel();
-      }
-
-      public void stop() {
-        super.stop();
-        queueRemoveAllIndicators();
-      }
-    };
-    myInfoAndProgressPanel.removeAll();
-    myInfoAndProgressPanel.setLayout(new GridLayout(1, 2));
-    myInfoAndProgressPanel.add(myInfoPanel);
-
-    final Wrapper inlineComponent = new Wrapper(inline.getComponent());
-    inlineComponent.setBorder(BorderFactory.createCompoundBorder(new EdgeBorder(EdgeBorder.EDGE_LEFT), new EmptyBorder(0, 2, 0, 0)));
-    myInfoAndProgressPanel.add(inlineComponent);
-
-    indicator.setStateDelegate(inline);
-    
-    myInfoPanel.revalidate();
-    myInfoPanel.repaint();
+    myInfoAndProgressPanel.addProgress(indicator, info);
   }
 
-  private void queueRemoveAllIndicators() {
-    LaterInvocator.invokeLater(new Runnable() {
-      public void run() {
-        removeAllIndicators();
-      }
-    });
-  }
-
-  public void removeAllIndicators() {
-    myInfoAndProgressPanel.removeAll();
-    myInfoAndProgressPanel.setLayout(new GridLayout(1, 1));
-    myInfoAndProgressPanel.add(myInfoPanel);
-    myInfoPanel.revalidate();
-    myInfoPanel.repaint();
-  }
 
   protected final void paintComponent(final Graphics g) {
     g.setColor(getBackground());

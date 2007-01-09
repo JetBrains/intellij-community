@@ -18,7 +18,7 @@ public class AddTestProcessAction extends AnAction {
     final BackgroundableProcessIndicator indicator =
       new BackgroundableProcessIndicator(project, "Test process", new PerformInBackgroundOption() {
         public boolean shouldStartInBackground() {
-          return false;
+          return true;
         }
 
         public void processSentToBackground() {
@@ -41,8 +41,9 @@ public class AddTestProcessAction extends AnAction {
                 indicator.setText("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
               }
               indicator.setFraction(each / 100.0);
-              sleep(75);
+              sleep(300);
               indicator.checkCanceled();
+              indicator.setText2("bla bla bla");
             }
           });
           indicator.stop();
