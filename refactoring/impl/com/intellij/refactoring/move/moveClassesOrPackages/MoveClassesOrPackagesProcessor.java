@@ -94,8 +94,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       String newName = getNewQName(element);
       final UsageInfo[] usages = MoveClassesOrPackagesUtil.findUsages(element, mySearchInComments,
                                                                       mySearchInNonJavaFiles, newName);
-      ArrayList<UsageInfo> usageInfos = new ArrayList<UsageInfo>(Arrays.asList(usages));
-      allUsages.addAll(usageInfos);
+      allUsages.addAll(new ArrayList<UsageInfo>(Arrays.asList(usages)));
     }
     myMoveDestination.analyzeModuleConflicts(Arrays.asList(myElementsToMove), conflicts,
                                              allUsages.toArray(new UsageInfo[allUsages.size()]));
@@ -167,10 +166,12 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
 
     public void visitReferenceExpression(PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
       visitReferenceElement(expression);
     }
 
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      super.visitReferenceElement(reference);
       PsiElement resolved = reference.resolve();
       visitResolvedReference(resolved, reference);
     }
