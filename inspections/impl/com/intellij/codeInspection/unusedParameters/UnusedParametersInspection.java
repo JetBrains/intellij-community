@@ -24,6 +24,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
@@ -203,6 +204,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
     }
 
     protected boolean applyFix(RefElement[] refElements) {
+      boolean needToRefresh = false;
       for (RefElement refElement : refElements) {
         if (refElement instanceof RefMethod) {
           RefMethod refMethod = (RefMethod)refElement;
@@ -215,13 +217,18 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
             psiParameters.add(refParameter.getElement());
           }
 
-          removeUnusedParameterViaChangeSignature(psiMethod, psiParameters);
+          final PsiModificationTracker tracker = psiMethod.getManager().getModificationTracker();
+          final long startModificationCount = tracker.getModificationCount();
 
-          getFilter().addIgnoreList(refMethod);
+          removeUnusedParameterViaChangeSignature(psiMethod, psiParameters);
+          if (startModificationCount != tracker.getModificationCount()) {
+            getFilter().addIgnoreList(refMethod);
+            needToRefresh = true;
+          }
         }
       }
 
-      return true;
+      return needToRefresh;
     }
   }
 
@@ -240,7 +247,7 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
     return "UnusedParameters";
   }
 
-  public HTMLComposer getComposer() {
+  public HTMLComposerImpl getComposer() {
     if (myComposer == null) {
       myComposer = new UnusedParametersComposer(getFilter(), this);
     }

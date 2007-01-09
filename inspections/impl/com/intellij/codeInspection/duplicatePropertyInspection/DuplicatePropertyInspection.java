@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.DescriptorComposer;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
-import com.intellij.codeInspection.ex.HTMLComposer;
+import com.intellij.codeInspection.ex.HTMLComposerImpl;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.properties.PropertiesBundle;
@@ -35,6 +35,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -61,9 +62,6 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
   private JCheckBox myDuplicateBoth;
   private JPanel myWholePanel;
 
-  public DuplicatePropertyInspection() {
-  }
-
   public void runInspection(AnalysisScope scope, final InspectionManager manager) {
     scope.accept(new PsiRecursiveElementVisitor() {
       public void visitFile(PsiFile file) {
@@ -72,7 +70,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
     });
   }
 
-  public HTMLComposer getComposer() {
+  public HTMLComposerImpl getComposer() {
     return new DescriptorComposer(this) {
       protected void composeDescription(final CommonProblemDescriptor description, int i, StringBuffer buf, final RefEntity refElement) {
         @NonNls String descriptionTemplate = description.getDescriptionTemplate();
@@ -83,7 +81,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private void surroundWithHref(StringBuffer anchor, PsiElement element, final boolean isValue) {
+  private static void surroundWithHref(StringBuffer anchor, PsiElement element, final boolean isValue) {
     if (element != null) {
       final PsiElement parent = element.getParent();
       PsiElement elementToLink = isValue ? parent.getFirstChild() : parent.getLastChild();
@@ -118,14 +116,14 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private void compoundLineLink(StringBuffer lineAnchor, PsiElement psiElement) {
+  private static void compoundLineLink(StringBuffer lineAnchor, PsiElement psiElement) {
     final PsiFile file = psiElement.getContainingFile();
     if (file != null) {
       final VirtualFile vFile = file.getVirtualFile();
       if (vFile != null) {
         Document doc = FileDocumentManager.getInstance().getDocument(vFile);
         final int lineNumber = doc.getLineNumber(psiElement.getTextOffset()) + 1;
-        lineAnchor.append(" " + InspectionsBundle.message("inspection.export.results.at.line") + " ");
+        lineAnchor.append(" ").append(InspectionsBundle.message("inspection.export.results.at.line")).append(" ");
         lineAnchor.append("<a HREF=\"");
         try {
           int offset = doc.getLineStartOffset(lineNumber - 1);
@@ -142,11 +140,12 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
     }
   }
 
+  @NotNull
   public JobDescriptor[] getJobDescriptors() {
-    return new JobDescriptor[]{};
+    return JobDescriptor.EMPTY_ARRAY;
   }
 
-  public void checkFile(final PsiFile file, final InspectionManager manager) {
+  private void checkFile(final PsiFile file, final InspectionManager manager) {
     if (!(file instanceof PropertiesFile)) return;
     if (getContext().RUN_WITH_EDITOR_PROFILE &&
         InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile((PsiElement)file).getInspectionTool(getShortName()) != this) {
@@ -189,7 +188,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
     }, progress);
   }
 
-  private void processTextUsages(final Map<String, Set<PsiFile>> processedTextToFiles,
+  private static void processTextUsages(final Map<String, Set<PsiFile>> processedTextToFiles,
                                  final String text,
                                  final Map<String, Set<PsiFile>> processedFoundTextToFiles,
                                  final PsiSearchHelper searchHelper,
@@ -208,11 +207,11 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
   }
 
 
-  private void prepareDuplicateValuesByFile(final Map<String, Set<PsiFile>> valueToFiles,
-                                            final InspectionManager manager,
-                                            final List<ProblemDescriptor> problemDescriptors,
-                                            final PsiFile psiFile,
-                                            final ProgressIndicator progress) {
+  private static void prepareDuplicateValuesByFile(final Map<String, Set<PsiFile>> valueToFiles,
+                                                   final InspectionManager manager,
+                                                   final List<ProblemDescriptor> problemDescriptors,
+                                                   final PsiFile psiFile,
+                                                   final ProgressIndicator progress) {
     for (String value : valueToFiles.keySet()) {
       if (progress != null){
         progress.setText2(InspectionsBundle.message("duplicate.property.value.progress.indicator.text", value));
@@ -292,12 +291,12 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
   }
 
 
-  private void processDuplicateKeysWithDifferentValues(final Map<String, Set<String>> keyToDifferentValues,
-                                                       final Map<String, Set<PsiFile>> keyToFiles,
-                                                       final List<ProblemDescriptor> problemDescriptors,
-                                                       final InspectionManager manager,
-                                                       final PsiFile psiFile,
-                                                       final ProgressIndicator progress) {
+  private static void processDuplicateKeysWithDifferentValues(final Map<String, Set<String>> keyToDifferentValues,
+                                                              final Map<String, Set<PsiFile>> keyToFiles,
+                                                              final List<ProblemDescriptor> problemDescriptors,
+                                                              final InspectionManager manager,
+                                                              final PsiFile psiFile,
+                                                              final ProgressIndicator progress) {
     for (String key : keyToDifferentValues.keySet()) {
       if (progress != null) {
         progress.setText2(InspectionsBundle.message("duplicate.property.diff.key.progress.indicator.text", key));
@@ -328,10 +327,10 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
     }
   }
 
-  private void findFilesWithText(String stringToFind,
-                                 PsiSearchHelper searchHelper,
-                                 GlobalSearchScope scope,
-                                 final Set<PsiFile> resultFiles) {
+  private static void findFilesWithText(String stringToFind,
+                                        PsiSearchHelper searchHelper,
+                                        GlobalSearchScope scope,
+                                        final Set<PsiFile> resultFiles) {
     final List<String> words = StringUtil.getWordsIn(stringToFind);
     if (words.size() == 0) return;
     Collections.sort(words, new Comparator<String>() {
@@ -352,14 +351,17 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
     }
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("duplicate.property.display.name");
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
   }
 
+  @NotNull
   public String getShortName() {
     return "DuplicatePropertyInspection";
   }

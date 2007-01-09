@@ -1,10 +1,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.DeadCodeInspection;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
@@ -318,7 +315,7 @@ public class Browser extends JPanel {
           buf.append(font);
           @NonNls final String br = "<br>";
           buf.append(br).append(br);
-          HTMLComposer.appendHeading(buf, InspectionsBundle.message("inspection.export.results.suppress"));
+          HTMLComposerImpl.appendHeading(buf, InspectionsBundle.message("inspection.export.results.suppress"));
           buf.append(br);
           HTMLComposer.appendAfterHeaderIndention(buf);
           @NonNls final String href = "<a HREF=\"file://bred.txt#suppress:\">" + suppressAction.getTemplatePresentation().getText() + "</a>";

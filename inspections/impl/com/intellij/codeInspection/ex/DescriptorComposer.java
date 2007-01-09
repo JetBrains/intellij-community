@@ -18,7 +18,7 @@ import java.net.URL;
 /**
  * @author max
  */
-public class DescriptorComposer extends HTMLComposer {
+public class DescriptorComposer extends HTMLComposerImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorComposer");
   private DescriptorProviderInspection myTool;
 
@@ -33,6 +33,8 @@ public class DescriptorComposer extends HTMLComposer {
 
       CommonProblemDescriptor[] descriptions = myTool.getDescriptions(refEntity);
 
+      LOG.assertTrue(descriptions != null);
+
       startList(buf);
       for (int i = 0; i < descriptions.length; i++) {
         final CommonProblemDescriptor description = descriptions[i];
@@ -43,6 +45,7 @@ public class DescriptorComposer extends HTMLComposer {
       }
 
       doneList(buf);
+      composeAdditionalDescription(buf, refEntity);
 
       appendResolution(buf, myTool, refEntity);
     }
@@ -50,6 +53,8 @@ public class DescriptorComposer extends HTMLComposer {
       appendNoProblems(buf);
     }
   }
+
+  protected void composeAdditionalDescription(final StringBuffer buf, final RefEntity refEntity) {}
 
   public void compose(StringBuffer buf, RefEntity refElement, CommonProblemDescriptor descriptor) {
     CommonProblemDescriptor[] descriptions = myTool.getDescriptions(refElement);

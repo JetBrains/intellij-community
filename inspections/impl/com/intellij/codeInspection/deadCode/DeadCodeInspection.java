@@ -544,7 +544,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     return myFilter;
   }
 
-  public HTMLComposer getComposer() {
+  public HTMLComposerImpl getComposer() {
     if (myComposer == null) {
       myComposer = new DeadHTMLComposer(this);
     }

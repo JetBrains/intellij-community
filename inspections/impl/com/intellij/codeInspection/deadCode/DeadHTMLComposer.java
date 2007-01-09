@@ -9,7 +9,7 @@
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.HTMLComposer;
+import com.intellij.codeInspection.ex.HTMLComposerImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.RefElementNode;
@@ -19,7 +19,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-public class DeadHTMLComposer extends HTMLComposer {
+public class DeadHTMLComposer extends HTMLComposerImpl {
   private final InspectionTool myTool;
 
   public DeadHTMLComposer(InspectionTool tool) {

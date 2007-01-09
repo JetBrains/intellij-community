@@ -53,7 +53,7 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
     return "";
   }
 
-  public HTMLComposer getComposer() {
+  public HTMLComposerImpl getComposer() {
     return new DeadHTMLComposer(this);
   }
 
@@ -74,8 +74,7 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
     }
 
     protected boolean applyFix(RefElement[] refElements) {
-      for (int i = 0; i < refElements.length; i++) {
-        RefElement refElement = refElements[i];
+      for (RefElement refElement : refElements) {
         EntryPointsManager.getInstance(getContext().getProject()).removeEntryPoint(refElement);
       }
 

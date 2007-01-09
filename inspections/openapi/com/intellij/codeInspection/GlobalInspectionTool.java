@@ -146,13 +146,32 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
     return false;
   }
 
+  /**
+   * Allows TeamCity plugin to reconstract quickfixes from server side data
+   * @param hint a hint to distinguish different quick fixes for one problem
+   * @return quickfix to be shown in editor when server side insepctions are enabled
+   */
   @Nullable
   public QuickFix getQuickFix(final String hint) {
     return null;
   }
 
+  /**
+   * Allows TeamCity plugin to serialize quick fixes on server in order to reconstract them in idea
+   * @param fix fix to be serialized
+   * @return hint to be stored on server
+   */
   @Nullable
   public String getHint(final QuickFix fix) {
     return null;
+  }
+
+  /**
+   * Allows additional description to refEntity problems
+   * @param buf page content with problem description
+   * @param refEntity entity to describe
+   * @param composer provides sample api to compose html
+   */
+  public void compose(StringBuffer buf, RefEntity refEntity, HTMLComposer composer) {
   }
 }

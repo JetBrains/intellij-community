@@ -418,6 +418,10 @@ public class VisibilityInspection extends GlobalInspectionTool {
     }
   }
 
+  public void compose(final StringBuffer buf, final RefEntity refEntity, final HTMLComposer composer) {
+    composer.appendElementInReferences(buf, (RefElement)refEntity);
+  }
+
   @Nullable
   public QuickFix getQuickFix(final String hint) {
     return new AcceptSuggestedAccess(null, hint);

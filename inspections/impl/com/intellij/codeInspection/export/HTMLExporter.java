@@ -9,7 +9,7 @@
 package com.intellij.codeInspection.export;
 
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.HTMLComposer;
+import com.intellij.codeInspection.ex.HTMLComposerImpl;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,11 +33,11 @@ public class HTMLExporter {
   private Project myProject;
   private int myFileCounter;
   private final HashMap<RefEntity,String> myElementToFilenameMap;
-  private final HTMLComposer myComposer;
+  private final HTMLComposerImpl myComposer;
   private final HashSet<RefEntity> myGeneratedReferences;
   private final HashSet<RefEntity> myGeneratedPages;
 
-  public HTMLExporter(String rootFolder, HTMLComposer composer, Project project) {
+  public HTMLExporter(String rootFolder, HTMLComposerImpl composer, Project project) {
     myRootFolder = rootFolder;
     myProject = project;
     myElementToFilenameMap = new HashMap<RefEntity, String>();

@@ -332,14 +332,12 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             final Set<Pair<InspectionTool, InspectionProfile>> sameTools = myTools.get(toolName);
             boolean hasProblems = false;
             boolean isLocalTool = false;
-            boolean isDescriptorProvider = false;
             if (sameTools != null) {
               for (Pair<InspectionTool, InspectionProfile> toolDescr : sameTools) {
                 final InspectionTool tool = toolDescr.first;
-                if (tool instanceof DescriptorProviderInspection) {
+                if (tool instanceof LocalInspectionToolWrapper) {
                   hasProblems = new File(outputPath, toolName + ext).exists();
-                  isLocalTool = tool instanceof LocalInspectionToolWrapper;
-                  isDescriptorProvider = true;
+                  isLocalTool = true;
                 }
                 else {
                   tool.updateContent();
@@ -357,8 +355,8 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             try {
               new File(outputPath).mkdirs();
               final File file = new File(outputPath, toolName + ext);
-              if (isDescriptorProvider) {
-                outStream = descriptorProviderFilePreparations(file, outStream, isLocalToolAttribute, isLocalTool);
+              if (isLocalTool) {
+                outStream = localInspectionFilePreparations(file, outStream, isLocalToolAttribute, isLocalTool);
               }
               else {
                 ((ProjectEx)getProject()).getMacroReplacements().substitute(doc.getRootElement(), SystemInfo.isFileSystemCaseSensitive);
@@ -391,10 +389,10 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
   }
 
-  private static OutputStream descriptorProviderFilePreparations(final File file,
-                                                                 OutputStream outStream,
-                                                                 final String localToolAttribute,
-                                                                 final boolean localTool) throws IOException {
+  private static OutputStream localInspectionFilePreparations(final File file,
+                                                              OutputStream outStream,
+                                                              final String localToolAttribute,
+                                                              final boolean localTool) throws IOException {
     BufferedReader reader = null;
     try {
       StringBuilder buf = new StringBuilder();
@@ -896,7 +894,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
   }
 
-  private void initializeTools(AnalysisScope scope, Map<String, Set<InspectionTool>> tools, Map<String, Set<InspectionTool>> localTools) {
+  public void initializeTools(AnalysisScope scope, Map<String, Set<InspectionTool>> tools, Map<String, Set<InspectionTool>> localTools) {
     myJobDescriptors = new ArrayList<JobDescriptor>();
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(getProject());
     if (RUN_WITH_EDITOR_PROFILE) {

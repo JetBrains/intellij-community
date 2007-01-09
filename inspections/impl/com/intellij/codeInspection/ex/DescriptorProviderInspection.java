@@ -49,7 +49,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     if (refElement == null) return;
     if (descriptions == null || descriptions.length == 0) return;
     if (filterSuppresssed) {
-      if (ourOutputPath == null) {
+      if (ourOutputPath == null || !(this instanceof LocalInspectionToolWrapper)) {
         CommonProblemDescriptor[] problems = getProblemElements().get(refElement);
         if (problems == null) {
           problems = descriptions;
@@ -214,7 +214,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     return getProblemElements().get(refEntity);
   }
 
-  public HTMLComposer getComposer() {
+  public HTMLComposerImpl getComposer() {
     if (myComposer == null) {
       myComposer = new DescriptorComposer(this);
     }
@@ -226,7 +226,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       public void visitElement(final RefEntity refEntity) {
         if (getProblemElements().containsKey(refEntity)) {
           CommonProblemDescriptor[] descriptions = getDescriptions(refEntity);
-          DescriptorProviderInspection.this.exportResults(descriptions, refEntity, parentNode);
+          exportResults(descriptions, refEntity, parentNode);
         }
       }
     });

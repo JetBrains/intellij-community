@@ -9,6 +9,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.HTMLComposer;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.export.HTMLExporter;
 import com.intellij.codeInspection.reference.*;
@@ -16,12 +17,10 @@ import com.intellij.psi.*;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Iterator;
-
 /**
  * @author max
  */
-public abstract class HTMLComposer {
+public abstract class HTMLComposerImpl extends HTMLComposer {
   protected HTMLExporter myExporter;
   private int[] myListStack;
   private int myListStackTop;
@@ -37,7 +36,7 @@ public abstract class HTMLComposer {
   @NonNls protected static final String A_HREF_OPENING = "<a HREF=\"";
   @NonNls protected static final String A_CLOSING = "</a>";
 
-  protected HTMLComposer() {
+  protected HTMLComposerImpl() {
     myListStack = new int[5];
     myListStackTop = -1;
   }
@@ -69,13 +68,6 @@ public abstract class HTMLComposer {
       appendLocation(buf, refElement);
       buf.append(BR).append(BR);
     }
-  }
-
-  public static void appendHeading(@NonNls final StringBuffer buf, String name) {
-    buf.append(
-      "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font style=\"font-family:verdana; font-weight:bold; color:#005555; size = 3\">");
-    buf.append(name);
-    buf.append(":</font>");
   }
 
   private static void appendAccessModifier(@NonNls final StringBuffer buf, RefElement refElement) {
@@ -120,7 +112,7 @@ public abstract class HTMLComposer {
     buf.append(FONT_CLOSING);
   }
 
-  protected static void appendClassOrInterface(StringBuffer buf, RefClass refClass, boolean capitalizeFirstLetter) {
+  public void appendClassOrInterface(StringBuffer buf, RefClass refClass, boolean capitalizeFirstLetter) {
     if (refClass.isInterface()) {
       buf.append(capitalizeFirstLetter ? InspectionsBundle.message("inspection.export.results.capitalized.interface") : InspectionsBundle.message("inspection.export.results.interface"));
     }
@@ -132,19 +124,7 @@ public abstract class HTMLComposer {
     }
   }
 
-  protected static String getClassOrInterface(RefClass refClass, boolean capitalizeFirstLetter) {
-    if (refClass.isInterface()) {
-      return capitalizeFirstLetter ? InspectionsBundle.message("inspection.export.results.capitalized.interface") : InspectionsBundle.message("inspection.export.results.interface");
-    }
-    else if (refClass.isAbstract()) {
-      return capitalizeFirstLetter ? InspectionsBundle.message("inspection.export.results.capitalized.abstract.class") : InspectionsBundle.message("inspection.export.results.abstract.class");
-    }
-    else {
-      return capitalizeFirstLetter ? InspectionsBundle.message("inspection.export.results.capitalized.class") : InspectionsBundle.message("inspection.export.results.class");
-    }
-  }
-
-  private static void appendShortName(final StringBuffer buf, RefElement refElement) {
+  private void appendShortName(final StringBuffer buf, RefElement refElement) {
     refElement.accept(new RefVisitor() {
       public void visitClass(RefClass refClass) {
         if (refClass.isStatic()) {
@@ -259,7 +239,7 @@ public abstract class HTMLComposer {
     buf.append(qName);
   }
 
-  private void appendElementReference(final StringBuffer buf, RefElement refElement) {
+  public void appendElementReference(final StringBuffer buf, RefElement refElement) {
     appendElementReference(buf, refElement, true);
   }
 
@@ -297,7 +277,7 @@ public abstract class HTMLComposer {
     }
   }
 
-  protected void appendElementReference(final StringBuffer buf, RefElement refElement, boolean isPackageIncluded) {
+  public void appendElementReference(final StringBuffer buf, RefElement refElement, boolean isPackageIncluded) {
     appendElementReference(buf, refElement, isPackageIncluded, null);
   }
 
@@ -384,11 +364,8 @@ public abstract class HTMLComposer {
     }
   }
 
-  protected static String appendNumereable(int n,
-                                           String statement,
-                                           String singleEnding,
-                                           String multipleEnding) {
-    StringBuffer buf = new StringBuffer();
+  public String composeNumereables(int n, String statement, String singleEnding, String multipleEnding) {
+    final StringBuffer buf = new StringBuffer();
     buf.append(n);
     buf.append(' ');
     buf.append(statement);
@@ -402,32 +379,30 @@ public abstract class HTMLComposer {
     return buf.toString();
   }
 
-  protected void appendElementInReferences(StringBuffer buf, RefElement refElement) {
+  public void appendElementInReferences(StringBuffer buf, RefElement refElement) {
     if (refElement.getInReferences().size() > 0) {
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.used.from"));
       startList(buf);
-      for (Iterator<RefElement> iterator = refElement.getInReferences().iterator(); iterator.hasNext();) {
-        RefElement refCaller = iterator.next();
+      for (RefElement refCaller : refElement.getInReferences()) {
         appendListItem(buf, refCaller);
       }
       doneList(buf);
     }
   }
 
-  protected void appendElementOutReferences(StringBuffer buf, RefElement refElement) {
+  public void appendElementOutReferences(StringBuffer buf, RefElement refElement) {
     if (refElement.getOutReferences().size() > 0) {
       buf.append(BR);
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.uses"));
       startList(buf);
-      for (Iterator<RefElement> iterator = refElement.getOutReferences().iterator(); iterator.hasNext();) {
-        RefElement refCallee = iterator.next();
+      for (RefElement refCallee : refElement.getOutReferences()) {
         appendListItem(buf, refCallee);
       }
       doneList(buf);
     }
   }
 
-  protected void appendListItem(StringBuffer buf, RefElement refElement) {
+  public void appendListItem(StringBuffer buf, RefElement refElement) {
     startListItem(buf);
     buf.append(FONT_OPENING);
     buf.append(CLOSE_TAG);
@@ -441,19 +416,18 @@ public abstract class HTMLComposer {
     // Default appends nothing.
   }
 
-  protected void appendClassExtendsImplements(StringBuffer buf, RefClass refClass) {
+  public void appendClassExtendsImplements(StringBuffer buf, RefClass refClass) {
     if (refClass.getBaseClasses().size() > 0) {
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.extends.implements"));
       startList(buf);
-      for (Iterator<RefClass> iterator = refClass.getBaseClasses().iterator(); iterator.hasNext();) {
-        RefClass refBase = iterator.next();
+      for (RefClass refBase : refClass.getBaseClasses()) {
         appendListItem(buf, refBase);
       }
       doneList(buf);
     }
   }
 
-  protected void appendDerivedClasses(StringBuffer buf, RefClass refClass) {
+  public void appendDerivedClasses(StringBuffer buf, RefClass refClass) {
     if (refClass.getSubClasses().size() > 0) {
       if (refClass.isInterface()) {
         appendHeading(buf, InspectionsBundle.message("inspection.export.results.extended.implemented"));
@@ -463,60 +437,55 @@ public abstract class HTMLComposer {
       }
 
       startList(buf);
-      for (Iterator<RefClass> iterator = refClass.getSubClasses().iterator(); iterator.hasNext();) {
-        RefClass refDerived = iterator.next();
+      for (RefClass refDerived : refClass.getSubClasses()) {
         appendListItem(buf, refDerived);
       }
       doneList(buf);
     }
   }
 
-  protected void appendLibraryMethods(StringBuffer buf, RefClass refClass) {
+  public void appendLibraryMethods(StringBuffer buf, RefClass refClass) {
     if (refClass.getLibraryMethods().size() > 0) {
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.overrides.library.methods"));
 
       startList(buf);
-      for (Iterator<RefMethod> iterator = refClass.getLibraryMethods().iterator(); iterator.hasNext();) {
-        RefMethod refMethod = iterator.next();
+      for (RefMethod refMethod : refClass.getLibraryMethods()) {
         appendListItem(buf, refMethod);
       }
       doneList(buf);
     }
   }
 
-  protected void appendSuperMethods(StringBuffer buf, RefMethod refMethod) {
+  public void appendSuperMethods(StringBuffer buf, RefMethod refMethod) {
     if (refMethod.getSuperMethods().size() > 0) {
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.overrides.implements"));
 
       startList(buf);
-      for (Iterator<RefMethod> iterator = refMethod.getSuperMethods().iterator(); iterator.hasNext();) {
-        RefMethod refSuper = iterator.next();
+      for (RefMethod refSuper : refMethod.getSuperMethods()) {
         appendListItem(buf, refSuper);
       }
       doneList(buf);
     }
   }
 
-  protected void appendDerivedMethods(StringBuffer buf, RefMethod refMethod) {
+  public void appendDerivedMethods(StringBuffer buf, RefMethod refMethod) {
     if (refMethod.getDerivedMethods().size() > 0) {
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.derived.methods"));
 
       startList(buf);
-      for (Iterator<RefMethod> iterator = refMethod.getDerivedMethods().iterator(); iterator.hasNext();) {
-        RefMethod refDerived = iterator.next();
+      for (RefMethod refDerived : refMethod.getDerivedMethods()) {
         appendListItem(buf, refDerived);
       }
       doneList(buf);
     }
   }
 
-  protected void appendTypeReferences(StringBuffer buf, RefClass refClass) {
+  public void appendTypeReferences(StringBuffer buf, RefClass refClass) {
     if (refClass.getInTypeReferences().size() > 0) {
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.type.references"));
 
       startList(buf);
-      for (Iterator iterator = refClass.getInTypeReferences().iterator(); iterator.hasNext();) {
-        RefElement refElement = (RefElement)iterator.next();
+      for (final RefElement refElement : refClass.getInTypeReferences()) {
         appendListItem(buf, refElement);
       }
       doneList(buf);
@@ -548,13 +517,13 @@ public abstract class HTMLComposer {
     }
   }
 
-  protected void startList(@NonNls final StringBuffer buf) {
+  public void startList(@NonNls final StringBuffer buf) {
     buf.append("<ul>");
     myListStackTop++;
     myListStack[myListStackTop] = 0;
   }
 
-  protected void doneList(@NonNls StringBuffer buf) {
+  public void doneList(@NonNls StringBuffer buf) {
     buf.append("</ul>");
     if (myListStack[myListStackTop] != 0) {
       buf.append("<table cellpadding=\"0\" border=\"0\" cellspacing=\"0\"><tr><td>&nbsp;</td></tr></table>");
@@ -562,20 +531,16 @@ public abstract class HTMLComposer {
     myListStackTop--;
   }
 
-  protected void startListItem(@NonNls StringBuffer buf) {
+  public void startListItem(@NonNls StringBuffer buf) {
     myListStack[myListStackTop]++;
     buf.append("<li>");
   }
 
-  protected static void doneListItem(@NonNls StringBuffer buf) {
+  public static void doneListItem(@NonNls StringBuffer buf) {
     buf.append("</li>");
   }
 
-  public static void appendAfterHeaderIndention(@NonNls StringBuffer buf) {
-    buf.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
-  }
-
-  protected static void appendNoProblems(StringBuffer buf) {
+  public void appendNoProblems(StringBuffer buf) {
     buf.append(BR);
     appendAfterHeaderIndention(buf);
     buf.append(B_OPENING);

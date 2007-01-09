@@ -95,7 +95,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     cleanup();
   }
 
-  public abstract HTMLComposer getComposer();
+  public abstract HTMLComposerImpl getComposer();
 
   public abstract boolean hasReportedProblems();
 

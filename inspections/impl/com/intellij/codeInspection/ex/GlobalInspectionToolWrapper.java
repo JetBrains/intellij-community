@@ -122,6 +122,15 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
     myTool.projectClosed(project);
   }
 
+
+  public HTMLComposerImpl getComposer() {
+    return new DescriptorComposer(this) {
+      protected void composeAdditionalDescription(final StringBuffer buf, final RefEntity refEntity) {
+        myTool.compose(buf, refEntity, this);
+      }
+    };
+  }
+
   @Nullable
   public IntentionAction findQuickFixes(final CommonProblemDescriptor problemDescriptor, final String hint) {
     final QuickFix fix = myTool.getQuickFix(hint);
