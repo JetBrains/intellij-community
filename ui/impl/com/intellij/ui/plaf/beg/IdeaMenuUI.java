@@ -53,6 +53,7 @@ public class IdeaMenuUI extends BasicMenuUI{
   }
 
   public void paint(Graphics g, JComponent comp) {
+    UIUtil.applyRenderingHints(g);
     JMenu jMenu = (JMenu)comp;
     ButtonModel buttonmodel = jMenu.getModel();
     int mnemonicIndex = jMenu.getDisplayedMnemonicIndex();
