@@ -42,6 +42,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
       myComponent.add(textAndProgress, BorderLayout.CENTER);
       myComponent.add(myCancelButton, BorderLayout.EAST);
       myComponent.setToolTipText(processInfo.getProcessTitle() + ". " + IdeBundle.message("progress.text.clickToViewProgressWindow"));
+      myProgress.setActive(false);
     } else {
       myComponent.setLayout(new BorderLayout());
       myComponent.add(myCancelButton, BorderLayout.EAST);
@@ -85,7 +86,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
   }
 
   private void _updateProgress() {
-    updateVisibility(myProgress, getFraction() > 0 || isIndeterminate());
+    updateVisibility(myProgress, getFraction() > 0 && !isIndeterminate());
     if (isIndeterminate()) {
       myProgress.setIndeterminate(true);
     }
@@ -115,10 +116,14 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
     if (holdsValue && !bar.isActive()) {
       bar.setActive(true);
       bar.repaint();
+      myComponent.revalidate();
+      myComponent.repaint();
     }
     else if (!holdsValue && bar.isActive()) {
       bar.setActive(false);
       bar.repaint();
+      myComponent.revalidate();
+      myComponent.repaint();
     }
   }
 
@@ -180,6 +185,12 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
 
     public boolean isActive() {
       return myActive;
+    }
+
+
+    public Dimension getPreferredSize() {
+      if (!myActive && myCompact) return new Dimension(0, 0);
+      return super.getPreferredSize();
     }
 
     public void setActive(final boolean active) {

@@ -7,6 +7,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.EdgeBorder;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -14,6 +15,7 @@ import com.intellij.util.ui.update.Update;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,10 +34,21 @@ public class InfoAndProgressPanel extends JPanel {
     new MultiValuesMap<ProgressIndicatorEx, InlineProgressIndicator>();
 
   private MergingUpdateQueue myUpdateQueue;
+  private AsyncProcessIcon myProgressIcon;
 
   public InfoAndProgressPanel(final StatusBarImpl statusBar) {
     myStatusBar = statusBar;
     setOpaque(false);
+
+    myProgressIcon = new AsyncProcessIcon("Background process");
+    myProgressIcon.setToolTipText("View " + ProcessPopup.BACKGROUND_PROCESSES);
+    new BaseButtonBehavior(myProgressIcon) {
+      protected void execute() {
+        triggerPopupShowing();
+      }
+    };
+    myProgressIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    myProgressIcon.setBorder(new EmptyBorder(0, 2, 0, 2));
 
     myUpdateQueue = new MergingUpdateQueue("Progress indicator", 250, true, null);
     myPopup = new ProcessPopup(this);
@@ -53,6 +66,8 @@ public class InfoAndProgressPanel extends JPanel {
     final InlineProgressIndicator compact = createInlineDelegate(info, original, true);
 
     myPopup.addIndicator(expanded);
+    myProgressIcon.resume();
+
     if (veryFirst && !myPopup.isShowing()) {
       buildInInlineIndicator(compact);
     }
@@ -102,7 +117,11 @@ public class InfoAndProgressPanel extends JPanel {
 
   private void openProcessPopup() {
     if (myPopup.isShowing()) return;
-    buildInProcessCount();
+    if (myOriginals.size() > 0) {
+      buildInProcessCount();
+    } else {
+      restoreEmptyStatus();
+    }
     myPopup.show();
   }
 
@@ -126,7 +145,7 @@ public class InfoAndProgressPanel extends JPanel {
     removeAll();
     setLayout(new BorderLayout());
 
-    final JPanel progressCountPanel = new JPanel(new BorderLayout());
+    final JPanel progressCountPanel = new JPanel(new BorderLayout(0, 2));
     String processWord = myOriginals.size() == 1 ? " process" : " processes";
     final LinkLabel label = new LinkLabel(myOriginals.size() + processWord + " running...", null, new LinkListener() {
       public void linkSelected(final LinkLabel aSource, final Object aLinkData) {
@@ -134,17 +153,22 @@ public class InfoAndProgressPanel extends JPanel {
       }
     });
     progressCountPanel.add(label, BorderLayout.CENTER);
+    label.setBorder(new EmptyBorder(0, 2, 0, 0));
 
-    final AsyncProcessIcon async = new AsyncProcessIcon("Background process");
-    progressCountPanel.add(async, BorderLayout.WEST);
+    final Wrapper icon = new Wrapper(myProgressIcon);
+    progressCountPanel.add(icon, BorderLayout.EAST);
 
-    progressCountPanel.setBorder(BorderFactory.createCompoundBorder(new EdgeBorder(EdgeBorder.EDGE_LEFT), new EmptyBorder(0, 2, 0, 0)));
+    progressCountPanel.setBorder(createLeftEdgeBorder());
 
     add(myStatusBar.myInfoPanel, BorderLayout.CENTER);
     add(progressCountPanel, BorderLayout.EAST);
 
     revalidate();
     repaint();
+  }
+
+  private static Border createLeftEdgeBorder() {
+    return BorderFactory.createCompoundBorder(new EdgeBorder(EdgeBorder.EDGE_LEFT), new EmptyBorder(0, 0, 0, 0));
   }
 
   private void buildInInlineIndicator(final InlineProgressIndicator inline) {
@@ -154,8 +178,13 @@ public class InfoAndProgressPanel extends JPanel {
 
     final JPanel inlineComponent = new JPanel(new BorderLayout());
     inlineComponent.add(inline.getComponent(), BorderLayout.CENTER);
+    inlineComponent.setBorder(createLeftEdgeBorder());
 
-    inlineComponent.setBorder(BorderFactory.createCompoundBorder(new EdgeBorder(EdgeBorder.EDGE_LEFT), new EmptyBorder(0, 2, 0, 0)));
+    final Wrapper icon = new Wrapper(myProgressIcon);
+    icon.setBorder(createLeftEdgeBorder());
+
+    inlineComponent.add(icon, BorderLayout.EAST);
+
     add(inlineComponent);
 
     myStatusBar.myInfoPanel.revalidate();
@@ -197,8 +226,12 @@ public class InfoAndProgressPanel extends JPanel {
 
   private void restoreEmptyStatus() {
     removeAll();
-    setLayout(new GridLayout(1, 1));
-    add(myStatusBar.myInfoPanel);
+    setLayout(new BorderLayout());
+    add(myStatusBar.myInfoPanel, BorderLayout.CENTER);
+    final Wrapper icon = new Wrapper(myProgressIcon);
+    icon.setBorder(createLeftEdgeBorder());
+    add(icon, BorderLayout.EAST);
+    myProgressIcon.suspend();
     myStatusBar.myInfoPanel.revalidate();
     myStatusBar.myInfoPanel.repaint();
   }

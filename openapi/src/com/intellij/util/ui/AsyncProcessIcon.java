@@ -21,6 +21,9 @@ public class AsyncProcessIcon extends JComponent implements Disposable {
   private int myCurrentCount = 0;
 
   public static final int COUNT = 12;
+  private Icon myPassiveIcon;
+
+  private boolean myRunning = true;
 
   public AsyncProcessIcon(@NonNls String name) {
     myName = name;
@@ -28,6 +31,7 @@ public class AsyncProcessIcon extends JComponent implements Disposable {
     for (int i = 0; i <= COUNT - 1; i++) {
       myIcons[i] = IconLoader.getIcon("/process/step_" + (i + 1) + ".png");
     }
+    myPassiveIcon = IconLoader.getIcon("/process/step_passive.png");
     myPrefSize.width = myIcons[0].getIconWidth();
     myPrefSize.height = myIcons[0].getIconHeight();
 
@@ -57,12 +61,16 @@ public class AsyncProcessIcon extends JComponent implements Disposable {
   }
 
   public void resume() {
+    myRunning = true;
     myTimer.resume();
+    repaint();
   }
 
   public void addNotify() {
     super.addNotify();
-    myTimer.resume();
+    if (myRunning) {
+      myTimer.resume();
+    }
   }
 
   public void removeNotify() {
@@ -71,7 +79,9 @@ public class AsyncProcessIcon extends JComponent implements Disposable {
   }
 
   public void suspend() {
+    myRunning = false;
     myTimer.suspend();
+    repaint();
   }
 
   public void dispose() {
@@ -92,12 +102,17 @@ public class AsyncProcessIcon extends JComponent implements Disposable {
 
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    Icon icon = myIcons[myCurrentIconIndex];
+
+    Icon icon;
+
+    if (myTimer.isRunning()) {
+      icon = myIcons[myCurrentIconIndex];
+    } else {
+      icon = myPassiveIcon;
+    }
 
     int x = (getWidth() - icon.getIconWidth()) / 2;
     int y = (getHeight() - icon.getIconHeight()) / 2;
-
-
 
     icon.paintIcon(this, g, x, y);
   }

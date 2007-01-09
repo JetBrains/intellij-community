@@ -16,6 +16,8 @@ public class ProcessPopup  {
 
   private InfoAndProgressPanel myProgressPanel;
 
+  static final String BACKGROUND_PROCESSES = "Background Processes";
+
   public ProcessPopup(final InfoAndProgressPanel progressPanel) {
     myProgressPanel = progressPanel;
   }
@@ -55,7 +57,7 @@ public class ProcessPopup  {
   public void show() {
     myDialog = new MyDialogWrapper(myProgressPanel.myStatusBar);
 
-    myDialog.setTitle("Background Processes");
+    myDialog.setTitle(BACKGROUND_PROCESSES);
     myDialog.pack();
     myDialog.show();
   }

@@ -205,7 +205,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
                                                                                    progressTitle,
                                                                                    option,
                                                                                    "Cancel",
-                                                                                   "Stop " + progressTitle);
+                                                                                   "Stop \"" + progressTitle + "\"");
 
     //noinspection HardCodedStringLiteral
     Runnable action = new Runnable() {

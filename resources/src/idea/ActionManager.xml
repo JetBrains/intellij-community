@@ -635,6 +635,7 @@
           <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.diagnostic.DumpInspectionDescriptionsAction"/>
           <separator/>
           <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction" text="Add Test Process"/>
+          <action id="AddTestProcessActionIndefinte" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessActionIndefinite" text="Add Test Process Indefinite"/>
         </group>
       </group>
 

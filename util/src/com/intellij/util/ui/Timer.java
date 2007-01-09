@@ -83,4 +83,8 @@ public abstract class Timer implements Disposable {
   public String toString() {
     return "Timer=" + myName;
   }
+
+  public boolean isRunning() {
+    return myRunning;
+  }
 }

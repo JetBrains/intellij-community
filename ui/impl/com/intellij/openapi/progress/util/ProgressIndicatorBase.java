@@ -283,18 +283,16 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
  public final void addStateDelegate(ProgressIndicatorEx delegate) {
     myStateDelegates.add(delegate);
     if (isRunning()) {
-      delegateProgressChange(new IndicatorAction() {
-        public void execute(final ProgressIndicatorEx each) {
-          each.start();
-          each.setText(getText());
-          each.setText2(getText2());
-          each.setFraction(getFraction());
-          each.setIndeterminate(isIndeterminate());
-          if (!isCancelable()) {
-            each.startNonCancelableSection();
-          }
-        }
-      });
+      if (!delegate.isRunning()) {
+        delegate.start();
+      }
+      delegate.setText(getText());
+      delegate.setText2(getText2());
+      delegate.setFraction(getFraction());
+      delegate.setIndeterminate(isIndeterminate());
+      if (!isCancelable()) {
+        delegate.startNonCancelableSection();
+      }
     }
   }
  private void delegateProgressChange(IndicatorAction action) {
