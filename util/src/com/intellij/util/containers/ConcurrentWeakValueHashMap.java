@@ -73,17 +73,13 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
       processQueue();
       MyReference<K, V> newRef = new MyReference<K, V>(key, value, myQueue);
       MyReference<K,V> oldRef = myMap.putIfAbsent(key, newRef);
-      if (oldRef != null) {
-        final V oldVal = oldRef.get();
-        if (oldVal == null) {
-          if (myMap.replace(key, oldRef, newRef)) return null;
-        }
-        else {
-          return oldVal;
-        }
+      if (oldRef == null) return null;
+      final V oldVal = oldRef.get();
+      if (oldVal == null) {
+        if (myMap.replace(key, oldRef, newRef)) return null;
       }
       else {
-        return null;
+        return oldVal;
       }
     }
   }

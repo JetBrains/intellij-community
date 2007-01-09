@@ -1,5 +1,6 @@
 package com.intellij.util.containers;
 
+import com.intellij.util.ConcurrencyUtil;
 import gnu.trove.TObjectHashingStrategy;
 
 import java.io.IOException;
@@ -1366,7 +1367,6 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
    * @return value if there is no entry in the map, or corresponding value if entry already exists
    */
   public V cacheOrGet(final K key, final V value) {
-    V prev = putIfAbsent(key, value);
-    return prev == null ? value : prev;
+    return ConcurrencyUtil.cacheOrGet(this, key, value);
   }
 }

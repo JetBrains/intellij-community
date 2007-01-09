@@ -35,10 +35,11 @@ public abstract class WeakFactoryMap<T,V> {
       }
     }
 
-    final V v1 = create(key);
-    SoftReference<V> prevRef = myMap.putIfAbsent(key, new SoftReference<V>(v1 == null ? (V)FactoryMap.NULL : v1));
+    final V value = create(key);
+    SoftReference<V> valueRef = new SoftReference<V>(value == null ? (V)FactoryMap.NULL : value);
+    SoftReference<V> prevRef = myMap.putIfAbsent(key, valueRef);
     V prev = prevRef == null ? null : prevRef.get();
-    return prev == null || prev == FactoryMap.NULL? v1 : prev;
+    return prev == null || prev == FactoryMap.NULL? value : prev;
   }
 
   public final boolean containsKey(T key) {

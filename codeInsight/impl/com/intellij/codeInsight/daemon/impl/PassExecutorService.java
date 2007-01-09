@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ConcurrencyUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -289,10 +290,7 @@ public class PassExecutorService {
 
   private static final ConcurrentHashMap<Thread, Integer> threads = new ConcurrentHashMap<Thread, Integer>();
   private static int getThreadNum() {
-    int size = threads.size();
-    Integer number = threads.putIfAbsent(Thread.currentThread(), size);
-    if (number == null) number = size;
-    return number;
+    return ConcurrencyUtil.cacheOrGet(threads, Thread.currentThread(), threads.size());
   }
 
   public static void log(ProgressIndicator progressIndicator, @NonNls Object... info) {

@@ -55,4 +55,13 @@ public class ConcurrencyUtil {
     }
     return futures;
   }
+
+  /**
+   * @return defaultValue if there is no entry in the map (in that case defaultValue is placed into the map), or corresponding value if entry already exists
+   */
+  @NotNull
+  public static <K,V> V cacheOrGet(ConcurrentMap<K, V> map, @NotNull final K key, @NotNull final V defaultValue) {
+    V prev = map.putIfAbsent(key, defaultValue);
+    return prev == null ? defaultValue : prev;
+  }
 }
