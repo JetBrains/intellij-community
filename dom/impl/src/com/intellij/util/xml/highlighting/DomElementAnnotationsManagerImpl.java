@@ -4,17 +4,25 @@
 
 package com.intellij.util.xml.highlighting;
 
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -22,24 +30,24 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.SoftHashMap;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManager implements ProjectComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl");
+  private static final Key<DomElementsProblemsHolderImpl> DOM_PROBLEM_HOLDER_KEY = Key.create("DomProblemHolder");
+  private static final Key<CachedValue<Boolean>> CACHED_VALUE_KEY = Key.create("DomProblemHolderCachedValue");
   private final EventDispatcher<DomHighlightingListener> myDispatcher = EventDispatcher.create(DomHighlightingListener.class);
 
   private final Map<Class, List<DomElementsAnnotator>> myClass2Annotator = new HashMap<Class, List<DomElementsAnnotator>>();
 
-  private final Map<DomFileElement, CachedValue<Boolean>> myCachedValues = new SoftHashMap<DomFileElement, CachedValue<Boolean>>();
-  private final Map<DomFileElement, Boolean> myCalculatingHolders = new SoftHashMap<DomFileElement, Boolean>();
-  private final Map<DomFileElement, DomElementsProblemsHolder> myReadyHolders = new SoftHashMap<DomFileElement, DomElementsProblemsHolder>();
   private static final DomElementsProblemsHolder EMPTY_PROBLEMS_HOLDER = new DomElementsProblemsHolder() {
     @NotNull
     public List<DomElementProblemDescriptor> getProblems(DomElement domElement) {
@@ -71,22 +79,37 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       return Collections.emptyList();
     }
 
-    public List<DomElementProblemDescriptor> getAllProblems(DomElementsInspection inspection) {
+    public List<DomElementProblemDescriptor> getAllProblems(@NotNull DomElementsInspection inspection) {
       return Collections.emptyList();
+    }
+
+    public boolean isInspectionCompleted(@NotNull final DomElementsInspection inspectionClass) {
+      return false;
     }
 
   };
   private final DomHighlightingHelperImpl myHighlightingHelper = new DomHighlightingHelperImpl(this);
   private final ModificationTracker myModificationTracker;
+  private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
+  private final ProjectRootManager myProjectRootManager;
+  private final CachedValuesManager myCachedValuesManager;
+  private final InspectionProjectProfileManager myInspectionProjectProfileManager;
 
-  public DomElementAnnotationsManagerImpl(Project project, InspectionProfileManager manager) {
+  public DomElementAnnotationsManagerImpl(Project project, InspectionProfileManager manager, DaemonCodeAnalyzerImpl daemonCodeAnalyzer, ProjectRootManager projectRootManager, PsiManager psiManager, InspectionProjectProfileManager inspectionProjectProfileManager) {
+    this(project, manager, daemonCodeAnalyzer, projectRootManager, psiManager.getCachedValuesManager(), inspectionProjectProfileManager);
+  }
+  public DomElementAnnotationsManagerImpl(Project project, InspectionProfileManager inspectionProfileManager, DaemonCodeAnalyzerImpl daemonCodeAnalyzer, ProjectRootManager projectRootManager, final CachedValuesManager cachedValuesManager, InspectionProjectProfileManager inspectionProjectProfileManager) {
+    myInspectionProjectProfileManager = inspectionProjectProfileManager;
+    myCachedValuesManager = cachedValuesManager;
+    myDaemonCodeAnalyzer = daemonCodeAnalyzer;
+    myProjectRootManager = projectRootManager;
     final int[] modCount = new int[]{0};
     myModificationTracker = new ModificationTracker() {
       public long getModificationCount() {
         return modCount[0];
       }
     };
-    manager.addProfileChangeListener(new ProfileChangeAdapter() {
+    inspectionProfileManager.addProfileChangeListener(new ProfileChangeAdapter() {
       public void profileActivated(@Nullable NamedScope scope, Profile oldProfile, Profile profile) {
         modCount[0]++;
       }
@@ -97,84 +120,67 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     }, project);
   }
 
-  private boolean isCalculating(DomFileElement fileElement) {
+  public final List<DomElementProblemDescriptor> appendProblems(@NotNull DomFileElement element, @NotNull DomElementAnnotationHolder annotationHolder, Class<? extends DomElementsInspection> inspectionClass) {
+    final DomElementAnnotationHolderImpl holderImpl = (DomElementAnnotationHolderImpl)annotationHolder;
     synchronized (PsiLock.LOCK) {
-      return myCalculatingHolders.containsKey(fileElement);
+      final DomElementsProblemsHolderImpl holder = _getOrCreateProblemsHolder(element);
+      holder.appendProblems(holderImpl, inspectionClass);
     }
+    myDispatcher.getMulticaster().highlightingFinished(element);
+    return Collections.unmodifiableList(holderImpl);
+  }
+
+  private DomElementsProblemsHolderImpl _getOrCreateProblemsHolder(final DomFileElement element) {
+    final DomElementsProblemsHolderImpl holder;
+    if (isHolderOutdated(element)) {
+      holder = new DomElementsProblemsHolderImpl(element);
+      element.putUserData(DOM_PROBLEM_HOLDER_KEY, holder);
+      final CachedValue<Boolean> cachedValue = myCachedValuesManager.createCachedValue(new CachedValueProvider<Boolean>() {
+        public Result<Boolean> compute() {
+          return new Result<Boolean>(Boolean.FALSE, element, myModificationTracker, myProjectRootManager);
+        }
+      }, false);
+      cachedValue.getValue();
+      element.putUserData(CACHED_VALUE_KEY, cachedValue);
+    }
+    else {
+      holder = element.getUserData(DOM_PROBLEM_HOLDER_KEY);
+      LOG.assertTrue(holder != null);
+    }
+    return holder;
+  }
+
+  public static boolean isHolderUpToDate(DomElement element) {
+    synchronized (PsiLock.LOCK) {
+      return !isHolderOutdated(element.getRoot());
+    }
+  }
+
+  public static void outdateProblemHolder(final DomElement element) {
+    synchronized (PsiLock.LOCK) {
+      element.getRoot().putUserData(CACHED_VALUE_KEY, null);
+    }
+  }
+
+  private static boolean isHolderOutdated(final DomFileElement element) {
+    final CachedValue<Boolean> cachedValue = element.getUserData(CACHED_VALUE_KEY);
+    return cachedValue == null || !cachedValue.hasUpToDateValue();
   }
 
   @NotNull
   public DomElementsProblemsHolder getProblemHolder(DomElement element) {
     if (element == null || !element.isValid()) return EMPTY_PROBLEMS_HOLDER;
     final DomFileElement<DomElement> fileElement = element.getRoot();
-    if (!isCalculating(fileElement) || SwingUtilities.isEventDispatchThread()) {
-      synchronized (PsiLock.LOCK) {
-        final DomElementsProblemsHolder readyHolder = myReadyHolders.get(fileElement);
-        if (isHighlightingFinished(fileElement)) {
-          return readyHolder;
-        }
-        if (myCalculatingHolders.containsKey(fileElement)) {
-          return readyHolder == null ? EMPTY_PROBLEMS_HOLDER : readyHolder;
-        }
-        myCalculatingHolders.put(fileElement, new Boolean(true));
-      }
-      try {
-        final DomElementsProblemsHolderImpl holder = new DomElementsProblemsHolderImpl(fileElement);
-        holder.calculateAllProblems();
-        synchronized (PsiLock.LOCK) {
-          final Project project = fileElement.getManager().getProject();
-          final CachedValuesManager cachedValuesManager = PsiManager.getInstance(project).getCachedValuesManager();
-          myReadyHolders.put(fileElement, holder);
-          final CachedValue<Boolean> cachedValue = cachedValuesManager.createCachedValue(new CachedValueProvider<Boolean>() {
-            public Result<Boolean> compute() {
-              return new Result<Boolean>(Boolean.FALSE, fileElement, ProjectRootManager.getInstance(project), myModificationTracker);
-            }
-          }, false);
-          myCachedValues.put(fileElement, cachedValue);
-          cachedValue.getValue();
-        }
-        myDispatcher.getMulticaster().highlightingFinished(fileElement);
-        return holder;
-      } finally {
-        final Boolean aBoolean;
-        synchronized (PsiLock.LOCK) {
-          aBoolean = myCalculatingHolders.remove(fileElement);
-        }
-        synchronized (aBoolean) {
-          aBoolean.notifyAll();
-        }
-      }
-    } else {
-      final Boolean value;
-      synchronized (PsiLock.LOCK) {
-        value = myCalculatingHolders.get(fileElement);
-      }
-      if (value != null) {
-        synchronized (value) {
-          try {
-            value.wait();
-          }
-          catch (InterruptedException e) {
-          }
-        }
-      }
-      return getProblemHolder(fileElement);
-    }
-  }
 
-  private boolean isHighlightingFinished(final DomFileElement<DomElement> fileElement) {
-    final CachedValue<Boolean> cachedValue = myCachedValues.get(fileElement);
-    return myReadyHolders.containsKey(fileElement) && cachedValue != null && cachedValue.hasUpToDateValue();
+    synchronized (PsiLock.LOCK) {
+      final DomElementsProblemsHolder readyHolder = fileElement.getUserData(DOM_PROBLEM_HOLDER_KEY);
+      return readyHolder == null ? EMPTY_PROBLEMS_HOLDER : readyHolder;
+    }
   }
 
   @NotNull
   public DomElementsProblemsHolder getCachedProblemHolder(DomElement element) {
-    if (element == null || !element.isValid()) return EMPTY_PROBLEMS_HOLDER;
-    final DomFileElement fileElement = element.getRoot();
-    synchronized (PsiLock.LOCK) {
-      final DomElementsProblemsHolder holder = myReadyHolders.get(fileElement);
-      return holder == null ? EMPTY_PROBLEMS_HOLDER : holder;
-    }
+    return getProblemHolder(element);
   }
 
   public void annotate(final DomElement element, final DomElementAnnotationHolder holder, final Class rootClass) {
@@ -210,11 +216,8 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
   public boolean isHighlightingFinished(final DomElement[] domElements) {
     for (final DomElement domElement : domElements) {
-      final DomFileElement<DomElement> root = domElement.getRoot();
-      synchronized (PsiLock.LOCK) {
-        if (!isHighlightingFinished(root)) {
-          return false;
-        }
+      if (getHighlightStatus(domElement) != DomHighlightStatus.INSPECTIONS_FINISHED) {
+        return false;
       }
     }
     return true;
@@ -226,6 +229,19 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
   public DomHighlightingHelper getHighlightingHelper() {
     return myHighlightingHelper;
+  }
+
+  @NotNull
+  public <T extends DomElement> List<DomElementProblemDescriptor> checkFileElement(@NotNull final DomFileElement<T> domFileElement,
+                                                                                   @NotNull final DomElementsInspection<T> inspection) {
+    final DomElementsProblemsHolder problemHolder = getProblemHolder(domFileElement);
+    if (isHolderUpToDate(domFileElement) && problemHolder.isInspectionCompleted(inspection)) {
+      return problemHolder.getAllProblems(inspection);
+    }
+
+    final DomElementAnnotationHolder holder = new DomElementAnnotationHolderImpl();
+    inspection.checkFileElement(domFileElement, holder);
+    return appendProblems(domFileElement, holder, inspection.getClass());
   }
 
 
@@ -249,4 +265,76 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   public void projectClosed() {
   }
 
+  public List<DomElementsInspection> getSuitableDomInspections(final DomFileElement fileElement, boolean enabledOnly) {
+    Class rootType = fileElement.getRootElementClass();
+    final InspectionProfile profile = getInspectionProfile(fileElement);
+    final List<DomElementsInspection> inspections = new SmartList<DomElementsInspection>();
+    for (final InspectionProfileEntry profileEntry : profile.getInspectionTools()) {
+      if (!enabledOnly || profile.isToolEnabled(HighlightDisplayKey.find(profileEntry.getShortName()))) {
+        ContainerUtil.addIfNotNull(getSuitableInspection(profileEntry, rootType), inspections);
+      }
+    }
+    return inspections;
+  }
+
+  protected InspectionProfile getInspectionProfile(final DomFileElement fileElement) {
+    return myInspectionProjectProfileManager.getInspectionProfile(fileElement.getFile());
+  }
+
+  @Nullable
+  private static DomElementsInspection getSuitableInspection(InspectionProfileEntry entry, Class rootType) {
+    if (entry instanceof LocalInspectionToolWrapper) {
+      return getSuitableInspection(((LocalInspectionToolWrapper)entry).getTool(), rootType);
+    }
+
+    if (entry instanceof DomElementsInspection) {
+      if (((DomElementsInspection)entry).getDomClasses().contains(rootType)) {
+        return (DomElementsInspection) entry;
+      }
+    }
+    return null;
+  }
+
+  @Nullable public <T extends DomElement>  DomElementsInspection<T> getMockInspection(DomFileElement<T> root) {
+    if (root.getFileDescription().isAutomaticHighlightingEnabled()) {
+      return new MockAnnotatingDomInspection<T>(root.getRootElementClass());
+    }
+    if (getSuitableDomInspections(root, false).isEmpty()) {
+      return new MockDomInspection<T>(root.getRootElementClass());
+    }
+
+    return null;
+  }
+
+  private static boolean areInspectionsFinished(DomElementsProblemsHolderImpl holder, final List<DomElementsInspection> suitableInspections) {
+    for (final DomElementsInspection inspection : suitableInspections) {
+      if (!holder.isInspectionCompleted(inspection)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @NotNull
+  public DomHighlightStatus getHighlightStatus(final DomElement element) {
+    synchronized (PsiLock.LOCK) {
+      final DomFileElement<DomElement> root = element.getRoot();
+      if (!isHolderOutdated(root)) {
+        final DomElementsProblemsHolder holder = getProblemHolder(element);
+        if (holder instanceof DomElementsProblemsHolderImpl) {
+          DomElementsProblemsHolderImpl holderImpl = (DomElementsProblemsHolderImpl)holder;
+          final List<DomElementsInspection> suitableInspections = getSuitableDomInspections(root, true);
+          final DomElementsInspection mockInspection = getMockInspection(root);
+          final boolean annotatorsFinished = mockInspection == null || holderImpl.isInspectionCompleted(mockInspection);
+          final boolean inspectionsFinished = areInspectionsFinished(holderImpl, suitableInspections);
+          if (annotatorsFinished) {
+            if (suitableInspections.isEmpty() || inspectionsFinished) return DomHighlightStatus.INSPECTIONS_FINISHED;
+            return DomHighlightStatus.ANNOTATORS_FINISHED;
+          }
+        }
+      }
+      return DomHighlightStatus.NONE;
+    }
+
+  }
 }

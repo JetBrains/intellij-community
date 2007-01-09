@@ -3,6 +3,7 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -118,6 +119,8 @@ public abstract class DomUIFactory implements ApplicationComponent {
 
   public abstract UserActivityWatcher createEditorAwareUserActivityWatcher();
 
+  public abstract void setupErrorOutdatingUserActivityWatcher(CommittablePanel panel, DomElement... elements);
+
   public abstract BaseControl createPsiClassControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
 
   public abstract BaseControl createPsiTypeControl(DomWrapper<String> wrapper, final boolean commitOnEveryChange);
@@ -170,4 +173,7 @@ public abstract class DomUIFactory implements ApplicationComponent {
    * @return captionComponent
    */
   public abstract CaptionComponent addErrorPanel(CaptionComponent captionComponent, DomElement... elements);
+
+  public abstract BackgroundEditorHighlighter createDomHighlighter(Project project, PerspectiveFileEditor editor, DomElement element);
+
 }

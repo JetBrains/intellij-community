@@ -8,16 +8,18 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.RefreshStatusRenderer;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomChangeAdapter;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.ui.CommittablePanel;
+import com.intellij.util.xml.ui.Highlightable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,7 +27,7 @@ import java.awt.*;
 /**
  * User: Sergey.Vasiliev
  */
-public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
+public class DomElementsErrorPanel extends JPanel implements CommittablePanel, Highlightable {
   private static final Icon ERRORS_FOUND_ICON = IconLoader.getIcon("/general/errorsInProgress.png");
 
   private static final int ALARM_PERIOD = 241;
@@ -34,6 +36,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
   private DomElement[] myDomElements;
 
   private final DomElementsRefreshStatusRenderer myErrorStripeRenderer;
+  private final DomElementAnnotationsManagerImpl myAnnotationsManager;
 
   private final Alarm myAlarm = new Alarm();
 
@@ -43,6 +46,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
     myDomElements = domElements;
     final DomManager domManager = domElements[0].getManager();
     myProject = domManager.getProject();
+    myAnnotationsManager = (DomElementAnnotationsManagerImpl)DomElementAnnotationsManager.getInstance(myProject);
 
     setPreferredSize(getDimension());
 
@@ -54,6 +58,10 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
         updatePanel();
       }
     }, this);
+  }
+
+  public void updateHighlighting() {
+    updatePanel();
   }
 
   private boolean areValid() {
@@ -77,8 +85,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
   }
 
   private boolean isHighlightingFinished() {
-    return !areValid() ||
-           DomElementAnnotationsManager.getInstance(myProject).isHighlightingFinished(myDomElements);
+    return !areValid() || myAnnotationsManager.isHighlightingFinished(myDomElements);
   }
 
   private void addUpdateRequest() {
@@ -97,10 +104,6 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
     myErrorStripeRenderer.paint(this, g, new Rectangle(0, 0, getWidth(), getHeight()));
   }
 
-  public ErrorStripeRenderer getErrorStripeRenderer() {
-    return myErrorStripeRenderer;
-  }
-
   public void dispose() {
     myAlarm.cancelAllRequests();
   }
@@ -110,53 +113,50 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel {
   }
 
   public void commit() {
-
   }
 
   public void reset() {
     updatePanel();
   }
 
-  protected static Dimension getDimension() {
+  private static Dimension getDimension() {
     return new Dimension(ERRORS_FOUND_ICON.getIconWidth() + 2, ERRORS_FOUND_ICON.getIconHeight() + 2);
   }
 
   private class DomElementsRefreshStatusRenderer extends RefreshStatusRenderer {
+
     public DomElementsRefreshStatusRenderer(final PsiFile xmlFile) {
-      super(xmlFile.getProject(), (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(xmlFile.getProject()), PsiDocumentManager.getInstance(xmlFile.getProject()).getDocument(xmlFile), xmlFile);
+      super(xmlFile.getProject(), (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(xmlFile.getProject()),
+            PsiDocumentManager.getInstance(xmlFile.getProject()).getDocument(xmlFile), xmlFile);
     }
 
     protected int getErrorsCount(final HighlightSeverity minSeverity) {
       int sum = 0;
       for (DomElement element : myDomElements) {
-        final Project project = getProject();
-        final DomElementsProblemsHolder holder = DomElementAnnotationsManager.getInstance(project).getCachedProblemHolder(element);
-        if (minSeverity.compareTo(HighlightSeverity.WARNING) >= 0) {
-          sum += holder.getProblems(element, true, true).size();
-        } else {
-          sum += holder.getProblems(element, true, true, minSeverity).size();
-        }
+        final DomElementsProblemsHolder holder = myAnnotationsManager.getCachedProblemHolder(element);
+        sum += (minSeverity.compareTo(HighlightSeverity.WARNING) >= 0
+                ? holder.getProblems(element, true, true)
+                : holder.getProblems(element, true, minSeverity)).size();
       }
       return sum;
     }
 
     protected boolean isInspectionCompleted() {
-      return isHighlightingFinished();
+      return ContainerUtil.and(myDomElements, new Condition<DomElement>() {
+        public boolean value(final DomElement element) {
+          return myAnnotationsManager.getHighlightStatus(element) == DomHighlightStatus.INSPECTIONS_FINISHED;
+        }
+      });
     }
 
     protected boolean isErrorAnalyzingFinished() {
-      return isHighlightingFinished();
+      return ContainerUtil.and(myDomElements, new Condition<DomElement>() {
+        public boolean value(final DomElement element) {
+          return myAnnotationsManager.getHighlightStatus(element).compareTo(DomHighlightStatus.ANNOTATORS_FINISHED) >= 0;
+        }
+      });
     }
 
   }
 
-  // private static class MyRefreshStatusRenderer extends RefreshStatusRenderer {
-  //  public MyRefreshStatusRenderer(final Project project, final Document document, final XmlFile xmlFile) {
-  //    super(project, (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project), document, xmlFile);
-  //  }
-  //
-  //  public DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus() {
-  //    return super.getDaemonCodeAnalyzerStatus();
-  //  }
-  //}
 }

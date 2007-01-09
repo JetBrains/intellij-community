@@ -4,32 +4,22 @@
 
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.Annotation;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiLock;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomReflectionUtil;
-import com.intellij.util.xml.impl.DomManagerImpl;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder {
@@ -49,7 +39,6 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
 
   private final DomFileElement myElement;
 
-  private final Class<? extends DomElement> myRootType;
   private static final Factory<Map<Class<? extends DomElementsInspection>,List<DomElementProblemDescriptor>>> CONCURRENT_HASH_MAP_FACTORY = new Factory<Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>>() {
     public Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> create() {
       return new ConcurrentHashMap<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>();
@@ -60,57 +49,30 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
       return new SmartList<DomElementProblemDescriptor>();
     }
   };
+  private final Set<Class<? extends DomElementsInspection>> myPassedInspections = new THashSet<Class<? extends DomElementsInspection>>();
 
   public DomElementsProblemsHolderImpl(final DomFileElement element) {
     myElement = element;
-    myRootType = (Class<? extends DomElement>)DomReflectionUtil.getRawType(myElement.getRootElement().getDomElementType());
   }
 
-  public final void calculateAllProblems() {
-    boolean hasInspections = false;
-    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(getProject());
-    final InspectionProfile profile = profileManager.getInspectionProfile(myElement.getFile());
-    for (final InspectionProfileEntry profileEntry : profile.getInspectionTools()) {
-      hasInspections |= processProfileEntry(profile.isToolEnabled(HighlightDisplayKey.find(profileEntry.getShortName())), profileEntry);
-    }
-    if (!hasInspections) {
-      runInspection(new MockDomInspection(myRootType));
-    }
-    else if (DomManagerImpl.getDomManager(getProject()).getDomFileDescription(myElement.getFile()).isAutomaticHighlightingEnabled()) {
-      runInspection(new MockAnnotatingDomInspection(myRootType));
-    }
-  }
+  public final void appendProblems(final DomElementAnnotationHolderImpl holder, final Class<? extends DomElementsInspection> inspectionClass) {
+    if (isInspectionCompleted(inspectionClass)) return;
 
-  private Project getProject() {
-    return myElement.getManager().getProject();
-  }
-
-  private boolean processProfileEntry(final boolean isEnabled, final InspectionProfileEntry entry) {
-    if (entry instanceof LocalInspectionToolWrapper) {
-      return processProfileEntry(isEnabled, ((LocalInspectionToolWrapper)entry).getTool());
-    }
-
-    if (entry instanceof DomElementsInspection) {
-      final DomElementsInspection inspection = (DomElementsInspection)entry;
-      if (inspection.getDomClasses().contains(myRootType)) {
-        if (isEnabled) {
-          runInspection(inspection);
-        }
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private void runInspection(final DomElementsInspection<?> inspection) {
-    ProgressManager.getInstance().checkCanceled();
-    final DomElementAnnotationHolderImpl holder = new DomElementAnnotationHolderImpl();
-    inspection.checkFileElement(myElement, holder);
-    final Class<? extends DomElementsInspection> inspectionClass = inspection.getClass();
     for (final DomElementProblemDescriptor descriptor : holder) {
       addProblem(descriptor, inspectionClass);
     }
     myAnnotations.addAll(holder.getAnnotations());
+    myPassedInspections.add(inspectionClass);
+  }
+
+  public final boolean isInspectionCompleted(@NotNull final DomElementsInspection inspection) {
+    return isInspectionCompleted(inspection.getClass());
+  }
+
+  public final boolean isInspectionCompleted(final Class<? extends DomElementsInspection> inspectionClass) {
+    synchronized (PsiLock.LOCK) {
+      return myPassedInspections.contains(inspectionClass);
+    }
   }
 
   public final List<Annotation> getAnnotations() {
@@ -187,7 +149,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     return getProblems(myElement, false, true);
   }
 
-  public List<DomElementProblemDescriptor> getAllProblems(DomElementsInspection inspection) {
+  public List<DomElementProblemDescriptor> getAllProblems(@NotNull DomElementsInspection inspection) {
     if (!myElement.isValid()) {
       return Collections.emptyList();
     }

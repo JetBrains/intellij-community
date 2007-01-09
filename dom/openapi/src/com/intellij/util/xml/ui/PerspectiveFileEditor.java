@@ -29,7 +29,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 /**
- * User: Sergey.Vasiliev
+ * @author Sergey.Vasiliev
  */
 abstract public class PerspectiveFileEditor extends UserDataHolderBase implements DocumentsEditor, Committable {
   private Wrapper myWrapprer = new Wrapper();
@@ -112,10 +112,6 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   abstract protected DomElement getSelectedDomElement();
 
   abstract protected void setSelectedDomElement(DomElement domElement);
-
-  protected boolean isMyFile(VirtualFile file) {
-    return file.equals(myFile);
-  }
 
   public final void addWatchedElement(final DomElement domElement) {
     addWatchedDocument(getDocumentManager().getDocument(domElement.getRoot().getFile()));

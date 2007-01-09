@@ -3,12 +3,12 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.ModificationTracker;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -25,5 +25,11 @@ public interface DomFileElement<T extends DomElement> extends DomElement, UserDa
 
   @NotNull
   T getRootElement();
+
+  @NotNull
+  Class<T> getRootElementClass();
+
+  @NotNull
+  DomFileDescription<T> getFileDescription();
 
 }

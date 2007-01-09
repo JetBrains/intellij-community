@@ -20,12 +20,14 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author peter
@@ -57,7 +59,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
     this(domWrapper, false);
   }
 
-  protected abstract EditorTextField getEditorTextField(T component);
+  protected abstract EditorTextField getEditorTextField(@NotNull T component);
 
   public void setEditorTextFieldBorder(Border border) {
     T component = getComponent();
@@ -95,7 +97,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
 
     final EditorTextField editorTextField = getEditorTextField(boundedComponent);
     editorTextField.setSupplementary(true);
-    final PsiCodeFragment file = (PsiCodeFragment)PsiDocumentManager.getInstance(project).getPsiFile(editorTextField.getDocument());
+    final PsiCodeFragment file = getPsiFile(boundedComponent);
     EditorTextFieldControlHighlighter.getEditorTextFieldControlHighlighter(project).addFile(file, new Factory<DomElement>() {
       public DomElement create() {
         return isValid() ? getDomElement() : null;
@@ -108,10 +110,19 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
     return boundedComponent;
   }
 
+  private PsiCodeFragment getPsiFile(@NotNull final T boundedComponent) {
+    return (PsiCodeFragment)PsiDocumentManager.getInstance(getProject()).getPsiFile(getEditorTextField(boundedComponent).getDocument());
+  }
+
   protected abstract T createMainComponent(T boundedComponent, Project project);
 
   protected String getValue() {
     return getEditorTextField(getComponent()).getText();
+  }
+
+  public void dispose() {
+    super.dispose();
+    EditorTextFieldControlHighlighter.getEditorTextFieldControlHighlighter(getProject()).removeFile(getPsiFile(getComponent()));
   }
 
   protected void setValue(final String value) {

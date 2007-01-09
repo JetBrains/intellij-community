@@ -426,4 +426,22 @@ public class ContainerUtil {
     }
     return list;
   }
+
+  public static <T> boolean and(T[] iterable, Condition<T> condition) {
+    return and(Arrays.asList(iterable), condition);
+  }
+
+  public static <T> boolean and(Iterable<T> iterable, Condition<T> condition) {
+    for (final T t : iterable) {
+      if (!condition.value(t)) return false;
+    }
+    return true;
+  }
+
+  public static <T> boolean or(Iterable<T> iterable, Condition<T> condition) {
+    for (final T t : iterable) {
+      if (condition.value(t)) return true;
+    }
+    return false;
+  }
 }

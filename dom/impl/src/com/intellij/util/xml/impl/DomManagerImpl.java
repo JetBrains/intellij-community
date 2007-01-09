@@ -4,9 +4,6 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.lang.StdLanguages;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -186,33 +183,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       }
     });
 
-    StdLanguages.XML.injectAnnotator(new Annotator() {
-      public void annotate(PsiElement psiElement, AnnotationHolder holder) {
-        final DomFileDescription description = getDomFileDescription(psiElement);
-        if (description != null && description.isAutomaticHighlightingEnabled()) {
-          final DomElement domElement;
-          if (psiElement instanceof XmlTag) {
-            domElement = getDomElement((XmlTag)psiElement);
-          }
-          else if (psiElement instanceof XmlAttribute) {
-            domElement = getDomElement((XmlAttribute)psiElement);
-
-          } else {
-            return;
-          }
-          if (domElement != null) {
-            final List<Annotation> list = (List<Annotation>)holder;
-            final DomElementsProblemsHolder problemsHolder = annotationsManager.getProblemHolder(domElement);
-            for (final DomElementProblemDescriptor descriptor : problemsHolder.getAllProblems(MockAnnotatingDomInspection.INSTANCE)) {
-              list.addAll(descriptor.getAnnotations());
-            }
-            if (problemsHolder instanceof DomElementsProblemsHolderImpl) {
-              list.addAll(((DomElementsProblemsHolderImpl)problemsHolder).getAnnotations());
-            }
-          }
-        }
-      }
-    }, project);
+    StdLanguages.XML.injectAnnotator(new DefaultDomAnnotator(this, annotationsManager), project);
   }
 
   private void processVfsChange(final VirtualFile file) {

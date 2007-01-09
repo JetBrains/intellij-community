@@ -176,6 +176,11 @@
     <component>
       <implementation-class>com.intellij.ide.Exe4jListener</implementation-class>
     </component>
+    <component>
+          <interface-class>com.intellij.util.xml.ui.DomUIFactory</interface-class>
+          <implementation-class>com.intellij.util.xml.ui.DomUIFactoryImpl</implementation-class>
+        </component>
+        
   </application-components>
 
 
@@ -186,10 +191,14 @@
       <skipForDummyProject/>
     </component>
     <component>
+      <interface-class>com.intellij.util.xml.highlighting.DomElementAnnotationsManager</interface-class>
+      <implementation-class>com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl</implementation-class>
+      <skipForDummyProject/>
+    </component>
+    <component>
       <implementation-class>com.intellij.util.xml.ui.CommittableUtil</implementation-class>
       <skipForDummyProject/>
     </component>
-
     <component>
       <interface-class>com.intellij.util.xml.DomElementsNavigationManager</interface-class>
       <implementation-class>com.intellij.util.xml.impl.DomElementsNavigationManagerImpl</implementation-class>

@@ -21,7 +21,7 @@ import java.lang.reflect.InvocationTargetException;
 /**
  * @author peter
  */
-public abstract class BaseControl<Bound extends JComponent, T> extends DomUIControl {
+public abstract class BaseControl<Bound extends JComponent, T> extends DomUIControl implements Highlightable {
   public static final Color ERROR_BACKGROUND = new Color(255,204,204);
   public static final Color ERROR_FOREGROUND = SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor();
   public static final Color WARNING_BACKGROUND = new Color(255,255,204);
@@ -153,6 +153,10 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
       doReset();
       updateComponent();
     }
+  }
+
+  public void updateHighlighting() {
+    updateComponent();
   }
 
   protected void updateComponent() {

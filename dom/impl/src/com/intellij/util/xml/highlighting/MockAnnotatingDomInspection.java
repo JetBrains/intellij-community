@@ -12,10 +12,9 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author peter
  */
-public class MockAnnotatingDomInspection extends BasicDomElementsInspection<DomElement>{
-  public static final MockAnnotatingDomInspection INSTANCE = new MockAnnotatingDomInspection(DomElement.class);
+public class MockAnnotatingDomInspection<T extends DomElement> extends BasicDomElementsInspection<T>{
 
-  public MockAnnotatingDomInspection(final Class<? extends DomElement> domClass) {
+  public MockAnnotatingDomInspection(final Class<T> domClass) {
     super(domClass);
   }
 

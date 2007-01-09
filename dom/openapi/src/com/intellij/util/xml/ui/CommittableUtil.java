@@ -10,6 +10,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 
@@ -100,5 +101,11 @@ public class CommittableUtil implements ProjectComponent {
   }
 
   public void projectClosed() {
+  }
+
+  public static void updateHighlighting(@Nullable Committable committable) {
+    if (committable instanceof Highlightable) {
+      ((Highlightable)committable).updateHighlighting();
+    }
   }
 }

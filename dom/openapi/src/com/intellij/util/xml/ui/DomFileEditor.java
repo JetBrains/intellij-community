@@ -5,28 +5,16 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.codeHighlighting.HighlightingPass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.problems.Problem;
-import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.ui.UserActivityWatcher;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomEventAdapter;
-import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.events.DomEvent;
-import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,11 +24,10 @@ import java.awt.*;
 /**
  * @author peter
  */
-public class DomFileEditor<T extends BasicDomElementComponent> extends PerspectiveFileEditor{
+public class DomFileEditor<T extends BasicDomElementComponent> extends PerspectiveFileEditor implements CommittablePanel, Highlightable {
   private final String myName;
   private final Factory<? extends T> myComponentFactory;
   private T myComponent;
-  private CommitablePanelUserActivityListener myUserActivityListener;
 
   public DomFileEditor(final DomElement element, final String name, final T component) {
     this(element.getManager().getProject(), element.getRoot().getFile().getVirtualFile(), name, component);
@@ -60,6 +47,12 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
     myName = name;
   }
 
+  public void updateHighlighting() {
+    if (checkIsValid()) {
+      CommittableUtil.updateHighlighting(myComponent);
+    }
+  }
+
   public void commit() {
     if (checkIsValid()) {
       getProject().getComponent(CommittableUtil.class).commit(myComponent);
@@ -77,24 +70,16 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
 
   @NotNull
   protected JComponent createCustomComponent() {
-    final UserActivityWatcher userActivityWatcher = DomUIFactory.getDomUIFactory().createEditorAwareUserActivityWatcher();
-    myUserActivityListener = new CommitablePanelUserActivityListener(getProject()) {
-      protected void applyChanges() {
-        DomFileEditor.this.commit();
-      }
-    };
-    userActivityWatcher.addUserActivityListener(myUserActivityListener, this);
-    userActivityWatcher.register(getComponent());
     new MnemonicHelper().register(getComponent());
     myComponent = myComponentFactory.create();
-    addWatchedElement(myComponent.getDomElement());
-    DomManager.getDomManager(myComponent.getProject()).addDomEventListener(new DomEventAdapter() {
+    DomUIFactory.getDomUIFactory().setupErrorOutdatingUserActivityWatcher(this, getDomElement());
+    addWatchedElement(getDomElement());
+    DomManager.getDomManager(getProject()).addDomEventListener(new DomEventAdapter() {
       public void eventOccured(DomEvent event) {
         checkIsValid();
       }
     }, this);
     Disposer.register(this, myComponent);
-    Disposer.register(this, myUserActivityListener);
     return myComponent.getComponent();
   }
 
@@ -115,59 +100,16 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
   }
 
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    final DomManager domManager = DomManager.getDomManager(getProject());
-    final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(getProject());
-    final WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(getProject());
+    return DomUIFactory.getDomUIFactory().createDomHighlighter(getProject(), this, getDomElement());
+  }
 
-    return new BackgroundEditorHighlighter() {
-      public HighlightingPass[] createPassesForEditor() {
-        return ContainerUtil.map2Array(getDocuments(), HighlightingPass.class, new Function<Document, HighlightingPass>() {
-          public HighlightingPass fun(final Document document) {
-            return new TextEditorHighlightingPass(getProject(), document) {
-              public void doCollectInformation(ProgressIndicator progress) {
-                if (myUserActivityListener != null && myUserActivityListener.isWaiting()) return;
-                final PsiFile file = getDocumentManager().getPsiFile(document);
-                if (file instanceof XmlFile) {
-                  final XmlFile xmlFile = (XmlFile)file;
-                  final DomFileElement<DomElement> element = domManager.getFileElement(xmlFile);
-                  if (element != null) {
-                    annotationsManager.getProblemHolder(element);
-                  }
-                }
-              }
-
-              public void doApplyInformationToEditor() {
-                if (myUserActivityListener != null && myUserActivityListener.isWaiting()) return;
-                final PsiFile file = getDocumentManager().getPsiFile(document);
-                if (file instanceof XmlFile) {
-                  final DomFileElement<DomElement> element = domManager.getFileElement((XmlFile)file);
-                  if (!annotationsManager.getCachedProblemHolder(element).getProblems(element, true, true).isEmpty()) {
-                    wolf.weHaveGotProblem(new Problem() {
-                      public VirtualFile getVirtualFile() {
-                        return file.getVirtualFile();
-                      }
-                    });
-                  }
-                }
-                if (isInitialised()) {
-                  reset();
-                }
-              }
-
-            };
-          }
-        });
-      }
-
-      public HighlightingPass[] createPassesForVisibleArea() {
-        return createPassesForEditor();
-      }
-    };
+  private DomElement getDomElement() {
+    return myComponent.getDomElement();
   }
 
 
   public boolean isValid() {
-    return super.isValid() && (!isInitialised() || myComponent.getDomElement().isValid());
+    return super.isValid() && (!isInitialised() || getDomElement().isValid());
   }
 
   public void reset() {
@@ -228,4 +170,5 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
     component.addComponent(captionComponent);
     return component;
   }
+
 }

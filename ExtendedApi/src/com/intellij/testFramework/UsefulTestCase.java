@@ -4,6 +4,8 @@
 package com.intellij.testFramework;
 
 import com.intellij.util.Consumer;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -14,6 +16,25 @@ import java.util.*;
  * @author peter
  */
 public abstract class UsefulTestCase extends TestCase {
+  protected Disposable myTestRootDisposable;
+
+  protected void setUp() throws Exception {
+    super.setUp();
+    myTestRootDisposable = new Disposable() {
+      public void dispose() {
+      }
+    };
+  }
+
+  protected void tearDown() throws Exception {
+    Disposer.dispose(myTestRootDisposable);
+    myTestRootDisposable = null;
+    super.tearDown();
+  }
+
+  protected Disposable getTestRootDisposable() {
+    return myTestRootDisposable;
+  }
 
   @NonNls
   public static String toString(Collection collection) {
@@ -126,5 +147,9 @@ public abstract class UsefulTestCase extends TestCase {
         System.out.println(stackTraceElement);
       }
     }
+  }
+
+  public static void assertEmpty(final Collection collection) {
+    assertOrderedEquals(collection);
   }
 }

@@ -248,9 +248,20 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return (T)getRootHandler().getProxy();
   }
 
+  public Class<T> getRootElementClass() {
+    return myRootElementClass;
+  }
+
+  @NotNull
+  public DomFileDescription<T> getFileDescription() {
+    final DomFileDescription description = myManager.getDomFileDescription(getFile());
+    assert description != null;
+    return description;
+  }
+
   protected final DomRootInvocationHandler getRootHandler() {
     synchronized (PsiLock.LOCK) {
-      if (myRootHandler == null/* || !myRootHandler.isValid()*/) {
+      if (myRootHandler == null) {
         final XmlTag tag = getRootTag();
         myRootHandler = new DomRootInvocationHandler(myRootElementClass, tag, this, myRootTagName);
       }

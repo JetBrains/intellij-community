@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * author: lesya
  */
-public class CompositeCommittable implements Committable {
+public class CompositeCommittable implements Committable, Highlightable {
   private final List<Committable> myComponents = new ArrayList<Committable>();
 
   public final <T extends Committable> T addComponent(T panel) {
@@ -49,5 +49,11 @@ public class CompositeCommittable implements Committable {
 
   public List<Committable> getChildren() {
     return myComponents;
+  }
+
+  public void updateHighlighting() {
+    for (final Committable component : myComponents) {
+      CommittableUtil.updateHighlighting(component);
+    }
   }
 }

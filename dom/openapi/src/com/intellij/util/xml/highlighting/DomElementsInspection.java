@@ -8,7 +8,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
@@ -39,7 +38,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends LocalI
   }
 
   /**
-   * This method is called internally in {@link com.intellij.util.xml.highlighting.DomElementAnnotationsManager#getProblemHolder(com.intellij.util.xml.DomElement)},
+   * This method is called internally in {@link com.intellij.util.xml.highlighting.DomElementAnnotationsManager#checkFileElement(com.intellij.util.xml.DomFileElement, DomElementsInspection)},
    * it should add some problems to the annotation holder. The default implementation performs recursive tree traversal, and calls
    * {@link #checkDomElement(com.intellij.util.xml.DomElement, DomElementAnnotationHolder, DomHighlightingHelper)} for each element. 
    * @param domFileElement file element to check
@@ -99,12 +98,11 @@ public abstract class DomElementsInspection<T extends DomElement> extends LocalI
   protected ProblemDescriptor[] checkDomFile(@NotNull final DomFileElement<T> domFileElement,
                                              @NotNull final InspectionManager manager,
                                              final boolean isOnTheFly) {
+    final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(manager.getProject());
 
-    final Project project = manager.getProject();
-    final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(project);
-    final DomElementsProblemsHolder problemsHolder = annotationsManager.getProblemHolder(domFileElement);
+    final List<DomElementProblemDescriptor> list = annotationsManager.checkFileElement(domFileElement, this);
     List<ProblemDescriptor> problems =
-      ContainerUtil.concat(problemsHolder.getAllProblems(this), new Function<DomElementProblemDescriptor, Collection<? extends ProblemDescriptor>>() {
+      ContainerUtil.concat(list, new Function<DomElementProblemDescriptor, Collection<? extends ProblemDescriptor>>() {
         public Collection<ProblemDescriptor> fun(final DomElementProblemDescriptor s) {
           return annotationsManager.createProblemDescriptors(manager, s);
         }

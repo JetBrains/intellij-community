@@ -12,9 +12,9 @@ import com.intellij.util.xml.DomElement;
 /**
  * @author peter
  */
-public class MockDomInspection extends BasicDomElementsInspection{
+public class MockDomInspection<T extends DomElement> extends BasicDomElementsInspection<T>{
 
-  public MockDomInspection(final Class<? extends DomElement> domClass) {
+  public MockDomInspection(final Class<T> domClass) {
     super(domClass);
   }
 

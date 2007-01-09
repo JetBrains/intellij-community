@@ -20,13 +20,13 @@ package com.intellij.util.xml.ui;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.xml.DomElement;
 
-import java.awt.*;
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * User: Sergey.Vasiliev
  */
-public class CaptionComponent extends JPanel implements Committable {
+public class CaptionComponent extends JPanel implements Committable, Highlightable {
   private JPanel myRootPanel;
   private JLabel myCaptionLabel;
   private JLabel myDescriptionLabel;
@@ -60,6 +60,10 @@ public class CaptionComponent extends JPanel implements Committable {
     else {
       myRootPanel.setBorder(BorderFactory.createEmptyBorder());
     }
+  }
+
+  public void updateHighlighting() {
+    CommittableUtil.updateHighlighting(myCommittableErrorPanel);
   }
 
   public void setText(final String text) {
