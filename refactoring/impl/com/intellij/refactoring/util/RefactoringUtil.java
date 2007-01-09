@@ -1469,7 +1469,7 @@ public class RefactoringUtil {
             final PsiElement resolved = reference.resolve();
             if (resolved instanceof PsiTypeParameter) {
               final PsiTypeParameter typeParameter = (PsiTypeParameter)resolved;
-              if (PsiTreeUtil.isAncestor(typeParameter.getOwner(), element, false)) {
+              if (PsiTreeUtil.isAncestor(typeParameter.getOwner(), element, true)) {
                 used.add(typeParameter);
               }
             }
