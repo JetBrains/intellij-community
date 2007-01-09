@@ -39,7 +39,7 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
   }
 
   @NotNull
-  public StructureViewTreeElement getRoot() {
+  public StructureViewTreeElement<PropertiesFile> getRoot() {
     return new PropertiesFileStructureViewElement(myPropertiesFile);
   }
 

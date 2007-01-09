@@ -73,7 +73,7 @@ public interface StructureViewModel extends TreeModel {
    * @return the structure view root.
    */
   @NotNull
-  StructureViewTreeElement getRoot();
+  StructureViewTreeElement<?> getRoot();
 
   /**
    * Disposes of the model.

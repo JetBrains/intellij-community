@@ -1,14 +1,16 @@
 package com.intellij.ide.structureView.newStructureView;
 
-import com.intellij.ide.util.treeView.smartTree.*;
-import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.FileEditorPositionListener;
 import com.intellij.ide.structureView.ModelListener;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.util.treeView.smartTree.Filter;
+import com.intellij.ide.util.treeView.smartTree.Grouper;
+import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.ide.util.treeView.smartTree.TreeAction;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NotNull;
 
 public class TreeModelWrapper implements StructureViewModel {
   private final StructureViewModel myModel;
@@ -20,7 +22,7 @@ public class TreeModelWrapper implements StructureViewModel {
   }
 
   @NotNull
-  public StructureViewTreeElement getRoot() {
+  public StructureViewTreeElement<?> getRoot() {
     return myModel.getRoot();
   }
 

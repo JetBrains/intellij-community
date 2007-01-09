@@ -41,7 +41,7 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
   }
 
   @NotNull
-  public StructureViewTreeElement getRoot() {
+  public StructureViewTreeElement<ResourceBundle> getRoot() {
     return new ResourceBundleFileStructureViewElement(myProject, myResourceBundle);
   }
 
