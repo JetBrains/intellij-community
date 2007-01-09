@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -15,9 +14,9 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -42,11 +41,6 @@ public class FileReference
   private TextRange myRange;
   private final String myText;
   @NotNull private final FileReferenceSet myFileReferenceSet;
-  private final Condition<String> myEqualsToCondition = new Condition<String>() {
-    public boolean value(String s) {
-      return equalsTo(s);
-    }
-  };
 
   public FileReference(final @NotNull FileReferenceSet fileReferenceSet, TextRange range, int index, String text) {
     myFileReferenceSet = fileReferenceSet;
@@ -73,12 +67,6 @@ public class FileReference
   public static PsiDirectory getPsiDirectory(@NotNull PsiFileSystemItem element) {
     final FileReferenceHelper<PsiFileSystemItem> helper = FileReferenceHelperRegistrar.getHelper(element);
     return helper != null ? helper.getPsiDirectory(element) : null;
-  }
-
-  @Nullable
-  public PsiFileSystemItem getContext() {
-    final FileReference contextRef = getContextReference();
-    return contextRef != null ? contextRef.resolve() : null;
   }
 
   @NotNull
@@ -109,9 +97,11 @@ public class FileReference
           } else {
             helper.processVariants(context, new BaseScopeProcessor() {
               public boolean execute(final PsiElement element, final PsiSubstitutor substitutor) {
-                PsiFileSystemItem item = (PsiFileSystemItem)element;
-                if (equalsTo(item.getName())) {
-                  result.add(new PsiElementResolveResult(item));
+                final String name = ((PsiFileSystemItem)element).getName();
+                final boolean nameEquals =
+                  myFileReferenceSet.isCaseSensitive() ? getText().equals(name) : getText().compareToIgnoreCase(name) == 0;
+                if (nameEquals) {
+                  result.add(new PsiElementResolveResult(element));
                   return false;
                 }
                 return true;
@@ -148,7 +138,7 @@ public class FileReference
     }
   }
 
-  public void processVariants(@NotNull final PsiScopeProcessor processor) {
+  private void processVariants(@NotNull final PsiScopeProcessor processor) {
     for (PsiFileSystemItem context : getContexts()) {
       final FileReferenceHelper<PsiFileSystemItem> helper = FileReferenceHelperRegistrar.getHelper(context);
       if (helper != null && !helper.processVariants(context, processor)) return;
@@ -156,7 +146,7 @@ public class FileReference
   }
 
   @Nullable
-  public FileReference getContextReference() {
+  private FileReference getContextReference() {
     return myIndex > 0 ? myFileReferenceSet.getReference(myIndex - 1) : null;
   }
 
@@ -167,10 +157,6 @@ public class FileReference
   public PsiFileSystemItem resolve() {
     ResolveResult[] resolveResults = multiResolve(false);
     return resolveResults.length == 1 ? (PsiFileSystemItem)resolveResults[0].getElement() : null;
-  }
-
-  private boolean equalsTo(final String name) {
-    return myFileReferenceSet.isCaseSensitive() ? getText().equals(name) : getText().compareToIgnoreCase(name) == 0;
   }
 
   public boolean isReferenceTo(PsiElement element) {
