@@ -17,6 +17,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.xml.actions.ValidateXmlActionHandler;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.NonNls;
 import org.xml.sax.SAXParseException;
 
@@ -302,6 +303,10 @@ public class ExternalDocumentValidator {
         )
       ) {
       return;
+    }
+
+    for(Language lang:containingFile.getViewProvider().getPrimaryLanguages()) {
+      if ("ANT".equals(lang.getID())) return;
     }
 
     final XmlDocument document = ((XmlFile)containingFile).getDocument();
