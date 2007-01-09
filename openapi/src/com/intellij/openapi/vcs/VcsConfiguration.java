@@ -74,14 +74,10 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
     }
   }
 
-  public boolean PUT_FOCUS_INTO_COMMENT = false;
   public boolean FORCE_NON_EMPTY_COMMENT = false;
 
   private ArrayList<String> myLastCommitMessages = new ArrayList<String>();
   public String LAST_COMMIT_MESSAGE = null;
-
-  public boolean SAVE_LAST_COMMIT_MESSAGE = true;
-  public float CHECKIN_DIALOG_SPLITTER_PROPORTION = 0.8f;
 
   public boolean OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT = false;
 

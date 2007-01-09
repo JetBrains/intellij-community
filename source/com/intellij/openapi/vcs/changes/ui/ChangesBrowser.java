@@ -10,8 +10,8 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Icons;
+import com.intellij.ui.SeparatorFactory;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -59,8 +59,10 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     rebuildList();
 
     myListPanel = new JPanel(new BorderLayout());
-    myListPanel.add(myViewer);
-    myListPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("commit.dialog.changed.files.label")));
+    myListPanel.add(myViewer, BorderLayout.CENTER);
+
+    JComponent separator = SeparatorFactory.createSeparator(VcsBundle.message("commit.dialog.changed.files.label"), myViewer);
+    myListPanel.add(separator, BorderLayout.NORTH);
     add(myListPanel, BorderLayout.CENTER);
 
     myHeaderPanel = new JPanel(new BorderLayout());

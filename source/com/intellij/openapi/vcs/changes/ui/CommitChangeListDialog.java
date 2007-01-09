@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -65,16 +66,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private static void commit(Project project, final List<Change> changes, final ChangeList initialSelection,
                              final List<CommitExecutor> executors, boolean showVcsCommit) {
     new CommitChangeListDialog(project, changes, initialSelection, executors, showVcsCommit).show();
-  }
-
-  public static void commitPaths(final Project project, Collection<FilePath> paths, final ChangeList initialSelection) {
-    final ChangeListManager manager = ChangeListManager.getInstance(project);
-    final Collection<Change> changes = new HashSet<Change>();
-    for (FilePath path : paths) {
-      changes.addAll(manager.getChangesIn(path));
-    }
-
-    commitChanges(project, changes, initialSelection, manager.getRegisteredExecutors(), true);
   }
 
   public static void commitPaths(final Project project, Collection<FilePath> paths, final ChangeList initialSelection,
@@ -161,7 +152,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myBrowser.addToolbarActions(CommitMessage.getToolbarActions());
 
-    myCommitMessageArea = new CommitMessage(false);
+    myCommitMessageArea = new CommitMessage();
     setCommitMessage(getInitialMessage(getPaths(), project));
     myCommitMessageArea.init();
 
@@ -183,8 +174,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         final RefreshableOnComponent options = checkinEnvironment.createAdditionalOptionsPanelForCheckinProject(this);
         if (options != null) {
           JPanel vcsOptions = new JPanel(new BorderLayout());
-          vcsOptions.add(options.getComponent());
-          vcsOptions.setBorder(IdeBorderFactory.createTitledHeaderBorder(vcs.getDisplayName()));
+          vcsOptions.add(options.getComponent(), BorderLayout.CENTER);
+          vcsOptions.add(SeparatorFactory.createSeparator(vcs.getDisplayName(), null), BorderLayout.NORTH);
           vcsCommitOptions.add(vcsOptions);
           myAdditionalComponents.add(options);
           hasVcsOptions = true;
@@ -222,13 +213,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     if (beforeVisible) {
       beforeBox.add(Box.createVerticalGlue());
-      beforeBox.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("border.standard.checkin.options.group")));
+      beforeBox.add(SeparatorFactory.createSeparator(VcsBundle.message("border.standard.checkin.options.group"), null), 0);
       optionsBox.add(beforeBox);
     }
 
     if (afterVisible) {
       afterBox.add(Box.createVerticalGlue());
-      afterBox.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("border.standard.after.checkin.options.group")));
+      afterBox.add(SeparatorFactory.createSeparator(VcsBundle.message("border.standard.after.checkin.options.group"), null), 0);
       optionsBox.add(afterBox);
     }
 
@@ -260,6 +251,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     
     init();
     updateButtons();
+    myCommitMessageArea.requestFocusInMessage();;
 
   }
 
@@ -346,12 +338,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     VcsConfiguration config = VcsConfiguration.getInstance(project);
 
-    if (config.SAVE_LAST_COMMIT_MESSAGE || config.ERROR_OCCURED) {
-      return config.LAST_COMMIT_MESSAGE;
-    }
-    else {
-      return "";
-    }
+    return config.LAST_COMMIT_MESSAGE;
   }
 
   private void updateComment() {
@@ -511,6 +498,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     infoPanel.add(myLegend.getComponent(), BorderLayout.NORTH);
     infoPanel.add(myAdditionalOptionsPanel, BorderLayout.CENTER);
     rootPane.add(infoPanel, BorderLayout.EAST);
+    infoPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
 
     return rootPane;
   }
@@ -657,12 +645,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
   
   public JComponent getPreferredFocusedComponent() {
-    if (VcsConfiguration.getInstance(myProject).PUT_FOCUS_INTO_COMMENT) {
-      return myCommitMessageArea.getTextField();
-    }
-    else {
-      return myBrowser.getPrefferedFocusComponent();
-    }
+    return myCommitMessageArea.getTextField();
   }
 
   public void calcData(DataKey key, DataSink sink) {

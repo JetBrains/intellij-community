@@ -17,9 +17,8 @@ package com.intellij.openapi.vcs.ui;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SeparatorFactory;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -28,20 +27,13 @@ import java.awt.*;
 public class CommitMessage extends JPanel{
   private final JTextArea myCommentArea = new JTextArea();
 
-  public CommitMessage(final boolean includeCommitButton) {
+  public CommitMessage() {
     super(new BorderLayout());
     final JScrollPane scrollPane = new JScrollPane(myCommentArea);
     scrollPane.setPreferredSize(myCommentArea.getPreferredSize());
     add(scrollPane, BorderLayout.CENTER);
-    setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("label.commit.comment")));
-
-    if (includeCommitButton) {
-      final ActionGroup messageActionGroup = getToolbarActions();
-      if (messageActionGroup != null) {
-        JComponent toolbar = ActionManager.getInstance().createButtonToolbar(ActionPlaces.UNKNOWN, messageActionGroup);
-        add(toolbar, BorderLayout.SOUTH);
-      }
-    }
+    JComponent separator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myCommentArea);
+    add(separator, BorderLayout.NORTH);
   }
 
   @Nullable
@@ -72,5 +64,6 @@ public class CommitMessage extends JPanel{
 
   public void requestFocusInMessage() {
     myCommentArea.requestFocus();
+    myCommentArea.selectAll();
   }
 }

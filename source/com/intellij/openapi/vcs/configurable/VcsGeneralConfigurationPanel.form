@@ -3,7 +3,7 @@
   <grid id="7e224" binding="myPanel" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="7" y="16" width="868" height="392"/>
+      <xy x="7" y="16" width="868" height="399"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -119,7 +119,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <grid id="207cf" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="207cf" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
@@ -127,25 +127,9 @@
             <properties/>
             <border type="etched" title-resource-bundle="messages/VcsBundle" title-key="border.check.in.messages.settings"/>
             <children>
-              <component id="58f38" class="javax.swing.JCheckBox" binding="myPutFocusIntoComment">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/VcsBundle" key="checkbox.put.focus.into.comment"/>
-                </properties>
-              </component>
-              <component id="1d8cf" class="javax.swing.JCheckBox" binding="myReuseLastComment">
-                <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/VcsBundle" key="checkbox.reuse.last.comment"/>
-                </properties>
-              </component>
               <component id="5f121" class="javax.swing.JCheckBox" binding="myForceNonEmptyComment">
                 <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/VcsBundle" key="checkbox.force.non.empty.messages"/>

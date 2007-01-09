@@ -17,8 +17,6 @@ import java.util.List;
 public class VcsGeneralConfigurationPanel {
 
   private JCheckBox myForceNonEmptyComment;
-  private JCheckBox myReuseLastComment;
-  private JCheckBox myPutFocusIntoComment;
   private JCheckBox myShowReadOnlyStatusDialog;
 
   private JRadioButton myShowDialogOnAddingFile;
@@ -92,8 +90,6 @@ public class VcsGeneralConfigurationPanel {
 
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
 
-    settings.PUT_FOCUS_INTO_COMMENT = myPutFocusIntoComment.isSelected();
-    settings.SAVE_LAST_COMMIT_MESSAGE = myReuseLastComment.isSelected();
     settings.FORCE_NON_EMPTY_COMMENT = myForceNonEmptyComment.isSelected();
     settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = myCbOfferToMoveChanges.isSelected();
     settings.PERFORM_COMMIT_IN_BACKGROUND = myCbCommitInBackground.isSelected();
@@ -135,12 +131,6 @@ public class VcsGeneralConfigurationPanel {
   public boolean isModified() {
 
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
-    if (settings.PUT_FOCUS_INTO_COMMENT != myPutFocusIntoComment.isSelected()){
-      return true;
-    }
-    if (settings.SAVE_LAST_COMMIT_MESSAGE != myReuseLastComment.isSelected()){
-      return true;
-    }
     if (settings.FORCE_NON_EMPTY_COMMENT != myForceNonEmptyComment.isSelected()){
       return true;
     }
@@ -172,8 +162,6 @@ public class VcsGeneralConfigurationPanel {
 
   public void reset() {
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
-    myPutFocusIntoComment.setSelected(settings.PUT_FOCUS_INTO_COMMENT);
-    myReuseLastComment.setSelected(settings.SAVE_LAST_COMMIT_MESSAGE);
     myForceNonEmptyComment.setSelected(settings.FORCE_NON_EMPTY_COMMENT);
     myCbOfferToMoveChanges.setSelected(settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT);
     myShowReadOnlyStatusDialog.setSelected(getReadOnlyStatusHandler().SHOW_DIALOG);

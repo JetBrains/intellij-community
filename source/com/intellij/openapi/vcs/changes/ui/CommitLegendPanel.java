@@ -7,7 +7,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -33,11 +33,10 @@ public class CommitLegendPanel {
   private JLabel myNewLabel;
   private JPanel myDeletedPanel;
   private JLabel myDeletedLabel;
+  private JPanel myHeadingPanel;
 
 
   public CommitLegendPanel() {
-    myRootPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("commit.legend.summary")));
-
     final Color background = UIUtil.getListBackground();
     myModifiedPanel.setBackground(background);
     myNewPanel.setBackground(background);
@@ -64,6 +63,10 @@ public class CommitLegendPanel {
     updateCategory(myModifiedShown, myModifiedIncluded, displayedChanges, includedChanges, MODIFIED_FILTER);
     updateCategory(myNewShown, myNewIncluded, displayedChanges, includedChanges, NEW_FILTER);
     updateCategory(myDeletedShown, myDeletedIncluded, displayedChanges, includedChanges, DELETED_FILTER);
+  }
+
+  private void createUIComponents() {
+    myHeadingPanel = (JPanel)SeparatorFactory.createSeparator(VcsBundle.message("commit.legend.summary"), null);
   }
 
   private interface Filter<T> {

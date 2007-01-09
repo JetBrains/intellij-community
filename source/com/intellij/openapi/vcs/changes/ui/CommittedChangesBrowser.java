@@ -9,8 +9,8 @@ import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.table.TableView;
+import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.ui.SortableColumnModel;
 
 import javax.swing.*;
@@ -57,7 +57,8 @@ public class CommittedChangesBrowser extends JPanel {
 
     JPanel commitPanel = new JPanel(new BorderLayout());
     commitPanel.add(new JScrollPane(myCommitMessageArea), BorderLayout.CENTER);
-    commitPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("label.commit.comment")));
+    final JComponent separator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myCommitMessageArea);
+    commitPanel.add(separator, BorderLayout.NORTH);
 
     myLeftPanel = new JPanel(new BorderLayout());
     myLeftPanel.add(new JScrollPane(myChangeListsView), BorderLayout.CENTER);
