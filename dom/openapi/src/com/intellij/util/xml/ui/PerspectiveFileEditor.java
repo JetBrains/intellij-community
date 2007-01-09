@@ -18,15 +18,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
-import com.intellij.ui.components.panels.Wrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import javax.swing.*;
 
 /**
  * User: Sergey.Vasiliev
@@ -133,6 +133,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
     myUndoHelper.removeWatchedDocument(document);
   }
 
+  @Nullable
   protected DomElement getSelectedDomElementFromTextEditor(final TextEditor textEditor) {
     final PsiFile psiFile = getPsiFile();
     if (psiFile == null) return null;
@@ -232,18 +233,18 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   @NotNull
-  public FileEditorState getState(FileEditorStateLevel level) {
+  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
     return FILE_EDITOR_STATE;
   }
 
-  public void setState(FileEditorState state) {
+  public void setState(@NotNull FileEditorState state) {
   }
 
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeSupport.addPropertyChangeListener(listener);
   }
 
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
 
