@@ -99,7 +99,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
     }
 
     myText.setText(getText() != null ? getText() : "");
-    myText2.setText(getText2() != null ? getText() : "");
+    myText2.setText(getText2() != null ? getText2() : "");
 
     myCancelButton.setActive(isCancelable());
   }
