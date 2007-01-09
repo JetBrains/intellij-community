@@ -156,7 +156,9 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
   }
 
   private static JComponent createToolbarComponent(final DefaultActionGroup group) {
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false).getComponent();
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
+    actionToolbar.setLayoutPolicy(ActionToolbar.WRAP_LAYOUT_POLICY);
+    return actionToolbar.getComponent();
   }
 
   void updateProgressText(final String text, final boolean isError) {
