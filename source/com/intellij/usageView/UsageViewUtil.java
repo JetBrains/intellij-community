@@ -7,16 +7,16 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.ElementPresentationManager;
 
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -212,13 +212,15 @@ public class UsageViewUtil {
     if (psiElement instanceof PsiDirectory) {
       return LangBundle.message("terms.directory");
     }
-    if (psiElement instanceof WebDirectoryElement) {
-      return LangBundle.message("terms.web.directory");
-    }
 
     final Language lang = psiElement.getLanguage();
     FindUsagesProvider provider = lang.getFindUsagesProvider();
-    return provider.getType(psiElement);
+    final String type = provider.getType(psiElement);
+    if (StringUtil.isNotEmpty(type)) {
+      return type;
+    }
+
+    return ElementPresentationManager.getTypeName(psiElement.getClass());
   }
 
   public static String getDescriptiveName(final PsiElement psiElement) {

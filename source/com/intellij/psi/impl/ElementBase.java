@@ -109,9 +109,6 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     else if (element instanceof PsiAntElement) {
       return ((PsiAntElement)element).getRole().getIcon();
     }
-    else if (element instanceof WebDirectoryElement) {
-      return Icons.DIRECTORY_CLOSED_ICON;
-    }
     else if (element instanceof PsiClassObjectAccessExpression) {
       final RowIcon rowIcon = createLayeredIcon(Icons.FIELD_ICON, 0);
       rowIcon.setIcon(Icons.PUBLIC_ICON, 1);
