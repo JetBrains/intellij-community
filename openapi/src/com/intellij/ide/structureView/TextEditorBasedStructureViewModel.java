@@ -143,7 +143,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
    *
    * @return the list of classes
    */
-  @NotNull protected abstract Class[] getSuitableClasses();   // TODO: Class<PsiElement>?
+  @NotNull protected abstract Class<?>[] getSuitableClasses();   // TODO: Class<PsiElement>?
 
   protected Editor getEditor() {
     return myEditor;
