@@ -19,8 +19,6 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.ui.DocumentAdapter;
@@ -30,7 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JFormattedTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
 import java.lang.reflect.Field;
@@ -39,14 +37,11 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 
 public abstract class BaseInspection extends LocalInspectionTool {
+
     private static final Logger LOG = Logger.getInstance("#com.siyeh.ig.BaseInspection");
 
     private String m_shortName = null;
-    private InspectionRunListener listener = null;
-    private boolean telemetryEnabled = true;
     @NonNls private static final String INSPECTION = "Inspection";
-    @NonNls private static final String INSPECTION_GADGETS_COMPONENT_NAME =
-            "InspectionGadgets";
 
     @NotNull
     public String getShortName() {
@@ -73,60 +68,10 @@ public abstract class BaseInspection extends LocalInspectionTool {
     }
 
     @Nullable
-    public ProblemDescriptor[] checkFile(@NotNull PsiFile file,
-                                         @NotNull InspectionManager manager,
-                                         boolean isOnTheFly) {
-        /*
-        if (telemetryEnabled) {
-          initializeTelemetryIfNecessary();
-          final long start = System.currentTimeMillis();
-          try {
-            return doCheckFile(file, manager, isOnTheFly);
-          }
-          finally {
-            final long end = System.currentTimeMillis();
-            final String displayName = getDisplayName();
-            listener.reportRun(displayName, end - start);
-          }
-        }
-        else {
-          return doCheckFile(file, manager, isOnTheFly);
-        }
-        */
-
-        return null;
-    }
-
-    @Nullable
     protected ProblemDescriptor[] doCheckFile(PsiFile file,
                                               InspectionManager manager,
                                               boolean isOnTheFly) {
         return super.checkFile(file, manager, isOnTheFly);
-    }
-
-    @Nullable
-    public ProblemDescriptor[] checkMethod(PsiMethod method,
-                                           InspectionManager manager,
-                                           boolean isOnTheFly) {
-        /*
-        if (telemetryEnabled) {
-          initializeTelemetryIfNecessary();
-          final long start = System.currentTimeMillis();
-          try {
-            return doCheckMethod(method, manager, isOnTheFly);
-          }
-          finally {
-            final long end = System.currentTimeMillis();
-            final String displayName = getDisplayName();
-            listener.reportRun(displayName, end - start);
-          }
-        }
-        else {
-          return doCheckMethod(method, manager, isOnTheFly);
-        }
-        */
-
-        return null;
     }
 
     @Nullable
@@ -137,59 +82,10 @@ public abstract class BaseInspection extends LocalInspectionTool {
     }
 
     @Nullable
-    public ProblemDescriptor[] checkClass(PsiClass aClass,
-                                          InspectionManager manager,
-                                          boolean isOnTheFly) {
-        /*
-        if (telemetryEnabled) {
-          initializeTelemetryIfNecessary();
-          final long start = System.currentTimeMillis();
-          try {
-            return doCheckClass(aClass, manager, isOnTheFly);
-          }
-          finally {
-            final long end = System.currentTimeMillis();
-            final String name = getDisplayName();
-            listener.reportRun(name, end - start);
-          }
-        }
-        else {
-          return doCheckClass(aClass, manager, isOnTheFly);
-        }
-        */
-
-        return null;
-    }
-
-    @Nullable
     protected ProblemDescriptor[] doCheckClass(PsiClass aClass,
                                                InspectionManager manager,
                                                boolean isOnTheFly) {
         return super.checkClass(aClass, manager, isOnTheFly);
-    }
-
-    @Nullable
-    public ProblemDescriptor[] checkField(PsiField field,
-                                          InspectionManager manager,
-                                          boolean isOnTheFly) {
-        /*
-        if (telemetryEnabled) {
-          initializeTelemetryIfNecessary();
-          final long start = System.currentTimeMillis();
-          try {
-            return doCheckField(field, manager, isOnTheFly);
-          }
-          finally {
-            final long end = System.currentTimeMillis();
-            final String displayName = getDisplayName();
-            listener.reportRun(displayName, end - start);
-          }
-        }
-        else {
-          return doCheckField(field, manager, isOnTheFly);
-        }
-        */
-        return null;
     }
 
     @Nullable
@@ -210,16 +106,6 @@ public abstract class BaseInspection extends LocalInspectionTool {
     @Nullable
     protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
         return null;
-    }
-
-    private void initializeTelemetryIfNecessary() {
-        if (telemetryEnabled && listener == null) {
-            final Application application = ApplicationManager.getApplication();
-            final InspectionGadgetsPlugin plugin = (InspectionGadgetsPlugin)
-                    application.getComponent(INSPECTION_GADGETS_COMPONENT_NAME);
-            telemetryEnabled = InspectionGadgetsPlugin.isTelemetryEnabled();
-            listener = plugin.getTelemetry();
-        }
     }
 
     private String getPropertyPrefixForInspection() {
@@ -265,7 +151,7 @@ public abstract class BaseInspection extends LocalInspectionTool {
 
     public abstract BaseInspectionVisitor buildVisitor();
 
-    public PsiElementVisitor buildVisitor(ProblemsHolder holder,
+    public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                           boolean isOnTheFly) {
         final BaseInspectionVisitor visitor = buildVisitor();
         visitor.setProblemsHolder(holder);
@@ -304,7 +190,7 @@ public abstract class BaseInspection extends LocalInspectionTool {
         } catch (IllegalAccessException e) {
             LOG.error(e);
         }
-        
+
         return null;
     }
 }

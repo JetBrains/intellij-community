@@ -263,17 +263,19 @@ public class ImportUtils{
                 return;
             }
             final PsiElement element = reference.resolve();
-            if(element instanceof PsiClass
-                    && !(element instanceof PsiTypeParameter)){
-                final PsiClass aClass = (PsiClass) element;
-                final String testClassName = aClass.getName();
-                final String testClassQualifiedName = aClass.getQualifiedName();
-                if(testClassQualifiedName != null && testClassName != null
-                        && !testClassQualifiedName.equals(fullyQualifiedName) &&
-                        testClassName.equals(m_name)){
-                    m_referenceFound = true;
-                }
+            if (!(element instanceof PsiClass)
+                    || element instanceof PsiTypeParameter) {
+                return;
             }
+            final PsiClass aClass = (PsiClass) element;
+            final String testClassName = aClass.getName();
+            final String testClassQualifiedName = aClass.getQualifiedName();
+            if (testClassQualifiedName == null || testClassName == null
+                    || testClassQualifiedName.equals(fullyQualifiedName) ||
+                    !testClassName.equals(m_name)) {
+                return;
+            }
+            m_referenceFound = true;
         }
 
         public boolean isReferenceFound(){

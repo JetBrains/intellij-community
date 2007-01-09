@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 class ClassAccessVisitor extends PsiRecursiveElementVisitor {
+
     private final Map<PsiClass,Integer> m_accessCounts = new HashMap<PsiClass, Integer>(2);
     private final Set<PsiClass> m_overAccessedClasses = new HashSet<PsiClass>(2);
     private final PsiClass currentClass;
@@ -42,8 +43,7 @@ class ClassAccessVisitor extends PsiRecursiveElementVisitor {
             return;
         }
         final PsiClass calledClass = method.getContainingClass();
-        if(calledClass == null)
-        {
+        if(calledClass == null) {
             return;
         }
         if (currentClass.equals(calledClass)) {
@@ -53,11 +53,9 @@ class ClassAccessVisitor extends PsiRecursiveElementVisitor {
         if(overAccessedClasses.contains(calledClass)){
             return;
         }
-
         if(LibraryUtil.classIsInLibrary(calledClass)){
             return;
         }
-
         if (PsiTreeUtil.isAncestor(currentClass, calledClass, true)) {
             return;
         }
@@ -69,8 +67,9 @@ class ClassAccessVisitor extends PsiRecursiveElementVisitor {
             if(lexicallyEnclosingClass.isInheritor(calledClass, true)){
                 return;
             }
-            lexicallyEnclosingClass = PsiTreeUtil.getParentOfType(lexicallyEnclosingClass,
-                                                                             PsiClass.class);
+            lexicallyEnclosingClass =
+                    PsiTreeUtil.getParentOfType(lexicallyEnclosingClass,
+                            PsiClass.class);
         }
         final Map<PsiClass,Integer> accessCounts = m_accessCounts;
         final Integer count = accessCounts.get(calledClass);
