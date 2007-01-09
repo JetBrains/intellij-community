@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.BidirectionalMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +41,6 @@ public class VisibilityInspection extends GlobalInspectionTool {
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.visibility.display.name");
   @NonNls private static final String SHORT_NAME = "WeakerAccess";
 
-  private BidirectionalMap<QuickFix, String> myFixes = null;
   @NonNls private static final String PACKAGE_LOCAL = InspectionsBundle.message("inspection.package.local");
 
   private class OptionsPanel extends JPanel {
@@ -163,21 +161,9 @@ public class VisibilityInspection extends GlobalInspectionTool {
       if (access != refElement.getAccessModifier()) {
         final PsiElement psiElement = HighlightUsagesHandler.getNameIdentifier(refElement.getElement());
         if (psiElement != null) {
-          if (myFixes == null) {
-            myFixes = new BidirectionalMap<QuickFix, String>();
-          }
-          final List<QuickFix> list = myFixes.getKeysByValue(access);
-          final QuickFix fix;
-          if (list != null) {
-            LOG.assertTrue(list.size() == 1);
-            fix = list.get(0);
-          } else {
-            fix = new AcceptSuggestedAccess(globalContext.getRefManager(), access);
-            myFixes.put(fix, access);
-          }
           return new ProblemDescriptor[]{manager.createProblemDescriptor(psiElement,
                                                                          InspectionsBundle.message("inspection.visibility.compose.suggestion", access == PsiModifier.PACKAGE_LOCAL ? PACKAGE_LOCAL : access),
-                                                                         (LocalQuickFix)fix,
+                                                                         new AcceptSuggestedAccess(globalContext.getRefManager(), access),
                                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
         }
       }
@@ -334,7 +320,7 @@ public class VisibilityInspection extends GlobalInspectionTool {
                                              final GlobalInspectionContext globalContext,
                                              final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     for (SmartRefElementPointer entryPoint : EntryPointsManager.getInstance(globalContext.getProject()).getEntryPoints()) {
-      RefElement refElement = entryPoint.getRefElement();
+      final RefElement refElement = entryPoint.getRefElement();
       if (refElement != null) {
         ignoreElement(problemDescriptionsProcessor, refElement);
       }
@@ -429,7 +415,7 @@ public class VisibilityInspection extends GlobalInspectionTool {
 
   @Nullable
   public String getHint(final QuickFix fix) {
-    return myFixes.get(fix);
+    return ((AcceptSuggestedAccess)fix).getHint();
   }
 
   private static class AcceptSuggestedAccess implements LocalQuickFix{
@@ -486,6 +472,10 @@ public class VisibilityInspection extends GlobalInspectionTool {
           LOG.error(e);
         }
       }
+    }
+
+    public String getHint() {
+      return myHint;
     }
   }
 }

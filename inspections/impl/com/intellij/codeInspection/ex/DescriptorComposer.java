@@ -45,7 +45,6 @@ public class DescriptorComposer extends HTMLComposerImpl {
       }
 
       doneList(buf);
-      composeAdditionalDescription(buf, refEntity);
 
       appendResolution(buf, myTool, refEntity);
     }
@@ -136,38 +135,35 @@ public class DescriptorComposer extends HTMLComposerImpl {
     }
 
     String descriptionTemplate = description.getDescriptionTemplate();
-    if (descriptionTemplate != null) {
-      //noinspection HardCodedStringLiteral
-      String res = descriptionTemplate.replaceAll("#ref", anchor.toString());
-      final int lineNumber = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
-      StringBuffer lineAnchor = new StringBuffer();
-      if (expression != null && lineNumber > 0) {
-        VirtualFile vFile = expression.getContainingFile().getVirtualFile();
-        Document doc = FileDocumentManager.getInstance().getDocument(vFile);
-        lineAnchor.append(InspectionsBundle.message("inspection.export.results.at.line") + " ");
-        if (myExporter == null) {
-          //noinspection HardCodedStringLiteral
-          lineAnchor.append("<a HREF=\"");
-          try {
-            int offset = doc.getLineStartOffset(lineNumber - 1);
-            offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
-            lineAnchor.append(new URL(vFile.getUrl() + "#" + offset));
-          }
-          catch (MalformedURLException e) {
-            LOG.error(e);
-          }
-          lineAnchor.append("\">");
+    //noinspection HardCodedStringLiteral
+    String res = descriptionTemplate.replaceAll("#ref", anchor.toString());
+    final int lineNumber = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
+    StringBuffer lineAnchor = new StringBuffer();
+    if (expression != null && lineNumber > 0) {
+      VirtualFile vFile = expression.getContainingFile().getVirtualFile();
+      Document doc = FileDocumentManager.getInstance().getDocument(vFile);
+      lineAnchor.append(InspectionsBundle.message("inspection.export.results.at.line")).append(" ");
+      if (myExporter == null) {
+        //noinspection HardCodedStringLiteral
+        lineAnchor.append("<a HREF=\"");
+        try {
+          int offset = doc.getLineStartOffset(lineNumber - 1);
+          offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
+          lineAnchor.append(new URL(vFile.getUrl() + "#" + offset));
         }
-        lineAnchor.append(Integer.toString(lineNumber));
-        //noinspection HardCodedStringLiteral
-        lineAnchor.append("</a>");
-        //noinspection HardCodedStringLiteral
-        res = res.replaceAll("#loc", lineAnchor.toString());
+        catch (MalformedURLException e) {
+          LOG.error(e);
+        }
+        lineAnchor.append("\">");
       }
-      buf.append(res);
+      lineAnchor.append(Integer.toString(lineNumber));
+      //noinspection HardCodedStringLiteral
+      lineAnchor.append("</a>");
+      //noinspection HardCodedStringLiteral
+      res = res.replaceAll("#loc", lineAnchor.toString());
     }
-    else {
-      buf.append(InspectionsBundle.message("inspection.export.results.no.error"));
-    }
+    buf.append(res);
+    buf.append(BR).append(BR);
+    composeAdditionalDescription(buf, refElement);
   }
 }

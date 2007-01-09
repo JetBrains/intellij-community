@@ -10,17 +10,11 @@ package com.intellij.codeInspection.unusedParameters;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.util.XMLExportUtl;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -28,207 +22,159 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
-import com.intellij.util.IncorrectOperationException;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
-public class UnusedParametersInspection extends FilteringInspectionTool {
-  private UnusedParametersFilter myFilter;
-  private UnusedParametersComposer myComposer;
-  @NonNls private static final String QUICK_FIX_NAME = InspectionsBundle.message("inspection.unused.parameter.delete.quickfix");
+public class UnusedParametersInspection extends GlobalInspectionTool {
 
-  public UnusedParametersInspection() {
+  @Nullable
+  public CommonProblemDescriptor[] checkElement(final RefEntity refEntity,
+                                                final AnalysisScope scope,
+                                                final InspectionManager manager,
+                                                final GlobalInspectionContext globalContext,
+                                                final ProblemDescriptionsProcessor processor) {
+    if (refEntity instanceof RefMethod) {
+      final RefMethod refMethod = (RefMethod)refEntity;
 
-    myQuickFixActions = new QuickFixAction[] {new AcceptSuggested()};
+      if (refMethod.isSyntheticJSP()) return null;
+
+      if (refMethod.isExternalOverride()) return null;
+
+      if (!(refMethod.isStatic() || refMethod.isConstructor()) && refMethod.getSuperMethods().size() > 0) return null;
+
+      if ((refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) && refMethod.getDerivedMethods().isEmpty()) return null;
+
+      if (RefUtil.isEntryPoint(refMethod)) return null;
+
+      final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);
+
+      if (unusedParameters.size() == 0) return null;
+
+      final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
+      for (RefParameter refParameter : unusedParameters) {
+        final PsiIdentifier psiIdentifier = refParameter.getElement().getNameIdentifier();
+        if (psiIdentifier != null) {
+          result.add(manager.createProblemDescriptor(psiIdentifier,
+                                                     refMethod.isAbstract()
+                                                     ? InspectionsBundle.message("inspection.unused.parameter.composer")
+                                                     : InspectionsBundle.message("inspection.unused.parameter.composer1"),
+                                                     new AcceptSuggested(globalContext.getRefManager(), processor, refParameter.toString()),
+                                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL));
+        }
+      }
+      return result.toArray(new CommonProblemDescriptor[result.size()]);
+    }
+    return null;
   }
 
-  private QuickFixAction[] myQuickFixActions;
-
-  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
-    // Do additional search of problem elements outside the scope.
-    final Runnable action = new Runnable() {
-      public void run() {
-        if (getRefManager().getScope().getScopeType() != AnalysisScope.PROJECT) {
-          ProgressManager.getInstance().runProcess(new Runnable() {
-            public void run() {
-              final UnusedParametersFilter filter = getFilter();
-              final PsiSearchHelper helper = PsiManager.getInstance(getContext().getProject()).getSearchHelper();
-
-              getRefManager().iterate(new RefVisitor() {
-                public void visitElement(RefEntity refEntity) {
-                  if (refEntity instanceof RefElement && filter.accepts((RefElement)refEntity)) {
-                    RefMethod refMethod = (RefMethod) refEntity;
-                    PsiMethod psiMethod = (PsiMethod) refMethod.getElement();
-                    if (!refMethod.isStatic() && !refMethod.isConstructor() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
-                      PsiMethod[] derived = helper.findOverridingMethods(psiMethod, psiMethod.getUseScope(), true);
-                      final ArrayList<RefParameter> unusedParameters = UnusedParametersFilter.getUnusedParameters(refMethod);
-                      for (final RefParameter refParameter : unusedParameters) {
-                        int idx = refParameter.getIndex();
-
-                        if (refMethod.isAbstract() && derived.length == 0) {
+  public boolean queryExternalUsagesRequests(final InspectionManager manager,
+                                             final GlobalInspectionContext globalContext,
+                                             final ProblemDescriptionsProcessor processor) {
+    for (SmartRefElementPointer entryPoint : EntryPointsManager.getInstance(globalContext.getProject()).getEntryPoints()) {
+      final RefElement refElement = entryPoint.getRefElement();
+      if (refElement != null) {
+        processor.ignoreElement(refElement);
+      }
+    }
+    final PsiSearchHelper helper = PsiManager.getInstance(globalContext.getProject()).getSearchHelper();
+    final AnalysisScope scope = globalContext.getRefManager().getScope();
+    globalContext.getRefManager().iterate(new RefVisitor() {
+      public void visitElement(RefEntity refEntity) {
+        if (refEntity instanceof RefMethod) {
+          RefMethod refMethod = (RefMethod)refEntity;
+          final PsiModifierListOwner element = refMethod.getElement();
+          if (element instanceof PsiMethod) { //implicit construcors are invisible
+            PsiMethod psiMethod = (PsiMethod)element;
+            if (!refMethod.isStatic() && !refMethod.isConstructor() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
+              final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);
+              if (unusedParameters.isEmpty()) return;
+              PsiMethod[] derived = helper.findOverridingMethods(psiMethod, psiMethod.getUseScope(), true);
+              for (final RefParameter refParameter : unusedParameters) {
+                if (refMethod.isAbstract() && derived.length == 0) {
+                  refParameter.parameterReferenced(false);
+                  processor.ignoreElement(refParameter);
+                }
+                else {
+                  int idx = refParameter.getIndex();
+                  final boolean[] found = new boolean[]{false};
+                  for (int i = 0; i < derived.length && !found[0]; i++) {
+                    if (!scope.contains(derived[i])) {
+                      PsiParameter psiParameter = derived[i].getParameterList().getParameters()[idx];
+                      helper.processReferences(new PsiReferenceProcessor() {
+                        public boolean execute(PsiReference element) {
                           refParameter.parameterReferenced(false);
+                          processor.ignoreElement(refParameter);
+                          found[0] = true;
+                          return false;
                         }
-                        else {
-                          final boolean[] found = new boolean[]{false};
-                          for (int i = 0; i < derived.length && !found[0]; i++) {
-                            if (!getRefManager().getScope().contains(derived[i])) {
-                              PsiParameter psiParameter = derived[i].getParameterList().getParameters()[idx];
-                              helper.processReferences(new PsiReferenceProcessor() {
-                                public boolean execute(PsiReference element) {
-                                  refParameter.parameterReferenced(false);
-                                  found[0] = true;
-                                  return false;
-                                }
-                              }, psiParameter, helper.getUseScope(psiParameter), false);
-                            }
-                          }
-                        }
-                      }
+                      }, psiParameter, helper.getUseScope(psiParameter), false);
                     }
                   }
                 }
-              });
+              }
             }
-          }, null);
-        }
-      }
-    };
-    ApplicationManager.getApplication().runReadAction(action);
-  }
-
-  public UnusedParametersFilter getFilter() {
-    if (myFilter == null) {
-      myFilter = new UnusedParametersFilter(this);
-    }
-    return myFilter;
-  }
-
-  public void exportResults(final Element parentNode) {
-    final UnusedParametersFilter filter = getFilter();
-    getRefManager().iterate(new RefVisitor() {
-      public void visitElement(RefEntity refEntity) {
-        if (refEntity instanceof RefElement && filter.accepts((RefElement)refEntity)) {
-          ArrayList<RefParameter> unusedParameters = UnusedParametersFilter.getUnusedParameters((RefMethod)refEntity);
-          for (RefParameter unusedParameter : unusedParameters) {
-            Element element = XMLExportUtl.createElement(refEntity, parentNode, -1, null);
-            @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
-            problemClassElement.addContent(InspectionsBundle.message("inspection.unused.parameter.export.results"));
-
-            final HighlightSeverity severity = getCurrentSeverity(unusedParameter);
-            final String attributeKey = getTextAttributeKey(severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-            problemClassElement.setAttribute("severity", severity.myName);
-            problemClassElement.setAttribute("attribute_key", attributeKey);
-
-            element.addContent(problemClassElement);
-
-            @NonNls Element hintsElement = new Element("hints");
-            @NonNls Element hintElement = new Element("hint");
-            hintElement.setAttribute("value", String.valueOf(unusedParameter.getIndex()));
-            hintsElement.addContent(hintElement);
-
-            Element descriptionElement = new Element(InspectionsBundle.message("inspection.export.results.description.tag"));
-            descriptionElement
-              .addContent(InspectionsBundle.message("inspection.unused.parameter.export.results.description", unusedParameter.getName()));
-            element.addContent(descriptionElement);
           }
         }
       }
     });
+    return false;
   }
 
-  public QuickFixAction[] getQuickFixes(final RefEntity[] refElements) {
-    return myQuickFixActions;
+  public boolean isGraphNeeded() {
+    return true;
   }
-
-  @NotNull
-  public JobDescriptor[] getJobDescriptors() {
-    return new JobDescriptor[] {GlobalInspectionContextImpl.BUILD_GRAPH, GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES};
-  }
-
 
   @Nullable
-  public IntentionAction findQuickFixes(final CommonProblemDescriptor descriptor, final String hint) {
-    return new IntentionAction() {
-      @NotNull
-      public String getText() {
-        return QUICK_FIX_NAME;
-      }
-
-      @NotNull
-      public String getFamilyName() {
-        return getText();
-      }
-
-      public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-        return true;
-      }
-
-      public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-        if (hint == null) return;
-        if (descriptor instanceof ProblemDescriptor) {
-          int idx;
-          try {
-            idx = Integer.parseInt(hint);
-          }
-          catch (NumberFormatException e) {
-            return;
-          }
-          final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(((ProblemDescriptor)descriptor).getPsiElement(), PsiMethod.class);
-          if (psiMethod != null) {
-
-            final PsiParameter parameter = psiMethod.getParameterList().getParameters()[idx];
-
-            if (descriptor.getDescriptionTemplate().indexOf(parameter.getName()) == - 1) return;
-
-            final ArrayList<PsiElement> parametersToDelete = new ArrayList<PsiElement>();
-            parametersToDelete.add(parameter);
-            removeUnusedParameterViaChangeSignature(psiMethod, parametersToDelete);
-          }
-        }
-      }
-
-      public boolean startInWriteAction() {
-        return true;
-      }
-    };
+  public String getHint(final QuickFix fix) {
+    return ((AcceptSuggested)fix).getHint();
   }
 
-  private class AcceptSuggested extends QuickFixAction {
-    private AcceptSuggested() {
-      super(QUICK_FIX_NAME, IconLoader.getIcon("/actions/cancel.png"), null, UnusedParametersInspection.this);
+  @Nullable
+  public QuickFix getQuickFix(final String hint) {
+    return new AcceptSuggested(null, null, hint);
+  }
+
+  public void compose(final StringBuffer buf, final RefEntity refEntity, final HTMLComposer composer) {
+    if (refEntity instanceof RefMethod) {
+      final RefMethod refMethod = (RefMethod)refEntity;
+      composer.appendDerivedMethods(buf, refMethod);
+      composer.appendSuperMethods(buf, refMethod);
+    }
+  }
+
+  public static ArrayList<RefParameter> getUnusedParameters(RefMethod refMethod) {
+    boolean checkDeep = !refMethod.isStatic() && !refMethod.isConstructor();
+    ArrayList<RefParameter> res = new ArrayList<RefParameter>();
+    RefParameter[] methodParameters = refMethod.getParameters();
+    RefParameter[] result = new RefParameter[methodParameters.length];
+    System.arraycopy(methodParameters, 0, result, 0, methodParameters.length);
+
+    clearUsedParameters(refMethod, result, checkDeep);
+
+    for (RefParameter parameter : result) {
+      if (parameter != null) {
+        res.add(parameter);
+      }
     }
 
-    protected boolean applyFix(RefElement[] refElements) {
-      boolean needToRefresh = false;
-      for (RefElement refElement : refElements) {
-        if (refElement instanceof RefMethod) {
-          RefMethod refMethod = (RefMethod)refElement;
-          PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
+    return res;
+  }
 
-          if (psiMethod == null) continue;
+  private static void clearUsedParameters(RefMethod refMethods, RefParameter[] params, boolean checkDeep) {
+    RefParameter[] methodParms = refMethods.getParameters();
 
-          ArrayList<PsiElement> psiParameters = new ArrayList<PsiElement>();
-          for (final RefParameter refParameter : UnusedParametersFilter.getUnusedParameters(refMethod)) {
-            psiParameters.add(refParameter.getElement());
-          }
+    for (int i = 0; i < methodParms.length; i++) {
+      if (methodParms[i].isUsedForReading()) params[i] = null;
+    }
 
-          final PsiModificationTracker tracker = psiMethod.getManager().getModificationTracker();
-          final long startModificationCount = tracker.getModificationCount();
-
-          removeUnusedParameterViaChangeSignature(psiMethod, psiParameters);
-          if (startModificationCount != tracker.getModificationCount()) {
-            getFilter().addIgnoreList(refMethod);
-            needToRefresh = true;
-          }
-        }
+    if (checkDeep) {
+      for (RefMethod refOverride : refMethods.getDerivedMethods()) {
+        clearUsedParameters(refOverride, params, checkDeep);
       }
-
-      return needToRefresh;
     }
   }
 
@@ -247,33 +193,80 @@ public class UnusedParametersInspection extends FilteringInspectionTool {
     return "UnusedParameters";
   }
 
-  public HTMLComposerImpl getComposer() {
-    if (myComposer == null) {
-      myComposer = new UnusedParametersComposer(getFilter(), this);
-    }
-    return myComposer;
-  }
 
-  private void removeUnusedParameterViaChangeSignature(final PsiMethod psiMethod, final Collection<PsiElement> parametersToDelete) {
-    ArrayList<ParameterInfo> newParameters = new ArrayList<ParameterInfo>();
-    PsiParameter[] oldParameters = psiMethod.getParameterList().getParameters();
-    for (int i = 0; i < oldParameters.length; i++) {
-      PsiParameter oldParameter = oldParameters[i];
-      if (!parametersToDelete.contains(oldParameter)) {
-        newParameters.add(new ParameterInfo(i, oldParameter.getName(), oldParameter.getType()));
+  private static class AcceptSuggested implements LocalQuickFix {
+    private RefManager myManager;
+    private String myHint;
+    private ProblemDescriptionsProcessor myProcessor;
+
+    public AcceptSuggested(final RefManager manager, final ProblemDescriptionsProcessor processor, final String hint) {
+      myManager = manager;
+      myProcessor = processor;
+      myHint = hint;
+    }
+
+    public String getHint() {
+      return myHint;
+    }
+
+    @NotNull
+    public String getName() {
+      return InspectionsBundle.message("inspection.unused.parameter.delete.quickfix");
+    }
+
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
+
+    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+      final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
+      if (psiMethod != null) {
+        ArrayList<PsiElement> psiParameters = new ArrayList<PsiElement>();
+        if (myManager != null) {
+          for (final RefParameter refParameter : getUnusedParameters((RefMethod)myManager.getReference(psiMethod))) {
+            psiParameters.add(refParameter.getElement());
+          }
+        }
+        else {
+          final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+          for (PsiParameter parameter : parameters) {
+            if (Comparing.strEqual(parameter.getName(), myHint)) {
+              psiParameters.add(parameter);
+              break;
+            }
+          }
+        }
+
+        final PsiModificationTracker tracker = psiMethod.getManager().getModificationTracker();
+        final long startModificationCount = tracker.getModificationCount();
+
+        removeUnusedParameterViaChangeSignature(psiMethod, psiParameters);
+
+        if (myManager != null && startModificationCount != tracker.getModificationCount()) {
+          myProcessor.ignoreElement(myManager.getReference(psiMethod));
+        }
       }
     }
 
-    ParameterInfo[] parameterInfos = newParameters.toArray(new ParameterInfo[newParameters.size()]);
+    private static void removeUnusedParameterViaChangeSignature(final PsiMethod psiMethod,
+                                                                final Collection<PsiElement> parametersToDelete) {
+      ArrayList<ParameterInfo> newParameters = new ArrayList<ParameterInfo>();
+      PsiParameter[] oldParameters = psiMethod.getParameterList().getParameters();
+      for (int i = 0; i < oldParameters.length; i++) {
+        PsiParameter oldParameter = oldParameters[i];
+        if (!parametersToDelete.contains(oldParameter)) {
+          newParameters.add(new ParameterInfo(i, oldParameter.getName(), oldParameter.getType()));
+        }
+      }
 
-    ChangeSignatureProcessor csp = new ChangeSignatureProcessor(getContext().getProject(),
-                                                                psiMethod,
-                                                                false,
-                                                                null,
-                                                                psiMethod.getName(),
-                                                                psiMethod.getReturnType(),
-                                                                parameterInfos);
+      ParameterInfo[] parameterInfos = newParameters.toArray(new ParameterInfo[newParameters.size()]);
 
-    csp.run();
+      ChangeSignatureProcessor csp = new ChangeSignatureProcessor(psiMethod.getProject(), psiMethod, false, null, psiMethod.getName(),
+                                                                  psiMethod.getReturnType(), parameterInfos);
+
+      csp.run();
+    }
+
   }
 }

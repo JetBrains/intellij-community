@@ -456,7 +456,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     for (RefEntity entity : getIgnoredElements().keySet()) {
       if (entity instanceof RefElement){
         final RefElement refElement = (RefElement)entity;
-        if (Comparing.equal(refElement.getElement(), element.getElement())){
+        if (Comparing.equal(refElement, element)){
           return true;
         }
       }

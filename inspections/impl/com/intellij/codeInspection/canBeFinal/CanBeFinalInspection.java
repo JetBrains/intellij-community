@@ -11,6 +11,7 @@ package com.intellij.codeInspection.canBeFinal;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -154,6 +155,12 @@ public class CanBeFinalInspection extends GlobalInspectionTool {
   public boolean queryExternalUsagesRequests(final InspectionManager manager,
                                              final GlobalInspectionContext globalContext,
                                              final ProblemDescriptionsProcessor problemsProcessor) {
+    for (SmartRefElementPointer entryPoint : EntryPointsManager.getInstance(globalContext.getProject()).getEntryPoints()) {
+      final RefElement refElement = entryPoint.getRefElement();
+      if (refElement != null) {
+        problemsProcessor.ignoreElement(refElement);
+      }
+    }
     globalContext.getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (problemsProcessor.getDescriptions(refEntity) == null) return;
