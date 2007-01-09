@@ -190,7 +190,7 @@ public interface PsiSearchHelper {
    * @param searchScope the scope in which occurrences are searched.
    * @return the array of found comments.
    */
-  PsiElement[] findCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope);
+  @NotNull PsiElement[] findCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope);
 
   /**
    * Searches the specified scope for string literals containing the specified identifier.
@@ -199,14 +199,14 @@ public interface PsiSearchHelper {
    * @param searchScope the scope in which occurrences are searched.
    * @return the array of found string literals.
    */
-  PsiLiteralExpression[] findStringLiteralsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope);
+  @NotNull PsiLiteralExpression[] findStringLiteralsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope);
 
   /**
    * Passes all classes in the specified scope to the specified processor.
    *
    * @param processor   the processor which accepts found classes.
    * @param searchScope the scope in which classes are searched.
-   * @return the array of found classes.
+   * @return true if the search was completed normally, if the processing was cancelled by the processor.
    */
   boolean processAllClasses(@NotNull PsiElementProcessor<PsiClass> processor, @NotNull SearchScope searchScope);
 

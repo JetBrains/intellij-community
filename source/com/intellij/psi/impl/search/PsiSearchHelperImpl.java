@@ -43,13 +43,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private final PsiManagerImpl myManager;
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
-  private static final int POOL_SIZE = Runtime.getRuntime().availableProcessors();
+  private static final int POOL_SIZE = Runtime.getRuntime().availableProcessors() - 1; // -1 because calling thread contributes to the number of concurrent threads, see ConcurrencyUtil
   private final ThreadPoolExecutor myThreadPoolExecutor = new ThreadPoolExecutor(POOL_SIZE, Integer.MAX_VALUE, 60,
                                                              TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
     public Thread newThread(final Runnable r) {
-      Thread thread = new Thread(r,"Find usages");
-      thread.setPriority(Thread.MIN_PRIORITY);
-      return thread;
+      return new Thread(r, "Find usages");
     }
   });
 
@@ -359,6 +357,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final TokenSet COMMENT_BIT_SET = TokenSet.create(JavaDocTokenType.DOC_COMMENT_DATA, JavaDocTokenType.DOC_TAG_VALUE_TOKEN,
                                                                   JavaTokenType.C_STYLE_COMMENT, JavaTokenType.END_OF_LINE_COMMENT);
 
+  @NotNull
   public PsiElement[] findCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope) {
     final ArrayList<PsiElement> results = new ArrayList<PsiElement>();
     TextOccurenceProcessor processor = new TextOccurenceProcessor() {
@@ -374,6 +373,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return results.toArray(new PsiElement[results.size()]);
   }
 
+  @NotNull
   public PsiLiteralExpression[] findStringLiteralsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope) {
     final ArrayList<PsiLiteralExpression> results = new ArrayList<PsiLiteralExpression>();
     TextOccurenceProcessor processor = new TextOccurenceProcessor() {
@@ -428,7 +428,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     myManager.getRepositoryManager().updateAll();
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
-    fileIndex.iterateContent(new ContentIterator() {
+    return fileIndex.iterateContent(new ContentIterator() {
       public boolean processFile(VirtualFile fileOrDir) {
         if (!fileOrDir.isDirectory() && searchScope.contains(fileOrDir)) {
           final PsiFile psiFile = myManager.findFile(fileOrDir);
@@ -449,8 +449,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return true;
       }
     });
-
-    return true;
   }
 
   @NotNull
@@ -535,7 +533,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
 
       // if we are under write action, additional threads will never get read action
-      if (!application.isUnitTestMode() && !application.isWriteAccessAllowed()) {
+      if (!application.isUnitTestMode() && !application.isWriteAccessAllowed() && POOL_SIZE > 1) {
         final int chunkSize = Math.max(10, files.length / POOL_SIZE / 20); // make at least 20 chunks per proc to balance load
         ArrayList<Callable<Boolean>> callables = new ArrayList<Callable<Boolean>>(files.length/chunkSize);
         final AtomicInteger counter = new AtomicInteger(0);
@@ -548,10 +546,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                 public void run() {
                   for (int i = index; i < index + chunkSize && i < files.length; i++) {
                     final PsiFile file = files[i];
+                    files[i] = null; // prevent strong ref
                     application.runReadAction(new Runnable() {
                       public void run() {
                         try {
-                          ProgressManager.getInstance().checkCanceled();
                           PsiElement[] psiRoots = file.getPsiRoots();
                           Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
                           for (PsiElement psiRoot : psiRoots) {
@@ -584,16 +582,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
         try {
           List<Future<Boolean>> futures = ConcurrencyUtil.invokeAll(callables, myThreadPoolExecutor);
-          boolean canceled = false;
+          boolean success = true;
           for (Future<Boolean> future : futures) {
-            if (canceled) {
-              future.cancel(false);
-            }
-            else {
-              canceled = !future.get();
-            }
+            if (!(success &= future.get())) break;
           }
-          return !canceled;
+          return success;
         }
         catch (Throwable throwable) {
           LOG.error(throwable);
