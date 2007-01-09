@@ -720,8 +720,22 @@ public class TypedHandler implements TypedActionHandler {
     if (offset < editor.getDocument().getTextLength()) {
       element = provider.findElementAt(offset, XMLLanguage.class);
       if (!(element instanceof PsiWhiteSpace)) {
+        boolean nonAcceptableDelimiter = true;
+
         if (element instanceof XmlToken) {
-          final IElementType tokenType = ((XmlToken)element).getTokenType();
+          IElementType tokenType = ((XmlToken)element).getTokenType();
+
+          if (tokenType == XmlTokenType.XML_START_TAG_START) {
+            if (offset > 0) {
+              PsiElement previousElement = provider.findElementAt(offset - 1, XMLLanguage.class);
+
+              if (previousElement instanceof XmlToken) {
+                tokenType = ((XmlToken)previousElement).getTokenType();
+                element = previousElement;
+                nonAcceptableDelimiter = false;
+              }
+            }
+          }
 
           if (tokenType == XmlTokenType.XML_TAG_END ||
               tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END && element.getTextOffset() == offset - 1
@@ -731,7 +745,7 @@ public class TypedHandler implements TypedActionHandler {
             return true;
           }
         }
-        return false;
+        if (nonAcceptableDelimiter) return false;
       } else {
         // check if right after empty end
         PsiElement previousElement = provider.findElementAt(offset - 1, XMLLanguage.class);
