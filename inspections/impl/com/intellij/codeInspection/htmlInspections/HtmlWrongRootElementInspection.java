@@ -8,6 +8,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlBundle;
@@ -40,10 +41,32 @@ public class HtmlWrongRootElementInspection extends HtmlLocalInspectionTool {
 
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     if (!(tag.getParent() instanceof XmlTag)) {
-      XmlFile file = (XmlFile)tag.getContainingFile();
+      final PsiFile psiFile = tag.getContainingFile();
+      if (!(psiFile instanceof XmlFile)) {
+        return;
+      }
 
-      XmlProlog prolog = file.getDocument().getProlog();
+      XmlFile xmlFile = (XmlFile) psiFile;
 
+      /*
+      if (psiFile instanceof XmlFile) {
+        xmlFile = (XmlFile)psiFile;
+      }
+      else {
+        // jsp?
+        final JspFile jspFile = PsiUtil.getJspFile(tag);
+        if (jspFile != null) {
+          xmlFile = jspFile;
+        }
+      }
+      */
+
+      final XmlDocument document = xmlFile.getDocument();
+      if (document == null) {
+        return;
+      }
+
+      XmlProlog prolog = document.getProlog();
       if (prolog == null || prolog.getUserData(DO_NOT_VALIDATE_KEY) != null) {
         return;
       }
