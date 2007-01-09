@@ -46,7 +46,6 @@ import com.siyeh.ig.imports.*;
 import com.siyeh.ig.initialization.*;
 import com.siyeh.ig.internationalization.*;
 import com.siyeh.ig.j2me.*;
-import com.siyeh.ig.j2me.MultiplyOrDivideByPowerOfTwoInspection;
 import com.siyeh.ig.jdk.*;
 import com.siyeh.ig.jdk15.*;
 import com.siyeh.ig.junit.*;
