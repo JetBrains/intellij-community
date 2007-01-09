@@ -24,7 +24,7 @@ import java.util.Collection;
 public abstract class DiffMarkup implements EditorSource {
   private static final Logger LOG = Logger.getInstance(
     "#com.intellij.openapi.diff.impl.highlighting.EditorTextAppender");
-  private static final int LAYER = HighlighterLayer.FIRST + 1;
+  private static final int LAYER = HighlighterLayer.SELECTION - 1;
 
   private final ArrayList<RangeHighlighter> myHighLighters = new ArrayList<RangeHighlighter>();
   private final HashSet<RangeHighlighter> myActionHighlighters = new HashSet<RangeHighlighter>();
