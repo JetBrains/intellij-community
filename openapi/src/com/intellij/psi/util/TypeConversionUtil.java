@@ -21,8 +21,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -71,6 +71,7 @@ public class TypeConversionUtil {
    * @return true iff fromType can be casted to toType
    */
   public static boolean areTypesConvertible(@NotNull PsiType fromType, @NotNull PsiType toType) {
+    if (fromType == toType) return true;
     final boolean fromIsPrimitive = isPrimitiveAndNotNull(fromType);
     final boolean toIsPrimitive = isPrimitiveAndNotNull(toType);
     if (fromIsPrimitive || toIsPrimitive) {
@@ -87,7 +88,7 @@ public class TypeConversionUtil {
     }
 
     //type can be casted via widening reference conversion
-    if (toType.isAssignableFrom(fromType)) return true;
+    if (isAssignable(toType, fromType)) return true;
 
     if (isNullType(fromType) || isNullType(toType)) return true;
 
@@ -162,8 +163,10 @@ public class TypeConversionUtil {
     final LanguageLevel languageLevel = toClassType.getLanguageLevel();
     if (!fromClass.isInterface()) {
       if (toClass.isInterface()) {
-        if (fromClass.hasModifierProperty(PsiModifier.FINAL)) return false;
-        return checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager, fromResult.getSubstitutor(), new THashSet<PsiClass>(),
+        return !fromClass.hasModifierProperty(PsiModifier.FINAL) &&
+               checkSuperTypesWithDifferentTypeArguments(toResult, fromClass, manager,
+                                                         fromResult.getSubstitutor(),
+                                                         new THashSet<PsiClass>(),
                                                          languageLevel);
       }
       else {
@@ -498,7 +501,7 @@ public class TypeConversionUtil {
     if (lType == null || rExpr == null) return true;
     PsiType rType = rExpr.getType();
     if (rType == null) return false;
-    if (lType.isAssignableFrom(rType)) return true;
+    if (isAssignable(lType, rType)) return true;
     if (lType instanceof PsiClassType) {
         lType = PsiPrimitiveType.getUnboxedType(lType);
         if (lType == null) return false;
@@ -529,9 +532,6 @@ public class TypeConversionUtil {
       else if (PsiType.CHAR == lType) {
         return 0 <= value && value <= 0xFFFF;
       }
-      else {
-        return false;
-      }
     }
     return false;
   }
@@ -550,6 +550,7 @@ public class TypeConversionUtil {
 
 
   public static boolean isAssignable(@NotNull PsiType left, @NotNull PsiType right, boolean allowUncheckedConversion) {
+    if (left == right) return true;
     if (isNullType(right)) {
       return !(left instanceof PsiPrimitiveType) || isNullType(left);
     }
@@ -596,13 +597,10 @@ public class TypeConversionUtil {
       PsiType lCompType = ((PsiArrayType)left).getComponentType();
       PsiType rCompType = ((PsiArrayType)right).getComponentType();
       if (lCompType instanceof PsiPrimitiveType) {
-        return rCompType instanceof PsiPrimitiveType && lCompType == rCompType;
-      }
-      else if (rCompType instanceof PsiPrimitiveType) {
-        return false;
+        return lCompType == rCompType;
       }
       else {
-        return isAssignable(lCompType, rCompType, allowUncheckedConversion);
+        return !(rCompType instanceof PsiPrimitiveType) && isAssignable(lCompType, rCompType, allowUncheckedConversion);
       }
     }
     else {
@@ -611,7 +609,6 @@ public class TypeConversionUtil {
         if (!(left instanceof PsiPrimitiveType)) {
           return left instanceof PsiClassType && isBoxable((PsiClassType)left, (PsiPrimitiveType)right);
         }
-        if (left == right) return true;
         int leftTypeIndex = TYPE_TO_RANK_MAP.get(left) - 1;
         if (leftTypeIndex < 0) return false;
         int rightTypeIndex = TYPE_TO_RANK_MAP.get(right) - 1;
@@ -662,12 +659,14 @@ public class TypeConversionUtil {
 
   public static boolean boxingConversionApplicable(final PsiType left, final PsiType right) {
     if (left instanceof PsiPrimitiveType && !PsiType.NULL.equals(left)) {
-      return right instanceof PsiClassType && left.isAssignableFrom(right);
+      return right instanceof PsiClassType && isAssignable(left, right);
     }
-    else return left instanceof PsiClassType
+    else {
+      return left instanceof PsiClassType
                 && right instanceof PsiPrimitiveType
                 && !PsiType.NULL.equals(right)
-                && left.isAssignableFrom(right);
+                && isAssignable(left, right);
+    }
   }
 
   private static boolean isBoxable(final PsiClassType left, final PsiPrimitiveType right) {
@@ -683,13 +682,10 @@ public class TypeConversionUtil {
                                            boolean allowUncheckedConversion) {
     final PsiClass leftClass = leftResult.getElement();
     final PsiClass rightClass = rightResult.getElement();
-    if (leftClass == null || rightClass == null) return false;
-
-    if (!InheritanceUtil.isInheritorOrSelf(rightClass, leftClass, true)) {
-      return false;
-    }
-
-    return typeParametersAgree(leftResult, rightResult, allowUncheckedConversion);
+    return leftClass != null
+           && rightClass != null
+           && InheritanceUtil.isInheritorOrSelf(rightClass, leftClass, true)
+           && typeParametersAgree(leftResult, rightResult, allowUncheckedConversion);
   }
 
   private static boolean typeParametersAgree(PsiClassType.ClassResolveResult leftResult,
