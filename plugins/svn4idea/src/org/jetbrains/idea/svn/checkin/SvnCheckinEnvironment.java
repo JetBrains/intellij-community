@@ -262,9 +262,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return SvnBundle.message("checkin.operation.name");
   }
 
-  // TODO: Get rid of CheckitEnvironment and move real commit code here.
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    final List<FilePath> paths = ChangesUtil.getPaths(changes);
+    final Collection<FilePath> paths = ChangesUtil.getPaths(changes);
     FilePath[] arrayed = paths.toArray(new FilePath[paths.size()]);
     return commitInt(SvnCheckinEnvironment.collectPaths(arrayed), preparedComment, true, false);
   }
