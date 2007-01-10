@@ -685,8 +685,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public final void setInBulkUpdate(boolean value) {
-    if (value) putUserData(DOING_BULK_UPDATE,Boolean.TRUE);
-    else putUserData(DOING_BULK_UPDATE,null);
+    putUserData(DOING_BULK_UPDATE,value ? Boolean.TRUE : null);
   }
 }
 
