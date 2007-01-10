@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,6 +21,9 @@ public class LaterInvocator {
   private static final Object LOCK = new Object();
   private static final IdeEventQueue ourEventQueue = IdeEventQueue.getInstance();
 
+  private LaterInvocator() {
+  }
+
   private static class RunnableInfo {
     final Runnable runnable;
     final ModalityState modalityState;
@@ -30,7 +34,7 @@ public class LaterInvocator {
     }
   }
 
-  private static ArrayList ourModalEntities = new ArrayList();
+  private static ArrayList<Object> ourModalEntities = new ArrayList<Object>();
   private static final ArrayList<RunnableInfo> ourQueue = new ArrayList<RunnableInfo>();
   private static int ourQueueSkipCount = 0; // optimization
   private static final Runnable ourFlushQueueRunnable = new FlushQueue();
@@ -175,19 +179,11 @@ public class LaterInvocator {
     return ApplicationManager.getApplication().isDispatchThread();
   }
 
-  public static boolean isInMyRunnable() {
-    // speed
-    //LOG.assertTrue(EventQueue.isDispatchThread());
-
-    if (ourEventStack.isEmpty()) return false;
-    AWTEvent top = ourEventStack.peek();
-    return ourEventQueue.getTrueCurrentEvent() == top;
-  }
-
   private static void requestFlush() {
     SwingUtilities.invokeLater(ourFlushQueueRunnable);
   }
 
+  @Nullable
   private static Runnable pollNext() {
     synchronized (LOCK) {
       ModalityStateEx currentModality = (ModalityStateEx)(ourModalEntities.size() > 0
@@ -207,7 +203,7 @@ public class LaterInvocator {
     }
   }
 
-  private static Object RUN_LOCK = new Object();
+  private final static Object RUN_LOCK = new Object();
 
   private static class FlushQueue implements Runnable {
     public void run() {
