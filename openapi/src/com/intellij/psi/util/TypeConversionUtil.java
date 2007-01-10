@@ -21,8 +21,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectIntHashMap;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -104,6 +104,15 @@ public class TypeConversionUtil {
     //Done with primitives
 
     if (toType instanceof PsiArrayType && !(fromType instanceof PsiArrayType)) {
+      if (fromType instanceof PsiClassType) {
+        final PsiClass resolved = ((PsiClassType)fromType).resolve();
+        if (resolved instanceof PsiTypeParameter) {
+          for (final PsiClassType superType : resolved.getSuperTypes()) {
+            if (!isNarrowingReferenceConversionAllowed(superType, toType)) return false;
+          }
+          return true;
+        }
+      }
       return isAssignable(fromType, toType);
     }
     if (fromType instanceof PsiArrayType) {
