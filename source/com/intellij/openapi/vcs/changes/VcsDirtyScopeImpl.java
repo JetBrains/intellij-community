@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -163,10 +162,10 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
             FilePath parent;
             VirtualFile vParent = path.getVirtualFileParent();
             if (vParent != null && vParent.isValid()) {
-              parent = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(vParent);
+              parent = new FilePathImpl(vParent);
             }
             else {
-              parent = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(path.getIOFile().getParentFile());
+              parent = FilePathImpl.create(path.getIOFile().getParentFile());
             }
             for (FilePath filePath : myDirtyFiles) {
               if (filePath.equals(parent) || filePath.equals(path)) return Boolean.TRUE;

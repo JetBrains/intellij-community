@@ -298,7 +298,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
 
-  public synchronized void dispose() {
+  public void dispose() {
     Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
     final boolean[] canClose = new boolean[]{true};
     for (final Project project : openProjects) {

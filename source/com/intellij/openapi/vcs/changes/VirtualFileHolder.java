@@ -3,8 +3,8 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -32,7 +32,7 @@ public class VirtualFileHolder {
         if (myProject.isDisposed()) return;
         final List<VirtualFile> currentFiles = new ArrayList<VirtualFile>(myFiles);
         for (VirtualFile file : currentFiles) {
-          if (fileDropped(file) || scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+          if (fileDropped(file) || scope.belongsTo(new FilePathImpl(file))) {
             myFiles.remove(file);
           }
         }
