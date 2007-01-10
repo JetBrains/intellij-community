@@ -2,14 +2,12 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
-import org.jetbrains.annotations.NotNull;
 
 public class FileElement extends RepositoryTreeElement{
   private CharTable myCharTable = new CharTableImpl();
@@ -38,16 +36,6 @@ public class FileElement extends RepositoryTreeElement{
     SrcRepositoryPsiElement psiElement = getPsiElement();
     SrcRepositoryPsiElement psiElementCopy = (SrcRepositoryPsiElement)psiElement.copy();
     return psiElementCopy.getTreeElement();
-  }
-
-  @NotNull
-  public char[] textToCharArray() {
-    synchronized (PsiLock.LOCK) {
-      final int textLength = getTextLength();
-      char[] buffer = new char[textLength];
-      SourceUtil.toBuffer(this, buffer, 0);
-      return buffer;
-    }
   }
 
   public void setCharTable(CharTable table) {
