@@ -129,6 +129,7 @@ public class ProjectFacetsConfigurator {
     for (FacetEditor editor : myEditors.values()) {
       editor.disposeUIResources();
     }
+    myEditors.clear();
   }
 
   public boolean isModified() {
@@ -171,6 +172,12 @@ public class ProjectFacetsConfigurator {
           myEditors.put(facet, entry.getValue());
         }
       }
+    }
+  }
+
+  public void disposeEditors() {
+    for (FacetEditor editor : myEditors.values()) {
+      editor.disposeUIResources();
     }
   }
 }
