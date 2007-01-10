@@ -40,8 +40,9 @@ abstract class AbstractCollectionBinding implements Binding {
         if (myAnnotation.elementTag() == null) {
           throw new XmlSerializationException("If surround with tag is turned off, element tag must be specified for: " + myAccessor);
         }
+
         if (myAnnotation.elementTag().equals(Constants.OPTION)) {
-          final Map<Class, Binding> bindings = getElementBindings();
+          getElementBindings();
 
           if (myUsingOptionBinding) {
             throw new XmlSerializationException("If surround with tag is turned off, element tag must be specified for: " + myAccessor);
@@ -94,7 +95,7 @@ abstract class AbstractCollectionBinding implements Binding {
     return binding;
   }
 
-  protected Binding createElementTagWrapper(final Binding elementBinding) {
+  private Binding createElementTagWrapper(final Binding elementBinding) {
     if (myAnnotation == null) return new TagBindingWrapper(elementBinding, Constants.OPTION, Constants.VALUE);
 
     return new TagBindingWrapper(elementBinding,

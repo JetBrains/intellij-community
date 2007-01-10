@@ -4,17 +4,16 @@ import com.intellij.ide.util.projectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.LoadCancelledException;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
@@ -37,6 +36,7 @@ public class NewModuleAction extends AnAction {
     if (wizard.isOK()) {
       final ModuleBuilder moduleBuilder = wizard.getModuleBuilder();
       Exception ex = ApplicationManager.getApplication().runWriteAction(new Computable<Exception>() {
+        @Nullable
         public Exception compute() {
           try {
             final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
@@ -50,15 +50,8 @@ public class NewModuleAction extends AnAction {
       });
 
       if (ex != null) {
-        if (ex instanceof LoadCancelledException) {
-          LoadCancelledException cancelled = (LoadCancelledException)ex;
-          Messages.showInfoMessage(
-            ProjectBundle.message("module.new.creation.cancelled.message", cancelled.getIssuer().getComponentName(), cancelled.getMessage()),
-            ProjectBundle.message("module.new.creation.cancelled.title"));
-        } else {
-          Messages.showErrorDialog(ProjectBundle.message("module.new.error.message", ex.getMessage()),
-                                   ProjectBundle.message("module.new.error.title"));
-        }
+        Messages.showErrorDialog(ProjectBundle.message("module.new.error.message", ex.getMessage()),
+                                 ProjectBundle.message("module.new.error.title"));
       }
     }
   }
@@ -68,9 +61,9 @@ public class NewModuleAction extends AnAction {
     e.getPresentation().setEnabled(getProject(e) != null);
   }
 
+  @Nullable
   private static Project getProject(AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    return (Project)dataContext.getData(DataConstants.PROJECT);
+    return e.getData(DataKeys.PROJECT);
   }
 
 }

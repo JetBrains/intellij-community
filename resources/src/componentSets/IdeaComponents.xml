@@ -1,28 +1,34 @@
-<components>
-  <include name="componentSets/Lvcs"/>
-  <include name="componentSets/Core"/>
-  <include name="componentSets/UILaf"/>
-  <include name="componentSets/UICore"/>
-  <include name="componentSets/WindowManagement"/>
-  <include name="componentSets/Configurables"/>
-  <include name="componentSets/Toolwindows"/>
-  <include name="componentSets/Editor"/>
-  <include name="componentSets/CodeInsight"/>
-  <include name="componentSets/CodeInspection"/>
-  <include name="componentSets/Refactoring"/>
-  <include name="componentSets/Misc"/>
-  <include name="componentSets/Debugger"/>
-  <include name="componentSets/Compiler"/>
-  <include name="componentSets/Execution"/>
-  <include name="componentSets/VCS"/>
-  <include name="componentSets/J2EE"/>
-  <include name="componentSets/Help"/>
-  <include name="componentSets/ErrorReport"/>
-  <include name="componentSets/Http"/>
-  <include name="componentSets/GuiDesigner"/>
-  <include name="componentSets/Util"/>
-  <include name="componentSets/StructuralSearch"/>
-  <include name="componentSets/Css"/>
-  <include name="componentSets/PropertiesFile"/>
-  <include name="componentSets/Profiles"/>
+<?xml version="1.1" encoding="UTF-8" standalone="yes"?>
+<components xmlns:xi="http://www.w3.org/2001/XInclude"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.w3.org/2001/XInclude
+   http://www.w3.org/2001/XInclude.xsd">
+
+  <xi:include href="Lvcs.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Core.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="UILaf.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="UICore.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="WindowManagement.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Configurables.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Toolwindows.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Editor.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="CodeInsight.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="CodeInspection.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Refactoring.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Misc.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Debugger.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Compiler.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Execution.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="VCS.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="J2EE.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Help.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="ErrorReport.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Http.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="GuiDesigner.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Util.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="StructuralSearch.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Css.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="PropertiesFile.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Profiles.xml" xpointer="xpointer(/components/*)"/>
+
 </components>

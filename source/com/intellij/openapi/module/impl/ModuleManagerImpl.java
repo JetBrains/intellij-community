@@ -6,7 +6,6 @@ import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.LoadCancelledException;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
@@ -182,20 +181,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
             }
             catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
               fireError(moduleWithNameAlreadyExists.getMessage(), modulePath);
-            }
-            catch (final LoadCancelledException e) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  int response = Messages.showDialog(ProjectBundle.message("module.loading.cancelled.error", modulePath.getPath(),
-                                                                           e.getIssuer().getComponentName(), e.getMessage()),
-                                                     ProjectBundle.message("module.loading.cancelled.title"), new String[]{
-                    ProjectBundle.message("module.loading.cancelled.load.later.action"),
-                    ProjectBundle.message("module.loading.cancelled.remove.action")}, 0, Messages.getErrorIcon());
-                  if (response == 1) {
-                    myModuleModel.myPathToCancelledModule.remove(modulePath.getPath());
-                  }
-                }
-              });
             }
           }
           if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !modulesWithUnknownTypes.isEmpty()) {
@@ -628,8 +613,8 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     private Module loadModuleInternal(String filePath) throws ModuleWithNameAlreadyExists,
                                                               JDOMException,
                                                               IOException,
-                                                              InvalidDataException,
-                                                              LoadCancelledException {
+                                                              InvalidDataException
+                                                               {
       final File moduleFile = new File(filePath);
       try {
         filePath = FileUtil.resolveShortWindowsName(filePath);
@@ -659,19 +644,10 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       return module;
     }
 
-    private void initModule(ModuleImpl module, boolean saveToCancelled) throws LoadCancelledException {
+    private void initModule(ModuleImpl module, boolean saveToCancelled) {
       String path = module.getModuleFilePath();
-      try {
-        myPathToModule.put(path, module);
-        module.init();
-      }
-      catch (LoadCancelledException e) {
-        myPathToModule.remove(path);
-        if (saveToCancelled) {
-          myPathToCancelledModule.put(path, module);
-        }
-        throw e;
-      }
+      myPathToModule.put(path, module);
+      module.init();
     }
 
     public void disposeModule(@NotNull Module module) {

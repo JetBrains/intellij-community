@@ -1,5 +1,6 @@
 package com.intellij.util.xmlb;
 
+import com.intellij.util.DOMUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -23,7 +24,14 @@ class TagBindingWrapper implements Binding {
     Document ownerDocument = XmlSerializerImpl.getOwnerDocument(context);
     Element e = ownerDocument.createElement(myTagName);
     Node n = binding.serialize(o, e);
-    e.setAttribute(myAttributeName, n.getNodeValue());
+
+    if (myAttributeName.length() != 0) {
+      e.setAttribute(myAttributeName, n.getNodeValue());
+    }
+    else {
+      e.appendChild(ownerDocument.createTextNode(n.getNodeValue()));
+    }
+
     return e;
   }
 
@@ -31,7 +39,15 @@ class TagBindingWrapper implements Binding {
     assert nodes.length == 1;
 
     Element e = (Element)nodes[0];
-    return binding.deserialize(context, e.getAttributeNode(myAttributeName));
+    final Node[] childNodes;
+    if (myAttributeName.length() != 0) {
+      childNodes = new Node[]{e.getAttributeNode(myAttributeName)};
+    }
+    else {
+      childNodes = DOMUtil.getChildNodes(e);
+    }
+  
+    return binding.deserialize(context, childNodes);
   }
 
   public boolean isBoundTo(Node node) {

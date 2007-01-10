@@ -1,4 +1,4 @@
-package com.intellij.openapi.components.impl;
+package com.intellij.openapi.components;
 
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
@@ -7,19 +7,19 @@ import com.intellij.util.xmlb.annotations.Tag;
 import java.util.HashMap;
 import java.util.Map;
 
-@Tag(name = "component")
+@Tag("component")
 public class ComponentConfig {
-  @Tag(name = "implementation-class")
+  @Tag("implementation-class")
   public String implementationClass;
 
-  @Tag(name = "interface-class")
+  @Tag("interface-class")
   public String interfaceClass;
 
-  @Tag(name = "headless-implementation-class")
+  @Tag("headless-implementation-class")
   public String headlessImplementationClass;
 
   //todo: empty tag means TRUE
-  @Tag(name = "skipForDummyProject")
+  @Tag(value = "skipForDummyProject", textIfEmpty="true")
   public boolean skipForDummyProject;
 
   @Property(surroundWithTag = false)

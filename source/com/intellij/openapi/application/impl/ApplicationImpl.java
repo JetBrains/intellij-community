@@ -10,10 +10,10 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.components.impl.stores.IApplicationStore;
+import com.intellij.openapi.components.impl.stores.StoreFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
@@ -27,20 +27,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.convertors.Convertor34;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
-import com.intellij.util.containers.HashMap;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
@@ -48,11 +41,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
 import java.util.List;
+import java.util.Stack;
 import java.util.concurrent.*;
 
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
@@ -82,12 +74,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private long myStartTime = 0;
   private boolean myDoNotSave = false;
   private boolean myIsWaitingForWriteAction = false;
-  @NonNls private static final String APPLICATION_ELEMENT = "application";
-  @NonNls private static final String ELEMENT_COMPONENT = "component";
-  @NonNls private static final String ATTRIBUTE_NAME = "name";
-  @NonNls private static final String ATTRIBUTE_CLASS = "class";
   @NonNls private static final String NULL_STR = "null";
-  @NonNls private static final String XML_EXTENSION = ".xml";
+  private final IApplicationStore myApplicationStore;
+
 
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
     15,
@@ -120,7 +109,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   );
 
 
+  public IApplicationStore getStateStore() {
+    return (IApplicationStore)super.getStateStore();
+  }
+
   public ApplicationImpl(String componentsDescriptor, boolean isInternal, boolean isUnitTestMode, boolean isHeadless, String appName) {
+    super(StoreFactory.createApplicationStore());
+    myApplicationStore = getStateStore();
+    myApplicationStore.setApplication(this);
+
+
     if (isInternal || isUnitTestMode) {
       Disposer.setDebugMode(true);
     }
@@ -196,7 +194,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return myName;
   }
 
-  protected void initComponents() {
+  public void initComponents() {
     initComponentsFromExtensions(Extensions.getRootArea());
     super.initComponents();
   }
@@ -241,17 +239,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
       for (IdeaPluginDescriptor plugin : plugins) {
         if (!PluginManager.shouldLoadPlugin(plugin)) continue;
-        final Element appComponents = plugin.getAppComponents();
-        if (appComponents != null) {
-          loadComponentsConfiguration(appComponents, plugin, true);
-        }
+        loadComponentsConfiguration(plugin.getAppComponents(), plugin, true);
       }
     }
   }
 
   protected MutablePicoContainer createPicoContainer() {
     final AreaPicoContainer picoContainer = Extensions.getRootArea().getPicoContainer();
-    picoContainer.setComponentAdapterFactory(new MyComponentAdapterFactory());
+    picoContainer.setComponentAdapterFactory(new MyComponentAdapterFactory(this));
     return picoContainer;
   }
 
@@ -297,169 +292,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return EventQueue.isDispatchThread();
   }
 
-  private void save(String path) throws IOException {
-    deleteBackupFiles(path);
-    backupFiles(path);
-
-    Class[] componentClasses = getComponentInterfaces();
-
-    HashMap<String, Element> fileNameToRootElementMap = new HashMap<String, Element>();
-
-    for (Class<?> componentClass : componentClasses) {
-      Object component = getComponent(componentClass);
-      if (!(component instanceof BaseComponent)) continue;
-      String fileName;
-      if (component instanceof NamedJDOMExternalizable) {
-        fileName = ((NamedJDOMExternalizable)component).getExternalFileName() + XML_EXTENSION;
-      }
-      else {
-        fileName = PathManager.DEFAULT_OPTIONS_FILE_NAME + XML_EXTENSION;
-      }
-
-      Element root = getRootElement(fileNameToRootElementMap, fileName);
-      try {
-        Element node = serializeComponent((BaseComponent)component);
-        if (node != null) {
-          root.addContent(node);
-        }
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-
-    for (String fileName : fileNameToRootElementMap.keySet()) {
-      Element root = fileNameToRootElementMap.get(fileName);
-
-      JDOMUtil.writeDocument(new Document(root), path + File.separatorChar + fileName,
-                             CodeStyleSettingsManager.getSettings(null).getLineSeparator());
-    }
-
-    deleteBackupFiles(path);
-  }
-
-  private static void backupFiles(String path) throws IOException {
-    String[] list = new File(path).list();
-    for (String name : list) {
-      if (StringUtil.endsWithIgnoreCase(name, XML_EXTENSION)) {
-        File file = new File(path + File.separatorChar + name);
-        File newFile = new File(path + File.separatorChar + name + "~");
-        FileUtil.rename(file, newFile);
-      }
-    }
-  }
-
-  private static Element getRootElement(Map<String, Element> fileNameToRootElementMap, String fileName) {
-    Element root = fileNameToRootElementMap.get(fileName);
-    if (root == null) {
-      root = new Element(APPLICATION_ELEMENT);
-      fileNameToRootElementMap.put(fileName, root);
-    }
-    return root;
-  }
-
-  private static void deleteBackupFiles(String path) throws IOException {
-    String[] list = new File(path).list();
-    for (String name : list) {
-      if (StringUtil.endsWithChar(name.toLowerCase(), '~')) {
-        File file = new File(path + File.separatorChar + name);
-        if (!file.delete()) {
-          throw new IOException(ApplicationBundle.message("backup.cannot.delete.file", file.getPath()));
-        }
-      }
-    }
-  }
 
   public void load(String path) throws IOException, InvalidDataException {
-    try {
-      if (path == null) return;
-      loadConfiguration(path);
-    }
-    finally {
-      initComponents();
-      clearDomMap();
-    }
+    myApplicationStore.loadApplication(path);
   }
 
-  private void loadConfiguration(String path) {
-    clearDomMap();
 
-    File configurationDir = new File(path);
-    if (!configurationDir.exists()) return;
-
-    Set<String> names = new HashSet<String>(Arrays.asList(configurationDir.list()));
-
-    for (Iterator<String> i = names.iterator(); i.hasNext();) {
-      String name = i.next();
-      if (name.endsWith(XML_EXTENSION)) {
-        String backupName = name + "~";
-        if (names.contains(backupName)) i.remove();
-      }
-    }
-
-    for (String name : names) {
-      if (!name.endsWith(XML_EXTENSION) && !name.endsWith(XML_EXTENSION + "~")) continue; // see SCR #12791
-      final String filePath = path + File.separatorChar + name;
-      File file = new File(filePath);
-      if (!file.exists() || !file.isFile()) continue;
-
-      try {
-        loadFile(filePath);
-      }
-      catch (Exception e) {
-        //OK here. Just drop corrupted settings.
-      }
-    }
-  }
-
-  private void loadFile(String filePath) throws JDOMException, InvalidDataException, IOException {
-    Document document = JDOMUtil.loadDocument(new File(filePath));
-    if (document == null) {
-      throw new InvalidDataException();
-    }
-
-    Element root = document.getRootElement();
-    if (root == null || !APPLICATION_ELEMENT.equals(root.getName())) {
-      throw new InvalidDataException();
-    }
-
-    final List<String> additionalFiles = new ArrayList<String>();
-    synchronized (this) {
-      List children = root.getChildren(ELEMENT_COMPONENT);
-      for (final Object aChildren : children) {
-        Element element = (Element)aChildren;
-
-        String name = element.getAttributeValue(ATTRIBUTE_NAME);
-        if (name == null || name.length() == 0) {
-          String className = element.getAttributeValue(ATTRIBUTE_CLASS);
-          if (className == null) {
-            throw new InvalidDataException();
-          }
-          name = className.substring(className.lastIndexOf('.') + 1);
-        }
-
-        convertComponents(root, filePath, additionalFiles);
-
-        addConfiguration(name, element);
-      }
-    }
-
-    for (String additionalPath : additionalFiles) {
-      loadFile(additionalPath);
-    }
-  }
-
-  private static void convertComponents(Element root, String filePath, final List<String> additionalFiles) {// Converting components
-    final String additionalFilePath;
-    additionalFilePath = Convertor34.convertLibraryTable34(root, filePath);
-    if (additionalFilePath != null) {
-      additionalFiles.add(additionalFilePath);
-    }
-    // Additional converors here probably, adding new files to load
-    // to aditionalFiles
-  }
-
-  public void dispose() {
+  public synchronized void dispose() {
     Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
     final boolean[] canClose = new boolean[]{true};
     for (final Project project : openProjects) {
@@ -552,11 +391,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     LaterInvocator.invokeLater(runnable);
   }
 
-  public void invokeLater(Runnable runnable, ModalityState state) {
+  public void invokeLater(Runnable runnable, @NotNull ModalityState state) {
     LaterInvocator.invokeLater(runnable, state);
   }
 
-  public void invokeAndWait(Runnable runnable, ModalityState modalityState) {
+  public void invokeAndWait(Runnable runnable, @NotNull ModalityState modalityState) {
     if (isDispatchThread()) {
       LOG.error("invokeAndWait should not be called from event queue thread");
       runnable.run();
@@ -941,37 +780,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  protected Element getDefaults(BaseComponent component) throws IOException, JDOMException, InvalidDataException {
-    InputStream stream = getDefaultsInputStream(component);
-
-    if (stream != null) {
-      Document document = null;
-      try {
-        document = JDOMUtil.loadDocument(stream);
-      }
-      finally {
-        stream.close();
-      }
-      if (document == null) {
-        throw new InvalidDataException();
-      }
-      Element root = document.getRootElement();
-      if (root == null || !ELEMENT_COMPONENT.equals(root.getName())) {
-        throw new InvalidDataException();
-      }
-      return root;
-    }
-    return null;
-  }
-
   @Nullable
   protected ComponentManagerImpl getParentComponentManager() {
     return null;
   }
 
-  private static InputStream getDefaultsInputStream(BaseComponent component) {
-    return DecodeDefaultsUtil.getDefaultsInputStream(component);
-  }
 
   public void saveSettings() {
     if (myDoNotSave) return;
@@ -988,7 +801,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         }
 
         try {
-          save(optionsPath);
+          myApplicationStore.saveApplication(optionsPath);
         }
         catch (final Throwable ex) {
           LOG.info("Saving application settings failed", ex);

@@ -3,9 +3,11 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -21,8 +23,10 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
 
   String getName();
 
+  @NotNull
   PluginId[] getDependentPluginIds();
 
+  @NotNull
   PluginId[] getOptionalDependentPluginIds();
 
   String getVendor();
@@ -35,11 +39,14 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
 
   Element getActionsDescriptionElement();
 
-  Element getAppComponents();
+  @NotNull
+  ComponentConfig[] getAppComponents();
 
-  Element getProjectComponents();
+  @NotNull
+  ComponentConfig[] getProjectComponents();
 
-  Element getModuleComponents();
+  @NotNull
+  ComponentConfig[] getModuleComponents();
 
   String getVendorEmail();
 
@@ -47,6 +54,7 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
 
   String getUrl();
 
+  @NotNull
   HelpSetPath[] getHelpSets();
 
   String getVendorLogoPath();

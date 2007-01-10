@@ -1,6 +1,5 @@
 package com.intellij.openapi.project.impl;
 
-import com.intellij.CommonBundle;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -10,7 +9,6 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
@@ -25,16 +23,19 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.ProfilingUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.TObjectLongHashMap;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,10 +43,9 @@ import java.util.*;
 
 public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectManagerImpl");
-  static final int CURRENT_FORMAT_VERSION = 4;
+  public static final int CURRENT_FORMAT_VERSION = 4;
 
   private static final Key<ArrayList<ProjectManagerListener>> LISTENERS_IN_PROJECT_KEY = Key.create("LISTENERS_IN_PROJECT_KEY");
-  @NonNls private static final String OLD_PROJECT_SUFFIX = "_old.";
   @NonNls private static final String ELEMENT_DEFAULT_PROJECT = "defaultProject";
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
@@ -68,7 +68,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private Map<VirtualFile, byte[]> mySavedCopies = new HashMap<VirtualFile, byte[]>();
   private TObjectLongHashMap<VirtualFile> mySavedTimestamps = new TObjectLongHashMap<VirtualFile>();
   private HashMap<Project, List<VirtualFile>> myChangedProjectFiles = new HashMap<Project, List<VirtualFile>>();
-  private PathMacrosImpl myPathMacros;
+  //todo[mike] make private again
+  public PathMacrosImpl myPathMacros;
   private volatile int myReloadBlockCount = 0;
 
   private static ProjectManagerListener[] getListeners(Project project) {
@@ -134,10 +135,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     ProjectImpl project = createProject(filePath, false, isDummy, ApplicationManager.getApplication().isUnitTestMode());
 
     if (useDefaultProjectSettings) {
-      ProjectImpl defaultProject = (ProjectImpl)getDefaultProject();
-      Element element = defaultProject.saveToXml(null, defaultProject.getProjectFile());
       try {
-        project.loadFromXml(element, filePath);
+        project.getStateStore().loadProjectFromTemplate(getDefaultProject());
       }
       catch (Exception e) {
         LOG.error(e);
@@ -163,28 +162,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public Project loadProject(String filePath) throws IOException, JDOMException, InvalidDataException {
     filePath = canonicalize(filePath);
     ProjectImpl project = createProject(filePath, false, false, false);
-
-    // http://www.jetbrains.net/jira/browse/IDEA-1556. Enforce refresh. Project files may potentially reside in non-yet valid vfs paths.
-    final ConfigurationFile[] files = project.getConfigurationFiles();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (ConfigurationFile file : files) {
-          LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getFilePath().replace(File.separatorChar, '/'));
-        }
-      }
-    });
-
-    final boolean macrosOk = checkMacros(project, getDefinedMacros());
-    if (!macrosOk) {
-      throw new IOException(ProjectBundle.message("project.load.undefined.path.variables.error"));
-    }
-
-    project.loadSavedConfiguration();
-
-    project.init();
+    project.getStateStore().loadProject(this);
     return project;
   }
 
+  @Nullable
   private static String canonicalize(final String filePath) {
     if (filePath == null) return null;
     try {
@@ -195,42 +177,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
 
     return filePath;
-  }
-
-  private Set<String> getDefinedMacros() {
-    Set<String> definedMacros = new HashSet<String>(myPathMacros.getUserMacroNames());
-    definedMacros.addAll(myPathMacros.getSystemMacroNames());
-    definedMacros = Collections.unmodifiableSet(definedMacros);
-    return definedMacros;
-  }
-
-  private boolean checkMacros(Project project, Set<String> definedMacros) throws IOException, JDOMException {
-    String projectFilePath = project.getProjectFilePath();
-    if (projectFilePath == null) {
-      return true;
-    }
-    Document document = JDOMUtil.loadDocument(new File(projectFilePath));
-    Element root = document.getRootElement();
-    final Set<String> usedMacros = new HashSet<String>(Arrays.asList(ProjectImpl.readUsedMacros(root)));
-
-    usedMacros.removeAll(definedMacros);
-
-    // try to lookup values in System properties
-    for (Iterator it = usedMacros.iterator(); it.hasNext();) {
-      final String macro = (String)it.next();
-      final String value = System.getProperty(macro, null);
-      if (value != null) {
-        myPathMacros.setMacro(macro, value);
-        it.remove();
-      }
-    }
-
-    if (usedMacros.isEmpty()) {
-      return true; // all macros in configuration files are defined
-    }
-    
-    // there are undefined macros, need to define them before loading components
-    return showMacrosConfigurationDialog(project, usedMacros);
   }
 
   public static boolean showMacrosConfigurationDialog(Project project, final Set<String> undefinedMacros) {
@@ -285,7 +231,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   public boolean openProject(final Project project) {
     if (myOpenProjects.contains(project)) return false;
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !checkVersion(project)) return false;
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !((ProjectImpl)project).myProjectStore.checkVersion()) return false;
 
 
     myCountOfProjectsBeingOpen++;
@@ -511,77 +457,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       files.add(module.getModuleFile());
     }
     return files;
-  }
-
-  private static boolean checkVersion(final Project project) {
-    int version = ((ProjectImpl)project).getOriginalVersion();
-    if (version >= 0 && version < CURRENT_FORMAT_VERSION) {
-      final VirtualFile projectFile = project.getProjectFile();
-      LOG.assertTrue(projectFile != null);
-      String name = projectFile.getNameWithoutExtension();
-
-      String message = ProjectBundle.message("project.convert.old.prompt", projectFile.getName(),
-                                             ApplicationNamesInfo.getInstance().getProductName(),
-                                             name + OLD_PROJECT_SUFFIX + projectFile.getExtension());
-      if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != 0) return false;
-
-      final ArrayList<String> conversionProblems = ((ProjectImpl)project).getConversionProblemsStorage();
-      if (conversionProblems.size() > 0) {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append(ProjectBundle.message("project.convert.problems.detected"));
-        for (String s : conversionProblems) {
-          buffer.append('\n');
-          buffer.append(s);
-        }
-        buffer.append(ProjectBundle.message("project.convert.problems.help"));
-        final int result = Messages.showDialog(project, buffer.toString(), ProjectBundle.message("project.convert.problems.title"),
-                                               new String[]{ProjectBundle.message("project.convert.problems.help.button"),
-                                                 CommonBundle.getCloseButtonText()}, 0,
-                                                                                     Messages.getWarningIcon()
-        );
-        if (result == 0) {
-          HelpManager.getInstance().invokeHelp("project.migrationProblems");
-        }
-      }
-
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          try {
-            VirtualFile projectDir = projectFile.getParent();
-            assert projectDir != null;
-
-            final String oldProjectName = projectFile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX + projectFile.getExtension();
-            VirtualFile oldProject = projectDir.findChild(oldProjectName);
-            if (oldProject == null) {
-              oldProject = projectDir.createChildData(this, oldProjectName);
-            }
-            VfsUtil.saveText(oldProject, VfsUtil.loadText(projectFile));
-            VirtualFile workspaceFile = project.getWorkspaceFile();
-            if (workspaceFile != null) {
-              final String oldWorkspaceName = workspaceFile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX +
-                                              project.getWorkspaceFile().getExtension();
-              VirtualFile oldWorkspace = projectDir.findChild(oldWorkspaceName);
-              if (oldWorkspace == null) {
-                oldWorkspace = projectDir.createChildData(this, oldWorkspaceName);
-              }
-              VfsUtil.saveText(oldWorkspace, VfsUtil.loadText(workspaceFile));
-            }
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-        }
-      });
-    }
-
-    if (version > CURRENT_FORMAT_VERSION) {
-      String message =
-        ProjectBundle.message("project.load.new.version.warning", project.getName(), ApplicationNamesInfo.getInstance().getProductName());
-
-      if (Messages.showYesNoDialog(message, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) != 0) return false;
-    }
-
-    return true;
   }
 
   /*

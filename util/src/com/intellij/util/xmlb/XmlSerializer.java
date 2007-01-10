@@ -8,6 +8,7 @@ import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.URL;
 
 public class XmlSerializer {
@@ -42,6 +43,17 @@ public class XmlSerializer {
     catch (Exception e) {
       throw new XmlSerializationException(e);
     }
+  }
+
+  public static <T> T[] deserialize(Element[] elements, Class<T> aClass) throws XmlSerializationException {
+    //noinspection unchecked
+    T[] result = (T[])Array.newInstance(aClass, elements.length);
+
+    for (int i = 0; i < result.length; i++) {
+      result[i] = deserialize(elements[i], aClass);
+    }
+
+    return result;
   }
 
   @Nullable

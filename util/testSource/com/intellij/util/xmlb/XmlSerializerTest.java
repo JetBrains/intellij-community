@@ -7,8 +7,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -31,7 +29,7 @@ public class XmlSerializerTest extends TestCase {
     doSerializerTest("<EmptyBean/>", new EmptyBean());
   }
 
-  @Tag(name = "Bean")
+  @Tag("Bean")
   public static class EmptyBeanWithCustomName {
   }
 
@@ -117,7 +115,7 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public static class BeanWithList {
-    public List<String> VALUES = new ArrayList<String>(Arrays.asList(new String[]{"a", "b", "c"}));
+    public List<String> VALUES = new ArrayList<String>(Arrays.asList("a", "b", "c"));
   }
 
   public void testListSerialization() throws Exception {
@@ -127,7 +125,7 @@ public class XmlSerializerTest extends TestCase {
       "<BeanWithList><option name=\"VALUES\"><collection><option value=\"a\"/><option value=\"b\"/><option value=\"c\"/></collection></option></BeanWithList>",
       bean);
 
-    bean.VALUES = new ArrayList<String>(Arrays.asList(new String[]{"1", "2", "3"}));
+    bean.VALUES = new ArrayList<String>(Arrays.asList("1", "2", "3"));
 
     doSerializerTest(
       "<BeanWithList><option name=\"VALUES\"><collection><option value=\"1\"/><option value=\"2\"/><option value=\"3\"/></collection></option></BeanWithList>",
@@ -135,7 +133,7 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public static class BeanWithSet {
-    public Set<String> VALUES = new HashSet<String>(Arrays.asList(new String[]{"a", "b", "w"}));
+    public Set<String> VALUES = new HashSet<String>(Arrays.asList("a", "b", "w"));
   }
 
   public void testSetSerialization() throws Exception {
@@ -143,7 +141,7 @@ public class XmlSerializerTest extends TestCase {
     doSerializerTest(
       "<BeanWithSet><option name=\"VALUES\"><collection><option value=\"w\"/><option value=\"a\"/><option value=\"b\"/></collection></option></BeanWithSet>",
       bean);
-    bean.VALUES = new HashSet<String>(Arrays.asList(new String[]{"1", "2", "3"}));
+    bean.VALUES = new HashSet<String>(Arrays.asList("1", "2", "3"));
 
     doSerializerTest(
       "<BeanWithSet><option name=\"VALUES\"><collection><option value=\"3\"/><option value=\"2\"/><option value=\"1\"/></collection></option></BeanWithSet>",
@@ -232,7 +230,7 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public static class BeanWithFieldWithTagAnnotation {
-    @Tag(name = "name")
+    @Tag("name")
     public String STRING_V = "hello";
   }
 
@@ -395,6 +393,23 @@ public class XmlSerializerTest extends TestCase {
     doSerializerTest("<BeanWithArrayWithoutAllsTag><option name=\"INT_V\" value=\"2\"/><vvalue v=\"1\"/><vvalue v=\"2\"/><vvalue v=\"3\"/></BeanWithArrayWithoutAllsTag>", bean);
   }
 
+  public static class BeanWithArrayWithoutAllsTag2 {
+    @Property(surroundWithTag = false)
+    @com.intellij.util.xmlb.annotations.AbstractCollection(elementTag = "vvalue", elementValueAttribute = "", surroundWithTag = false)
+    public String[] V = new String[]{"a", "b"};
+    public int INT_V = 1;
+  }
+  public void testArrayWithoutAllTags2() throws Exception {
+    final BeanWithArrayWithoutAllsTag2 bean = new BeanWithArrayWithoutAllsTag2();
+
+    doSerializerTest("<BeanWithArrayWithoutAllsTag2><option name=\"INT_V\" value=\"1\"/><vvalue>a</vvalue><vvalue>b</vvalue></BeanWithArrayWithoutAllsTag2>", bean);
+
+    bean.INT_V = 2;
+    bean.V = new String[] {"1", "2", "3"};
+
+    doSerializerTest("<BeanWithArrayWithoutAllsTag2><option name=\"INT_V\" value=\"2\"/><vvalue>1</vvalue><vvalue>2</vvalue><vvalue>3</vvalue></BeanWithArrayWithoutAllsTag2>", bean);
+  }
+
   public void testDeserializeFromFormattedXML() throws Exception {
     String xml = "<BeanWithArrayWithoutAllsTag>\n" + "  <option name=\"INT_V\" value=\"2\"/>\n" + "  <vvalue v=\"1\"/>\n" +
                  "  <vvalue v=\"2\"/>\n" + "  <vvalue v=\"3\"/>\n" + "</BeanWithArrayWithoutAllsTag>";
@@ -429,9 +444,9 @@ public class XmlSerializerTest extends TestCase {
 
 
   public static class BeanWithPropertiesBoundToAttribute {
-    @Attribute(name = "count")
+    @Attribute( "count")
     public int COUNT = 3;
-    @Attribute(name = "name")
+    @Attribute("name")
     public String name = "James";
   }
   public void testBeanWithPrimitivePropertyBoundToAttribute() throws Exception {
@@ -445,6 +460,90 @@ public class XmlSerializerTest extends TestCase {
     doSerializerTest("<BeanWithPropertiesBoundToAttribute count=\"10\" name=\"Bond\"/>", bean);
   }
 
+
+  public static class BeanWithPropertyFilter {
+    @Property(
+      filter = PropertyFilterTest.class
+    )
+    public String STRING_V = "hello";
+  }
+  public static class PropertyFilterTest implements SerializationFilter {
+    public boolean accepts(Accessor accessor, Object bean) {
+      return !accessor.read(bean).equals("skip");
+    }
+  }
+  public void testPropertyFilter() throws Exception {
+    BeanWithPropertyFilter bean = new BeanWithPropertyFilter();
+
+    doSerializerTest(
+      "<BeanWithPropertyFilter><option name=\"STRING_V\" value=\"hello\"/></BeanWithPropertyFilter>", bean);
+
+    bean.STRING_V = "bye";
+
+    doSerializerTest(
+      "<BeanWithPropertyFilter><option name=\"STRING_V\" value=\"bye\"/></BeanWithPropertyFilter>", bean);
+
+    bean.STRING_V = "skip";
+
+    assertSerializer(bean, "<BeanWithPropertyFilter/>", "Serialization failure", null);
+  }
+
+  public static class BeanWithJDOMElement {
+    public String STRING_V = "hello";
+    @Tag("actions")
+    public org.jdom.Element actions;
+  }
+  public void testJDOMElementField() throws Exception {
+
+
+    final BeanWithJDOMElement bean = XmlSerializer.deserialize(DOMUtil.loadText(
+      "<BeanWithJDOMElement><option name=\"STRING_V\" value=\"bye\"/><actions><action/><action/></actions></BeanWithJDOMElement>"
+    ).getDocumentElement(), BeanWithJDOMElement.class);
+
+
+    assertEquals("bye", bean.STRING_V);
+    assertNotNull(bean.actions);
+    assertEquals(2, bean.actions.getChildren("action").size());
+  }
+
+  public static class BeanWithJDOMElementArray {
+    public String STRING_V = "hello";
+    @Tag("actions")
+    public org.jdom.Element[] actions;
+  }
+  public void testJDOMElementArrayField() throws Exception {
+
+
+    final BeanWithJDOMElementArray bean = XmlSerializer.deserialize(DOMUtil.loadText(
+      "<BeanWithJDOMElementArray><option name=\"STRING_V\" value=\"bye\"/><actions><action/><action/></actions><actions><action/></actions></BeanWithJDOMElementArray>"
+    ).getDocumentElement(), BeanWithJDOMElementArray.class);
+
+
+    assertEquals("bye", bean.STRING_V);
+    assertNotNull(bean.actions);
+    assertEquals(2, bean.actions.length);
+    assertEquals(2, bean.actions[0].getChildren().size());
+    assertEquals(1, bean.actions[1].getChildren().size());
+  }
+
+  public static class BeanWithTextAnnotation {
+    public int INT_V = 1;
+    @Text
+    public String STRING_V = "hello";
+  }
+
+  public void testTextAnnotation() throws Exception {
+    BeanWithTextAnnotation bean = new BeanWithTextAnnotation();
+
+    doSerializerTest(
+      "<BeanWithTextAnnotation><option name=\"INT_V\" value=\"1\"/>hello</BeanWithTextAnnotation>", bean);
+
+    bean.INT_V = 2;
+    bean.STRING_V = "bye";
+
+    doSerializerTest(
+      "<BeanWithTextAnnotation><option name=\"INT_V\" value=\"2\"/>bye</BeanWithTextAnnotation>", bean);
+  }
 
   //---------------------------------------------------------------------------------------------------
   private void assertSerializer(Object bean, String expected, SerializationFilter filter)
@@ -485,9 +584,7 @@ public class XmlSerializerTest extends TestCase {
   }
 
   private Element serialize(Object bean, SerializationFilter filter) throws ParserConfigurationException {
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    DocumentBuilder documentBuilder = factory.newDocumentBuilder();
-    Document document = documentBuilder.newDocument();
+    Document document = DOMUtil.createDocument();
 
     Element element = XmlSerializer.serialize(bean, document, filter);
     document.appendChild(element);

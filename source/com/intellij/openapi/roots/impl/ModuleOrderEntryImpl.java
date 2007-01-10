@@ -98,7 +98,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
 
   @NotNull
   VirtualFile[] getFiles(OrderRootType type, Set<Module> processed) {
-    if (myModule != null && !processed.contains(myModule)) {
+    if (myModule != null && !processed.contains(myModule) && !myModule.isDisposed()) {
       processed.add(myModule);
       return ((ModuleRootManagerImpl)ModuleRootManager.getInstance(myModule)).getFilesForOtherModules(type, processed);
     }
@@ -113,7 +113,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
   }
 
   public String[] getUrls (OrderRootType rootType, Set<Module> processed) {
-    if (myModule != null && !processed.contains(myModule)) {
+    if (myModule != null && !processed.contains(myModule) && !myModule.isDisposed()) {
       processed.add(myModule);
       return ((ModuleRootManagerImpl)ModuleRootManager.getInstance(myModule)).getUrlsForOtherModules(rootType, processed);
     }

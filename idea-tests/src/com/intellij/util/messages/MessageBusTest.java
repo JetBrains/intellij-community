@@ -60,7 +60,7 @@ public class MessageBusTest extends TestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myBus = MessageBusFactory.newMessageBus();
+    myBus = MessageBusFactory.newMessageBus(this);
     myLog = new ArrayList<String>();
   }
 

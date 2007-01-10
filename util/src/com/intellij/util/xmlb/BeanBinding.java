@@ -2,10 +2,7 @@ package com.intellij.util.xmlb;
 
 import com.intellij.util.DOMUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.NonNls;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
@@ -69,6 +66,20 @@ class BeanBinding implements Binding {
     for (Binding binding : bindings) {
       Accessor accessor = myPropertyBindings.get(binding);
       if (!filter.accepts(accessor, o)) continue;
+
+      //todo: optimize. Cache it.
+      final Property property = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Property.class);
+      if (property != null) {
+        try {
+          if (!property.filter().newInstance().accepts(accessor, o)) continue;
+        }
+        catch (InstantiationException e) {
+          throw new XmlSerializationException(e);
+        }
+        catch (IllegalAccessException e) {
+          throw new XmlSerializationException(e);
+        }
+      }
 
       Node node = binding.serialize(o, element);
       if (node != element) {
@@ -147,7 +158,7 @@ class BeanBinding implements Binding {
 
   private static String getTagName(Class<?> aClass) {
     Tag tag = aClass.getAnnotation(Tag.class);
-    if (tag != null && tag.name().length() != 0) return tag.name();
+    if (tag != null && tag.value().length() != 0) return tag.value();
 
     return aClass.getSimpleName();
   }
@@ -204,6 +215,13 @@ class BeanBinding implements Binding {
     Property property = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Property.class);
     Tag tag = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Tag.class);
     Attribute attribute = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Attribute.class);
+    Text text = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), Text.class);
+
+    final Binding binding = xmlSerializer.getTypeBinding(accessor.getGenericType(), accessor);
+
+    if (binding instanceof JDOMElementBinding) return binding;
+
+    if (text != null) return new TextBinding(accessor, xmlSerializer);
 
     if (attribute != null) {
       return new AttributeBinding(accessor, attribute, xmlSerializer);
@@ -211,17 +229,20 @@ class BeanBinding implements Binding {
 
 
     if (tag != null) {
-      if (tag.name().length() > 0) return new TagBinding(accessor, tag, xmlSerializer);
+      if (tag.value().length() > 0) return new TagBinding(accessor, tag, xmlSerializer);
     }
 
+    boolean surroundWithTag = true;
+
     if (property != null) {
-      if (!property.surroundWithTag()) {
-        final Binding binding = xmlSerializer.getTypeBinding(accessor.getGenericType(), accessor);
-        if (!Element.class.isAssignableFrom(binding.getBoundNodeType())) {
-          throw new XmlSerializationException("Text-serializable properties can't be serialized without surrounding tags: " + accessor);
-        }
-        return new AccessorBindingWrapper(accessor, binding);
+      surroundWithTag = property.surroundWithTag();
+    }
+
+    if (!surroundWithTag) {
+      if (!Element.class.isAssignableFrom(binding.getBoundNodeType())) {
+        throw new XmlSerializationException("Text-serializable properties can't be serialized without surrounding tags: " + accessor);
       }
+      return new AccessorBindingWrapper(accessor, binding);
     }
 
     return new OptionTagBinding(accessor, xmlSerializer);

@@ -1,12 +1,13 @@
 package com.intellij.testFramework;
 
-import com.intellij.openapi.compiler.make.ModuleBuildProperties;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.make.ModuleBuildProperties;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Computable;
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -97,6 +99,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   }
 
 
+  @Nullable
   protected ModuleImpl loadAllModulesUnder(VirtualFile rootDir) throws Exception {
     ModuleImpl module = null;
     final VirtualFile[] children = rootDir.getChildren();
@@ -115,14 +118,16 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   }
 
   protected void readJdomExternalizables(ModuleImpl module) {
+    final ProjectImpl project = ((ProjectImpl)myProject);
+    project.setOptimiseTestLoadSpeed(false);
     final ModuleRootManagerImpl moduleRootManager = (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
-    module.doInitJdomExternalizable(ModuleRootManager.class, moduleRootManager);
+    module.getStateStore().initComponent(moduleRootManager, ModuleRootManager.class);
 
     ModuleBuildProperties moduleBuildProperties = ModuleBuildProperties.getInstance(module);
     if (moduleBuildProperties != null) {
-      module.doInitJdomExternalizable(ModuleBuildProperties.class, moduleBuildProperties);
+      module.getStateStore().initComponent(moduleBuildProperties, ModuleBuildProperties.class);
     }
-
+    project.setOptimiseTestLoadSpeed(true);
   }
 
   protected Module createModuleFromTestData(final String dirInTestData, final String newModuleFileName, final ModuleType moduleType)

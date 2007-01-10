@@ -7,32 +7,30 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.BaseComponent;
-import com.intellij.openapi.components.LoadCancelledException;
+import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.*;
 import org.picocontainer.defaults.*;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author mike
@@ -52,36 +50,29 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private Map<Class, Object> myInterfaceToComponentMap = new HashMap<Class, Object>();
 
-  private Map<String, Element> myNameToConfiguration = new HashMap<String, Element>();
   private Map<String, BaseComponent> myNameToComponent = new HashMap<String, BaseComponent>();
   private Map<Class, Object> myInitializedComponents = new HashMap<Class, Object>();
-  private Set<Object> myInitializingComponents = new HashSet<Object>();
   private Set<Class> myLazyComponents = new HashSet<Class>();
 
-  private static Map<String, Element> ourDescriptorToRootMap = new HashMap<String, Element>();
   private MutablePicoContainer myPicoContainer;
-  @NonNls private static final String COMPONENT_ELEMENT = "component";
-  @NonNls private static final String NAME_ATTR = "name";
-  @NonNls private static final String INCLUDE_ELEMENT = "include";
-  @NonNls private static final String INTERFACE_CLASS_ELEMENT = "interface-class";
-  @NonNls private static final String IMPLEMENTATION_CLASS_ELEMENT = "implementation-class";
-  @NonNls private static final String HEADLESS_IMPLEMENTATION_CLASS_ELEMENT = "headless-implementation-class";
-  @NonNls private static final String OPTION_ELEMENT = "option";
-  @NonNls private static final String VALUE_ATTR = "value";
   private volatile boolean myDisposed = false;
   private volatile boolean myDisposeCompleted = false;
 
   private MessageBus myMessageBus;
+  private IComponentStore myStateStore;
 
+  private final ComponentManagerConfigurator myConfigurator = new ComponentManagerConfigurator(this);
 
-  protected void initComponents() {
-    final ComponentManagerImpl parent = getParentComponentManager();
-    myMessageBus = MessageBusFactory.newMessageBus(parent != null ? parent.getMessageBus() : null);
-    getPicoContainer().registerComponentInstance(MessageBus.class, myMessageBus);
-
-    createComponents();
-    getComponents(false);
+  protected ComponentManagerImpl(@NotNull IComponentStore stateManager) {
+    myStateStore = stateManager;
   }
+
+
+  @NotNull
+  public IComponentStore getStateStore() {
+    return myStateStore;
+  }
+
 
 
   public MessageBus getMessageBus() {
@@ -92,16 +83,13 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myComponentsCreated;
   }
 
-  private void createComponents() {
+  private synchronized void createComponents() {
     try {
       final Class[] componentInterfaces = getComponentInterfaces();
       for (Class componentInterface : componentInterfaces) {
         if (!myLazyComponents.contains(componentInterface)) {
           try {
             createComponent(componentInterface);
-          }
-          catch (LoadCancelledException e) {
-            throw e;
           }
           catch (Exception e) {
             LOG.error(e);
@@ -115,7 +103,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   }
 
-  private Object createComponent(Class componentInterface) {
+  private synchronized Object createComponent(Class componentInterface) {
     Class componentClass = myInterfaceToClassMap.get(componentInterface);
     final Object component = instantiateComponent(componentClass);
     myInterfaceToComponentMap.put(componentInterface, component);
@@ -167,11 +155,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @Nullable
-  public <T> T getComponentFromContainer(Class<T> interfaceClass) {
-    synchronized (this) {
-      final Object initializedComponent = myInitializedComponents.get(interfaceClass);
-      if (initializedComponent != null) return (T)initializedComponent;
-    }
+  private synchronized <T> T getComponentFromContainer(Class<T> interfaceClass) {
+    final T initializedComponent = (T)myInitializedComponents.get(interfaceClass);
+    if (initializedComponent != null) return initializedComponent;
 
     //if (!myComponentsCreated) {
     //  LOG.error("Component requests are not allowed before they are created");
@@ -189,37 +175,22 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         myLazyComponents.remove(interfaceClass);
       }
 
-      Object component = myInterfaceToComponentMap.get(interfaceClass);
+      T component = (T)myInterfaceToComponentMap.get(interfaceClass);
       if (component == null) {
-        component = createComponent(interfaceClass);
+        component = (T)createComponent(interfaceClass);
       }
       if (component == null) {
         LOG.error("Cant create " + interfaceClass);
         return null;
       }
 
-      synchronized (this) {
-        if (myInitializingComponents.contains(component)) {
-          LOG.error("Component  " + interfaceClass + " is being requested during its own initializing procedure");
-          return (T)component;
-        }
+      myInitializedComponents.put(interfaceClass, component);
 
-        myInitializingComponents.add(component);
-      }
-
-      try {
-        //initComponent(component, interfaceClass);
-      }
-      finally {
-        synchronized (this) {
-          myInitializingComponents.remove(component);
-          myInitializedComponents.put(interfaceClass, component);
-        }
-      }
-      return (T)component;
+      return component;
     }
   }
 
+  @Nullable
   public <T> T getComponent(Class<T> interfaceClass) {
     assert !myDisposeCompleted : "Already disposed";
     return getComponent(interfaceClass, null);
@@ -235,9 +206,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private void initComponent(BaseComponent component, Class componentClass) {
     try {
-      if (component instanceof JDOMExternalizable) {
-        initJdomExternalizable(componentClass, component);
-      }
+      myStateStore.initComponent(component, componentClass);
       component.initComponent();
     }
     catch (Throwable ex) {
@@ -249,7 +218,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     LOG.error(ex);
   }
 
-  protected synchronized Object getLock(Class componentClass) {
+  private synchronized Object getLock(Class componentClass) {
     Object lock = myInterfaceToLockMap.get(componentClass);
     if (lock == null) {
       myInterfaceToLockMap.put(componentClass, lock = new Object());
@@ -290,11 +259,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myComponentInterfaces.toArray(new Class[myComponentInterfaces.size()]);
   }
 
-  public boolean hasComponent(@NotNull Class interfaceClass) {
+  public synchronized boolean hasComponent(@NotNull Class interfaceClass) {
     return myInterfaceToClassMap.containsKey(interfaceClass);
   }
 
-  protected Object[] getComponents(boolean includeLazyComponents) {
+  protected synchronized Object[] getComponents(boolean includeLazyComponents) {
     Class[] componentClasses = getComponentInterfaces();
     ArrayList<Object> components = new ArrayList<Object>(componentClasses.length);
     for (Class<?> interfaceClass : componentClasses) {
@@ -307,17 +276,15 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @NotNull
-  public <T> T[] getComponents(Class<T> baseInterfaceClass) {
+  public synchronized <T> T[] getComponents(Class<T> baseInterfaceClass) {
     Class[] componentClasses;
-    synchronized (this) {
-      ArrayList<Class> array = new ArrayList<Class>();
-      for (Class componentClass : myComponentInterfaces) {
-        if (baseInterfaceClass.isAssignableFrom(componentClass)) {
-          array.add(componentClass);
-        }
+    ArrayList<Class> array = new ArrayList<Class>();
+    for (Class componentClass : myComponentInterfaces) {
+      if (baseInterfaceClass.isAssignableFrom(componentClass)) {
+        array.add(componentClass);
       }
-      componentClasses = array.toArray(new Class[array.size()]);
     }
+    componentClasses = array.toArray(new Class[array.size()]);
     T[] components = (T[])Array.newInstance(baseInterfaceClass, componentClasses.length);
     for (int i = 0; i < componentClasses.length; i++) {
       components[i] = (T)getComponent(componentClasses[i]);
@@ -325,79 +292,14 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return components;
   }
 
-  protected void initJdomExternalizable(Class componentClass, BaseComponent component) {
-    doInitJdomExternalizable(componentClass, component);
-  }
-
-  public final void doInitJdomExternalizable(Class componentClass, BaseComponent component) {
-    try {
-      Element element = getDefaults(component);
-
-      if (element != null) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Loading defaults for " + componentClass.getName());
-        }
-        ((JDOMExternalizable)component).readExternal(element);
-      }
-    }
-    catch (Exception e) {
-      LOG.error("Cannot load defaults for " + componentClass.getName(), e);
-    }
-
-    Element element = getConfiguration(component.getComponentName());
-
-    if (element != null) {
-      try {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Loading configuration for " + componentClass.getName());
-        }
-        ((JDOMExternalizable)component).readExternal(element);
-      }
-      catch (InvalidDataException e) {
-        synchronized (this) {
-          myInterfaceToComponentMap.remove(componentClass);
-        }
-        throw new InvalidComponentDataException(e);
-      }
-      removeConfiguration(component.getComponentName());
-    }
-  }
-
-  @Nullable
-  protected static Element serializeComponent(BaseComponent component) {
-    try {
-      if (component instanceof JDOMExternalizable) {
-        Element element = new Element(COMPONENT_ELEMENT);
-
-        element.setAttribute(NAME_ATTR, component.getComponentName());
-
-        try {
-          ((JDOMExternalizable)component).writeExternal(element);
-          return element;
-        }
-//      catch (JDOMException exception) {
-//        LOG.error(exception);
-//      }
-        catch (WriteExternalException ex) {
-        }
-      }
-    }
-    catch (Throwable e) { // Request #12351
-      LOG.error(e);
-    }
-    return null;
-  }
-
-  protected final Object instantiateComponent(Class componentClass) {
+  private Object instantiateComponent(Class componentClass) {
     return getPicoContainer().getComponentInstance(componentClass);
   }
-
-  protected abstract Element getDefaults(BaseComponent component) throws IOException, JDOMException, InvalidDataException;
 
   @Nullable
   protected abstract ComponentManagerImpl getParentComponentManager();
 
-  public MutablePicoContainer getPicoContainer() {
+  public synchronized MutablePicoContainer getPicoContainer() {
     if (myPicoContainer == null) {
       myPicoContainer = createPicoContainer();
     }
@@ -408,15 +310,15 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     MutablePicoContainer result;
     final ComponentManagerImpl parentComponentManager = getParentComponentManager();
     if (parentComponentManager != null) {
-      result = new DefaultPicoContainer(new MyComponentAdapterFactory(), parentComponentManager.getPicoContainer());
+      result = new DefaultPicoContainer(new MyComponentAdapterFactory(this), parentComponentManager.getPicoContainer());
     }
     else {
-      result = new DefaultPicoContainer(new MyComponentAdapterFactory());
+      result = new DefaultPicoContainer(new MyComponentAdapterFactory(this));
     }
     return result;
   }
 
-  protected void initComponentsFromExtensions(final ExtensionsArea extensionsArea) {
+  public void initComponentsFromExtensions(final ExtensionsArea extensionsArea) {
     //if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) return; // TODO: quick and dirty. To make tests running.
     final Application app = ApplicationManager.getApplication();
     final boolean headless = app.isHeadlessEnvironment();
@@ -455,160 +357,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return loader;
   }
 
-  protected static class InvalidComponentDataException extends RuntimeException {
-    public InvalidComponentDataException(InvalidDataException exception) {
-      super(exception);
-    }
-  }
-
-  protected void clearDomMap() {
-    myNameToConfiguration = new HashMap<String, Element>();
-  }
-
-  protected synchronized void addConfiguration(String componentName, Element configuration) {
-    myNameToConfiguration.put(componentName, configuration);
-  }
-
-  protected synchronized Set<String> getConfigurationNames() {
-    return myNameToConfiguration.keySet();
-  }
-
-  @Nullable
-  protected synchronized Element getConfiguration(String name) {
-    if (myNameToConfiguration == null) return null;
-
-    return myNameToConfiguration.get(name);
-  }
-
-  protected synchronized void removeConfiguration(String name) {
-    myNameToConfiguration.remove(name);
-  }
-
-  public BaseComponent getComponent(String name) {
+  public synchronized BaseComponent getComponent(String name) {
     return myNameToComponent.get(name);
   }
 
-  protected Map getComponentOptions(Class componentInterfaceClass) {
+  public synchronized Map getComponentOptions(Class componentInterfaceClass) {
     return myInterfaceToOptionsMap.get(componentInterfaceClass);
-  }
-
-  public void loadComponentsConfiguration(String layer, final boolean loadDummies) {
-    loadComponentsConfiguration(ApplicationManagerEx.getApplicationEx().getComponentsDescriptor(), layer, loadDummies);
-  }
-
-  private void loadComponentsConfiguration(String descriptor, String layer, boolean loadDummies) {
-    loadComponentsConfiguration(descriptor, layer, new ArrayList<String>(), loadDummies);
-  }
-
-  private void loadComponentsConfiguration(String descriptor, String layer, ArrayList<String> loadedIncludes, boolean loadDummies) {
-    try {
-      Element root = ourDescriptorToRootMap.get(descriptor);
-      if (root == null) {
-        InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(this, descriptor);
-        if (inputStream == null) {
-          LOG.assertTrue(false, "Defaults not found:" + descriptor);
-        }
-        final Document document = JDOMUtil.loadDocument(inputStream);
-        inputStream.close();
-
-        root = document.getRootElement();
-        ourDescriptorToRootMap.put(descriptor, root);
-      }
-
-      List includes = root.getChildren(INCLUDE_ELEMENT);
-      if (includes != null) {
-        for (final Object include : includes) {
-          Element includeElement = (Element)include;
-          String includeName = includeElement.getAttributeValue(NAME_ATTR);
-
-          if (includeName != null && !loadedIncludes.contains(includeName)) {
-            loadedIncludes.add(includeName);
-            loadComponentsConfiguration(includeName, layer, loadedIncludes, loadDummies);
-          }
-        }
-      }
-
-      loadComponentsConfiguration(root.getChild(layer), loadDummies);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-  }
-
-  private void loadComponentsConfiguration(final Element element, boolean loadDummies) {
-    loadComponentsConfiguration(element, null, loadDummies);
-  }
-
-  public void loadComponentsConfiguration(final Element element, IdeaPluginDescriptor descriptor, final boolean loadDummies) {
-    if (element == null) return;
-    final boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
-    for (final Object o : element.getChildren(COMPONENT_ELEMENT)) {
-      @NonNls Element child = (Element)o;
-      boolean skipForDummyProject = child.getChild("skipForDummyProject") != null;
-      if (!loadDummies && skipForDummyProject) {
-        continue;
-      }
-      String interfaceClass = child.getChildText(INTERFACE_CLASS_ELEMENT);
-      String implClass = child.getChildText(IMPLEMENTATION_CLASS_ELEMENT);
-      if (headless) {
-        String headlessImplClass = child.getChildText(HEADLESS_IMPLEMENTATION_CLASS_ELEMENT);
-        if (headlessImplClass != null) {
-          if (headlessImplClass.trim().length() == 0) continue;
-          implClass = headlessImplClass;
-        }
-      }
-
-      if (interfaceClass == null) interfaceClass = implClass;
-
-      Map<String, String> options = null;
-
-      final List optionElements = child.getChildren(OPTION_ELEMENT);
-      if (!optionElements.isEmpty()) {
-        options = new HashMap<String, String>();
-        for (final Object optionElement : optionElements) {
-          Element e = (Element)optionElement;
-          String name = e.getAttributeValue(NAME_ATTR);
-          String value = e.getAttributeValue(VALUE_ATTR);
-          options.put(name, value);
-        }
-      }
-
-      if (!isComponentSuitable(options)) continue;
-
-      ClassLoader loader = null;
-      if (descriptor != null) {
-        loader = descriptor.getPluginClassLoader();
-      }
-      if (loader == null) {
-        loader = getClass().getClassLoader();
-      }
-
-      interfaceClass = interfaceClass.trim();
-      implClass = implClass.trim();
-
-      try {
-        registerComponent(Class.forName(interfaceClass, true, loader), Class.forName(implClass, true, loader), options, true,
-                          isTrue(options, "lazy"));
-      }
-      catch (Exception e) {
-        final String message = "Error while initializing component: " + interfaceClass + ":" + implClass;
-
-        if (descriptor != null) {
-          LOG.error(message, new PluginException(e, descriptor.getPluginId()));
-        }
-        else {
-          LOG.error(message, e);
-        }
-      }
-      catch (Error e) {
-        if (descriptor != null) {
-          LOG.error(new PluginException(e, descriptor.getPluginId()));
-        }
-        else {
-          throw e;
-        }
-      }
-    }
   }
 
   protected boolean isComponentSuitable(Map<String, String> options) {
@@ -619,7 +373,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return options != null && options.containsKey(option) && Boolean.valueOf(options.get(option).toString()).booleanValue();
   }
 
-  protected void saveSettingsSavingComponents() {
+  public void saveSettingsSavingComponents() {
     Object[] components = getComponents(SettingsSavingComponent.class);
     for (Object component : components) {
       if (component instanceof SettingsSavingComponent) {
@@ -628,8 +382,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
   }
 
-  protected class MyComponentAdapterFactory implements ComponentAdapterFactory {
-    public MyComponentAdapterFactory() {
+  public static class MyComponentAdapterFactory implements ComponentAdapterFactory {
+    private final ComponentManagerImpl myComponentManager;
+
+    public MyComponentAdapterFactory(final ComponentManagerImpl componentManager) {
+      this.myComponentManager = componentManager;
     }
 
     public ComponentAdapter createComponentAdapter(final Object componentKey, Class componentImplementation, Parameter[] parameters)
@@ -642,11 +399,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
             try {
               componentInstance = super.getComponentInstance(picoContainer);
               if (componentInstance instanceof BaseComponent) {
-                initComponent((BaseComponent)componentInstance, (Class)componentKey);
+                myComponentManager.initComponent((BaseComponent)componentInstance, (Class)componentKey);
               }
             }
-            catch(Throwable t) {
-              handleInitComponentError((Class)componentKey, t, componentInstance == null);
+            catch (Throwable t) {
+              myComponentManager.handleInitComponentError((Class)componentKey, t, componentInstance == null);
               if (componentInstance == null) {
                 System.exit(1);
               }
@@ -661,28 +418,51 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
 
-  public void dispose() {
+  public synchronized void dispose() {
     myDisposeCompleted = true;
 
-    myMessageBus.dispose();
-    myMessageBus = null;
+    if (myMessageBus != null) {
+      myMessageBus.dispose();
+      myMessageBus = null;
+    }
 
     myComponentInterfaces = null;
     myInitializedComponents = null;
-    myInitializingComponents = null;
     myInterfaceToClassMap = null;
     myInterfaceToComponentMap = null;
     myInterfaceToLockMap = null;
     myInterfaceToOptionsMap = null;
     myLazyComponents = null;
     myNameToComponent = null;
-    myNameToConfiguration = null;
     myPicoContainer = null;
-
+    
+    myStateStore.dispose();
   }
 
   public boolean isDisposed() {
     return myDisposed;
   }
+
+  //todo[mike] there are several init* methods. Make it just 1
+  public void init() {
+    myStateStore.initStore();
+    initComponents();
+  }
+
+  public void initComponents() {
+    final ComponentManagerImpl parent = getParentComponentManager();
+    myMessageBus = MessageBusFactory.newMessageBus(this, parent != null ? parent.getMessageBus() : null);
+    getPicoContainer().registerComponentInstance(MessageBus.class, myMessageBus);
+
+    createComponents();
+    getComponents(false);
+  }
+
+  protected void loadComponentsConfiguration(ComponentConfig[] components, @Nullable final IdeaPluginDescriptor descriptor, final boolean loadDummies) {
+    myConfigurator.loadComponentsConfiguration(components, descriptor, loadDummies);
+  }
+
+  public void loadComponentsConfiguration(final String layer, final boolean loadDummies) {
+    myConfigurator.loadComponentsConfiguration(layer, loadDummies);
+  }
 }
-  

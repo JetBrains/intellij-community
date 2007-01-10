@@ -6,7 +6,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 
-@Tag(name = ActionManagerImpl.GROUP_ELEMENT_NAME)
+@Tag(ActionManagerImpl.GROUP_ELEMENT_NAME)
 public class ActionGroupBean extends ActionBean {
   @Property(surroundWithTag = false)
   @AbstractCollection(
@@ -14,10 +14,10 @@ public class ActionGroupBean extends ActionBean {
     elementTypes = {ActionBean.class, ActionGroupBean.class, ActionReferenceBean.class, SeparatorBean.class})
   public Object[] actions;
 
-  @Attribute(name = "test")
+  @Attribute("test")
   public String test;
 
-  @Attribute(name = "configurable")
+  @Attribute("configurable")
   public boolean configurable;
 
 }

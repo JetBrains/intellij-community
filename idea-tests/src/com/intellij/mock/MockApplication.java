@@ -22,7 +22,7 @@ import java.lang.reflect.Array;
 import java.util.concurrent.Future;
 
 public class MockApplication extends UserDataHolderBase implements ApplicationEx {
-  private final MessageBus myMessageBus = MessageBusFactory.newMessageBus();
+  private final MessageBus myMessageBus = MessageBusFactory.newMessageBus(this);
 
   public String getName() {
     return "mock";

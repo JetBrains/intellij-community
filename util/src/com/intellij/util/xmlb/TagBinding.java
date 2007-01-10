@@ -6,14 +6,20 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 class TagBinding implements Binding {
   private Accessor accessor;
+  private Tag myTagAnnotation;
   private String myTagName;
   private Binding binding;
 
   public TagBinding(Accessor accessor, Tag tagAnnotation, XmlSerializerImpl xmlSerializer) {
     this.accessor = accessor;
-    myTagName = tagAnnotation.name();
+    myTagAnnotation = tagAnnotation;
+    myTagName = tagAnnotation.value();
     binding = xmlSerializer.getBinding(accessor);
   }
 
@@ -31,8 +37,27 @@ class TagBinding implements Binding {
   }
 
   public Object deserialize(Object o, Node... nodes) {
-    assert nodes.length == 1;
-    Object v = binding.deserialize(o, DOMUtil.toArray(nodes[0].getChildNodes()));
+    assert nodes.length > 0;
+    final Document document = nodes[0].getOwnerDocument();
+    Node[] children;
+    if (nodes.length == 1) {
+      children = DOMUtil.toArray(nodes[0].getChildNodes());
+    }
+    else {
+      String name = nodes[0].getNodeName();
+      List<Node> childrenList = new ArrayList<Node>();
+      for (Node node : nodes) {
+        assert node.getNodeName().equals(name);
+        childrenList.addAll(Arrays.asList(DOMUtil.toArray(node.getChildNodes())));
+      }
+      children = childrenList.toArray(new Node[childrenList.size()]);
+    }
+
+    if (children.length == 0) {
+      children = new Node[] {document.createTextNode(myTagAnnotation.textIfEmpty())};
+    }
+
+    Object v = binding.deserialize(o, children);
     Object value = XmlSerializerImpl.convert(v, accessor.getValueClass());
     accessor.write(o, value);
     return o;

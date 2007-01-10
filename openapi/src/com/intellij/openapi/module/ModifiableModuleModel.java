@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.module;
 
-import com.intellij.openapi.components.LoadCancelledException;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.JDOMException;
@@ -45,9 +44,8 @@ public interface ModifiableModuleModel {
    *
    * @param filePath the path at which the module is created.
    * @return the module instance.
-   * @throws LoadCancelledException in case of internal error while creating the module.
    */
-  @NotNull Module newModule(@NotNull String filePath) throws LoadCancelledException;
+  @NotNull Module newModule(@NotNull String filePath);
 
   /**
    * Creates a module of the specified type at the specified path and adds it to the project
@@ -57,9 +55,8 @@ public interface ModifiableModuleModel {
    * @param filePath the path at which the module is created.
    * @param moduleType the type of the module to create.
    * @return the module instance.
-   * @throws LoadCancelledException in case of internal error while creating the module.
    */
-  @NotNull Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType) throws LoadCancelledException;
+  @NotNull Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType);
 
   /**
    * Loads a module from an .iml file with the specified path and adds it to the project.
@@ -73,7 +70,7 @@ public interface ModifiableModuleModel {
    * @throws ModuleWithNameAlreadyExists if a module with such a name already exists in the project.
    * @throws LoadCancelledException if loading the module was cancelled by some of the components.
    */
-  @NotNull Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists, LoadCancelledException;
+  @NotNull Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists;
 
   /**
    * Disposes of the specified module and removes it from the project. {@link #commit()}

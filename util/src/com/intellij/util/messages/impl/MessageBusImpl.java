@@ -31,8 +31,15 @@ public class MessageBusImpl implements MessageBus {
   private final static Object NA = new Object();
   private final MessageBusImpl myParentBus;
 
+  //is used for debugging purposes
+  private Object myOwner;
 
   public MessageBusImpl(MessageBus parentBus) {
+    this(null, parentBus);
+  }
+
+  public MessageBusImpl(final Object owner, MessageBus parentBus) {
+    myOwner = owner;
     myParentBus = (MessageBusImpl)parentBus;
     if (myParentBus != null) {
       myParentBus.notifyChildBusCreated(this);

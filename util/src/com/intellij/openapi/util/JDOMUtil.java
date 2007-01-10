@@ -451,7 +451,16 @@ public class JDOMUtil {
   public static org.w3c.dom.Element convertToDOM(Element e) {
     try {
       final Document d = new Document();
-      d.addContent(e);
+      final Element newRoot = new Element(e.getName());
+      final List attributes = e.getAttributes();
+
+      for (Object o : attributes) {
+        Attribute attr = (Attribute)o;
+        newRoot.setAttribute(attr.getName(), attr.getValue(), attr.getNamespace());
+      }
+
+      d.addContent(newRoot);
+      newRoot.addContent(e.cloneContent());
 
       return new DOMOutputter().output(d).getDocumentElement();
     }

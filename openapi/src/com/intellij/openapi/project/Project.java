@@ -21,19 +21,29 @@ import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomModel;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 /**
  * Project interface class.
  */
 public interface Project extends ComponentManager, AreaInstance, Disposable {
+  @Nullable
   VirtualFile getProjectFile();
+
+  @NotNull
+  @NonNls
   String getName();
+
   /**
    * @return Returns an "java.io.File" path.
    */
+  @NotNull
   String getProjectFilePath();
 
+  @Nullable
   VirtualFile getWorkspaceFile();
 
   void save();
@@ -46,6 +56,7 @@ public interface Project extends ComponentManager, AreaInstance, Disposable {
 
   boolean isDefault();
 
+  @NotNull
   PomModel getModel();
 
   GlobalSearchScope getAllScope();

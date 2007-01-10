@@ -1,5 +1,6 @@
 package com.intellij.util.xmlb;
 
+import com.intellij.util.DOMUtil;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -20,13 +21,22 @@ class PrimitiveValueBinding implements Binding {
 
   @Nullable
   public Object deserialize(Object o, Node... nodes) {
+    assert nodes != null;
+
     if (nodes.length == 0) {
       return XmlSerializerImpl.convert("", myType);
     }
 
-    assert nodes.length == 1;
+    String value;
+    if (nodes.length > 1) {
+      value = DOMUtil.concatTextNodesValues(nodes);
+    }
+    else {
+      assert nodes[0] != null;
+      value = nodes[0].getNodeValue();
+    }
 
-    return XmlSerializerImpl.convert(nodes[0].getNodeValue(), myType);
+    return XmlSerializerImpl.convert(value, myType);
   }
 
   public boolean isBoundTo(Node node) {

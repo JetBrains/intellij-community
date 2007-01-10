@@ -22,7 +22,7 @@ public class AttributeBinding implements Binding {
     final Object v = myAccessor.read(o);
     final Node node = myBinding.serialize(v, context);
 
-    final Attr attr = context.getOwnerDocument().createAttribute(myAttribute.name());
+    final Attr attr = context.getOwnerDocument().createAttribute(myAttribute.value());
     attr.setValue(node.getTextContent());
     return attr;
   }
@@ -41,7 +41,7 @@ public class AttributeBinding implements Binding {
   }
 
   public boolean isBoundTo(Node node) {
-    return node instanceof Attr && node.getNodeName().equals(myAttribute.name());
+    return node instanceof Attr && node.getNodeName().equals(myAttribute.value());
   }
 
   public Class<? extends Node> getBoundNodeType() {

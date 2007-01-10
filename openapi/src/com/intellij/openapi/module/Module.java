@@ -43,6 +43,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    *
    * @return the virtual file instance.
    */
+  @Nullable
   VirtualFile getModuleFile();
 
   /**

@@ -46,6 +46,7 @@ public interface ComponentManager extends UserDataHolder, Disposable {
    * @param interfaceClass the interface class of the component
    * @return component that matches interface class or null if there is no such component
    */
+  @Nullable
   <T> T getComponent(Class<T> interfaceClass);
 
   /**
@@ -57,7 +58,7 @@ public interface ComponentManager extends UserDataHolder, Disposable {
    * @return component that matches interface class or default if there is no such component
    */
   @Nullable
-    <T> T getComponent(Class<T> interfaceClass, T defaultImplementationIfAbsent);
+  <T> T getComponent(Class<T> interfaceClass, T defaultImplementationIfAbsent);
 
   /**
    * Gets interface classes for all available components.

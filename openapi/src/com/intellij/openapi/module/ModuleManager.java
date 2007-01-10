@@ -16,7 +16,6 @@
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.LoadCancelledException;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
@@ -51,9 +50,8 @@ public abstract class ModuleManager {
    *
    * @param filePath the path at which the module is created.
    * @return the module instance.
-   * @throws LoadCancelledException in case of internal error while creating the module.
    */
-  @NotNull public abstract Module newModule(@NotNull String filePath) throws LoadCancelledException;
+  @NotNull public abstract Module newModule(@NotNull String filePath);
 
   /**
    * Creates a module of the specified type at the specified path and adds it to the project
@@ -62,9 +60,8 @@ public abstract class ModuleManager {
    * @param filePath the path at which the module is created.
    * @param moduleType the type of the module to create.
    * @return the module instance.
-   * @throws LoadCancelledException in case of internal error while creating the module.
    */
-  @NotNull public abstract Module newModule(@NotNull @NonNls String filePath, @NotNull ModuleType moduleType) throws LoadCancelledException;
+  @NotNull public abstract Module newModule(@NotNull @NonNls String filePath, @NotNull ModuleType moduleType);
 
   /**
    * Loads a module from an .iml file with the specified path and adds it to the project.
@@ -76,9 +73,8 @@ public abstract class ModuleManager {
    * @throws JDOMException if the file contains invalid XML data.
    * @throws ModuleWithNameAlreadyExists if a module with such a name already exists in the project.
    * @throws ModuleCircularDependencyException never actually thrown (circular module dependency is not an error).
-   * @throws LoadCancelledException if loading the module was cancelled by some of the components.
    */
-  @NotNull public abstract Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists, ModuleCircularDependencyException, LoadCancelledException;
+  @NotNull public abstract Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists, ModuleCircularDependencyException;
 
   /**
    * Disposes of the specified module and removes it from the project.

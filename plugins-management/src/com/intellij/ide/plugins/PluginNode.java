@@ -1,5 +1,6 @@
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.extensions.PluginId;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
@@ -255,17 +256,17 @@ public class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Nullable
-  public Element getAppComponents() {
+  public ComponentConfig[] getAppComponents() {
     return null;
   }
 
   @Nullable
-  public Element getProjectComponents() {
+  public ComponentConfig[] getProjectComponents() {
     return null;
   }
 
   @Nullable
-  public Element getModuleComponents() {
+  public ComponentConfig[] getModuleComponents() {
     return null;
   }
 

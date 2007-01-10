@@ -3,8 +3,12 @@ package com.intellij.ide.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.*;
+import com.intellij.util.xmlb.Accessor;
+import com.intellij.util.xmlb.SerializationFilter;
+import com.intellij.util.xmlb.annotations.Property;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -14,8 +18,12 @@ import java.util.Map;
 public class UISettings implements NamedJDOMExternalizable, ApplicationComponent {
   private EventListenerList myListenerList;
 
-  @NonNls public String FONT_FACE;
+  @Property(filter = FontFilter.class)
+  @NonNls
+  public String FONT_FACE;
+  @Property(filter = FontFilter.class)
   public int FONT_SIZE;
+
   public int RECENT_FILES_LIMIT = 15;
   public int EDITOR_TAB_LIMIT = 10;
   public boolean ANIMATE_WINDOWS = true;
@@ -183,10 +191,9 @@ public class UISettings implements NamedJDOMExternalizable, ApplicationComponent
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
+    final boolean defaultFonts = hasDefaultFontSetting(this);
     // Don't save face and size of font if it they don't differ from system settings
-    //noinspection HardCodedStringLiteral
-    Font font=(Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
-    if(SystemInfo.isWindows && font!=null && FONT_FACE.equals(font.getName()) && FONT_SIZE==font.getSize()){
+    if(defaultFonts){
       String oldFontFace=FONT_FACE;
       int oldFontSize=FONT_SIZE;
       FONT_FACE=null;
@@ -202,6 +209,26 @@ public class UISettings implements NamedJDOMExternalizable, ApplicationComponent
     }
   }
 
+  private static boolean hasDefaultFontSetting(final UISettings settings) {
+    Font font=(Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
+    if(SystemInfo.isWindows && font!=null && settings.FONT_FACE.equals(font.getName()) && settings.FONT_SIZE==font.getSize()){
+      return true;
+    }
+
+    return false;
+  }
+
+  public static class FontFilter implements SerializationFilter {
+    public boolean accepts(Accessor accessor, Object bean) {
+      UISettings settings = (UISettings)bean;
+
+      if (hasDefaultFontSetting(settings)) return false;
+      return true;
+    }
+
+  }
+
+  @NotNull
   public String getComponentName() {
     return "UISettings";
   }

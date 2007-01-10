@@ -6,9 +6,9 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 
-@Tag(name = ActionManagerImpl.ACTION_ELEMENT_NAME)
+@Tag(ActionManagerImpl.ACTION_ELEMENT_NAME)
 public class ActionBean {
-  @Attribute(name = ActionManagerImpl.ID_ATTR_NAME)
+  @Attribute(ActionManagerImpl.ID_ATTR_NAME)
   public String id;
 
   @Property(surroundWithTag = false)
@@ -19,25 +19,25 @@ public class ActionBean {
   @AbstractCollection(surroundWithTag = false)
   public AddToGroupBean[] addToGroups;
 
-  @Attribute(name = ActionManagerImpl.CLASS_ATTR_NAME)
+  @Attribute(ActionManagerImpl.CLASS_ATTR_NAME)
   public String actionClass;
 
-  @Attribute(name = ActionManagerImpl.ICON_ATTR_NAME)
+  @Attribute(ActionManagerImpl.ICON_ATTR_NAME)
   public String icon;
 
 
-  @Attribute(name = ActionManagerImpl.POPUP_ATTR_NAME)
+  @Attribute(ActionManagerImpl.POPUP_ATTR_NAME)
   public String isPopup;
 
-  @Attribute(name = ActionManagerImpl.TEXT_ATTR_NAME)
+  @Attribute(ActionManagerImpl.TEXT_ATTR_NAME)
   public String text;
 
-  @Attribute(name = ActionManagerImpl.INTERNAL_ATTR_NAME)
+  @Attribute(ActionManagerImpl.INTERNAL_ATTR_NAME)
   public boolean internal;
 
-  @Attribute(name = "use-shortcut-of")
+  @Attribute("use-shortcut-of")
   public boolean useShortcutOf;
 
-  @Attribute(name = ActionManagerImpl.KEYMAP_ATTR_NAME)
+  @Attribute(ActionManagerImpl.KEYMAP_ATTR_NAME)
   public String keymap;
 }

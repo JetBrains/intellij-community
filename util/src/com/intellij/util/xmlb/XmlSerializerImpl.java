@@ -79,11 +79,18 @@ class XmlSerializerImpl {
 
   private Binding _getNonCachedClassBinding(final Class<?> aClass, final Accessor accessor, final Type originalType) {
     if (aClass.isPrimitive()) return new PrimitiveValueBinding(aClass);
-    if (aClass.isArray()) return new ArrayBinding(this, aClass, accessor);
+    if (aClass.isArray()) {
+      if (org.jdom.Element.class.isAssignableFrom(aClass.getComponentType())) {
+        return new JDOMElementBinding(this, accessor);
+      }
+
+      return new ArrayBinding(this, aClass, accessor);
+    }
     if (Number.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
     if (String.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
     if (Collection.class.isAssignableFrom(aClass)) return new CollectionBinding((ParameterizedType)originalType, this, accessor);
     if (Map.class.isAssignableFrom(aClass)) return new MapBinding((ParameterizedType)originalType, this, accessor);
+    if (org.jdom.Element.class.isAssignableFrom(aClass)) return new JDOMElementBinding(this, accessor);
 
     return new BeanBinding(aClass, this);
   }
@@ -130,6 +137,11 @@ class XmlSerializerImpl {
     }
     if (node instanceof Comment) {
       return true;
+    }
+    if (node instanceof Attr) {
+      Attr attr = (Attr)node;
+      final String namespaceURI = attr.getNamespaceURI();
+      if (namespaceURI != null && namespaceURI != "") return true;
     }
 
     return false;

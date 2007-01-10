@@ -1,7 +1,11 @@
-<components>
-  <include name="componentSets/Lvcs"/>
-  <include name="componentSets/Core"/>
-  <include name="componentSets/CodeInspection"/>
+<components xmlns:xi="http://www.w3.org/2001/XInclude"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.w3.org/2001/XInclude
+   http://www.w3.org/2001/XInclude.xsd">
+
+  <xi:include href="Lvcs.xml"/>
+  <xi:include href="Core.xml"/>
+  <xi:include href="CodeInspection.xml"/>
 
   <application-components>
     <component>
@@ -27,5 +31,7 @@
       <option name="workspace" value="true"/>
     </component>
   </module-components>
-  <include name="componentSets/ErrorReport"/>
+
+  <xi:include href="ErrorReport.xml"/>
+
 </components>

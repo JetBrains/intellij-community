@@ -5,7 +5,7 @@ import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
 
 public class ActionManagerConfiguration {
-  @Tag(name = ActionManagerImpl.ACTIONS_ELEMENT_NAME)
+  @Tag(ActionManagerImpl.ACTIONS_ELEMENT_NAME)
   @AbstractCollection(
     surroundWithTag = false,
     elementTypes = {ActionBean.class, ActionGroupBean.class, ActionReferenceBean.class})

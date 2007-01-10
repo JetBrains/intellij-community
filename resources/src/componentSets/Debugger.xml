@@ -72,6 +72,7 @@
     </component>
   </project-components>
 
+  <!--
   <actions>
     <group id="CommonViews">
       <add-to-group group-id="Debugger.Representation" anchor="after" relative-to-action="Debugger.AutoRenderer"/>
@@ -79,4 +80,5 @@
       <action id="Debugger.ShowAllAsDecimal" class="com.intellij.debugger.ui.tree.actions.ShowAllAsDecimal" text="Decimal Array"/>
     </group>
   </actions>
+  -->
 </components>

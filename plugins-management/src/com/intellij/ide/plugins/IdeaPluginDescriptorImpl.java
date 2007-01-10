@@ -2,25 +2,30 @@ package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.DOMUtil;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 
 /**
  * @author mike
  */
-public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginDescriptor {
+public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginDescriptor");
 
   public static final IdeaPluginDescriptorImpl[] EMPTY_ARRAY = new IdeaPluginDescriptorImpl[0];
@@ -40,44 +45,18 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
   private PluginId[] myDependencies;
   private PluginId[] myOptionalDependencies;
   private Element myActionsElement = null;
-  private Element myAppComponents = null;
-  private Element myProjectComponents = null;
-  private Element myModuleComponents = null;
+  private ComponentConfig[] myAppComponents = null;
+  private ComponentConfig[] myProjectComponents = null;
+  private ComponentConfig[] myModuleComponents = null;
   private boolean myDeleted = false;
   private ClassLoader myLoader;
   private HelpSetPath[] myHelpSets;
-  private int myFormatVersion = 1;
   private List<Element> myExtensions;
   private List<Element> myExtensionsPoints;
   private String myDescriptionChildText;
   private String myDownloadCounter;
   private long myDate;
   private boolean myUseIdeaClassLoader;
-
-  @NonNls private static final String ATTRIBUTE_URL = "url";
-  @NonNls private static final String ELEMENT_NAME = "name";
-  @NonNls private static final String ELEMENT_ID = "id";
-  @NonNls private static final String ATTRIBUTE_VERSION = "version";
-  @NonNls private static final String ATTRIBUTE_USE_IDEA_CLASSLOADER = "use-idea-classloader";
-  @NonNls private static final String ELEMENT_RESOURCE_BUNDLE = "resource-bundle";
-  @NonNls private static final String ELEMENT_DESCRIPTION = "description";
-  @NonNls private static final String ELEMENT_CHANGE_NOTES = "change-notes";
-  @NonNls private static final String ELEMENT_VENDOR = "vendor";
-  @NonNls private static final String ELEMENT_CATEGORY = "category";
-  @NonNls private static final String ELEMENT_DEPENDS = "depends";
-  @NonNls private static final String ELEMENT_HELPSET = "helpset";
-  @NonNls private static final String ATTRIBUTE_FILE = "file";
-  @NonNls private static final String ATTRIBUTE_PATH = "path";
-  @NonNls private static final String ATTRIBUTE_EMAIL = "email";
-  @NonNls private static final String ATTRIBUTE_LOGO = "logo";
-  @NonNls private static final String ELEMENT_APPLICATION_COMPONENTS = "application-components";
-  @NonNls private static final String ELEMENT_PROJECT_COMPONENTS = "project-components";
-  @NonNls private static final String ELEMENT_MODULE_COMPONENTS = "module-components";
-  @NonNls private static final String ELEMENT_ACTIONS = "actions";
-
-  @NonNls private static final String ELEMENT_EXTENSIONS = "extensions";
-  @NonNls private static final String ELEMENT_EXTENSION_POINTS = "extensionPoints";
-  @NonNls private static final String ATT_OPTIONAL = "optional";
 
   public IdeaPluginDescriptorImpl(File pluginPath) {
     myPath = pluginPath;
@@ -91,94 +70,115 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
     return myPath;
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    url = element.getAttributeValue(ATTRIBUTE_URL);
-    myName = element.getChildText(ELEMENT_NAME);
-    String idString = element.getChildText(ELEMENT_ID);
+  public void readExternal(final URL url) throws InvalidDataException, FileNotFoundException {
+    try {
+      readExternal(DOMUtil.load(url).getDocumentElement());
+    }
+    catch (FileNotFoundException e) {
+      throw e;
+    }
+    catch (IOException e) {
+      throw new InvalidDataException(e);
+    }
+    catch (ParserConfigurationException e) {
+      throw new InvalidDataException(e);
+    }
+    catch (SAXException e) {
+      throw new InvalidDataException(e);
+    }
+  }
+
+  private void readExternal(org.w3c.dom.Element element) throws InvalidDataException {
+    final PluginBean pluginBean = XmlSerializer.deserialize(element, PluginBean.class);
+
+    url = pluginBean.url;
+    myName = pluginBean.name;
+    String idString = pluginBean.id;
     if (idString == null || idString.length() == 0) {
       idString = myName;
     }
     myId = PluginId.getId(idString);
 
-    String internalVersionString = element.getAttributeValue(ATTRIBUTE_VERSION);
+    String internalVersionString = pluginBean.formatVersion;
     if (internalVersionString != null) {
       try {
-        myFormatVersion = Integer.parseInt(internalVersionString);
+        final int formatVersion = Integer.parseInt(internalVersionString);
       }
       catch (NumberFormatException e) {
         LOG.error(new PluginException("Invalid value in plugin.xml format version: " + internalVersionString, e, myId));
       }
     }
-    myUseIdeaClassLoader = element.getAttributeValue(ATTRIBUTE_USE_IDEA_CLASSLOADER) != null &&
-                           Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_USE_IDEA_CLASSLOADER));
+    myUseIdeaClassLoader = pluginBean.useIdeaClassLoader;
 
-    myResourceBundleBaseName = element.getChildText(ELEMENT_RESOURCE_BUNDLE);
+    myResourceBundleBaseName = pluginBean.resourceBundle;
 
-    myDescriptionChildText = element.getChildText(ELEMENT_DESCRIPTION);
-    myChangeNotes = element.getChildText(ELEMENT_CHANGE_NOTES);
-    myVersion = element.getChildText(ATTRIBUTE_VERSION);
-    myVendor = element.getChildText(ELEMENT_VENDOR);
-    myCategory = element.getChildText(ELEMENT_CATEGORY);
+    myDescriptionChildText = pluginBean.description;
+    myChangeNotes = pluginBean.changeNotes;
+    myVersion = pluginBean.pluginVersion;
+    myCategory = pluginBean.category;
 
 
-    List children = element.getChildren(ELEMENT_DEPENDS);
-    Set<PluginId> dependentPlugins = new HashSet<PluginId>(children.size());
-    Set<PluginId> optionalDependentPlugins = new HashSet<PluginId>(children.size());
-    for (final Object aChildren : children) {
-      final Element dependentPlugin = (Element)aChildren;
-      String text = dependentPlugin.getText();
-      if (text != null && text.length() > 0) {
-        final PluginId id = PluginId.getId(text);
-        dependentPlugins.add(id);
-        if (Boolean.valueOf(dependentPlugin.getAttributeValue(ATT_OPTIONAL)).booleanValue()) {
-          optionalDependentPlugins.add(id);
+    if (pluginBean.vendor != null) {
+      myVendor = pluginBean.vendor.name;
+      myVendorEmail = pluginBean.vendor.email;
+      myVendorUrl = pluginBean.vendor.url;
+      myVendorLogoPath = pluginBean.vendor.logo;
+    }
+
+    Set<PluginId> dependentPlugins = new HashSet<PluginId>();
+    Set<PluginId> optionalDependentPlugins = new HashSet<PluginId>();
+    if (pluginBean.dependencies != null) {
+      for (PluginDependency dependency : pluginBean.dependencies) {
+        String text = dependency.pluginId;
+        if (text != null && text.length() > 0) {
+          final PluginId id = PluginId.getId(text);
+          dependentPlugins.add(id);
+          if (dependency.optional) {
+            optionalDependentPlugins.add(id);
+          }
         }
       }
     }
     myDependencies = dependentPlugins.toArray(new PluginId[dependentPlugins.size()]);
     myOptionalDependencies = optionalDependentPlugins.toArray(new PluginId[optionalDependentPlugins.size()]);
 
-    children = element.getChildren(ELEMENT_HELPSET);
-    List<HelpSetPath> hsPathes = new ArrayList<HelpSetPath>(children.size());
-    for (final Object aChildren1 : children) {
-      final Element helpset = (Element)aChildren1;
-      HelpSetPath hsPath = new HelpSetPath(helpset.getAttributeValue(ATTRIBUTE_FILE), helpset.getAttributeValue(ATTRIBUTE_PATH));
-      hsPathes.add(hsPath);
+
+    List<HelpSetPath> hsPathes = new ArrayList<HelpSetPath>();
+    if (pluginBean.helpSets != null) {
+      for (PluginHelpSet pluginHelpSet : pluginBean.helpSets) {
+        HelpSetPath hsPath = new HelpSetPath(pluginHelpSet.file, pluginHelpSet.path);
+        hsPathes.add(hsPath);
+      }
     }
     myHelpSets = hsPathes.toArray(new HelpSetPath[hsPathes.size()]);
 
-    Element vendor = element.getChild(ELEMENT_VENDOR);
-    if (vendor != null) {
-      myVendorEmail = element.getChild(ELEMENT_VENDOR).getAttributeValue(ATTRIBUTE_EMAIL);
-      myVendorUrl = element.getChild(ELEMENT_VENDOR).getAttributeValue(ATTRIBUTE_URL);
-      myVendorLogoPath = element.getChild(ELEMENT_VENDOR).getAttributeValue(ATTRIBUTE_LOGO);
-    }
+    myAppComponents = pluginBean.applicationComponents;
+    myProjectComponents = pluginBean.projectComponents;
+    myModuleComponents = pluginBean.moduleComponents;
 
-    myAppComponents = element.getChild(ELEMENT_APPLICATION_COMPONENTS);
-    myProjectComponents = element.getChild(ELEMENT_PROJECT_COMPONENTS);
-    myModuleComponents = element.getChild(ELEMENT_MODULE_COMPONENTS);
+    if (myAppComponents == null) myAppComponents = new ComponentConfig[0];
+    if (myProjectComponents == null) myProjectComponents = new ComponentConfig[0];
+    if (myModuleComponents == null) myModuleComponents = new ComponentConfig[0];
 
-    final List<Element> extensionsRoots = JDOMUtil.getChildrenFromAllNamespaces(element, ELEMENT_EXTENSIONS);
-    if (!extensionsRoots.isEmpty()) {
+    if (pluginBean.extensions != null) {
       myExtensions = new ArrayList<Element>();
-      for (Element extensionsRoot : extensionsRoots) {
+      for (Element extensionsRoot : pluginBean.extensions) {
         for (final Object o : extensionsRoot.getChildren()) {
           myExtensions.add((Element)o);
         }
       }
     }
 
-    final List<Element> extensionPointRoots = JDOMUtil.getChildrenFromAllNamespaces(element, ELEMENT_EXTENSION_POINTS);
-    if (!extensionPointRoots.isEmpty()) {
+    if (pluginBean.extensionPoints != null) {
       myExtensionsPoints = new ArrayList<Element>();
-      for (Element root : extensionPointRoots) {
+      for (Element root : pluginBean.extensionPoints) {
         for (Object o : root.getChildren()) {
           myExtensionsPoints.add((Element)o);
         }
       }
     }
 
-    myActionsElement = element.getChild(ELEMENT_ACTIONS);
+    myActionsElement = pluginBean.actions;
   }
 
   private static String loadDescription(final String descriptionChildText, @Nullable final ResourceBundle bundle, final PluginId id) {
@@ -208,14 +208,6 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    throw new WriteExternalException("Not supported");
-  }
-
-  public int getFormatVersion() {
-    return myFormatVersion;
-  }
-
   public String getDescription() {
     return myDescription;
   }
@@ -228,10 +220,12 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
     return myName;
   }
 
+  @NotNull
   public PluginId[] getDependentPluginIds() {
     return myDependencies;
   }
 
+  @NotNull
   public PluginId[] getOptionalDependentPluginIds() {
     return myOptionalDependencies;
   }
@@ -288,15 +282,18 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
     return myActionsElement;
   }
 
-  public Element getAppComponents() {
+  @NotNull
+  public ComponentConfig[] getAppComponents() {
     return myAppComponents;
   }
 
-  public Element getProjectComponents() {
+  @NotNull
+  public ComponentConfig[] getProjectComponents() {
     return myProjectComponents;
   }
 
-  public Element getModuleComponents() {
+  @NotNull
+  public ComponentConfig[] getModuleComponents() {
     return myModuleComponents;
   }
 
@@ -350,6 +347,7 @@ public class IdeaPluginDescriptorImpl implements JDOMExternalizable, IdeaPluginD
     return (myName != null ? myName.hashCode() : 0);
   }
 
+  @NotNull
   public HelpSetPath[] getHelpSets() {
     return myHelpSets;
   }

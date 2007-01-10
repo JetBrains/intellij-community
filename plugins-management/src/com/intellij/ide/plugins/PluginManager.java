@@ -29,6 +29,7 @@ import sun.reflect.Reflection;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -40,8 +41,6 @@ import java.net.URLClassLoader;
 import java.net.URLDecoder;
 import java.util.*;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 /**
  * @author mike
@@ -66,9 +65,9 @@ public class PluginManager {
 
   // these fields are accessed via Reflection, so their names must not be changed by the obfuscator
   // do not make them private cause in this case they will be scrambled
-  static String[] ourArguments;
-  static String ourMainClass;
-  static String ourMethodName;
+  @SuppressWarnings({"WeakerAccess"}) static String[] ourArguments;
+  @SuppressWarnings({"WeakerAccess"}) static String ourMainClass;
+  @SuppressWarnings({"WeakerAccess"}) static String ourMethodName;
 
   private static class Facade extends PluginsFacade {
     public IdeaPluginDescriptor getPlugin(PluginId id) {
@@ -274,6 +273,7 @@ public class PluginManager {
   /**
    * Called via reflection
    */
+  @SuppressWarnings({"UnusedDeclaration"})
   protected static void start() {
     try {
       //noinspection HardCodedStringLiteral
@@ -534,7 +534,7 @@ public class PluginManager {
       descriptor = new IdeaPluginDescriptorImpl(file);
 
       try {
-        descriptor.readExternal(JDOMUtil.loadDocument(descriptorFile).getRootElement());
+        descriptor.readExternal(descriptorFile.toURL());
       }
       catch (Exception e) {
         System.err.println("Cannot load: " + descriptorFile.getAbsolutePath());
@@ -544,31 +544,28 @@ public class PluginManager {
     return descriptor;
   }
 
+  @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptorFromJar(File file) {
-    IdeaPluginDescriptorImpl descriptor = null;
     try {
-      ZipFile zipFile = new ZipFile(file);
 
-      try {
-        //noinspection HardCodedStringLiteral
-        final ZipEntry entry = zipFile.getEntry("META-INF/plugin.xml");
-        if (entry != null) {
-          descriptor = new IdeaPluginDescriptorImpl(file);
+      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(file);
 
-          final InputStream inputStream = zipFile.getInputStream(entry);
-          final Element rootElement = JDOMUtil.loadDocument(inputStream).getRootElement();
-          inputStream.close();
-          descriptor.readExternal(rootElement);
-        }
-      }
-      finally {
-        zipFile.close();
-      }
+      URL fileURL = file.toURL();
+      URL jarURL = new URL(
+        "jar:" + fileURL.toExternalForm() + "!/META-INF/plugin.xml"
+      );
+
+      descriptor.readExternal(jarURL);
+      return descriptor;
+    }
+    catch (FileNotFoundException e) {
+      return null;
     }
     catch (Exception e) {
       getLogger().info("Cannot load " + file, e);
     }
-    return descriptor;
+
+    return null;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -672,6 +669,7 @@ public class PluginManager {
     }
   }
 
+  @Nullable
   private static ClassLoader createPluginClassLoader(final File[] classPath,
                                                          final ClassLoader[] parentLoaders,
                                                          IdeaPluginDescriptor pluginDescriptor) {
@@ -724,13 +722,14 @@ public class PluginManager {
     return null;
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   private static Method getAddUrlMethod(final ClassLoader loader) throws NoSuchMethodException {
     if (loader instanceof URLClassLoader) {
       final Method addUrlMethod = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
       addUrlMethod.setAccessible(true);
       return addUrlMethod;
     }
-    
+
     return loader.getClass().getDeclaredMethod("addURL", URL.class);
   }
 
@@ -851,6 +850,7 @@ public class PluginManager {
     return (getPlugin(id) != null);
   }
 
+  @Nullable
   public static IdeaPluginDescriptor getPlugin(PluginId id) {
     final IdeaPluginDescriptor[] plugins = getPlugins();
     for (final IdeaPluginDescriptor plugin : plugins) {
