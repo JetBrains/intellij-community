@@ -83,7 +83,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myComponentsCreated;
   }
 
-  private synchronized void createComponents() {
+  private void createComponents() {
     try {
       final Class[] componentInterfaces = getComponentInterfaces();
       for (Class componentInterface : componentInterfaces) {

@@ -123,7 +123,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
   public void createDefaultProfile() {
     final InspectionProfileImpl defaultProfile;
     defaultProfile = (InspectionProfileImpl)createProfile();
-    defaultProfile.setBaseProfile(InspectionProfileImpl.DEFAULT_PROFILE);
+    defaultProfile.setBaseProfile(InspectionProfileImpl.getDefaultProfile());
     addProfile(defaultProfile);
   }
 

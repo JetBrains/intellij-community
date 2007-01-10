@@ -298,7 +298,7 @@ public class InspectionApplication {
   }
 
   private static void describeInspections(@NonNls String myOutputPath) throws IOException {
-    final InspectionProfileEntry[] profileEntries = InspectionProfileImpl.DEFAULT_PROFILE.getInspectionTools();
+    final InspectionProfileEntry[] profileEntries = InspectionProfileImpl.getDefaultProfile().getInspectionTools();
     final Map<String, Set<InspectionProfileEntry>> map = new HashMap<String, Set<InspectionProfileEntry>>();
     for (InspectionProfileEntry entry : profileEntries) {
       final String groupName = entry.getGroupDisplayName();

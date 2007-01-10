@@ -35,22 +35,7 @@ import java.util.LinkedHashMap;
  * @author max
  */
 public class InspectionProfileImpl extends ProfileEx implements ModifiableModel, InspectionProfile {
-  @NonNls public static final InspectionProfileImpl DEFAULT_PROFILE = new InspectionProfileImpl("Default");
-  static {
-    final InspectionProfileEntry[] inspectionTools = DEFAULT_PROFILE.getInspectionTools();
-    for (InspectionProfileEntry tool : inspectionTools) {
-      final String shortName = tool.getShortName();
-      HighlightDisplayKey key;
-      if (tool instanceof LocalInspectionToolWrapper) {
-        key = HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID());
-      } else {
-        key = HighlightDisplayKey.register(shortName);
-      }
-      if (key != null) { //in case when short name isn't unique
-        DEFAULT_PROFILE.myDisplayLevelMap.put(key, new ToolState(tool.getDefaultLevel(), tool.isEnabledByDefault()));
-      }
-    }
-  }
+  @NonNls private static InspectionProfileImpl DEFAULT_PROFILE;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileImpl");
   @NonNls private static String VALID_VERSION = "1.0";
@@ -111,7 +96,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
                                final InspectionToolRegistrar registrar) {
     super(inspectionProfile, file);
     myRegistrar = registrar;
-    myBaseProfile = DEFAULT_PROFILE;
+    myBaseProfile = getDefaultProfile();
   }
 
   public InspectionProfileImpl(@NonNls String name) {
@@ -287,7 +272,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       myDisplayLevelMap.put(key, new ToolState(level, enabled != null && Boolean.parseBoolean(enabled)));
     }
 
-    myBaseProfile = DEFAULT_PROFILE;
+    myBaseProfile = getDefaultProfile();
   }
 
 
@@ -569,6 +554,26 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myTools = inspectionProfile.myTools;
 
     save();
+  }
+
+  public static synchronized InspectionProfileImpl getDefaultProfile() {
+    if (DEFAULT_PROFILE == null) {
+      DEFAULT_PROFILE = new InspectionProfileImpl("Default");
+      final InspectionProfileEntry[] inspectionTools = DEFAULT_PROFILE.getInspectionTools();
+      for (InspectionProfileEntry tool : inspectionTools) {
+        final String shortName = tool.getShortName();
+        HighlightDisplayKey key;
+        if (tool instanceof LocalInspectionToolWrapper) {
+          key = HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID());
+        } else {
+          key = HighlightDisplayKey.register(shortName);
+        }
+        if (key != null) { //in case when short name isn't unique
+          DEFAULT_PROFILE.myDisplayLevelMap.put(key, new ToolState(tool.getDefaultLevel(), tool.isEnabledByDefault()));
+        }
+      }
+    }
+    return DEFAULT_PROFILE;
   }
 
   private static class ToolState {

@@ -199,7 +199,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     for (InspectionProfileEntry tool : tools) {
       myDescriptors.add(new Descriptor(tool, profile != null
                                              ? profile
-                                             : InspectionProfileImpl.DEFAULT_PROFILE)); //fix for new profile - isModified == true by default
+                                             : InspectionProfileImpl.getDefaultProfile())); //fix for new profile - isModified == true by default
     }
   }
 
