@@ -417,10 +417,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
           if (myReturnValueWatcher != null) {
             myReturnValueWatcher.setTrackingEnabled(false);
           }
+          suspendManager.voteSuspend(suspendContext);
           if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
             myBreakpointManager.applyThreadFilter(DebugProcessEvents.this, event.thread());
           }
-          suspendManager.voteSuspend(suspendContext);
           showStatusText(DebugProcessEvents.this, event);
         }
       }

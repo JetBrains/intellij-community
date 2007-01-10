@@ -39,12 +39,12 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.RequestManagerImpl");
 
   private static final Key CLASS_NAME = Key.create("ClassName");
+  private static final Key<Requestor> REQUESTOR = Key.create("Requestor");
 
   private DebugProcessImpl myDebugProcess;
   private HashMap<Requestor, String> myInvalidRequestors = new HashMap<Requestor, String>();
 
-  private Map<Requestor, Set<EventRequest>> myRequestorToBelongedRequests        = new HashMap<Requestor, Set<EventRequest>>();
-  private Map<EventRequest, Requestor>      myRequestsToProcessingRequestor     = new HashMap<EventRequest, Requestor>();
+  private Map<Requestor, Set<EventRequest>> myRequestorToBelongedRequests = new HashMap<Requestor, Set<EventRequest>>();
   private EventRequestManager myEventRequestManager;
   private @Nullable ThreadReference myFilterThread;
 
@@ -77,10 +77,10 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public Requestor findRequestor(EventRequest request) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    return myRequestsToProcessingRequestor.get(request);
+    return request != null? (Requestor)request.getProperty(REQUESTOR) : null;
   }
 
-  private void addClassFilter(EventRequest request, String pattern){
+  private static void addClassFilter(EventRequest request, String pattern){
     if(request instanceof AccessWatchpointRequest){
       ((AccessWatchpointRequest) request).addClassFilter(pattern);
     }
@@ -101,7 +101,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
-  private void addClassExclusionFilter(EventRequest request, String pattern){
+  private static void addClassExclusionFilter(EventRequest request, String pattern){
     if(request instanceof AccessWatchpointRequest){
       ((AccessWatchpointRequest) request).addClassExclusionFilter(pattern);
     }
@@ -138,15 +138,15 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
     if (requestor.CLASS_FILTERS_ENABLED) {
       ClassFilter[] classFilters = requestor.getClassFilters();
-      for (int idx = 0; idx < classFilters.length; idx++) {
-        final ClassFilter filter = classFilters[idx];
+      for (final ClassFilter filter : classFilters) {
         if (!filter.isEnabled()) {
           continue;
         }
         final JVMName jvmClassName = ApplicationManager.getApplication().runReadAction(new Computable<JVMName>() {
           public JVMName compute() {
-            PsiClass psiClass = DebuggerUtilsEx.findClass(filter.getPattern(), myDebugProcess.getProject(), myDebugProcess.getSession().getSearchScope());
-            if(psiClass == null) {
+            PsiClass psiClass =
+              DebuggerUtilsEx.findClass(filter.getPattern(), myDebugProcess.getProject(), myDebugProcess.getSession().getSearchScope());
+            if (psiClass == null) {
               return null;
             }
             return JVMNameUtil.getJVMQualifiedName(psiClass);
@@ -154,7 +154,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         });
         String pattern = filter.getPattern();
         try {
-          if(jvmClassName != null) {
+          if (jvmClassName != null) {
             pattern = jvmClassName.getName(myDebugProcess);
           }
         }
@@ -165,8 +165,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       }
 
       final ClassFilter[] iclassFilters = requestor.getClassExclusionFilters();
-      for (int idx = 0; idx < iclassFilters.length; idx++) {
-        ClassFilter filter = iclassFilters[idx];
+      for (ClassFilter filter : iclassFilters) {
         if (filter.isEnabled()) {
           addClassExclusionFilter(request, filter.getPattern());
         }
@@ -178,7 +177,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public void registerRequestInternal(final Requestor requestor, final EventRequest request) {
     registerRequest(requestor, request);
-    callbackOnEvent(requestor, request);
+    request.putProperty(REQUESTOR, requestor);
   }
 
   private void registerRequest(Requestor requestor, EventRequest request) {
@@ -189,10 +188,6 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
     reqSet.add(request);
 
-  }
-
-  private void callbackOnEvent(Requestor requestor, EventRequest request) {
-    myRequestsToProcessingRequestor.put(request, requestor);
   }
 
   // requests creation
@@ -258,19 +253,16 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       return;
     }
     myRequestorToBelongedRequests.remove(requestor);
-    for (Iterator iterator = requests.iterator(); iterator.hasNext();) {
-      EventRequest eventRequest = (EventRequest) iterator.next();
-      myRequestsToProcessingRequestor.remove(eventRequest);
-    }
-    for (Iterator iterator = requests.iterator(); iterator.hasNext();) {
-      EventRequest eventRequest = (EventRequest)iterator.next();
+    for (final EventRequest request : requests) {
       try {
-        myEventRequestManager.deleteEventRequest(eventRequest);
-      } catch (InternalException e) {
-        if(e.errorCode() == 41) {
+        myEventRequestManager.deleteEventRequest(request);
+      }
+      catch (InternalException e) {
+        if (e.errorCode() == 41) {
           //event request not found
           //there could be no requests after hotswap
-        } else {
+        }
+        else {
           LOG.error(e);
         }
       }
@@ -354,7 +346,6 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     myEventRequestManager = null;
     myInvalidRequestors.clear();
     myRequestorToBelongedRequests.clear();
-    myRequestsToProcessingRequestor.clear();
   }
 
   public void processAttached(DebugProcessImpl process) {
@@ -382,7 +373,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       if (LOG.isDebugEnabled()) {
         LOG.debug("signature = " + classType.signature());
       }
-      ClassPrepareRequestor requestor = (ClassPrepareRequestor)myRequestsToProcessingRequestor.get((ClassPrepareRequest)event.request());
+      ClassPrepareRequestor requestor = (ClassPrepareRequestor)event.request().getProperty(REQUESTOR);
       if (requestor != null) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("requestor found " + classType.signature());
