@@ -581,7 +581,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private FilePath[] getPaths() {
-    List<FilePath> result = ChangesUtil.getPaths(getIncludedChanges());
+    Collection<FilePath> result = ChangesUtil.getPaths(getIncludedChanges());
     return result.toArray(new FilePath[result.size()]);
   }
 

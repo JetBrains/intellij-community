@@ -158,7 +158,21 @@ public class ShowDiffAction extends AnAction {
       }
     }
 
-    String title = bRev != null ? bRev.getFile().getPath() : aRev != null ? aRev.getFile().getPath() : "Unknown diff";
+    String beforePath = bRev != null ? bRev.getFile().getPath() : null;
+    String afterPath = aRev != null ? aRev.getFile().getPath() : null;
+    String title;
+    if (beforePath != null && afterPath != null && !beforePath.equals(afterPath)) {
+      title = beforePath + " -> " + afterPath;
+    }
+    else if (beforePath != null) {
+      title = beforePath;
+    }
+    else if (afterPath != null) {
+      title = afterPath;
+    }
+    else {
+      title = VcsBundle.message("diff.unknown.path.title");
+    }
     final SimpleDiffRequest diffReq = new SimpleDiffRequest(project, title);
 
     if (changes.length > 1) {

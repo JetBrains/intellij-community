@@ -66,14 +66,24 @@ class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
       final FilePath filePath = ChangesUtil.getFilePath(change);
       final String fileName = filePath.getName();
       VirtualFile vFile = filePath.getVirtualFile();
-      appendFileName(vFile, fileName, getColor(change));
+      final Color changeColor = getColor(change);
+      appendFileName(vFile, fileName, changeColor);
+
+      if (change.isRenamed() || change.isMoved()) {
+        FilePath beforePath = change.getBeforeRevision().getFile();
+        if (change.isRenamed()) {
+          append(" - renamed from "+ beforePath.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+        else {
+          append(" - moved from " + change.getMoveRelativePath(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+      }
+
       if (myShowFlatten) {
-        append(" (", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         final File parentFile = filePath.getIOFile().getParentFile();
         if (parentFile != null) {
-          append(parentFile.getPath() + ", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          append(" (" + parentFile.getPath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
-        append(change.getFileStatus().getText() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
       else if (node.getCount() != 1 || node.getDirectoryCount() != 0) {
         appendCount(node);

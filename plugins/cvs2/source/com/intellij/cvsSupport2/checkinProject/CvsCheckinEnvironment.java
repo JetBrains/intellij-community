@@ -24,6 +24,7 @@ import com.intellij.CvsBundle;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Collection;
 import java.io.File;
 import java.io.IOException;
 
@@ -83,7 +84,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    final List<FilePath> filesList = ChangesUtil.getPaths(changes);
+    final Collection<FilePath> filesList = ChangesUtil.getPaths(changes);
     FilePath[] files = filesList.toArray(new FilePath[filesList.size()]);
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.setShowErrors(false);

@@ -52,10 +52,17 @@ public class ChangesUtil {
     return null;
   }
 
-  public static List<FilePath> getPaths(final List<Change> changes) {
-    List<FilePath> paths = new ArrayList<FilePath>();
+  public static Collection<FilePath> getPaths(final List<Change> changes) {
+    Set<FilePath> paths = new HashSet<FilePath>();
     for (Change change : changes) {
-      paths.add(getFilePath(change));
+      ContentRevision beforeRevision = change.getBeforeRevision();
+      if (beforeRevision != null) {
+        paths.add(beforeRevision.getFile());
+      }
+      ContentRevision afterRevision = change.getAfterRevision();
+      if (afterRevision != null) {
+        paths.add(afterRevision.getFile());
+      }
     }
     return paths;
   }

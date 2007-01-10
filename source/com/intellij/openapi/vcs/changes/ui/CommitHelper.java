@@ -103,7 +103,7 @@ public class CommitHelper {
         public void process(AbstractVcs vcs, List<Change> changes) {
           final CheckinEnvironment environment = vcs.getCheckinEnvironment();
           if (environment != null) {
-            List<FilePath> paths = ChangesUtil.getPaths(changes);
+            Collection<FilePath> paths = ChangesUtil.getPaths(changes);
             pathsToRefresh.addAll(paths);
             final List<VcsException> exceptions = environment.commit(changes, myCommitMessage);
             if (exceptions.size() > 0) {

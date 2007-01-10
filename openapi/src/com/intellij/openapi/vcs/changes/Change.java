@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +22,10 @@ public class Change {
   private final ContentRevision myBeforeRevision;
   private final ContentRevision myAfterRevision;
   private final FileStatus myFileStatus;
+  private String myMoveRelativePath;
+  private boolean myRenamed;
+  private boolean myMoved;
+  private boolean myRenameOrMoveCached = false;
 
 
   public Change(final ContentRevision beforeRevision, final ContentRevision afterRevision) {
@@ -101,5 +106,36 @@ public class Change {
     if (myBeforeRevision != null && myBeforeRevision.getFile().getIOFile().equals(ioFile)) return true;
     if (myAfterRevision != null && myAfterRevision.getFile().getIOFile().equals(ioFile)) return true;
     return false;
+  }
+
+  public boolean isRenamed() {
+    cacheRenameOrMove();
+    return myRenamed;
+  }
+
+  public boolean isMoved() {
+    cacheRenameOrMove();
+    return myMoved;
+  }
+
+  public String getMoveRelativePath() {
+    cacheRenameOrMove();
+    return myMoveRelativePath;
+  }
+
+  private void cacheRenameOrMove() {
+    if (!myRenameOrMoveCached) {
+      myRenameOrMoveCached = true;
+      if (myBeforeRevision != null && myAfterRevision != null &&
+          !myBeforeRevision.getFile().equals(myAfterRevision.getFile())) {
+        if (myBeforeRevision.getFile().getParentPath().equals(myAfterRevision.getFile().getParentPath())) {
+          myRenamed = true;
+        }
+        else {
+          myMoved = true;
+          myMoveRelativePath = FileUtil.getRelativePath(myAfterRevision.getFile().getIOFile(), myBeforeRevision.getFile().getIOFile());
+        }
+      }
+    }
   }
 }
