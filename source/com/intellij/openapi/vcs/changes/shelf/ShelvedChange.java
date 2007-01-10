@@ -32,29 +32,35 @@ import java.util.List;
 
 public class ShelvedChange {
   private String myPatchPath;
-  private String myPatchedFilePath;
+  private String myBeforePath;
+  private String myAfterPath;
   private FileStatus myFileStatus;
   private Change myChange;
 
-  public ShelvedChange(final String patchPath, final String filePath, final FileStatus fileStatus) {
+  public ShelvedChange(final String patchPath, final String beforePath, final String afterPath, final FileStatus fileStatus) {
     myPatchPath = patchPath;
-    myPatchedFilePath = filePath;
+    myBeforePath = beforePath;
+    myAfterPath = afterPath;
     myFileStatus = fileStatus;
   }
 
-  public String getPatchedFilePath() {
-    return myPatchedFilePath;
+  public String getBeforePath() {
+    return myBeforePath;
   }
 
-  public String getFileName() {
-    int pos = myPatchedFilePath.lastIndexOf('/');
-    if (pos >= 0) return myPatchedFilePath.substring(pos+1);
-    return myPatchedFilePath;
+  public String getAfterPath() {
+    return myAfterPath;
   }
 
-  public String getDirectory() {
-    int pos = myPatchedFilePath.lastIndexOf('/');
-    if (pos >= 0) return myPatchedFilePath.substring(0, pos).replace('/', File.separatorChar);
+  public String getBeforeFileName() {
+    int pos = myBeforePath.lastIndexOf('/');
+    if (pos >= 0) return myBeforePath.substring(pos+1);
+    return myBeforePath;
+  }
+
+  public String getBeforeDirectory() {
+    int pos = myBeforePath.lastIndexOf('/');
+    if (pos >= 0) return myBeforePath.substring(0, pos).replace('/', File.separatorChar);
     return File.separator;
   }
 
@@ -70,15 +76,15 @@ public class ShelvedChange {
       VirtualFile baseDir = project.getProjectFile().getParent();
 
       if (myFileStatus != FileStatus.ADDED) {
-        VirtualFile changedFile = VfsUtil.findRelativeFile(myPatchedFilePath, baseDir);
+        VirtualFile changedFile = VfsUtil.findRelativeFile(myBeforePath, baseDir);
         if (changedFile != null) {
           filePath = new FilePathImpl(changedFile);
           beforeRevision = new CurrentContentRevision(filePath);
         }
       }
       if (filePath == null) {
-        VirtualFile changedDir = VfsUtil.findRelativeFile(getDirectory(), baseDir);
-        filePath = new FilePathImpl(changedDir, getFileName(), false);
+        VirtualFile changedDir = VfsUtil.findRelativeFile(getBeforeDirectory(), baseDir);
+        filePath = new FilePathImpl(changedDir, getBeforeFileName(), false);
       }
 
       if (myFileStatus != FileStatus.DELETED) {
@@ -101,7 +107,7 @@ public class ShelvedChange {
       try {
         List<FilePatch> filePatches = ShelveChangesManager.loadPatches(myPatchPath);
         for(FilePatch patch: filePatches) {
-          if (myPatchedFilePath.equals(patch.getBeforeName())) {
+          if (myBeforePath.equals(patch.getBeforeName())) {
             if (patch.isNewFile()) {
               return patch.getNewFileText();
             }

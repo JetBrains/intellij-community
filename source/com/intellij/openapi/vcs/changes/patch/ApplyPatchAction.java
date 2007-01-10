@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.io.IOException;
 
 public class ApplyPatchAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.ApplyPatchAction");
@@ -51,14 +52,22 @@ public class ApplyPatchAction extends AnAction {
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
     }
-    applyPatch(project, dialog.getPatches(), dialog.getBaseDirectory(), dialog.getStripLeadingDirectories(), false);
+    applyPatch(project, dialog.getPatches(), dialog.getBaseDirectory(), dialog.getStripLeadingDirectories(), false, false);
   }
 
   public static ApplyPatchStatus applyPatch(final Project project, final List<FilePatch> patches, final VirtualFile baseDirectory,
-                                            final int stripLeadingDirectories, final boolean createDirectories) {
+                                            final int stripLeadingDirectories, final boolean createDirectories, final boolean allowRename) {
     List<VirtualFile> filesToMakeWritable = new ArrayList<VirtualFile>();
     for(FilePatch patch: patches) {
-      VirtualFile fileToPatch = patch.findFileToPatch(baseDirectory, stripLeadingDirectories, false);
+      VirtualFile fileToPatch;
+      try {
+        fileToPatch = patch.findFileToPatch(baseDirectory, stripLeadingDirectories, false, false);
+      }
+      catch (IOException e) {
+        Messages.showErrorDialog(project, "Error when searching for file to patch: " + patch.getBeforeName() + ": " + e.getMessage(),
+                                 "Apply Patch");
+        return ApplyPatchStatus.FAILURE;
+      }
       if (fileToPatch != null && !fileToPatch.isDirectory()) {
         filesToMakeWritable.add(fileToPatch);
         FileType fileType = fileToPatch.getFileType();
@@ -82,7 +91,8 @@ public class ApplyPatchAction extends AnAction {
           public void run() {
             ApplyPatchStatus status = null;
             for(FilePatch patch: patches) {
-              final ApplyPatchStatus patchStatus = applySinglePatch(project, patch, baseDirectory, stripLeadingDirectories, createDirectories);
+              final ApplyPatchStatus patchStatus = applySinglePatch(project, patch, baseDirectory, stripLeadingDirectories, createDirectories,
+                                                                    allowRename);
               status = ApplyPatchStatus.and(status, patchStatus);
             }
             if (status == ApplyPatchStatus.ALREADY_APPLIED) {
@@ -102,8 +112,16 @@ public class ApplyPatchAction extends AnAction {
   }
 
   private static ApplyPatchStatus applySinglePatch(final Project project, final FilePatch patch, final VirtualFile baseDirectory,
-                                                   final int stripLeadingDirectories, final boolean createDirectories) {
-    VirtualFile file = patch.findFileToPatch(baseDirectory, stripLeadingDirectories, createDirectories);
+                                                   final int stripLeadingDirectories, final boolean createDirectories,
+                                                   final boolean allowRename) {
+    VirtualFile file;
+    try {
+      file = patch.findFileToPatch(baseDirectory, stripLeadingDirectories, createDirectories, allowRename);
+    }
+    catch (IOException e) {
+      Messages.showErrorDialog(project, "Error when searching for file to patch: " + patch.getBeforeName() + ": " + e.getMessage(), "Apply Patch");
+      return ApplyPatchStatus.FAILURE;
+    }
     if (file == null) {
       Messages.showErrorDialog(project, "Cannot find file to patch: " + patch.getBeforeName(), "Apply Patch");
       return ApplyPatchStatus.FAILURE;

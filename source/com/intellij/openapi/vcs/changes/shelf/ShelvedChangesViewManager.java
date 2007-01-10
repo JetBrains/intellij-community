@@ -184,9 +184,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
       else if (nodeValue instanceof ShelvedChange) {
         ShelvedChange change = (ShelvedChange) nodeValue;
-        append(change.getFileName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, change.getFileStatus().getColor()));
-        append(" ("+ change.getDirectory() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        setIcon(FileTypeManager.getInstance().getFileTypeByFileName(change.getFileName()).getIcon());
+        append(change.getBeforeFileName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, change.getFileStatus().getColor()));
+        append(" ("+ change.getBeforeDirectory() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        setIcon(FileTypeManager.getInstance().getFileTypeByFileName(change.getBeforeFileName()).getIcon());
       }
     }
   }

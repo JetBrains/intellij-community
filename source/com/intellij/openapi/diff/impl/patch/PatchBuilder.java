@@ -36,7 +36,7 @@ public class PatchBuilder {
   private PatchBuilder() {
   }
 
-  public static List<FilePatch> buildPatch(final Collection<Change> changes, final String basePath) throws VcsException {
+  public static List<FilePatch> buildPatch(final Collection<Change> changes, final String basePath, final boolean allowRename) throws VcsException {
     List<FilePatch> result = new ArrayList<FilePatch>();
     for(Change c: changes) {
       final ContentRevision beforeRevision = c.getBeforeRevision();
@@ -51,6 +51,7 @@ public class PatchBuilder {
       if (afterRevision != null && afterRevision.getFile().isDirectory()) {
         continue;
       }
+
       if (beforeRevision == null) {
         result.add(buildAddedFile(basePath, afterRevision));
         continue;
@@ -59,6 +60,13 @@ public class PatchBuilder {
         result.add(buildDeletedFile(basePath, beforeRevision));
         continue;
       }
+
+      if (!allowRename && !beforeRevision.getFile().equals(afterRevision.getFile())) {
+        result.add(buildDeletedFile(basePath, beforeRevision));
+        result.add(buildAddedFile(basePath, afterRevision));
+        continue;
+      }
+
       final String beforeContent = beforeRevision.getContent();
       final String afterContent = afterRevision.getContent();
       String[] beforeLines = DiffUtil.convertToLines(beforeContent);

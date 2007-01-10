@@ -112,7 +112,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       writer = new OutputStreamWriter(new FileOutputStream(patchPath));
     }
     try {
-      List<FilePatch> patches = PatchBuilder.buildPatch(changes, myProject.getProjectFile().getParent().getPresentableUrl());
+      List<FilePatch> patches = PatchBuilder.buildPatch(changes, myProject.getProjectFile().getParent().getPresentableUrl(), true);
       UnifiedDiffWriter.write(patches, writer);
     }
     finally {
@@ -156,7 +156,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     try {
       List<FilePatch> patches = loadPatches(change.PATH);
       VirtualFile baseDir = myProject.getProjectFile().getParent();
-      if (ApplyPatchAction.applyPatch(myProject, patches, baseDir, 0, true) == ApplyPatchStatus.FAILURE) {
+      if (ApplyPatchAction.applyPatch(myProject, patches, baseDir, 0, true, true) == ApplyPatchStatus.FAILURE) {
         return;
       }
     }

@@ -129,7 +129,7 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
         PATCH_PATH = file.getParent();
         Writer writer = new OutputStreamWriter(new FileOutputStream(fileName));
         try {
-          List<FilePatch> patches = PatchBuilder.buildPatch(changes, myProject.getProjectFile().getParent().getPresentableUrl());
+          List<FilePatch> patches = PatchBuilder.buildPatch(changes, myProject.getProjectFile().getParent().getPresentableUrl(), false);
           UnifiedDiffWriter.write(patches, writer);
         }
         finally {

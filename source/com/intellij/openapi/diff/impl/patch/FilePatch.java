@@ -75,8 +75,9 @@ public class FilePatch {
     return Collections.unmodifiableList(myHunks);
   }
 
-  public ApplyPatchStatus apply(final VirtualFile patchedDir, final int skipTopDirs) throws ApplyPatchException, IOException {
-    VirtualFile fileToPatch = findFileToPatch(patchedDir, skipTopDirs, false);
+  public ApplyPatchStatus apply(VirtualFile patchedDir, int skipTopDirs, boolean createDirectories, boolean allowRename)
+    throws ApplyPatchException, IOException {
+    VirtualFile fileToPatch = findFileToPatch(patchedDir, skipTopDirs, createDirectories, allowRename);
 
     if (fileToPatch == null) {
       throw new ApplyPatchException("Cannot find file to patch: " + myBeforeName);
@@ -133,10 +134,29 @@ public class FilePatch {
   }
 
   @Nullable
-  public VirtualFile findFileToPatch(@NotNull final VirtualFile patchedDir, final int skipTopDirs, final boolean createDirectories) {
+  public VirtualFile findFileToPatch(@NotNull final VirtualFile patchedDir, final int skipTopDirs, final boolean createDirectories,
+                                     final boolean allowRename) throws IOException {
     VirtualFile file = findFileToPatchByName(patchedDir, skipTopDirs, myBeforeName, createDirectories);
     if (file == null) {
       file = findFileToPatchByName(patchedDir, skipTopDirs, myAfterName, createDirectories);
+    }
+    else if (allowRename && !myBeforeName.equals(myAfterName)) {
+      String[] beforeNameComponents = myBeforeName.split("/");
+      String[] afterNameComponents = myAfterName.split("/");
+      if (!beforeNameComponents [beforeNameComponents.length-1].equals(afterNameComponents [afterNameComponents.length-1])) {
+        file.rename(this, afterNameComponents [afterNameComponents.length-1]);
+      }
+      for(int i=skipTopDirs; i<afterNameComponents.length-1; i++) {
+        if (!beforeNameComponents [i].equals(afterNameComponents [i])) {
+          VirtualFile moveTarget = findFileToPatchByComponents(patchedDir, skipTopDirs, afterNameComponents, afterNameComponents.length-1,
+                                                               createDirectories);
+          if (moveTarget == null) {
+            return null;
+          }
+          file.move(this, moveTarget);
+          break;
+        }
+      }
     }
     return file;
   }
@@ -145,14 +165,22 @@ public class FilePatch {
   private VirtualFile findFileToPatchByName(@NotNull final VirtualFile patchedDir, final int skipTopDirs, final String fileName,
                                             final boolean createDirectories) {
     String[] pathNameComponents = fileName.split("/");
-    VirtualFile fileToPatch = patchedDir;
     int lastComponentToFind = isNewFile() ? pathNameComponents.length-1 : pathNameComponents.length;
+    return findFileToPatchByComponents(patchedDir, skipTopDirs, pathNameComponents, lastComponentToFind, createDirectories);
+  }
+
+  @Nullable
+  private VirtualFile findFileToPatchByComponents(VirtualFile patchedDir,
+                                                  final int skipTopDirs,
+                                                  final String[] pathNameComponents,
+                                                  final int lastComponentToFind,
+                                                  final boolean createDirectories) {
     for(int i=skipTopDirs; i<lastComponentToFind; i++) {
-      VirtualFile nextChild = fileToPatch.findChild(pathNameComponents [i]);
+      VirtualFile nextChild = patchedDir.findChild(pathNameComponents [i]);
       if (nextChild == null) {
         if (createDirectories) {
           try {
-            nextChild = fileToPatch.createChildDirectory(this, pathNameComponents [i]);
+            nextChild = patchedDir.createChildDirectory(this, pathNameComponents [i]);
           }
           catch (IOException e) {
             return null;
@@ -162,9 +190,9 @@ public class FilePatch {
           return null;
         }
       }
-      fileToPatch = nextChild;
+      patchedDir = nextChild;
     }
-    return fileToPatch;
+    return patchedDir;
   }
 
   public boolean isNewFile() {
