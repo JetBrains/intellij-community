@@ -113,11 +113,11 @@ public class CompletionVariant {
     myScopeClassExceptions.add(aClass);
   }
 
-  public void includeScopeClass(Class aClass){
+  public void includeScopeClass(Class<?> aClass){
     myScopeClasses.add(new Scope(aClass, false));
   }
 
-  public void includeScopeClass(Class aClass, boolean isFinalScope){
+  public void includeScopeClass(Class<?> aClass, boolean isFinalScope){
     myScopeClasses.add(new Scope(aClass, isFinalScope));
   }
 
