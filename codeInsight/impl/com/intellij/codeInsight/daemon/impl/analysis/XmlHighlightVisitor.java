@@ -309,41 +309,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
-  static class RenameTagBeginOrEndIntentionAction implements IntentionAction {
-    private boolean myStart;
-    private XmlTag myTagToChange;
-    private String myName;
-
-    RenameTagBeginOrEndIntentionAction(XmlTag tagToChange, String name, boolean start) {
-      myStart = start;
-      myTagToChange = tagToChange;
-      myName = name;
-    }
-
-    @NotNull
-    public String getText() {
-      return myStart ? XmlErrorMessages.message("rename.start.tag.name.intention") : XmlErrorMessages.message("rename.end.tag.name.intention");
-    }
-
-    @NotNull
-    public String getFamilyName() {
-      return getText();
-    }
-
-    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-      return true;
-    }
-
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      if (!CodeInsightUtil.prepareFileForWrite(file)) return;
-      myTagToChange.setName(myName);
-    }
-
-    public boolean startInWriteAction() {
-      return true;
-    }
-  }
-
   private void checkTagByDescriptor(final XmlTag tag) {
     String name = tag.getName();
 
@@ -1006,46 +971,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         nextSibling =  nextSibling.getNextSibling();
       }
       return null;
-    }
-
-    public boolean startInWriteAction() {
-      return true;
-    }
-  }
-
-  private static class RemoveExtraClosingTagIntentionAction implements IntentionAction {
-    private final XmlToken myXmlToken;
-
-    public RemoveExtraClosingTagIntentionAction(final XmlToken xmlToken) {
-      myXmlToken = xmlToken;
-    }
-
-    @NotNull
-    public String getText() {
-      return XmlErrorMessages.message("remove.extra.closing.tag.quickfix");
-    }
-
-    @NotNull
-    public String getFamilyName() {
-      return XmlErrorMessages.message("remove.extra.closing.tag.quickfix");
-    }
-
-    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-      return true;
-    }
-
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      if (!CodeInsightUtil.prepareFileForWrite(file)) return;
-
-      XmlToken tagEndStart = myXmlToken;
-      while(tagEndStart.getTokenType() != XmlTokenType.XML_END_TAG_START) {
-        final PsiElement prevSibling = tagEndStart.getPrevSibling();
-        if (!(prevSibling instanceof XmlToken)) break;
-        tagEndStart = (XmlToken)prevSibling;
-      }
-
-      final PsiElement parent = tagEndStart.getParent();
-      parent.deleteChildRange(tagEndStart,parent.getLastChild());
     }
 
     public boolean startInWriteAction() {
