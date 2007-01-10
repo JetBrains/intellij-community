@@ -46,11 +46,13 @@ abstract class ComponentStoreImpl implements StateStore, IComponentStore {
     return myNameToConfiguration.get(name);
   }
 
-  private synchronized void removeConfiguration(String name) {
+  synchronized void removeConfiguration(String name) {
     myNameToConfiguration.remove(name);
   }
 
   void initJdomExternalizable(Class componentClass, BaseComponent component) {
+    final String componentName = component.getComponentName();
+
     try {
       Element element = getDefaults(component);
 
@@ -65,7 +67,7 @@ abstract class ComponentStoreImpl implements StateStore, IComponentStore {
       LOG.error("Cannot load defaults for " + componentClass.getName(), e);
     }
 
-    Element element = getConfiguration(component.getComponentName());
+    Element element = getConfiguration(componentName);
 
     if (element != null) {
       try {
@@ -77,7 +79,7 @@ abstract class ComponentStoreImpl implements StateStore, IComponentStore {
       catch (InvalidDataException e) {
         throw new InvalidComponentDataException(e);
       }
-      removeConfiguration(component.getComponentName());
+      removeConfiguration(componentName);
     }
   }
 
