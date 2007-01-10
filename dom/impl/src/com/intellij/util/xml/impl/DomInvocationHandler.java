@@ -337,6 +337,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     return myTagName.getLocalName();
   }
 
+  @NotNull
   public final EvaluatedXmlName getXmlName() {
     return myTagName;
   }

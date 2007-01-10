@@ -49,7 +49,9 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
 
     final XmlTag tag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
 
-    final DomManager domManager = DomManager.getDomManager(psiElement.getManager().getProject());
+    PsiManager psiManager = psiElement.getManager();
+    psiManager = psiElement.getManager();
+    final DomManager domManager = DomManager.getDomManager(psiManager.getProject());
     DomElement domElement = domManager.getDomElement(tag);
     if (domElement == null) {
       return PsiReference.EMPTY_ARRAY;
