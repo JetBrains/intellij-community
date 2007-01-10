@@ -56,14 +56,7 @@ public class ChangeSet {
     }
   }
 
-  public void _revertOn(RootEntry root) {
-    for (int i = myChanges.size() - 1; i >= 0; i--) {
-      Change change = myChanges.get(i);
-      change._revertOn(root);
-    }
-  }
-
-  public void revertOn(Entry e) {
+  public void revertOn(RootEntry e) {
     for (int i = myChanges.size() - 1; i >= 0; i--) {
       Change change = myChanges.get(i);
       change.revertOn(e);

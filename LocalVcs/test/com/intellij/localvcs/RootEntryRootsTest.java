@@ -41,7 +41,7 @@ public class RootEntryRootsTest extends TestCase {
       root.createFile(null, "c:/non-existing-root/file", null, null);
       fail();
     }
-    catch (AssertionError e) {
+    catch (RuntimeException e) {
     }
   }
 

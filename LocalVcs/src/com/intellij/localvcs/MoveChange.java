@@ -33,7 +33,7 @@ public class MoveChange extends Change {
   }
 
   @Override
-  public void _revertOn(RootEntry root) {
+  public void revertOn(RootEntry root) {
     root.move(getNewPath(), Paths.getParentOf(myPath));
   }
 

@@ -24,12 +24,12 @@ public class ChangeListTest extends TestCase {
     cl.labelLastChangeSet("2");
 
     RootEntry copy = r.copy();
-    cl._revertUpToChangeSetOn(copy, cl.getChangeSets().get(1));
+    cl.revertEntryUpToChangeSet(copy, cl.getChangeSets().get(1));
     assertTrue(copy.hasEntry("file1"));
     assertTrue(copy.hasEntry("file2"));
 
     copy = r.copy();
-    cl._revertUpToChangeSetOn(copy, cl.getChangeSets().get(0));
+    cl.revertEntryUpToChangeSet(copy, cl.getChangeSets().get(0));
     assertTrue(copy.hasEntry("file1"));
     assertFalse(copy.hasEntry("file2"));
   }
@@ -167,6 +167,6 @@ public class ChangeListTest extends TestCase {
   }
 
   private List<ChangeSet> getChangeSetsFor(String path) {
-    return cl.getChangeListFor(r.getEntry(path)).getChangeSets();
+    return cl.getChangeSetsFor(r.getEntry(path));
   }
 }

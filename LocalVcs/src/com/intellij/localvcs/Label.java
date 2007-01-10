@@ -6,7 +6,7 @@ public class Label {
   private ChangeSet myChangeSet;
   private RootEntry myRoot;
 
-  public Label(Entry e, ChangeList cl, ChangeSet cs, RootEntry r) {
+  public Label(Entry e, RootEntry r, ChangeList cl, ChangeSet cs) {
     myEntry = e;
     myChangeList = cl;
     myChangeSet = cs;
@@ -18,15 +18,8 @@ public class Label {
   }
 
   public Entry getEntry() {
-    // todo cleanup this mess
-    if (myEntry instanceof FileEntry) {
-      Entry e = myEntry.copy();
-      myChangeList.revertEntryUpToChangeSet(e, myChangeSet);
-      return e;
-    }
     RootEntry copy = myRoot.copy();
-    myChangeList._revertUpToChangeSetOn(copy, myChangeSet);
-
+    myChangeList.revertEntryUpToChangeSet(copy, myChangeSet);
     return copy.getEntry(myEntry.getId());
   }
 

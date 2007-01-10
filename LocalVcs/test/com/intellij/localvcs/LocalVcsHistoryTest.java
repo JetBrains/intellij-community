@@ -115,7 +115,25 @@ public class LocalVcsHistoryTest extends TestCase {
     assertEquals("file", e.getName());
     assertEquals(c("content"), e.getContent());
     assertEquals(123L, e.getTimestamp());
+  }
 
+  @Test
+  public void testGettingEntryFromLabelInRenamedDir() {
+    vcs.createDirectory("dir", null);
+    vcs.createFile("dir/file", null, null);
+    vcs.apply();
+
+    vcs.rename("dir", "newDir");
+    vcs.apply();
+
+    vcs.changeFileContent("newDir/file", null, null);
+    vcs.apply();
+
+    List<Label> labels = vcs.getLabelsFor("newDir/file");
+    assertEquals(2, labels.size());
+
+    assertEquals("newDir/file", labels.get(0).getEntry().getPath());
+    assertEquals("dir/file", labels.get(1).getEntry().getPath());
   }
 
   @Test

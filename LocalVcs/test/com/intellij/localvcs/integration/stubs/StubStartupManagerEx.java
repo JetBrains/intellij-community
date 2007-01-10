@@ -1,8 +1,7 @@
 package com.intellij.localvcs.integration.stubs;
 
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.ide.startup.FileSystemSynchronizer;
 
 public class StubStartupManagerEx extends StartupManagerEx {
   public void registerStartupActivity(Runnable runnable) {

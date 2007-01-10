@@ -19,13 +19,13 @@ public class ChangeSetTest extends TestCase {
 
   @Test
   public void testApplyingIsFIFO() {
-    changeSet.applyTo(null);
+    changeSet.applyTo(new RootEntry());
     assertEquals(new Object[]{1, 2, 3}, log);
   }
 
   @Test
   public void testRevertingIsLIFO() {
-    changeSet._revertOn(null);
+    changeSet.revertOn(new RootEntry());
     assertEquals(new Object[]{3, 2, 1}, log);
   }
 
@@ -41,7 +41,7 @@ public class ChangeSetTest extends TestCase {
       log.add(myId);
     }
 
-    public void _revertOn(RootEntry root) {
+    public void revertOn(RootEntry root) {
       log.add(myId);
     }
   }

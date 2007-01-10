@@ -96,14 +96,16 @@ public class RootEntryFindingTest extends TestCase {
       root.getEntry("unknown entry");
       fail();
     }
-    catch (AssertionError e) {
+    catch (RuntimeException e) {
+      assertEquals("entry 'unknown entry' not found", e.getMessage());
     }
 
     try {
       root.getEntry(42);
       fail();
     }
-    catch (AssertionError e) {
+    catch (RuntimeException e) {
+      assertEquals("entry #42 not found", e.getMessage());
     }
   }
 }

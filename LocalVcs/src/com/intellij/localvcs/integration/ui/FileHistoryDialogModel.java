@@ -58,6 +58,7 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
       // todo review content stuff
       
       // todo test copying
+      // todo it seems ugly
       Entry e = getVcsEntry().copy();
       e.changeContent(getCurrentContent(), null);
       return e;

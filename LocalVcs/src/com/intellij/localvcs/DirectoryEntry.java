@@ -3,6 +3,7 @@ package com.intellij.localvcs;
 import static com.intellij.localvcs.Difference.Kind.*;
 
 import java.io.IOException;
+import static java.lang.String.format;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,17 +46,19 @@ public class DirectoryEntry extends Entry {
 
   @Override
   public void addChild(Entry child) {
-    assert doesNotExist(child);
+    checkDoesNotExist(child);
 
     myChildren.add(child);
     child.setParent(this);
   }
 
-  private boolean doesNotExist(Entry child) {
+  private void checkDoesNotExist(Entry child) {
     for (Entry e : myChildren) {
-      if (e.getName().equals(child.getName())) return false;
+      if (e.getName().equals(child.getName())) {
+        String m = "entry '%s' already exists in '%s'";
+        throw new RuntimeException(format(m, child.getName(), getPath()));
+      }
     }
-    return true;
   }
 
   @Override

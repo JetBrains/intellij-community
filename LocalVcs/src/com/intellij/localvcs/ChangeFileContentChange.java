@@ -60,13 +60,7 @@ public class ChangeFileContentChange extends Change {
   }
 
   @Override
-  public void _revertOn(RootEntry root) {
+  public void revertOn(RootEntry root) {
     root.changeFileContent(myPath, myOldContent, myOldTimestamp);
-  }
-
-  @Override
-  public void revertFile(Entry e) {
-    if (!isFor(e)) return;
-    e.changeContent(myOldContent, myOldTimestamp);
   }
 }

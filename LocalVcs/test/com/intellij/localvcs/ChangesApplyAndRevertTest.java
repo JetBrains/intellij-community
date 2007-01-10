@@ -16,7 +16,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
     assertEquals(c("content"), e.getContent());
     assertEquals(123L, e.getTimestamp());
 
-    c._revertOn(root);
+    c.revertOn(root);
     assertFalse(root.hasEntry("file"));
   }
 
@@ -28,7 +28,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
     assertTrue(root.hasEntry("dir"));
     assertEquals(777L, root.getEntry("dir").getTimestamp());
 
-    c._revertOn(root);
+    c.revertOn(root);
     assertFalse(root.hasEntry("dir"));
   }
 
@@ -41,7 +41,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
 
     assertTrue(root.hasEntry("dir/file"));
 
-    c._revertOn(root);
+    c.revertOn(root);
     assertFalse(root.hasEntry("dir/file"));
     assertTrue(root.hasEntry("dir"));
   }
@@ -57,7 +57,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
     assertEquals(c("new content"), e.getContent());
     assertEquals(22L, e.getTimestamp());
 
-    c._revertOn(root);
+    c.revertOn(root);
 
     e = root.getEntry("file");
     assertEquals(c("old content"), e.getContent());
@@ -74,7 +74,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
     assertFalse(root.hasEntry("file"));
     assertTrue(root.hasEntry("new file"));
 
-    c._revertOn(root);
+    c.revertOn(root);
 
     assertTrue(root.hasEntry("file"));
     assertFalse(root.hasEntry("new file"));
@@ -94,7 +94,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
 
     assertFalse(root.hasEntry("dir1/dir2"));
 
-    c._revertOn(root);
+    c.revertOn(root);
 
     assertTrue(root.hasEntry("dir1/dir2"));
     assertTrue(root.hasEntry("dir1/dir2/file"));
@@ -114,7 +114,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
     assertTrue(root.hasEntry("dir2/file"));
     assertFalse(root.hasEntry("dir1/file"));
 
-    c._revertOn(root);
+    c.revertOn(root);
 
     assertFalse(root.hasEntry("dir2/file"));
     assertTrue(root.hasEntry("dir1/file"));
@@ -134,7 +134,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
     assertTrue(root.hasEntry("root2/dir/file"));
     assertFalse(root.hasEntry("root1/dir"));
 
-    c._revertOn(root);
+    c.revertOn(root);
 
     assertTrue(root.hasEntry("root1/dir"));
     assertTrue(root.hasEntry("root1/dir/file"));
@@ -150,7 +150,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
 
     assertFalse(root.hasEntry("file"));
 
-    c._revertOn(root);
+    c.revertOn(root);
     assertTrue(root.hasEntry("file"));
 
     Entry e = root.getEntry("file");
@@ -170,7 +170,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
     c.applyTo(root);
 
     assertFalse(root.hasEntry("dir1"));
-    c._revertOn(root);
+    c.revertOn(root);
 
     assertTrue(root.hasEntry("dir1"));
     assertTrue(root.hasEntry("dir1/dir2"));
@@ -185,7 +185,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
 
     Change c = new ChangeFileContentChange("file", null, null);
     c.applyTo(root);
-    c._revertOn(root);
+    c.revertOn(root);
 
     assertEquals(14, root.getEntry("file").getId());
   }
@@ -196,7 +196,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
 
     Change c = new RenameChange("file", "new name");
     c.applyTo(root);
-    c._revertOn(root);
+    c.revertOn(root);
 
     assertEquals(13, root.getEntry("file").getId());
   }
@@ -209,7 +209,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
 
     Change c = new MoveChange("dir1/file", "dir2");
     c.applyTo(root);
-    c._revertOn(root);
+    c.revertOn(root);
 
     assertEquals(3, root.getEntry("dir1/file").getId());
   }
@@ -220,7 +220,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
 
     Change c = new DeleteChange("file");
     c.applyTo(root);
-    c._revertOn(root);
+    c.revertOn(root);
 
     assertEquals(1, root.getEntry("file").getId());
   }
@@ -232,7 +232,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
 
     Change c = new DeleteChange("dir");
     c.applyTo(root);
-    c._revertOn(root);
+    c.revertOn(root);
 
     assertEquals(1, root.getEntry("dir").getId());
     assertEquals(2, root.getEntry("dir/file").getId());

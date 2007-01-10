@@ -1,6 +1,5 @@
 package com.intellij.localvcs;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -115,10 +114,9 @@ public class LocalVcs {
     List<Label> result = new ArrayList<Label>();
 
     Entry e = getEntry(path);
-    ChangeList cl = myChangeList.getChangeListFor(e);
 
-    for (ChangeSet cs : cl.getChangeSets()) {
-      result.add(new Label(e, cl, cs, myRoot));
+    for (ChangeSet cs : myChangeList.getChangeSetsFor(e)) {
+      result.add(new Label(e, myRoot, myChangeList, cs));
     }
 
     Collections.reverse(result);

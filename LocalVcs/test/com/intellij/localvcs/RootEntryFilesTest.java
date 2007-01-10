@@ -38,7 +38,8 @@ public class RootEntryFilesTest extends TestCase {
       root.createFile(null, "file", null, null);
       fail();
     }
-    catch (AssertionError e) {
+    catch (Exception e) {
+      assertEquals("entry 'file' already exists in 'null'", e.getMessage());
     }
   }
 
@@ -70,7 +71,7 @@ public class RootEntryFilesTest extends TestCase {
       root.changeFileContent("unknown file", c("content"), null);
       fail();
     }
-    catch (AssertionError e) {
+    catch (RuntimeException e) {
     }
   }
 
@@ -94,7 +95,7 @@ public class RootEntryFilesTest extends TestCase {
       root.rename("unknown file", "new file");
       fail();
     }
-    catch (AssertionError e) {
+    catch (RuntimeException e) {
     }
   }
 
@@ -147,7 +148,7 @@ public class RootEntryFilesTest extends TestCase {
       root.delete("unknown file");
       fail();
     }
-    catch (AssertionError e) {
+    catch (RuntimeException e) {
     }
   }
 }

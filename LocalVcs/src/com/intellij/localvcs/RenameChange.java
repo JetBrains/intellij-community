@@ -32,16 +32,10 @@ public class RenameChange extends Change {
   }
 
   @Override
-  public void _revertOn(RootEntry root) {
+  public void revertOn(RootEntry root) {
     String newPath = Paths.renamed(myPath, myNewName);
     String oldName = Paths.getNameOf(myPath);
 
     root.rename(newPath, oldName);
-  }
-
-  @Override
-  public void revertFile(Entry e) {
-    if (!isFor(e)) return;
-    e.changeName(myPath);
   }
 }

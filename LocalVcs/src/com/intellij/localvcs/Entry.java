@@ -1,6 +1,7 @@
 package com.intellij.localvcs;
 
 import java.io.IOException;
+import static java.lang.String.format;
 import java.util.Collections;
 import java.util.List;
 
@@ -89,7 +90,9 @@ public abstract class Entry {
 
   public Entry getEntry(String path) {
     Entry result = findEntry(path);
-    assert result != null;
+    if (result == null) {
+      throw new RuntimeException(format("entry '%s' not found", path));
+    }
     return result;
   }
 
@@ -118,7 +121,9 @@ public abstract class Entry {
     // todo it's very slow
     // todo get rid of this method
     Entry result = findEntry(id);
-    assert result != null;
+    if (result == null) {
+      throw new RuntimeException(format("entry #%d not found", id));
+    }
     return result;
   }
 

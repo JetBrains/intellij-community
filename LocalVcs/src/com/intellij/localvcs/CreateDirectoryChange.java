@@ -1,8 +1,6 @@
 package com.intellij.localvcs;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 public class CreateDirectoryChange extends Change {
   private Integer myId;
@@ -43,7 +41,7 @@ public class CreateDirectoryChange extends Change {
   }
 
   @Override
-  public void _revertOn(RootEntry root) {
+  public void revertOn(RootEntry root) {
     root.delete(myPath);
   }
 }

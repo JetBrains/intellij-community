@@ -34,33 +34,12 @@ public abstract class Change {
 
   public abstract void applyTo(RootEntry root);
 
-  public abstract void _revertOn(RootEntry root);
-
-  public void revertFile(Entry e) { }
-
-  public void revertOn(Entry e) {
-    // todo replace with polymorphims
-    // todo clean up revertion stuffs
-    if (e instanceof FileEntry) {
-      revertFile(e);
-    }
-    else {
-      throw new RuntimeException("under construction");
-    }
-  }
+  public abstract void revertOn(RootEntry root);
 
   public boolean affects(Entry e) {
     // todo test it
     for (IdPath p : myAffectedIdPaths) {
       if (p.contains(e.getId())) return true;
-    }
-    return false;
-  }
-
-  protected boolean isFor(Entry e) {
-    // todo test it
-    for (IdPath p : myAffectedIdPaths) {
-      if (p.getName().equals(e.getId())) return true;
     }
     return false;
   }

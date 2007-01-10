@@ -41,14 +41,14 @@ public class RootEntryDirectoriesTest extends TestCase {
       root.createFile(null, "dir/file", null, null);
       fail();
     }
-    catch (AssertionError e) {
+    catch (RuntimeException e) {
     }
 
     try {
       root.createFile(null, "dir1/dir2", null, null);
       fail();
     }
-    catch (AssertionError e) {
+    catch (RuntimeException e) {
     }
   }
 
@@ -61,14 +61,14 @@ public class RootEntryDirectoriesTest extends TestCase {
       root.createFile(null, "name1", null, null);
       fail();
     }
-    catch (AssertionError e) {
+    catch (RuntimeException e) {
     }
 
     try {
       root.createFile(null, "name2", null, null);
       fail();
     }
-    catch (AssertionError e) {
+    catch (RuntimeException e) {
     }
   }
 
@@ -234,7 +234,7 @@ public class RootEntryDirectoriesTest extends TestCase {
       root.move("dir1", "dir1/dir2");
       fail();
     }
-    catch (AssertionError e) {
+    catch (RuntimeException e) {
     }
   }
 
@@ -247,7 +247,7 @@ public class RootEntryDirectoriesTest extends TestCase {
       root.move("file1", "file1/file2");
       fail();
     }
-    catch (AssertionError e) {
+    catch (RuntimeException e) {
     }
   }
 

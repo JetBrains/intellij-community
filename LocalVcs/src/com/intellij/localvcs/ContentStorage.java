@@ -26,7 +26,6 @@ public class ContentStorage {
 
   private TIntLongHashMap myIds2Offsets;
   private IntObjectCache<byte[]> myContentCache;
-  private int myCounter = 0;
 
   public ContentStorage(File f) throws IOException, CouldNotLoadLvcsException {
     // todo why SharedCachingStrategy?

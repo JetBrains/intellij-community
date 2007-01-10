@@ -27,16 +27,12 @@ public class ChangeList {
     return myChangeSets;
   }
 
-  public ChangeList getChangeListFor(Entry e) {
-    List<ChangeSet> sets = new ArrayList<ChangeSet>();
-
+  public List<ChangeSet> getChangeSetsFor(Entry e) {
+    List<ChangeSet> result = new ArrayList<ChangeSet>();
     for (ChangeSet cs : myChangeSets) {
-      if (cs.hasChangesFor(e)) sets.add(cs);
+      if (cs.hasChangesFor(e)) result.add(cs);
     }
-
-    ChangeList cl = new ChangeList();
-    cl.myChangeSets = sets;
-    return cl;
+    return result;
   }
 
   public void applyChangeSetTo(RootEntry root, ChangeSet cs) {
@@ -44,15 +40,7 @@ public class ChangeList {
     myChangeSets.add(cs);
   }
 
-  public void _revertUpToChangeSetOn(RootEntry root, ChangeSet cs) {
-    for (int i = myChangeSets.size() - 1; i >= 0; i--) {
-      ChangeSet changeSet = myChangeSets.get(i);
-      if (changeSet == cs) return;
-      changeSet._revertOn(root);
-    }
-  }
-
-  public void revertEntryUpToChangeSet(Entry e, ChangeSet cs) {
+  public void revertEntryUpToChangeSet(RootEntry e, ChangeSet cs) {
     for (int i = myChangeSets.size() - 1; i >= 0; i--) {
       ChangeSet changeSet = myChangeSets.get(i);
       if (changeSet == cs) return;
