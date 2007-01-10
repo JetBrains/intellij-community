@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,23 @@
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.fixes.EncapsulateVariableFix;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
 
 public class PublicFieldInspection extends FieldInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreEnums = false;
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("public.field.display.name");
@@ -43,6 +47,13 @@ public class PublicFieldInspection extends FieldInspection {
         return InspectionGadgetsBundle.message("public.field.problem.descriptor");
     }
 
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "public.field.ignore.enum.type.fields.option"), this, 
+                "ignoreEnums");
+    }
+
     protected InspectionGadgetsFix buildFix(PsiElement location) {
         return new EncapsulateVariableFix();
     }
@@ -55,7 +66,7 @@ public class PublicFieldInspection extends FieldInspection {
         return new PublicFieldVisitor();
     }
 
-    private static class PublicFieldVisitor extends BaseInspectionVisitor {
+    private class PublicFieldVisitor extends BaseInspectionVisitor {
 
         public void visitField(@NotNull PsiField field) {
             if (!field.hasModifierProperty(PsiModifier.PUBLIC)) {
@@ -68,6 +79,15 @@ public class PublicFieldInspection extends FieldInspection {
                 final PsiType type = field.getType();
                 if (ClassUtils.isImmutable(type)) {
                     return;
+                }
+                if (ignoreEnums) {
+                    if (type instanceof PsiClassType) {
+                        final PsiClassType classType = (PsiClassType) type;
+                        final PsiClass aClass = classType.resolve();
+                        if (aClass != null && aClass.isEnum()) {
+                            return;
+                        }
+                    }
                 }
             }
             registerFieldError(field);

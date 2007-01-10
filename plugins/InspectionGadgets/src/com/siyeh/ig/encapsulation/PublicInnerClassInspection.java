@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,18 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.fixes.MoveClassFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
 
 public class PublicInnerClassInspection extends ClassInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreEnums = false;
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -44,6 +51,13 @@ public class PublicInnerClassInspection extends ClassInspection {
                 "public.inner.class.problem.descriptor");
     }
 
+
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "public.inner.class.ignore.enum.option"), this, "ignoreEnums");
+    }
+
     protected InspectionGadgetsFix buildFix(PsiElement location) {
         return new MoveClassFix();
     }
@@ -56,13 +70,16 @@ public class PublicInnerClassInspection extends ClassInspection {
         return new PublicInnerClassVisitor();
     }
 
-    private static class PublicInnerClassVisitor extends BaseInspectionVisitor {
+    private class PublicInnerClassVisitor extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
             if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
                 return;
             }
             if (!ClassUtils.isInnerClass(aClass)) {
+                return;
+            }
+            if (ignoreEnums && aClass.isEnum()) {
                 return;
             }
             registerClassError(aClass);
