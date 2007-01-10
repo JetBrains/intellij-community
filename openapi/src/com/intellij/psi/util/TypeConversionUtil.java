@@ -107,8 +107,8 @@ public class TypeConversionUtil {
       if (fromType instanceof PsiClassType) {
         final PsiClass resolved = ((PsiClassType)fromType).resolve();
         if (resolved instanceof PsiTypeParameter) {
-          for (final PsiClassType superType : resolved.getSuperTypes()) {
-            if (!isNarrowingReferenceConversionAllowed(superType, toType)) return false;
+          for (final PsiClassType boundType : resolved.getExtendsListTypes()) {
+            if (!isNarrowingReferenceConversionAllowed(boundType, toType)) return false;
           }
           return true;
         }
