@@ -86,7 +86,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
     Map<LocalInspectionTool, LocalInspectionToolWrapper> tool2Wrapper = new THashMap<LocalInspectionTool, LocalInspectionToolWrapper>(toolWrappers.length);
     for (InspectionTool toolWrapper : toolWrappers) {
-      tool2Wrapper.put(((LocalInspectionToolWrapper)toolWrapper).getTool(), ((LocalInspectionToolWrapper)toolWrapper));
+      tool2Wrapper.put(((LocalInspectionToolWrapper)toolWrapper).getTool(), (LocalInspectionToolWrapper)toolWrapper);
     }
     LocalInspectionTool[] tools = tool2Wrapper.keySet().toArray(new LocalInspectionTool[tool2Wrapper.size()]);
     inspect(tools, progress, iManager, false);
@@ -124,6 +124,9 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
                     for (int i = index; i < index + chunkSize && i < tools.length; i++) {
                       LocalInspectionTool tool = tools[i];
                       PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
+                      if(elementVisitor == null) {
+                        LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
+                      }
                       for (PsiElement element : elements) {
                         progressManager.checkCanceled();
                         element.accept(elementVisitor);

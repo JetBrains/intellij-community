@@ -10,7 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class DeprecationInspection extends LocalInspectionTool {
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.deprecated.display.name");
 
 
-  @Nullable
+  @NotNull
   public PsiElementVisitor buildVisitor(final ProblemsHolder holder, boolean isOnTheFly) {
     return new DeprecationElementVisitor(holder);
   }

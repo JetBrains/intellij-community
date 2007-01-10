@@ -14,7 +14,7 @@ import com.intellij.uiDesigner.binding.FieldFormReference;
 import com.intellij.uiDesigner.binding.FormReferenceProvider;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -38,7 +38,7 @@ public class BoundFieldAssignmentInspection extends LocalInspectionTool {
     return true;
   }
 
-  @Override @Nullable
+  @NotNull
   public PsiElementVisitor buildVisitor(final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {

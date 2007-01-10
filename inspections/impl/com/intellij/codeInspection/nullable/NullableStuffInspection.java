@@ -1,18 +1,19 @@
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.AnnotateQuickFix;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AnnotateQuickFix;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.AnnotateMethodFix;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,7 +30,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
   public boolean REPORT_NOT_ANNOTATED_GETTER = true;
   public boolean REPORT_NOT_ANNOTATED_SETTER_PARAMETER = true;
 
-  @Nullable
+  @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {

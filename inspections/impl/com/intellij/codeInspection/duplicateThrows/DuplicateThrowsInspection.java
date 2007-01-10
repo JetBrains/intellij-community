@@ -7,7 +7,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class DuplicateThrowsInspection extends BaseLocalInspectionTool {
   public String getDisplayName() {
@@ -23,7 +23,7 @@ public class DuplicateThrowsInspection extends BaseLocalInspectionTool {
   }
 
 
-  @Nullable
+  @NotNull
   public PsiElementVisitor buildVisitor(final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {

@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 
@@ -77,8 +78,7 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
     return false;
   }
 
-  @Override
-  @Nullable
+  @NotNull
   public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
     return new MyVisitor(holder);
   }

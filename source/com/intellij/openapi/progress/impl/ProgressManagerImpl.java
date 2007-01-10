@@ -102,6 +102,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
     myFunComponentProviders.remove(provider);
   }
 
+  @NotNull
   public String getComponentName() {
     return "ProgressManager";
   }
@@ -124,36 +125,25 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
     return false;
   }
 
-  public void runProcess(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
-    Thread currentThread = Thread.currentThread();
-
-    ProgressIndicator oldIndicator;
-    if (progress == null) {
-      oldIndicator = myThreadToIndicatorMap.remove(currentThread);
-    }
-    else {
-      oldIndicator = myThreadToIndicatorMap.put(currentThread, progress);
-    }
-    synchronized (process) {
-      process.notify();
-    }
-    try {
-      if (progress != null && !progress.isRunning()) {
-        progress.start();
+  public void runProcess(@NotNull final Runnable process, final ProgressIndicator progress) throws ProcessCanceledException {
+    executeProcessUnderProgress(new Runnable(){
+      public void run() {
+        synchronized (process) {
+          process.notify();
+        }
+        try {
+          if (progress != null && !progress.isRunning()) {
+            progress.start();
+          }
+          process.run();
+        }
+        finally {
+          if (progress != null && progress.isRunning()) {
+            progress.stop();
+          }
+        }
       }
-      process.run();
-    }
-    finally {
-      if (progress != null && progress.isRunning()) {
-        progress.stop();
-      }
-      if (oldIndicator == null) {
-        myThreadToIndicatorMap.remove(currentThread);
-      }
-      else {
-        myThreadToIndicatorMap.put(currentThread, oldIndicator);
-      }
-    }
+    },progress);
   }
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
     Thread currentThread = Thread.currentThread();
@@ -207,7 +197,6 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
                                                                                    "Cancel",
                                                                                    "Stop \"" + progressTitle + "\"");
 
-    //noinspection HardCodedStringLiteral
     Runnable action = new Runnable() {
       public void run() {
         boolean canceled = false;

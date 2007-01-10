@@ -24,7 +24,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
@@ -48,7 +48,7 @@ public class SillyAssignmentInspection extends LocalInspectionTool {
     return true;
   }
 
-  @Nullable
+  @NotNull
   public PsiElementVisitor buildVisitor(final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
 

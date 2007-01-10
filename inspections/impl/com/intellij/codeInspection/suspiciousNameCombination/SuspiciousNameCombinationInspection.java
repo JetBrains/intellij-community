@@ -19,6 +19,7 @@ import com.intellij.ui.AddDeleteListPanel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -72,7 +73,7 @@ public class SuspiciousNameCombinationInspection extends BaseLocalInspectionTool
     return "SuspiciousNameCombination";
   }
 
-  @Override @Nullable
+  @NotNull
   public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
     return new MyVisitor(holder);
   }

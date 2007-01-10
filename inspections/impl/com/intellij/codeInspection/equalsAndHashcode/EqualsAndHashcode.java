@@ -4,12 +4,11 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -18,7 +17,6 @@ public class EqualsAndHashcode extends LocalInspectionTool {
 
   private PsiMethod myHashCode;
   private PsiMethod myEquals;
-  private static final Logger LOG = Logger.getInstance(EqualsAndHashcode.class.getName());
 
   public void projectOpened(Project project) {
     PsiManager psiManager = PsiManager.getInstance(project);
@@ -37,10 +35,13 @@ public class EqualsAndHashcode extends LocalInspectionTool {
     }
   }
 
-  @Nullable
-  public PsiElementVisitor buildVisitor(final ProblemsHolder holder, boolean isOnTheFly) {
-    if (myEquals == null || myHashCode == null) return null;  //jdk wasn't configured for the project
-    if (!myEquals.isValid() || !myHashCode.isValid()) return null;
+  @NotNull
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    //jdk wasn't configured for the project
+    if (myEquals == null || myHashCode == null || !myEquals.isValid() || !myHashCode.isValid()) return new PsiElementVisitor() {
+      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      }
+    };
     return new PsiElementVisitor() {
       public void visitClass(PsiClass aClass) {
         super.visitClass(aClass);
