@@ -16,7 +16,7 @@ import java.util.List;
  *         Date: Jun 21, 2006
  */
 public class InternedPath {
-  private final @NotNull String[] myValue;
+  private final @NotNull List<String> myValue;
 
   public InternedPath(StringInterner interner, String url, final char separator) {
     myValue = convert(interner, url, separator);
@@ -26,8 +26,8 @@ public class InternedPath {
     return join(myValue, '/');
   }
 
-  public static String[] convert(StringInterner interner, String value, char delim) {
-    final List<String> result = new ArrayList<String>(10);
+  public static List<String> convert(StringInterner interner, String value, char delim) {
+    final List<String> result = new ArrayList<String>();
     int start = 0;
     final int len = value.length();
     for (int idx = 0; idx < len; idx++) {
@@ -42,16 +42,17 @@ public class InternedPath {
     if (len > 0 && value.charAt(len-1) == delim) { // ends with delimiter
       result.add("");
     }
-    return result.toArray(new String[result.size()]);
+    return result;
   }
 
-  public static String join(String[] value, char separator) {
-    if (value.length > 1) {
+  public static String join(List<String> value, char separator) {
+    final int size = value.size();
+    if (size > 1) {
       final StringBuilder builder = StringBuilderSpinAllocator.alloc();
       try {
-        builder.append(value[0]);
-        for (int idx = 1; idx < value.length; idx++) {
-          builder.append(separator).append(value[idx]);
+        builder.append(value.get(0));
+        for (int idx = 1; idx < size; idx++) {
+          builder.append(separator).append(value.get(idx));
         }
         return builder.toString();
       }
@@ -59,8 +60,8 @@ public class InternedPath {
         StringBuilderSpinAllocator.dispose(builder);
       }
     }
-    else if (value.length == 1){
-      return value[0];
+    else if (size == 1){
+      return value.get(0);
     }
     return "";
   }

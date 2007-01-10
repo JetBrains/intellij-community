@@ -7,13 +7,15 @@ package com.intellij.compiler.impl;
 import com.intellij.util.containers.StringInterner;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Jun 21, 2006
  */
 public class SourceUrlClassNamePair {
-  private final String[] mySourceUrl;
-  private final @Nullable String[] myClassName;
+  private final List<String> mySourceUrl;
+  private final @Nullable List<String> myClassName;
 
   public SourceUrlClassNamePair(StringInterner interner, String url, @Nullable String className) {
     mySourceUrl = InternedPath.convert(interner, url, '/');

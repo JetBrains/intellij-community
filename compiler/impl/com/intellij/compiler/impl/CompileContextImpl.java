@@ -16,6 +16,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,6 +49,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final Map<Module, Set<VirtualFile>> myModuleToRootsMap = new HashMap<Module, Set<VirtualFile>>();
   private final VirtualFile[] myOutputDirectories;
   private final Set<VirtualFile> myTestOutputDirectories;
+  private final ProjectFileIndex myProjectFileIndex; // cached for performance reasons
 
   public CompileContextImpl(Project project,
                             CompilerProgressIndicator indicator,
@@ -84,6 +87,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     // Directories that are configured for both test and production classes must not be added in the resulting set
     testOutputDirs.removeAll(productionOutputDirs);  
     myTestOutputDirectories = Collections.unmodifiableSet(testOutputDirs);
+    myProjectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
   }
 
   public DependencyCache getDependencyCache() {
@@ -201,7 +205,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   public Module getModuleByFile(VirtualFile file) {
-    Module module = VfsUtil.getModuleForFile(myProject, file);
+    Module module = myProjectFileIndex.getModuleForFile(file);
     if (module == null) {
       for (final VirtualFile root : myRootToModuleMap.keySet()) {
         if (VfsUtil.isAncestor(root, file, false)) {
