@@ -20,7 +20,7 @@ import com.intellij.openapi.application.Application;
 /**
  * Component which implements this interfaces will be asked to save ({@link #save}) custom settings (in their own custom way)
  *  when {@link Application#saveSettings()} (for Application level components) or {@link com.intellij.openapi.project.Project#save()}
- * (for Project level compoents) is invoked.
+ * (for Project level components) is invoked.
  * @see BaseComponent
  */
 public interface SettingsSavingComponent {
