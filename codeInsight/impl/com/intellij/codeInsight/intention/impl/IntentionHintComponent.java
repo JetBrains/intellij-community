@@ -163,6 +163,11 @@ public class IntentionHintComponent extends JPanel {
       ArrayList<IntentionActionWithTextCaching> result = new ArrayList<IntentionActionWithTextCaching>(myActions);
       Collections.sort(result, new Comparator<IntentionActionWithTextCaching>() {
         public int compare(final IntentionActionWithTextCaching o1, final IntentionActionWithTextCaching o2) {
+          boolean isFix1 = myQuickFixes.contains(o1.getAction());
+          boolean isFix2 = myQuickFixes.contains(o2.getAction());
+          if (isFix1 != isFix2) {
+            return isFix1 ? -1 : 1;
+          }
           return Comparing.compare(o1.getText(), o2.getText());
         }
       });
