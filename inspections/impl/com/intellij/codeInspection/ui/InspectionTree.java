@@ -248,23 +248,26 @@ public class InspectionTree extends Tree {
                                       boolean hasFocus) {
       InspectionTreeNode node = (InspectionTreeNode)value;
 
-      append(node.toString(), appearsBold(node)
-                              ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
-                              : getMainForegroundAttributes(node));
+      append(node.toString(),
+             patchAttr(node, appearsBold(node) ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : getMainForegroundAttributes(node)));
 
       if (!node.isValid()) {
-        append(" " + InspectionsBundle.message("inspection.invalid.node.text"), SimpleTextAttributes.ERROR_ATTRIBUTES);
-      }
-      else if (node.isResolved()){
-        append(InspectionsBundle.message("inspection.resolved.node.text") , SimpleTextAttributes.DARK_TEXT);
+        append(" " + InspectionsBundle.message("inspection.invalid.node.text"), patchAttr(node, SimpleTextAttributes.ERROR_ATTRIBUTES));
       }
 
       int problemCount = node.getProblemCount();
       if (problemCount > 0) {
-        append(" " + InspectionsBundle.message("inspection.problem.descriptor.count", problemCount), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        append(" " + InspectionsBundle.message("inspection.problem.descriptor.count", problemCount), patchAttr(node, SimpleTextAttributes.GRAYED_ATTRIBUTES));
       }
 
       setIcon(node.getIcon(expanded));     
+    }
+
+    public static SimpleTextAttributes patchAttr(InspectionTreeNode node, SimpleTextAttributes attributes) {
+      if (node.isResolved()) {
+        return new SimpleTextAttributes(attributes.getBgColor(), attributes.getFgColor(), attributes.getWaveColor(), attributes.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT);
+      }
+      return attributes;
     }
 
     private static SimpleTextAttributes getMainForegroundAttributes(InspectionTreeNode node) {
