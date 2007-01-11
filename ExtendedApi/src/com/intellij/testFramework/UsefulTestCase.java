@@ -152,4 +152,9 @@ public abstract class UsefulTestCase extends TestCase {
   public static void assertEmpty(final Collection collection) {
     assertOrderedEquals(collection);
   }
+
+  protected <T extends Disposable> T disposeOnTearDown(final T disposable) {
+    Disposer.register(myTestRootDisposable, disposable);
+    return disposable;
+  }
 }
