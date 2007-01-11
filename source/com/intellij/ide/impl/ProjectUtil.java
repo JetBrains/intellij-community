@@ -103,19 +103,7 @@ public class ProjectUtil {
 
     newProject.save();
 
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    if (openProjects.length > 0) {
-      int exitCode = Messages.showDialog(
-        IdeBundle.message("prompt.open.project.in.new.frame"),
-        IdeBundle.message("title.new.project"),
-        new String[]{IdeBundle.message("button.yes"), IdeBundle.message("button.no")},
-        1,
-        Messages.getQuestionIcon()
-      );
-      if (exitCode == 1) { // "No" option
-        closeProject(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1]);
-      }
-    }
+    closePreviousProject(projectToClose);
 
     final ModuleBuilder moduleBuilder = dialog.getModuleBuilder();
     if (moduleBuilder != null) {
@@ -159,7 +147,23 @@ public class ProjectUtil {
     projectManager.openProject(newProject);
   }
 
-  private static LanguageLevel getDefaultLanguageLevel(@NotNull String versionString) {
+  public static void closePreviousProject(final Project projectToClose) {
+    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    if (openProjects.length > 0) {
+      int exitCode = Messages.showDialog(
+        IdeBundle.message("prompt.open.project.in.new.frame"),
+        IdeBundle.message("title.new.project"),
+        new String[]{IdeBundle.message("button.yes"), IdeBundle.message("button.no")},
+        1,
+        Messages.getQuestionIcon()
+      );
+      if (exitCode == 1) { // "No" option
+        closeProject(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1]);
+      }
+    }
+  }
+
+  public static LanguageLevel getDefaultLanguageLevel(@NotNull String versionString) {
     if (isOfVersionOrHigher(versionString, "1.5") || isOfVersionOrHigher(versionString, "5.0")) {
       return LanguageLevel.JDK_1_5;
     }
@@ -175,7 +179,7 @@ public class ProjectUtil {
     return JavaSdk.getInstance().compareTo(versionString, checkedVersion) >= 0;
   }
 
-  private static void updateLastProjectLocation(final String projectFilePath) {
+  public static void updateLastProjectLocation(final String projectFilePath) {
     File lastProjectLocation = new File(projectFilePath).getParentFile();
     if (lastProjectLocation == null) { // the immediate parent of the ipr file
       return;

@@ -293,6 +293,7 @@
         <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction"/>
         <separator/>
         <action id="ImportFromJBuilder" class="com.intellij.openapi.project.impl.importProject.jbuilder.ImportFromJBuilderAction"/>
+        <action id="ImportFromEclipse" class="com.intellij.projectImport.eclipse.action.ImportEclipseProjectsAction"/>
         <separator/>
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="/actions/sync.png"/>
         <action id="ReloadFromDisk" class="com.intellij.ide.actions.ReloadFromDiskAction"/>
