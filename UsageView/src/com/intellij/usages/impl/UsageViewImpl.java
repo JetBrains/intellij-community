@@ -98,6 +98,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final UsageModelTracker myModelTracker;
   private final Set<Usage> myUsages = new ConcurrentHashSet<Usage>();
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<Usage, UsageNode>();
+  private static final UsageNode NULL_NODE = new UsageNode(null,null);
   private final ButtonPanel myButtonPanel = new ButtonPanel();
 
   private boolean myChangesDetected = false;
@@ -105,6 +106,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final List<Disposable> myDisposables = new ArrayList<Disposable>();
   static final Comparator<Usage> USAGE_COMPARATOR = new Comparator<Usage>() {
     public int compare(final Usage o1, final Usage o2) {
+      if (o1 == NULL_NODE || o2 == NULL_NODE) return -1;
       if (o1 instanceof Comparable && o2 instanceof Comparable) {
         final int selfcompared = ((Comparable<Usage>)o1).compareTo(o2);
         if (selfcompared != 0) return selfcompared;
@@ -562,7 +564,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
     myUsages.add(usage);
     final UsageNode node = myBuilder.appendUsage(usage);
-    myUsageNodes.put(usage, node);
+    myUsageNodes.put(usage, node == null ? NULL_NODE : node);
     if (!myIsFirstVisibleUsageFound && node != null) { //first visible usage found;
       showNode(node);
       myIsFirstVisibleUsageFound = true;
@@ -571,7 +573,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   public void removeUsage(Usage usage) {
     final UsageNode node = myUsageNodes.remove(usage);
-    if (node != null) {
+    if (node != NULL_NODE) {
       ((DefaultTreeModel)myTree.getModel()).removeNodeFromParent (node);
       ((GroupNode)myTree.getModel().getRoot()).removeUsage(node);
     }
@@ -580,7 +582,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void includeUsages(Usage[] usages) {
     for (Usage usage : usages) {
       final UsageNode node = myUsageNodes.get(usage);
-      if (node != null) {
+      if (node != NULL_NODE) {
         node.setUsageExcluded(false);
       }
     }
@@ -590,7 +592,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void excludeUsages(Usage[] usages) {
     for (Usage usage : usages) {
       final UsageNode node = myUsageNodes.get(usage);
-      if (node != null) {
+      if (node != NULL_NODE) {
         node.setUsageExcluded(true);
       }
     }
@@ -605,7 +607,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     for (Usage usage : usages) {
       final UsageNode node = myUsageNodes.get(usage);
 
-      if (node != null) {
+      if (node != NULL_NODE) {
         pathes.add(new TreePath(node.getPath()));
       }
     }
@@ -750,7 +752,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     for (Map.Entry<Usage, UsageNode> entry : usages) {
       Usage usage = entry.getKey();
       UsageNode node = entry.getValue();
-      if (node != null && !node.isExcluded() && usage.isReadOnly()) {
+      if (node != NULL_NODE && !node.isExcluded() && usage.isReadOnly()) {
         result.add(usage);
       }
     }
@@ -778,7 +780,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     Set<Usage> result = new THashSet<Usage>();
     Collection<UsageNode> usageNodes = myUsageNodes.values();
     for (final UsageNode node : usageNodes) {
-      if (node == null) {
+      if (node == NULL_NODE) {
         continue;
       }
       if (node.isExcluded()) {
@@ -1095,7 +1097,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
     public void restore() {
       final UsageNode node = myUsageNodes.get(myUsage);
-      if (node == null) {
+      if (node == NULL_NODE) {
         return;
       }
       final DefaultMutableTreeNode parentGroupingNode = (DefaultMutableTreeNode)node.getParent();
