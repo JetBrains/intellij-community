@@ -60,7 +60,7 @@ public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T
          }
 
          final Module module = ModuleUtil.findModuleForPsiElement(file);
-         final M model = module != null ? computeModel(file, module) : null;
+         final M model = computeModel(file, module);
          return new CachedValueProvider.Result<M>(model, computeDependencies(file, module));
       }
     };
