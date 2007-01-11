@@ -685,11 +685,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   private boolean navigateAndSelectEditor(final NavigatableFileEditor editor, final OpenFileDescriptor descriptor) {
     if (editor.canNavigateTo(descriptor)) {
       setSelectedEditor(editor);
-      SwingUtilities.invokeLater(new Runnable() { // Necessary to carry out proper scrolling with NO_TABS mode.
-        public void run() {
-          editor.navigateTo(descriptor);
-        }
-      });
+      editor.navigateTo(descriptor);
       return true;
     }
 
