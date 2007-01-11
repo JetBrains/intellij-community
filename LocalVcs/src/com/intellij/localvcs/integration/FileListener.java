@@ -1,6 +1,6 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.Paths;
 import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.NonNls;
@@ -14,9 +14,9 @@ import java.io.OutputStream;
 // todo review LocalVcsServiceTests...
 public class FileListener extends VirtualFileAdapter {
   private FileFilter myFileFilter;
-  private LocalVcs myVcs;
+  private ILocalVcs myVcs;
 
-  public FileListener(LocalVcs vcs, FileFilter f) {
+  public FileListener(ILocalVcs vcs, FileFilter f) {
     myVcs = vcs;
     myFileFilter = f;
   }

@@ -2,6 +2,7 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.ILocalVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -13,15 +14,15 @@ import java.util.List;
 public class Updater {
   // todo algorithm could be simplified and improved
 
-  private LocalVcs myVcs;
+  private ILocalVcs myVcs;
   private FileFilter myFilter;
   private VirtualFile[] myRoots;
 
-  public static void update(LocalVcs vcs, FileFilter filter, VirtualFile... roots) throws IOException {
+  public static void update(ILocalVcs vcs, FileFilter filter, VirtualFile... roots) throws IOException {
     new Updater(vcs, filter, roots).update();
   }
 
-  public Updater(LocalVcs vcs, FileFilter filter, VirtualFile... roots) {
+  public Updater(ILocalVcs vcs, FileFilter filter, VirtualFile... roots) {
     myVcs = vcs;
     myFilter = filter;
     myRoots = selectNonNestedRoots(roots);

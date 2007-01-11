@@ -4,7 +4,6 @@ import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Storage;
 import com.intellij.localvcs.TempDirTestCase;
 import com.intellij.localvcs.integration.stubs.StubStartupManagerEx;
-import com.intellij.mock.MockProject;
 import com.intellij.openapi.project.Project;
 import org.junit.After;
 import org.junit.Test;
@@ -38,7 +37,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
     LocalVcs vcs = new LocalVcs(s);
     vcs.createFile("file", null, null);
     vcs.apply();
-    vcs.store();
+    vcs.save();
     s.close();
 
     sm.runPreStartupActivity();

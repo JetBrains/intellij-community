@@ -1,6 +1,7 @@
 package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.ILocalVcs;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -8,11 +9,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class LocalVcsAction {
   public static LocalVcsAction NULL = new Null(); // todo try to get rid of this
 
-  private LocalVcs myVcs;
+  private ILocalVcs myVcs;
   private FileDocumentManager myDocumentManager;
   private FileFilter myFilter;
 
-  public LocalVcsAction(LocalVcs vcs, FileDocumentManager dm, FileFilter f) {
+  public LocalVcsAction(ILocalVcs vcs, FileDocumentManager dm, FileFilter f) {
     myVcs = vcs;
     myDocumentManager = dm;
     myFilter = f;

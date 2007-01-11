@@ -2,18 +2,19 @@ package com.intellij.localvcs.integration.ui;
 
 import com.intellij.localvcs.Label;
 import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.ILocalVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class HistoryDialogModel {
-  protected LocalVcs myVcs;
+  protected ILocalVcs myVcs;
   protected VirtualFile myFile;
   private int myRightLabel;
   private int myLeftLabel;
 
-  public HistoryDialogModel(VirtualFile f, LocalVcs vcs) {
+  public HistoryDialogModel(VirtualFile f, ILocalVcs vcs) {
     myVcs = vcs;
     myFile = f;
   }

@@ -4,7 +4,7 @@ import java.io.*;
 
 public class Storage {
   private File myDir;
-  private ContentStorage myContentStorage;
+  private IContentStorage myContentStorage;
 
   public Storage(File dir) {
     myDir = dir;
@@ -15,6 +15,8 @@ public class Storage {
     myDir.mkdirs();
     try {
       myContentStorage = new ContentStorage(new File(myDir, "contents"));
+      myContentStorage = new CachingContentStorage(myContentStorage);
+      myContentStorage = new ThreadSafeContentStorage(myContentStorage);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -124,7 +126,7 @@ public class Storage {
 
   public Content createContent(byte[] bytes) {
     try {
-      int id = myContentStorage.storeContent(bytes);
+      int id = myContentStorage.store(bytes);
       return new Content(this, id);
     }
     catch (IOException e) {
@@ -134,7 +136,7 @@ public class Storage {
 
   protected byte[] loadContent(int id) {
     try {
-      return myContentStorage.loadContent(id);
+      return myContentStorage.load(id);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

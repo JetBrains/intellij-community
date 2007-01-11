@@ -2,12 +2,8 @@ package com.intellij.localvcs;
 
 import com.intellij.localVcs.common.CouldNotLoadLvcsException;
 import com.intellij.openapi.localVcs.LocalVcsBundle;
-import com.intellij.util.containers.IntObjectCache;
 import com.intellij.util.io.CachedFile;
 import com.intellij.util.io.CachedRandomAccessFile;
-import com.intellij.util.io.CachingStrategy;
-import com.intellij.util.io.SharedCachingStrategy;
-import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntLongHashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -20,20 +16,17 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
-public class ContentStorage {
+// todo clean up this class
+public class ContentStorage implements IContentStorage {
   // todo what about reusing removed contents????
   private CachedFile myStore;
 
   private TIntLongHashMap myIds2Offsets;
-  private IntObjectCache<byte[]> myContentCache;
+  // todo dont forget to enable cache back!!!
 
   public ContentStorage(File f) throws IOException, CouldNotLoadLvcsException {
-    // todo why SharedCachingStrategy?
-    CachingStrategy s = new SharedCachingStrategy(16 * 1024, 2 * 1024 * 1024);
-
-    myStore = new CachedRandomAccessFile(f, s);
+    myStore = new CachedRandomAccessFile(f, 16 * 1024, 2 * 1024 * 1024);
     myIds2Offsets = new TIntLongHashMap(1024);
-    myContentCache = new IntObjectCache<byte[]>(200);
     load();
   }
 
@@ -58,7 +51,7 @@ public class ContentStorage {
     myStore.flush();
   }
 
-  public int storeContent(byte[] content) throws IOException {
+  public int store(byte[] content) throws IOException {
     long offset = myStore.length();
     int id = (int)offset;
 
@@ -66,29 +59,18 @@ public class ContentStorage {
     ContentDescriptor d = new ContentDescriptor(id, content);
 
     d.saveTo(myStore);
-
     myIds2Offsets.put(id, offset);
-    myContentCache.cacheObject(id, content);
 
     return id;
   }
 
-  public byte[] loadContent(int id) throws IOException {
-    byte[] content = findContentInCache(id);
-    if (content != null) return content;
-
-    long offset = getOffsetFor(id);
-
-    myStore.seek(offset);
+  public byte[] load(int id) throws IOException {
+    myStore.seek(getOffsetFor(id));
     ContentDescriptor cd = new ContentDescriptor(myStore, false);
-
-    content = cd.getContent();
-    myContentCache.cacheObject(id, content);
-
-    return content;
+    return cd.getContent();
   }
 
-  public void removeContent(int id) throws IOException {
+  public void remove(int id) throws IOException {
     long offset = getOffsetFor(id);
     myStore.seek(offset);
 
@@ -97,13 +79,7 @@ public class ContentStorage {
 
     myStore.seek(offset);
     d.saveTo(myStore); // todo what do we save removed content for?
-
-    myContentCache.remove(id);
     myIds2Offsets.remove(id);
-  }
-
-  private byte[] findContentInCache(int id) {
-    return myContentCache.tryKey(id);
   }
 
   private long getOffsetFor(int id) {

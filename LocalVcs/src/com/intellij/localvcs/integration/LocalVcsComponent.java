@@ -1,8 +1,10 @@
 package com.intellij.localvcs.integration;
 
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Storage;
+import com.intellij.localvcs.ThreadSafeLocalVcs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -25,10 +27,10 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
   private FileDocumentManager myDocumentManager;
   private FileTypeManager myTypeManager;
   private Storage myStorage;
-  private LocalVcs myVcs;
+  private ILocalVcs myVcs;
   private LocalVcsService myService;
 
-  public static LocalVcs getLocalVcsFor(Project p) {
+  public static ILocalVcs getLocalVcsFor(Project p) {
     return getInstance(p).getLocalVcs();
   }
 
@@ -61,7 +63,7 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
 
   protected void initVcs() {
     myStorage = new Storage(getStorageDir());
-    myVcs = new LocalVcs(myStorage);
+    myVcs = new ThreadSafeLocalVcs(new LocalVcs(myStorage));
   }
 
   protected void initService() {
@@ -83,7 +85,7 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
   }
 
   public void save() {
-    if (myVcs != null) myVcs.store();
+    if (myVcs != null) myVcs.save();
   }
 
   public void disposeComponent() {
@@ -117,7 +119,7 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
     return "NewLocalVcs";
   }
 
-  public LocalVcs getLocalVcs() {
+  public ILocalVcs getLocalVcs() {
     if (isDisabled()) throw new RuntimeException("new local vcs is disabled");
     return myVcs;
   }

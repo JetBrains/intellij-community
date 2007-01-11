@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class LocalVcs {
+public class LocalVcs implements ILocalVcs {
   private Storage myStorage;
 
   private ChangeList myChangeList;
@@ -26,7 +26,7 @@ public class LocalVcs {
     myEntryCounter = myStorage.loadCounter();
   }
 
-  public void store() {
+  public void save() {
     myStorage.storeChangeList(myChangeList);
     myStorage.storeRootEntry(myRoot);
     myStorage.storeCounter(myEntryCounter);

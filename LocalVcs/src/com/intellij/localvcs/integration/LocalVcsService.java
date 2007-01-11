@@ -5,6 +5,7 @@ import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.ILocalVcs;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,7 +23,7 @@ public class LocalVcsService {
   // todo use CacheUpdater to update roots
   // todo extract inner classes
 
-  private LocalVcs myVcs;
+  private ILocalVcs myVcs;
   private StartupManager myStartupManager;
   private ProjectRootManagerEx myRootManager;
   private VirtualFileManagerEx myFileManager;
@@ -32,7 +33,7 @@ public class LocalVcsService {
   private CacheUpdater myCacheUpdater;
   private FileContentProvider myFileContentProvider;
 
-  public LocalVcsService(LocalVcs vcs, StartupManager sm, ProjectRootManagerEx rm, VirtualFileManagerEx fm, FileDocumentManager dm,
+  public LocalVcsService(ILocalVcs vcs, StartupManager sm, ProjectRootManagerEx rm, VirtualFileManagerEx fm, FileDocumentManager dm,
                          FileFilter f) {
     myVcs = vcs;
     myStartupManager = sm;

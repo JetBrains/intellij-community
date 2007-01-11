@@ -1,7 +1,7 @@
 package com.intellij.localvcs.integration.ui;
 
-import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Content;
+import com.intellij.localvcs.ILocalVcs;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.SimpleDiffRequest;
@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ui.impl.checkinProjectPanel.CheckinPanelTreeTable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
-import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
@@ -24,7 +23,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   @Override
-  protected DirectoryHistoryDialogModel createModelFor(VirtualFile f, LocalVcs vcs) {
+  protected DirectoryHistoryDialogModel createModelFor(VirtualFile f, ILocalVcs vcs) {
     return new DirectoryHistoryDialogModel(f, vcs);
   }
 

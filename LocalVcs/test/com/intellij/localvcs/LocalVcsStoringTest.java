@@ -25,7 +25,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
     vcs.createFile("file", b("content"), 123L);
     vcs.apply();
 
-    vcs.store();
+    vcs.save();
     initVcs();
 
     Entry e = vcs.findEntry("file");
@@ -41,7 +41,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
     vcs.changeFileContent("file", b("new content"), null);
     vcs.apply();
 
-    vcs.store();
+    vcs.save();
     initVcs();
 
     assertEquals(2, vcs.getLabelsFor("file").size());
@@ -53,7 +53,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
     vcs.createFile("file2", b("content2"), null);
     vcs.apply();
 
-    vcs.store();
+    vcs.save();
     initVcs();
 
     vcs.createFile("file3", b("content3"), null);
@@ -68,9 +68,9 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   @Test
   public void testDoesNotStoreUnappliedChanges() {
     vcs.createFile("file", b("content"), null);
-    vcs.store();
+    vcs.save();
 
-    vcs.store();
+    vcs.save();
 
     initVcs();
     assertTrue(vcs.isClean());

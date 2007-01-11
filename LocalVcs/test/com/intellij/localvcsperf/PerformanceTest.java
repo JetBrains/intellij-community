@@ -53,7 +53,7 @@ public class PerformanceTest extends TempDirTestCase {
 
     assertExecutionTime(1000, new Task() {
       public void execute() {
-        vcs.store();
+        vcs.save();
       }
     });
   }
@@ -62,7 +62,7 @@ public class PerformanceTest extends TempDirTestCase {
   public void testLoading() {
     buildTree();
     vcs.apply();
-    vcs.store();
+    vcs.save();
 
     assertExecutionTime(1000, new Task() {
       public void execute() {
@@ -107,7 +107,7 @@ public class PerformanceTest extends TempDirTestCase {
     }
   }
 
-  protected void assertExecutionTime(long expected, final Task task) {
+  protected void assertExecutionTime(long expected, Task task) {
     long actual = measureExecutionTime(task);
     long delta = ((actual * 100) / expected) - 100;
 

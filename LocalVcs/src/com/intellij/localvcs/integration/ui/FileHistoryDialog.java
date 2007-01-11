@@ -1,10 +1,9 @@
 package com.intellij.localvcs.integration.ui;
 
-import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Content;
+import com.intellij.localvcs.ILocalVcs;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffPanel;
-import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,7 +18,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @Override
-  protected FileHistoryDialogModel createModelFor(VirtualFile f, LocalVcs vcs) {
+  protected FileHistoryDialogModel createModelFor(VirtualFile f, ILocalVcs vcs) {
     FileDocumentManager dm = FileDocumentManager.getInstance();
     return new FileHistoryDialogModel(f, vcs, dm);
   }

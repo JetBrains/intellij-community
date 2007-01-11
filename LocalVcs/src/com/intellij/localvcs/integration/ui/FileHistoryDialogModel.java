@@ -9,7 +9,7 @@ import java.util.List;
 public class FileHistoryDialogModel extends HistoryDialogModel {
   private FileDocumentManager myDocumentManager;
 
-  public FileHistoryDialogModel(VirtualFile f, LocalVcs vcs, FileDocumentManager dm) {
+  public FileHistoryDialogModel(VirtualFile f, ILocalVcs vcs, FileDocumentManager dm) {
     super(f, vcs);
     myDocumentManager = dm;
   }

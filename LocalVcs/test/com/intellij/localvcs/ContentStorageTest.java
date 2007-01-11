@@ -28,39 +28,39 @@ public class ContentStorageTest extends TempDirTestCase {
     byte[] c1 = new byte[]{1};
     byte[] c2 = new byte[]{2};
 
-    int id1 = s.storeContent(c1);
-    int id2 = s.storeContent(c2);
+    int id1 = s.store(c1);
+    int id2 = s.store(c2);
 
-    assertEquals(c1, s.loadContent(id1));
-    assertEquals(c2, s.loadContent(id2));
+    assertEquals(c1, s.load(id1));
+    assertEquals(c2, s.load(id2));
   }
 
   @Test(expected = AssertionError.class)
   public void testLoadingUnexistingContentThrowsException() throws Exception {
-    s.loadContent(666);
+    s.load(666);
   }
 
   @Test
   public void testStoringBetweenSessions() throws Exception {
     byte[] c = new byte[]{1, 2, 3};
 
-    int id = s.storeContent(c);
+    int id = s.store(c);
     s.close();
 
     s = createStorage();
-    assertEquals(c, s.loadContent(id));
+    assertEquals(c, s.load(id));
   }
 
   @Test
   public void testSaving() throws Exception {
     byte[] c = new byte[]{1, 2, 3};
 
-    int id = s.storeContent(c);
+    int id = s.store(c);
     s.save();
 
     ContentStorage another = createStorage();
     try {
-      assertEquals(c, another.loadContent(id));
+      assertEquals(c, another.load(id));
     }
     finally {
       another.close();
@@ -69,25 +69,25 @@ public class ContentStorageTest extends TempDirTestCase {
 
   @Test
   public void testRemoving() throws Exception {
-    int id = s.storeContent(new byte[]{1});
+    int id = s.store(new byte[]{1});
     assertTrue(s.hasContent(id));
 
-    s.removeContent(id);
+    s.remove(id);
     assertFalse(s.hasContent(id));
   }
 
   @Test(expected = AssertionError.class)
   public void testLoadingRemovedContentThrowsException() throws Exception {
-    int id = s.storeContent(new byte[]{1});
-    s.removeContent(id);
+    int id = s.store(new byte[]{1});
+    s.remove(id);
 
-    s.loadContent(id);
+    s.load(id);
   }
 
   @Test
   public void testSavingWithRemovedContent() throws Exception {
-    int id = s.storeContent(new byte[]{1});
-    s.removeContent(id);
+    int id = s.store(new byte[]{1});
+    s.remove(id);
     s.close();
 
     s = createStorage();

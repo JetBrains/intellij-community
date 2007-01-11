@@ -5,6 +5,7 @@ import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Storage;
+import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.integration.LocalVcsAction;
 import com.intellij.localvcs.integration.LocalVcsComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -79,7 +80,7 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     p = ProjectManagerEx.getInstanceEx().loadAndOpenProject(projectFile.getPath());
     ((StartupManagerImpl)StartupManager.getInstance(p)).runStartupActivities();
 
-    LocalVcs vcs = LocalVcsComponent.getLocalVcsFor(p);
+    ILocalVcs vcs = LocalVcsComponent.getLocalVcsFor(p);
     boolean result = vcs.hasEntry(f.getPath());
 
     Disposer.dispose(p);
@@ -148,7 +149,7 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     return getVcs().getEntry(f.getPath()).getContent().getData();
   }
 
-  private LocalVcs getVcs() {
+  private ILocalVcs getVcs() {
     return LocalVcsComponent.getLocalVcsFor(getProject());
   }
 

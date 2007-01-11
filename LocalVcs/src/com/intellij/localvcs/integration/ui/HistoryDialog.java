@@ -2,6 +2,7 @@ package com.intellij.localvcs.integration.ui;
 
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Content;
+import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.integration.LocalVcsComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -30,11 +31,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   }
 
   private void initModel(VirtualFile f) {
-    LocalVcs vcs = LocalVcsComponent.getLocalVcsFor(myProject);
+    ILocalVcs vcs = LocalVcsComponent.getLocalVcsFor(myProject);
     myModel = createModelFor(f, vcs);
   }
 
-  protected abstract T createModelFor(VirtualFile f, LocalVcs vcs);
+  protected abstract T createModelFor(VirtualFile f, ILocalVcs vcs);
 
   protected JComponent createCenterPanel() {
     JComponent diff = createDiffPanel();
