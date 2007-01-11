@@ -78,7 +78,15 @@ public class TypeConversionUtil {
       if (isVoidType(fromType) || isVoidType(toType)) return false;
       final int fromTypeRank = getTypeRank(fromType);
       final int toTypeRank = getTypeRank(toType);
-      if (!toIsPrimitive) return fromTypeRank == toTypeRank;
+      if (!toIsPrimitive) {
+        if (fromTypeRank == toTypeRank) return true;
+        // JLS 5.5: A value of a primitive type can be cast to a reference type by boxing conversion(see 5.1.7)
+        if (!(toType instanceof PsiClassType)) return false;
+        PsiClass toClass = ((PsiClassType)toType).resolve();
+        if (toClass == null) return false;
+        PsiClassType boxedType = ((PsiPrimitiveType)fromType).getBoxedType(toClass.getManager(), toType.getResolveScope());
+        return boxedType != null && areTypesConvertible(boxedType, toType);
+      }
       if (!fromIsPrimitive) {
         if (fromTypeRank == toTypeRank) return true;
         return fromTypeRank <= MAX_NUMERIC_RANK && toTypeRank <= MAX_NUMERIC_RANK && fromTypeRank < toTypeRank;
@@ -384,6 +392,7 @@ public class TypeConversionUtil {
                        || ltypeRank == BOOL_RANK && rtypeRank == BOOL_RANK;
       }
       else {
+        if (isPrimitiveAndNotNull(ltype) || isPrimitiveAndNotNull(rtype)) return false;
         isApplicable = areTypesConvertible(ltype, rtype) || areTypesConvertible(rtype, ltype);
       }
     }
