@@ -10,10 +10,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocCommentOwner;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.source.Constants;
@@ -84,6 +83,8 @@ public class CodeFormatterFacade implements Constants {
     final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(element);
     final PsiFile file = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
     final FormattingModelBuilder builder = file.getLanguage().getEffectiveFormattingModelBuilder(file);
+    final Document document = file.getViewProvider().getDocument();
+    final RangeMarker rangeMarker = document != null && endOffset < document.getTextLength()? document.createRangeMarker(startOffset, endOffset):null;
 
     if (builder != null) {
       TextRange range = formatComments(element, new TextRange(startOffset, endOffset));
@@ -100,7 +101,17 @@ public class CodeFormatterFacade implements Constants {
         }
       }
 
-      assert psiElement.isValid();
+      /*
+       */
+      if (!psiElement.isValid()) {
+        if (rangeMarker != null) {
+          final PsiElement at = file.findElementAt(rangeMarker.getStartOffset());
+          assert psiElement.getClass().isInstance(at);
+          return at.getNode();
+        } else {
+          assert false;
+        }
+      }
 
 //      return SourceTreeToPsiMap.psiElementToTree(pointer.getElement());
 

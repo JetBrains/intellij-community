@@ -53,6 +53,13 @@ public class TypedHandler implements TypedActionHandler {
 
   private TypedActionHandler myOriginalHandler;
 
+  public interface JavaLikeQuoteHandler extends QuoteHandler {
+    TokenSet getConcatenatableStringTokenTypes();
+    String getStringConcatenationOperatorRepresentation();
+
+    TokenSet getStringTokenTypes();
+  }
+
   public interface QuoteHandler {
     boolean isClosingQuote(HighlighterIterator iterator, int offset);
     boolean isOpeningQuote(HighlighterIterator iterator, int offset);
@@ -81,7 +88,7 @@ public class TypedHandler implements TypedActionHandler {
   }
 
   public static class SimpleTokenSetQuoteHandler implements QuoteHandler {
-    private TokenSet myLiteralTokenSet;
+    protected final TokenSet myLiteralTokenSet;
 
     public SimpleTokenSetQuoteHandler(IElementType[] _literalTokens) {
       myLiteralTokenSet = TokenSet.create(_literalTokens);
@@ -268,9 +275,12 @@ public class TypedHandler implements TypedActionHandler {
     }
   }
 
-  static class JavaQuoteHandler extends SimpleTokenSetQuoteHandler {
+  static class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements JavaLikeQuoteHandler {
+    private final TokenSet concatenatableStrings;
+
     public JavaQuoteHandler() {
       super(new IElementType[] { JavaTokenType.STRING_LITERAL, JavaTokenType.CHARACTER_LITERAL});
+      concatenatableStrings = TokenSet.create(JavaTokenType.STRING_LITERAL);
     }
 
     public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
@@ -305,6 +315,18 @@ public class TypedHandler implements TypedActionHandler {
         }
       }
       return closingQuote;
+    }
+
+    public TokenSet getConcatenatableStringTokenTypes() {
+      return concatenatableStrings;
+    }
+
+    public String getStringConcatenationOperatorRepresentation() {
+      return "+";
+    }
+
+    public TokenSet getStringTokenTypes() {
+      return myLiteralTokenSet;
     }
   }
 

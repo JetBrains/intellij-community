@@ -6,10 +6,14 @@ package com.intellij.lang.java;
 
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.LangBundle;
+import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.documentation.QuickDocumentationProvider;
+import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiFormatUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -20,7 +24,13 @@ import org.jetbrains.annotations.NonNls;
  * Time: 7:45:12 PM
  * To change this template use File | Settings | File Templates.
  */
-public class JavaDocumentationProvider extends QuickDocumentationProvider {
+public class JavaDocumentationProvider extends QuickDocumentationProvider implements CodeDocumentationProvider {
+  private static final String LINE_SEPARATOR = "\n";
+
+  @NonNls private static final String PARAM_TAG = "@param";
+  @NonNls private static final String RETURN_TAG = "@return";
+  @NonNls private static final String THROWS_TAG = "@throws";
+
   public String getQuickNavigateInfo(PsiElement element) {
     if (element instanceof PsiClass) {
       return generateClassInfo((PsiClass) element);
@@ -362,5 +372,58 @@ public class JavaDocumentationProvider extends QuickDocumentationProvider {
     generateInitializer(buffer, variable);
 
     return buffer.toString();
+  }
+
+  public PsiComment findExistingDocComment(final PsiComment _element) {
+    PsiElement parentElement = _element.getParent();
+
+    return parentElement instanceof PsiDocCommentOwner ? ((PsiDocCommentOwner)parentElement).getDocComment() : null;
+  }
+
+  public String generateDocumentationContentStub(PsiComment _element) {
+    PsiElement parentElement = _element.getParent();
+
+    if (parentElement instanceof PsiMethod) {
+      PsiMethod psiMethod = (PsiMethod)parentElement;
+      final StringBuffer buffer = new StringBuffer();
+      final Project project = parentElement.getProject();
+      final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+      final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)parentElement.getLanguage().getCommenter();
+
+      for (PsiParameter parameter : parameters) {
+
+        buffer.append(createDocCommentLine(PARAM_TAG, project, commenter));
+        buffer.append(parameter.getName());
+        buffer.append(LINE_SEPARATOR);
+      }
+
+      if (psiMethod.getReturnType() != null && psiMethod.getReturnType() != PsiType.VOID) {
+        buffer.append(createDocCommentLine(RETURN_TAG, project, commenter));
+        buffer.append(LINE_SEPARATOR);
+      }
+
+      final PsiJavaCodeReferenceElement[] references = psiMethod.getThrowsList().getReferenceElements();
+      for (PsiJavaCodeReferenceElement reference : references) {
+        buffer.append(createDocCommentLine(THROWS_TAG, project,commenter));
+        buffer.append(reference.getText());
+        buffer.append(LINE_SEPARATOR);
+      }
+
+      return buffer.toString();
+    }
+    return null;
+  }
+
+  public static String createDocCommentLine(String lineData, Project project, CodeDocumentationAwareCommenter commenter) {
+    if (!CodeStyleSettingsManager.getSettings(project).JD_LEADING_ASTERISKS_ARE_ENABLED) {
+      return " " + lineData + " ";
+    } else {
+      if (lineData.length() == 0) {
+        return commenter.getDocumentationCommentLinePrefix() + " ";
+      } else {
+        return commenter.getDocumentationCommentLinePrefix() + " " + lineData + " ";
+      }
+
+    }
   }
 }

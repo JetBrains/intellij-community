@@ -34,13 +34,6 @@ public interface Commenter {
   String getLineCommentPrefix();
 
   /**
-   * Returns true if the line comments in the language must start at the zero column and may not
-   * be indented.
-   * @return true if line comments may not be indented, false otherwise.
-   */
-  boolean isLineCommentPrefixOnZeroColumn();
-
-  /**
    * Returns the string which marks the beginning of a block comment in the language,
    * or null if the language does not support block comments.
    * @return the block comment start text, or null.

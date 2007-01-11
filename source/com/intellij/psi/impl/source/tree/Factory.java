@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.lang.ParserDefinition;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -129,8 +130,13 @@ public class Factory implements Constants {
             element = elementFactory.createLeafElement(type, buffer, startOffset, endOffset, table);
           }
         }
-        //LOG.error("Unknown leaf:" + type);
-        //return null;
+
+        if (element == null) {
+          final ParserDefinition definition = type.getLanguage().getParserDefinition();
+          if (definition != null && definition.getCommentTokens().contains(type)) {
+            element = new PsiCommentImpl(type, buffer, startOffset, endOffset, table);
+          }
+        }
         if (element == null) {
           element = new LeafPsiElement(type, buffer, startOffset, endOffset, table);
         }
