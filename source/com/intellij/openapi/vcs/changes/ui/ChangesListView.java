@@ -176,7 +176,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     }
     else if (key == DataKeys.NAVIGATABLE) {
       final VirtualFile[] files = getSelectedFiles();
-      if (files.length == 1) {
+      if (files.length == 1 && !files [0].isDirectory()) {
         sink.put(DataKeys.NAVIGATABLE, new OpenFileDescriptor(myProject, files[0], 0));
       }
     }
