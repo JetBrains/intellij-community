@@ -89,12 +89,14 @@ public class PsiSuperMethodImplUtil {
       Stack<HierarchicalMethodSignatureImpl> stack = signatures.get(signature);
       if (stack != null) {
         boolean isNewSignature = true;
-        for (final HierarchicalMethodSignatureImpl existing : stack) {
+        for (int i = stack.size() - 1; i >= 0; i--) {
+          HierarchicalMethodSignatureImpl existing = stack.get(i);
           final PsiMethod hisMethod = existing.getMethod();
           final PsiClass hisClass = hisMethod.getContainingClass();
           if (!hisMethod.isConstructor() && !aClass.equals(hisClass) &&
               //only public methods from java.lang.Object are considered to be overridden in interface
-              !(hisClass.isInterface() && "java.lang.Object".equals(aClass.getQualifiedName()) && !method.hasModifierProperty(PsiModifier.PUBLIC))) {
+              !(hisClass.isInterface() && "java.lang.Object".equals(aClass.getQualifiedName()) &&
+                !method.hasModifierProperty(PsiModifier.PUBLIC))) {
             if (MethodSignatureUtil.isSubsignature(signature, existing)) {
               existing.addSuperSignature(signatureHierarchical);
               isNewSignature = false;
