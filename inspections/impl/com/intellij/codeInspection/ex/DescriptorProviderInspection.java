@@ -2,9 +2,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.ui.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,7 +43,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     addProblemElement(refElement, true, descriptions);
   }
 
-  public void addProblemElement(RefEntity refElement, boolean filterSuppresssed, CommonProblemDescriptor... descriptions) {
+  protected void addProblemElement(RefEntity refElement, boolean filterSuppresssed, CommonProblemDescriptor... descriptions) {
     if (refElement == null) return;
     if (descriptions == null || descriptions.length == 0) return;
     if (filterSuppresssed) {
@@ -125,11 +123,6 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     if (refEntity == null) return;
     ignoreProblemElement(refEntity);
     getQuickFixActions().remove(refEntity);
-  }
-
-  public void ignoreProblem(ProblemDescriptor problem) {
-    RefEntity refElement = getProblemToElements().get(problem);
-    if (refElement != null) ignoreProblem(refElement, problem, -1);
   }
 
   public void ignoreProblem(RefEntity refEntity, CommonProblemDescriptor problem, int idx) {
@@ -329,74 +322,31 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     }
   }
 
-  public InspectionTreeNode[] getContents() {
-    List<InspectionTreeNode> content = new ArrayList<InspectionTreeNode>();
-    buildTreeNode(content, myPackageContents, getProblemElements());
-    if (isOldProblemsIncluded(getContext())){
-      HashMap<String, Set<RefElement>> oldContents = new HashMap<String, Set<RefElement>>();
-      final Set<RefEntity> elements = myOldProblemElements.keySet();
-      for (RefEntity element : elements) {
-        if (element instanceof RefElement) {
-          String packageName = RefUtil.getInstance().getPackageName(element);
-          final Set<RefElement> collection = myPackageContents.get(packageName);
-          if (collection != null){
-            final Set<RefEntity> currentElements = new HashSet<RefEntity>(collection);
-            if (contains((RefElement)element, currentElements)) continue;
-          }
-          Set<RefElement> oldContent = oldContents.get(packageName);
-          if (oldContent == null) {
-            oldContent = new HashSet<RefElement>();
-            oldContents.put(packageName, oldContent);
-          }
-          oldContent.add((RefElement)element);
-        }
-      }
-      buildTreeNode(content, oldContents, myOldProblemElements);
-    }
-
-    for (RefModule refModule : myModulesProblems) {
-      InspectionModuleNode moduleNode = new InspectionModuleNode(refModule.getModule());
-      final CommonProblemDescriptor[] problems = getProblemElements().get(refModule);
-      for (CommonProblemDescriptor problem : problems) {
-        moduleNode.add(new ProblemDescriptionNode(refModule, problem, !(this instanceof DuplicatePropertyInspection), this));
-      }
-      content.add(moduleNode);
-    }
-    return content.toArray(new InspectionTreeNode[content.size()]);
-  }
-
-  private boolean isOldProblemsIncluded(final GlobalInspectionContextImpl context) {
-    return context != null && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN && myOldProblemElements != null;
-  }
-
-  private void buildTreeNode(final List<InspectionTreeNode> content,
-                             final HashMap<String, Set<RefElement>> packageContents,
-                             final Map<RefEntity, CommonProblemDescriptor[]> problemElements) {
-    final GlobalInspectionContextImpl context = getContext();
-    Set<String> packages = packageContents.keySet();
-    for (String p : packages) {
-      InspectionPackageNode pNode = new InspectionPackageNode(p);
-      Set<RefElement> elements = packageContents.get(p);
-      for (RefElement refElement : elements) {
-        if (context != null && context.getUIOptions().SHOW_ONLY_DIFF && getElementStatus(refElement) == FileStatus.NOT_CHANGED) continue;
-        final RefElementNode elemNode = addNodeToParent(refElement, pNode);
-        final CommonProblemDescriptor[] problems = problemElements.get(refElement);
-        if (problems != null) {
-          for (CommonProblemDescriptor problem : problems) {
-            if (context != null && context.getUIOptions().SHOW_ONLY_DIFF && getProblemStatus(problem) == FileStatus.NOT_CHANGED) continue;
-            elemNode.add(new ProblemDescriptionNode(refElement, problem, !(this instanceof DuplicatePropertyInspection), this));
-          }
-          if (problems.length == 1){
-            elemNode.setProblem(problems[0]);
-          }
-        }
-      }
-      content.add(pNode);
-    }
-  }
-
   public Map<String, Set<RefElement>> getPackageContent() {
     return myPackageContents;
+  }
+
+  public Map<String, Set<RefElement>> getOldPackageContent() {
+    if (myOldProblemElements == null) return null;
+    final HashMap<String, Set<RefElement>> oldContents = new HashMap<String, Set<RefElement>>();
+    final Set<RefEntity> elements = myOldProblemElements.keySet();
+    for (RefEntity element : elements) {
+      if (element instanceof RefElement) {
+        String packageName = RefUtil.getInstance().getPackageName(element);
+        final Set<RefElement> collection = myPackageContents.get(packageName);
+        if (collection != null) {
+          final Set<RefEntity> currentElements = new HashSet<RefEntity>(collection);
+          if (contains((RefElement)element, currentElements)) continue;
+        }
+        Set<RefElement> oldContent = oldContents.get(packageName);
+        if (oldContent == null) {
+          oldContent = new HashSet<RefElement>();
+          oldContents.put(packageName, oldContent);
+        }
+        oldContent.add((RefElement)element);
+      }
+    }
+    return oldContents;
   }
 
   public Set<RefModule> getModuleProblems() {
@@ -405,9 +355,13 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
 
   public QuickFixAction[] getQuickFixes(final RefEntity[] refElements) {
     if (refElements == null) return null;
+    return extractActiveFixes(refElements, getQuickFixActions());    
+  }
+
+  public QuickFixAction[] extractActiveFixes(final RefEntity[] refElements, final Map<RefEntity, Set<QuickFix>> actions) {
     Map<Class, QuickFixAction> result = new java.util.HashMap<Class, QuickFixAction>();
     for (RefEntity refElement : refElements) {
-      final Set<QuickFix> localQuickFixes = getQuickFixActions().get(refElement);
+      final Set<QuickFix> localQuickFixes = actions.get(refElement);
       if (localQuickFixes != null){
         for (QuickFix fix : localQuickFixes) {
           if (fix == null) continue;
@@ -513,11 +467,16 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     return FileStatus.NOT_CHANGED;
   }
 
-  private THashMap<RefEntity, CommonProblemDescriptor[]> getProblemElements() {
+  public THashMap<RefEntity, CommonProblemDescriptor[]> getProblemElements() {
     if (myProblemElements == null) {
       myProblemElements = new THashMap<RefEntity, CommonProblemDescriptor[]>();
     }
     return myProblemElements;
+  }
+
+  @Nullable
+  public HashMap<RefEntity, CommonProblemDescriptor[]> getOldProblemElements() {
+    return myOldProblemElements;
   }
 
   private THashMap<CommonProblemDescriptor, RefEntity> getProblemToElements() {

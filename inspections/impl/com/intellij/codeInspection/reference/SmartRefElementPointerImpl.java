@@ -12,23 +12,24 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 public class SmartRefElementPointerImpl implements SmartRefElementPointer {
-  @NonNls private static final String CLASS = "class";
-  @NonNls private static final String METHOD = "method";
-  @NonNls private static final String FIELD = "field";
+  @NonNls public static final String CLASS = "class";
+  @NonNls public static final String METHOD = "method";
+  @NonNls public static final String FIELD = "field";
 
-  @NonNls private static final String FILE = "file";
-  @NonNls private static final String PARAMETER = "parameter";
+  @NonNls public static final String FILE = "file";
+  @NonNls public static final String PARAMETER = "parameter";
 
   private final boolean myIsPersistent;
   private RefElement myRefElement;
   private String myFQName;
-  private final String myType;
+  private String myType;
     @NonNls
-    private static final String FQNAME_ATTR = "FQNAME";
+    public static final String FQNAME_ATTR = "FQNAME";
     @NonNls
-    private static final String TYPE_ATTR = "TYPE";
+    public static final String TYPE_ATTR = "TYPE";
+  @NonNls public static final String ENTRY_POINT = "entry_point";
 
-    public SmartRefElementPointerImpl(RefElement ref, boolean isPersistent) {
+  public SmartRefElementPointerImpl(RefElement ref, boolean isPersistent) {
       myIsPersistent = isPersistent;
       myRefElement = ref;
       if (ref instanceof RefImplicitConstructor) {
@@ -58,6 +59,10 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
     myFQName = jDomElement.getAttributeValue(FQNAME_ATTR);
     String type = jDomElement.getAttributeValue(TYPE_ATTR);
 
+    initType(type);
+  }
+
+  private void initType(final String type) {
     if (METHOD.equals(type)) {
       myType = METHOD;
     } else if (CLASS.equals(type)) {
@@ -73,6 +78,13 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
     }
   }
 
+  public SmartRefElementPointerImpl(final String type, final String fqName, final RefManager manager) {
+    myIsPersistent = false;
+    myFQName = fqName;
+    initType(type);
+    resolve(manager);
+  }
+
   public boolean isPersistent() {
     return myIsPersistent;
   }
@@ -85,11 +97,16 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
     return myRefElement;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element parentNode) {
-    Element element = new Element("entry_point");
+    Element element = new Element(ENTRY_POINT);
     element.setAttribute(TYPE_ATTR, myType);
     element.setAttribute(FQNAME_ATTR, getFQName());
+    if (myRefElement != null) {
+      final RefEntity entity = myRefElement.getOwner();
+      if (entity instanceof RefElement) {
+        new SmartRefElementPointerImpl((RefElement)entity, myIsPersistent).writeExternal(element);        
+      }
+    }
     parentNode.addContent(element);
   }
 

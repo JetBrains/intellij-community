@@ -18,22 +18,17 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
-import com.intellij.codeInspection.ui.InspectionPackageNode;
-import com.intellij.codeInspection.ui.InspectionTreeNode;
-import com.intellij.codeInspection.ui.RefElementNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -101,9 +96,15 @@ public abstract class InspectionTool extends InspectionProfileEntry {
 
   public abstract void updateContent();
 
-  public abstract InspectionTreeNode[] getContents();
-
   public abstract Map<String, Set<RefElement>> getPackageContent();
+
+  @Nullable
+  public abstract Map<String, Set<RefElement>> getOldPackageContent();
+
+  public boolean isOldProblemsIncluded() {
+    final GlobalInspectionContextImpl context = getContext();
+    return context != null && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN && getOldPackageContent() != null;
+  }
 
   @Nullable
   public Set<RefModule> getModuleProblems(){
@@ -111,46 +112,6 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   }
 
   public abstract void ignoreElement(RefEntity refElement);
-
-  protected RefElementNode addNodeToParent(RefElement refElement, InspectionPackageNode packageNode){
-    final Set<InspectionTreeNode> children = new HashSet<InspectionTreeNode>();
-    TreeUtil.traverseDepth(packageNode, new TreeUtil.Traverse() {
-      public boolean accept(Object node) {
-        children.add((InspectionTreeNode)node);
-        return true;
-      }
-    });
-    RefElementNode nodeToAdd = new RefElementNode(refElement, this);
-    boolean firstLevel = true;
-    RefElementNode prevNode = null;
-    while (true) {
-      RefElementNode currentNode = firstLevel ? nodeToAdd : new RefElementNode(refElement, this);
-      for (InspectionTreeNode node : children) {
-        if (node instanceof RefElementNode){
-          final RefElementNode refElementNode = (RefElementNode)node;
-          if (Comparing.equal(refElementNode.getElement(), refElement)){
-            if (firstLevel){
-              return refElementNode;
-            } else {
-              refElementNode.add(prevNode);
-              return nodeToAdd;
-            }
-          }
-        }
-      }
-      if (!firstLevel) {
-        currentNode.add(prevNode);
-      }
-      RefEntity owner = refElement.getOwner();
-      if (!(owner instanceof RefElement)){
-        packageNode.add(currentNode);
-        return nodeToAdd;
-      }
-      refElement = (RefElement)owner;
-      prevNode = currentNode;
-      firstLevel = false;
-    }
-  }
 
   public abstract boolean isElementIgnored(final RefElement element);
 

@@ -62,4 +62,8 @@ public class QuickFixWrapper implements IntentionAction {
   public boolean startInWriteAction() {
     return true;
   }
+
+  public LocalQuickFix getFix() {
+    return (LocalQuickFix)myDescriptor.getFixes()[myFixNumber];
+  }
 }

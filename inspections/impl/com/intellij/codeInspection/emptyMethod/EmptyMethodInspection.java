@@ -30,7 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -261,7 +262,7 @@ public class EmptyMethodInspection extends GlobalInspectionTool {
     }
 
     public void applyFix(@NotNull final Project project, final ProblemDescriptor descriptor) {
-      final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
+      final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class, false);
       if (psiMethod != null) {
         final List<PsiElement> psiElements = new ArrayList<PsiElement>();
         psiElements.add(psiMethod);

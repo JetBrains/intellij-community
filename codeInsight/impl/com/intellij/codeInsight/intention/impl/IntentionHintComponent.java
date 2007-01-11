@@ -17,7 +17,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Comparing;
@@ -514,11 +513,7 @@ public class IntentionHintComponent extends JPanel {
                 public void run() {
                   try {
                     action.invoke(myProject, myEditor, file);
-                  }
-                  catch(ProcessCanceledException e1) {
-                    //do nothing
-                  }
-                  catch (IncorrectOperationException e1) {
+                  } catch (IncorrectOperationException e1) {
                     LOG.error(e1);
                   }
                   DaemonCodeAnalyzer.getInstance(myProject).updateVisibleHighlighters(myEditor);

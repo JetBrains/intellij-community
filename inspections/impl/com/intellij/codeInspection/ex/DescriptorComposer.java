@@ -58,15 +58,18 @@ public class DescriptorComposer extends HTMLComposerImpl {
   public void compose(StringBuffer buf, RefEntity refElement, CommonProblemDescriptor descriptor) {
     CommonProblemDescriptor[] descriptions = myTool.getDescriptions(refElement);
 
-    int problemIdx = -1;
-    for (int i = 0; i < descriptions.length; i++) {
-      CommonProblemDescriptor description = descriptions[i];
-      if (description == descriptor) {
-        problemIdx = i;
-        break;
+    int problemIdx = 0;
+    if (descriptions != null) { //server-side inspections
+      problemIdx = -1;
+      for (int i = 0; i < descriptions.length; i++) {
+        CommonProblemDescriptor description = descriptions[i];
+        if (description == descriptor) {
+          problemIdx = i;
+          break;
+        }
       }
+      if (problemIdx == -1) return;
     }
-    if (problemIdx == -1) return;
 
     genPageHeader(buf, refElement);
     appendHeading(buf, InspectionsBundle.message("inspection.problem.synopsis"));

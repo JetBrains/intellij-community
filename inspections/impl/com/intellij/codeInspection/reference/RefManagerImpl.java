@@ -172,6 +172,11 @@ public class RefManagerImpl extends RefManager {
     myIsInProcess = false;
   }
 
+
+  public boolean isInProcess() {
+    return myIsInProcess;
+  }
+
   @Nullable public PsiElement getPsiAtOffset(VirtualFile vFile, int textOffset) {
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(vFile);
     if (psiFile == null) return null;

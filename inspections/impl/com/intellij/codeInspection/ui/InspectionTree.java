@@ -277,7 +277,7 @@ public class InspectionTree extends Tree {
           if (defaultConstructor != null) refElement = defaultConstructor;
         }
 
-        if (refElement.isEntry() && refElement.isPermanentEntry()) {
+        if (refElement != null && refElement.isEntry() && refElement.isPermanentEntry()) {
           foreground = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.blue);
         }
       }

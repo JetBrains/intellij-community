@@ -187,22 +187,23 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
 
-  private void addView(InspectionResultsView view) {
+  public void addView(InspectionResultsView view, String title) {
     myView = view;
     ContentManager contentManager = getContentManager();
-    myContent = PeerFactory.getInstance().getContentFactory().createContent(view,
-                                                                            view.getCurrentProfileName() == null
-                                                                            ? InspectionsBundle.message("inspection.results.title")
-                                                                            : InspectionsBundle.message(
-                                                                              "inspection.results.for.profile.toolwindow.title",
-                                                                              view.getCurrentProfileName()),
-                                                                            false);
+    myContent = PeerFactory.getInstance().getContentFactory().createContent(view, title, false);
 
     myContent.setDisposer(myView);
     contentManager.addContent(myContent);
     contentManager.setSelectedContent(myContent);
 
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.INSPECTION).activate(null);
+  }
+
+  private void addView(InspectionResultsView view) {
+    addView(view, view.getCurrentProfileName() == null
+                  ? InspectionsBundle.message("inspection.results.title")
+                  : InspectionsBundle.message("inspection.results.for.profile.toolwindow.title", view.getCurrentProfileName()));
+
   }
 
 
@@ -764,7 +765,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
     LOG.info("Code inspection finished");
 
-    InspectionResultsView view = new InspectionResultsView(myProject, RUN_WITH_EDITOR_PROFILE ? null : getCurrentProfile(), scope, this);
+    final InspectionResultsView view = new InspectionResultsView(myProject, RUN_WITH_EDITOR_PROFILE ? null : getCurrentProfile(), scope, this, new InspectionResultsViewProviderImpl());
     if (!view.update() && !getUIOptions().SHOW_ONLY_DIFF) {
       Messages.showMessageDialog(myProject, InspectionsBundle.message("inspection.no.problems.message"),
                                  InspectionsBundle.message("inspection.no.problems.dialog.title"), Messages.getInformationIcon());

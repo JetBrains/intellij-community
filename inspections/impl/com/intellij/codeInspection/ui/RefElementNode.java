@@ -23,7 +23,12 @@ public class RefElementNode extends InspectionTreeNode {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ui.RefElementNode");
   private boolean myHasDescriptorsUnder = false;
   private CommonProblemDescriptor mySingleDescriptor = null;
-  private InspectionTool myTool;
+  protected InspectionTool myTool;
+
+  public RefElementNode(final Object userObject, final InspectionTool tool) {
+    super(userObject);
+    myTool = tool;
+  }
 
   public RefElementNode(RefElement element, final InspectionTool inspectionTool) {
     super(element);
@@ -33,16 +38,21 @@ public class RefElementNode extends InspectionTreeNode {
 
   public boolean hasDescriptorsUnder() { return myHasDescriptorsUnder; }
 
+  @Nullable
   public RefElement getElement() {
     return (RefElement)getUserObject();
   }
 
   @Nullable
   public Icon getIcon(boolean expanded) {
-    final PsiElement element = getElement().getElement();
+    final RefElement refElement = getElement();
+    if (refElement == null) {
+      return null;
+    }
+    final PsiElement element = refElement.getElement();
     if (element != null) {
       final int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
-      if (getElement().isSyntheticJSP()) {
+      if (refElement.isSyntheticJSP()) {
         return IconUtil.getIcon(element.getContainingFile().getVirtualFile(),
                                 flags,
                                 element.getProject());
@@ -60,6 +70,9 @@ public class RefElementNode extends InspectionTreeNode {
 
   public String toString() {
     final RefElement element = getElement();
+    if (element == null) {
+      return "";
+    }
     if (element instanceof RefImplicitConstructor) {
       return RefUtil.getInstance().getQualifiedName(((RefImplicitConstructor)element).getOwnerClass());
     }
@@ -67,7 +80,8 @@ public class RefElementNode extends InspectionTreeNode {
   }
 
   public boolean isValid() {
-    return getElement().isValid();
+    final RefElement refElement = getElement();
+    return refElement != null && refElement.isValid();
   }
 
   public boolean isResolved() {

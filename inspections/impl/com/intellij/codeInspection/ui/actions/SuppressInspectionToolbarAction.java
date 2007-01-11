@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.codeInspection.ui;
+package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.SuppressUtil;
@@ -16,16 +16,19 @@ import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionTree;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -39,9 +42,9 @@ import java.util.Set;
  * User: anna
  * Date: 11-Jan-2006
  */
-class SuppressInspectionToolbarAction extends AnAction {
+public class SuppressInspectionToolbarAction extends AnAction {
   private InspectionResultsView myView;
-  private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.ui.SuppressInspectionToolbarAction");
+  private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.ui.actions.SuppressInspectionToolbarAction");
 
   public SuppressInspectionToolbarAction(final InspectionResultsView view) {
     super(InspectionsBundle.message("suppress.inspection.family"), InspectionsBundle.message("suppress.inspection.family"),
@@ -128,6 +131,7 @@ class SuppressInspectionToolbarAction extends AnAction {
           final InspectionTreeNode node = (InspectionTreeNode)treePath.getLastPathComponent();
           final List<RefElement> elementsToSuppress = InspectionTree.getElementsToSuppressInSubTree(node);
           for (RefElement refElement : elementsToSuppress) {
+            if (refElement == null) continue;
             final PsiElement element = refElement.getElement();
             if (element instanceof PsiFile) continue;
             if (element == null || !element.isValid()) continue;
@@ -149,19 +153,20 @@ class SuppressInspectionToolbarAction extends AnAction {
                                   final InspectionTool tool,
                                   final Project project) {
     final boolean[] needToRefresh = new boolean[]{true};
+    final PsiModificationTracker tracker = PsiManager.getInstance(project).getModificationTracker();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         PsiDocumentManager.getInstance(project).commitAllDocuments();
         try {
+          final long startModificationCount = tracker.getModificationCount();
           action.invoke(project, null, element.getContainingFile());
-          final Set<GlobalInspectionContextImpl> globalInspectionContexts =
-            ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).getRunningContexts();
-          for (GlobalInspectionContextImpl context : globalInspectionContexts) {
-            context.ignoreElement(tool, element);
+          if (startModificationCount != tracker.getModificationCount()) {
+            final Set<GlobalInspectionContextImpl> globalInspectionContexts =
+              ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).getRunningContexts();
+            for (GlobalInspectionContextImpl context : globalInspectionContexts) {
+              context.ignoreElement(tool, element);
+            }
           }
-        }
-        catch (ProcessCanceledException e1) {
-          needToRefresh[0] = false;
         }
         catch (IncorrectOperationException e1) {
           LOG.error(e1);

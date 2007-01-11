@@ -1,115 +1,98 @@
 /*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jun 23, 2002
- * Time: 7:14:29 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
+ * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
+ */
+
+/*
+ * User: anna
+ * Date: 09-Jan-2007
  */
 package com.intellij.codeInspection.actions;
 
-import com.intellij.codeInspection.InspectionManager;
+import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.offlineViewer.OfflineView;
-import com.intellij.ide.RecentProjectsManager;
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.offlineViewer.OfflineInspectionResultsViewProvider;
+import com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptor;
+import com.intellij.codeInspection.offlineViewer.OfflineViewParseUtil;
+import com.intellij.codeInspection.reference.RefManagerImpl;
+import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.util.Icons;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.Profile;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.util.ui.tree.TreeUtil;
 
-import javax.swing.*;
-import javax.swing.filechooser.FileView;
-import java.io.File;
-import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ViewOfflineResultsAction extends AnAction {
 
   public void update(AnActionEvent event) {
-    Presentation presentation = event.getPresentation();
-    DataContext dataContext = event.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Presentation presentation = event.getPresentation();
+    final Project project = event.getData(DataKeys.PROJECT);
     presentation.setEnabled(project != null);
     presentation.setVisible(ActionPlaces.MAIN_MENU.equals(event.getPlace()));
   }
 
   public void actionPerformed(AnActionEvent event) {
-    DataContext dataContext = event.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = event.getData(DataKeys.PROJECT);
 
-    String lastFilePath=getLastFilePath(project);
-    String path = lastFilePath != null ? lastFilePath : RecentProjectsManager.getInstance().getLastProjectPath();
-    JFileChooser fileChooser = new JFileChooser(path);
-    FileView fileView = new FileView() {
-      public Icon getIcon(File f) {
-        if (f.isDirectory()) return super.getIcon(f);
-        @NonNls final String name = f.getName();
-        if (name.endsWith(".ipr")) {
-          return Icons.PROJECT_ICON;
-        }
-        FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(name);
-        return fileType.getIcon();
-      }
-    };
+    final VirtualFile[] virtualFiles = FileChooser.chooseFiles(project, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
+    if (virtualFiles == null || virtualFiles.length == 0) return;
+    if (!virtualFiles[0].isDirectory()) return;
 
-    fileChooser.setFileView(fileView);
-    fileChooser.setAcceptAllFileFilterUsed(false);
-    fileChooser.setDialogTitle("Open offline inspection results folder");
-    fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-    if (fileChooser.showOpenDialog(WindowManager.getInstance().suggestParentWindow(project)) != JFileChooser.APPROVE_OPTION) return;
-    File file = fileChooser.getSelectedFile();
-    if (file == null) return;
-    setLastFilePath(project, file.getParent());
-
-    if (!file.isDirectory()) return;
-    InspectionManagerEx manager = (InspectionManagerEx) InspectionManager.getInstance(project);
-    final GlobalInspectionContextImpl inspectionContext = manager.createNewGlobalContext(false);
-    OfflineView view = OfflineView.create(project.getName(), project, inspectionContext);
-    final File[] files = file.listFiles();
-    for (File inspectionFile : files) {
-      Document doc;
-      try {
-        doc = JDOMUtil.loadDocument(inspectionFile);
-        ((ProjectEx) project).getExpandMacroReplacements().substitute(doc.getRootElement(), SystemInfo.isFileSystemCaseSensitive);
-      } catch (JDOMException e) {
-        Messages.showMessageDialog(project, "Error parsing the results file", "Error", Messages.getErrorIcon());
-        return;
-      } catch (IOException e) {
-        Messages.showMessageDialog(project, "Error loading the results file", "Error", Messages.getErrorIcon());
-        return;
-      }
-      Element root = doc.getRootElement();
-      List problems = root.getChildren("problem");
-      for (final Object problemElement : problems) {
-        Element problem = (Element)problemElement;
-        view.addProblem(problem);
-      }
+    final Map<String , Map<String, List<OfflineProblemDescriptor>>> resMap = new HashMap<String, Map<String, List<OfflineProblemDescriptor>>>();
+    final VirtualFile[] files = virtualFiles[0].getChildren();
+    for (VirtualFile inspectionFile : files) {
+      resMap.put(inspectionFile.getNameWithoutExtension(), OfflineViewParseUtil.parse(LoadTextUtil.loadText(inspectionFile).toString()));
     }
-    view.init();
-    inspectionContext.getContentManager().addContent(view.getContent());
-    ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.INSPECTION).activate(null);
-  }
 
-  private static String getLastFilePath(Project project) {
-    return PropertiesComponent.getInstance(project).getValue("last_opened_file_path");
-  }
+    final AnalysisScope scope = new AnalysisScope(project);
+    final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));
+    final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
+    InspectionProfile inspectionProfile = null;
+    String profileName = null;
+    if (profileName != null) {
+      final Profile profile = InspectionProjectProfileManager.getInstance(project).getProfile(profileName);
+      if (profile != null) {
+        inspectionProfile = (InspectionProfile)profile;
+      }
+      else {
+        inspectionProfile = new InspectionProfileImpl("Server Side Profile") {
+          public boolean isToolEnabled(final HighlightDisplayKey key) {
+            return resMap.containsKey(key.toString());
+          }
 
-  private static void setLastFilePath(Project project,String path) {
-    PropertiesComponent.getInstance(project).setValue("last_opened_file_path",path);
+          public HighlightDisplayLevel getErrorLevel(final HighlightDisplayKey key) {
+            return ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(key);
+          }
+        };
+      }
+      inspectionContext.setExternalProfile(inspectionProfile);
+    }
+    else {
+      inspectionContext.RUN_WITH_EDITOR_PROFILE = true;
+    }
+    inspectionContext.setCurrentScope(scope);
+    inspectionContext.initializeTools(scope, new HashMap<String, Set<InspectionTool>>(), new HashMap<String, Set<InspectionTool>>());
+    final InspectionResultsView view = new InspectionResultsView(project, inspectionProfile, scope,
+                                                                 inspectionContext,
+                                                                 new OfflineInspectionResultsViewProvider(resMap));
+    ((RefManagerImpl)inspectionContext.getRefManager()).inspectionReadActionStarted();
+    view.buildTreeAndSort();
+    TreeUtil.selectFirstNode(view.getTree());
+    inspectionContext.addView(view, "Offline View" + (profileName != null ? " of " + profileName : ""));
   }
 }

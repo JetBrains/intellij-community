@@ -4,16 +4,12 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.codeInspection.reference.RefVisitor;
-import com.intellij.codeInspection.ui.InspectionPackageNode;
-import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,46 +18,12 @@ import java.util.Set;
  */
 public abstract class FilteringInspectionTool extends InspectionTool {
   public abstract RefFilter getFilter();
-  HashMap<String, Set<RefElement>> myPackageContents = new HashMap<String, Set<RefElement>>();
+  private HashMap<String, Set<RefElement>> myPackageContents = new HashMap<String, Set<RefElement>>();
 
   private HashMap<String, Set<RefElement>> myOldPackageContents = null;
 
-  Set<RefElement> myIgnoreElements = new HashSet<RefElement>();
-  public InspectionTreeNode[] getContents() {
-    List<InspectionTreeNode> content = new ArrayList<InspectionTreeNode>();
-    buildTreeNode(content, myPackageContents);
-    if (isOldProblemsIncluded(getContext())){
-      buildTreeNode(content, myOldPackageContents);
-    }
-    return content.toArray(new InspectionTreeNode[content.size()]);
-  }
-
-  private boolean isOldProblemsIncluded(final GlobalInspectionContextImpl context) {
-    return context != null && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN && myOldPackageContents != null;
-  }
-
-  private void buildTreeNode(final List<InspectionTreeNode> content,
-                             final HashMap<String, Set<RefElement>> packageContents) {
-    final GlobalInspectionContextImpl context = getContext();
-    Set<String> packages = packageContents.keySet();
-    for (String p : packages) {
-      InspectionPackageNode pNode = new InspectionPackageNode(p);
-      Set<RefElement> elements = packageContents.get(p);
-      for (RefElement refElement : elements) {
-        if (context != null && context.getUIOptions().SHOW_ONLY_DIFF && getElementStatus(refElement) == FileStatus.NOT_CHANGED) continue;
-        if (packageContents != myPackageContents) {
-          final Set<RefElement> currentElements = myPackageContents.get(p);
-          if (currentElements != null){
-            Set<RefEntity> currentEntities = new HashSet<RefEntity>(currentElements);
-            if (contains(refElement, currentEntities)) continue;
-          }
-        }
-        addNodeToParent(refElement, pNode);
-      }
-      if (pNode.getChildCount() > 0) content.add(pNode);
-    }
-  }
-
+  private Set<RefElement> myIgnoreElements = new HashSet<RefElement>();
+ 
   public void updateContent() {
     myPackageContents = new HashMap<String, Set<RefElement>>();
     getContext().getRefManager().iterate(new RefVisitor() {
@@ -89,7 +51,7 @@ public abstract class FilteringInspectionTool extends InspectionTool {
     } else {
       if (myPackageContents.size() > 0) return true;
     }
-    return isOldProblemsIncluded(context) && myOldPackageContents.size() > 0;
+    return isOldProblemsIncluded() && myOldPackageContents.size() > 0;
   }
 
   private boolean containsOnlyDiff(final HashMap<String, Set<RefElement>> packageContents) {
@@ -108,6 +70,10 @@ public abstract class FilteringInspectionTool extends InspectionTool {
 
   public Map<String, Set<RefElement>> getPackageContent() {
     return myPackageContents;
+  }
+
+  public Map<String, Set<RefElement>> getOldPackageContent() {
+    return myOldPackageContents;
   }
 
   public void ignoreElement(RefEntity refEntity) {

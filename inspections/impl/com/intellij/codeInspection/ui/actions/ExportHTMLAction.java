@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.codeInspection.ui;
+package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -13,6 +13,10 @@ import com.intellij.codeInspection.export.HTMLExporter;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
 import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.ui.InspectionGroupNode;
+import com.intellij.codeInspection.ui.InspectionNode;
+import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefEntityAlphabeticalComparator;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -30,7 +34,7 @@ import java.util.*;
  * User: anna
  * Date: 11-Jan-2006
  */
-class ExportHTMLAction extends AnAction {
+public class ExportHTMLAction extends AnAction {
   private InspectionResultsView myView;
 
   public ExportHTMLAction(final InspectionResultsView view) {

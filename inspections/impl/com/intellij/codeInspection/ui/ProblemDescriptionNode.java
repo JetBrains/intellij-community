@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -19,10 +20,18 @@ import javax.swing.*;
  */
 public class ProblemDescriptionNode extends InspectionTreeNode {
   public static final Icon INFO = IconLoader.getIcon("/compiler/information.png");
-  private RefEntity myElement;
+  protected RefEntity myElement;
   private CommonProblemDescriptor myDescriptor;
   private boolean myReplaceProblemDescriptorTemplateMessage;
-  private DescriptorProviderInspection myTool;
+  protected DescriptorProviderInspection myTool;
+
+  public ProblemDescriptionNode(final Object userObject,
+                                final boolean replaceProblemDescriptorTemplateMessage,
+                                final DescriptorProviderInspection tool) {
+    super(userObject);
+    myReplaceProblemDescriptorTemplateMessage = replaceProblemDescriptorTemplateMessage;
+    myTool = tool;
+  }
 
   public ProblemDescriptionNode(RefEntity element,
                                 CommonProblemDescriptor descriptor,
@@ -35,7 +44,9 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
     myTool = descriptorProviderInspection;
   }
 
+  @Nullable
   public RefEntity getElement() { return myElement; }
+  @Nullable
   public CommonProblemDescriptor getDescriptor() { return myDescriptor; }
 
   public Icon getIcon(boolean expanded) {
@@ -48,8 +59,9 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
 
   public boolean isValid() {
     if (myElement instanceof RefElement && !((RefElement)myElement).isValid()) return false;
-    if (myDescriptor instanceof ProblemDescriptor) {
-      final PsiElement psiElement = ((ProblemDescriptor)myDescriptor).getPsiElement();
+    final CommonProblemDescriptor descriptor = getDescriptor();
+    if (descriptor instanceof ProblemDescriptor) {
+      final PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
       return psiElement != null && psiElement.isValid();
     }
     return true;
@@ -69,7 +81,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   }
 
   public String toString() {
-    return isValid() ? renderDescriptionMessage(myDescriptor, myReplaceProblemDescriptorTemplateMessage) : "";
+    return isValid() ? renderDescriptionMessage(getDescriptor(), myReplaceProblemDescriptorTemplateMessage) : "";
   }
 
   private static String renderDescriptionMessage(CommonProblemDescriptor descriptor, boolean isReplaceProblemDescriptorTemplateMessage) {

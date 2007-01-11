@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
+import com.intellij.codeInspection.ui.actions.SuppressInspectionToolbarAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -197,7 +198,7 @@ public class Browser extends JPanel {
               else if (ref.startsWith("invoke:")) {
                 int actionNumber = Integer.parseInt(ref.substring("invoke:".length()));
                 getTool().getQuickFixes(new RefElement[]{(RefElement)myCurrentEntity})[actionNumber]
-                  .doApplyFix(new RefElement[]{(RefElement)myCurrentEntity}, myView);
+                  .doApplyFix(new RefElement[]{(RefElement)myCurrentEntity}, getTool(), myView);
               }
               else if (ref.startsWith("invokelocal:")) {
                 int actionNumber = Integer.parseInt(ref.substring("invokelocal:".length()));

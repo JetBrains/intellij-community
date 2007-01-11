@@ -2,13 +2,12 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.codeInspection.ui;
+package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.QuickFixAction;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -17,7 +16,6 @@ import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +23,7 @@ import java.util.List;
  * User: anna
  * Date: 11-Jan-2006
  */
-class InvokeQuickFixAction extends AnAction {
+public class InvokeQuickFixAction extends AnAction {
   private InspectionResultsView myView;
   private RelativePoint myPoint;
 
@@ -45,12 +43,7 @@ class InvokeQuickFixAction extends AnAction {
 
     //noinspection ConstantConditions
     final @NotNull InspectionTool tool = myView.getTree().getSelectedTool();
-    List<RefEntity> selectedElements = new ArrayList<RefEntity>();
-    final TreePath[] selectionPaths = myView.getTree().getSelectionPaths();
-    for (TreePath path : selectionPaths) {
-      InspectionResultsView.traverseRefElements((InspectionTreeNode)path.getLastPathComponent(), selectedElements);
-    }
-    final QuickFixAction[] quickFixes = tool.getQuickFixes(selectedElements.toArray(new RefEntity[selectedElements.size()]));
+    final QuickFixAction[] quickFixes = myView.getProvider().getQuickFixes(tool, myView.getTree());
     if (quickFixes == null || quickFixes.length == 0) {
       e.getPresentation().setEnabled(false);
       return;
@@ -74,12 +67,7 @@ class InvokeQuickFixAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final InspectionTool tool = myView.getTree().getSelectedTool();
     assert tool != null;
-    List<RefEntity> selectedElements = new ArrayList<RefEntity>();
-    final TreePath[] selectionPaths = myView.getTree().getSelectionPaths();
-    for (TreePath path : selectionPaths) {
-      InspectionResultsView.traverseRefElements((InspectionTreeNode)path.getLastPathComponent(), selectedElements);
-    }
-    final QuickFixAction[] quickFixes = tool.getQuickFixes(selectedElements.toArray(new RefElement[selectedElements.size()]));
+    final QuickFixAction[] quickFixes = myView.getProvider().getQuickFixes(tool, myView.getTree());
     ActionGroup fixes = new ActionGroup() {
       public AnAction[] getChildren(@Nullable AnActionEvent e) {
         List<QuickFixAction> children = new ArrayList<QuickFixAction>();

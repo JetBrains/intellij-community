@@ -1,12 +1,14 @@
 package com.intellij.codeInspection.ex;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
+import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -21,7 +23,8 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import gnu.trove.THashSet;
 
 import javax.swing.*;
@@ -30,7 +33,7 @@ import java.util.*;
 /**
  * @author max
  */
-public abstract class QuickFixAction extends AnAction {
+public class QuickFixAction extends AnAction {
   protected InspectionTool myTool;
 
   public static InspectionResultsView getInvoker(AnActionEvent e) {
@@ -79,17 +82,142 @@ public abstract class QuickFixAction extends AnAction {
   }
 
   public void actionPerformed(final AnActionEvent e) {
+    final InspectionResultsView view = getInvoker(e);
+    final InspectionTree tree = view.getTree();
+    final InspectionTool tool = tree.getSelectedTool();
     if (isProblemDescriptorsAcceptable()) {
-      final InspectionResultsView view = getInvoker(e);
-      final InspectionTree tree = view.getTree();
       final ProblemDescriptor[] descriptors = tree.getSelectedDescriptors();
       if (descriptors.length > 0) {
-        doApplyFix(view.getProject(), (DescriptorProviderInspection)tree.getSelectedTool(), descriptors, e);
+        doApplyFix(view.getProject(), (DescriptorProviderInspection)tool, descriptors);
         return;
       }
     }
 
-    doApplyFix(getSelectedElements(e), getInvoker(e));
+    doApplyFix(getSelectedElements(e), tool, view);
+  }
+
+
+  private void doApplyFix(final Project project,
+                          final DescriptorProviderInspection tool,
+                          final CommonProblemDescriptor[] descriptors) {
+    final Set<VirtualFile> readOnlyFiles = new THashSet<VirtualFile>();
+    for (CommonProblemDescriptor descriptor : descriptors) {
+      final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
+      if (psiElement != null && !psiElement.isWritable()) {
+        readOnlyFiles.add(psiElement.getContainingFile().getVirtualFile());
+      }
+    }
+
+    if (!readOnlyFiles.isEmpty()) {
+      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]));
+      if (operationStatus.hasReadonlyFiles()) return;
+    }
+
+    final RefManagerImpl refManager = ((RefManagerImpl)tool.getContext().getRefManager());
+
+    final boolean initial = refManager.isInProcess();
+
+    refManager.inspectionReadActionFinished();
+
+    try {
+      final Set<PsiElement> ignoredElements = new HashSet<PsiElement>();
+
+      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+        public void run() {
+          CommandProcessor.getInstance().markCurrentCommandAsComplex(project);
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              final PsiModificationTracker tracker = PsiManager.getInstance(project).getModificationTracker();
+              for (CommonProblemDescriptor descriptor : descriptors) {
+                final QuickFix[] fixes = descriptor.getFixes();
+                if (fixes != null) {
+                  for (QuickFix fix : fixes) {
+                    if (fix != null) {
+                      final QuickFixAction quickFixAction = QuickFixAction.this;
+                      if (quickFixAction instanceof LocalQuickFixWrapper &&
+                          !((LocalQuickFixWrapper)quickFixAction).getFix().getClass().isInstance(fix)) {
+                        continue;
+                      }
+
+                      final long startCount = tracker.getModificationCount();
+                      //CCE here means QuickFix was incorrectly inherited, is there a way to signal (plugin) it is wrong?
+                      fix.applyFix(project, descriptor);
+                      if (startCount != tracker.getModificationCount()) {
+                        DaemonCodeAnalyzer.getInstance(project).restart();
+                        tool.ignoreProblem(descriptor, fix);
+                        if (descriptor instanceof ProblemDescriptor) {
+                          ignoredElements.add(((ProblemDescriptor)descriptor).getPsiElement());
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          });
+        }
+      }, getTemplatePresentation().getText(), null);
+
+      refreshViews(project, ignoredElements, tool);
+    }
+    finally { //to make offline view lazy
+      if (initial) refManager.inspectionReadActionStarted();
+    }
+  }
+
+  public void doApplyFix(final RefElement[] refElements, final InspectionTool tool, InspectionResultsView view) {
+    Set<VirtualFile> readOnlyFiles = getReadOnlyFiles(refElements);
+    if (!readOnlyFiles.isEmpty()) {
+      final Project project = refElements[0].getRefManager().getProject();
+      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]));
+      if (operationStatus.hasReadonlyFiles()) return;
+    }
+
+    final RefManagerImpl refManager = ((RefManagerImpl)tool.getContext().getRefManager());
+
+    final boolean initial = refManager.isInProcess();
+
+    refManager.inspectionReadActionFinished();
+
+    try {
+      final boolean[] refreshNeeded = new boolean[]{false};
+      if (refElements.length > 0) {
+        final Project project = refElements[0].getRefManager().getProject();
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          public void run() {
+            CommandProcessor.getInstance().markCurrentCommandAsComplex(project);
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                refreshNeeded[0] = applyFix(refElements);
+              }
+            });
+          }
+        }, getTemplatePresentation().getText(), null);
+      }
+      if (refreshNeeded[0]) {
+        final Set<PsiElement> ignoredElements = new HashSet<PsiElement>();
+        for (RefElement element : refElements) {
+          final PsiElement psiElement = element.getElement();
+          if (psiElement != null && psiElement.isValid()) {
+            ignoredElements.add(psiElement);
+          }
+        }
+        refreshViews(view.getProject(), ignoredElements, myTool);
+      }
+    }
+    finally {  //to make offline view lazy
+      if (initial) refManager.inspectionReadActionStarted();
+    }
+  }
+
+  private static Set<VirtualFile> getReadOnlyFiles(final RefElement[] refElements) {
+    Set<VirtualFile> readOnlyFiles = new THashSet<VirtualFile>();
+    for (RefElement refElement : refElements) {
+      PsiElement psiElement = refElement.getElement();
+      if (psiElement == null) continue;
+      if (!psiElement.isWritable()) readOnlyFiles.add(psiElement.getContainingFile().getVirtualFile());
+    }
+    return readOnlyFiles;
   }
 
   protected static RefElement[] getSelectedElements(AnActionEvent e) {
@@ -108,10 +236,10 @@ public abstract class QuickFixAction extends AnAction {
           if (i1 == i2) return 0;
           return -1;
         }
-        if (o1 instanceof RefElement){
+        if (o1 instanceof RefElement) {
           return 1;
         }
-        if (o2 instanceof RefElement){
+        if (o2 instanceof RefElement) {
           return -1;
         }
         return o1.getName().compareTo(o2.getName());
@@ -121,109 +249,21 @@ public abstract class QuickFixAction extends AnAction {
     return selection.toArray(new RefElement[selection.size()]);
   }
 
-  private void doApplyFix(final Project project,
-                          final DescriptorProviderInspection tool,
-                          final CommonProblemDescriptor[] descriptors,
-                          final AnActionEvent e) {
-    final Set<VirtualFile> readOnlyFiles = new THashSet<VirtualFile>();
-    for (CommonProblemDescriptor descriptor : descriptors) {
-      final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
-      if (psiElement != null && !psiElement.isWritable()) {
-        readOnlyFiles.add(psiElement.getContainingFile().getVirtualFile());
-      }
-    }
-
-    if (!readOnlyFiles.isEmpty()) {
-      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]));
-      if (operationStatus.hasReadonlyFiles()) return;
-    }
-
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
-        CommandProcessor.getInstance().markCurrentCommandAsComplex(project);
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            for (CommonProblemDescriptor descriptor : descriptors) {
-              final QuickFix[] fixes = descriptor.getFixes();
-              if (fixes != null) {
-                for (QuickFix fix : fixes) {
-                  if (fix != null) {
-                    final QuickFixAction quickFixAction = QuickFixAction.this;
-                    if (quickFixAction instanceof LocalQuickFixWrapper &&
-                        !((LocalQuickFixWrapper)quickFixAction).getFix().getClass().isInstance(fix)) {
-                      continue;
-                    }
-
-                    //CCE here means QuickFix was incorrectly inherited, is there a way to signal (plugin) it is wrong?
-                    fix.applyFix(project, descriptor);
-                    DaemonCodeAnalyzer.getInstance(project).restart();
-
-                    tool.ignoreProblem(descriptor, fix);
-                  }
-                }
-              }
-            }
-          }
-        });
-      }
-    }, getTemplatePresentation().getText(), null);
-
-    final RefElement[] selectedElements = getSelectedElements(e);
-    refreshViews(project, selectedElements, tool);
-  }
-
-  private static void refreshViews(final Project project, final RefElement[] selectedElements, final InspectionTool tool) {
+  private static void refreshViews(final Project project, final Set<PsiElement> selectedElements, final InspectionTool tool) {
     InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final Set<GlobalInspectionContextImpl> runningContexts = managerEx.getRunningContexts();
     for (GlobalInspectionContextImpl context : runningContexts) {
-      for (RefElement element : selectedElements) {
-        context.ignoreElement(tool, element.getElement());
+      for (PsiElement element : selectedElements) {
+        context.ignoreElement(tool, element);
       }
       context.refreshViews();
     }
   }
 
-  public void doApplyFix(final RefElement[] refElements, InspectionResultsView view) {
-    Set<VirtualFile> readOnlyFiles = getReadOnlyFiles(refElements);
-    if (!readOnlyFiles.isEmpty()) {
-      final Project project = refElements[0].getRefManager().getProject();
-      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]));
-      if (operationStatus.hasReadonlyFiles()) return;
-    }
-    if (refElements.length > 0) {
-      final Project project = refElements[0].getRefManager().getProject();
-      final boolean[] refreshNeeded = new boolean[1];
-
-      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-        public void run() {
-          CommandProcessor.getInstance().markCurrentCommandAsComplex(project);
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              refreshNeeded[0] = applyFix(refElements);
-            }
-          });
-        }
-      }, getTemplatePresentation().getText(), null);
-
-      if (refreshNeeded[0]) {
-        view.updateView(false);
-      }
-    }
-    refreshViews(view.getProject(), refElements, myTool);
-  }
-
-  private static Set<VirtualFile> getReadOnlyFiles(final RefElement[] refElements) {
-    Set<VirtualFile> readOnlyFiles = new THashSet<VirtualFile>();
-    for (RefElement refElement : refElements) {
-      PsiElement psiElement = refElement.getElement();
-      if (psiElement == null) continue;
-      if (!psiElement.isWritable()) readOnlyFiles.add(psiElement.getContainingFile().getVirtualFile());
-    }
-    return readOnlyFiles;
-  }
-
   /**
    * @return true if immediate UI update needed.
    */
-  protected abstract boolean applyFix(RefElement[] refElements);
+  protected boolean applyFix(RefElement[] refElements) {
+    return false;
+  }
 }
