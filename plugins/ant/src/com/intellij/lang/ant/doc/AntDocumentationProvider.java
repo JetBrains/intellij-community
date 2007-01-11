@@ -17,8 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -74,14 +72,6 @@ public class AntDocumentationProvider implements DocumentationProvider {
   }
 
 
-  @Nullable
-  static private String getTagName(final AntElement element) {
-    final XmlElement xmlElement = element.getSourceElement();
-    XmlTag tag = (xmlElement instanceof XmlTag) ? (XmlTag)xmlElement : PsiTreeUtil.getParentOfType(xmlElement, XmlTag.class);
-    return tag == null ? null : tag.getName();
-
-  }
-
   @NonNls private static final String CORE_TASKS_FOLDER_NAME = "/CoreTasks/";
   @NonNls private static final String CORE_TYPES_FOLDER_NAME = "/CoreTypes/";
   @NonNls private static final String OPTIONAL_TYPES_FOLDER_NAME = "/OptionalTypes/";
@@ -122,14 +112,14 @@ public class AntDocumentationProvider implements DocumentationProvider {
   }
 
   public String getUrlFor(PsiElement element, PsiElement originalElement) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 }
