@@ -45,6 +45,10 @@ public abstract class UsageViewManager {
                                 boolean showNotFoundMessage, UsageViewPresentation presentation,
                                 UsageViewStateListener listener);
 
+  public abstract void setCurrentSearchCancelled(boolean flag);
+
+  public abstract boolean searchHasBeenCancelled();
+
   public interface UsageViewStateListener {
     void usageViewCreated(UsageView usageView);
     void findingUsagesFinished(final UsageView usageView);

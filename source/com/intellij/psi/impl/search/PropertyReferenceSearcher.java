@@ -3,6 +3,8 @@ package com.intellij.psi.impl.search;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
@@ -26,7 +28,11 @@ public class PropertyReferenceSearcher implements QueryExecutor<PsiReference, Re
       if (words.isEmpty()) return true;
       final String lastWord = words.get(words.size() - 1);
 
-      SearchScope searchScope = queryParameters.getEffectiveSearchScope();
+      SearchScope searchScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+        public SearchScope compute() {
+          return queryParameters.getEffectiveSearchScope();
+        }
+      });
       if (searchScope instanceof GlobalSearchScope) {
         searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, StdFileTypes.JSP, StdFileTypes.JSPX);
       }

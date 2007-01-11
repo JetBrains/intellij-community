@@ -8,6 +8,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
+import com.intellij.openapi.application.ReadActionProcessor;
 
 /**
  * @author max
@@ -19,8 +20,8 @@ public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiR
       PsiMethod method = (PsiMethod)refElement;
       if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(method.getName()) && method.getParameterList().getParametersCount() == 0) {
         final Query<PsiReference> query = ReferencesSearch.search(method.getContainingClass(), p.getScope(), p.isIgnoreAccessScope());
-        return query.forEach(new Processor<PsiReference>() {
-          public boolean process(final PsiReference reference) {
+        return query.forEach(new ReadActionProcessor<PsiReference>() {
+          public boolean processInReadAction(final PsiReference reference) {
             if (reference instanceof PsiJavaCodeReferenceElement) {
               PsiJavaCodeReferenceElement javaReference = (PsiJavaCodeReferenceElement)reference;
               if (javaReference.getParent() instanceof PsiAnnotation) {

@@ -40,29 +40,29 @@ import java.util.*;
 public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiClass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiClassImpl");
 
-  private PsiModifierListImpl myRepositoryModifierList = null;
-  private PsiReferenceListImpl myRepositoryExtendsList = null;
-  private PsiReferenceListImpl myRepositoryImplementsList = null;
-  private PsiTypeParameterListImpl myRepositoryParameterList = null;
+  private volatile PsiModifierListImpl myRepositoryModifierList = null;
+  private volatile PsiReferenceListImpl myRepositoryExtendsList = null;
+  private volatile PsiReferenceListImpl myRepositoryImplementsList = null;
+  private volatile PsiTypeParameterListImpl myRepositoryParameterList = null;
 
-  private String myCachedName = null;
-  private String myCachedQName = null;
-  private Map<String, PsiField> myCachedFieldsMap = null;
-  private Map<String, PsiMethod[]> myCachedMethodsMap = null;
-  private Map<String, PsiClass> myCachedInnersMap = null;
+  private volatile String myCachedName = null;
+  private volatile String myCachedQName = null;
+  private volatile Map<String, PsiField> myCachedFieldsMap = null;
+  private volatile Map<String, PsiMethod[]> myCachedMethodsMap = null;
+  private volatile Map<String, PsiClass> myCachedInnersMap = null;
 
-  private PsiField[] myCachedFields = null;
-  private PsiMethod[] myCachedMethods = null;
-  private PsiMethod[] myCachedConstructors = null;
-  private PsiClass[] myCachedInners = null;
-  private Boolean myCachedIsDeprecated = null;
-  private Boolean myCachedIsInterface = null;
-  private Boolean myCachedIsAnnotationType = null;
-  private Boolean myCachedIsEnum = null;
+  private volatile PsiField[] myCachedFields = null;
+  private volatile PsiMethod[] myCachedMethods = null;
+  private volatile PsiMethod[] myCachedConstructors = null;
+  private volatile PsiClass[] myCachedInners = null;
+  private volatile Boolean myCachedIsDeprecated = null;
+  private volatile Boolean myCachedIsInterface = null;
+  private volatile Boolean myCachedIsAnnotationType = null;
+  private volatile Boolean myCachedIsEnum = null;
 
   private PsiMethod myValuesMethod = null;
   private PsiMethod myValueOfMethod = null;
-  private String myCachedForLongName = null;
+  private volatile String myCachedForLongName = null;
   private static final @NonNls String VALUES_METHOD = "values";
   private static final @NonNls String VALUE_OF_METHOD = "valueOf";
 

@@ -81,7 +81,9 @@ public class ReentrantWriterPreferenceReadWriteLock extends WriterPreferenceRead
   }
 
   protected boolean allowReader() {
-    return (activeWriter_ == null/* && waitingWriters_ == 0*/) || // [Valentin] Changed policy so that readers are allowed while there are waiting writers
+    // [Valentin] Changed policy so that readers are allowed while there are waiting writers
+    // [cdr]: No more!
+    return (activeWriter_ == null && waitingWriters_ == 0) ||
       activeWriter_ == Thread.currentThread();
   }
 

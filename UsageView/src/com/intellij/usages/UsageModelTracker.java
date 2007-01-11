@@ -18,15 +18,11 @@ package com.intellij.usages;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 16, 2004
- * Time: 4:46:14 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class UsageModelTracker {
   private PsiTreeChangeListener myPsiListener;
@@ -36,48 +32,42 @@ public class UsageModelTracker {
   }
 
   private Project myProject;
-  private List<UsageModelTrackerListener> myListeners = new ArrayList<UsageModelTrackerListener>();
+  private List<UsageModelTrackerListener> myListeners = new CopyOnWriteArrayList<UsageModelTrackerListener>();
 
   public UsageModelTracker(Project project) {
     myProject = project;
     myPsiListener = new PsiTreeChangeAdapter() {
       public void childAdded(PsiTreeChangeEvent event) {
-        if (!(event.getFile() instanceof PsiCodeFragment)) {
-          fireModelChanged(false);
-        }
+        doFire(event, false);
       }
 
       public void childRemoved(PsiTreeChangeEvent event) {
-        if (!(event.getFile() instanceof PsiCodeFragment)) {
-          fireModelChanged(false);
-        }
+        doFire(event, false);
       }
 
       public void childReplaced(PsiTreeChangeEvent event) {
-        if (!(event.getFile() instanceof PsiCodeFragment)) {
-          fireModelChanged(false);
-        }
+        doFire(event, false);
       }
 
       public void childrenChanged(PsiTreeChangeEvent event) {
-        if (!(event.getFile() instanceof PsiCodeFragment)) {
-          fireModelChanged(false);
-        }
+        doFire(event, false);
       }
 
       public void childMoved(PsiTreeChangeEvent event) {
-        if (!(event.getFile() instanceof PsiCodeFragment)) {
-          fireModelChanged(false);
-        }
+        doFire(event, false);
       }
 
       public void propertyChanged(PsiTreeChangeEvent event) {
-        if (!(event.getFile() instanceof PsiCodeFragment)) {
-          fireModelChanged(true);
-        }
+        doFire(event, true);
       }
     };
     PsiManager.getInstance(project).addPsiTreeChangeListener(myPsiListener);
+  }
+
+  private void doFire(final PsiTreeChangeEvent event, boolean propertyChange) {
+    if (!(event.getFile() instanceof PsiCodeFragment)) {
+      fireModelChanged(propertyChange);
+    }
   }
 
   public void dispose() {
@@ -93,8 +83,7 @@ public class UsageModelTracker {
   }
 
   private void fireModelChanged(final boolean isPropertyChange) {
-    final UsageModelTrackerListener[] listeners = myListeners.toArray(new UsageModelTrackerListener[myListeners.size()]);
-    for (UsageModelTrackerListener listener : listeners) {
+    for (UsageModelTrackerListener listener : myListeners) {
       listener.modelChanged(isPropertyChange);
     }
   }

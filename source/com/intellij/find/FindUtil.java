@@ -90,6 +90,7 @@ public class FindUtil {
   }
 
   public static void find(Project project, Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     FindManager findManager = FindManager.getInstance(project);
     String s = editor.getSelectionModel().getSelectedText();
 
@@ -170,10 +171,10 @@ public class FindUtil {
     int textLength = document.getTextLength();
     final List<Usage> usages = new ArrayList<Usage>();
     if (text != null) {
-      int offset = 0;
       FindManager findManager = FindManager.getInstance(project);
       findModel.setForward(true); // when find all there is no diff in direction
-      
+
+      int offset = 0;
       while (offset < textLength) {
         FindResult result = findManager.findString(text, offset, findModel);
         if (!result.isStringFound()) break;

@@ -22,11 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.text.MessageFormat;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 28.10.2005
- * Time: 15:11:01
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class FormClassAnnotator implements ApplicationComponent, Annotator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.binding.FormClassAnnotator");
@@ -35,7 +31,7 @@ public class FormClassAnnotator implements ApplicationComponent, Annotator {
   private static final String BOUND_FIELD_TYPE_MISMATCH = JavaErrorMessages.message("uidesigner.bound.field.type.mismatch");
   private FormReferencesSearcher myRefSearcher;
 
-  @SuppressWarnings({"UNUSED_SYMBOL"})
+  @SuppressWarnings({"UNUSED_SYMBOL", "UnusedParameters", "UnusedDeclaration"})
   public FormClassAnnotator(final FileTypeManager fileTypeManager) {
     // dependency ensures that we get created after FileTypeManager and StdFileTypes.JAVA already exists
   }
@@ -98,10 +94,12 @@ public class FormClassAnnotator implements ApplicationComponent, Annotator {
       final String message = MessageFormat.format(FIELD_IS_OVERWRITTEN, field.getName());
       Annotation annotation = holder.createWarningAnnotation(field.getInitializer(), message);
       annotation.registerFix(new IntentionAction() {
+        @NotNull
         public String getText() {
           return message;
         }
 
+        @NotNull
         public String getFamilyName() {
           return UIBundle.message("remove.field.initializer.quick.fix");
         }

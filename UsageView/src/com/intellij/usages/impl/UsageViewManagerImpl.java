@@ -47,6 +47,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class UsageViewManagerImpl extends UsageViewManager implements ProjectComponent {
   private Project myProject;
   private static final Key<UsageView> USAGE_VIEW_KEY = Key.create("USAGE_VIEW");
+  private volatile boolean mySearchHasBeenCancelled;
 
   public UsageViewManagerImpl(Project project) {
     myProject = project;
@@ -97,9 +98,12 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
     FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
     processPresentation.setShowNotFoundMessage(showNotFoundMessage);
     processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener),
-      getProgressTitle(presentation), true, myProject);
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject,
+                                                                       getProgressTitle(presentation),
+                                                                       new SearchForUsagesRunnable(usageView, presentation, searchFor,
+                                                                                                   searcherFactory, processPresentation,
+                                                                                                   listener),
+                                                                       null, null);
     return usageView.get();
   }
 
@@ -176,6 +180,14 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
 
   public void projectClosed() { }
 
+  public synchronized void setCurrentSearchCancelled(boolean flag) {
+    mySearchHasBeenCancelled = flag;
+  }
+
+  public synchronized boolean searchHasBeenCancelled() {
+    return mySearchHasBeenCancelled;
+  }
+
   private class SearchForUsagesRunnable implements Runnable {
     private final AtomicInteger myUsageCount = new AtomicInteger(0);
     private final AtomicReference<Usage> myFirstUsage = new AtomicReference<Usage>();
@@ -198,6 +210,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
       mySearcherFactory = searcherFactory;
       myProcessPresentation = processPresentation;
       myListener = listener;
+      mySearchHasBeenCancelled = false;
     }
 
     private UsageViewImpl getUsageView() {
@@ -226,15 +239,12 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
             myListener.usageViewCreated(usageView);
           }
           showToolWindow(false);
-          
-          usageView.setProgressIndicatorFactory(myProcessPresentation.getProgressIndicatorFactory());
         }
       });
     }
 
     public void run() {
       searchUsages();
-
       endSearchForUsages();
     }
 
@@ -250,7 +260,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
           if (usageView != null) {
             usageView.appendUsageLater(usage);
           }
-
+          if (mySearchHasBeenCancelled) return false;
           final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
           return indicator == null || !indicator.isCanceled();
         }

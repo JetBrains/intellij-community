@@ -16,9 +16,9 @@ import com.intellij.util.QueryExecutor;
  */
 public class ConstructorReferencesSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   public boolean execute(final ReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
-    final PsiElement elt = p.getElementToSearch();
-    if (elt instanceof PsiMethod && ((PsiMethod)elt).isConstructor()) {
-      return new ConstructorReferencesSearchHelper(PsiManager.getInstance(elt.getProject()))
+    final PsiElement element = p.getElementToSearch();
+    if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
+      return new ConstructorReferencesSearchHelper(PsiManager.getInstance(element.getProject()))
         .processConstructorReferences(consumer, (PsiMethod)p.getElementToSearch(), p.getScope(), p.isIgnoreAccessScope(), true);
     }
     return true;

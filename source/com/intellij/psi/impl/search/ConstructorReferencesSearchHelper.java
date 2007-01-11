@@ -3,6 +3,10 @@
  */
 package com.intellij.psi.impl.search;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadActionProcessor;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
@@ -25,24 +29,37 @@ public class ConstructorReferencesSearchHelper {
                                               final SearchScope searchScope,
                                               boolean ignoreAccessScope,
                                               final boolean isStrictSignatureSearch) {
-    PsiClass aClass = constructor.getContainingClass();
-    if (aClass == null) return true;
+    final Ref<Boolean> result = new Ref<Boolean>();
+    PsiClass aClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+      public PsiClass compute() {
+        PsiClass aClass = constructor.getContainingClass();
+        if (aClass == null) {
+          result.set(true);
+          return null;
+        }
 
-    if (aClass.isEnum()) {
-      PsiField[] fields = aClass.getFields();
-      for (PsiField field : fields) {
-        if (field instanceof PsiEnumConstant) {
-          PsiReference reference = field.getReference();
-          if (reference != null && reference.isReferenceTo(constructor)) {
-            if (!processor.process(reference)) return false;
+        if (aClass.isEnum()) {
+          PsiField[] fields = aClass.getFields();
+          for (PsiField field : fields) {
+            if (field instanceof PsiEnumConstant) {
+              PsiReference reference = field.getReference();
+              if (reference != null && reference.isReferenceTo(constructor)) {
+                if (!processor.process(reference)) {
+                  result.set(false);
+                  return null;
+                }
+              }
+            }
           }
         }
+        return aClass;
       }
-    }
+    });
+    if (!result.isNull()) return result.get();
 
     // search usages like "new XXX(..)"
-    Processor<PsiReference> processor1 = new Processor<PsiReference>() {
-      public boolean process(final PsiReference reference) {
+    Processor<PsiReference> processor1 = new ReadActionProcessor<PsiReference>() {
+      public boolean processInReadAction(final PsiReference reference) {
         PsiElement parent = reference.getElement().getParent();
         if (parent instanceof PsiAnonymousClass) {
           parent = parent.getParent();
@@ -69,14 +86,16 @@ public class ConstructorReferencesSearchHelper {
     if (!ReferencesSearch.search(aClass, searchScope, ignoreAccessScope).forEach(processor1)) return false;
 
     // search usages like "this(..)"
-    if (!processConstructorReferencesViaSuperOrThis(processor, aClass, constructor, searchScope, isStrictSignatureSearch, PsiKeyword.THIS)) {
+    if (!processConstructorReferencesViaSuperOrThis(processor, aClass, constructor, searchScope, isStrictSignatureSearch,
+                                                    PsiKeyword.THIS)) {
       return false;
     }
 
     // search usages like "super(..)"
     Processor<PsiClass> processor2 = new Processor<PsiClass>() {
       public boolean process(PsiClass inheritor) {
-        return processConstructorReferencesViaSuperOrThis(processor, inheritor, constructor, searchScope, isStrictSignatureSearch, PsiKeyword.SUPER);
+        return processConstructorReferencesViaSuperOrThis(processor, inheritor, constructor, searchScope, isStrictSignatureSearch,
+                                                          PsiKeyword.SUPER);
       }
     };
 
@@ -89,32 +108,35 @@ public class ConstructorReferencesSearchHelper {
                                                              final SearchScope searchScope,
                                                              final boolean isStrictSignatureSearch,
                                                              final String superOrThisKeyword) {
-    PsiMethod[] methods = inheritor.getMethods();
-    for (PsiMethod method : methods) {
-      if (method.isConstructor()) {
-        PsiCodeBlock body = method.getBody();
-        if (body != null) {
-          PsiStatement[] statements = body.getStatements();
-          if (statements.length > 0) {
-            PsiStatement statement = statements[0];
-            if (statement instanceof PsiExpressionStatement) {
-              PsiExpression expr = ((PsiExpressionStatement)statement).getExpression();
-              if (expr instanceof PsiMethodCallExpression) {
-                PsiReferenceExpression refExpr = ((PsiMethodCallExpression)expr).getMethodExpression();
-                if (PsiSearchScopeUtil.isInScope(searchScope, refExpr)) {
-                  if (refExpr.getText().equals(superOrThisKeyword)) {
-                    PsiElement referencedElement = refExpr.resolve();
-                    if (referencedElement instanceof PsiMethod) {
-                      PsiMethod constructor1 = (PsiMethod)referencedElement;
-                      if (isStrictSignatureSearch) {
-                        if (myManager.areElementsEquivalent(constructor1, constructor)) {
-                          if (!processor.process(refExpr)) return false;
-                        }
-                      }
-                      else {
-                        if (myManager.areElementsEquivalent(constructor.getContainingClass(),
-                                                            constructor1.getContainingClass())) {
-                          if (!processor.process(refExpr)) return false;
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        PsiMethod[] methods = inheritor.getMethods();
+        for (PsiMethod method : methods) {
+          if (method.isConstructor()) {
+            PsiCodeBlock body = method.getBody();
+            if (body != null) {
+              PsiStatement[] statements = body.getStatements();
+              if (statements.length > 0) {
+                PsiStatement statement = statements[0];
+                if (statement instanceof PsiExpressionStatement) {
+                  PsiExpression expr = ((PsiExpressionStatement)statement).getExpression();
+                  if (expr instanceof PsiMethodCallExpression) {
+                    PsiReferenceExpression refExpr = ((PsiMethodCallExpression)expr).getMethodExpression();
+                    if (PsiSearchScopeUtil.isInScope(searchScope, refExpr)) {
+                      if (refExpr.getText().equals(superOrThisKeyword)) {
+                        PsiElement referencedElement = refExpr.resolve();
+                        if (referencedElement instanceof PsiMethod) {
+                          PsiMethod constructor1 = (PsiMethod)referencedElement;
+                          if (isStrictSignatureSearch) {
+                            if (myManager.areElementsEquivalent(constructor1, constructor)) {
+                              if (!processor.process(refExpr)) return false;
+                            }
+                          }
+                          else {
+                            if (myManager.areElementsEquivalent(constructor.getContainingClass(), constructor1.getContainingClass())) {
+                              if (!processor.process(refExpr)) return false;
+                            }
+                          }
                         }
                       }
                     }
@@ -124,9 +146,8 @@ public class ConstructorReferencesSearchHelper {
             }
           }
         }
+        return true;
       }
-    }
-    return true;
+    });
   }
-
 }

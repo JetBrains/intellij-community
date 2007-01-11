@@ -62,11 +62,7 @@ public class PropertyUtil {
       return false;
     }
 
-    if (method.getParameterList().getParametersCount() != 0) {
-      return false;
-    }
-
-    return true;
+    return method.getParameterList().getParametersCount() == 0;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -84,11 +80,7 @@ public class PropertyUtil {
       return false;
     }
 
-    if (method.getReturnType() != null && method.getReturnType() != PsiType.VOID) {
-      return false;
-    }
-
-    return true;
+    return method.getReturnType() == null || method.getReturnType() == PsiType.VOID;
   }
 
   @Nullable public static String getPropertyName(PsiMethod method) {

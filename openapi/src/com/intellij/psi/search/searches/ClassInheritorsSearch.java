@@ -6,6 +6,8 @@ package com.intellij.psi.search.searches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
@@ -125,30 +127,35 @@ public class ClassInheritorsSearch extends QueryFactory<PsiClass, ClassInheritor
 
     DirectClassInheritorsSearch.search(baseClass).forEach(new Processor<PsiClass>() {
       public boolean process(final PsiClass candidate) {
-        if (checkInheritance || (checkDeep && !(candidate instanceof PsiAnonymousClass))) {
-          if (!candidate.isInheritor(baseClass, false)) return true;
-
-          if (!processed.add(candidate)) return true;
-        }
-
-        if (candidate instanceof PsiAnonymousClass) {
-          if (!consumer.process(candidate)) return false;
-        }
-        else {
-          if (PsiSearchScopeUtil.isInScope(searchScope, candidate)) {
-            if (searchScope instanceof GlobalSearchScope) {
-              String qName = candidate.getQualifiedName();
-              if (qName != null) {
-                PsiClass[] candidateClasses = psiManager.findClasses(qName, (GlobalSearchScope)searchScope);
-                if (ArrayUtil.find(candidateClasses, candidate) == -1) return true;
+        final Ref<Boolean> result = new Ref<Boolean>();
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            if (checkInheritance || (checkDeep && !(candidate instanceof PsiAnonymousClass))) {
+              if (!candidate.isInheritor(baseClass, false) || !processed.add(candidate)) {
+                result.set(true);
+                return;
               }
             }
-            if (!consumer.process(candidate)) return false;
-          }
 
-          if (checkDeep) {
-            if (!processInheritors(consumer, candidate, searchScope, checkDeep, processed, checkInheritance)) return false;
+            if (candidate instanceof PsiAnonymousClass) {
+              result.set(consumer.process(candidate));
+            }
+            else if (PsiSearchScopeUtil.isInScope(searchScope, candidate)) {
+              if (searchScope instanceof GlobalSearchScope) {
+                String qName = candidate.getQualifiedName();
+                if (qName != null) {
+                  PsiClass[] candidateClasses = psiManager.findClasses(qName, (GlobalSearchScope)searchScope);
+                  if (ArrayUtil.find(candidateClasses, candidate) == -1) result.set(true);
+                }
+              }
+              if (!consumer.process(candidate)) result.set(false);
+            }
           }
+        });
+        if (!result.isNull()) return result.get();
+
+        if (checkDeep) {
+          if (!processInheritors(consumer, candidate, searchScope, checkDeep, processed, checkInheritance)) return false;
         }
 
         return true;

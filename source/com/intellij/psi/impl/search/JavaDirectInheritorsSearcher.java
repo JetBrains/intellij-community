@@ -5,16 +5,17 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
@@ -29,32 +30,42 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     final PsiClass aClass = p.getClassToProcess();
     PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(aClass.getProject());
 
-    RepositoryManager repositoryManager = psiManager.getRepositoryManager();
-    RepositoryElementsManager repositoryElementsManager = psiManager.getRepositoryElementsManager();
-
-    RepositoryIndex repositoryIndex = repositoryManager.getIndex();
-    final SearchScope useScope = aClass.getUseScope();
-
-    final VirtualFileFilter rootFilter;
-    if (useScope instanceof GlobalSearchScope) {
-      rootFilter = repositoryIndex.rootFilterBySearchScope((GlobalSearchScope)useScope);
-    }
-    else {
-      rootFilter = null;
-    }
+    final SearchScope useScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      public SearchScope compute() {
+        return aClass.getUseScope();
+      }
+    });
 
     if ("java.lang.Object".equals(aClass.getQualifiedName())) {
       return psiManager.getSearchHelper().processAllClasses(new PsiElementProcessor<PsiClass>() {
         public boolean execute(final PsiClass psiClass) {
-          PsiReferenceList extendsList = psiClass.getExtendsList();
           return consumer.process(psiClass);
         }
       }, useScope);
     }
     else {
-      long[] candidateIds = repositoryIndex.getNameOccurrencesInExtendsLists(aClass.getName(), rootFilter);
-      for (long candidateId : candidateIds) {
-        PsiClass candidate = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(candidateId);
+      final RepositoryManager repositoryManager = psiManager.getRepositoryManager();
+      final RepositoryElementsManager repositoryElementsManager = psiManager.getRepositoryElementsManager();
+
+      long[] candidateIds = ApplicationManager.getApplication().runReadAction(new Computable<long[]>() {
+        public long[] compute() {
+          RepositoryIndex repositoryIndex = repositoryManager.getIndex();
+          final VirtualFileFilter rootFilter;
+          if (useScope instanceof GlobalSearchScope) {
+            rootFilter = repositoryIndex.rootFilterBySearchScope((GlobalSearchScope)useScope);
+          }
+          else {
+            rootFilter = null;
+          }
+          return repositoryIndex.getNameOccurrencesInExtendsLists(aClass.getName(), rootFilter);
+        }
+      });
+      for (final long candidateId : candidateIds) {
+        PsiClass candidate = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+          public PsiClass compute() {
+            return (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(candidateId);
+          }
+        });
         LOG.assertTrue(candidate.isValid());
         if (!consumer.process(candidate)) {
           return false;

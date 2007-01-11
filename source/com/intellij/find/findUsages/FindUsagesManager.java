@@ -3,7 +3,6 @@ package com.intellij.find.findUsages;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindBundle;
-import static com.intellij.find.findUsages.FindUsagesManager.FileSearchScope.*;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -29,7 +28,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,13 +38,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class FindUsagesManager implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findParameterUsages.FindUsagesManager");
 
-  enum FileSearchScope {
+  private static enum FileSearchScope {
     FROM_START,
     FROM_END,
     AFTER_CARET,
@@ -137,11 +134,11 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   public boolean findNextUsageInFile(FileEditor editor) {
-    return findUsageInFile(editor, AFTER_CARET);
+    return findUsageInFile(editor, FileSearchScope.AFTER_CARET);
   }
 
   public boolean findPreviousUsageInFile(FileEditor editor) {
-    return findUsageInFile(editor, BEFORE_CARET);
+    return findUsageInFile(editor, FileSearchScope.BEFORE_CARET);
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -160,7 +157,7 @@ public class FindUsagesManager implements JDOMExternalizable {
       PsiElement element = pointer.getElement();
       if (element != null) elements.add(element);
     }
-    if (elements.size() == 0) {
+    if (elements.isEmpty()) {
       Messages.showMessageDialog(myProject, FindBundle.message("find.searched.elements.have.been.changed.error"),
                                  FindBundle.message("cannot.search.for.usages.title"), Messages.getInformationIcon());
       // SCR #10022
@@ -186,11 +183,7 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   private void initLastSearchElement(final FindUsagesOptions findUsagesOptions,
                                      UsageInfoToUsageConverter.TargetElementsDescriptor descriptor) {
-    final PsiElement[] primaryElements = descriptor.getPrimaryElements();
-    final PsiElement[] additionalElements = descriptor.getAdditionalElements();
-    List<PsiElement> allElements = new ArrayList<PsiElement>(primaryElements.length + additionalElements.length);
-    allElements.addAll(Arrays.asList(primaryElements));
-    allElements.addAll(Arrays.asList(additionalElements));
+    List<? extends PsiElement> allElements = descriptor.getAllElements();
 
     myLastSearchData.myLastSearchElements = new SmartPsiElementPointer[allElements.size()];
     int idx = 0;
@@ -239,7 +232,7 @@ public class FindUsagesManager implements JDOMExternalizable {
       findUsagesOptions.isDerivedInterfaces = false;
       findUsagesOptions.isImplementingClasses = false;
       editor.putUserData(KEY_START_USAGE_AGAIN, null);
-      findUsagesInEditor(descriptor, scopeFile, FROM_START, findUsagesOptions, editor);
+      findUsagesInEditor(descriptor, scopeFile, FileSearchScope.FROM_START, findUsagesOptions, editor);
     }
   }
 
@@ -250,11 +243,11 @@ public class FindUsagesManager implements JDOMExternalizable {
     }
   }
 
-  public final boolean shouldOpenInNewTab() {
+  private boolean shouldOpenInNewTab() {
     return mustOpenInNewTab() || myToOpenInNewTab;
   }
 
-  public final boolean mustOpenInNewTab() {
+  private boolean mustOpenInNewTab() {
     Content selectedContent = UsageViewManager.getInstance(myProject).getSelectedContent(true);
     return selectedContent != null && selectedContent.isPinned();
   }
@@ -272,25 +265,18 @@ public class FindUsagesManager implements JDOMExternalizable {
             return processor.process(UsageInfoToUsageConverter.convert(descriptor, usageInfo));
           }
         };
-        for (PsiElement primaryElement : descriptor.getPrimaryElements()) {
-          LOG.assertTrue(primaryElement.isValid());
-          FindUsagesUtil.processUsages(primaryElement, usageInfoProcessorToUsageProcessorAdapter, options);
-        }
-
-        for (PsiElement additionalElement : descriptor.getAdditionalElements()) {
-          LOG.assertTrue(additionalElement.isValid());
-          FindUsagesUtil.processUsages(additionalElement, usageInfoProcessorToUsageProcessorAdapter, options);
+        for (PsiElement element : descriptor.getAllElements()) {
+          LOG.assertTrue(element.isValid());
+          FindUsagesUtil.processUsages(element, usageInfoProcessorToUsageProcessorAdapter, options);
         }
       }
     };
   }
 
-  private static PsiElement2UsageTargetAdapter[] convertToUsageTargets(final PsiElement[] elementsToSearch) {
-    final ArrayList<PsiElement2UsageTargetAdapter> targets = new ArrayList<PsiElement2UsageTargetAdapter>();
-    if (elementsToSearch != null) {
-      for (PsiElement element : elementsToSearch) {
-        convertToUsageTarget(targets, element);
-      }
+  private static PsiElement2UsageTargetAdapter[] convertToUsageTargets(final List<? extends PsiElement> elementsToSearch) {
+    final ArrayList<PsiElement2UsageTargetAdapter> targets = new ArrayList<PsiElement2UsageTargetAdapter>(elementsToSearch.size());
+    for (PsiElement element : elementsToSearch) {
+      convertToUsageTarget(targets, element);
     }
     return targets.toArray(new PsiElement2UsageTargetAdapter[targets.size()]);
   }
@@ -300,16 +286,13 @@ public class FindUsagesManager implements JDOMExternalizable {
                           final boolean toOpenInNewTab,
                           final FindUsagesOptions findUsagesOptions) {
 
-    final PsiElement[] primaryElements = descriptor.getPrimaryElements();
-    final PsiElement[] additionalElements = descriptor.getAdditionalElements();
-
-    final UsageTarget[] targets = ArrayUtil
-      .mergeArrays(convertToUsageTargets(primaryElements), convertToUsageTargets(additionalElements), UsageTarget.class);
+    List<? extends PsiElement> elements = descriptor.getAllElements();
+    final UsageTarget[] targets = convertToUsageTargets(elements);
     myAnotherManager.searchAndShowUsages(targets, new Factory<UsageSearcher>() {
       public UsageSearcher create() {
         return createUsageSearcher(descriptor, findUsagesOptions, null);
       }
-    }, !toSkipUsagePanelWhenOneUsage, true, createPresentation(primaryElements[0], findUsagesOptions, toOpenInNewTab), null);
+    }, !toSkipUsagePanelWhenOneUsage, true, createPresentation(elements.get(0), findUsagesOptions, toOpenInNewTab), null);
   }
 
   private static UsageViewPresentation createPresentation(PsiElement psiElement,
@@ -379,7 +362,7 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   private static String getSearchAgainMessage(PsiElement element, final FileSearchScope direction) {
     String message = getNoUsagesFoundMessage(element);
-    if (direction == AFTER_CARET) {
+    if (direction == FileSearchScope.AFTER_CARET) {
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT);
       String shortcutsText = KeymapUtil.getFirstKeyboardShortcutText(action);
       if (shortcutsText.length() > 0) {
@@ -421,11 +404,11 @@ public class FindUsagesManager implements JDOMExternalizable {
     final Usage[] foundUsage = new Usage[]{null};
 
     if (fileEditor.getUserData(KEY_START_USAGE_AGAIN) != null) {
-      if (dir == AFTER_CARET) {
-        dir = FROM_START;
+      if (dir == FileSearchScope.AFTER_CARET) {
+        dir = FileSearchScope.FROM_START;
       }
       else {
-        dir = FROM_END;
+        dir = FileSearchScope.FROM_END;
       }
     }
 
@@ -436,20 +419,20 @@ public class FindUsagesManager implements JDOMExternalizable {
       public boolean process(Usage usage) {
         usagesWereFound[0] = true;
 
-        if (direction == FROM_START) {
+        if (direction == FileSearchScope.FROM_START) {
           foundUsage[0] = usage;
           return false;
         }
-        else if (direction == FROM_END) {
+        else if (direction == FileSearchScope.FROM_END) {
           foundUsage[0] = usage;
         }
-        else if (direction == AFTER_CARET) {
+        else if (direction == FileSearchScope.AFTER_CARET) {
           if (usage.getLocation().compareTo(currentLocation) > 0) {
             foundUsage[0] = usage;
             return false;
           }
         }
-        else if (direction == BEFORE_CARET) {
+        else if (direction == FileSearchScope.BEFORE_CARET) {
           if (usage.getLocation().compareTo(currentLocation) < 0) {
             if (foundUsage[0] != null) {
               if (foundUsage[0].getLocation().compareTo(usage.getLocation()) < 0) {
@@ -484,7 +467,6 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   private static String generateUsagesString(final FindUsagesOptions selectedOptions) {
-    String usagesString = "";
     String suffix = " " + FindBundle.message("find.usages.panel.title.separator") + " ";
     ArrayList<String> strings = new ArrayList<String>();
     if ((selectedOptions.isUsages && selectedOptions.isUsages) || (selectedOptions.isClassesUsages && selectedOptions.isClassesUsages) ||
@@ -495,27 +477,28 @@ public class FindUsagesManager implements JDOMExternalizable {
     if (selectedOptions.isIncludeOverloadUsages && selectedOptions.isIncludeOverloadUsages) {
       strings.add(FindBundle.message("find.usages.panel.title.overloaded.methods.usages"));
     }
-    if ((selectedOptions.isDerivedClasses && selectedOptions.isDerivedClasses)) {
+    if (selectedOptions.isDerivedClasses && selectedOptions.isDerivedClasses) {
       strings.add(FindBundle.message("find.usages.panel.title.derived.classes"));
     }
-    if ((selectedOptions.isDerivedInterfaces && selectedOptions.isDerivedInterfaces)) {
+    if (selectedOptions.isDerivedInterfaces && selectedOptions.isDerivedInterfaces) {
       strings.add(FindBundle.message("find.usages.panel.title.derived.interfaces"));
     }
-    if ((selectedOptions.isImplementingClasses && selectedOptions.isImplementingClasses)) {
+    if (selectedOptions.isImplementingClasses && selectedOptions.isImplementingClasses) {
       strings.add(FindBundle.message("find.usages.panel.title.implementing.classes"));
     }
-    if ((selectedOptions.isImplementingMethods && selectedOptions.isImplementingMethods)) {
+    if (selectedOptions.isImplementingMethods && selectedOptions.isImplementingMethods) {
       strings.add(FindBundle.message("find.usages.panel.title.implementing.methods"));
     }
-    if ((selectedOptions.isOverridingMethods && selectedOptions.isOverridingMethods)) {
+    if (selectedOptions.isOverridingMethods && selectedOptions.isOverridingMethods) {
       strings.add(FindBundle.message("find.usages.panel.title.overriding.methods"));
     }
-    if (strings.size() == 0) {
+    if (strings.isEmpty()) {
       strings.add(FindBundle.message("find.usages.panel.title.usages"));
     }
+    String usagesString = "";
     for (int i = 0; i < strings.size(); i++) {
       String s = strings.get(i);
-      usagesString += (i == strings.size() - 1) ? s : s + suffix;
+      usagesString += i == strings.size() - 1 ? s : s + suffix;
     }
     return usagesString;
   }
@@ -531,6 +514,4 @@ public class FindUsagesManager implements JDOMExternalizable {
   public static String getHelpID(PsiElement element) {
     return element.getLanguage().getFindUsagesProvider().getHelpId(element);
   }
-
-
 }

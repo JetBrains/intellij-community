@@ -59,7 +59,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     ReferencesSearch.INSTANCE.registerExecutor(new PropertyReferenceSearcher());
 
     DirectClassInheritorsSearch.INSTANCE.registerExecutor(new JavaDirectInheritorsSearcher());
-
+           
     OverridingMethodsSearch.INSTANCE.registerExecutor(new JavaOverridingMethodsSearcher());
 
     AllOverridingMethodsSearch.INSTANCE.registerExecutor(new JavaAllOverridingMethodsSearcher());
@@ -483,14 +483,18 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
   }
 
-  private static boolean processElementsWithWordInScopeElement(PsiElement scopeElement,
-                                                               TextOccurenceProcessor processor,
-                                                               String word,
-                                                               boolean caseSensitive) {
-    StringSearcher searcher = new StringSearcher(word);
-    searcher.setCaseSensitive(caseSensitive);
+  private static boolean processElementsWithWordInScopeElement(final PsiElement scopeElement,
+                                                               final TextOccurenceProcessor processor,
+                                                               final String word,
+                                                               final boolean caseSensitive) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        StringSearcher searcher = new StringSearcher(word);
+        searcher.setCaseSensitive(caseSensitive);
 
-    return LowLevelSearchUtil.processElementsContainingWordInElement(processor, scopeElement, searcher);
+        return LowLevelSearchUtil.processElementsContainingWordInElement(processor, scopeElement, searcher);
+      }
+    });
   }
 
   private boolean processElementsWithTextInGlobalScope(final TextOccurenceProcessor processor,
@@ -637,9 +641,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     processUsagesInNonJavaFiles(null, qName, processor, searchScope);
   }
 
-  public void processUsagesInNonJavaFiles(@Nullable PsiElement originalElement,
+  public void processUsagesInNonJavaFiles(@Nullable final PsiElement originalElement,
                                           @NotNull String qName,
-                                          @NotNull PsiNonJavaFileReferenceProcessor processor,
+                                          @NotNull final PsiNonJavaFileReferenceProcessor processor,
                                           @NotNull GlobalSearchScope searchScope) {
     ProgressManager progressManager = ProgressManager.getInstance();
     ProgressIndicator progress = progressManager.getProgressIndicator();
@@ -653,7 +657,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
     PsiFile[] files = myManager.getCacheManager().getFilesWithWord(wordToSearch, UsageSearchContext.IN_PLAIN_TEXT, searchScope, true);
 
-    StringSearcher searcher = new StringSearcher(qName);
+    final StringSearcher searcher = new StringSearcher(qName);
     searcher.setCaseSensitive(true);
     searcher.setForwardDirection(true);
 
@@ -662,23 +666,31 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       progress.setText(PsiBundle.message("psi.search.in.non.java.files.progress"));
     }
 
-    AllFilesLoop:
+    final Ref<Boolean> cancelled = new Ref<Boolean>(Boolean.FALSE);
+    final GlobalSearchScope finalScope = searchScope;
     for (int i = 0; i < files.length; i++) {
-      ProgressManager.getInstance().checkCanceled();
+      progressManager.checkCanceled();
 
-      PsiFile psiFile = files[i];
-      CharSequence text = psiFile.getViewProvider().getContents();
-      for (int index = LowLevelSearchUtil.searchWord(text, 0, text.length(), searcher); index >= 0;) {
-        PsiReference referenceAt = psiFile.findReferenceAt(index);
-        if (referenceAt == null ||
-            originalElement == null ||
-            !PsiSearchScopeUtil.isInScope(getUseScope(originalElement).intersectWith(searchScope), psiFile)) {
-          if (!processor.process(psiFile, index, index + searcher.getPattern().length())) break AllFilesLoop;
+      final PsiFile psiFile = files[i];
+
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          CharSequence text = psiFile.getViewProvider().getContents();
+          for (int index = LowLevelSearchUtil.searchWord(text, 0, text.length(), searcher); index >= 0;) {
+            PsiReference referenceAt = psiFile.findReferenceAt(index);
+            if (referenceAt == null || originalElement == null ||
+                !PsiSearchScopeUtil.isInScope(getUseScope(originalElement).intersectWith(finalScope), psiFile)) {
+              if (!processor.process(psiFile, index, index + searcher.getPattern().length())) {
+                cancelled.set(Boolean.TRUE);
+                return;
+              }
+            }
+
+            index = LowLevelSearchUtil.searchWord(text, index + searcher.getPattern().length(), text.length(), searcher);
+          }
         }
-
-        index = LowLevelSearchUtil.searchWord(text, index + searcher.getPattern().length(), text.length(), searcher);
-      }
-
+      });
+      if (cancelled.get()) break;
       if (progress != null) {
         progress.setFraction((double)(i + 1) / files.length);
       }

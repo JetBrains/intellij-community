@@ -26,13 +26,13 @@ import com.intellij.util.Function;
 
 import java.util.List;
 import java.util.Collections;
+import java.util.ArrayList;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Jan 17, 2005
  */
 public class UsageInfoToUsageConverter {
-
   public static class TargetElementsDescriptor {
     private final List<SmartPsiElementPointer> myPrimarySearchedElements;
     private final List<SmartPsiElementPointer> myAdditionalSearchedElements;
@@ -50,12 +50,13 @@ public class UsageInfoToUsageConverter {
       myAdditionalSearchedElements = convertToSmartPointers(additionalSearchedElements);
     }
 
+    private static final Function<SmartPsiElementPointer,PsiElement> SMARTPOINTER_TO_ELEMENT_MAPPER = new Function<SmartPsiElementPointer, PsiElement>() {
+      public PsiElement fun(final SmartPsiElementPointer s) {
+        return s.getElement();
+      }
+    };
     private static PsiElement[] convertToPsiElements(final List<SmartPsiElementPointer> primary) {
-      return ContainerUtil.map2Array(primary, PsiElement.class, new Function<SmartPsiElementPointer, PsiElement>() {
-        public PsiElement fun(final SmartPsiElementPointer s) {
-          return s.getElement();
-        }
-      });
+      return ContainerUtil.map2Array(primary, PsiElement.class, SMARTPOINTER_TO_ELEMENT_MAPPER);
     }
 
     private static List<SmartPsiElementPointer> convertToSmartPointers(final PsiElement[] primaryElements) {
@@ -80,6 +81,16 @@ public class UsageInfoToUsageConverter {
 
     public PsiElement[] getAdditionalElements() {
       return convertToPsiElements(myAdditionalSearchedElements);
+    }
+    public List<? extends PsiElement> getAllElements() {
+      List<PsiElement> result = new ArrayList<PsiElement>(myPrimarySearchedElements.size() + myAdditionalSearchedElements.size());
+      for (SmartPsiElementPointer pointer : myPrimarySearchedElements) {
+        result.add(pointer.getElement());
+      }
+      for (SmartPsiElementPointer pointer : myAdditionalSearchedElements) {
+        result.add(pointer.getElement());
+      }
+      return result;
     }
 
   }

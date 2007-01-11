@@ -45,13 +45,7 @@ class UsageNode extends Node implements Comparable<UsageNode>, Navigatable {
   }
 
   public int compareTo(UsageNode usageNode) {
-    Comparable comparable = myUsage instanceof Comparable ? (Comparable)myUsage : null;
-    Comparable otherComparable = usageNode.getUsage() instanceof Comparable ? (Comparable)usageNode.getUsage() : null;
-
-    if (comparable == null || otherComparable == null) {
-      return -1;
-    }
-    return comparable.compareTo(otherComparable);
+    return UsageViewImpl.USAGE_COMPARATOR.compare(myUsage, usageNode.getUsage());
   }
 
   public Usage getUsage() {

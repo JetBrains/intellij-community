@@ -42,15 +42,14 @@ import com.intellij.usages.rules.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.Nullable;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -67,9 +66,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author max
  */
 public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTrackerListener {
-  private UsageNodeTreeBuilder myBuilder;
-  private MyPanel myRootPanel;
-  private JTree myTree = new Tree() {
+  private final UsageNodeTreeBuilder myBuilder;
+  private final MyPanel myRootPanel;
+  private final JTree myTree = new Tree() {
     {
       ToolTipManager.sharedInstance().registerComponent(this);
     }
@@ -86,26 +85,25 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   };
   private Content myContent;
 
-  private UsageViewPresentation myPresentation;
-  private UsageTarget[] myTargets;
-  private Factory<UsageSearcher> myUsageSearcherFactory;
-  private Project myProject;
+  private final UsageViewPresentation myPresentation;
+  private final UsageTarget[] myTargets;
+  private final Factory<UsageSearcher> myUsageSearcherFactory;
+  private final Project myProject;
 
   private boolean mySearchInProgress = true;
   private ExporterToTextFile myTextFileExporter;
-  private Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private Alarm myFlushAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private UsageModelTracker myModelTracker;
-  private Set<Usage> myUsages = new ConcurrentHashSet<Usage>();
-  private Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<Usage, UsageNode>();
-  private ButtonPanel myButtonPanel = new ButtonPanel();
+  private final Alarm myFlushAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final UsageModelTracker myModelTracker;
+  private final Set<Usage> myUsages = new ConcurrentHashSet<Usage>();
+  private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<Usage, UsageNode>();
+  private final ButtonPanel myButtonPanel = new ButtonPanel();
 
   private boolean myChangesDetected = false;
   private final Collection<Usage> myUsagesToFlush = new ConcurrentHashSet<Usage>();
-  private Factory<ProgressIndicator> myIndicatorFactory;
-  private List<Disposable> myDisposables = new ArrayList<Disposable>();
-  private static final Comparator<Usage> USAGE_COMPARATOR = new Comparator<Usage>() {
+  private final List<Disposable> myDisposables = new ArrayList<Disposable>();
+  static final Comparator<Usage> USAGE_COMPARATOR = new Comparator<Usage>() {
     public int compare(final Usage o1, final Usage o2) {
       if (o1 instanceof Comparable && o2 instanceof Comparable) {
         final int selfcompared = ((Comparable<Usage>)o1).compareTo(o2);
@@ -125,7 +123,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
         return 0;
       }
-      return 0;
+      return -1;
     }
   };
   @NonNls private static final String HELP_ID = "ideaInterface.find";
@@ -486,12 +484,15 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     final Runnable process = new Runnable() {
       public void run() {
         setSearchInProgress(true);
+        final com.intellij.usages.UsageViewManager usageViewManager = com.intellij.usages.UsageViewManager.getInstance(myProject);
+        usageViewManager.setCurrentSearchCancelled(false);
 
         myChangesDetected = false;
         UsageSearcher usageSearcher = myUsageSearcherFactory.create();
         usageSearcher.generate(new Processor<Usage>() {
           public boolean process(final Usage usage) {
             appendUsageLater(usage);
+            if (usageViewManager.searchHasBeenCancelled()) return false;
             ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
             return indicator == null || !indicator.isCanceled();
           }
@@ -500,18 +501,11 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         setSearchInProgress(false);
       }
     };
-
-    if (myIndicatorFactory!=null) {
-      UsageViewImplUtil.runProcessWithProgress(myIndicatorFactory.create(), process, new Runnable() {
-        public void run() {}
-      });
-    }  else {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(process, UsageViewManagerImpl.getProgressTitle(myPresentation), true, myProject);
-    }
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, UsageViewManagerImpl.getProgressTitle(myPresentation), process, null, null);
   }
 
   private void reset() {
-    myUsageNodes = new HashMap<Usage, UsageNode>();
+    myUsageNodes.clear();
     myIsFirstVisibleUsageFound = false;
     ((UsageViewTreeModelBuilder)myTree.getModel()).reset();
     TreeUtil.expand(myTree, 2);
@@ -521,16 +515,16 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void appendUsageLater(final Usage usage) {
     myUsages.add(usage);
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    
+
     myFlushAlarm.cancelAllRequests();
     myFlushAlarm.addRequest(
       new Runnable() {
         public void run() {
           flush();
         }
-      }, 
+      },
       300, indicator != null ? indicator.getModalityState() : ModalityState.defaultModalityState());
-    
+
 
     myUsagesToFlush.add(usage);
     if (myUsagesToFlush.size() > 50) {
@@ -652,7 +646,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         new Runnable() {
         public void run() {
           if (myProject.isDisposed()) return;
-          
+
           updateImmediately();
         }
       },
@@ -661,10 +655,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   public void close() {
+    // todo ? crazyness
+    com.intellij.usages.UsageViewManager.getInstance(myProject).setCurrentSearchCancelled(true);
     UsageViewManager.getInstance(myProject).closeContent(myContent);
   }
 
   public void dispose() {
+    ToolTipManager.sharedInstance().unregisterComponent(myTree);
     for (Disposable disposable : myDisposables) {
       disposable.dispose();
     }
@@ -708,7 +705,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   public void addButtonToLowerPane(final Runnable runnable, String text, char mnemonic) {
-    // implemented method is deprecated, so, it just calls non-deprecated overloading one 
+    // implemented method is deprecated, so, it just calls non-deprecated overloading one
     addButtonToLowerPane(runnable, text);
   }
 
@@ -748,7 +745,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private Set<Usage> getReadOnlyUsages() {
-    final Set<Usage> result = new HashSet<Usage>();
+    final Set<Usage> result = new THashSet<Usage>();
     final Set<Map.Entry<Usage,UsageNode>> usages = myUsageNodes.entrySet();
     for (Map.Entry<Usage, UsageNode> entry : usages) {
       Usage usage = entry.getKey();
@@ -762,7 +759,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private Set<VirtualFile> getReadOnlyUsagesFiles() {
     Set<Usage> usages = getReadOnlyUsages();
-    Set<VirtualFile> result = new HashSet<VirtualFile>();
+    Set<VirtualFile> result = new THashSet<VirtualFile>();
     for (Usage usage : usages) {
       if (usage instanceof UsageInFile) {
         UsageInFile usageInFile = (UsageInFile)usage;
@@ -778,7 +775,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   public Set<Usage> getExcludedUsages() {
-    Set<Usage> result = new HashSet<Usage>();
+    Set<Usage> result = new THashSet<Usage>();
     Collection<UsageNode> usageNodes = myUsageNodes.values();
     for (final UsageNode node : usageNodes) {
       if (node == null) {
@@ -822,7 +819,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       return null;
     }
 
-    Set<Usage> usages = new HashSet<Usage>();
+    Set<Usage> usages = new THashSet<Usage>();
     for (TreePath selectionPath : selectionPaths) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
       collectUsages(node, usages);
@@ -861,7 +858,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths == null) return null;
 
-    Set<UsageTarget> targets = new HashSet<UsageTarget>();
+    Set<UsageTarget> targets = new THashSet<UsageTarget>();
     for (TreePath selectionPath : selectionPaths) {
       Object lastPathComponent = selectionPath.getLastPathComponent();
       if (lastPathComponent instanceof UsageTargetNode) {
@@ -1008,7 +1005,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         return null;
       }
 
-      final Set<VirtualFile> result = new java.util.HashSet<VirtualFile>();
+      final Set<VirtualFile> result = new THashSet<VirtualFile>();
 
       if (usages != null) {
         for (Usage usage : usages) {
@@ -1110,10 +1107,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         }
       }
     }
-  }
-
-  public void setProgressIndicatorFactory(final Factory<ProgressIndicator> indicatorFactory) {
-    myIndicatorFactory = indicatorFactory;
   }
 
   private class MyPerformOperationRunnable implements Runnable {

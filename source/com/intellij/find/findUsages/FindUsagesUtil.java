@@ -6,11 +6,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.search.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -178,13 +180,12 @@ public class FindUsagesUtil {
     if (element instanceof PsiMethod){
       addMethodUsages((PsiMethod)element, results, options, options.searchScope);
     }
-    else{
-      PsiSearchHelper helper = element.getManager().getSearchHelper();
-      helper.processReferences(new PsiReferenceProcessor() {
-        public boolean execute(PsiReference ref) {
+    else {
+      ReferencesSearch.search(element, options.searchScope, false).forEach(new ReadActionProcessor<PsiReference>() {
+        public boolean processInReadAction(final PsiReference ref) {
           return addResult(results, ref, options, element);
         }
-      }, element, options.searchScope, false);
+      });
     }
   }
 
@@ -192,10 +193,11 @@ public class FindUsagesUtil {
     PsiSearchHelper helper = method.getManager().getSearchHelper();
     if (method.isConstructor()) {
       if (!options.isIncludeOverloadUsages) {
-        addConstructorUsages(method, helper, searchScope, result, options);
-      } else {
+        addConstructorUsages(method, searchScope, result, options);
+      }
+      else {
         for (PsiMethod constructor : method.getContainingClass().getConstructors()) {
-          addConstructorUsages(constructor, helper, searchScope, result, options);
+          addConstructorUsages(constructor, searchScope, result, options);
         }
       }
     }
@@ -208,15 +210,15 @@ public class FindUsagesUtil {
     }
   }
 
-  private static void addConstructorUsages(PsiMethod method, PsiSearchHelper helper, SearchScope searchScope, final Processor<UsageInfo> result, final FindUsagesOptions options) {
+  private static void addConstructorUsages(PsiMethod method, SearchScope searchScope, final Processor<UsageInfo> result, final FindUsagesOptions options) {
     final PsiClass parentClass = method.getContainingClass();
     if (parentClass == null) return;
 
-    helper.processReferences(new PsiReferenceProcessor() {
-      public boolean execute(PsiReference ref) {
+    ReferencesSearch.search(method, searchScope, false).forEach(new ReadActionProcessor<PsiReference>() {
+      public boolean processInReadAction(final PsiReference ref) {
         return addResult(result, ref, options, parentClass);
       }
-    }, method, searchScope, false);
+    });
 
     addImplicitConstructorCalls(method, result, searchScope);
   }
@@ -383,44 +385,43 @@ public class FindUsagesUtil {
   }
 
   private static void addFieldsUsages(final PsiClass aClass, final Processor<UsageInfo> results, final FindUsagesOptions options) {
-    if (!options.isIncludeInherited){
+    if (!options.isIncludeInherited) {
       PsiField[] fields = aClass.getFields();
       for (PsiField field : fields) {
         addElementUsages(field, results, options);
       }
     }
-    else{
+    else {
       final PsiManager manager = aClass.getManager();
-      PsiSearchHelper helper = manager.getSearchHelper();
       PsiField[] fields = aClass.getAllFields();
       FieldsLoop:
-        for(int i = 0; i < fields.length; i++){
-          final PsiField field = fields[i];
-          // filter hidden fields
-          for(int j = 0; j < i; j++){
-            if (field.getName().equals(fields[j].getName())) continue FieldsLoop;
-          }
-          final PsiClass fieldClass = field.getContainingClass();
-          if (fieldClass != null && manager.areElementsEquivalent(fieldClass, aClass)){
-            addElementUsages(fields[i], results, options);
-          }
-          else{
-            helper.processReferences(new PsiReferenceProcessor() {
-              public boolean execute(PsiReference reference) {
-                PsiElement refElement = reference.getElement();
-                if (refElement instanceof PsiReferenceExpression) {
-                  PsiClass usedClass = getFieldOrMethodAccessedClass((PsiReferenceExpression)refElement, fieldClass);
-                  if (usedClass != null) {
-                    if (manager.areElementsEquivalent(usedClass, aClass) || usedClass.isInheritor(aClass, true)) {
-                      addResult(results, refElement, options, field);
-                    }
+      for (int i = 0; i < fields.length; i++) {
+        final PsiField field = fields[i];
+        // filter hidden fields
+        for (int j = 0; j < i; j++) {
+          if (field.getName().equals(fields[j].getName())) continue FieldsLoop;
+        }
+        final PsiClass fieldClass = field.getContainingClass();
+        if (fieldClass != null && manager.areElementsEquivalent(fieldClass, aClass)) {
+          addElementUsages(fields[i], results, options);
+        }
+        else {
+          ReferencesSearch.search(field, options.searchScope, false).forEach(new ReadActionProcessor<PsiReference>() {
+            public boolean processInReadAction(final PsiReference reference) {
+              PsiElement refElement = reference.getElement();
+              if (refElement instanceof PsiReferenceExpression) {
+                PsiClass usedClass = getFieldOrMethodAccessedClass((PsiReferenceExpression)refElement, fieldClass);
+                if (usedClass != null) {
+                  if (manager.areElementsEquivalent(usedClass, aClass) || usedClass.isInheritor(aClass, true)) {
+                    addResult(results, refElement, options, field);
                   }
                 }
-                return true;
               }
-            }, field, options.searchScope, false);
-          }
+              return true;
+            }
+          });
         }
+      }
     }
   }
 

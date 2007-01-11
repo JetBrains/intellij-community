@@ -6,6 +6,8 @@ package com.intellij.psi.impl.search;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.meta.PsiMetaDataBase;
@@ -26,33 +28,41 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
   public boolean execute(final ReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
 
-    String text = null;
+    String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        String text = null;
 
-    if (refElement instanceof XmlAttributeValue) {
-      text = ((XmlAttributeValue)refElement).getValue();
-    }
-    else if (refElement instanceof PsiFile) {
-      final VirtualFile vFile = ((PsiFile)refElement).getVirtualFile();
-      if (vFile != null) {
-        text = vFile.getNameWithoutExtension();
+        if (refElement instanceof XmlAttributeValue) {
+          text = ((XmlAttributeValue)refElement).getValue();
+        }
+        else if (refElement instanceof PsiFile) {
+          final VirtualFile vFile = ((PsiFile)refElement).getVirtualFile();
+          if (vFile != null) {
+            text = vFile.getNameWithoutExtension();
+          }
+        }
+        else if (refElement instanceof PsiNamedElement) {
+          text = ((PsiNamedElement)refElement).getName();
+          if (refElement instanceof PsiMetaBaseOwner) {
+            final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)refElement).getMetaData();
+            if (metaData != null) text = metaData.getName();
+          }
+        }
+
+        if (text == null && refElement instanceof PsiMetaBaseOwner) {
+          final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)refElement).getMetaData();
+          if (metaData != null) text = metaData.getName();
+        }
+        return text;
       }
-    }
-    else if (refElement instanceof PsiNamedElement) {
-      text = ((PsiNamedElement)refElement).getName();
-      if (refElement instanceof PsiMetaBaseOwner) {
-        final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)refElement).getMetaData();
-        if (metaData != null) text = metaData.getName();
-      }
-    }
-
-    if (text == null && refElement instanceof PsiMetaBaseOwner) {
-      final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)refElement).getMetaData();
-      if (metaData != null) text = metaData.getName();
-    }
-
+    });
     if (StringUtil.isEmpty(text)) return true;
       
-    SearchScope searchScope = p.getEffectiveSearchScope();
+    SearchScope searchScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      public SearchScope compute() {
+        return p.getEffectiveSearchScope();
+      }
+    });
     final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
         final PsiReference[] refs = element.getReferences();

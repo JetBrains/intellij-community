@@ -7,6 +7,7 @@ import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
@@ -80,8 +81,8 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
       registerExecutor(new QueryExecutor<PsiDirectory, GlobalSearchScope>() {
         public boolean execute(final GlobalSearchScope scope, final Processor<PsiDirectory> consumer) {
           FileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
-          projectFileIndex.getDirsByPackageName(myQualifiedName, false).forEach(new Processor<VirtualFile>() {
-            public boolean process(final VirtualFile dir) {
+          projectFileIndex.getDirsByPackageName(myQualifiedName, false).forEach(new ReadActionProcessor<VirtualFile>() {
+            public boolean processInReadAction(final VirtualFile dir) {
               if (!scope.contains(dir)) return true;
               PsiDirectory psiDir = myManager.findDirectory(dir);
               assert psiDir != null;

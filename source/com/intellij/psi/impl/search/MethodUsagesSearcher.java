@@ -4,6 +4,9 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadActionProcessor;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -18,14 +21,14 @@ import com.intellij.util.QueryExecutor;
  */
 public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodReferencesSearch.SearchParameters> {
   public boolean execute(final MethodReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
-    PsiMethod method = p.getMethod();
+    final PsiMethod method = p.getMethod();
     SearchScope searchScope = p.getScope();
     PsiManager psiManager = PsiManager.getInstance(method.getProject());
     final boolean isStrictSignatureSearch = p.isStrictSignatureSearch();
 
     if (method.isConstructor()) {
       final ConstructorReferencesSearchHelper helper = new ConstructorReferencesSearchHelper(psiManager);
-      if (!helper. processConstructorReferences(consumer, method, searchScope, !isStrictSignatureSearch, isStrictSignatureSearch)) {
+      if (!helper.processConstructorReferences(consumer, method, searchScope, !isStrictSignatureSearch, isStrictSignatureSearch)) {
         return false;
       }
     }
@@ -38,23 +41,31 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
                                     || method.hasModifierProperty(PsiModifier.FINAL)
                                     || method.hasModifierProperty(PsiModifier.PRIVATE))
       ) {
-      return ReferencesSearch.search(method, searchScope, false).forEach(consumer);
+      return ReferencesSearch.search(method, searchScope, false).forEach(new ReadActionProcessor<PsiReference>() {
+        public boolean processInReadAction(final PsiReference psiReference) {
+          return consumer.process(psiReference);
+        }
+      });
     }
 
     final String text = method.getName();
     final PsiMethod[] methods = isStrictSignatureSearch ? new PsiMethod[]{method} : getOverloads(method);
-    
-    SearchScope accessScope = methods[0].getUseScope();
-    for (int i = 1; i < methods.length; i++) {
-      PsiMethod method1 = methods[i];
-      SearchScope someScope = PsiSearchScopeUtil.scopesUnion(accessScope, method1.getUseScope());
-      accessScope = someScope == null ? accessScope : someScope;
-    }
 
-    final PsiClass aClass = method.getContainingClass();
+    SearchScope accessScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      public SearchScope compute() {
+        SearchScope accessScope = methods[0].getUseScope();
+        for (int i = 1; i < methods.length; i++) {
+          PsiMethod method1 = methods[i];
+          SearchScope someScope = PsiSearchScopeUtil.scopesUnion(accessScope, method1.getUseScope());
+          accessScope = someScope == null ? accessScope : someScope;
+        }
+        return accessScope;
+      }
+    });
 
     final TextOccurenceProcessor processor1 = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
+        final PsiClass aClass = method.getContainingClass();
         final PsiReference[] refs = element.getReferences();
         for (PsiReference ref : refs) {
           if (ref.getRangeInElement().contains(offsetInElement)) {
@@ -125,9 +136,13 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
     return true;
   }
 
-  private static PsiMethod[] getOverloads(PsiMethod method) {
-    PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return new PsiMethod[]{method};
-    return aClass.findMethodsByName(method.getName(), false);
+  private static PsiMethod[] getOverloads(final PsiMethod method) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod[]>() {
+      public PsiMethod[] compute() {
+        PsiClass aClass = method.getContainingClass();
+        if (aClass == null) return new PsiMethod[]{method};
+        return aClass.findMethodsByName(method.getName(), false);
+      }
+    });
   }
 }
