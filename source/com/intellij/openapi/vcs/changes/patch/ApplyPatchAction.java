@@ -16,31 +16,32 @@ import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
-import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
-import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.ActionButtonPresentation;
-import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.DiffManager;
+import com.intellij.openapi.diff.DiffRequestFactory;
+import com.intellij.openapi.diff.MergeRequest;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
+import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.ArrayList;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ApplyPatchAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.ApplyPatchAction");
@@ -65,6 +66,12 @@ public class ApplyPatchAction extends AnAction {
       }
       catch (IOException e) {
         Messages.showErrorDialog(project, "Error when searching for file to patch: " + patch.getBeforeName() + ": " + e.getMessage(),
+                                 "Apply Patch");
+        return ApplyPatchStatus.FAILURE;
+      }
+      // security check to avoid overwriting system files with a patch
+      if (fileToPatch != null && !ProjectRootManager.getInstance(project).getFileIndex().isInContent(fileToPatch)) {
+        Messages.showErrorDialog(project, "File to patch found outside content root: " + patch.getBeforeName(),
                                  "Apply Patch");
         return ApplyPatchStatus.FAILURE;
       }

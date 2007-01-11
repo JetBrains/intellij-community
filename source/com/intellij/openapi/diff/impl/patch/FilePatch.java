@@ -176,7 +176,13 @@ public class FilePatch {
                                                   final int lastComponentToFind,
                                                   final boolean createDirectories) {
     for(int i=skipTopDirs; i<lastComponentToFind; i++) {
-      VirtualFile nextChild = patchedDir.findChild(pathNameComponents [i]);
+      VirtualFile nextChild;
+      if (pathNameComponents [i].equals("..")) {
+        nextChild = patchedDir.getParent();
+      }
+      else {
+        nextChild = patchedDir.findChild(pathNameComponents [i]);
+      }
       if (nextChild == null) {
         if (createDirectories) {
           try {
