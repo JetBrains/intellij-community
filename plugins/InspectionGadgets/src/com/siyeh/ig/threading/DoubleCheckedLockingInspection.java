@@ -17,15 +17,29 @@ package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
 
 public class DoubleCheckedLockingInspection extends ExpressionInspection {
+
+    /** @noinspection PublicField*/
+    public boolean ignoreOnVolatileVariables;
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "double.checked.locking.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.THREADING_GROUP_NAME;
@@ -37,11 +51,19 @@ public class DoubleCheckedLockingInspection extends ExpressionInspection {
                 "double.checked.locking.problem.descriptor");
     }
 
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "double.checked.locking.ignore.on.volatiles.option"), this, 
+                "ignoreOnVolatileVariables"
+        );
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new DoubleCheckedLockingVisitor();
     }
 
-    private static class DoubleCheckedLockingVisitor
+    private class DoubleCheckedLockingVisitor
             extends BaseInspectionVisitor {
 
         public void visitIfStatement(@NotNull PsiIfStatement statement) {
@@ -77,7 +99,43 @@ public class DoubleCheckedLockingInspection extends ExpressionInspection {
                     outerCondition)) {
                 return;
             }
+            if (ignoreOnVolatileVariables &&
+                    ifStatementAssignsVolatileVariable(innerIf)) {
+                return;
+            }
             registerStatementError(statement);
+        }
+
+        private boolean ifStatementAssignsVolatileVariable(
+                PsiIfStatement statement) {
+            PsiStatement innerThen = statement.getThenBranch();
+            innerThen = ControlFlowUtils.stripBraces(innerThen);
+            if (!(innerThen instanceof PsiExpressionStatement)) {
+                return false;
+            }
+            final PsiExpressionStatement expressionStatement =
+                    (PsiExpressionStatement)innerThen;
+            final PsiExpression expression =
+                    expressionStatement.getExpression();
+            if (!(expression instanceof PsiAssignmentExpression)) {
+                return false;
+            }
+            final PsiAssignmentExpression assignmentExpression =
+                    (PsiAssignmentExpression)expression;
+            final PsiExpression lhs =
+                    assignmentExpression.getLExpression();
+            if (!(lhs instanceof PsiReferenceExpression)) {
+                return false;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression)lhs;
+            final PsiElement element =
+                    referenceExpression.resolve();
+            if (!(element instanceof PsiField)) {
+                return false;
+            }
+            final PsiField field = (PsiField)element;
+            return field.hasModifierProperty(PsiModifier.VOLATILE);
         }
     }
 }
