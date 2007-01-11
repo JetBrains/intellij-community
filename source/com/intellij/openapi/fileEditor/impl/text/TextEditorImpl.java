@@ -14,14 +14,13 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladimir Kondratyev
@@ -198,13 +197,13 @@ public final class TextEditorImpl extends UserDataHolderBase implements TextEdit
 
     if (descriptor.getOffset() >= 0) {
       _editor.getCaretModel().moveToOffset(Math.min(descriptor.getOffset(), _editor.getDocument().getTextLength()));
-      _editor.getSelectionModel().removeSelection();
+      //_editor.getSelectionModel().removeSelection();
       _editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
     else if (descriptor.getLine() != -1 && descriptor.getColumn() != -1) {
       final LogicalPosition pos = new LogicalPosition(descriptor.getLine(), descriptor.getColumn());
       _editor.getCaretModel().moveToLogicalPosition(pos);
-      _editor.getSelectionModel().removeSelection();
+      //_editor.getSelectionModel().removeSelection();
       _editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
   }
