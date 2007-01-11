@@ -183,9 +183,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
     collectReadonlyFiles(getConfigurationFiles(), readonlyFiles);
 
-    for (Module module1 : modules) {
-      final ModuleImpl module = (ModuleImpl)module1;
-      collectReadonlyFiles(((ModuleStoreImpl)module.getStateStore()).getConfigurationFiles(), readonlyFiles);
+    for (Module module : modules) {
+      final ModuleStoreImpl moduleStore = (ModuleStoreImpl)((ModuleImpl)module).getStateStore();
+      moduleStore.collectReadonlyFiles(moduleStore.getConfigurationFiles(), readonlyFiles);
     }
 
     return ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readonlyFiles.toArray(new VirtualFile[readonlyFiles.size()]));
