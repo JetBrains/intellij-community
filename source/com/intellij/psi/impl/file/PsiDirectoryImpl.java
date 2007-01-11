@@ -253,7 +253,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return children.toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  public PsiElement getParent() {
+  public PsiDirectory getParent() {
     return getParentDirectory();
   }
 

@@ -17,6 +17,8 @@ package com.intellij.psi;
 
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a file or directory which can be renamed.
@@ -34,4 +36,10 @@ public interface PsiFileSystemItem extends PsiNamedElement, NavigationItem {
   void checkSetName(String name) throws IncorrectOperationException;
 
   boolean isDirectory();
+
+  @Nullable
+  PsiFileSystemItem getParent();
+
+  @Nullable
+  VirtualFile getVirtualFile();
 }

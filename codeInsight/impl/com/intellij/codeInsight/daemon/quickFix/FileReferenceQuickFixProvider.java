@@ -3,23 +3,24 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameFileFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.ide.highlighter.UnknownFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInspection.LocalQuickFix;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Collections;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Maxim.Mossienko
@@ -55,8 +56,10 @@ public class FileReferenceQuickFixProvider {
     }
     if (context == null) return Collections.emptyList();
 
-    final PsiDirectory directory = FileReference.getPsiDirectory(context);
-
+    final VirtualFile virtualFile = context.getVirtualFile();
+    if (virtualFile == null) return Collections.emptyList();
+    
+    final PsiDirectory directory = context.getManager().findDirectory(virtualFile);
     if (directory == null) return Collections.emptyList();
 
     boolean differentCase = false;

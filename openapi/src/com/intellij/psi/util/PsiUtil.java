@@ -994,8 +994,8 @@ public final class PsiUtil {
       return null;
     }
 
-    if (element instanceof PsiDirectory) {
-      return ((PsiDirectory)element).getVirtualFile();
+    if (element instanceof PsiFileSystemItem) {
+      return ((PsiFileSystemItem)element).getVirtualFile();
     }
 
     final PsiFile containingFile = element.getContainingFile();

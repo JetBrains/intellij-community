@@ -59,6 +59,9 @@ public interface PsiDirectory extends PsiFileSystemItem {
   @Nullable
   PsiDirectory getParentDirectory();
 
+  @Nullable
+  PsiDirectory getParent();
+
   /**
    * Returns the list of subdirectories of this directory.
    *

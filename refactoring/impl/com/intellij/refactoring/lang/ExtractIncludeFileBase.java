@@ -22,12 +22,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelperRegistrar;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileSystemItemUtil;
 import com.intellij.psi.xml.XmlTagChild;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -225,14 +224,4 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
     return includePath;
   }
 
-  @Nullable
-  protected static String getRelativePath(final Project project, final VirtualFile srcVFile, final VirtualFile dstVFile) {
-    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
-      final String relativePath = helper.getRelativePath(project, srcVFile, dstVFile);
-      if (relativePath != null) {
-        return relativePath;
-      }
-    }
-    return null;
-  }
 }

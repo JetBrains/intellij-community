@@ -25,6 +25,7 @@ import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
@@ -278,7 +279,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return getViewProvider().getVirtualFile().isWritable() && getUserData(CacheUtil.CACHE_COPY_KEY) != Boolean.TRUE;
   }
 
-  public PsiElement getParent() {
+  public PsiDirectory getParent() {
     return getContainingDirectory();
   }
 
@@ -286,6 +287,11 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     final VirtualFile parentFile = getViewProvider().getVirtualFile().getParent();
     if (parentFile == null) return null;
     return getManager().findDirectory(parentFile);
+  }
+
+  @Nullable
+  public PsiDirectory getParentDirectory() {
+    return getContainingDirectory();
   }
 
   public PsiFile getContainingFile() {

@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -251,15 +252,13 @@ public class FileReferenceSet {
       }
     }
 
-    final List<FileReferenceHelper> helpers = FileReferenceHelperRegistrar.getHelpers();
-    for (final FileReferenceHelper helper : helpers) {
-      final PsiFileSystemItem item = helper.getContainingDirectory(file);
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile != null) {
+      final PsiFileSystemItem item = FileReferenceHelperRegistrar.getNotNullHelper(file).getPsiFileSystemItem(project, virtualFile);
       if (item != null) {
-        result = item;
-        break;
+        result = item.getParent();
       }
     }
-
     return result == null ? Collections.<PsiFileSystemItem>emptyList() : Collections.singleton(result);
   }
 
@@ -273,9 +272,12 @@ public class FileReferenceSet {
 
   @Nullable
   public static PsiFileSystemItem getAbsoluteTopLevelDirLocation(final PsiFile file) {
-    final List<FileReferenceHelper> helpers = FileReferenceHelperRegistrar.getHelpers();
-    for (final FileReferenceHelper helper : helpers) {
-      final PsiFileSystemItem element = helper.getAbsoluteTopLevelDirLocation(file);
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return null;
+
+    final Project project = file.getProject();
+    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+      final PsiFileSystemItem element = helper.findRoot(project, virtualFile);
       if (element != null) {
         return element;
       }

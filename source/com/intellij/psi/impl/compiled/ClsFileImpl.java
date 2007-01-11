@@ -26,6 +26,7 @@ import com.intellij.util.cls.ClsFormatException;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -95,7 +96,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     return myViewProvider.getVirtualFile();
   }
 
-  public PsiElement getParent() {
+  public PsiDirectory getParent() {
     return getContainingDirectory();
   }
 
@@ -103,6 +104,11 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     VirtualFile parentFile = getVirtualFile().getParent();
     if (parentFile == null) return null;
     return getManager().findDirectory(parentFile);
+  }
+
+  @Nullable
+  public PsiDirectory getParentDirectory() {
+    return getContainingDirectory();
   }
 
   public PsiFile getContainingFile() {

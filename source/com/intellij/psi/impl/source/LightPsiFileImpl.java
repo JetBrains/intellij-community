@@ -22,6 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -113,7 +114,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     PsiFileImplUtil.checkSetName(this, name);
   }
 
-  public PsiElement getParent() {
+  public PsiDirectory getParent() {
     return getContainingDirectory();
   }
 
@@ -121,6 +122,11 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     final VirtualFile parentFile = getViewProvider().getVirtualFile().getParent();
     if (parentFile == null) return null;
     return getManager().findDirectory(parentFile);
+  }
+
+  @Nullable
+  public PsiDirectory getParentDirectory() {
+    return getContainingDirectory();
   }
 
   public PsiFile getContainingFile() {

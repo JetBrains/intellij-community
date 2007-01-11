@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -14,11 +15,10 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
-import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -63,12 +63,6 @@ public class FileReference
     return result;
   }
 
-  @Nullable
-  public static PsiDirectory getPsiDirectory(@NotNull PsiFileSystemItem element) {
-    final FileReferenceHelper<PsiFileSystemItem> helper = FileReferenceHelperRegistrar.getHelper(element);
-    return helper != null ? helper.getPsiDirectory(element) : null;
-  }
-
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     final PsiManager manager = getElement().getManager();
@@ -86,29 +80,22 @@ public class FileReference
     for (final PsiFileSystemItem context : contexts) {
       if (text.length() == 0 && !myFileReferenceSet.isEndingSlashNotAllowed() && isLast() || ".".equals(text) || "/".equals(text)) {
         result.add(new PsiElementResolveResult(context));
-      } else {
-        final FileReferenceHelper<PsiFileSystemItem> helper = FileReferenceHelperRegistrar.getHelper(context);
-        if (helper != null) {
-          if ("..".equals(text)) {
-            final PsiFileSystemItem resolved = helper.getParentDirectory(getElement().getProject(), context);
-            if (resolved != null) {
-              result.add(new PsiElementResolveResult(resolved));
-            }
-          } else {
-            helper.processVariants(context, new BaseScopeProcessor() {
-              public boolean execute(final PsiElement element, final PsiSubstitutor substitutor) {
-                final String name = ((PsiFileSystemItem)element).getName();
-                final boolean nameEquals =
-                  myFileReferenceSet.isCaseSensitive() ? getText().equals(name) : getText().compareToIgnoreCase(name) == 0;
-                if (nameEquals) {
-                  result.add(new PsiElementResolveResult(element));
-                  return false;
-                }
-                return true;
-              }
-            });
-          }
+      } else if ("..".equals(text)) {
+        final PsiFileSystemItem resolved = context.getParent();
+        if (resolved != null) {
+          result.add(new PsiElementResolveResult(resolved));
         }
+      } else {
+        processVariants(context, new BaseScopeProcessor() {
+          public boolean execute(final PsiElement element, final PsiSubstitutor substitutor) {
+            final String name = ((PsiFileSystemItem)element).getName();
+            if (myFileReferenceSet.isCaseSensitive() ? text.equals(name) : text.compareToIgnoreCase(name) == 0) {
+              result.add(new PsiElementResolveResult(element));
+              return false;
+            }
+            return true;
+          }
+        });
       }
     }
     final int resultCount = result.size();
@@ -129,7 +116,9 @@ public class FileReference
       }
       final PsiScopeProcessor proc =
         myFileReferenceSet.createProcessor(ret, allowedClasses, Arrays.<PsiConflictResolver>asList(new DuplicateConflictResolver()));
-      processVariants(proc);
+      for (PsiFileSystemItem context : getContexts()) {
+        processVariants(context, proc);
+      }
       return ret.toArray();
     }
     catch (ProcessorRegistry.IncompatibleReferenceTypeException e) {
@@ -138,10 +127,19 @@ public class FileReference
     }
   }
 
-  private void processVariants(@NotNull final PsiScopeProcessor processor) {
-    for (PsiFileSystemItem context : getContexts()) {
-      final FileReferenceHelper<PsiFileSystemItem> helper = FileReferenceHelperRegistrar.getHelper(context);
-      if (helper != null && !helper.processVariants(context, processor)) return;
+  private void processVariants(final PsiFileSystemItem context, final PsiScopeProcessor processor) {
+    for (PsiElement element : context.getChildren()) {
+      if (element instanceof PsiFileSystemItem) {
+        PsiFileSystemItem item = (PsiFileSystemItem)element;
+        final VirtualFile file = item.getVirtualFile();
+        if (file != null && !file.isDirectory()) {
+          final PsiFile psiFile = getElement().getManager().findFile(file);
+          if (psiFile != null) {
+            item = psiFile;
+          }
+        }
+        if (!processor.execute(item, PsiSubstitutor.EMPTY)) break;
+      }
     }
   }
 
@@ -162,12 +160,8 @@ public class FileReference
   public boolean isReferenceTo(PsiElement element) {
     if (!(element instanceof PsiFileSystemItem)) return false;
 
-    final PsiFileSystemItem resolveResult = resolve();
-    if (resolveResult == null) return false;
-
-    final PsiManager manager = element.getManager();
-    return element instanceof PsiDirectory && manager.areElementsEquivalent(element, getPsiDirectory(resolveResult)) ||
-           manager.areElementsEquivalent(element, resolveResult);
+    final PsiFileSystemItem item = resolve();
+    return item != null && FileReferenceHelperRegistrar.areElementsEquivalent(item, (PsiFileSystemItem)element);
   }
 
   public TextRange getRangeInElement() {
@@ -203,34 +197,52 @@ public class FileReference
   }
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-    if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element");
-    PsiFileSystemItem fileSystemItem = (PsiFileSystemItem)element;
-    VirtualFile dstVFile = PsiUtil.getVirtualFile(fileSystemItem);
+    if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element, should be instanceof PsiFileSystemItem: " + element);
 
-    final PsiFile file = getElement().getContainingFile();
+    final PsiFileSystemItem fileSystemItem = (PsiFileSystemItem)element;
+    VirtualFile dstVFile = fileSystemItem.getVirtualFile();
     if (dstVFile == null) throw new IncorrectOperationException("Cannot bind to non-physical element:" + element);
 
-    for (final FileReferenceHelper helper : getHelpers()) {
-      if (helper.isDoNothingOnBind(file, this)) {
-        return element;
+    final PsiFile file = getElement().getContainingFile();
+    final VirtualFile curVFile = file.getVirtualFile();
+    if (curVFile == null) throw new IncorrectOperationException("Cannot bind from non-physical element:" + file);
+
+    final Project project = element.getProject();
+
+    final String newName;
+    if (myFileReferenceSet.isAbsolutePathReference()) {
+      PsiFileSystemItem root = null;
+      PsiFileSystemItem dstItem = null;
+      for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+        PsiFileSystemItem _dstItem = helper.getPsiFileSystemItem(project, dstVFile);
+        if (_dstItem != null) {
+          PsiFileSystemItem _root = helper.findRoot(project, dstVFile);
+          if (_root != null) {
+            root = _root;
+            dstItem = _dstItem;
+            break;
+          }
+        }
       }
-    }
+      if (root == null) return element;
 
-    final VirtualFile currentFile = file.getVirtualFile();
-    LOG.assertTrue(currentFile != null);
-
-    String newName = null;
-    for (final FileReferenceHelper helper : getHelpers()) {
-      final String s = helper.getRelativePath(file.getProject(), currentFile, dstVFile);
-      if (s != null) {
-        newName = s;
-        break;
+      newName = "/" + PsiFileSystemItemUtil.getNotNullRelativePath(root, dstItem);
+    } else {
+      PsiFileSystemItem curItem = null;
+      PsiFileSystemItem dstItem = null;
+      for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+        PsiFileSystemItem _curItem = helper.getPsiFileSystemItem(project, curVFile);
+        if (_curItem != null) {
+          PsiFileSystemItem _dstItem = helper.getPsiFileSystemItem(project, dstVFile);
+          if (_dstItem != null) {
+            curItem = _curItem;
+            dstItem = _dstItem;
+            break;
+          }
+        }
       }
-    }
-
-    if (newName == null) {
-      throw new IncorrectOperationException(
-        "Cannot find path between files; src = " + currentFile.getPresentableUrl() + "; dst = " + dstVFile.getPresentableUrl());
+      checkNotNull(curItem, curVFile, dstVFile);
+      newName = PsiFileSystemItemUtil.getNotNullRelativePath(curItem, dstItem);
     }
 
     final TextRange range = new TextRange(myFileReferenceSet.getStartInElement(), getRangeInElement().getEndOffset());
@@ -239,6 +251,12 @@ public class FileReference
       throw new IncorrectOperationException("Manipulator not defined for: " + getElement());
     }
     return manipulator.handleContentChange(getElement(), range, newName);
+  }
+
+  private static void checkNotNull(final Object o, final VirtualFile curVFile, final VirtualFile dstVFile) throws IncorrectOperationException {
+    if (o == null) {
+      throw new IncorrectOperationException("Cannot find path between files; src = " + curVFile.getPresentableUrl() + "; dst = " + dstVFile.getPresentableUrl());
+    }
   }
 
   public void registerQuickfix(HighlightInfo info, FileReference reference) {

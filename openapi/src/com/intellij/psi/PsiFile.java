@@ -44,6 +44,8 @@ public interface PsiFile extends PsiFileSystemItem {
    */
   @Nullable PsiDirectory getContainingDirectory();
 
+  @Nullable PsiDirectory getParent();
+
   /**
    * Gets the modification stamp value. Modification stamp is a value changed by any modification
    * of the content of the file. Note that it is not related to the file modification time.

@@ -8,9 +8,9 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,37 +20,23 @@ import java.util.List;
  * @author peter
  */
 public interface FileReferenceHelper<T extends PsiFileSystemItem> {
+
+  @NotNull String trimUrl(@NotNull String url);
+
+  @Nullable PsiReference createDynamicReference(PsiElement element, String str);
+
   @NotNull
   Class<T> getDirectoryClass();
 
   @NotNull String getDirectoryTypeName();
 
-  boolean isDoNothingOnBind(PsiFile currentFile, final FileReference reference);
-
-  @Nullable
-  @NonNls
-  String getRelativePath(Project project, VirtualFile currentFile, VirtualFile dstVFile);
-
-  @Nullable
-  PsiDirectory getPsiDirectory(T element);
-
-  @Nullable
-  T getAbsoluteTopLevelDirLocation(@NotNull final PsiFile file);
-
-  @Nullable
-  T getContainingDirectory(PsiFile file);
-
-  @NotNull String trimUrl(@NotNull String url);
-
-  @Nullable
-  PsiReference createDynamicReference(PsiElement element, String str);
-
-  boolean processVariants(T element, PsiScopeProcessor processor);
-
   @Nullable
   List<? extends LocalQuickFix> registerFixes(HighlightInfo info, FileReference reference);
 
   @Nullable
-  PsiFileSystemItem getParentDirectory(final Project project, T element);
+  PsiFileSystemItem getPsiFileSystemItem(final Project project, @NotNull VirtualFile file);
+
+  @Nullable
+  PsiFileSystemItem findRoot(final Project project, @NotNull VirtualFile file);
 
 }

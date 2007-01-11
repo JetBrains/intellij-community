@@ -13,6 +13,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -71,6 +72,11 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return getManager().findDirectory(parentFile);
   }
 
+  @Nullable
+  public PsiDirectory getParentDirectory() {
+    return getContainingDirectory();
+  }
+
   public long getModificationStamp() {
     return myModificationStamp;
   }
@@ -89,7 +95,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return PsiElement.EMPTY_ARRAY;
   }
 
-  public PsiElement getParent() {
+  public PsiDirectory getParent() {
     return getContainingDirectory();
   }
 
