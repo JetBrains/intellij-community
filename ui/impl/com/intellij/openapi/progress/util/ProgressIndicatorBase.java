@@ -39,8 +39,8 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
 
   private Set<ProgressIndicatorEx> myStateDelegates = new HashSet<ProgressIndicatorEx>();
 
-  public void start(){
-    synchronized(this){
+  public void start() {
+    synchronized (this) {
       LOG.assertTrue(!isRunning());
       myText = "";
       myFraction = 0;
@@ -59,17 +59,15 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
   }
 
   protected final void enterModality() {
-    if (myModalityProgress == this){
-      if (!EventQueue.isDispatchThread()){
-        SwingUtilities.invokeLater(
-          new Runnable() {
-            public void run() {
-              doEnterModality();
-            }
+    if (myModalityProgress == this) {
+      if (!EventQueue.isDispatchThread()) {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            doEnterModality();
           }
-        );
+        });
       }
-      else{
+      else {
         doEnterModality();
       }
     }
@@ -82,7 +80,7 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
     }
   }
 
-  public void stop(){
+  public void stop() {
     LOG.assertTrue(myRunning, "stop() should be called only if start() called before");
     myRunning = false;
 
@@ -95,17 +93,15 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
   }
 
   protected final void exitModality() {
-    if (myModalityProgress == this){
-      if (!EventQueue.isDispatchThread()){
-        SwingUtilities.invokeLater(
-          new Runnable() {
-            public void run() {
-              doExitModality();
-            }
+    if (myModalityProgress == this) {
+      if (!EventQueue.isDispatchThread()) {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            doExitModality();
           }
-        );
+        });
       }
-      else{
+      else {
         doExitModality();
       }
     }
@@ -122,7 +118,7 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
     return myRunning;
   }
 
-  public void cancel(){
+  public void cancel() {
     myCanceled = true;
 
     delegateRunningChange(new IndicatorAction() {
@@ -132,11 +128,11 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
     });
   }
 
-  public boolean isCanceled(){
+  public boolean isCanceled() {
     return myCanceled;
   }
 
-  public final void checkCanceled(){
+  public final void checkCanceled() {
     if (isCanceled() && myNonCancelableCount == 0) {
       throw new ProcessCanceledException();
     }
@@ -148,7 +144,7 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
     });
   }
 
-  public void setText(final String text){
+  public void setText(final String text) {
     myText = text;
 
     delegateProgressChange(new IndicatorAction() {
@@ -158,11 +154,11 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
     });
   }
 
-  public String getText(){
+  public String getText() {
     return myText;
   }
 
-  public void setText2(final String text){
+  public void setText2(final String text) {
     myText2 = text;
 
     delegateProgressChange(new IndicatorAction() {
@@ -172,7 +168,7 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
     });
   }
 
-  public String getText2(){
+  public String getText2() {
     return myText2;
   }
 
@@ -190,35 +186,35 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
     });
   }
 
-  public synchronized void pushState(){
-      myTextStack.add(myText);
-      myFractionStack.add(myFraction);
-      myText2Stack.add(myText2);
-      setText("");
-      setFraction(0);
-      setText2("");
+  public synchronized void pushState() {
+    myTextStack.add(myText);
+    myFractionStack.add(myFraction);
+    myText2Stack.add(myText2);
+    setText("");
+    setFraction(0);
+    setText2("");
 
-      delegateProgressChange(new IndicatorAction() {
-        public void execute(final ProgressIndicatorEx each) {
-          each.pushState();
-        }
-      });
+    delegateProgressChange(new IndicatorAction() {
+      public void execute(final ProgressIndicatorEx each) {
+        each.pushState();
+      }
+    });
   }
 
-  public synchronized void popState(){
-      LOG.assertTrue(!myTextStack.isEmpty());
-      setText(myTextStack.remove(myTextStack.size() - 1));
-      setFraction(myFractionStack.remove(myFractionStack.size() - 1));
-      setText2(myText2Stack.remove(myText2Stack.size() - 1));
+  public synchronized void popState() {
+    LOG.assertTrue(!myTextStack.isEmpty());
+    setText(myTextStack.remove(myTextStack.size() - 1));
+    setFraction(myFractionStack.remove(myFractionStack.size() - 1));
+    setText2(myText2Stack.remove(myText2Stack.size() - 1));
 
-      delegateProgressChange(new IndicatorAction() {
-        public void execute(final ProgressIndicatorEx each) {
-          each.popState();
-        }
-      });
+    delegateProgressChange(new IndicatorAction() {
+      public void execute(final ProgressIndicatorEx each) {
+        each.popState();
+      }
+    });
   }
 
-  public void startNonCancelableSection(){
+  public void startNonCancelableSection() {
     myNonCancelableCount++;
 
     delegateProgressChange(new IndicatorAction() {
@@ -228,7 +224,7 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
     });
   }
 
-  public void finishNonCancelableSection(){
+  public void finishNonCancelableSection() {
     myNonCancelableCount--;
 
     delegateProgressChange(new IndicatorAction() {
@@ -242,7 +238,7 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
     return myNonCancelableCount == 0;
   }
 
-  public final boolean isModal(){
+  public final boolean isModal() {
     return myModalityProgress != null;
   }
 
@@ -280,22 +276,12 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
     start();
   }
 
- public final void addStateDelegate(ProgressIndicatorEx delegate) {
+  public final void addStateDelegate(ProgressIndicatorEx delegate) {
+    delegate.initStateFrom(this);
     myStateDelegates.add(delegate);
-    if (isRunning()) {
-      if (!delegate.isRunning()) {
-        delegate.start();
-      }
-      delegate.setText(getText());
-      delegate.setText2(getText2());
-      delegate.setFraction(getFraction());
-      delegate.setIndeterminate(isIndeterminate());
-      if (!isCancelable()) {
-        delegate.startNonCancelableSection();
-      }
-    }
   }
- private void delegateProgressChange(IndicatorAction action) {
+
+  private void delegateProgressChange(IndicatorAction action) {
     delegate(action);
     onProgressChange();
   }
@@ -322,4 +308,48 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
 
   protected void onRunningChange() {
 
-  }}
+  }
+
+
+  public Stack<String> getTextStack() {
+    return myTextStack;
+  }
+
+  public DoubleArrayList getFractionStack() {
+    return myFractionStack;
+  }
+
+  public Stack<String> getText2Stack() {
+    return myText2Stack;
+  }
+
+  public int getNonCancelableCount() {
+    return myNonCancelableCount;
+  }
+
+
+  public boolean isModalityEntered() {
+    return myModalityEntered;
+  }
+
+  public synchronized void initStateFrom(final ProgressIndicatorEx indicator) {
+    myRunning = indicator.isRunning();
+    myCanceled = indicator.isCanceled();
+    myModalityEntered = indicator.isModalityEntered();
+    myFraction = indicator.getFraction();
+    myIndeterminate = indicator.isIndeterminate();
+    myNonCancelableCount = indicator.getNonCancelableCount();
+
+    myTextStack.clear();
+    myTextStack.addAll(indicator.getTextStack());
+
+    myText2Stack.clear();
+    myText2Stack.addAll(indicator.getText2Stack());
+
+    myFractionStack.clear();
+    final double[] fractions = indicator.getFractionStack().toArray();
+    for (double eachFraction : fractions) {
+      myFractionStack.add(eachFraction);
+    }
+  }
+}
