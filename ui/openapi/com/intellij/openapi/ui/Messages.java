@@ -26,6 +26,7 @@ import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -243,6 +244,7 @@ public class Messages {
   /**
    * @return trimmed inpit string or <code>null</code> if user cancelled dialog.
    */
+  @Nullable
   public static String showInputDialog(Project project, String message, String title, Icon icon) {
     return showInputDialog(project, message, title, icon, null, null);
   }
@@ -250,6 +252,7 @@ public class Messages {
   /**
    * @return trimmed inpit string or <code>null</code> if user cancelled dialog.
    */
+  @Nullable
   public static String showInputDialog(Component parent, String message, String title, Icon icon) {
     return showInputDialog(parent, message, title, icon, null, null);
   }
@@ -260,10 +263,12 @@ public class Messages {
    * @see #showInputDialog(Project, String, String, Icon)
    * @see #showInputDialog(Component, String, String, Icon)
    */
+  @Nullable
   public static String showInputDialog(String message, String title, Icon icon) {
     return showInputDialog(message, title, icon, null, null);
   }
 
+  @Nullable
   public static String showInputDialog(Project project,
                                        String message,
                                        String title,
@@ -281,6 +286,7 @@ public class Messages {
     }
   }
 
+  @Nullable
   public static String showInputDialog(Component parent,
                                        String message,
                                        String title,
@@ -305,6 +311,7 @@ public class Messages {
    * @see #showInputDialog(Project, String, String, Icon, String, InputValidator)
    * @see #showInputDialog(Component, String, String, Icon, String, InputValidator)
    */
+  @Nullable
   public static String showInputDialog(String message, String title, Icon icon, String initialValue, InputValidator validator) {
     final Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
@@ -317,6 +324,7 @@ public class Messages {
     }
   }
 
+  @Nullable
   public static String showEditableChooseDialog(String message,
                                                 String title,
                                                 Icon icon,
@@ -657,6 +665,7 @@ public class Messages {
       return myField;
     }
 
+    @Nullable
     public String getInputString() {
       if (getExitCode() == 0) {
         return myField.getText().trim();
@@ -778,6 +787,7 @@ public class Messages {
       return myComboBox;
     }
 
+    @Nullable
     public String getInputString() {
       if (getExitCode() == 0) {
         return myComboBox.getSelectedItem().toString();
