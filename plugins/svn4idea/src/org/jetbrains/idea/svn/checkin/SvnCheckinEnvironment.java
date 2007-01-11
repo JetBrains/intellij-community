@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -78,7 +79,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
 
-  public List<VcsException> commitInt(List<String> paths, final String comment, final boolean force, final boolean recursive) {
+  private List<VcsException> commitInt(List<File> paths, final String comment, final boolean force, final boolean recursive) {
     final List<VcsException> exception = new ArrayList<VcsException>();
     final Collection<File> committables = getCommitables(paths);
 
@@ -208,7 +209,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-  private Collection<File> getCommitables(List<String> paths) {
+  private Collection<File> getCommitables(List<File> paths) {
     Collection<File> result = new HashSet<File>();
     SVNStatusClient statusClient = null;
     try {
@@ -217,9 +218,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     catch (SVNException e) {
       //
     }
-    for (Iterator<String> p = paths.iterator(); p.hasNext();) {
-      String path = p.next();
-      File file = new File(path).getAbsoluteFile();
+    for (File path : paths) {
+      File file = path.getAbsoluteFile();
       result.add(file);
       if (file.getParentFile() != null) {
         addParents(statusClient, file.getParentFile(), result);
@@ -248,12 +248,12 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-  public static List<String> collectPaths(FilePath[] roots) {
-    ArrayList<String> result = new ArrayList<String>();
+  private static List<File> collectPaths(Collection<FilePath> roots) {
+    ArrayList<File> result = new ArrayList<File>();
     for (FilePath file : roots) {
       // if file is scheduled for addition[r] and its parent is also scheduled for additio[r] ->
       // then add parents till versioned file is met. same for 'copied' files.
-      result.add(file.getPath());
+      result.add(file.getIOFile());
     }
     return result;
   }
@@ -264,37 +264,53 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
     final Collection<FilePath> paths = ChangesUtil.getPaths(changes);
-    FilePath[] arrayed = paths.toArray(new FilePath[paths.size()]);
-    return commitInt(SvnCheckinEnvironment.collectPaths(arrayed), preparedComment, true, false);
+    return commitInt(collectPaths(paths), preparedComment, true, false);
   }
 
   public List<VcsException> rollbackChanges(List<Change> changes) {
     final List<VcsException> exceptions = new ArrayList<VcsException>();
     for (Change change : changes) {
-      final File ioFile = ChangesUtil.getFilePath(change).getIOFile();
-      try {
-        SVNWCClient client = mySvnVcs.createWCClient();
-        client.setEventHandler(new ISVNEventHandler() {
-          public void handleEvent(SVNEvent event, double progress) {
-            if (event.getAction() == SVNEventAction.FAILED_REVERT) {
-              exceptions.add(new VcsException("Revert failed"));
-            }
-          }
-
-          public void checkCancelled() {
-          }
-        });
-        client.doRevert(ioFile, false);
+      File beforePath = null;
+      ContentRevision beforeRevision = change.getBeforeRevision();
+      if (beforeRevision != null) {
+        beforePath = beforeRevision.getFile().getIOFile();
+        checkRevertFile(beforePath, exceptions);
       }
-      catch (SVNException e) {
-        if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
-          // skip errors on unversioned resources.
-          exceptions.add(new VcsException(e));
+      ContentRevision afterRevision = change.getAfterRevision();
+      if (afterRevision != null) {
+        File afterPath = afterRevision.getFile().getIOFile();
+        if (!afterPath.equals(beforePath)) {
+          checkRevertFile(afterPath, exceptions);
+          // rolling back a rename should delete the after file
+          FileUtil.delete(afterPath);
         }
       }
     }
 
     return exceptions;
+  }
+
+  private void checkRevertFile(final File ioFile, final List<VcsException> exceptions) {
+    try {
+      SVNWCClient client = mySvnVcs.createWCClient();
+      client.setEventHandler(new ISVNEventHandler() {
+        public void handleEvent(SVNEvent event, double progress) {
+          if (event.getAction() == SVNEventAction.FAILED_REVERT) {
+            exceptions.add(new VcsException("Revert failed"));
+          }
+        }
+
+        public void checkCancelled() {
+        }
+      });
+      client.doRevert(ioFile, false);
+    }
+    catch (SVNException e) {
+      if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
+        // skip errors on unversioned resources.
+        exceptions.add(new VcsException(e));
+      }
+    }
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {

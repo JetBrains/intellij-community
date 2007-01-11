@@ -6,16 +6,20 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
@@ -26,26 +30,76 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * @author max
  */
 public class SvnChangeProvider implements ChangeProvider {
   private SvnVcs myVcs;
+  private VcsContextFactory myFactory;
 
   public SvnChangeProvider(final SvnVcs vcs) {
     myVcs = vcs;
+    myFactory = PeerFactory.getInstance().getVcsContextFactory();
   }
 
   public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, ProgressIndicator progress) throws VcsException {
     try {
       final SVNStatusClient client = myVcs.createStatusClient();
+      final List<SvnChangedFile> copiedFiles = new ArrayList<SvnChangedFile>();
+      final List<SvnChangedFile> deletedFiles = new ArrayList<SvnChangedFile>();
       for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
-        processFile(path, client, builder, true);
+        processFile(path, client, builder, copiedFiles, deletedFiles, true);
       }
 
       for (FilePath path : dirtyScope.getDirtyFiles()) {
-        processFile(path, client, builder, false);
+        processFile(path, client, builder, copiedFiles, deletedFiles, false);
+      }
+
+      for(SvnChangedFile copiedFile: copiedFiles) {
+        boolean foundRename = false;
+        final SVNStatus copiedStatus = copiedFile.getStatus();
+        for (Iterator<SvnChangedFile> iterator = deletedFiles.iterator(); iterator.hasNext();) {
+          SvnChangedFile deletedFile = iterator.next();
+          final SVNStatus deletedStatus = deletedFile.getStatus();
+          if (copiedStatus.getCopyFromURL().equals(deletedStatus.getURL().toString())) {
+            builder.processChange(new Change(new SvnUpToDateRevision(deletedFile.getFilePath(), deletedStatus.getRevision()),
+                                             CurrentContentRevision.create(copiedFile.getFilePath())));
+            iterator.remove();
+            foundRename = true;
+            break;
+          }
+        }
+
+        // handle the case when the deleted file wasn't included in the dirty scope - try searching for the local copy
+        // by building a relative url
+        if (!foundRename) {
+          File wcPath = guessWorkingCopyPath(copiedStatus.getFile(), copiedStatus.getURL(), copiedStatus.getCopyFromURL());
+          SVNStatus status;
+          try {
+            status = client.doStatus(wcPath, false);
+          }
+          catch(SVNException ex) {
+            status = null;
+          }
+          if (status != null && status.getContentsStatus() == SVNStatusType.STATUS_DELETED) {
+            final FilePath filePath = myFactory.createFilePathOnDeleted(wcPath, false);
+            final SvnUpToDateRevision beforeRevision = new SvnUpToDateRevision(filePath, status.getRevision());
+            final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
+            builder.processChange(new Change(beforeRevision, afterRevision));
+            foundRename = true;
+          }
+        }
+
+        if (!foundRename) {
+          processStatus(copiedFile.getFilePath(), copiedStatus, builder);
+        }
+      }
+      for(SvnChangedFile deletedFile: deletedFiles) {
+        processStatus(deletedFile.getFilePath(), deletedFile.getStatus(), builder);
       }
     }
     catch (SVNException e) {
@@ -53,18 +107,37 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
+  private static File guessWorkingCopyPath(final File file, final SVNURL url, final String copyFromURL) throws SVNException {
+    String copiedPath = url.getPath();
+    String copyFromPath = SVNURL.parseURIEncoded(copyFromURL).getPath();
+    String commonPathAncestor = SVNPathUtil.getCommonPathAncestor(copiedPath, copyFromPath);
+    int pathSegmentCount = SVNPathUtil.getSegmentsCount(copiedPath);
+    int ancestorSegmentCount = SVNPathUtil.getSegmentsCount(commonPathAncestor);
+    List<String> segments = StringUtil.split(file.getPath(), File.separator);
+    List<String> copyFromPathSegments = StringUtil.split(copyFromPath, "/");
+    List<String> resultSegments = new ArrayList<String>();
+    final int keepSegments = segments.size() - pathSegmentCount + ancestorSegmentCount;
+    for(int i=0; i< keepSegments; i++) {
+      resultSegments.add(segments.get(i));
+    }
+    for(int i=ancestorSegmentCount; i<copyFromPathSegments.size(); i++) {
+      resultSegments.add(copyFromPathSegments.get(i));
+    }
+    return new File(StringUtil.join(resultSegments, "/"));
+  }
+
   public boolean isModifiedDocumentTrackingRequired() {
     return true;
   }
 
-  private static void processFile(FilePath path, SVNStatusClient stClient, final ChangelistBuilder builder, final boolean recursively)
-    throws SVNException {
+  private static void processFile(FilePath path, SVNStatusClient stClient, final ChangelistBuilder builder,
+                                  final List<SvnChangedFile> copiedFiles, final List<SvnChangedFile> deletedFiles, final boolean recursively) throws SVNException {
     try {
       if (path.isDirectory()) {
         stClient.doStatus(path.getIOFile(), recursively, false, false, true, new ISVNStatusHandler() {
           public void handleStatus(SVNStatus status) throws SVNException {
             FilePath path = VcsUtil.getFilePath(status.getFile(), status.getKind().equals(SVNNodeKind.DIR));
-            processStatus(path, status, builder);
+            processStatusFirstPass(path, status, builder, copiedFiles, deletedFiles);
             if (status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED && path.isDirectory()) {
               // process children of this file with another client.
               SVNStatusClient client = new SVNStatusClient(null, null);
@@ -72,14 +145,14 @@ public class SvnChangeProvider implements ChangeProvider {
                 VirtualFile[] children = path.getVirtualFile().getChildren();
                 for (VirtualFile aChildren : children) {
                   FilePath filePath = VcsUtil.getFilePath(aChildren.getPath(), aChildren.isDirectory());
-                  processFile(filePath, client, builder, recursively);
+                  processFile(filePath, client, builder, copiedFiles, deletedFiles, recursively);
                 }
               }
             }
           }
         });
       } else {
-        processFile(path, stClient, builder);
+        processFile(path, stClient, builder, copiedFiles, deletedFiles);
       }
     } catch (SVNException e) {
       if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
@@ -90,7 +163,7 @@ public class SvnChangeProvider implements ChangeProvider {
           VirtualFile[] children = virtualFile.getChildren();
           for (VirtualFile child : children) {
             FilePath filePath = VcsUtil.getFilePath(child.getPath(), child.isDirectory());
-            processFile(filePath, stClient, builder, recursively);
+            processFile(filePath, stClient, builder, copiedFiles, deletedFiles, recursively);
           }
         }
       }
@@ -100,9 +173,23 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
-  private static void processFile(FilePath filePath, SVNStatusClient stClient, ChangelistBuilder builder) throws SVNException {
+  private static void processFile(FilePath filePath, SVNStatusClient stClient, ChangelistBuilder builder,
+                                  final List<SvnChangedFile> copiedFiles, final List<SvnChangedFile> deletedFiles) throws SVNException {
     SVNStatus status = stClient.doStatus(filePath.getIOFile(), false, false);
-    processStatus(filePath, status, builder);
+    processStatusFirstPass(filePath, status, builder, copiedFiles, deletedFiles);
+  }
+
+  private static void processStatusFirstPass(final FilePath filePath, final SVNStatus status, final ChangelistBuilder builder,
+                                             final List<SvnChangedFile> copiedFiles, final List<SvnChangedFile> deletedFiles) throws SVNException {
+    if (status.getContentsStatus() == SVNStatusType.STATUS_ADDED && status.getCopyFromURL() != null) {
+      copiedFiles.add(new SvnChangedFile(filePath, status));
+    }
+    else if (status.getContentsStatus() == SVNStatusType.STATUS_DELETED) {
+      deletedFiles.add(new SvnChangedFile(filePath, status));
+    }
+    else {
+      processStatus(filePath, status, builder);
+    }
   }
 
   private static void processStatus(final FilePath filePath, final SVNStatus status, final ChangelistBuilder builder) throws SVNException {
@@ -294,6 +381,24 @@ public class SvnChangeProvider implements ChangeProvider {
     @NotNull
     public VcsRevisionNumber getRevisionNumber() {
       return myRevNumber;
+    }
+  }
+
+  private static class SvnChangedFile {
+    private FilePath myFilePath;
+    private SVNStatus myStatus;
+
+    public SvnChangedFile(final FilePath filePath, final SVNStatus status) {
+      myFilePath = filePath;
+      myStatus = status;
+    }
+
+    public FilePath getFilePath() {
+      return myFilePath;
+    }
+
+    public SVNStatus getStatus() {
+      return myStatus;
     }
   }
 }
