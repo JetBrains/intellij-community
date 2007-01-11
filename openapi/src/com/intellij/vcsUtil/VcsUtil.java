@@ -49,9 +49,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class VcsUtil
@@ -297,24 +295,24 @@ public class VcsUtil
     return false;
   }
 
-  public static FilePath getFilePath(String path) {
-    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(new File(path));
+  public static FilePath getFilePath( String path ) {
+    return getFilePath( new File( path ) ); 
+  }
+
+  public static FilePath getFilePath( File file ) {
+    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn( file );
+  }
+
+  public static FilePath getFilePath(String path, boolean isDirectory) {
+    return getFilePath( new File( path ), isDirectory );
+  }
+
+  public static FilePath getFilePath(File file, boolean isDirectory) {
+    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn( file, isDirectory );
   }
 
   public static FilePath getFilePathForDeletedFile(String path, boolean isDirectory) {
     return PeerFactory.getInstance().getVcsContextFactory().createFilePathOnDeleted(new File(path), isDirectory);
-  }
-
-  public static FilePath getFilePath(File file) {
-    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file);
-  }
-
-  public static FilePath getFilePath(String path, boolean isDirectory) {
-    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(new File(path), isDirectory);
-  }
-
-  public static FilePath getFilePath(File file, boolean isDirectory) {
-    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file, isDirectory);
   }
 
   /**
@@ -347,6 +345,38 @@ public class VcsUtil
   public static boolean isChangeForNew( Change change )
   {
     return (change.getBeforeRevision() == null) && (change.getAfterRevision() != null);
+  }
+
+  /**
+   * Sort file paths so that paths under the same root are placed from the
+   * innermost to the outermost (closest to the root). 
+   * @param  files An array of file paths to be sorted. Sorting is done over the parameter.
+   * @return Sorted array of the file paths.
+   */
+  public static FilePath[] sortPathsFromInnermost( FilePath[] files )
+  {
+    return sortPaths( files, -1 );
+  }
+  
+  /**
+   * Sort file paths so that paths under the same root are placed from the
+   * outermost to the innermost (farest from the root).
+   * @param  files An array of file paths to be sorted. Sorting is done over the parameter.
+   * @return Sorted array of the file paths.
+   */
+  public static FilePath[] sortPathsFromOutermost( FilePath[] files )
+  {
+    return sortPaths( files, 1 );
+  }
+
+  private static FilePath[] sortPaths( FilePath[] files, final int sign )
+  {
+    Arrays.sort( files, new Comparator<FilePath>() {
+     public int compare(FilePath o1, FilePath o2) {
+        return sign * o1.getPath().compareTo( o2.getPath() );
+      }
+    });
+    return files;
   }
 
   /**
