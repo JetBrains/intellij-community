@@ -25,6 +25,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -179,27 +180,24 @@ public class CtrlMouseHandler implements ProjectComponent {
     return modifiers == mask;
   }
 
-  private static class JavaInfoGenerator {
-    private static String generateFileInfo(PsiFile file) {
-      return file.getVirtualFile().getPresentableUrl();
+  @Nullable
+  public static String generateInfo(PsiElement element) {
+    final Language language = element.getContainingFile().getLanguage();
+    final DocumentationProvider documentationProvider = language.getDocumentationProvider();
+    if (documentationProvider != null) {
+      String info = documentationProvider.getQuickNavigateInfo(element);
+      if (info != null) {
+        return info;
+      }
     }
 
-    @Nullable
-    public static String generateInfo(PsiElement element) {
-      final Language language = element.getContainingFile().getLanguage();
-      final DocumentationProvider documentationProvider = language.getDocumentationProvider();
-      if(documentationProvider != null) {
-        String info = documentationProvider.getQuickNavigateInfo(element);
-        if (info != null) {
-          return info;
-        }
+    if (element instanceof PsiFile) {
+      final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
+      if (virtualFile != null) {
+        return virtualFile.getPresentableUrl();
       }
-
-      if (element instanceof PsiFile) {
-        return generateFileInfo((PsiFile) element);
-      }
-      return null;
     }
+    return null;
   }
 
   private static class Info {
@@ -348,7 +346,7 @@ public class CtrlMouseHandler implements ProjectComponent {
         internalComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         FileEditorManager.getInstance(myProject).addFileEditorManagerListener(myFileEditorManagerListener);
 
-        String text = JavaInfoGenerator.generateInfo(info.myTargetElement);
+        String text = generateInfo(info.myTargetElement);
 
         if (text == null) return;
 
@@ -363,7 +361,7 @@ public class CtrlMouseHandler implements ProjectComponent {
             hintManager.hideAllHints();
           }
         });
-        Point p = hintManager.getHintPosition(hint, myEditor, myPosition, HintManager.ABOVE);
+        Point p = HintManager.getHintPosition(hint, myEditor, myPosition, HintManager.ABOVE);
         hintManager.showEditorHint(hint, myEditor, p,
                                    HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE |
                                    HintManager.HIDE_BY_SCROLLING,
