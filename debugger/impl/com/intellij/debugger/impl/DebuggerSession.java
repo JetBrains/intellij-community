@@ -338,7 +338,7 @@ public class DebuggerSession {
           public void run() {
             myIsEvaluating = false;
             if (context != getSuspendContext()) {
-              getContextManager().setState(DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, context), STATE_PAUSED, EVENT_CONTEXT, null);
+              getContextManager().setState(DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, context), STATE_PAUSED, EVENT_REFRESH, null);
             }
           }
         });
