@@ -93,7 +93,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     final DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(dir);
     if (info == null) return Collections.emptyList();
     final List<OrderEntry> orderEntries = info.getOrderEntries();
-    List<OrderEntry> result = new SmartList<OrderEntry>();
+    SmartList<OrderEntry> result = new SmartList<OrderEntry>();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < orderEntries.size(); i++) {
       final OrderEntry orderEntry = orderEntries.get(i);
@@ -101,7 +101,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
         result.add(orderEntry);
       }
     }
-    return Collections.unmodifiableList(result);
+    return result;
   }
 
   public OrderEntry getOrderEntryForFile(@NotNull VirtualFile fileOrDir) {

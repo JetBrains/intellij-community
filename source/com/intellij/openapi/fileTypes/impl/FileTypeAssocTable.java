@@ -98,7 +98,9 @@ public class FileTypeAssocTable {
 
   @Nullable
   public FileType findAssociatedFileType(@NotNull @NonNls String fileName) {
-    for (Pair<FileNameMatcher, FileType> mapping : myMatchingMappings) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < myMatchingMappings.size(); i++) {
+      final Pair<FileNameMatcher, FileType> mapping = myMatchingMappings.get(i);
       if (mapping.getFirst().accept(fileName)) return mapping.getSecond();
     }
 

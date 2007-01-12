@@ -107,9 +107,9 @@ public class SmartList<E> extends AbstractList<E> {
 
   public E remove(final int index) {
     if (index < 0 || index >= mySize) {
-      throw new IndexOutOfBoundsException("index= " + index + ". Must be index > 0 && index < " + mySize);
+      throw new IndexOutOfBoundsException("index= " + index + ". Must be index >= 0 && index < " + mySize);
     }
-    ArrayList<E> old = new ArrayList<E>(this);
+    //ArrayList<E> old = new ArrayList<E>(this);
 
     final E oldValue;
     if (mySize == 1) {
@@ -136,14 +136,14 @@ public class SmartList<E> extends AbstractList<E> {
       oldValue = list.remove(index);
     }
     mySize--;
-    {
-      List<E> list = new ArrayList<E>(subList(0, index));
-      list.add(oldValue);
-      list.addAll(subList(index, mySize));
-      if (!list.equals(old)) {
-        int i = 0;
-      }
-    }
+    //{
+    //  List<E> list = new ArrayList<E>(subList(0, index));
+    //  list.add(oldValue);
+    //  list.addAll(subList(index, mySize));
+    //  if (!list.equals(old)) {
+    //    int i = 0;
+    //  }
+    //}
     return oldValue;
   }
 }

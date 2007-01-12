@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,7 +77,7 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
 
   private static <ElementClass extends PsiElement> ElementClass findNext(final PsiElement psiElement, final Class<ElementClass> ancestorClass) {
     PsiElement element = psiElement;
-    while ((element = element.getParent()) != null) {
+    while ((element = element.getParent()) != null && !(element instanceof PsiFile)) {
       final ElementClass ancestor = safeCast(element, ancestorClass);
       if (ancestor != null) return ancestor;
     }

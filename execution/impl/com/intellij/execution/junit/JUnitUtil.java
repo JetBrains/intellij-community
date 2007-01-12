@@ -79,25 +79,15 @@ public class JUnitUtil {
     if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
     if (psiMethod.getParameterList().getParametersCount() > 0) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.STATIC) && BaseTestRunner.SUITE_METHODNAME.equals(psiMethod.getName())) return false;
-    final PsiClass testCaseClass;
-    try {
-      testCaseClass = getTestCaseClass(location);
-    } catch (NoJUnitException e) {
-      return false;
-    }
-    return psiMethod.getContainingClass().isInheritor(testCaseClass, true);
+    PsiClass testCaseClass = getTestCaseClassOrNull(location);
+    return testCaseClass != null && psiMethod.getContainingClass().isInheritor(testCaseClass, true);
   }
 
   private static boolean isTestCaseInheritor(final PsiClass aClass) {
-    try {
-      if (!aClass.isValid()) return false;
-      Location<PsiClass> location = PsiLocation.fromPsiElement(aClass);
-      final PsiClass testCaseClass = getTestCaseClass(location);
-      return aClass.isInheritor(testCaseClass, true);
-    }
-    catch (NoJUnitException e) {
-      return false;
-    }
+    if (!aClass.isValid()) return false;
+    Location<PsiClass> location = PsiLocation.fromPsiElement(aClass);
+    PsiClass testCaseClass = getTestCaseClassOrNull(location);
+    return testCaseClass != null && aClass.isInheritor(testCaseClass, true);
   }
 
   /**
@@ -135,11 +125,13 @@ public class JUnitUtil {
     return method.getModifierList().findAnnotation("org.junit.Test") != null;
   }
 
-  private static PsiClass getTestCaseClass(final Location<?> location) throws NoJUnitException {
+  private static PsiClass getTestCaseClassOrNull(final Location<?> location) {
     final Location<PsiClass> ancestorOrSelf = location.getAncestorOrSelf(PsiClass.class);
     final PsiClass aClass = ancestorOrSelf.getPsiElement();
     Module module = ExecutionUtil.findModule(aClass);
-    return getTestCaseClass(module);
+    if (module == null) return null;
+    GlobalSearchScope scope = GlobalSearchScope.moduleRuntimeScope(module, true);
+    return getTestCaseClassOrNull(scope, module.getProject());
   }
 
   public static PsiClass getTestCaseClass(final Module module) throws NoJUnitException {
@@ -154,9 +146,12 @@ public class JUnitUtil {
   }
 
   private static PsiClass getTestCaseClass(final GlobalSearchScope scope, final Project project) throws NoJUnitException {
-    final PsiClass testCaseClass = PsiManager.getInstance(project).findClass(TESTCASE_CLASS, scope); // TODO do not search in sources;
+    PsiClass testCaseClass = getTestCaseClassOrNull(scope, project);
     if (testCaseClass == null) throw new NoJUnitException(scope.getDisplayName());
     return testCaseClass;
+  }
+  private static PsiClass getTestCaseClassOrNull(final GlobalSearchScope scope, final Project project) {
+    return PsiManager.getInstance(project).findClass(TESTCASE_CLASS, scope);
   }
 
   public static class  TestMethodFilter implements Condition<PsiMethod> {
