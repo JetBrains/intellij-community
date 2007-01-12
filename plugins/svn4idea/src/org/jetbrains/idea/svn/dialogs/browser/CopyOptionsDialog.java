@@ -208,6 +208,7 @@ public class CopyOptionsDialog extends DialogWrapper {
   private void update() {
     RepositoryTreeNode baseNode = myBrowser.getSelectedNode();
     if (baseNode == null) {
+      myTargetURL.setText("");
       getOKAction().setEnabled(false);
       return;
     }
