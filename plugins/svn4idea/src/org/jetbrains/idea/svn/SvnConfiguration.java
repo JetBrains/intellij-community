@@ -75,7 +75,6 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
   private String myUpgradeMode;
 
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
-  public boolean PROCESS_UNRESOLVED = false;
   public String LAST_MERGED_REVISION = null;
   public boolean UPDATE_RUN_STATUS = false;
   public boolean UPDATE_RECURSIVELY = true;

@@ -43,8 +43,6 @@ import org.tmatesoft.svn.core.wc.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -61,7 +59,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   public RefreshableOnComponent createAdditionalOptionsPanelForCheckinProject(Refreshable panel) {
-    return new KeepLocksComponent(panel, true);
+    return new KeepLocksComponent(panel);
   }
 
   @Nullable
@@ -384,38 +382,13 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     private boolean myIsKeepLocks;
     private JPanel myPanel;
 
-    private final JCheckBox myShowUnresolvedFileCheckBox;
-
-    public KeepLocksComponent(final Refreshable panel, boolean showShowUnresolvedCheckBox) {
+    public KeepLocksComponent(final Refreshable panel) {
 
       myPanel = new JPanel(new BorderLayout());
       myKeepLocksBox = new JCheckBox(SvnBundle.message("checkbox.chckin.keep.files.locked"));
       myKeepLocksBox.setSelected(myIsKeepLocks);
 
       myPanel.add(myKeepLocksBox, BorderLayout.CENTER);
-
-      if (showShowUnresolvedCheckBox) {
-        myShowUnresolvedFileCheckBox = new JCheckBox(SvnBundle.message("commit.dialog.setings.show.unresolved.checkbox"));
-
-        myPanel.add(myShowUnresolvedFileCheckBox, BorderLayout.NORTH);
-
-        myShowUnresolvedFileCheckBox.addItemListener(new ItemListener() {
-          public void itemStateChanged(ItemEvent e) {
-            final SvnConfiguration conf = SvnConfiguration.getInstance(mySvnVcs.getProject());
-            if (myShowUnresolvedFileCheckBox.isSelected() != conf.PROCESS_UNRESOLVED) {
-
-              panel.saveState();
-              conf.PROCESS_UNRESOLVED = myShowUnresolvedFileCheckBox.isSelected();
-              panel.refresh();
-            }
-          }
-        });
-
-      }
-      else {
-        myShowUnresolvedFileCheckBox = null;
-      }
-
     }
 
     public JComponent getComponent() {
@@ -427,9 +400,6 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
 
     public void refresh() {
-      if (myShowUnresolvedFileCheckBox != null) {
-        myShowUnresolvedFileCheckBox.setSelected(SvnConfiguration.getInstance(mySvnVcs.getProject()).PROCESS_UNRESOLVED);
-      }
     }
 
     public void saveState() {
