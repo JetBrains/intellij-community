@@ -4,6 +4,7 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 
 public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
@@ -33,7 +34,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
   public String expectedName;
 
 
-  ExpectedTypeInfoImpl(PsiType type, int kind, int dimCount, PsiType defaultType, int tailType) {
+  ExpectedTypeInfoImpl(@NotNull PsiType type, int kind, int dimCount, PsiType defaultType, int tailType) {
     this.type = type;
     this.kind = kind;
     this.defaultType = defaultType;
@@ -41,6 +42,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     this.dimCount = dimCount;
   }
 
+  @NotNull
   public PsiType getType () {
     PsiType t = type;
     int dims = dimCount;
