@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Stack;
 import java.util.concurrent.*;
 
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
@@ -533,17 +533,17 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void runReadAction(final Runnable action) {
-    boolean isExceptionalThread = isExceptionalThreadWithReadAccess(Thread.currentThread());
+    boolean mustAcquire = !isExceptionalThreadWithReadAccess(Thread.currentThread())
+                          /** if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
+                           * see {@link com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock#allowReader()} */
+                          && !isReadAccessAllowed();
 
-    if (!isExceptionalThread) {
-      while (true) {
-        try {
-          myActionsLock.readLock().acquire();
-        }
-        catch (InterruptedException e) {
-          throw new RuntimeInterruptedException(e);
-        }
-        break;
+    if (mustAcquire) {
+      try {
+        myActionsLock.readLock().acquire();
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeInterruptedException(e);
       }
     }
 
@@ -551,7 +551,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       action.run();
     }
     finally {
-      if (!isExceptionalThread) {
+      if (mustAcquire) {
         myActionsLock.readLock().release();
       }
     }
@@ -577,15 +577,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     myIsWaitingForWriteAction = true;
     try {
-      while (true) {
-        try {
-          myActionsLock.writeLock().acquire();
-        }
-        catch (InterruptedException e) {
-          throw new RuntimeInterruptedException(e);
-        }
-        break;
-      }
+      myActionsLock.writeLock().acquire();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeInterruptedException(e);
     }
     finally {
       myIsWaitingForWriteAction = false;
