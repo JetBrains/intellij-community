@@ -89,19 +89,23 @@ public class AsyncProcessIcon extends JComponent implements Disposable {
   }
 
   public Dimension getPreferredSize() {
-    return myPrefSize;
+    final Insets insets = getInsets();
+    return new Dimension(myPrefSize.width + insets.left + insets.right, myPrefSize.height + insets.top + insets.bottom);
   }
 
   public Dimension getMinimumSize() {
-    return myPrefSize;
+    return getPreferredSize();
   }
 
   public Dimension getMaximumSize() {
-    return myPrefSize;
+    return getPreferredSize();
   }
 
   protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
+    if (isOpaque()) {
+      g.setColor(getBackground());
+      g.fillRect(0, 0, getWidth(), getHeight());
+    }
 
     Icon icon;
 
@@ -111,8 +115,9 @@ public class AsyncProcessIcon extends JComponent implements Disposable {
       icon = myPassiveIcon;
     }
 
-    int x = (getWidth() - icon.getIconWidth()) / 2;
-    int y = (getHeight() - icon.getIconHeight()) / 2;
+    final Rectangle clipBounds = g.getClipBounds();
+    int x = (clipBounds.width - icon.getIconWidth()) / 2;
+    int y = (clipBounds.height - icon.getIconHeight()) / 2;
 
     icon.paintIcon(this, g, x, y);
   }

@@ -4,7 +4,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.wm.ex.ProcessInfo;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.ui.EdgeBorder;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.Wrapper;
@@ -15,7 +14,9 @@ import com.intellij.util.ui.update.Update;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,6 +42,7 @@ public class InfoAndProgressPanel extends JPanel {
     setOpaque(false);
 
     myProgressIcon = new AsyncProcessIcon("Background process");
+    myProgressIcon.setOpaque(true);
     myProgressIcon.setToolTipText("View " + ProcessPopup.BACKGROUND_PROCESSES);
     new BaseButtonBehavior(myProgressIcon) {
       protected void execute() {
@@ -48,12 +50,19 @@ public class InfoAndProgressPanel extends JPanel {
       }
     };
     myProgressIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    myProgressIcon.setBorder(new EmptyBorder(0, 2, 0, 2));
 
     myUpdateQueue = new MergingUpdateQueue("Progress indicator", 250, true, null);
     myPopup = new ProcessPopup(this);
 
     restoreEmptyStatus();
+  }
+
+  private Border createSeparatorBorder() {
+    return BorderFactory.createCompoundBorder(new StatusBarImpl.SeparatorBorder.Left(), new EmptyBorder(0, 2, 0, 2));
+  }
+
+  private Border createInsetBorder() {
+    return new EmptyBorder(0, 3, 0, 2);
   }
 
   public void addProgress(final ProgressIndicatorEx original, ProcessInfo info) {
@@ -152,13 +161,17 @@ public class InfoAndProgressPanel extends JPanel {
         triggerPopupShowing();
       }
     });
-    progressCountPanel.add(label, BorderLayout.CENTER);
-    label.setBorder(new EmptyBorder(0, 2, 0, 0));
+    label.setOpaque(true);
 
-    final Wrapper icon = new Wrapper(myProgressIcon);
-    progressCountPanel.add(icon, BorderLayout.EAST);
+    final Wrapper labelComp = new Wrapper(label);
+    labelComp.setBorder(new EmptyBorder(0, 4, 0, 0));
 
-    progressCountPanel.setBorder(createLeftEdgeBorder());
+    progressCountPanel.add(labelComp, BorderLayout.CENTER);
+
+    myProgressIcon.setBorder(createInsetBorder());
+    progressCountPanel.add(myProgressIcon, BorderLayout.EAST);
+
+    progressCountPanel.setBorder(new StatusBarImpl.SeparatorBorder.Left());
 
     add(myStatusBar.myInfoPanel, BorderLayout.CENTER);
     add(progressCountPanel, BorderLayout.EAST);
@@ -167,25 +180,20 @@ public class InfoAndProgressPanel extends JPanel {
     repaint();
   }
 
-  private static Border createLeftEdgeBorder() {
-    return BorderFactory.createCompoundBorder(new EdgeBorder(EdgeBorder.EDGE_LEFT), new EmptyBorder(0, 0, 0, 0));
-  }
-
   private void buildInInlineIndicator(final InlineProgressIndicator inline) {
     removeAll();
     setLayout(new GridLayout(1, 2));
     add(myStatusBar.myInfoPanel);
 
-    final JPanel inlineComponent = new JPanel(new BorderLayout());
-    inlineComponent.add(inline.getComponent(), BorderLayout.CENTER);
-    inlineComponent.setBorder(createLeftEdgeBorder());
+    final JPanel inlinePanel = new JPanel(new BorderLayout());
 
-    final Wrapper icon = new Wrapper(myProgressIcon);
-    icon.setBorder(createLeftEdgeBorder());
+    inline.getComponent().setBorder(createSeparatorBorder());
+    inlinePanel.add(inline.getComponent(), BorderLayout.CENTER);
 
-    inlineComponent.add(icon, BorderLayout.EAST);
+    myProgressIcon.setBorder(createSeparatorBorder());
+    inlinePanel.add(myProgressIcon, BorderLayout.EAST);
 
-    add(inlineComponent);
+    add(inlinePanel);
 
     myStatusBar.myInfoPanel.revalidate();
     myStatusBar.myInfoPanel.repaint();
@@ -228,9 +236,8 @@ public class InfoAndProgressPanel extends JPanel {
     removeAll();
     setLayout(new BorderLayout());
     add(myStatusBar.myInfoPanel, BorderLayout.CENTER);
-    final Wrapper icon = new Wrapper(myProgressIcon);
-    icon.setBorder(createLeftEdgeBorder());
-    add(icon, BorderLayout.EAST);
+    myProgressIcon.setBorder(createSeparatorBorder());
+    add(myProgressIcon, BorderLayout.EAST);
     myProgressIcon.suspend();
     myStatusBar.myInfoPanel.revalidate();
     myStatusBar.myInfoPanel.repaint();

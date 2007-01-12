@@ -8,6 +8,8 @@ import com.intellij.util.ui.InplaceButton;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 
 public class InlineProgressIndicator extends ProgressIndicatorBase {
@@ -31,10 +33,11 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
         cancelRequest();
       }
     };
+    myCancelButton.setOpaque(true);
     myCancelButton.setToolTipText(processInfo.getCancelTooltip());
 
     if (myCompact) {
-      myComponent.setLayout(new BorderLayout(0, 0));
+      myComponent.setLayout(new BorderLayout(2, 0));
       final JPanel textAndProgress = new JPanel(new BorderLayout());
       myText.setHorizontalAlignment(JLabel.RIGHT);
       textAndProgress.add(myText, BorderLayout.CENTER);
@@ -45,6 +48,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
       myProgress.setActive(false);
     } else {
       myComponent.setLayout(new BorderLayout());
+      myCancelButton.setBorder(new EmptyBorder(0, 2, 0, 0));
       myComponent.add(myCancelButton, BorderLayout.EAST);
       myComponent.add(myText, BorderLayout.NORTH);
       myComponent.add(myProgress, BorderLayout.CENTER);

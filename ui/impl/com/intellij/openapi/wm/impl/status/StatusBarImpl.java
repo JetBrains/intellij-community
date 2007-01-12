@@ -8,13 +8,13 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.ProcessInfo;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.ui.EdgeBorder;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class StatusBarImpl extends JPanel implements StatusBarEx {
@@ -49,15 +49,14 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   protected void constructUI() {
     setLayout(new BorderLayout());
 
-    final Border lineBorder = new EdgeBorder(EdgeBorder.EDGE_RIGHT);
-    final Border emptyBorder = BorderFactory.createEmptyBorder(3, 2, 2, 2);
-    final Border compoundBorder = BorderFactory.createCompoundBorder(emptyBorder, lineBorder);
+    final Border lineBorder = new SeparatorBorder.Left();
+    final Border emptyBorder = BorderFactory.createEmptyBorder(0, 2, 0, 2);
+    final Border separatorLeft = BorderFactory.createCompoundBorder(emptyBorder, lineBorder);
 
     myInfoPanel.setBorder(emptyBorder);
     myInfoPanel.setOpaque(false);
 
     myInfoAndProgressPanel = new InfoAndProgressPanel(this);
-    myInfoAndProgressPanel.setBorder(compoundBorder);
 
     add(myInfoAndProgressPanel, BorderLayout.CENTER);
 
@@ -72,25 +71,25 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     gbConstraints.weightx = 0;
     gbConstraints.weighty = 1;
 
-    myPositionPanel.setBorder(compoundBorder);
+    myPositionPanel.setBorder(separatorLeft);
     myPositionPanel.setOpaque(false);
     rightPanel.add(myPositionPanel, gbConstraints);
 
-    myToggleReadOnlyAttributePanel.setBorder(compoundBorder);
+    myToggleReadOnlyAttributePanel.setBorder(separatorLeft);
     myToggleReadOnlyAttributePanel.setOpaque(false);
     setWriteStatus(false);
     rightPanel.add(myToggleReadOnlyAttributePanel, gbConstraints);
 
-    myStatusPanel.setBorder(compoundBorder);
+    myStatusPanel.setBorder(separatorLeft);
     myStatusPanel.setOpaque(false);
     rightPanel.add(myStatusPanel, gbConstraints);
 
-    myEditorHighlightingPanel.setBorder(compoundBorder);
+    myEditorHighlightingPanel.setBorder(separatorLeft);
     myEditorHighlightingPanel.setOpaque(false);
     rightPanel.add(myEditorHighlightingPanel, gbConstraints);
 
     myCustomIndicationsPanel.setVisible(false); // Will become visible when any of indications really adds.
-    myCustomIndicationsPanel.setBorder(compoundBorder);
+    myCustomIndicationsPanel.setBorder(separatorLeft);
     myCustomIndicationsPanel.setOpaque(false);
     rightPanel.add(myCustomIndicationsPanel, gbConstraints);
 
@@ -98,13 +97,15 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     rightPanel.add(myMessagePanel, gbConstraints);
 
     //  myMemoryUsagePanel.setOpaque(false);
-    myMemoryUsagePanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+    myMemoryUsagePanel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
 
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.anchor = GridBagConstraints.WEST;
     rightPanel.add(myMemoryUsagePanel, gbConstraints);
 
     add(rightPanel, BorderLayout.EAST);
+
+    setBorder(new EmptyBorder(2, 0, 1, 0));
   }
 
   public void add(final ProgressIndicatorEx indicator, ProcessInfo info) {
@@ -116,14 +117,16 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     g.setColor(getBackground());
     g.fillRect(0, 0, getWidth(), getHeight());
 
-    GradientPaint paint = new GradientPaint(getWidth()/2, 0, getBackground().darker(), getWidth()/2, getHeight()/10, getBackground());
-    final Graphics2D g2 = (Graphics2D) g;
-    g2.setPaint(paint);
-    g.fillRect(0, 0, getWidth(), getHeight()/10);
+    final Color dark = getBackground().darker();
 
-    paint = new GradientPaint(getWidth()/2, getHeight() - getHeight()/7, getBackground(), getWidth()/2, getHeight() - 1, getBackground().darker());
-    g2.setPaint(paint);
-    g.fillRect(0, getHeight() - getHeight()/7, getWidth(), getHeight());
+    g.setColor(dark);
+    g.drawLine(0, 0, getWidth(), 0);
+
+    final Color lighter = new Color(dark.getRed(), dark.getGreen(), dark.getBlue(), 75);
+    g.setColor(lighter);
+    g.drawLine(0, 1, getWidth(), 1);
+
+    g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
   }
 
   public final void addNotify() {
@@ -231,6 +234,47 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   private final class MyUISettingsListener implements UISettingsListener{
     public void uiSettingsChanged(final UISettings uiSettings) {
       setMemoryIndicatorVisible(uiSettings.SHOW_MEMORY_INDICATOR);
+    }
+  }
+
+  public static class SeparatorBorder implements Border {
+
+    private boolean myLeft;
+
+    public SeparatorBorder(final boolean left) {
+      myLeft = left;
+    }
+
+    public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
+      g.setColor(c.getBackground().darker());
+      final Rectangle bounds = g.getClipBounds();
+      final int inset = 1;
+      if (myLeft) {
+        g.drawLine(bounds.x, bounds.y + inset, bounds.x, bounds.height - inset);
+      } else {
+        g.drawLine(bounds.width - inset, bounds.y, bounds.width - inset, bounds.y);
+      }
+    }
+
+    public Insets getBorderInsets(final Component c) {
+      return new Insets(0, 1, 0, 1);
+    }
+
+    public boolean isBorderOpaque() {
+      return false;
+    }
+
+
+    public static class Left extends SeparatorBorder {
+      public Left() {
+        super(true);
+      }
+    }
+
+    public static class Right extends SeparatorBorder {
+      public Right() {
+        super(false);
+      }
     }
   }
 
