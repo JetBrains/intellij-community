@@ -146,14 +146,12 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
       IgnoredFileBean result = new IgnoredFileBean();
       String path = FileUtil.getRelativePath(new File(projectDir.getPresentableUrl()), new File(myIgnoreDirectoryTextField.getText()));
       if (path == null) {
-        result.setPath(myIgnoreDirectoryTextField.getText().replace(File.separatorChar, '/'));
+        path = myIgnoreDirectoryTextField.getText().replace(File.separatorChar, '/');
       }
-      else {
-        if (!path.endsWith(File.separator)) {
-          path += File.separator;
-        }
-        result.setPath(path.replace(File.separatorChar, '/'));
+      if (!path.endsWith(File.separator)) {
+        path += File.separator;
       }
+      result.setPath(path.replace(File.separatorChar, '/'));
       return new IgnoredFileBean[] { result };
     }
     if (myIgnoreAllFilesMatchingRadioButton.isSelected()) {

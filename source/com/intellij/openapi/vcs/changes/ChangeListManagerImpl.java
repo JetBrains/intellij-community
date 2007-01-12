@@ -18,12 +18,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
-import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
@@ -38,11 +37,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 /**
  * @author max
@@ -380,6 +379,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
               }, null); // TODO: make real indicator
             }
             catch (VcsException e) {
+              LOG.info(e);
               if (myUpdateException == null) {
                 myUpdateException = e;
               }
@@ -950,7 +950,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       if (myFilesToIgnore.size() == 0) {
         return false;
       }
-      String filePath = VfsUtil.getRelativePath(file, myProject.getProjectFile().getParent(), '/');
+      String filePath = FileUtil.getRelativePath(new File(myProject.getProjectFile().getParent().getPath()), new File(file.getPath()));
       for(IgnoredFileBean bean: myFilesToIgnore) {
         final String prefix = bean.getPath();
         if (prefix != null && StringUtil.startsWithIgnoreCase(filePath, prefix)) {
