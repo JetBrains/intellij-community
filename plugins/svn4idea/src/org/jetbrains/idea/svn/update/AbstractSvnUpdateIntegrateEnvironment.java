@@ -78,7 +78,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
     final Collection<String> conflictedFiles = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
     return new UpdateSessionAdapter(exceptions, false) {
       public void onRefreshFilesCompleted() {
-        if (conflictedFiles != null && !conflictedFiles.isEmpty()) {
+        if (conflictedFiles != null && !conflictedFiles.isEmpty() && !isDryRun()) {
           List<VirtualFile> vfFiles = new ArrayList<VirtualFile>();
           for (final String conflictedFile : conflictedFiles) {
             @NonNls final String path = "file://" + conflictedFile.replace(File.separatorChar, '/');
@@ -101,6 +101,10 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       }
 
     };
+  }
+
+  protected boolean isDryRun() {
+    return false;
   }
 
   protected abstract AbstractUpdateIntegrateCrawler createCrawler(ISVNEventHandler eventHandler,

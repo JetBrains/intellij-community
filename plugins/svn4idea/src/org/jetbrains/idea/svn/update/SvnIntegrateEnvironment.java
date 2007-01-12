@@ -59,6 +59,11 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
     };
   }
 
+  @Override
+  protected boolean isDryRun() {
+    return SvnConfiguration.getInstance(myVcs.getProject()).MERGE_DRY_RUN;
+  }
+
   private class IntegrateCrawler extends AbstractUpdateIntegrateCrawler {
 
     public IntegrateCrawler(SvnVcs vcs,
