@@ -5,8 +5,8 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
@@ -79,7 +79,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
 
     @NonNls final String ext = ".xml";
     final String fileName = ourOutputPath + File.separator + getShortName() + ext;
-    final ReplacePathToMacroMap replacements = ((ProjectEx)getContext().getProject()).getMacroReplacements();
+    final ReplacePathToMacroMap replacements = PathMacroManager.getInstance(getContext().getProject()).getReplacePathMap();
     PrintWriter printWriter = null;
     try {
       new File(ourOutputPath).mkdirs();

@@ -1,18 +1,18 @@
 package com.intellij.ide.util;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.ExporterToTextFile;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.CommonBundle;
 import com.intellij.util.SystemProperties;
 
 import javax.swing.*;
@@ -169,7 +169,7 @@ public class ExportToFileUtil {
       panel.add(button, gbConstraints);
 
       String defaultFilePath = myExporter.getDefaultFilePath();
-      defaultFilePath = ((ProjectEx)myProject).getExpandMacroReplacements()
+      defaultFilePath = PathMacroManager.getInstance(myProject).getReplacePathMap()
         .substitute(defaultFilePath, SystemInfo.isFileSystemCaseSensitive).replace('/', File.separatorChar);
       textField.setText(defaultFilePath);
 

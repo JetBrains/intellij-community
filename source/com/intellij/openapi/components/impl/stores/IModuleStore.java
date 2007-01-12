@@ -1,7 +1,9 @@
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.application.options.ReplacePathToMacroMap;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,9 +16,6 @@ public interface IModuleStore extends IComponentStore {
   @SuppressWarnings({"EmptyMethod"})
   void save() throws IOException;
 
-  //todo: inline
-  ReplacePathToMacroMap getMacroReplacements();
-
   void setModuleFilePath(final String filePath);
 
   @Nullable
@@ -27,4 +26,9 @@ public interface IModuleStore extends IComponentStore {
 
   @NotNull
   String getModuleFileName();
+
+  Element saveToXml(final Element targetRoot, final VirtualFile configFile);
+  void loadSavedConfiguration() throws JDOMException, IOException, InvalidDataException;
+
+  void setSavePathsRelative(final boolean b);
 }

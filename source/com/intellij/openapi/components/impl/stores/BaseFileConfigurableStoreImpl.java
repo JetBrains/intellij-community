@@ -1,17 +1,12 @@
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.AreaInstance;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.project.impl.convertors.Convertor01;
@@ -24,7 +19,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -38,20 +32,15 @@ import java.util.*;
 abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.BaseFileConfigurableStoreImpl");
 
-  private boolean myDefault;
   private int myOriginalVersion = -1;
   private boolean mySavePathsRelative;
   private final HashMap<String,String> myConfigurationNameToFileName = new HashMap<String,String>();
-  private static final Set<String> ourUsedMacros = new HashSet<String>();
-  private static boolean ourLogMacroUsage = false;
   @NonNls private static final String RELATIVE_PATHS_OPTION = "relativePaths";
   @NonNls private static final String VERSION_OPTION = "version";
   @NonNls public static final String ATTRIBUTE_NAME = "name";
   @NonNls static final String ELEMENT_COMPONENT = "component";
   @NonNls private static final String ATTRIBUTE_CLASS = "class";
   private ComponentManagerImpl myComponentManager;
-  private AreaInstance myAreaInstance;
-  private BaseFileConfigurable myBaseFileConfigurable;
   private static ArrayList<String> ourConversionProblemsStorage = new ArrayList<String>();
 
   @Nullable
@@ -60,7 +49,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   protected abstract ConfigurationFile[] getConfigurationFiles();
 
 
-  public synchronized void setComponentManager(final ComponentManagerImpl componentManager) {
+  protected BaseFileConfigurableStoreImpl(final ComponentManagerImpl componentManager) {
     myComponentManager = componentManager;
   }
 
@@ -68,38 +57,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return myComponentManager;
   }
 
-  public synchronized void setAreaInstance(final AreaInstance areaInstance) {
-    myAreaInstance = areaInstance;
-  }
-
-  public synchronized void setBaseFileConfigurable(final BaseFileConfigurable baseFileConfigurable) {
-    myBaseFileConfigurable = baseFileConfigurable;
-  }
-
-  public void setDefault(boolean aDefault) {
-    myDefault = aDefault;
-  }
-
-  static void startLoggingUsedMacros() {
-    LOG.assertTrue(!ourLogMacroUsage, "endLoggingUsedMacros() must be called before calling startLoggingUsedMacros()");
-    getUsedMacros().clear();
-    ourLogMacroUsage = true;
-  }
-
-  public static boolean isMacroLoggingEnabled() {
-    return ourLogMacroUsage;
-  }
-
-  static void endLoggingUsedMacros() {
-    LOG.assertTrue(ourLogMacroUsage, "startLoggingUsedMacros() must be called before calling endLoggingUsedMacros()");
-    ourLogMacroUsage = false;
-  }
-
-  public static String[] getUsedMacroNames() {
-    return getUsedMacros().toArray(new String[getUsedMacros().size()]);
-  }
-
-  synchronized Element saveToXml(Element targetRoot, VirtualFile configFile) {
+  public synchronized Element saveToXml(Element targetRoot, VirtualFile configFile) {
     String filePath = configFile != null ? configFile.getPath() : null;
     Element root;
     if (targetRoot != null) {
@@ -135,7 +93,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     for (Class<?> componentInterface : componentInterfaces) {
       VirtualFile componentFile = getComponentConfigurationFile(componentInterface);
 
-      if (isDefault() || configFile == componentFile) {
+      if (configFile == componentFile) {
         final Object component = myComponentManager.getComponent(componentInterface);
         if (!(component instanceof BaseComponent)) continue;
         BaseComponent baseComponent = (BaseComponent)component;
@@ -171,7 +129,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   }
 
 
-  synchronized void loadFromXml(Element root, String filePath) throws InvalidDataException {
+  public synchronized void loadFromXml(Element root, String filePath) throws InvalidDataException {
     getExpandMacroReplacements().substitute(root, SystemInfo.isFileSystemCaseSensitive);
 
     int originalVersion = 0;
@@ -221,14 +179,12 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
   }
 
-  //todo: inline
-  public ExpandMacroToPathMap getExpandMacroReplacements() {
+  ExpandMacroToPathMap getExpandMacroReplacements() {
     return PathMacroManager.getInstance(myComponentManager).getExpandMacroMap();
   }
 
 
-  //todo: inline
-  public ReplacePathToMacroMap getMacroReplacements() {
+  ReplacePathToMacroMap getMacroReplacements() {
     return PathMacroManager.getInstance(myComponentManager).getReplacePathMap();
   }
 
@@ -239,10 +195,6 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
   synchronized int getOriginalVersion() {
     return myOriginalVersion;
-  }
-
-  public synchronized void initStore() {
-    myComponentManager.initComponentsFromExtensions(Extensions.getArea(myAreaInstance));
   }
 
   synchronized void save() throws IOException {
@@ -270,19 +222,8 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
            file.needsSave(saveToXml(null, vFile), replacements, getLineSeparator(vFile));
   }
 
-  private synchronized String getLineSeparator(final VirtualFile file) {
-    final Project project;
-    if (myBaseFileConfigurable instanceof Project) {
-      project = (Project)myBaseFileConfigurable;
-    }
-    else if (myBaseFileConfigurable instanceof Module) {
-      project = ((Module)myBaseFileConfigurable).getProject();
-    }
-    else {
-      project = null;
-    }
-
-    return FileDocumentManager.getInstance().getLineSeparator(file, project);
+  synchronized String getLineSeparator(final VirtualFile file) {
+    return FileDocumentManager.getInstance().getLineSeparator(file, null);
   }
 
   public synchronized void loadSavedConfiguration() throws JDOMException, IOException, InvalidDataException {
@@ -315,17 +256,4 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     mySavePathsRelative = b;
   }
 
-  public boolean isDefault() {
-    return myDefault;
-  }
-
-
-  //todo: inline
-  public void setPathMacros(final PathMacrosImpl pathMacros) {
-    PathMacroManager.getInstance(myComponentManager).setPathMacros(pathMacros);
-  }
-
-  public static Set<String> getUsedMacros() {
-    return ourUsedMacros;
-  }
 }

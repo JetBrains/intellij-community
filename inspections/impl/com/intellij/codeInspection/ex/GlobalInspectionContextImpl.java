@@ -16,6 +16,7 @@ import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.ide.util.projectWizard.JdkChooserPanel;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -25,7 +26,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
@@ -360,7 +360,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
                 outStream = localInspectionFilePreparations(file, outStream, isLocalToolAttribute, isLocalTool);
               }
               else {
-                ((ProjectEx)getProject()).getMacroReplacements().substitute(doc.getRootElement(), SystemInfo.isFileSystemCaseSensitive);
+                PathMacroManager.getInstance(getProject()).getReplacePathMap().substitute(doc.getRootElement(), SystemInfo.isFileSystemCaseSensitive);
                 outStream = new BufferedOutputStream(new FileOutputStream(file));
                 JDOMUtil.writeDocument(doc, outStream, "\n");
               }

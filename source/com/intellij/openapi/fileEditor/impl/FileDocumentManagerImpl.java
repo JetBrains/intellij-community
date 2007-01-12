@@ -297,7 +297,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return lineSeparator;
   }
 
-  public String getLineSeparator(VirtualFile file, Project project) {
+  @NotNull
+  public String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project) {
     String lineSeparator = file != null ? file.getUserData(LoadTextUtil.DETECTED_LINE_SEPARATOR_KEY) : null;
     if (lineSeparator == null) {
       CodeStyleSettingsManager settingsManager = project == null

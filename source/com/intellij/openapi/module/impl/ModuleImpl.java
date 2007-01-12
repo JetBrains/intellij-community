@@ -5,9 +5,9 @@ import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
-import com.intellij.openapi.components.impl.stores.BaseFileConfigurable;
 import com.intellij.openapi.components.impl.stores.IModuleStore;
 import com.intellij.openapi.components.impl.stores.ModuleStoreImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,9 +46,8 @@ import java.util.*;
 /**
  * @author max
  */
-public class ModuleImpl extends BaseFileConfigurable implements Module {
+public class ModuleImpl extends ComponentManagerImpl implements Module {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleImpl");
-  @NonNls private static final String RELATIVE_PATHS_OPTION = "relativePaths";
 
   @NotNull private final Project myProject;
   private ModuleType myModuleType = null;
@@ -75,7 +74,9 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   public static final Object MODULE_RENAMING_REQUESTOR = new Object();
 
   public ModuleImpl(String filePath, Project project, PomModel pomModel, PathMacrosImpl pathMacros) {
-    super(project, false, pathMacros);
+    super(project);
+
+    PathMacroManager.getInstance(this).setPathMacros(pathMacros);
 
     myProject = project;
     myPomModel =  pomModel;
@@ -126,13 +127,6 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     }
 
     return true;
-  }
-
-  // since this option is stored in 2 different places (a field in the base class and myOptions map in this class),
-  // we have to update both storages whenever the value of the option changes
-  public synchronized void setSavePathsRelative(boolean value) {
-    super.setSavePathsRelative(value);
-    setOption(RELATIVE_PATHS_OPTION, String.valueOf(value));
   }
 
   private static List<String> parseOptionValue(String optionValue) {
@@ -391,5 +385,10 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     final AreaPicoContainer picoContainer = Extensions.getArea(this).getPicoContainer();
     picoContainer.setComponentAdapterFactory(new ComponentManagerImpl.MyComponentAdapterFactory(this));
     return picoContainer;
+  }
+
+
+  public void setSavePathsRelative(final boolean b) {
+    getStateStore().setSavePathsRelative(b);
   }
 }

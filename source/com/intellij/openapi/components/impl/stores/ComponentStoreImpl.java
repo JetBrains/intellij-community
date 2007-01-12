@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 @SuppressWarnings({"deprecation"})
-abstract class ComponentStoreImpl implements StateStore, IComponentStore {
+abstract class ComponentStoreImpl implements IComponentStore {
   @NonNls private static final String COMPONENT_ELEMENT = "component";
   @NonNls private static final String NAME_ATTR = "name";
 

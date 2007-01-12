@@ -3,7 +3,10 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
@@ -28,6 +31,7 @@ import java.util.Set;
 
 public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ModuleStoreImpl");
+  @NonNls private static final String RELATIVE_PATHS_OPTION = "relativePaths";
 
   private ModuleImpl myModule;
 
@@ -35,7 +39,8 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   private ConfigurationFile myFile;
 
 
-  public ModuleStoreImpl(final ModuleImpl module) {
+  public ModuleStoreImpl(final ComponentManagerImpl componentManager, final ModuleImpl module) {
+    super(componentManager);
     myModule = module;
   }
 
@@ -66,7 +71,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     return null;
   }
 
-  protected synchronized Element saveToXml(final Element targetRoot, final VirtualFile configFile) {
+  public synchronized Element saveToXml(final Element targetRoot, final VirtualFile configFile) {
     final Element root = super.saveToXml(targetRoot, configFile);
     Set<String> options = myModule.myOptions.keySet();
     for (String option : options) {
@@ -75,7 +80,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     return root;
   }
 
-  protected synchronized void loadFromXml(final Element root, final String filePath) throws InvalidDataException {
+  public synchronized void loadFromXml(final Element root, final String filePath) throws InvalidDataException {
 
     List attributes = root.getAttributes();
     for (Object attribute : attributes) {
@@ -144,5 +149,20 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   @NonNls
   protected String getRootNodeName() {
     return "module";
+  }
+
+  // since this option is stored in 2 different places (a field in the base class and myOptions map in this class),
+  // we have to update both storages whenever the value of the option changes
+  public synchronized void setSavePathsRelative(boolean value) {
+    super.setSavePathsRelative(value);
+    myModule.setOption(RELATIVE_PATHS_OPTION, String.valueOf(value));
+  }
+
+  synchronized String getLineSeparator(final VirtualFile file) {
+    return FileDocumentManager.getInstance().getLineSeparator(file, myModule.getProject());
+  }
+
+  public synchronized void initStore() {
+    getComponentManager().initComponentsFromExtensions(Extensions.getArea(myModule));
   }
 }

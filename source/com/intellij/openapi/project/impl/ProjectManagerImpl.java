@@ -206,7 +206,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       myDefaultProject = createProject(null, true, false, ApplicationManager.getApplication().isUnitTestMode());
       if (myDefaultProjectRootElement != null) {
         try {
-          myDefaultProject.loadFromXml(myDefaultProjectRootElement, null);
+          myDefaultProject.getStateStore().loadFromXml(myDefaultProjectRootElement, null);
         }
         catch (InvalidDataException e) {
           LOG.info(e);
@@ -583,7 +583,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (myDefaultProject != null) {
       Element element = new Element(ELEMENT_DEFAULT_PROJECT);
       parentNode.addContent(element);
-      myDefaultProject.saveToXml(element, myDefaultProject.getProjectFile());
+      myDefaultProject.getStateStore().saveToXml(element, myDefaultProject.getProjectFile());
     }
     else if (myDefaultProjectRootElement != null) {
       parentNode.addContent((Element)myDefaultProjectRootElement.clone());

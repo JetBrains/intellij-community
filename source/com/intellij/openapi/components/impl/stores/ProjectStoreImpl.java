@@ -7,7 +7,11 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -55,8 +59,8 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
 
   private String myFilePath;
 
-
-  public ProjectStoreImpl(final ProjectImpl project) {
+  public ProjectStoreImpl(final ComponentManagerImpl componentManager, final ProjectImpl project) {
+    super(componentManager);
     myProject = project;
   }
 
@@ -194,7 +198,7 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
       if (!ourSaveSettingsInProgress) {
         try {
           ourSaveSettingsInProgress = true;
-          startLoggingUsedMacros();
+          PathMacroManager.startLoggingUsedMacros();
 
           myProject.saveSettingsSavingComponents();
 
@@ -233,7 +237,7 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
           }
         }
         finally {
-          endLoggingUsedMacros();
+          PathMacroManager.endLoggingUsedMacros();
           ourSaveSettingsInProgress = false;
         }
       }
@@ -284,7 +288,7 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
       throw new IOException(ProjectBundle.message("project.load.undefined.path.variables.error"));
     }
 
-    myProject.loadSavedConfiguration();
+    myProject.getStateStore().loadSavedConfiguration();
 
     myProject.init();
   }
@@ -335,7 +339,7 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
 
   public void loadProjectFromTemplate(final Project project) {
     ProjectImpl defaultProject = (ProjectImpl)project;
-    Element element = ((ProjectStoreImpl)defaultProject.getStateStore()).saveToXml(null, defaultProject.getProjectFile());
+    Element element = defaultProject.getStateStore().saveToXml(null, defaultProject.getProjectFile());
     try {
       loadFromXml(element, myFilePath);
     }
@@ -369,6 +373,10 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
   }
 
   protected VirtualFile getComponentConfigurationFile(Class componentInterface) {
+    if (myProject.isDefault()) {
+      return getProjectFile();
+    }
+
     return isWorkspace(componentInterface) ? getWorkspaceFile() : getProjectFile();
   }
 
@@ -386,5 +394,14 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
   public synchronized boolean isSavePathsRelative() {
     return super.isSavePathsRelative();
   }
+
+  synchronized String getLineSeparator(final VirtualFile file) {
+    return FileDocumentManager.getInstance().getLineSeparator(file, myProject);
+  }
+
+  public synchronized void initStore() {
+    getComponentManager().initComponentsFromExtensions(Extensions.getArea(myProject));
+  }
+
 }
 

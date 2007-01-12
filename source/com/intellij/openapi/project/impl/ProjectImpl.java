@@ -1,7 +1,6 @@
 package com.intellij.openapi.project.impl;
 
 import com.intellij.application.options.PathMacrosImpl;
-import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -9,11 +8,10 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.ExpandMacroToPathMap;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
-import com.intellij.openapi.components.impl.stores.BaseFileConfigurable;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.ProjectStoreImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,7 +43,7 @@ import java.util.List;
 /**
  *
  */
-public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
+public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
 
   private ProjectManagerImpl myManager;
@@ -63,14 +61,17 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
   private GlobalSearchScope myProjectScope;
   @NonNls private static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
   @NonNls private static final String DUMMY_PROJECT_NAME = "Dummy (Mock) Project";
+  private boolean myDefault;
 
   protected ProjectImpl(ProjectManagerImpl manager,
                         String filePath,
                         boolean isDefault,
                         boolean isOptimiseTestLoadSpeed,
                         PathMacrosImpl pathMacros) {
-    super(ApplicationManager.getApplication(), isDefault, pathMacros);
+    super(ApplicationManager.getApplication());
 
+    myDefault = isDefault;
+    PathMacroManager.getInstance(this).setPathMacros(pathMacros);
     getStateStore().setProjectFilePath(filePath);
 
     myOptimiseTestLoadSpeed = isOptimiseTestLoadSpeed;
@@ -93,12 +94,8 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
     return getStateStore().isSavePathsRelative();
   }
 
-  public ReplacePathToMacroMap getMacroReplacements() {
-    return getStateStore().getMacroReplacements();
-  }
-
-  public ExpandMacroToPathMap getExpandMacroReplacements() {
-    return getStateStore().getExpandMacroReplacements();
+  public void setSavePathsRelative(boolean b) {
+    getStateStore().setSavePathsRelative(b);
   }
 
   public boolean isDummy() {
@@ -357,5 +354,9 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
     final AreaPicoContainer picoContainer = Extensions.getArea(this).getPicoContainer();
     picoContainer.setComponentAdapterFactory(new ComponentManagerImpl.MyComponentAdapterFactory(this));
     return picoContainer;
+  }
+
+  public boolean isDefault() {
+    return myDefault;
   }
 }

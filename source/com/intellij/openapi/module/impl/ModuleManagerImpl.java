@@ -272,10 +272,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     protected String getModuleFilePath() {
       return myModule.getModuleFilePath().replace(File.separatorChar, '/');
     }
-
-    public boolean isDefaultModule() {
-      return ((ModuleImpl)myModule).isDefault();
-    }
   }
 
   private static class ModulePathSaveItem extends SaveItem{
@@ -637,7 +633,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       ModuleImpl module = getModuleByFilePath(filePath);
       if (module == null) {
         module = new ModuleImpl(filePath, myProject, myPomModel, PathMacrosImpl.getInstanceEx());
-        module.loadSavedConfiguration();
+        module.getStateStore().loadSavedConfiguration();
         module.loadModuleComponents();
         initModule(module, true);
       }

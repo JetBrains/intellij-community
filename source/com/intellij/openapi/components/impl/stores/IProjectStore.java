@@ -1,11 +1,10 @@
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.application.options.ReplacePathToMacroMap;
-import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,11 +17,6 @@ public interface IProjectStore extends IComponentStore {
   void saveProject();
 
   boolean checkVersion();
-
-  //todo: inline
-  ReplacePathToMacroMap getMacroReplacements();
-  //todo: inline
-  ExpandMacroToPathMap getExpandMacroReplacements();
 
   @SuppressWarnings({"EmptyMethod"})
   boolean isSavePathsRelative();
@@ -42,4 +36,11 @@ public interface IProjectStore extends IComponentStore {
 
   @NotNull
   String getProjectFilePath();
+
+  Element saveToXml(final Element targetRoot, final VirtualFile configFile);
+
+  void loadFromXml(final Element root, final String filePath) throws InvalidDataException;
+  void loadSavedConfiguration() throws JDOMException, IOException, InvalidDataException;
+
+  void setSavePathsRelative(final boolean b);
 }

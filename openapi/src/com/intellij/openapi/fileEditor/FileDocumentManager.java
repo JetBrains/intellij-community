@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class FileDocumentManager {
@@ -55,7 +56,8 @@ public abstract class FileDocumentManager {
 
   public abstract void reloadFromDisk(Document document);
 
-  public abstract String getLineSeparator(VirtualFile file, Project project);
+  @NotNull
+  public abstract String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project);
 
   public static boolean fileForDocumentCheckedOutSuccessfully(final Document document, final Project project) {
     if (project != null) {
