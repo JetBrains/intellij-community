@@ -45,7 +45,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
   @Nullable
-  protected Element getDefaults(final BaseComponent component) throws JDOMException, IOException, InvalidDataException {
+  protected Element getDefaults(final Object component) throws JDOMException, IOException, InvalidDataException {
     //[mike] speed optimization. If you need default initialization in tests
     //use field initializers instead.
     if (((ProjectImpl)myModule.getProject()).isOptimiseTestLoadSpeed()) return null;
@@ -71,8 +71,8 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     return null;
   }
 
-  public synchronized Element saveToXml(final Element targetRoot, final VirtualFile configFile) {
-    final Element root = super.saveToXml(targetRoot, configFile);
+  public synchronized Element saveToXml(final VirtualFile configFile) {
+    final Element root = super.saveToXml(configFile);
     Set<String> options = myModule.myOptions.keySet();
     for (String option : options) {
       root.setAttribute(option, myModule.myOptions.get(option));

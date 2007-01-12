@@ -37,7 +37,7 @@ public interface IProjectStore extends IComponentStore {
   @NotNull
   String getProjectFilePath();
 
-  Element saveToXml(final Element targetRoot, final VirtualFile configFile);
+  Element saveToXml(final VirtualFile configFile);
 
   void loadFromXml(final Element root, final String filePath) throws InvalidDataException;
   void loadSavedConfiguration() throws JDOMException, IOException, InvalidDataException;

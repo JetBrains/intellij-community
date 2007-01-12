@@ -152,7 +152,7 @@ public class ApplicationStoreImpl extends ComponentStoreImpl implements IApplica
 
       Element root = getRootElement(fileNameToRootElementMap, fileName);
       try {
-        Element node = serializeComponent((BaseComponent)component);
+        Element node = serializeComponent(component);
         if (node != null) {
           root.addContent(node);
         }
@@ -204,7 +204,7 @@ public class ApplicationStoreImpl extends ComponentStoreImpl implements IApplica
     }
   }
 
-  protected Element getDefaults(final BaseComponent component) throws JDOMException, IOException, InvalidDataException {
+  protected Element getDefaults(final Object component) throws JDOMException, IOException, InvalidDataException {
     InputStream stream = getDefaultsInputStream(component);
 
     if (stream != null) {
@@ -228,7 +228,7 @@ public class ApplicationStoreImpl extends ComponentStoreImpl implements IApplica
   }
 
   @Nullable
-  private static InputStream getDefaultsInputStream(BaseComponent component) {
+  private static InputStream getDefaultsInputStream(Object component) {
     return DecodeDefaultsUtil.getDefaultsInputStream(component);
   }
 

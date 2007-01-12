@@ -25,7 +25,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
 
   @Nullable
-  protected abstract Element getDefaults(BaseComponent component) throws IOException, JDOMException, InvalidDataException;
+  protected abstract Element getDefaults(Object component) throws IOException, JDOMException, InvalidDataException;
 
   synchronized void clearDomMap() {
     myNameToConfiguration = new HashMap<String, Element>();
@@ -50,8 +50,8 @@ abstract class ComponentStoreImpl implements IComponentStore {
     myNameToConfiguration.remove(name);
   }
 
-  void initJdomExternalizable(Class componentClass, BaseComponent component) {
-    final String componentName = component.getComponentName();
+  void initJdomExternalizable(Class componentClass, Object component) {
+    final String componentName = ((BaseComponent)component).getComponentName();
 
     try {
       Element element = getDefaults(component);
@@ -84,12 +84,12 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   @Nullable
-  static Element serializeComponent(BaseComponent component) {
+  static Element serializeComponent(Object component) {
     try {
       if (component instanceof JDOMExternalizable) {
         Element element = new Element(COMPONENT_ELEMENT);
 
-        element.setAttribute(NAME_ATTR, component.getComponentName());
+        element.setAttribute(NAME_ATTR, ((BaseComponent)component).getComponentName());
 
         try {
           ((JDOMExternalizable)component).writeExternal(element);
@@ -109,7 +109,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     return null;
   }
 
-  public void initComponent(final BaseComponent component, final Class componentClass) {
+  public void initComponent(final Object component, final Class componentClass) {
     if (component instanceof JDOMExternalizable) {
       initJdomExternalizable(componentClass, component);
     }

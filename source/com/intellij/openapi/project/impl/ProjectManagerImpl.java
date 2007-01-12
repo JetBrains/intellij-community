@@ -581,9 +581,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
     if (myDefaultProject != null) {
-      Element element = new Element(ELEMENT_DEFAULT_PROJECT);
-      parentNode.addContent(element);
-      myDefaultProject.getStateStore().saveToXml(element, myDefaultProject.getProjectFile());
+      final Element e = myDefaultProject.getStateStore().saveToXml(myDefaultProject.getProjectFile());
+      e.setName(ELEMENT_DEFAULT_PROJECT);
+      parentNode.addContent(e);
     }
     else if (myDefaultProjectRootElement != null) {
       parentNode.addContent((Element)myDefaultProjectRootElement.clone());

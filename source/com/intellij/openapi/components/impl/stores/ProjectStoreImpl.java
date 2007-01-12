@@ -82,7 +82,7 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
   }
 
   @Nullable
-  protected Element getDefaults(final BaseComponent component) throws JDOMException, IOException, InvalidDataException {
+  protected Element getDefaults(final Object component) throws JDOMException, IOException, InvalidDataException {
 
     //[max | mike] speed optimization. If you need default initialization in tests
     //use field initializers instead.
@@ -102,7 +102,7 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
         throw new InvalidDataException();
       }
 
-      getExpandMacroReplacements().substitute(root, SystemInfo.isFileSystemCaseSensitive);
+      PathMacroManager.getInstance(myProject).getExpandMacroMap().substitute(root, SystemInfo.isFileSystemCaseSensitive);
       return root;
     }
     return null;
@@ -179,17 +179,9 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
     return true;
   }
 
-  private ReadonlyStatusHandler.OperationStatus ensureConfigFilesWritable(Module[] modules) {
-
-    final List<VirtualFile> readonlyFiles = new ArrayList<VirtualFile>(modules.length + 2);
-
-    collectReadonlyFiles(getConfigurationFiles(), readonlyFiles);
-
-    for (Module module : modules) {
-      final ModuleStoreImpl moduleStore = (ModuleStoreImpl)((ModuleImpl)module).getStateStore();
-      moduleStore.collectReadonlyFiles(moduleStore.getConfigurationFiles(), readonlyFiles);
-    }
-
+  private ReadonlyStatusHandler.OperationStatus ensureConfigFilesWritable() {
+    final List<VirtualFile> readonlyFiles = new ArrayList<VirtualFile>();
+    collectFileNeedsToBeWritten(getConfigurationFiles(), readonlyFiles);
     return ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readonlyFiles.toArray(new VirtualFile[readonlyFiles.size()]));
   }
 
@@ -203,7 +195,7 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
           myProject.saveSettingsSavingComponents();
 
           final Module[] modules = ModuleManager.getInstance(myProject).getModules();
-          final ReadonlyStatusHandler.OperationStatus operationStatus = ensureConfigFilesWritable(modules);
+          final ReadonlyStatusHandler.OperationStatus operationStatus = ensureConfigFilesWritable();
           if (operationStatus.hasReadonlyFiles()) {
             MessagesEx.error(myProject, ProjectBundle.message("project.save.error", operationStatus.getReadonlyFilesMessage())).showLater();
             return;
@@ -339,7 +331,7 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
 
   public void loadProjectFromTemplate(final Project project) {
     ProjectImpl defaultProject = (ProjectImpl)project;
-    Element element = defaultProject.getStateStore().saveToXml(null, defaultProject.getProjectFile());
+    Element element = defaultProject.getStateStore().saveToXml(defaultProject.getProjectFile());
     try {
       loadFromXml(element, myFilePath);
     }
@@ -403,5 +395,14 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
     getComponentManager().initComponentsFromExtensions(Extensions.getArea(myProject));
   }
 
+
+  void collectFileNeedsToBeWritten(final ConfigurationFile[] files, final List<VirtualFile> readonlyFiles) {
+    super.collectFileNeedsToBeWritten(files, readonlyFiles);
+
+    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+      final ModuleStoreImpl moduleStore = (ModuleStoreImpl)((ModuleImpl)module).getStateStore();
+      moduleStore.collectFileNeedsToBeWritten(moduleStore.getConfigurationFiles(), readonlyFiles);
+    }
+  }
 }
 

@@ -27,7 +27,7 @@ public interface IModuleStore extends IComponentStore {
   @NotNull
   String getModuleFileName();
 
-  Element saveToXml(final Element targetRoot, final VirtualFile configFile);
+  Element saveToXml(final VirtualFile configFile);
   void loadSavedConfiguration() throws JDOMException, IOException, InvalidDataException;
 
   void setSavePathsRelative(final boolean b);

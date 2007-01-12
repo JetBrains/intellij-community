@@ -17,8 +17,8 @@ public class DecodeDefaultsUtil {
   @NonNls private static final String XML_EXTENSION = ".xml";
 
   @Nullable
-  public static InputStream getDefaultsInputStream(BaseComponent component) {
-    InputStream stream = getDefaultsInputStream(component, component.getComponentName());
+  public static InputStream getDefaultsInputStream(Object component) {
+    InputStream stream = getDefaultsInputStream(component, ((BaseComponent)component).getComponentName());
     if (stream != null) {
       return new BufferedInputStream(stream);
     }

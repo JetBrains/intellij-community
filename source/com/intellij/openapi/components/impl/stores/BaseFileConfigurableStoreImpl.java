@@ -1,8 +1,6 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.application.options.ReplacePathToMacroMap;
-import com.intellij.openapi.components.BaseComponent;
-import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,7 +32,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
   private int myOriginalVersion = -1;
   private boolean mySavePathsRelative;
-  private final HashMap<String,String> myConfigurationNameToFileName = new HashMap<String,String>();
+  final HashMap<String,String> myConfigurationNameToFileName = new HashMap<String,String>();
   @NonNls private static final String RELATIVE_PATHS_OPTION = "relativePaths";
   @NonNls private static final String VERSION_OPTION = "version";
   @NonNls public static final String ATTRIBUTE_NAME = "name";
@@ -57,34 +55,24 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return myComponentManager;
   }
 
-  public synchronized Element saveToXml(Element targetRoot, VirtualFile configFile) {
+  public synchronized Element saveToXml(VirtualFile configFile) {
     String filePath = configFile != null ? configFile.getPath() : null;
-    Element root;
-    if (targetRoot != null) {
-      root = targetRoot;
-    }
-    else {
-      root = new Element(getRootNodeName());
-    }
+    Element root = new Element(getRootNodeName());
 
     root.setAttribute(VERSION_OPTION, Integer.toString(ProjectManagerImpl.CURRENT_FORMAT_VERSION));
     root.setAttribute(RELATIVE_PATHS_OPTION, Boolean.toString(isSavePathsRelative()));
 
     List<Element> newContents = new ArrayList<Element>();
 
-    if (targetRoot == null) {
-      //save configuration without components
-      final Set<String> result;
-      result = getConfigurationNames();
-      final Set<String> names = result;
-      for (String name : names) {
-        if (Comparing.equal(myConfigurationNameToFileName.get(name), filePath)) {
-          final Element result1;
-          result1 = getConfiguration(name);
-          final Element e = result1;
-          if (e != null) {
-            newContents.add((Element)e.clone());
-          }
+    //save configuration without components
+    final Set<String> result;
+    result = getConfigurationNames();
+    final Set<String> names = result;
+    for (String name : names) {
+      if (Comparing.equal(myConfigurationNameToFileName.get(name), filePath)) {
+        final Element e = getConfiguration(name);
+        if (e != null) {
+          newContents.add((Element)e.clone());
         }
       }
     }
@@ -95,11 +83,9 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
       if (configFile == componentFile) {
         final Object component = myComponentManager.getComponent(componentInterface);
-        if (!(component instanceof BaseComponent)) continue;
-        BaseComponent baseComponent = (BaseComponent)component;
 
         try {
-          final Element node = serializeComponent(baseComponent);
+          final Element node = serializeComponent(component);
           if (node != null) {
             newContents.add(node);
           }
@@ -114,7 +100,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
       public int compare(Element e1, Element e2) {
         String name1 = e1.getAttributeValue(ATTRIBUTE_NAME);
         String name2 = e2.getAttributeValue(ATTRIBUTE_NAME);
-        if (name2 == null && name1 == null) return 0;
+        if (name2 == null && name1 == null) return e1.getName().compareTo(e2.getName());
         if (name1 == null) return 1;
         if (name2 == null) return -1;
         return name1.compareTo(name2);
@@ -130,7 +116,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
 
   public synchronized void loadFromXml(Element root, String filePath) throws InvalidDataException {
-    getExpandMacroReplacements().substitute(root, SystemInfo.isFileSystemCaseSensitive);
+    PathMacroManager.getInstance(myComponentManager).getExpandMacroMap().substitute(root, SystemInfo.isFileSystemCaseSensitive);
 
     int originalVersion = 0;
     try {
@@ -179,15 +165,6 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
   }
 
-  ExpandMacroToPathMap getExpandMacroReplacements() {
-    return PathMacroManager.getInstance(myComponentManager).getExpandMacroMap();
-  }
-
-
-  ReplacePathToMacroMap getMacroReplacements() {
-    return PathMacroManager.getInstance(myComponentManager).getReplacePathMap();
-  }
-
   @Nullable
   static ArrayList<String> getConversionProblemsStorage() {
     return ourConversionProblemsStorage;
@@ -200,13 +177,13 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   synchronized void save() throws IOException {
     for (ConfigurationFile file : getConfigurationFiles()) {
       final VirtualFile vFile = file.getVirtualFile();
-      file.save(saveToXml(null, vFile), getMacroReplacements(), getLineSeparator(vFile));
+      file.save(saveToXml(vFile), PathMacroManager.getInstance(myComponentManager).getReplacePathMap(), getLineSeparator(vFile));
     }
   }
 
-  final void collectReadonlyFiles(final ConfigurationFile[] files, final List<VirtualFile> readonlyFiles) {
+  void collectFileNeedsToBeWritten(final ConfigurationFile[] files, final List<VirtualFile> readonlyFiles) {
     if (files != null) {
-      final ReplacePathToMacroMap replacements = getMacroReplacements();
+      final ReplacePathToMacroMap replacements = PathMacroManager.getInstance(myComponentManager).getReplacePathMap();
       for (ConfigurationFile file : files) {
         final VirtualFile vFile = file.getVirtualFile();
         if (vFile != null && !vFile.isWritable() && configFileNeedsToBeWritten(file, replacements)) {
@@ -219,7 +196,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   private boolean configFileNeedsToBeWritten(ConfigurationFile file, final ReplacePathToMacroMap replacements) {
     final VirtualFile vFile = file.getVirtualFile();
     return !ProjectManagerEx.getInstanceEx().isFileSavedToBeReloaded(vFile) &&
-           file.needsSave(saveToXml(null, vFile), replacements, getLineSeparator(vFile));
+           file.needsSave(saveToXml(vFile), replacements, getLineSeparator(vFile));
   }
 
   synchronized String getLineSeparator(final VirtualFile file) {
