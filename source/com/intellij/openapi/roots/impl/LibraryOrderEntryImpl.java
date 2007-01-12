@@ -17,14 +17,13 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *  @author dsl
  */
-class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
-                                                              LibraryOrderEntry, ClonableOrderEntry, WritableOrderEntry {
+class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements LibraryOrderEntry, ClonableOrderEntry, WritableOrderEntry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryImpl");
   private Library myLibrary;
   private String myLibraryName; // is non-null if myLibrary == null
@@ -127,10 +126,12 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
     Library library = null;
     if (myLibrary == null) {
       if (myLibraryName != null) {
-        library = rootConfigurable.getLibrary(myLibraryLevel);
+        library = rootConfigurable.getLibrary(myLibraryName, myLibraryLevel);
       }
     } else {
-      library = rootConfigurable.getLibrary(myLibrary.getTable().getTableLevel());
+      if (myLibraryName != null) {
+        library = rootConfigurable.getLibrary(myLibraryName, myLibrary.getTable().getTableLevel());
+      }
     }
     if (library != null) { //library was not deleted
       return library;

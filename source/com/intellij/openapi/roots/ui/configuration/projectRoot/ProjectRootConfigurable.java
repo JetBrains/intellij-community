@@ -958,8 +958,10 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
   }
 
   @Nullable
-  public Library getLibrary(final String libraryLevel) {
-    return findLibraryModel(libraryLevel, myLevel2Providers.get(libraryLevel));
+  public Library getLibrary(final String libraryName, final String libraryLevel) {
+/* the null check is added only to prevent NPE when called from getLibrary */    
+    final LibrariesModifiableModel model = myLevel2Providers.get(libraryLevel);
+    return model == null ? null : findLibraryModel(libraryName, model);
   }
 
   @Nullable
