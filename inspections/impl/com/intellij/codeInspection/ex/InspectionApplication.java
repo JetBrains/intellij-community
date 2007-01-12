@@ -56,6 +56,9 @@ public class InspectionApplication {
   private int myVerboseLevel = 0;
 
   public boolean myErrorCodeRequired = true;
+  
+  @NonNls public static final String DESCRIPTIONS = ".descriptions";
+  @NonNls public static final String PROFILE = "profile";
 
   public void startup() {
     if (myProjectPath == null || myOutPath == null || myProfileName == null) {
@@ -211,7 +214,7 @@ public class InspectionApplication {
           logMessageLn(2, text);
         }
       });
-      describeInspections(myOutPath + File.separatorChar + ".descriptions.xml");
+      describeInspections(myOutPath + File.separatorChar + DESCRIPTIONS + ".xml", !myRunWithEditorSettings ? inspectionProfile.getName() : null);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -297,7 +300,7 @@ public class InspectionApplication {
     }
   }
 
-  private static void describeInspections(@NonNls String myOutputPath) throws IOException {
+  private static void describeInspections(@NonNls String myOutputPath, final String name) throws IOException {
     final InspectionProfileEntry[] profileEntries = InspectionProfileImpl.getDefaultProfile().getInspectionTools();
     final Map<String, Set<InspectionProfileEntry>> map = new HashMap<String, Set<InspectionProfileEntry>>();
     for (InspectionProfileEntry entry : profileEntries) {
@@ -315,6 +318,9 @@ public class InspectionApplication {
       fw = new FileWriter(myOutputPath);
       @NonNls final PrettyPrintWriter xmlWriter = new PrettyPrintWriter(fw);
       xmlWriter.startNode("inspections");
+      if (name != null) {
+        xmlWriter.addAttribute(PROFILE, name);
+      }
       for (String groupName : map.keySet()) {
         xmlWriter.startNode("group");
         xmlWriter.addAttribute("group_name", groupName);

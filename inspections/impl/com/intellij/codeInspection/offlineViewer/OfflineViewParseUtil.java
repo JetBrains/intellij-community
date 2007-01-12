@@ -8,11 +8,13 @@
  */
 package com.intellij.codeInspection.offlineViewer;
 
+import com.intellij.codeInspection.ex.InspectionApplication;
 import com.intellij.codeInspection.reference.SmartRefElementPointerImpl;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.StringReader;
 import java.util.*;
@@ -115,4 +117,17 @@ public class OfflineViewParseUtil {
     return package2Result;
   }
 
+  @Nullable
+  public static String parseProfileName(String descriptors) {
+    final XppReader reader = new XppReader(new StringReader(descriptors));
+    try {
+      return reader.getAttribute(InspectionApplication.PROFILE);
+    }
+    catch (Exception e) {
+      return null;
+    }
+    finally {
+      reader.close();
+    }
+  }
 }

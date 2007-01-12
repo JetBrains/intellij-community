@@ -12,10 +12,8 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvider;
 import com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptor;
 import com.intellij.codeInspection.offlineViewer.OfflineViewParseUtil;
@@ -31,6 +29,7 @@ import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -54,16 +53,28 @@ public class ViewOfflineResultsAction extends AnAction {
 
     final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap = new HashMap<String, Map<String, Set<OfflineProblemDescriptor>>>();
     final VirtualFile[] files = virtualFiles[0].getChildren();
+    String profileName = null;
     for (VirtualFile inspectionFile : files) {
-      resMap.put(inspectionFile.getNameWithoutExtension(), OfflineViewParseUtil.parse(LoadTextUtil.loadText(inspectionFile).toString()));
+      final String shortName = inspectionFile.getNameWithoutExtension();
+      if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
+        profileName = OfflineViewParseUtil.parseProfileName(LoadTextUtil.loadText(inspectionFile).toString());
+      } else {
+        resMap.put(shortName, OfflineViewParseUtil.parse(LoadTextUtil.loadText(inspectionFile).toString()));
+      }
     }
 
+    showOfflineView(project, profileName, resMap);
+  }
+
+  @SuppressWarnings({"UnusedDeclaration"})
+  public static void showOfflineView(final Project project,
+                                     @Nullable final String profileName,
+                                     final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap) {
     final AnalysisScope scope = new AnalysisScope(project);
     final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));
     final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
     final InspectionProfile inspectionProfile;
-    String profileName = "";
-    final Profile profile = InspectionProjectProfileManager.getInstance(project).getProfile(profileName);
+    final Profile profile = profileName != null ? InspectionProjectProfileManager.getInstance(project).getProfile(profileName) : null;
     if (profile != null) {
       inspectionProfile = (InspectionProfile)profile;
     }
@@ -87,6 +98,7 @@ public class ViewOfflineResultsAction extends AnAction {
     ((RefManagerImpl)inspectionContext.getRefManager()).inspectionReadActionStarted();
     view.update();
     TreeUtil.selectFirstNode(view.getTree());
-    inspectionContext.addView(view, "Offline View");
+    inspectionContext.addView(view, InspectionsBundle.message("offline.view.title") +
+                              " (" + (profileName != null ? profileName : InspectionsBundle.message("offline.view.editor.settings.title")) + ")");
   }
 }
