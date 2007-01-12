@@ -91,7 +91,7 @@ public class ViewOfflineResultsAction extends AnAction {
                                                                  inspectionContext,
                                                                  new OfflineInspectionResultsViewProvider(resMap));
     ((RefManagerImpl)inspectionContext.getRefManager()).inspectionReadActionStarted();
-    view.buildTreeAndSort();
+    view.update();
     TreeUtil.selectFirstNode(view.getTree());
     inspectionContext.addView(view, "Offline View" + (profileName != null ? " of " + profileName : ""));
   }

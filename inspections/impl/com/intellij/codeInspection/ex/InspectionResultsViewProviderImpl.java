@@ -13,10 +13,8 @@ import com.intellij.codeInspection.duplicatePropertyInspection.DuplicateProperty
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.*;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
@@ -25,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class InspectionResultsViewProviderImpl implements InspectionResultsViewProvider {
+public class InspectionResultsViewProviderImpl extends InspectionResultsViewProvider {
 
   public boolean hasReportedProblems(final InspectionTool tool) {
     tool.updateContent();
@@ -53,47 +51,6 @@ public class InspectionResultsViewProviderImpl implements InspectionResultsViewP
     return tool.getQuickFixes(selectedElements.toArray(new RefEntity[selectedElements.size()]));
   }
 
-  protected static RefElementNode addNodeToParent(RefElement refElement, InspectionTool tool, InspectionPackageNode packageNode) {
-    final Set<InspectionTreeNode> children = new HashSet<InspectionTreeNode>();
-    TreeUtil.traverseDepth(packageNode, new TreeUtil.Traverse() {
-      public boolean accept(Object node) {
-        children.add((InspectionTreeNode)node);
-        return true;
-      }
-    });
-    RefElementNode nodeToAdd = new RefElementNode(refElement, tool);
-    boolean firstLevel = true;
-    RefElementNode prevNode = null;
-    while (true) {
-      RefElementNode currentNode = firstLevel ? nodeToAdd : new RefElementNode(refElement, tool);
-      for (InspectionTreeNode node : children) {
-        if (node instanceof RefElementNode) {
-          final RefElementNode refElementNode = (RefElementNode)node;
-          if (Comparing.equal(refElementNode.getElement(), refElement)) {
-            if (firstLevel) {
-              return refElementNode;
-            }
-            else {
-              refElementNode.add(prevNode);
-              return nodeToAdd;
-            }
-          }
-        }
-      }
-      if (!firstLevel) {
-        currentNode.add(prevNode);
-      }
-      RefEntity owner = refElement.getOwner();
-      if (!(owner instanceof RefElement)) {
-        packageNode.add(currentNode);
-        return nodeToAdd;
-      }
-      refElement = (RefElement)owner;
-      prevNode = currentNode;
-      firstLevel = false;
-    }
-  }
-
   private static void buildTreeNode(final InspectionTool tool,
                                     final List<InspectionTreeNode> content,
                                     final Map<String, Set<RefElement>> packageContents,
@@ -101,15 +58,16 @@ public class InspectionResultsViewProviderImpl implements InspectionResultsViewP
     final GlobalInspectionContextImpl context = tool.getContext();
     Set<String> packages = packageContents.keySet();
     for (String packageName : packages) {
-      InspectionPackageNode pNode = new InspectionPackageNode(packageName);
-      Set<RefElement> elements = packageContents.get(packageName);
+      final InspectionPackageNode pNode = new InspectionPackageNode(packageName);
+      final Set<RefElement> elements = packageContents.get(packageName);
       for (RefElement refElement : elements) {
+        final RefElementDescriptor descriptor = new RefElementDescriptor(refElement);
         if (context.getUIOptions().SHOW_ONLY_DIFF && tool.getElementStatus(refElement) == FileStatus.NOT_CHANGED) continue;
         if (tool instanceof DescriptorProviderInspection) {
           final DescriptorProviderInspection descriptorProviderInspection = (DescriptorProviderInspection)tool;
           final CommonProblemDescriptor[] problems = problemElements.get(refElement);
           if (problems != null) {
-            final RefElementNode elemNode = addNodeToParent(refElement, tool, pNode);
+            final RefElementNode elemNode = addNodeToParent(descriptor, tool, pNode);
             for (CommonProblemDescriptor problem : problems) {
               if (context.getUIOptions().SHOW_ONLY_DIFF && descriptorProviderInspection.getProblemStatus(problem) == FileStatus.NOT_CHANGED) {
                 continue;
@@ -131,10 +89,35 @@ public class InspectionResultsViewProviderImpl implements InspectionResultsViewP
               if (InspectionTool.contains(refElement, currentEntities)) continue;
             }
           }
-          addNodeToParent(refElement, tool, pNode);
+          addNodeToParent(descriptor, tool, pNode);
         }
       }
       if (pNode.getChildCount() > 0) content.add(pNode);
+    }
+  }
+
+  private static class RefElementDescriptor implements Descriptor {
+    private RefElement myElement;
+
+    public RefElementDescriptor(final RefElement element) {
+      myElement = element;
+    }
+
+    @Nullable
+    public Descriptor getOwner() {
+      final RefEntity entity = myElement.getOwner();
+      if (entity instanceof RefElement){
+        return new RefElementDescriptor((RefElement)entity);
+      }
+      return null;
+    }
+
+    public RefElementNode createNode(InspectionTool tool) {
+      return new RefElementNode(myElement, tool);
+    }
+
+    public Object getUserObject() {
+      return myElement;
     }
   }
 }

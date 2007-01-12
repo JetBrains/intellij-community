@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ui.InspectionPackageNode;
 import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.RefElementNode;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +28,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
-public class OfflineInspectionResultsViewProvider implements InspectionResultsViewProvider {
+public class OfflineInspectionResultsViewProvider extends InspectionResultsViewProvider {
   private Map<String, Map<String, List<OfflineProblemDescriptor>>> myContent;
 
   public OfflineInspectionResultsViewProvider(final Map<String, Map<String, List<OfflineProblemDescriptor>>> content) {
@@ -49,12 +48,11 @@ public class OfflineInspectionResultsViewProvider implements InspectionResultsVi
         final InspectionPackageNode pNode = new InspectionPackageNode(packageName);
         final List<OfflineProblemDescriptor> elements = package2Problems.get(packageName);
         for (OfflineProblemDescriptor descriptor : elements) {
-          final OfflineRefElementNode elemNode = addNodeToParent(descriptor, tool, pNode);
+          final RefElementNode elemNode = addNodeToParent(new OfflineDescriptor(descriptor), tool, pNode);
           if (tool instanceof DescriptorProviderInspection) {
-            final OfflineProblemDescriptorNode problemNode = new OfflineProblemDescriptorNode(descriptor,
-                                                                                              !(tool instanceof DuplicatePropertyInspection),
-                                                                                              (DescriptorProviderInspection)tool);
-            elemNode.add(problemNode);
+            elemNode.add(new OfflineProblemDescriptorNode(descriptor,
+                                                          !(tool instanceof DuplicatePropertyInspection),
+                                                          (DescriptorProviderInspection)tool));
           }
         }
         if (pNode.getChildCount() > 0) result.add(pNode);
@@ -65,56 +63,30 @@ public class OfflineInspectionResultsViewProvider implements InspectionResultsVi
   }
 
 
+   private static class OfflineDescriptor implements Descriptor {
+     private OfflineProblemDescriptor myDescriptor;
 
+     public OfflineDescriptor(final OfflineProblemDescriptor descriptor) {
+       myDescriptor = descriptor;
+     }
 
-  protected static OfflineRefElementNode addNodeToParent(OfflineProblemDescriptor descriptor,
-                                                         final InspectionTool tool,
-                                                         final InspectionTreeNode parentNode) {
-    final Set<InspectionTreeNode> children = new HashSet<InspectionTreeNode>();
-    TreeUtil.traverseDepth(parentNode, new TreeUtil.Traverse() {
-      public boolean accept(Object node) {
-        children.add((InspectionTreeNode)node);
-        return true;
-      }
-    });
-    OfflineRefElementNode nodeToAdd = new OfflineRefElementNode(descriptor, tool);
-    boolean firstLevel = true;
-    RefElementNode prevNode = null;
-    while (true) {
-      OfflineRefElementNode currentNode = firstLevel ? nodeToAdd : new OfflineRefElementNode(descriptor, tool);
-      for (InspectionTreeNode node : children) {
-        if (node instanceof OfflineRefElementNode) {
-          final OfflineRefElementNode refElementNode = (OfflineRefElementNode)node;
-          if (Comparing.equal(refElementNode.getUserObject(), descriptor)) {
-            if (firstLevel) {
-              return refElementNode;
-            }
-            else {
-              for (int i = 0 ; i < refElementNode.getChildCount(); i++) {
-                if (Comparing.equal(((InspectionTreeNode)refElementNode.getChildAt(i)).getUserObject(),
-                                    prevNode.getUserObject())) {
-                  return nodeToAdd;
-                }
-              }
-              refElementNode.add(prevNode);
-              return nodeToAdd;
-            }
-          }
-        }
-      }
-      if (!firstLevel) {
-        currentNode.add(prevNode);
-      }
-      OfflineProblemDescriptor owner = descriptor.getOwner();
-      if (owner == null) {
-        parentNode.add(currentNode);
-        return nodeToAdd;
-      }
-      descriptor = owner;
-      prevNode = currentNode;
-      firstLevel = false;
-    }
-  }
+     @Nullable
+     public Descriptor getOwner() {
+       final OfflineProblemDescriptor descriptor = myDescriptor.getOwner();
+       if (descriptor != null) {
+         return new OfflineDescriptor(descriptor);
+       }
+       return null;
+     }
+
+     public RefElementNode createNode(InspectionTool tool) {
+       return new OfflineRefElementNode(myDescriptor, tool);
+     }
+
+     public Object getUserObject() {
+       return myDescriptor;
+     }
+   }
 
   @Nullable
   public QuickFixAction[] getQuickFixes(final InspectionTool tool, final InspectionTree tree) {

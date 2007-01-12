@@ -473,12 +473,13 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   public boolean updateView(boolean strict) {
     if (!strict && !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) return false;
     clearTree();
-    boolean resultsFound = buildTreeAndSort();
+    boolean resultsFound = buildTree();
+    myTree.sort();
     myTree.restoreExpantionAndSelection();
     return resultsFound;
   }
 
-  public boolean buildTreeAndSort() {
+  private boolean buildTree() {
     boolean resultsFound = false;
     final InspectionProfile profile = myInspectionProfile;
     final boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
@@ -498,7 +499,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         resultsFound |= hasProblems;
       }
     }
-    myTree.sort();
     return resultsFound;
   }
 
