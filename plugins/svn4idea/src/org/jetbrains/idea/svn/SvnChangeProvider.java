@@ -220,7 +220,7 @@ public class SvnChangeProvider implements ChangeProvider {
       else if (statusType == SVNStatusType.STATUS_IGNORED) {
         builder.processIgnoredFile(filePath.getVirtualFile());
       }
-      else if (fStatus == FileStatus.NOT_CHANGED) {
+      else if (fStatus == FileStatus.NOT_CHANGED && statusType != SVNStatusType.STATUS_NONE) {
         VirtualFile file = filePath.getVirtualFile();
         if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
           builder.processChange(new Change(new SvnUpToDateRevision(filePath, status.getRevision()), new CurrentContentRevision(filePath), FileStatus.MODIFIED));
