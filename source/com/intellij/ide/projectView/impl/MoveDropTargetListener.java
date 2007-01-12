@@ -5,6 +5,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesToNewDirectoryDialog;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -96,6 +97,7 @@ class MoveDropTargetListener implements DropTargetListener {
       int dropAction = dtde.getDropAction();
       if ((dropAction & DnDConstants.ACTION_MOVE) != 0) {
         dtde.dropComplete(true);
+        if (!CommonRefactoringUtil.checkReadOnlyStatus(myPane.myProject, elements)) return true;
         MoveClassesToNewDirectoryDialog dialog = new MoveClassesToNewDirectoryDialog(directory, elements);
         dialog.show();
         return true;
