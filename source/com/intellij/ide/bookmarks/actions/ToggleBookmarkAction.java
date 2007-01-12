@@ -1,11 +1,11 @@
 package com.intellij.ide.bookmarks.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.ide.bookmarks.EditorBookmark;
 import com.intellij.ide.commander.Commander;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -30,7 +30,7 @@ public class ToggleBookmarkAction extends AnAction {
       if (editor != null) {
         EditorBookmark bookmark = bookmarkManager.findEditorBookmark(editor.getDocument(), editor.getCaretModel().getLogicalPosition().line);
         if (bookmark == null) {
-          bookmarkManager.addEditorBookmark(editor.getDocument(), editor.getCaretModel().getLogicalPosition().line, EditorBookmark.NOT_NUMBERED);
+          bookmarkManager.addEditorBookmark(editor, editor.getCaretModel().getLogicalPosition().line, EditorBookmark.NOT_NUMBERED);
         }
         else {
           bookmarkManager.removeBookmark(bookmark);

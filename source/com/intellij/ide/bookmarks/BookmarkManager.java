@@ -31,6 +31,7 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
   private BookmarksCollection.ForEditors myEditorBookmarks = new BookmarksCollection.ForEditors();
   private BookmarksCollection.ForPsiElements myCommanderBookmarks = new BookmarksCollection.ForPsiElements();
   private final MyEditorMouseListener myEditorMouseListener = new MyEditorMouseListener();
+  public static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
 
   public static BookmarkManager getInstance(Project project) {
     return project.getComponent(BookmarkManager.class);
@@ -61,7 +62,8 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
     return myProject;
   }
 
-  public void addEditorBookmark(Document document, int lineIndex, int number) {
+  public void addEditorBookmark(Editor editor, int lineIndex, int number) {
+    Document document = editor.getDocument();
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (psiFile == null) return;
     final VirtualFile virtualFile = psiFile.getVirtualFile();
@@ -71,8 +73,19 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
     RangeHighlighter lineMarker = ((MarkupModelEx)document.getMarkupModel(myProject)).addPersistentLineHighlighter(
       lineIndex, HighlighterLayer.ADDITIONAL_SYNTAX - 1, null);
     if (lineMarker == null) return;
-    EditorBookmark bookmark = new EditorBookmark(document, myProject, lineMarker, "", number);
+    EditorBookmark bookmark = new EditorBookmark(document, myProject, lineMarker, BookmarkManager.getAutoDescription(editor), number);
     myEditorBookmarks.addBookmark(bookmark);
+  }
+
+  public static String getAutoDescription(final Editor editor) {
+    String autoDescription = editor.getSelectionModel().getSelectedText();
+    if ( autoDescription == null ) {
+      return "";
+    }
+    if ( autoDescription.length () > MAX_AUTO_DESCRIPTION_SIZE) {
+      return autoDescription.substring(0, MAX_AUTO_DESCRIPTION_SIZE)+"...";
+    }
+    return autoDescription;
   }
 
   public void addCommanderBookmark(PsiElement element) {
@@ -132,7 +145,7 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
 
   /**
    * Try to move bookmark one position up in the list
-   * 
+   *
    * @return bookmark list after moving
    */
   public List<Bookmark> moveBookmarkUp(Bookmark bookmark) {
@@ -154,7 +167,7 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
 
   /**
    * Try to move bookmark one position down in the list
-   * 
+   *
    * @return bookmark list after moving
    */
   public List<Bookmark> moveBookmarkDown(Bookmark bookmark) {
@@ -222,7 +235,7 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
 
       EditorBookmark bookmark = findEditorBookmark(document, line);
       if (bookmark == null) {
-        addEditorBookmark(document, line, EditorBookmark.NOT_NUMBERED);
+        addEditorBookmark(editor, line, EditorBookmark.NOT_NUMBERED);
       }
       else {
         removeBookmark(bookmark);
