@@ -284,7 +284,9 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
         if (!afterPath.equals(beforePath)) {
           checkRevertFile(afterPath, exceptions);
           // rolling back a rename should delete the after file
-          FileUtil.delete(afterPath);
+          if (beforePath != null) {
+            FileUtil.delete(afterPath);
+          }
         }
       }
     }
