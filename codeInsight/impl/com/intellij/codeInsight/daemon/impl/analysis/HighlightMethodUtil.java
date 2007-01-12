@@ -891,6 +891,7 @@ public class HighlightMethodUtil {
       boolean allAbstracts = method.hasModifierProperty(PsiModifier.ABSTRACT);
       HighlightInfo highlightInfo = null;
       final PsiClass containingClass = method.getContainingClass();
+      if (aClass.equals(containingClass)) continue;
       if (aClass.isInterface() && !containingClass.isInterface()) continue;
       if (!allAbstracts) {
         if (!aClass.equals(containingClass)) {
