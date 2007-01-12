@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.checkin;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -35,10 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 
 import javax.swing.*;
@@ -125,7 +123,13 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
           }
         }
 
-        public void checkCancelled() {
+        public void checkCancelled() throws SVNCancelException {
+          try {
+            progress.checkCanceled();
+          }
+          catch(ProcessCanceledException ex) {
+            throw new SVNCancelException();
+          }
         }
       });
     }
