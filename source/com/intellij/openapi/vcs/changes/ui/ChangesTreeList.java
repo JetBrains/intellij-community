@@ -108,11 +108,7 @@ public class ChangesTreeList extends JPanel {
 
     myList.setCellRenderer(new MyListCellRenderer());
 
-    registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        toggleSelection();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
 
     registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -485,6 +481,12 @@ public class ChangesTreeList extends JPanel {
       else {
         return myTextRenderer;
       }
+    }
+  }
+
+  private class MyToggleSelectionAction extends AnAction {
+    public void actionPerformed(AnActionEvent e) {
+      toggleSelection();
     }
   }
 }
