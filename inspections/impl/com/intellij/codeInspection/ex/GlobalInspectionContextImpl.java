@@ -765,7 +765,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
     LOG.info("Code inspection finished");
 
-    final InspectionResultsView view = new InspectionResultsView(myProject, RUN_WITH_EDITOR_PROFILE ? null : getCurrentProfile(), scope, this, new InspectionResultsViewProviderImpl());
+    final InspectionResultsView view = new InspectionResultsView(myProject, RUN_WITH_EDITOR_PROFILE ? null : getCurrentProfile(), scope, this, new InspectionRVContentProviderImpl(myProject));
     if (!view.update() && !getUIOptions().SHOW_ONLY_DIFF) {
       Messages.showMessageDialog(myProject, InspectionsBundle.message("inspection.no.problems.message"),
                                  InspectionsBundle.message("inspection.no.problems.dialog.title"), Messages.getInformationIcon());

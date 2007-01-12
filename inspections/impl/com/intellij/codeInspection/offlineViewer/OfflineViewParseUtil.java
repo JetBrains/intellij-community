@@ -15,22 +15,21 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OfflineViewParseUtil {
   @NonNls private static final String PACKAGE = "package";
   @NonNls private static final String DESCRIPTION = "description";
   @NonNls private static final String HINTS = "hints";
   @NonNls private static final String LINE = "line";
+  @NonNls private static final String MODULE = "module";
 
   private OfflineViewParseUtil() {
   }
 
-  public static Map<String, List<OfflineProblemDescriptor>> parse(final String problems) {
+  public static Map<String, Set<OfflineProblemDescriptor>> parse(final String problems) {
     final TObjectIntHashMap<String> fqName2IdxMap = new TObjectIntHashMap<String>();
-    final Map<String, List<OfflineProblemDescriptor>> package2Result = new THashMap<String, List<OfflineProblemDescriptor>>();
+    final Map<String, Set<OfflineProblemDescriptor>> package2Result = new THashMap<String, Set<OfflineProblemDescriptor>>();
     final XppReader reader = new XppReader(new StringReader(problems));
     try {
       while(reader.hasMoreChildren()) {
@@ -68,6 +67,9 @@ public class OfflineViewParseUtil {
           if (LINE.equals(reader.getNodeName())) {
             descriptor.setLine(Integer.parseInt(reader.getValue()));
           }
+          if (MODULE.equals(reader.getNodeName())) {
+            descriptor.setModule(reader.getValue());
+          }
           if (HINTS.equals(reader.getNodeName())) {
             while(reader.hasMoreChildren()) {
               reader.moveDown();
@@ -84,9 +86,9 @@ public class OfflineViewParseUtil {
             reader.moveDown();
             if (PACKAGE.equals(reader.getNodeName())) {
               final String packageName = reader.getValue();
-              List<OfflineProblemDescriptor> descriptors = package2Result.get(packageName);
+              Set<OfflineProblemDescriptor> descriptors = package2Result.get(packageName);
               if (descriptors == null) {
-                descriptors = new ArrayList<OfflineProblemDescriptor>();
+                descriptors = new HashSet<OfflineProblemDescriptor>();
                 package2Result.put(packageName, descriptors);
               }
               descriptors.add(descriptor);

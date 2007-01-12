@@ -91,13 +91,13 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private GlobalInspectionContextImpl myGlobalInspectionContext;
   private boolean myRerun = false;
 
-  private InspectionResultsViewProvider myProvider;
+  private InspectionRVContentProvider myProvider;
 
   public InspectionResultsView(final Project project,
                                final InspectionProfile inspectionProfile,
                                final AnalysisScope scope,
                                final GlobalInspectionContextImpl globalInspectionContext,
-                               final InspectionResultsViewProvider provider) {
+                               final InspectionRVContentProvider provider) {
     setLayout(new BorderLayout());
 
     myProject = project;
@@ -239,6 +239,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private JComponent createRightActionsToolbar() {
     DefaultActionGroup specialGroup = new DefaultActionGroup();
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupBySeverityAction(this));
+    specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupByDirectoryAction(this));
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createFilterResolvedItemsAction(this));
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createShowOutdatedProblemsAction(this));
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createShowDiffOnlyAction(this));
@@ -381,70 +382,14 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   private void addTool(InspectionTool tool, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
     final InspectionTreeNode parentNode = getToolParentNode(tool.getGroupDisplayName().length() > 0 ? tool.getGroupDisplayName() : GroupNames.GENERAL_GROUP_NAME, errorLevel, groupedBySeverity);
-    InspectionNode toolNode = new InspectionNode(tool);
-    initToolNode(tool, toolNode, parentNode);
+    final InspectionNode toolNode = new InspectionNode(tool);
+    myProvider.appendToolNodeContent(toolNode, parentNode, myGlobalInspectionContext.getUIOptions().SHOW_STRUCTURE);
     if (tool instanceof DeadCodeInspection) {
       final DummyEntryPointsTool entryPoints = new DummyEntryPointsTool((DeadCodeInspection)tool);
       entryPoints.updateContent();
-      initToolNode(entryPoints, new EntryPointsNode(entryPoints), toolNode);
+      myProvider.appendToolNodeContent(new EntryPointsNode(entryPoints), toolNode, myGlobalInspectionContext.getUIOptions().SHOW_STRUCTURE);
     }
     regsisterActionShortcuts(tool);
-  }
-
-  private void initToolNode(InspectionTool tool, InspectionNode toolNode, InspectionTreeNode parentNode) {
-    final InspectionTreeNode[] contents = myProvider.getContents(tool);
-    for (InspectionTreeNode content : contents) {
-      mergeBranch(content, toolNode);
-    }
-    mergeBranch(toolNode, parentNode);
-  }
-
-  @SuppressWarnings({"ConstantConditions"})
-  private void mergeBranch(InspectionTreeNode child, InspectionTreeNode parent){
-    if (myGlobalInspectionContext.RUN_WITH_EDITOR_PROFILE){
-      for(int i = 0; i < parent.getChildCount(); i++){
-        InspectionTreeNode current = (InspectionTreeNode)parent.getChildAt(i);
-        if (child.getClass() != current.getClass()){
-          continue;
-        }
-        if (current instanceof InspectionPackageNode){
-          if (((InspectionPackageNode)current).getPackageName().compareTo(((InspectionPackageNode)child).getPackageName()) == 0){
-            processDepth(child, current);
-            return;
-          }
-        } else if (current instanceof RefElementNode){
-          if (((RefElementNode)current).getElement().getName().compareTo(((RefElementNode)child).getElement().getName()) == 0){
-            processDepth(child, current);
-            return;
-          }
-        } else if (current instanceof InspectionNode){
-          if (((InspectionNode)current).getTool().getShortName().compareTo(
-              ((InspectionNode)child).getTool().getShortName()) == 0){
-            processDepth(child, current);
-            return;
-          }
-        } else if (current instanceof InspectionModuleNode){
-          if (((InspectionModuleNode)current).getName().compareTo(
-              ((InspectionModuleNode)child).getName()) == 0){
-            processDepth(child, current);
-            return;
-          }
-        } else if (current instanceof ProblemDescriptionNode){
-          if (((ProblemDescriptionNode)current).getDescriptor().getDescriptionTemplate().compareTo(
-              ((ProblemDescriptionNode)child).getDescriptor().getDescriptionTemplate()) == 0){
-            processDepth(child, current);
-            return;
-          }
-        }
-      }
-    }
-    parent.add(child);
-  }
-
-  private void processDepth(final InspectionTreeNode child, final InspectionTreeNode current) {
-    for (int j = 0; j < child.getChildCount(); j ++){
-      mergeBranch((InspectionTreeNode)child.getChildAt(j), current);
-    }
   }
 
   private void regsisterActionShortcuts(InspectionTool tool) {
@@ -492,11 +437,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         if (profile != null && !profile.isToolEnabled(key)) {
           break; //exclude disabled inspections from view
         }
-        final boolean hasProblems = myProvider.hasReportedProblems(tool);
-        if (hasProblems) {
+        if (myProvider.hasReportedProblems(tool)) {
           addTool(tool, toolWithProfile.second.getErrorLevel(key), isGroupedBySeverity);
+          resultsFound = true;
         }
-        resultsFound |= hasProblems;
       }
     }
     return resultsFound;
@@ -745,7 +689,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return myGlobalInspectionContext;
   }
 
-  public InspectionResultsViewProvider getProvider() {
+  public InspectionRVContentProvider getProvider() {
     return myProvider;
   }
 

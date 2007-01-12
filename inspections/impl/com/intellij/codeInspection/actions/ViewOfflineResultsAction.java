@@ -16,7 +16,7 @@ import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.codeInspection.offlineViewer.OfflineInspectionResultsViewProvider;
+import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvider;
 import com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptor;
 import com.intellij.codeInspection.offlineViewer.OfflineViewParseUtil;
 import com.intellij.codeInspection.reference.RefManagerImpl;
@@ -33,7 +33,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -53,7 +52,7 @@ public class ViewOfflineResultsAction extends AnAction {
     if (virtualFiles == null || virtualFiles.length == 0) return;
     if (!virtualFiles[0].isDirectory()) return;
 
-    final Map<String , Map<String, List<OfflineProblemDescriptor>>> resMap = new HashMap<String, Map<String, List<OfflineProblemDescriptor>>>();
+    final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap = new HashMap<String, Map<String, Set<OfflineProblemDescriptor>>>();
     final VirtualFile[] files = virtualFiles[0].getChildren();
     for (VirtualFile inspectionFile : files) {
       resMap.put(inspectionFile.getNameWithoutExtension(), OfflineViewParseUtil.parse(LoadTextUtil.loadText(inspectionFile).toString()));
@@ -62,37 +61,32 @@ public class ViewOfflineResultsAction extends AnAction {
     final AnalysisScope scope = new AnalysisScope(project);
     final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));
     final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
-    InspectionProfile inspectionProfile = null;
-    String profileName = null;
-    if (profileName != null) {
-      final Profile profile = InspectionProjectProfileManager.getInstance(project).getProfile(profileName);
-      if (profile != null) {
-        inspectionProfile = (InspectionProfile)profile;
-      }
-      else {
-        inspectionProfile = new InspectionProfileImpl("Server Side Profile") {
-          public boolean isToolEnabled(final HighlightDisplayKey key) {
-            return resMap.containsKey(key.toString());
-          }
-
-          public HighlightDisplayLevel getErrorLevel(final HighlightDisplayKey key) {
-            return ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(key);
-          }
-        };
-      }
-      inspectionContext.setExternalProfile(inspectionProfile);
+    final InspectionProfile inspectionProfile;
+    String profileName = "";
+    final Profile profile = InspectionProjectProfileManager.getInstance(project).getProfile(profileName);
+    if (profile != null) {
+      inspectionProfile = (InspectionProfile)profile;
     }
     else {
-      inspectionContext.RUN_WITH_EDITOR_PROFILE = true;
+      inspectionProfile = new InspectionProfileImpl("Server Side") {
+        public boolean isToolEnabled(final HighlightDisplayKey key) {
+          return resMap.containsKey(key.toString());
+        }
+
+        public HighlightDisplayLevel getErrorLevel(final HighlightDisplayKey key) {
+          return ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(key);
+        }
+      };
     }
+    inspectionContext.setExternalProfile(inspectionProfile);
     inspectionContext.setCurrentScope(scope);
     inspectionContext.initializeTools(scope, new HashMap<String, Set<InspectionTool>>(), new HashMap<String, Set<InspectionTool>>());
     final InspectionResultsView view = new InspectionResultsView(project, inspectionProfile, scope,
                                                                  inspectionContext,
-                                                                 new OfflineInspectionResultsViewProvider(resMap));
+                                                                 new OfflineInspectionRVContentProvider(resMap, project));
     ((RefManagerImpl)inspectionContext.getRefManager()).inspectionReadActionStarted();
     view.update();
     TreeUtil.selectFirstNode(view.getTree());
-    inspectionContext.addView(view, "Offline View" + (profileName != null ? " of " + profileName : ""));
+    inspectionContext.addView(view, "Offline View");
   }
 }

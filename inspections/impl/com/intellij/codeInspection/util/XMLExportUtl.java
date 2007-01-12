@@ -58,6 +58,13 @@ public class XMLExportUtl {
       problem.addContent(lineElement);
 
       new SmartRefElementPointerImpl(refElement, true).writeExternal(problem);
+
+      final RefModule refModule = refElement.getModule();
+      if (refModule != null) {
+        Element moduleElement = new Element("module");
+        moduleElement.addContent(refModule.getName());
+        problem.addContent(moduleElement);
+      }
     }
     else if (refEntity instanceof RefModule) {
       final RefModule refModule = (RefModule)refEntity;

@@ -28,6 +28,7 @@ public class OfflineProblemDescriptor {
   private int myLine;
   private String[] myParentType;
   private String[] myParentFQName;
+  private String myModuleName;
 
   public String getType() {
     return myType;
@@ -128,6 +129,7 @@ public class OfflineProblemDescriptor {
     final OfflineProblemDescriptor that = (OfflineProblemDescriptor)o;
 
     if (!myFQName.equals(that.myFQName)) return false;
+    if (!myType.equals(that.myType)) return false;
     if (!Arrays.equals(myParentFQName, that.myParentFQName)) return false;
     if (!Arrays.equals(myParentType, that.myParentType)) return false;
     if (!myType.equals(that.myType)) return false;
@@ -143,5 +145,13 @@ public class OfflineProblemDescriptor {
     result = 31 * result + (myParentType != null ? Arrays.hashCode(myParentType) : 0);
     result = 31 * result + (myParentFQName != null ? Arrays.hashCode(myParentFQName) : 0);
     return result;
+  }
+
+  public void setModule(final String moduleName) {
+    myModuleName = moduleName;
+  }
+
+  public String getModuleName() {
+    return myModuleName;
   }
 }

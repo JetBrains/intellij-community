@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.util.*;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.util.Icons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -29,6 +30,7 @@ public class UIOptions implements JDOMExternalizable {
   public String CUSTOM_SCOPE_NAME = "";
   public final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   public boolean SHOW_ONLY_DIFF = false;
+  public boolean SHOW_STRUCTURE = true;
 
   public UIOptions() {
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
@@ -124,6 +126,22 @@ public class UIOptions implements JDOMExternalizable {
         if (!SHOW_DIFF_WITH_PREVIOUS_RUN) {
           SHOW_ONLY_DIFF = false;
         }
+        view.update();
+      }
+    };
+  }
+
+  public AnAction createGroupByDirectoryAction(final InspectionResultsView view) {
+    return new ToggleAction("Group by directory",
+                            "Group by directory",
+                            Icons.DIRECTORY_CLOSED_ICON) {
+
+      public boolean isSelected(AnActionEvent e) {
+        return SHOW_STRUCTURE;
+      }
+
+      public void setSelected(AnActionEvent e, boolean state) {
+        SHOW_STRUCTURE = state;
         view.update();
       }
     };
