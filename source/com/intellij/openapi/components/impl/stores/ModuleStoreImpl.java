@@ -2,7 +2,6 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -122,7 +121,8 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
   }
 
 
-  protected void initJdomExternalizable(final Class componentClass, final BaseComponent component) {
+  @Override
+  protected void initJdomExternalizable(final Class componentClass, final Object component) {
    if (((ProjectImpl)myModule.getProject()).isOptimiseTestLoadSpeed()) return; //test load speed optimization
     super.initJdomExternalizable(componentClass, component);
   }
