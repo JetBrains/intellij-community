@@ -320,13 +320,14 @@ public class DebuggerSessionTab implements LogConsoleManager {
     addActionToGroup(group, DebuggerActions.PAUSE);
     addActionToGroup(group, IdeActions.ACTION_STOP_PROGRAM);
 
+    group.add(new CloseAction(myRunner, contentDescriptor, getProject()));
+    
     addActionToGroup(group, IdeActions.ACTION_PREVIOUS_OCCURENCE);
     addActionToGroup(group, IdeActions.ACTION_NEXT_OCCURENCE);
 
     addActionToGroup(group, DebuggerActions.EXPORT_THREADS);
     addActionToGroup(group, DebuggerActions.EVALUATE_EXPRESSION);
 
-    group.add(new CloseAction(myRunner, contentDescriptor, getProject()));
     group.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction(myRunner.getInfo().getHelpId()));
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
