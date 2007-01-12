@@ -231,7 +231,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   public boolean openProject(final Project project) {
     if (myOpenProjects.contains(project)) return false;
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !((ProjectImpl)project).myProjectStore.checkVersion()) return false;
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !((ProjectImpl)project).getStateStore().checkVersion()) return false;
 
 
     myCountOfProjectsBeingOpen++;

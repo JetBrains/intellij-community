@@ -18,13 +18,14 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationStore {
+public class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ApplicationStoreImpl");
 
   @NonNls private static final String APPLICATION_ELEMENT = "application";
@@ -36,7 +37,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   private ApplicationImpl myApplication;
 
 
-  public synchronized void setApplication(final ApplicationImpl application) {
+  public ApplicationStoreImpl(final ApplicationImpl application) {
     myApplication = application;
   }
 
@@ -226,6 +227,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
     return null;
   }
 
+  @Nullable
   private static InputStream getDefaultsInputStream(BaseComponent component) {
     return DecodeDefaultsUtil.getDefaultsInputStream(component);
   }

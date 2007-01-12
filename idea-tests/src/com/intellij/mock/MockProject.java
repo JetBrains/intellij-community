@@ -1,8 +1,8 @@
 package com.intellij.mock;
 
-import com.intellij.application.options.ExpandMacroToPathMap;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;

@@ -15,6 +15,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.io.fs.IFile;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.intellij.vfs.local.win32.FileWatcher;
 import gnu.trove.THashMap;
@@ -348,6 +349,14 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
   public VirtualFile refreshAndFindFileByIoFile(File file) {
     String path = getCanonicalPath(file);
+    if (path == null) return null;
+    path = path.replace(File.separatorChar, '/');
+    return refreshAndFindFileByPath(path);
+  }
+
+  @Nullable
+  public VirtualFile refreshAndFindFileByIoFile(final IFile ioFile) {
+    String path = ioFile.getCanonicalPath();
     if (path == null) return null;
     path = path.replace(File.separatorChar, '/');
     return refreshAndFindFileByPath(path);

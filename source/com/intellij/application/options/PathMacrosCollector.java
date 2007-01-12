@@ -4,6 +4,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.openapi.components.PathMacroMap;
 import org.jdom.Element;
 
 import java.util.HashSet;
@@ -15,7 +16,7 @@ import java.util.regex.Pattern;
  * @author Eugene Zhuravlev
  *         Date: Dec 6, 2004
  */
-public class PathMacrosCollector extends PathMacroMap{
+public class PathMacrosCollector extends PathMacroMap {
   private final Matcher myMatcher;
 
   private PathMacrosCollector() {

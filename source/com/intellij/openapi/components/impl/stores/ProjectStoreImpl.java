@@ -1,10 +1,6 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.CommonBundle;
-import com.intellij.application.options.ExpandMacroToPathMap;
-import com.intellij.application.options.PathMacroMap;
-import com.intellij.application.options.PathMacrosImpl;
-import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -26,7 +22,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -44,7 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
+public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ProjectStoreImpl");
   @NonNls private static final String OLD_PROJECT_SUFFIX = "_old.";
   @NonNls private static final String WORKSPACE_EXTENSION = ".iws";
@@ -52,13 +47,16 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   private ProjectImpl myProject;
   private static boolean ourSaveSettingsInProgress = false;
+
+  @Nullable
   private ConfigurationFile myProjectFile;
+  @Nullable
   private ConfigurationFile myWorkspaceFile;
+
   private String myFilePath;
 
 
-  public void setProject(final ProjectImpl project) {
-    assert myProject == null;
+  public ProjectStoreImpl(final ProjectImpl project) {
     myProject = project;
   }
 
@@ -152,7 +150,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
             VirtualFile workspaceFile = myProject.getWorkspaceFile();
             if (workspaceFile != null) {
               final String oldWorkspaceName = workspaceFile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX +
-                                              myProject.getWorkspaceFile().getExtension();
+                                              getWorkspaceFile().getExtension();
               VirtualFile oldWorkspace = projectDir.findChild(oldWorkspaceName);
               if (oldWorkspace == null) {
                 oldWorkspace = projectDir.createChildData(this, oldWorkspaceName);
@@ -250,12 +248,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     super.initJdomExternalizable(componentClass, component);
   }
 
-  public ExpandMacroToPathMap getExpandMacroReplacements() {
-    ExpandMacroToPathMap result = super.getExpandMacroReplacements();
-    getExpandProjectHomeReplacements(result);
-    return result;
-  }
-
   public void setProjectFilePath(final String filePath) {
     myFilePath = filePath;
     if (filePath != null) {
@@ -274,80 +266,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
   }
 
-  private void getExpandProjectHomeReplacements(ExpandMacroToPathMap result) {
-    String projectDir = getProjectDir();
-    if (projectDir == null) return;
 
-    File f = new File(projectDir.replace('/', File.separatorChar));
-
-    getExpandProjectHomeReplacements(result, f, "$" + PathMacrosImpl.PROJECT_DIR_MACRO_NAME + "$");
-  }
-
-  private static void getExpandProjectHomeReplacements(ExpandMacroToPathMap result, File f, String macro) {
-    if (f == null) return;
-
-    getExpandProjectHomeReplacements(result, f.getParentFile(), macro + "/..");
-    String path = PathMacroMap.quotePath(f.getAbsolutePath());
-    String s = macro;
-
-    if (StringUtil.endsWithChar(path, '/')) s += "/";
-
-    result.put(s, path);
-  }
-
-  private void getProjectHomeReplacements(@NonNls ReplacePathToMacroMap result, final boolean savePathsRelative) {
-    String projectDir = getProjectDir();
-    if (projectDir == null) return;
-
-    File f = new File(projectDir.replace('/', File.separatorChar));
-    //LOG.assertTrue(f.exists());
-
-    String macro = "$" + PathMacrosImpl.PROJECT_DIR_MACRO_NAME + "$";
-
-    while (f != null) {
-      String path = PathMacroMap.quotePath(f.getAbsolutePath());
-      String s = macro;
-
-      if (StringUtil.endsWithChar(path, '/')) s += "/";
-      if (path.equals("/")) break;
-
-      result.put("file://" + path, "file://" + s);
-      result.put("file:/" + path, "file:/" + s);
-      result.put("file:" + path, "file:" + s);
-      result.put("jar://" + path, "jar://" + s);
-      result.put("jar:/" + path, "jar:/" + s);
-      result.put("jar:" + path, "jar:" + s);
-      //noinspection HardCodedStringLiteral
-      if (!path.equalsIgnoreCase("e:/") && !path.equalsIgnoreCase("r:/")) {
-        result.put(path, s);
-      }
-
-      if (!savePathsRelative) break;
-      macro += "/..";
-      f = f.getParentFile();
-    }
-  }
-
-  public ReplacePathToMacroMap getMacroReplacements() {
-    ReplacePathToMacroMap result = new ReplacePathToMacroMap();
-    getProjectHomeReplacements(result, false);
-    result.putAll(super.getMacroReplacements());
-    getProjectHomeReplacements(result, isSavePathsRelative());
-    return result;
-  }
-
-  @Nullable
-  private String getProjectDir() {
-    String path = myProject.getProjectFilePath();
-    if (path == null) return null;
-    String projectDir = new File(path).getParent();
-    if (projectDir == null) return null;
-    projectDir = projectDir.replace(File.separatorChar, '/');
-    if (projectDir.endsWith(":/")) {
-      projectDir = projectDir.substring(0, projectDir.length() - 1);
-    }
-    return projectDir;
-  }
 
   public void loadProject(final ProjectManagerImpl projectManager) throws IOException, JDOMException, InvalidDataException {
     // http://www.jetbrains.net/jira/browse/IDEA-1556. Enforce refresh. Project files may potentially reside in non-yet valid vfs paths.
@@ -372,9 +291,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   private boolean checkMacros(ProjectManagerImpl projectManager, Set<String> definedMacros) throws IOException, JDOMException {
     String projectFilePath = myProject.getProjectFilePath();
-    if (projectFilePath == null) {
-      return true;
-    }
     Document document = JDOMUtil.loadDocument(new File(projectFilePath));
     Element root = document.getRootElement();
     final Set<String> usedMacros = new HashSet<String>(Arrays.asList(readUsedMacros(root)));
@@ -430,12 +346,12 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @NotNull
   public String getProjectFileName() {
-    return myProjectFile.getFileName();
+    return myProjectFile == null ? "" : myProjectFile.getFileName();
   }
 
   @NotNull
   public String getProjectFilePath() {
-    return myProjectFile.getFilePath();
+    return myProjectFile == null ? "" : myProjectFile.getFilePath();
   }
 
 

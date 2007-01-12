@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -59,21 +60,24 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private volatile boolean myDisposeCompleted = false;
 
   private MessageBus myMessageBus;
-  private IComponentStore myStateStore;
 
   private final ComponentManagerConfigurator myConfigurator = new ComponentManagerConfigurator(this);
+  private ComponentManager myParentComponentManager;
+  private IComponentStore myComponentStore;
 
-  protected ComponentManagerImpl(@NotNull IComponentStore stateManager) {
-    myStateStore = stateManager;
+  protected ComponentManagerImpl(ComponentManager parentComponentManager) {
+    myParentComponentManager = parentComponentManager;
+    boostrapPicoContainer();
   }
-
 
   @NotNull
   public IComponentStore getStateStore() {
-    return myStateStore;
+    if (myComponentStore == null) {
+      assert myPicoContainer != null;
+      myComponentStore = (IComponentStore)myPicoContainer.getComponentInstanceOfType(IComponentStore.class);
+    }
+    return myComponentStore;
   }
-
-
 
   public MessageBus getMessageBus() {
     return myMessageBus;
@@ -190,13 +194,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
   }
 
-  @Nullable
   public <T> T getComponent(Class<T> interfaceClass) {
     assert !myDisposeCompleted : "Already disposed";
     return getComponent(interfaceClass, null);
   }
 
-  @Nullable
   public <T> T getComponent(Class<T> interfaceClass, T defaultImplementation) {
     final T fromContainer = getComponentFromContainer(interfaceClass);
     if (fromContainer != null) return fromContainer;
@@ -206,7 +208,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private void initComponent(BaseComponent component, Class componentClass) {
     try {
-      myStateStore.initComponent(component, componentClass);
+      getStateStore().initComponent(component, componentClass);
       component.initComponent();
     }
     catch (Throwable ex) {
@@ -296,21 +298,15 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return getPicoContainer().getComponentInstance(componentClass);
   }
 
-  @Nullable
-  protected abstract ComponentManagerImpl getParentComponentManager();
-
+  @NotNull
   public synchronized MutablePicoContainer getPicoContainer() {
-    if (myPicoContainer == null) {
-      myPicoContainer = createPicoContainer();
-    }
     return myPicoContainer;
   }
 
   protected MutablePicoContainer createPicoContainer() {
     MutablePicoContainer result;
-    final ComponentManagerImpl parentComponentManager = getParentComponentManager();
-    if (parentComponentManager != null) {
-      result = new DefaultPicoContainer(new MyComponentAdapterFactory(this), parentComponentManager.getPicoContainer());
+    if (myParentComponentManager != null) {
+      result = new DefaultPicoContainer(new MyComponentAdapterFactory(this), myParentComponentManager.getPicoContainer());
     }
     else {
       result = new DefaultPicoContainer(new MyComponentAdapterFactory(this));
@@ -419,6 +415,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
 
   public synchronized void dispose() {
+    final IComponentStore store = getStateStore();
+
     myDisposeCompleted = true;
 
     if (myMessageBus != null) {
@@ -435,8 +433,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myLazyComponents = null;
     myNameToComponent = null;
     myPicoContainer = null;
-    
-    myStateStore.dispose();
+
+    store.dispose();
   }
 
   public boolean isDisposed() {
@@ -445,15 +443,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   //todo[mike] there are several init* methods. Make it just 1
   public void init() {
-    myStateStore.initStore();
+    getStateStore().initStore();
     initComponents();
   }
 
   public void initComponents() {
-    final ComponentManagerImpl parent = getParentComponentManager();
-    myMessageBus = MessageBusFactory.newMessageBus(this, parent != null ? parent.getMessageBus() : null);
-    getPicoContainer().registerComponentInstance(MessageBus.class, myMessageBus);
-
     createComponents();
     getComponents(false);
   }
@@ -464,5 +458,18 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   public void loadComponentsConfiguration(final String layer, final boolean loadDummies) {
     myConfigurator.loadComponentsConfiguration(layer, loadDummies);
+  }
+
+  protected void boostrapPicoContainer() {
+    myPicoContainer = createPicoContainer();
+    myMessageBus = MessageBusFactory.newMessageBus(this, myParentComponentManager != null ? myParentComponentManager.getMessageBus() : null);
+    final MutablePicoContainer picoContainer = getPicoContainer();
+    picoContainer.registerComponentInstance(MessageBus.class, myMessageBus);
+    picoContainer.registerComponentInstance(this);
+  }
+
+
+  public ComponentManager getParentComponentManager() {
+    return myParentComponentManager;
   }
 }

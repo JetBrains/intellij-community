@@ -1,9 +1,9 @@
 package com.intellij.openapi.roots.impl.libraries;
 
-import com.intellij.application.options.ExpandMacroToPathMap;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;

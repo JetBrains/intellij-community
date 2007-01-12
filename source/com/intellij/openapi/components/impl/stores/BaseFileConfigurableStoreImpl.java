@@ -1,14 +1,13 @@
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.application.options.ExpandMacroToPathMap;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.ExpandMacroToPathMap;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
-import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -32,7 +31,6 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.MutablePicoContainer;
 
 import java.io.IOException;
 import java.util.*;
@@ -44,7 +42,6 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   private int myOriginalVersion = -1;
   private boolean mySavePathsRelative;
   private final HashMap<String,String> myConfigurationNameToFileName = new HashMap<String,String>();
-  private PathMacrosImpl myPathMacros;
   private static final Set<String> ourUsedMacros = new HashSet<String>();
   private static boolean ourLogMacroUsage = false;
   @NonNls private static final String RELATIVE_PATHS_OPTION = "relativePaths";
@@ -81,12 +78,6 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
   public void setDefault(boolean aDefault) {
     myDefault = aDefault;
-  }
-
-  synchronized MutablePicoContainer createPicoContainer() {
-    final AreaPicoContainer picoContainer = Extensions.getArea(myAreaInstance).getPicoContainer();
-    picoContainer.setComponentAdapterFactory(new ComponentManagerImpl.MyComponentAdapterFactory(myComponentManager));
-    return picoContainer;
   }
 
   static void startLoggingUsedMacros() {
@@ -230,6 +221,17 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
   }
 
+  //todo: inline
+  public ExpandMacroToPathMap getExpandMacroReplacements() {
+    return PathMacroManager.getInstance(myComponentManager).getExpandMacroMap();
+  }
+
+
+  //todo: inline
+  public ReplacePathToMacroMap getMacroReplacements() {
+    return PathMacroManager.getInstance(myComponentManager).getReplacePathMap();
+  }
+
   @Nullable
   static ArrayList<String> getConversionProblemsStorage() {
     return ourConversionProblemsStorage;
@@ -237,23 +239,6 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
   synchronized int getOriginalVersion() {
     return myOriginalVersion;
-  }
-
-  ExpandMacroToPathMap getExpandMacroReplacements() {
-    ExpandMacroToPathMap result = new ExpandMacroToPathMap();
-    result.addMacroExpand(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, PathManager.getHomePath());
-    myPathMacros.addMacroExpands(result);
-    return result;
-  }
-
-  ReplacePathToMacroMap getMacroReplacements() {
-    ReplacePathToMacroMap result = new ReplacePathToMacroMap();
-
-    result.addMacroReplacement(PathManager.getHomePath(), PathMacrosImpl.APPLICATION_HOME_MACRO_NAME);
-
-    myPathMacros.addMacroReplacements(result);
-
-    return result;
   }
 
   public synchronized void initStore() {
@@ -334,12 +319,13 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return myDefault;
   }
 
+
+  //todo: inline
   public void setPathMacros(final PathMacrosImpl pathMacros) {
-    myPathMacros = pathMacros;
+    PathMacroManager.getInstance(myComponentManager).setPathMacros(pathMacros);
   }
 
   public static Set<String> getUsedMacros() {
     return ourUsedMacros;
   }
-
 }

@@ -4,25 +4,16 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusFactory;
-import org.jetbrains.annotations.NotNull;
-import org.picocontainer.PicoContainer;
 
 import java.awt.*;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.concurrent.Future;
 
-public class MockApplication extends UserDataHolderBase implements ApplicationEx {
-  private final MessageBus myMessageBus = MessageBusFactory.newMessageBus(this);
+public class MockApplication extends MockComponentManager implements ApplicationEx {
 
   public String getName() {
     return "mock";
@@ -84,26 +75,12 @@ public class MockApplication extends UserDataHolderBase implements ApplicationEx
     return new IdeaPluginDescriptor[0];
   }
 
-  public boolean isDisposed() {
-    return false;
-  }
 
   public Future<?> executeOnPooledThread(Runnable action) {
     new Thread(action).start();
     return null; // ?
   }
 
-  public BaseComponent getComponent(String name) {
-    return null;
-  }
-
-  public <T> T getComponent(Class<T> interfaceClass) {
-    return null;
-  }
-
-  public <T> T getComponent(Class<T> interfaceClass, T defaultImplementation) {
-    return null;
-  }
 
   public void runReadAction(Runnable action) {
     action.run();
@@ -141,9 +118,6 @@ public class MockApplication extends UserDataHolderBase implements ApplicationEx
   }
 
   public void exit() {
-  }
-
-  public void dispose() {
   }
 
   public void assertReadAccessToDocumentsAllowed() {
@@ -188,23 +162,7 @@ public class MockApplication extends UserDataHolderBase implements ApplicationEx
     return 0;
   }
 
-  @NotNull
-  public Class[] getComponentInterfaces() {
-    return ArrayUtil.EMPTY_CLASS_ARRAY;
-  }
 
-  public boolean hasComponent(Class interfaceClass) {
-    return false;
-  }
-
-  @NotNull
-  public <T> T[] getComponents(Class<T> baseInterfaceClass) {
-    return (T[])Array.newInstance(baseInterfaceClass, 0);
-  }
-
-  public PicoContainer getPicoContainer() {
-    throw new UnsupportedOperationException("getPicoContainer is not implement in : " + getClass());
-  }
 
   public ModalityState getCurrentModalityState() {
     return null;
@@ -220,9 +178,5 @@ public class MockApplication extends UserDataHolderBase implements ApplicationEx
 
   public ModalityState getNoneModalityState() {
     return null;
-  }
-
-  public MessageBus getMessageBus() {
-    return myMessageBus;
   }
 }

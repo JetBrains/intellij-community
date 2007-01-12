@@ -84,6 +84,7 @@ public interface ComponentManager extends UserDataHolder, Disposable {
    */
   @NotNull <T> T[] getComponents(Class<T> baseInterfaceClass);
 
+  @NotNull
   PicoContainer getPicoContainer();
 
   MessageBus getMessageBus();

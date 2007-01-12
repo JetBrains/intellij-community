@@ -12,8 +12,8 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.components.impl.stores.ApplicationStoreImpl;
 import com.intellij.openapi.components.impl.stores.IApplicationStore;
-import com.intellij.openapi.components.impl.stores.StoreFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
@@ -75,8 +75,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private boolean myDoNotSave = false;
   private boolean myIsWaitingForWriteAction = false;
   @NonNls private static final String NULL_STR = "null";
-  private final IApplicationStore myApplicationStore;
-
 
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
     15,
@@ -109,15 +107,18 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   );
 
 
+  protected void boostrapPicoContainer() {
+    super.boostrapPicoContainer();
+    getPicoContainer().registerComponentImplementation(ApplicationStoreImpl.class);
+  }
+
+  @NotNull
   public IApplicationStore getStateStore() {
     return (IApplicationStore)super.getStateStore();
   }
 
   public ApplicationImpl(String componentsDescriptor, boolean isInternal, boolean isUnitTestMode, boolean isHeadless, String appName) {
-    super(StoreFactory.createApplicationStore());
-    myApplicationStore = getStateStore();
-    myApplicationStore.setApplication(this);
-
+    super(null);
 
     if (isInternal || isUnitTestMode) {
       Disposer.setDebugMode(true);
@@ -143,8 +144,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       }
       IconLoader.activate();
     }
-
-    getPicoContainer().registerComponentInstance(ApplicationEx.class, this);
 
     myComponentsDescriptor = componentsDescriptor;
     myIsInternal = isInternal;
@@ -294,7 +293,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
 
   public void load(String path) throws IOException, InvalidDataException {
-    myApplicationStore.loadApplication(path);
+    getStateStore().loadApplication(path);
   }
 
 
@@ -780,11 +779,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  @Nullable
-  protected ComponentManagerImpl getParentComponentManager() {
-    return null;
-  }
-
 
   public void saveSettings() {
     if (myDoNotSave) return;
@@ -801,7 +795,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         }
 
         try {
-          myApplicationStore.saveApplication(optionsPath);
+          getStateStore().saveApplication(optionsPath);
         }
         catch (final Throwable ex) {
           LOG.info("Saving application settings failed", ex);

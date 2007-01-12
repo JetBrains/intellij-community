@@ -6,10 +6,13 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.components.impl.ModulePathMacroManager;
 import com.intellij.openapi.components.impl.stores.BaseFileConfigurable;
 import com.intellij.openapi.components.impl.stores.IModuleStore;
-import com.intellij.openapi.components.impl.stores.StoreFactory;
+import com.intellij.openapi.components.impl.stores.ModuleStoreImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.AreaInstance;
+import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
@@ -34,6 +37,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,20 +73,21 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   private ModuleRuntimeClasspathScope myModuleTestsRuntimeClasspathScope;
   private ModuleRuntimeClasspathScope myModuleRuntimeClasspathScope;
   public static final Object MODULE_RENAMING_REQUESTOR = new Object();
-  private final IModuleStore myModuleStore;
 
   public ModuleImpl(String filePath, Project project, PomModel pomModel, PathMacrosImpl pathMacros) {
-    super(StoreFactory.createModuleStore(), false, pathMacros);
-    myModuleStore = getStateStore();
-    myModuleStore.setModule(this);
-
+    super(project, false, pathMacros);
 
     myProject = project;
     myPomModel =  pomModel;
-    Extensions.instantiateArea(PluginManager.AREA_IDEA_MODULE, this, project);
     init(filePath);
   }
 
+  protected void boostrapPicoContainer() {
+    Extensions.instantiateArea(PluginManager.AREA_IDEA_MODULE, this, (AreaInstance)getParentComponentManager());
+    super.boostrapPicoContainer();
+    getPicoContainer().registerComponentImplementation(ModuleStoreImpl.class);
+    getPicoContainer().registerComponentImplementation(ModulePathMacroManager.class);
+  }
 
   @NotNull
   public IModuleStore getStateStore() {
@@ -90,7 +95,6 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   }
 
   private void init(String filePath) {
-    getPicoContainer().registerComponentInstance(Module.class, this);
     myPomModule = new PomModuleImpl(myPomModel, this);
 
     getStateStore().setModuleFilePath(filePath);
@@ -134,10 +138,6 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   private static List<String> parseOptionValue(String optionValue) {
     if (optionValue == null) return new ArrayList<String>(0);
     return Arrays.asList(optionValue.split(";"));
-  }
-
-  protected ComponentManagerImpl getParentComponentManager() {
-    return (ComponentManagerImpl)myProject;
   }
 
   @Nullable
@@ -385,5 +385,11 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
       }
     }
 
+  }
+
+  protected MutablePicoContainer createPicoContainer() {
+    final AreaPicoContainer picoContainer = Extensions.getArea(this).getPicoContainer();
+    picoContainer.setComponentAdapterFactory(new ComponentManagerImpl.MyComponentAdapterFactory(this));
+    return picoContainer;
   }
 }

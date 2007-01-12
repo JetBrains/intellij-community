@@ -4,6 +4,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 

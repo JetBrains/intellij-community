@@ -1,6 +1,5 @@
 package com.intellij.openapi.project.impl;
 
-import com.intellij.application.options.ExpandMacroToPathMap;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.ide.highlighter.ProjectFileType;
@@ -10,12 +9,15 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.BaseFileConfigurable;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
-import com.intellij.openapi.components.impl.stores.StoreFactory;
+import com.intellij.openapi.components.impl.stores.ProjectStoreImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -33,6 +35,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -60,28 +63,27 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
   private GlobalSearchScope myProjectScope;
   @NonNls private static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
   @NonNls private static final String DUMMY_PROJECT_NAME = "Dummy (Mock) Project";
-  final IProjectStore myProjectStore;
 
   protected ProjectImpl(ProjectManagerImpl manager,
                         String filePath,
                         boolean isDefault,
                         boolean isOptimiseTestLoadSpeed,
                         PathMacrosImpl pathMacros) {
-    super(StoreFactory.createProjectStore(), isDefault, pathMacros);
+    super(ApplicationManager.getApplication(), isDefault, pathMacros);
 
-    myProjectStore = getStateStore();
-    myProjectStore.setProject(this);
-    myProjectStore.setProjectFilePath(filePath);
+    getStateStore().setProjectFilePath(filePath);
 
     myOptimiseTestLoadSpeed = isOptimiseTestLoadSpeed;
-
-    Extensions.instantiateArea(PluginManager.AREA_IDEA_PROJECT, this, null);
-
-    getPicoContainer().registerComponentInstance(Project.class, this);
 
     myManager = manager;
   }
 
+  protected void boostrapPicoContainer() {
+    Extensions.instantiateArea(PluginManager.AREA_IDEA_PROJECT, this, null);
+    super.boostrapPicoContainer();
+    getPicoContainer().registerComponentImplementation(ProjectStoreImpl.class);
+    getPicoContainer().registerComponentImplementation(ProjectPathMacroManager.class);
+  }
 
   public IProjectStore getStateStore() {
     return (IProjectStore)super.getStateStore();
@@ -235,12 +237,12 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
 
   @NotNull
   public String getProjectFilePath() {
-    return myProjectStore.getProjectFilePath();
+    return getStateStore().getProjectFilePath();
   }
 
   @Nullable
   public VirtualFile getProjectFile() {
-    return myProjectStore.getProjectFile();
+    return getStateStore().getProjectFile();
   }
 
   @NotNull
@@ -248,7 +250,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
     if (isDefault()) return TEMPLATE_PROJECT_NAME;
     if (isDummy()) return DUMMY_PROJECT_NAME;
 
-    String temp = myProjectStore.getProjectFileName();
+    String temp = getStateStore().getProjectFileName();
     if (temp.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
       temp = temp.substring(0, temp.length() - ProjectFileType.DOT_DEFAULT_EXTENSION.length());
     }
@@ -261,11 +263,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
 
   @Nullable
   public VirtualFile getWorkspaceFile() {
-    return myProjectStore.getWorkspaceFile();
-  }
-
-  protected ComponentManagerImpl getParentComponentManager() {
-    return (ComponentManagerImpl)ApplicationManager.getApplication();
+    return getStateStore().getWorkspaceFile();
   }
 
   public boolean isOptimiseTestLoadSpeed() {
@@ -289,7 +287,7 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
     if (ApplicationManagerEx.getApplicationEx().isDoNotSave()) return; //no need to save
     ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
 
-    myProjectStore.saveProject();
+    getStateStore().saveProject();
   }
 
   public synchronized void dispose() {
@@ -353,5 +351,11 @@ public class ProjectImpl extends BaseFileConfigurable implements ProjectEx {
 
     public void projectClosing(Project project) {
     }
+  }
+
+  protected MutablePicoContainer createPicoContainer() {
+    final AreaPicoContainer picoContainer = Extensions.getArea(this).getPicoContainer();
+    picoContainer.setComponentAdapterFactory(new ComponentManagerImpl.MyComponentAdapterFactory(this));
+    return picoContainer;
   }
 }
