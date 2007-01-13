@@ -1,15 +1,14 @@
 package com.intellij.psi.filters.getters;
 
-import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,7 +19,6 @@ import java.util.List;
  */
 public class ExpectedTypesGetter implements ContextGetter{
   public Object[] get(PsiElement context, CompletionContext completionContext){
-    final List<PsiType> result = new ArrayList<PsiType>();
     ExpectedTypesProvider typesProvider = ExpectedTypesProvider.getInstance(context.getProject());
     PsiExpression expression = PsiTreeUtil.getContextOfType(context, PsiExpression.class, true);
     
@@ -37,46 +35,28 @@ public class ExpectedTypesGetter implements ContextGetter{
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
 
       final PsiNameValuePair psiNameValuePair = ((PsiNameValuePair)parent);
-      final Object[] variants = psiNameValuePair.getReference().getVariants();
-      
-      if (variants != null && 
-          variants.length == 1 && 
-          variants[0] instanceof PsiMethod &&
-          ((PsiMethod)variants[0]).getReturnType() != null
-        ) {
-        return new PsiType[] { ((PsiMethod)variants[0]).getReturnType() };
+      final PsiReference ref = psiNameValuePair.getReference();
+      if (ref != null) {
+        final Object[] variants = ref.getVariants();
+
+        if (variants != null &&
+            variants.length == 1 &&
+            variants[0] instanceof PsiMethod &&
+            ((PsiMethod)variants[0]).getReturnType() != null
+          ) {
+          return new PsiType[] { ((PsiMethod)variants[0]).getReturnType() };
+        }
       }
-      
+
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
     ExpectedTypeInfo[] infos = typesProvider.getExpectedTypes(expression, true);
 
-    infos = extractUnique(infos, typesProvider);
-    for (ExpectedTypeInfo info : infos) {
-      result.add(info.getType());
-    }
-    return result.toArray(new PsiType[result.size()]);
-  }
-
-  private ExpectedTypeInfo[] extractUnique(ExpectedTypeInfo[] infos, ExpectedTypesProvider typesProvider){
-    ArrayList<ExpectedTypeInfo> infoV = new ArrayList<ExpectedTypeInfo>();
-    AddInfosLoop:
-    for (ExpectedTypeInfo info : infos) {
-      PsiType type = info.getType();
-      for (int j = 0; j < infoV.size(); j++) {
-        ExpectedTypeInfo info1 = infoV.get(j);
-        PsiType type1 = info1.getType();
-        if (type.equals(type1)) { //?
-          if (info.getTailType() != info1.getTailType()) {
-            infoV.set(j, typesProvider.createInfo(type1, info1.getKind(), info1.getDefaultType(), TailType.NONE));
-          }
-          continue AddInfosLoop;
-        }
+    return ContainerUtil.map(infos, new Function<ExpectedTypeInfo, PsiType>() { //We want function types!!!
+      public PsiType fun(ExpectedTypeInfo info) {
+        return info.getType();
       }
-      infoV.add(info);
-    }
-    infos = infoV.toArray(new ExpectedTypeInfo[infoV.size()]);
-    return infos;
+    }, PsiType.EMPTY_ARRAY);
   }
 }
