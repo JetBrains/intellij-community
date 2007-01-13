@@ -77,7 +77,15 @@ public abstract class MethodSignatureBase implements MethodSignature {
   }
 
   public int hashCode() {
-    return MethodSignatureUtil.computeHashCode(this);
+    int result = getName().hashCode();
+
+    final PsiType[] parameterTypes = getParameterTypes();
+    result += 37 * parameterTypes.length;
+    PsiType firstParamType = parameterTypes.length != 0 ? parameterTypes[0] : null;
+    if (firstParamType != null) {
+      result += firstParamType.hashCode();
+    }
+    return result;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

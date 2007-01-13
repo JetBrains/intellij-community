@@ -117,18 +117,6 @@ public class MethodSignatureUtil {
     return false;
   }
 
-  public static int computeHashCode(final MethodSignature methodSignature) {
-    int result = methodSignature.getName().hashCode();
-
-    result += 37 * methodSignature.getParameterTypes().length;
-    /*PsiType firstParamType = parameterTypes.length != 0 ? parameterTypes[0] : null;
-    if (firstParamType != null) {
-      firstParamType = TypeConversionUtil.erasure(firstParamType);
-      result += firstParamType.hashCode();
-    }*/
-    return result;
-  }
-
   public static boolean isSuperMethod(final PsiMethod superMethodCandidate, final PsiMethod derivedMethod) {
     PsiClass superClassCandidate = superMethodCandidate.getContainingClass();
     PsiClass derivedClass = derivedMethod.getContainingClass();
@@ -314,7 +302,15 @@ public class MethodSignatureUtil {
 
   private static class MethodParametersErasureEquality implements TObjectHashingStrategy<MethodSignature> {
     public int computeHashCode(final MethodSignature signature) {
-      return MethodSignatureUtil.computeHashCode(signature);
+      int result = signature.getName().hashCode();
+
+      result += 37 * signature.getParameterTypes().length;
+      /*PsiType firstParamType = parameterTypes.length != 0 ? parameterTypes[0] : null;
+        if (firstParamType != null) {
+          firstParamType = TypeConversionUtil.erasure(firstParamType);
+          result += firstParamType.hashCode();
+        }*/
+      return result;
     }
 
     public boolean equals(MethodSignature method1, MethodSignature method2) {
