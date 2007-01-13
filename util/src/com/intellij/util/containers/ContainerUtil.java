@@ -15,10 +15,10 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.Disposable;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
@@ -398,6 +398,14 @@ public class ContainerUtil {
       result.add(mapping.fun(t));
     }
     return result;
+  }
+
+  public static <T,V> V[] map(T[] arr, Function<T, V> mapping, V[] emptyArray) {
+    List<V> result = new ArrayList<V>();
+    for (T t : arr) {
+      result.add(mapping.fun(t));
+    }
+    return result.toArray(emptyArray);
   }
 
   public static <T> void addIfNotNull(final T element, final Collection<T> result) {
