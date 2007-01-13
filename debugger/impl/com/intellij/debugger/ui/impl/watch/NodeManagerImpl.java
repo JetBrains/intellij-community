@@ -7,6 +7,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.nodes.NodeComparator;
+import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeManager;
 import com.intellij.openapi.project.Project;
@@ -26,7 +27,7 @@ import java.util.List;
  */
 
 public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeManager{
-  private static Comparator ourNodeComparator = new NodeComparator();
+  private static Comparator<DebuggerTreeNode> ourNodeComparator = new NodeComparator();
 
   private final DebuggerTree myDebuggerTree;
   private List<Breakpoint> myBreakpoints = Collections.emptyList();
@@ -36,7 +37,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     myDebuggerTree = tree;
   }
 
-  public static Comparator getNodeComparator() {
+  public static Comparator<DebuggerTreeNode> getNodeComparator() {
     return ourNodeComparator;
   }
 

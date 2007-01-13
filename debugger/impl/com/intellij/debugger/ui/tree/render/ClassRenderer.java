@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -129,14 +128,13 @@ public class ClassRenderer extends NodeRendererImpl{
       final ObjectReference objRef = (ObjectReference)value;
       final ReferenceType refType = objRef.referenceType();
       // default ObjectReference processing
-      final List fields = refType.allFields();
+      final List<Field> fields = refType.allFields();
       if (fields.size() > 0) {
-        for (Iterator it = fields.iterator(); it.hasNext();) {
-          Field jdiField = (Field)it.next();
-          if (!shouldDisplay(jdiField)) {
+        for (final Field field : fields) {
+          if (!shouldDisplay(field)) {
             continue;
           }
-          children.add(nodeManager.createNode(nodeDescriptorFactory.getFieldDescriptor(parentDescriptor, objRef, jdiField), evaluationContext));
+          children.add(nodeManager.createNode(nodeDescriptorFactory.getFieldDescriptor(parentDescriptor, objRef, field), evaluationContext));
         }
 
         if(SORT_ASCENDING) {

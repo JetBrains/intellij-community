@@ -104,12 +104,13 @@ public class DebuggerSessionTab implements LogConsoleManager {
     myProject = project;
     myManager = new LogFilesManager(project, this);
     myContentPanel = new JPanel(new BorderLayout());
+    final DebuggerSettings debuggerSettings = DebuggerSettings.getInstance();
     if(!ApplicationManager.getApplication().isUnitTestMode()) {
       getContextManager().addListener(new DebuggerContextListener() {
         public void changeEvent(DebuggerContextImpl newContext, int event) {
           switch(event) {
             case DebuggerSession.EVENT_DETACHED:
-              DebuggerSettings settings = DebuggerSettings.getInstance();
+              DebuggerSettings settings = debuggerSettings;
 
               myFirstToolbar.updateActionsImmediately();
               mySecondToolbar.updateActionsImmediately();
@@ -150,7 +151,8 @@ public class DebuggerSessionTab implements LogConsoleManager {
         return myViewsContentManager.getSelectedContent().getComponent() == this;
       }
     };
-    if (DebuggerSettings.getInstance().WATCHES_VISIBLE) {
+    myFramePanel.getFrameTree().setAutoVariablesMode(debuggerSettings.AUTO_VARIABLES_MODE);
+    if (debuggerSettings.WATCHES_VISIBLE) {
       myFramePanel.setWatchPanel(myWatchPanel);
     }
 
@@ -300,6 +302,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
     addActionToGroup(group, DebuggerActions.MUTE_BREAKPOINTS);
     group.add(new ShowWatchesAction());
     group.add(new WatchLastMethodReturnValueAction());
+    group.add(new AutoVarsSwitchAction());
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
   }
@@ -483,6 +486,34 @@ public class DebuggerSessionTab implements LogConsoleManager {
 
     public void setState(DebuggerContextImpl context, int state, int event, String description) {
       myDebuggerSession.getContextManager().setState(context, state, event, description);
+    }
+  }
+
+  private class AutoVarsSwitchAction extends ToggleAction {
+    private volatile boolean myAutoModeEnabled;
+    private final String myAutoModeText = "Auto-Variables Mode";
+    private final String myDefaultModeText = "All-Variables Mode";
+
+    public AutoVarsSwitchAction() {
+      super("", "", WATCHES_ICON);
+      myAutoModeEnabled = DebuggerSettings.getInstance().AUTO_VARIABLES_MODE;
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      final Presentation presentation = e.getPresentation();
+      final boolean autoModeEnabled = (Boolean)presentation.getClientProperty(SELECTED_PROPERTY);
+      presentation.setText(autoModeEnabled ? myDefaultModeText : myAutoModeText);
+    }
+
+    public boolean isSelected(AnActionEvent e) {
+      return myAutoModeEnabled;
+    }
+
+    public void setSelected(AnActionEvent e, boolean enabled) {
+      myAutoModeEnabled = enabled;
+      DebuggerSettings.getInstance().AUTO_VARIABLES_MODE = enabled;
+      myFramePanel.getFrameTree().setAutoVariablesMode(enabled);
     }
   }
 

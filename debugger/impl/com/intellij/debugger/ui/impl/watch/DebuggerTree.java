@@ -16,10 +16,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
-import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.impl.DebuggerTreeBase;
 import com.intellij.debugger.ui.impl.tree.TreeBuilder;
 import com.intellij.debugger.ui.impl.tree.TreeBuilderNode;
@@ -42,7 +39,9 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.LinkedList;
 import java.util.List;
 
 public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvider {
@@ -50,7 +49,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   protected static final Key<Rectangle> VISIBLE_RECT = Key.create("VISIBLE_RECT");
 
   private final Project myProject;
-  private final NodeManagerImpl myNodeManager;
+  protected final NodeManagerImpl myNodeManager;
 
   private int     myPriority = DebuggerManagerThreadImpl.NORMAL_PRIORITY;
   private NodeRendererSettingsListener mySettingsListener;
@@ -165,7 +164,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
   }
 
-  private BuildNodeCommand getBuildNodeCommand(final DebuggerTreeNodeImpl node) {
+  protected BuildNodeCommand getBuildNodeCommand(final DebuggerTreeNodeImpl node) {
     if (node.getDescriptor() instanceof StackFrameDescriptorImpl) {
       return new BuildStackFrameCommand(node);
     }
@@ -335,10 +334,13 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
   public void rebuild(final DebuggerContextImpl context) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-
+    final DebugProcessImpl process = context.getDebugProcess();
+    if (process == null) {
+      return; // empty context, no process available yet
+    }
     myDebuggerContext = context;
     saveState();
-    context.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(context){
+    process.getManagerThread().invokeLater(new DebuggerContextCommandImpl(context){
       public void threadAction() {
         getNodeFactory().setHistoryByContext(context);
       }
@@ -390,12 +392,12 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
   }
 
-  private class BuildStackFrameCommand extends BuildNodeCommand {
+  protected class BuildStackFrameCommand extends BuildNodeCommand {
     public BuildStackFrameCommand(DebuggerTreeNodeImpl stackNode) {
       super(stackNode);
     }
 
-    public void threadAction() {
+    public final void threadAction() {
       try {
         final StackFrameDescriptorImpl stackDescriptor = (StackFrameDescriptorImpl)getNode().getDescriptor();
         final StackFrameProxyImpl frame = stackDescriptor.getFrameProxy();
@@ -418,12 +420,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         }
         myChildren.add(myNodeManager.createNode(descriptor, evaluationContext));
         try {
-          for (final LocalVariableProxyImpl local : frame.visibleVariables()) {
-            final LocalVariableDescriptorImpl localVariableDescriptor =
-              myNodeManager.getLocalVariableDescriptor(stackDescriptor, local);
-            final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(localVariableDescriptor, evaluationContext);
-            myChildren.add(variableNode);
-          }
+          buildVariables(stackDescriptor, evaluationContext);
           if (NodeRendererSettings.getInstance().getClassRenderer().SORT_ASCENDING) {
             Collections.sort(myChildren, NodeManagerImpl.getNodeComparator());
           }
@@ -447,8 +444,18 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
       updateUI(true);
     }
+
+    protected void buildVariables(final StackFrameDescriptorImpl stackDescriptor, final EvaluationContextImpl evaluationContext) throws EvaluateException {
+      final StackFrameProxyImpl frame = stackDescriptor.getFrameProxy();
+      for (final LocalVariableProxyImpl local : frame.visibleVariables()) {
+        final LocalVariableDescriptorImpl localVariableDescriptor = myNodeManager.getLocalVariableDescriptor(stackDescriptor, local);
+        final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(localVariableDescriptor, evaluationContext);
+        myChildren.add(variableNode);
+      }
+    }
   }
 
+  /*
   private class BuildThreadGroupCommand extends BuildNodeCommand {
     public BuildThreadGroupCommand(DebuggerTreeNodeImpl node) {
       super(node);
@@ -499,8 +506,9 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       updateUI(true);
     }
   }
+  */
 
-  private class BuildValueNodeCommand extends BuildNodeCommand {
+  private class BuildValueNodeCommand extends BuildNodeCommand implements ChildrenBuilder {
     public BuildValueNodeCommand(DebuggerTreeNodeImpl node) {
       super(node);
     }
@@ -509,24 +517,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       ValueDescriptorImpl descriptor = (ValueDescriptorImpl)getNode().getDescriptor();
       try {
         final NodeRenderer renderer = descriptor.getRenderer(getSuspendContext().getDebugProcess());
-        renderer.buildChildren(descriptor.getValue(), new ChildrenBuilder() {
-          public NodeManagerImpl getNodeManager() {
-            return myNodeManager;
-          }
-
-          public NodeManagerImpl getDescriptorManager() {
-            return myNodeManager;
-          }
-
-          public ValueDescriptorImpl getParentDescriptor() {
-            return (ValueDescriptorImpl)getNode().getDescriptor();
-          }
-
-          public void setChildren(final List<DebuggerTreeNode> children) {
-            myChildren.addAll(children);
-            updateUI(false);
-          }
-        }, getDebuggerContext().createEvaluationContext());
+        renderer.buildChildren(descriptor.getValue(), this, getDebuggerContext().createEvaluationContext());
       }
       catch (ObjectCollectedException e) {
         getNode().removeAllChildren();
@@ -535,6 +526,23 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         );
         getNode().childrenChanged(false);
       }
+    }
+
+    public NodeManagerImpl getNodeManager() {
+      return myNodeManager;
+    }
+
+    public NodeManagerImpl getDescriptorManager() {
+      return myNodeManager;
+    }
+
+    public ValueDescriptorImpl getParentDescriptor() {
+      return (ValueDescriptorImpl)getNode().getDescriptor();
+    }
+
+    public void setChildren(final List<DebuggerTreeNode> children) {
+      myChildren.addAll(children);
+      updateUI(false);
     }
   }
 

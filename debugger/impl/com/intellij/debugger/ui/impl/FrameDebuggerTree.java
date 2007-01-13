@@ -4,30 +4,60 @@
  */
 package com.intellij.debugger.ui.impl;
 
-import com.intellij.debugger.engine.SuspendManager;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.SuspendManager;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
-import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 
 import javax.swing.event.TreeModelEvent;
-import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FrameDebuggerTree extends DebuggerTree {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.FrameDebuggerTree");
   private boolean myAnyNewLocals;
+  private boolean myAutoWatchMode = false;
 
   public FrameDebuggerTree(Project project) {
     super(project);
+  }
+
+  public boolean isAutoWatchMode() {
+    return myAutoWatchMode;
+  }
+
+  public void setAutoVariablesMode(final boolean autoWatchMode) {
+    final boolean valueChanged = myAutoWatchMode != autoWatchMode;
+    myAutoWatchMode = autoWatchMode;
+    if (valueChanged) {
+      rebuild(getDebuggerContext());
+    }
   }
 
   protected void build(DebuggerContextImpl context) {
@@ -53,6 +83,116 @@ public class FrameDebuggerTree extends DebuggerTree {
     }
   }
 
+
+  protected BuildNodeCommand getBuildNodeCommand(final DebuggerTreeNodeImpl node) {
+    if (myAutoWatchMode && node.getDescriptor() instanceof StackFrameDescriptorImpl) {
+      return new BuildAutoWatchStackFrameCommand(node);
+    }
+    return super.getBuildNodeCommand(node);
+  }
+
+  private class BuildAutoWatchStackFrameCommand extends BuildStackFrameCommand {
+    public BuildAutoWatchStackFrameCommand(DebuggerTreeNodeImpl stackNode) {
+      super(stackNode);
+    }
+
+    protected void buildVariables(final StackFrameDescriptorImpl stackDescriptor, final EvaluationContextImpl evaluationContext) throws EvaluateException {
+      final SourcePosition sourcePosition = getDebuggerContext().getSourcePosition();
+      final Pair<Set<String>, Set<TextWithImports>> usedVars = ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
+        public Pair<Set<String>, Set<TextWithImports>> compute() {
+          return findReferencedVars(sourcePosition);
+        }
+      });
+      if (usedVars.first.isEmpty() && usedVars.second.isEmpty()) {
+        return;
+      }
+      final StackFrameProxyImpl frame = stackDescriptor.getFrameProxy();
+      for (LocalVariableProxyImpl local : frame.visibleVariables()) {
+        if (usedVars.first.contains(local.name())) {
+          final LocalVariableDescriptorImpl descriptor = myNodeManager.getLocalVariableDescriptor(stackDescriptor, local);
+          myChildren.add(myNodeManager.createNode(descriptor, evaluationContext));
+        }
+      }
+      for (TextWithImports text : usedVars.second) {
+        myChildren.add(myNodeManager.createNode(new WatchItemDescriptor(getProject(), text, false), evaluationContext));
+      }
+    }
+  }
+
+  private static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(final SourcePosition position) {
+    final PsiFile file = position.getFile();
+    final Document doc = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
+    final int line = position.getLine();
+
+    final int startOffset = doc.getLineStartOffset(Math.max(0, line - 1));
+    final TextRange lineRange = new TextRange(startOffset, doc.getLineEndOffset(line));
+    final int offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), startOffset, " \t");
+    PsiElement element = file.findElementAt(offset);
+    if (element != null) {
+      do {
+        final PsiElement parent = element.getParent();
+        if (parent == null || (parent.getTextOffset() < lineRange.getStartOffset())) {
+          break;
+        }
+        element = parent;
+      }
+      while(true);
+
+      //noinspection unchecked
+      final Set<String> vars = new HashSet<String>();
+      final Set<TextWithImports> expressions = new HashSet<TextWithImports>();
+      final PsiRecursiveElementVisitor variablesCollector = new PsiRecursiveElementVisitor() {
+        
+        public void visitReferenceElement(final PsiJavaCodeReferenceElement reference) {
+          final PsiElement psiElement = reference.resolve();
+          if (psiElement instanceof PsiVariable) {
+            final PsiVariable var = (PsiVariable)psiElement;
+            if (var instanceof PsiField && reference instanceof PsiReferenceExpression && !hasMethodCall(reference)) {
+              expressions.add(new TextWithImportsImpl((PsiReferenceExpression)reference));
+            }
+            else {
+              vars.add(var.getName());
+            }
+          }
+          super.visitReferenceElement(reference);
+        }
+        
+        public void visitLocalVariable(final PsiLocalVariable variable) {
+          vars.add(variable.getName());
+          super.visitLocalVariable(variable);
+        }
+
+        /*
+        public void visitStatement(PsiStatement statement) {
+          if (lineRange.intersects(statement.getTextRange())) {
+            super.visitStatement(statement);
+          }
+        }
+        */
+      };
+      element.accept(variablesCollector);
+      for (PsiElement sibling = element.getNextSibling(); sibling != null; sibling = sibling.getNextSibling()) {
+        if (!lineRange.intersects(sibling.getTextRange())) {
+          break;
+        }
+        sibling.accept(variablesCollector);
+      }
+      return new Pair<Set<String>, Set<TextWithImports>>(vars, expressions);
+    }
+    return new Pair<Set<String>, Set<TextWithImports>>(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
+  }
+  
+  private static boolean hasMethodCall(PsiElement element) {
+    final AtomicBoolean rv = new AtomicBoolean(false);
+    element.accept(new PsiRecursiveElementVisitor() {
+      public void visitCallExpression(final PsiCallExpression callExpression) {
+        rv.set(true);
+      }
+    });
+    return rv.get();
+  }
+
+  
   private class RefreshFrameTreeCommand extends RefreshDebuggerTreeCommand {
     public RefreshFrameTreeCommand(DebuggerContextImpl context) {
       super(context);

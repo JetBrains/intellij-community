@@ -91,11 +91,8 @@ public class WatchDebuggerTree extends DebuggerTree {
   }
 
   protected void build(DebuggerContextImpl context) {
-    DebuggerTreeNodeImpl[] watches = getWatches();
-
-    for (int i = 0; i < watches.length; i++) {
-      DebuggerTreeNodeImpl watch = watches[i];
-      watch.calcValue();
+    for (DebuggerTreeNodeImpl node : getWatches()) {
+      node.calcValue();
     }
   }
 
@@ -111,9 +108,5 @@ public class WatchDebuggerTree extends DebuggerTree {
       DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)enumeration.nextElement();
       ((WatchItemDescriptor)child.getDescriptor()).setAllowBreakpoints(b);
     }      
-  }
-
-  public void setHistoryByContext(DebuggerContextImpl debuggerContext) {
-    
   }
 }
