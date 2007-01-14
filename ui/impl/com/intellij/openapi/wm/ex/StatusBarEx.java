@@ -20,4 +20,8 @@ public interface StatusBarEx extends StatusBar{
   void cleanupCustomComponents();
 
   void add(ProgressIndicatorEx indicator, ProcessInfo processInfo);
+
+  boolean isProcessWindowOpen();
+
+  void setProcessWindowOpen(boolean open);
 }

@@ -60,6 +60,14 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     public void add(ProgressIndicatorEx indicator, ProcessInfo processInfo) {
 
     }
+
+
+    public boolean isProcessWindowOpen() {
+      return false;
+    }
+
+    public void setProcessWindowOpen(final boolean open) {
+    }
   }
 
   public IdeFrame[] getAllFrames() {

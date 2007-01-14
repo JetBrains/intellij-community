@@ -6,6 +6,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.util.ArrayUtil;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -17,7 +19,6 @@ public class ProcessPopup  {
 
   private InfoAndProgressPanel myProgressPanel;
 
-  static final String BACKGROUND_PROCESSES = "Background Processes";
   private JBPopup myPopup;
 
   public ProcessPopup(final InfoAndProgressPanel progressPanel) {
@@ -81,7 +82,7 @@ public class ProcessPopup  {
     });
     builder.setMovable(true);
     builder.setResizable(true);
-    builder.setTitle(BACKGROUND_PROCESSES);
+    builder.setTitle(IdeBundle.message("progress.window.title"));
     builder.setDimensionServiceKey("BackgroundProcessPopup2", true);
     builder.setCancelOnClickOutside(false);
     builder.setRequestFocus(true);

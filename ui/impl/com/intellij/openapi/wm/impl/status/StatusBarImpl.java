@@ -113,6 +113,13 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     myInfoAndProgressPanel.addProgress(indicator, info);
   }
 
+  public void setProcessWindowOpen(final boolean open) {
+    myInfoAndProgressPanel.setProcessWindowOpen(open);
+  }
+
+  public boolean isProcessWindowOpen() {
+    return myInfoAndProgressPanel.isProcessWindowOpen();
+  }
 
   protected final void paintComponent(final Graphics g) {
     g.setColor(getBackground());

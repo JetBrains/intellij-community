@@ -11,6 +11,8 @@ import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.ide.IdeBundle;
+import com.intellij.idea.ActionsBundle;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -43,7 +45,7 @@ public class InfoAndProgressPanel extends JPanel {
 
     myProgressIcon = new AsyncProcessIcon("Background process");
     myProgressIcon.setOpaque(true);
-    myProgressIcon.setToolTipText("View " + ProcessPopup.BACKGROUND_PROCESSES);
+    myProgressIcon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.text"));
     new BaseButtonBehavior(myProgressIcon) {
       protected void execute() {
         triggerPopupShowing();
@@ -239,6 +241,18 @@ public class InfoAndProgressPanel extends JPanel {
     myProgressIcon.suspend();
     myStatusBar.myInfoPanel.revalidate();
     myStatusBar.myInfoPanel.repaint();
+  }
+
+  public boolean isProcessWindowOpen() {
+    return myPopup.isShowing();
+  }
+
+  public void setProcessWindowOpen(final boolean open) {
+    if (open) {
+      openProcessPopup();
+    } else {
+      hideProcessPopup();
+    }
   }
 
   private class MyInlineProgressIndicator extends InlineProgressIndicator {
