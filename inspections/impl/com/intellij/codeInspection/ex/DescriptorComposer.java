@@ -4,6 +4,7 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -78,6 +79,9 @@ public class DescriptorComposer extends HTMLComposerImpl {
     appendAfterHeaderIndention(buf);
 
     composeDescription(descriptor, problemIdx, buf, refElement);
+
+    if (refElement instanceof RefElement && !((RefElement)refElement).isValid()) return;
+
     final QuickFix[] fixes = descriptor.getFixes();
     if (fixes != null) {
       //noinspection HardCodedStringLiteral

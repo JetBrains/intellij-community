@@ -665,18 +665,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     menu.getComponent().show(component, x, y);
   }
 
-  public static void traverseRefElements(@NotNull InspectionTreeNode node, List<RefEntity> elementsToSuppress){
-    if (node instanceof RefElementNode){
-      elementsToSuppress.add(((RefElementNode)node).getElement());
-    } else if (node instanceof ProblemDescriptionNode){
-      elementsToSuppress.add(((ProblemDescriptionNode)node).getElement());
-    }
-    for (int i = 0; i < node.getChildCount(); i++) {
-      final InspectionTreeNode child = (InspectionTreeNode)node.getChildAt(i);
-      traverseRefElements(child, elementsToSuppress);
-    }
-  }
-
   @NotNull public InspectionTree getTree(){
     return myTree;
   }

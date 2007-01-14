@@ -48,6 +48,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     for (TreePath selectionPath : treePaths) {
       TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), new TreeUtil.Traverse() {
         public boolean accept(final Object node) {
+          if (!((InspectionTreeNode)node).isValid()) return true;
           if (node instanceof OfflineProblemDescriptorNode) {
             final OfflineProblemDescriptorNode descriptorNode = (OfflineProblemDescriptorNode)node;
             final RefEntity element = descriptorNode.getElement();
@@ -72,6 +73,8 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
         }
       });
     }
+
+    if (selectedElements.isEmpty()) return null;
 
     final RefEntity[] selectedRefElements = selectedElements.toArray(new RefEntity[selectedElements.size()]);
 

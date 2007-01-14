@@ -354,11 +354,11 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
   }
 
   public QuickFixAction[] getQuickFixes(final RefEntity[] refElements) {
-    if (refElements == null) return null;
     return extractActiveFixes(refElements, getQuickFixActions());    
   }
 
   public QuickFixAction[] extractActiveFixes(final RefEntity[] refElements, final Map<RefEntity, Set<QuickFix>> actions) {
+    if (refElements == null) return null;
     Map<Class, QuickFixAction> result = new java.util.HashMap<Class, QuickFixAction>();
     for (RefEntity refElement : refElements) {
       final Set<QuickFix> localQuickFixes = actions.get(refElement);

@@ -494,6 +494,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   protected void appendResolution(StringBuffer buf, InspectionTool tool, RefEntity where) {
     if (myExporter != null) return;
+    if (where instanceof RefElement && !((RefElement)where).isValid()) return;
     QuickFixAction[] quickFixes = tool.getQuickFixes(new RefEntity[] {where});
     if (quickFixes != null) {
       boolean listStarted = false;

@@ -164,16 +164,18 @@ public class InspectionTree extends Tree {
 
   public static List<RefElement> getElementsToSuppressInSubTree(InspectionTreeNode node){
     List<RefElement> result = new ArrayList<RefElement>();
-    if (node instanceof RefElementNode){
-      result.add(((RefElementNode)node).getElement());
-    } else if (node instanceof ProblemDescriptionNode){
-      final RefEntity element = ((ProblemDescriptionNode)node).getElement();
-      if (element instanceof RefElement) {
-        result.add((RefElement)element);
-      }
-    } else {
-      for(int i = 0; i < node.getChildCount(); i++){
-        result.addAll(getElementsToSuppressInSubTree((InspectionTreeNode)node.getChildAt(i)));
+    if (node.isValid()) {
+      if (node instanceof RefElementNode){
+        result.add(((RefElementNode)node).getElement());
+      } else if (node instanceof ProblemDescriptionNode){
+        final RefEntity element = ((ProblemDescriptionNode)node).getElement();
+        if (element instanceof RefElement) {
+          result.add((RefElement)element);
+        }
+      } else {
+        for(int i = 0; i < node.getChildCount(); i++){
+          result.addAll(getElementsToSuppressInSubTree((InspectionTreeNode)node.getChildAt(i)));
+        }
       }
     }
     return result;

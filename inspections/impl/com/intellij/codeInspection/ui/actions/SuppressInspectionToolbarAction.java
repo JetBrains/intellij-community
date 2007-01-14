@@ -15,7 +15,6 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
@@ -34,7 +33,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -120,7 +118,6 @@ public class SuppressInspectionToolbarAction extends AnAction {
           for (ProblemDescriptor descriptor : myView.getTree().getSelectedDescriptors()) {
             for (IntentionAction action : suppresableTool.getSuppressActions(descriptor)) {
               if (action.isAvailable(project, null, descriptor.getPsiElement().getContainingFile())) {
-                e.getPresentation().setEnabled(true);
                 return;
               }
             }
@@ -131,14 +128,12 @@ public class SuppressInspectionToolbarAction extends AnAction {
           final InspectionTreeNode node = (InspectionTreeNode)treePath.getLastPathComponent();
           final List<RefElement> elementsToSuppress = InspectionTree.getElementsToSuppressInSubTree(node);
           for (RefElement refElement : elementsToSuppress) {
-            if (refElement == null) continue;
             final PsiElement element = refElement.getElement();
             if (element instanceof PsiFile) continue;
             if (element == null || !element.isValid()) continue;
             final PsiFile file = element.getContainingFile();
             final IntentionAction action = getCorrectIntentionAction(tool, id, null, element);
             if (action.isAvailable(project, null, file)) {
-              e.getPresentation().setEnabled(true);
               return;
             }
           }
@@ -267,15 +262,11 @@ public class SuppressInspectionToolbarAction extends AnAction {
                 public void run() {
                   CommandProcessor.getInstance().executeCommand(view.getProject(), new Runnable() {
                     public void run() {
-                      final List<RefEntity> elementsToSuppress = new ArrayList<RefEntity>();
                       final InspectionTreeNode treeNode = (InspectionTreeNode)view.getTree().getSelectionPath().getLastPathComponent();
-                      InspectionResultsView.traverseRefElements(treeNode, elementsToSuppress);
+                      final List<RefElement> elementsToSuppress = InspectionTree.getElementsToSuppressInSubTree(treeNode);
                       final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManagerEx.getInstance(project);
-                      for (RefEntity entity : elementsToSuppress) {
-                        if (entity instanceof RefElement) {
-                          final RefElement element = (RefElement)entity;
-                          if (!suppress(element.getElement(), action, tool, project)) break;
-                        }
+                      for (RefElement element : elementsToSuppress) {                        
+                        if (!suppress(element.getElement(), action, tool, project)) break;
                       }
                       refreshViews(managerEx);
                     }

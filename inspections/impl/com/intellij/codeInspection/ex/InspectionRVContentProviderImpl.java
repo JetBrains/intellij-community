@@ -42,9 +42,9 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     final TreePath[] treePaths = tree.getSelectionPaths();
     final List<RefEntity> selectedElements = new ArrayList<RefEntity>();
     for (TreePath selectionPath : treePaths) {
-      InspectionResultsView.traverseRefElements((InspectionTreeNode)selectionPath.getLastPathComponent(), selectedElements);
+      selectedElements.addAll(InspectionTree.getElementsToSuppressInSubTree((InspectionTreeNode)selectionPath.getLastPathComponent()));
     }
-    return tool.getQuickFixes(selectedElements.toArray(new RefEntity[selectedElements.size()]));
+    return selectedElements.isEmpty() ? null : tool.getQuickFixes(selectedElements.toArray(new RefEntity[selectedElements.size()]));
   }
 
   public void appendToolNodeContent(final InspectionNode toolNode, final InspectionTreeNode parentNode, final boolean showStructure) {
