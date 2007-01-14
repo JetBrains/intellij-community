@@ -48,6 +48,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
 
   protected void constructUI() {
     setLayout(new BorderLayout());
+    setOpaque(true);
 
     final Border lineBorder = new SeparatorBorder.Left();
     final Border emptyBorder = BorderFactory.createEmptyBorder(0, 2, 0, 2);
@@ -94,10 +95,10 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     rightPanel.add(myCustomIndicationsPanel, gbConstraints);
 
     myMessagePanel.setOpaque(false);
+    myMemoryUsagePanel.setBorder(separatorLeft);
     rightPanel.add(myMessagePanel, gbConstraints);
 
-    //  myMemoryUsagePanel.setOpaque(false);
-    myMemoryUsagePanel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
+    myMemoryUsagePanel.setBorder(separatorLeft);
 
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.anchor = GridBagConstraints.WEST;
@@ -247,12 +248,11 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
 
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
       g.setColor(c.getBackground().darker());
-      final Rectangle bounds = g.getClipBounds();
       final int inset = 1;
       if (myLeft) {
-        g.drawLine(bounds.x, bounds.y + inset, bounds.x, bounds.height - inset);
+        g.drawLine(0, inset, 0, c.getHeight() - inset - 1);
       } else {
-        g.drawLine(bounds.width - inset, bounds.y, bounds.width - inset, bounds.y);
+        g.drawLine(c.getWidth() - 1, inset, c.getWidth() - 1, c.getHeight() - inset - 1);
       }
     }
 

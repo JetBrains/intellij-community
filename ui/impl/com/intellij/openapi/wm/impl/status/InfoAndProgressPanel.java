@@ -164,14 +164,12 @@ public class InfoAndProgressPanel extends JPanel {
     label.setOpaque(true);
 
     final Wrapper labelComp = new Wrapper(label);
-    labelComp.setBorder(new EmptyBorder(0, 4, 0, 0));
+    labelComp.setBorder(BorderFactory.createCompoundBorder(createSeparatorBorder(), new EmptyBorder(0, 3, 0, 0)));
 
     progressCountPanel.add(labelComp, BorderLayout.CENTER);
 
     myProgressIcon.setBorder(createInsetBorder());
     progressCountPanel.add(myProgressIcon, BorderLayout.EAST);
-
-    progressCountPanel.setBorder(new StatusBarImpl.SeparatorBorder.Left());
 
     add(myStatusBar.myInfoPanel, BorderLayout.CENTER);
     add(progressCountPanel, BorderLayout.EAST);

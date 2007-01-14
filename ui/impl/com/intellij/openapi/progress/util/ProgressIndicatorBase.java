@@ -342,14 +342,17 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
 
     myTextStack.clear();
     myTextStack.addAll(indicator.getTextStack());
+    myText = indicator.getText();
 
     myText2Stack.clear();
     myText2Stack.addAll(indicator.getText2Stack());
+    myText2 = indicator.getText2();
 
     myFractionStack.clear();
     final double[] fractions = indicator.getFractionStack().toArray();
     for (double eachFraction : fractions) {
       myFractionStack.add(eachFraction);
     }
+    myFraction = indicator.getFraction();
   }
 }
