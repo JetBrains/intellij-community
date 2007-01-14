@@ -4,13 +4,15 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.ProcessInfo;
-import com.intellij.util.ui.InplaceButton;
+import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.ui.InplaceButton;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class InlineProgressIndicator extends ProgressIndicatorBase {
 
@@ -28,11 +30,16 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
   public InlineProgressIndicator(boolean compact, ProcessInfo processInfo) {
     myCompact = compact;
 
-    myCancelButton = new InplaceButton(IconLoader.getIcon("/actions/cleanLight.png"), IconLoader.getIcon("/actions/clean.png")) {
-      protected void execute() {
+    myCancelButton = new InplaceButton(new IconButton(processInfo.getCancelTooltip(),
+                                                      IconLoader.getIcon("/actions/cleanLight.png"),
+                                                      IconLoader.getIcon("/actions/clean.png")) {
+    }, new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
         cancelRequest();
       }
-    };
+    });
+
+    myCancelButton.setBorder(new EmptyBorder(2, 2, 2, 2));
     myCancelButton.setOpaque(true);
     myCancelButton.setToolTipText(processInfo.getCancelTooltip());
 
@@ -105,7 +112,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
     myText.setText(getText() != null ? getText() : "");
     myText2.setText(getText2() != null ? getText2() : "");
 
-    myCancelButton.setActive(isCancelable());
+    myCancelButton.setPainting(isCancelable());
   }
 
   protected void queueProgressUpdate(Runnable update) {

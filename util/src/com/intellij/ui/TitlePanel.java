@@ -12,10 +12,10 @@ import java.awt.*;
  * @author max
  */
 public class TitlePanel extends CaptionPanel {
+
   private JLabel myLabel;
 
   public TitlePanel() {
-    setLayout(new BorderLayout());
     myLabel = new JLabel();
     myLabel.setOpaque(false);
     myLabel.setForeground(Color.black);
@@ -29,4 +29,5 @@ public class TitlePanel extends CaptionPanel {
   public void setText(String titleText) {
     myLabel.setText(titleText);
   }
+
 }

@@ -17,6 +17,7 @@
 package com.intellij.ui;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 /**
@@ -30,8 +31,11 @@ public class CaptionPanel extends JPanel {
   private final static Color BND_ACTIVE_COLOR = CNT_ACTIVE_COLOR.brighter();
 
   private boolean myActive = false;
+  private ActiveComponent myButtonComponent;
 
   public CaptionPanel() {
+    setLayout(new BorderLayout());
+    setBorder(new EmptyBorder(0, 4, 0, 4));
   }
 
   @Override
@@ -59,6 +63,17 @@ public class CaptionPanel extends JPanel {
 
   public void setActive(final boolean active) {
     myActive = active;
+    if (myButtonComponent != null) {
+      myButtonComponent.setActive(active);
+    }
     repaint();
+  }
+
+  public void setButtonComponent(ActiveComponent component) {
+    if (myButtonComponent != null) {
+      remove(myButtonComponent.getComponent());
+    }
+    add(component.getComponent(), BorderLayout.EAST);
+    myButtonComponent = component;
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -40,6 +41,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myCancelOnClickOutside = true;
   private Set<JBPopupListener> myListeners = new LinkedHashSet<JBPopupListener>();
   private boolean myUseDimSevriceForXYLocation;
+
+  private IconButton myCancelButton;
 
   public ComponentPopupBuilderImpl(final JComponent component,
                                    final JComponent prefferedFocusedComponent) {
@@ -103,6 +106,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   }
 
   @NotNull
+  public ComponentPopupBuilder setCancelButton(final IconButton cancelButton) {
+    myCancelButton = cancelButton;
+    return this;
+  }
+
+  @NotNull
   public ComponentPopupBuilder setLookupAndSearchUpdater(final Condition<PsiElement> updater, Project project) {
     myPopupUpdater = updater;
     myProject = project;
@@ -113,7 +122,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   public JBPopup createPopup() {
     final JBPopupImpl popup = new JBPopupImpl(myComponent, myPrefferedFocusedComponent, myRequestFocus, myForceHeavyweight,
                                               myDimensionServiceKey, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null,
-                                              myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation);
+                                              myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton);
     if (myPopupUpdater != null) {
       popup.setPopupUpdater(myPopupUpdater, myProject);
     }

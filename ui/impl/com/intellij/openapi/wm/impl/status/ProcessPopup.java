@@ -1,10 +1,8 @@
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.util.ArrayUtil;
@@ -87,6 +85,12 @@ public class ProcessPopup  {
     builder.setDimensionServiceKey("BackgroundProcessPopup2", true);
     builder.setCancelOnClickOutside(false);
     builder.setRequestFocus(true);
+
+    final IconButton hideButton = new IconButton("Hide", IconLoader.getIcon("/general/hideToolWindow.png"),
+                                                 IconLoader.getIcon("/general/hideToolWindow.png"),
+                                                 IconLoader.getIcon("/general/hideToolWindowInactive.png"));
+
+    builder.setCancelButton(hideButton);
 
     myPopup = builder.createPopup();
     myPopup.showInCenterOf(myProgressPanel.getRootPane());
