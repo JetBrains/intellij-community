@@ -1,22 +1,26 @@
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class ProcessPopup  {
 
   private VerticalBox myProcessBox = new VerticalBox();
 
-  private DialogWrapper myDialog;
-
   private InfoAndProgressPanel myProgressPanel;
 
   static final String BACKGROUND_PROCESSES = "Background Processes";
+  private JBPopup myPopup;
 
   public ProcessPopup(final InfoAndProgressPanel progressPanel) {
     myProgressPanel = progressPanel;
@@ -55,47 +59,49 @@ public class ProcessPopup  {
   }
 
   public void show() {
-    myDialog = new MyDialogWrapper(myProgressPanel.myStatusBar);
+    final JPanel component = new JPanel(new BorderLayout()) {
+      public Dimension getPreferredSize() {
+        if (myProcessBox.getComponentCount() > 0) {
+          return super.getPreferredSize();
+        } else {
+          final Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
+          size.width *= 0.3d;
+          size.height *= 0.3d;
+          return size;
+        }
+      }
+    };
+    component.setFocusable(true);
+    component.setBorder(DialogWrapper.ourDefaultBorder);
+    component.add(myProcessBox, BorderLayout.NORTH);
 
-    myDialog.setTitle(BACKGROUND_PROCESSES);
-    myDialog.pack();
-    myDialog.show();
+    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component);
+    builder.addListener(new JBPopupListener() {
+      public void onClosed(final JBPopup popup) {
+        myProgressPanel.hideProcessPopup();
+      }
+    });
+    builder.setMovable(true);
+    builder.setResizable(true);
+    builder.setTitle(BACKGROUND_PROCESSES);
+    builder.setDimensionServiceKey("BackgroundProcessPopup2", true);
+    builder.setCancelOnClickOutside(false);
+    builder.setRequestFocus(true);
+
+    myPopup = builder.createPopup();
+    myPopup.showInCenterOf(myProgressPanel.getRootPane());
   }
 
   public void hide() {
-    if (myDialog != null) {
-      myDialog.close(0);
+    if (myPopup != null) {
+      final JBPopup popup = myPopup;
+      myPopup = null;
+      popup.cancel();
     }
-    myDialog = null;
   }
 
   public boolean isShowing() {
-    return myDialog != null;
+    return myPopup != null;
   }
 
-  private class MyDialogWrapper extends DialogWrapper {
-    public MyDialogWrapper(final Component parent) {
-      super(parent, false);
-      setModal(false);
-      setCrossClosesWindow(true);
-      init();
-    }
-    protected JComponent createSouthPanel() {
-      return new JLabel();
-    }
-
-    public void doCancelAction() {
-      myProgressPanel.hideProcessPopup();
-    }
-
-    protected String getDimensionServiceKey() {
-      return "ProgressWindow";
-    }
-
-    protected JComponent createCenterPanel() {
-      final JPanel component = new JPanel(new BorderLayout());
-      component.add(myProcessBox, BorderLayout.NORTH);
-      return component;
-    }
-  }
 }

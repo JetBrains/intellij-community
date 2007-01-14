@@ -47,10 +47,16 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setForceHeavyweight(boolean forceHeavyweight);
 
   @NotNull
-  ComponentPopupBuilder setDimensionServiceKey(@NonNls final String dimensionServiceKey);
+  ComponentPopupBuilder setDimensionServiceKey(@NonNls final String dimensionServiceKey, final boolean useForXYLocation);
 
   @NotNull
   ComponentPopupBuilder setCancelCallback(final Computable<Boolean> shouldProceed);
+
+  @NotNull
+  ComponentPopupBuilder setCancelOnClickOutside(boolean cancel);
+
+  @NotNull
+  ComponentPopupBuilder addListener(JBPopupListener listener);
 
   /**
    * @param updater recreates popup in accordance to selected (in lookup or Ctrl N) psiElement. Current popup will be closed automatically

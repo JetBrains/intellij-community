@@ -9,6 +9,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -17,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Set;
+import java.util.LinkedHashSet;
 
 /**
  * User: anna
@@ -34,7 +37,9 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private Computable<Boolean> myCallback = null;
   private Condition<PsiElement> myPopupUpdater;
   private Project myProject;
-
+  private boolean myCancelOnClickOutside = true;
+  private Set<JBPopupListener> myListeners = new LinkedHashSet<JBPopupListener>();
+  private boolean myUseDimSevriceForXYLocation;
 
   public ComponentPopupBuilderImpl(final JComponent component,
                                    final JComponent prefferedFocusedComponent) {
@@ -60,6 +65,17 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
     return this;
   }
 
+  @NotNull
+  public ComponentPopupBuilder setCancelOnClickOutside(final boolean cancel) {
+    myCancelOnClickOutside = cancel;
+    return this;
+  }
+
+  @NotNull
+  public ComponentPopupBuilder addListener(final JBPopupListener listener) {
+    myListeners.add(listener);
+    return this;
+  }
 
   @NotNull
   public ComponentPopupBuilder setRequestFocus(final boolean requestFocus) {
@@ -74,8 +90,9 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   }
 
   @NotNull
-  public ComponentPopupBuilder setDimensionServiceKey(final String dimensionServiceKey) {
+  public ComponentPopupBuilder setDimensionServiceKey(final String dimensionServiceKey, final boolean useForXYLocation) {
     myDimensionServiceKey = dimensionServiceKey;
+    myUseDimSevriceForXYLocation = useForXYLocation;
     return this;
   }
 
@@ -96,7 +113,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   public JBPopup createPopup() {
     final JBPopupImpl popup = new JBPopupImpl(myComponent, myPrefferedFocusedComponent, myRequestFocus, myForceHeavyweight,
                                               myDimensionServiceKey, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null,
-                                              myCallback);
+                                              myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation);
     if (myPopupUpdater != null) {
       popup.setPopupUpdater(myPopupUpdater, myProject);
     }

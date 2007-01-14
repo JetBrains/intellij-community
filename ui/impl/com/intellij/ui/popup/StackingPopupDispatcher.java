@@ -74,7 +74,7 @@ public class StackingPopupDispatcher implements AWTEventListener, KeyEventDispat
       }
 
       final Rectangle bounds = new Rectangle(content.getLocationOnScreen(), content.getSize());
-      if (bounds.contains(point)) {
+      if (bounds.contains(point) || !popup.isCancelOnClickOutside()) {
         return false;
       }
 
