@@ -7,7 +7,9 @@
       <antReference projectDefault="true" />
       <customJdkName value="" />
       <maximumHeapSize value="128" />
-      <properties />
+      <properties>
+        <property name="idea.home" value="C:\Program Files\JetBrains\IntelliJ IDEA 6.0" />
+      </properties>
     </buildFile>
   </component>
   <component name="BuildJarProjectSettings">

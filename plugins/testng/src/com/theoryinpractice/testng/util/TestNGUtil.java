@@ -144,7 +144,7 @@ public class TestNGUtil
         test.addAll(Arrays.asList(CONFIG_ANNOTATIONS_FQN));
         for (PsiClass psiClass : classes) {
             //Ignore these, they cause an NPE inside of AnnotationUtil, at least up until IDEA 6.0.2
-            if (psiClass instanceof PsiAnonymousClass) continue;
+            if (psiClass == null || psiClass instanceof PsiAnonymousClass) continue;
             PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiClass, test);
             if (annotation != null) {
                 PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
@@ -175,27 +175,29 @@ public class TestNGUtil
             //we already have the class, no need to look through its methods
             PsiMethod[] methods = psiClass.getMethods();
             for (PsiMethod method : methods) {
-                annotation = AnnotationUtil.findAnnotation(method, test);
-                if (annotation != null) {
-                    PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
-                    OUTER:
-                    for (PsiNameValuePair aPair : pair) {
-                        if (parameter.equals(aPair.getName())) {
-                            Collection<String> matches = extractValuesFromParameter(aPair);
-                            for (String s : matches) {
-                                if (values.contains(s)) {
-                                    if (results.get(psiClass) == null) results.put(psiClass, new HashSet<PsiMethod>());
-                                    results.get(psiClass).add(method);
-                                    break OUTER;
+                if (method != null) {
+                    annotation = AnnotationUtil.findAnnotation(method, test);
+                    if (annotation != null) {
+                        PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
+                        OUTER:
+                        for (PsiNameValuePair aPair : pair) {
+                            if (parameter.equals(aPair.getName())) {
+                                Collection<String> matches = extractValuesFromParameter(aPair);
+                                for (String s : matches) {
+                                    if (values.contains(s)) {
+                                        if (results.get(psiClass) == null) results.put(psiClass, new HashSet<PsiMethod>());
+                                        results.get(psiClass).add(method);
+                                        break OUTER;
+                                    }
                                 }
                             }
                         }
-                    }
-                } else {
-                    Collection<String> matches = extractAnnotationValuesFromJavaDoc(getTextJavaDoc(psiClass), parameter);
-                    for (String s : matches) {
-                        if (values.contains(s)) {
-                            results.get(psiClass).add(method);
+                    } else {
+                        Collection<String> matches = extractAnnotationValuesFromJavaDoc(getTextJavaDoc(psiClass), parameter);
+                        for (String s : matches) {
+                            if (values.contains(s)) {
+                                results.get(psiClass).add(method);
+                            }
                         }
                     }
                 }
@@ -210,7 +212,7 @@ public class TestNGUtil
         test.add(TEST_ANNOTATION_FQN);
         test.addAll(Arrays.asList(CONFIG_ANNOTATIONS_FQN));
         for (PsiClass psiClass : classes) {
-            if (hasTest(psiClass)) {
+            if (psiClass != null && hasTest(psiClass)) {
                 PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiClass, test);
                 if (annotation != null) {
                     PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
@@ -225,16 +227,18 @@ public class TestNGUtil
 
                 PsiMethod[] methods = psiClass.getMethods();
                 for (PsiMethod method : methods) {
-                    annotation = AnnotationUtil.findAnnotation(method, test);
-                    if (annotation != null) {
-                        PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
-                        for (PsiNameValuePair aPair : pair) {
-                            if (parameter.equals(aPair.getName())) {
-                                results.addAll(extractValuesFromParameter(aPair));
+                    if (method != null) {
+                        annotation = AnnotationUtil.findAnnotation(method, test);
+                        if (annotation != null) {
+                            PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
+                            for (PsiNameValuePair aPair : pair) {
+                                if (parameter.equals(aPair.getName())) {
+                                    results.addAll(extractValuesFromParameter(aPair));
+                                }
                             }
+                        } else {
+                            results.addAll(extractAnnotationValuesFromJavaDoc(getTextJavaDoc(method), parameter));
                         }
-                    } else {
-                        results.addAll(extractAnnotationValuesFromJavaDoc(getTextJavaDoc(method), parameter));
                     }
                 }
             }
