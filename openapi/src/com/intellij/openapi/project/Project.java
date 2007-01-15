@@ -55,6 +55,10 @@ public interface Project extends ComponentManager, AreaInstance, Disposable {
   @NonNls
   String getPresentableUrl();
 
+  @NotNull
+  @NonNls
+  String getLocationHash();
+
   /**
    * @return Returns an "java.io.File" path.
    */

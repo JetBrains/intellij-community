@@ -90,8 +90,7 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
 
   public void update(PresentationData presentation) {
     presentation.setIcons(Icons.PROJECT_ICON);
-    final VirtualFile projectFile = getProject().getProjectFile();
-    presentation.setPresentableText(projectFile != null ? projectFile.getName() : "");
+    presentation.setPresentableText(getProject().getName());
   }
 
   public String getTestPresentation() {

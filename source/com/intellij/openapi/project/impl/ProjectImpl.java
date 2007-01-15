@@ -274,6 +274,15 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return projectFile != null ? projectFile.getPresentableUrl() : null;
   }
 
+  @NotNull
+  @NonNls
+  public String getLocationHash() {
+    String str = getPresentableUrl();
+    if (str == null) str = getName();
+
+    return getName() + Integer.toHexString(str.hashCode());
+  }
+
   /**
    * @deprecated
    */

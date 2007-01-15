@@ -86,7 +86,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     myFileIndex = projectRootManager.getFileIndex();
     myFileTypeManager = fileTypeManager;
     myConfiguration = configuration;
-    myVcsLocation = findProjectVcsLocation(myProject.getProjectFile());
+    myVcsLocation = findProjectVcsLocation();
     myImplementation = new OldLvcsImplemetation(project, this);
 
     startupManagerEx.registerPreStartupActivity(new Runnable() {
@@ -769,14 +769,8 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
     return type != StdFileTypes.IDEA_WORKSPACE && type != StdFileTypes.IDEA_PROJECT && type != StdFileTypes.IDEA_MODULE && !type.isBinary();
   }
 
-  private File findProjectVcsLocation(VirtualFile projectFile) {
-    String projectName = projectFile == null ? Integer.toHexString(myProject.hashCode()) : projectFile.getName();
-    String projectPath = projectFile == null ? "" : projectFile.getPath();
-    return new File(new File(PathManager.getSystemPath(), VCS_DIR), createUniqueName(projectName, projectPath));
-  }
-
-  private static String createUniqueName(String name, String path) {
-    return name.replace('.', '_') + "." + Integer.toHexString(path.replace('/', File.separatorChar).hashCode());
+  private File findProjectVcsLocation() {
+    return new File(new File(PathManager.getSystemPath(), VCS_DIR), myProject.getLocationHash());
   }
 
   public boolean isInitialized() {

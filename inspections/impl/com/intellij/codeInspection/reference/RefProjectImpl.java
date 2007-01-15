@@ -10,7 +10,6 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 
 public class RefProjectImpl extends RefEntityImpl implements RefProject {
   private final RefManager myRefManager;
@@ -22,9 +21,7 @@ public class RefProjectImpl extends RefEntityImpl implements RefProject {
   }
 
   private static String getProjectFileName(Project project) {
-    VirtualFile projectFile = project.getProjectFile();
-    if (projectFile == null) return InspectionsBundle.message("inspection.reference.unnamed");
-    return projectFile.getName();
+    return project.getName();
   }
 
   private RefManager getRefManager() {

@@ -5,7 +5,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author max
@@ -19,9 +18,7 @@ public class ProjectConfigurablesGroup implements ConfigurableGroup {
 
   public String getDisplayName() {
     if (isDefault()) return OptionsBundle.message("template.project.settings.display.name");
-    VirtualFile projectFile = myProject.getProjectFile();
-    final String projectName = (projectFile != null ? projectFile.getNameWithoutExtension() : OptionsBundle.message("unknown.project.display.name"));
-    return OptionsBundle.message("project.settings.display.name", projectName);
+    return OptionsBundle.message("project.settings.display.name", myProject.getName());
   }
 
   public String getShortName() {

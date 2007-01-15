@@ -43,6 +43,12 @@ public class DummyProject extends UserDataHolderBase implements Project {
     return null;
   }
 
+  @NotNull
+  @NonNls
+  public String getLocationHash() {
+    return "dummy";
+  }
+
   public String getProjectFilePath() {
     return null;
   }

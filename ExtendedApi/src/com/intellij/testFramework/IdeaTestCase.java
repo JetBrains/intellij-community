@@ -174,9 +174,9 @@ import java.util.HashSet;
   }
 
   protected Module doCreateRealModule(final String moduleName) {
-    final VirtualFile projectFile = myProject.getProjectFile();
-    assertNotNull(projectFile);
-    final File moduleFile = new File(projectFile.getParent().getPath().replace('/', File.separatorChar),
+    final VirtualFile baseDir = myProject.getBaseDir();
+    assertNotNull(baseDir);
+    final File moduleFile = new File(baseDir.getPath().replace('/', File.separatorChar),
                                      moduleName + ".iml");
     try {
       moduleFile.createNewFile();

@@ -72,6 +72,12 @@ public class MockProject extends UserDataHolderBase implements ProjectEx {
     return null;
   }
 
+  @NotNull
+  @NonNls
+  public String getLocationHash() {
+    return "mock";
+  }
+
   public String getProjectFilePath() {
     return null;
   }

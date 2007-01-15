@@ -1,10 +1,9 @@
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
-import com.intellij.codeInspection.InspectionsBundle;
 
 import javax.swing.*;
 
@@ -21,9 +20,8 @@ public class InspectionRootNode extends InspectionTreeNode {
   }
 
   public String toString() {
-    final VirtualFile projectFile = myProject.getProjectFile();
     return isEmpty() ? InspectionsBundle.message("inspection.empty.root.node.text") :
-           projectFile != null ? projectFile.getName() : myProject.getProjectFilePath();
+           myProject.getName();
   }
 
   private boolean isEmpty() {

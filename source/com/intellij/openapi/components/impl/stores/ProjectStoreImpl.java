@@ -113,7 +113,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   public boolean checkVersion() {
     int version = getOriginalVersion();
     if (version >= 0 && version < ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
-      final VirtualFile projectFile = myProject.getProjectFile();
+      final VirtualFile projectFile = getProjectFile();
       LOG.assertTrue(projectFile != null);
       String name = projectFile.getNameWithoutExtension();
 
@@ -343,7 +343,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   public void loadProjectFromTemplate(final Project project) {
     ProjectImpl defaultProject = (ProjectImpl)project;
-    Element element = defaultProject.getStateStore().saveToXml(defaultProject.getProjectFile());
+    Element element = defaultProject.getStateStore().saveToXml(defaultProject.getStateStore().getProjectFile());
     try {
       loadFromXml(element, myFilePath);
     }
