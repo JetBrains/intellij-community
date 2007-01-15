@@ -183,7 +183,6 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
     if (SystemInfo.isMac){
       if (bounds.x + bounds.width - startPoint.x < 16 && //inside icon
           bounds.y + bounds.height - startPoint.y < 16 &&
-          startPoint.x > startPoint.y &&
           bounds.y + bounds.height - startPoint.y > 0 &&
           bounds.x + bounds.width - startPoint.x > 0){
         return Cursor.SE_RESIZE_CURSOR;

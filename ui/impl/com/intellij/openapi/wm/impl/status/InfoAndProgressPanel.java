@@ -39,6 +39,8 @@ public class InfoAndProgressPanel extends JPanel {
   private MergingUpdateQueue myUpdateQueue;
   private AsyncProcessIcon myProgressIcon;
 
+  private boolean myShouldClosePopupAndAllProcessFinish;
+
   public InfoAndProgressPanel(final StatusBarImpl statusBar) {
     myStatusBar = statusBar;
     setOpaque(false);
@@ -99,6 +101,9 @@ public class InfoAndProgressPanel extends JPanel {
 
     if (last) {
       restoreEmptyStatus();
+      if (myShouldClosePopupAndAllProcessFinish) {
+        hideProcessPopup();
+      } 
     }
     else {
       if (myPopup.isShowing()) {
@@ -129,8 +134,10 @@ public class InfoAndProgressPanel extends JPanel {
   private void openProcessPopup() {
     if (myPopup.isShowing()) return;
     if (myOriginals.size() > 0) {
+      myShouldClosePopupAndAllProcessFinish = true;
       buildInProcessCount();
     } else {
+      myShouldClosePopupAndAllProcessFinish = false;
       restoreEmptyStatus();
     }
     myPopup.show();
@@ -279,9 +286,12 @@ public class InfoAndProgressPanel extends JPanel {
 
     public void stop() {
       super.stop();
-      removeProgress(this);
+      queueRunningUpdate(new Runnable() {
+        public void run() {
+          removeProgress(MyInlineProgressIndicator.this);
+        }
+      });
     }
-
 
     protected void queueProgressUpdate(final Runnable update) {
       myUpdateQueue.queue(new Update(MyInlineProgressIndicator.this, false, 1) {
