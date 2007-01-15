@@ -5,7 +5,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.MethodSignatureUtil;
 
 import java.util.Collection;
 import java.util.List;
@@ -92,9 +91,7 @@ public class ClassUtil {
         final List<HierarchicalMethodSignature> superSignatures = signatureHierarchical.getSuperSignatures();
         for (HierarchicalMethodSignature superSignatureHierarchical : superSignatures) {
           final PsiMethod superMethod = superSignatureHierarchical.getMethod();
-          if (superMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
-              (!MethodSignatureUtil.isSubsignature(superSignatureHierarchical, signatureHierarchical) ||
-               !resolveHelper.isAccessible(superMethod, method, null))) return superMethod;
+          if (superMethod.hasModifierProperty(PsiModifier.ABSTRACT) && !resolveHelper.isAccessible(superMethod, method, null)) return superMethod;
         }
       }
     }

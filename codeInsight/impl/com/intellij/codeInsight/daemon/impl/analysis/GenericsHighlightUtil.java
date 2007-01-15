@@ -1040,7 +1040,7 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  public static HighlightInfo checkUncheckedOverriding (PsiMethod overrider, final List<MethodSignatureBackedByPsiMethod> superMethodSignatures) {
+  public static HighlightInfo checkUncheckedOverriding (PsiMethod overrider, final List<HierarchicalMethodSignature> superMethodSignatures) {
     if (PsiUtil.getLanguageLevel(overrider).compareTo(LanguageLevel.JDK_1_5) < 0) return null;
     final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
     if (!InspectionProjectProfileManager.getInstance(overrider.getProject()).getInspectionProfile(overrider).isToolEnabled(key)) return null;

@@ -135,7 +135,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       hasAnnotators = true;
     }
     if (element instanceof OuterLanguageElement) {
-      myXmlVisitor.visitJspElement((OuterLanguageElement)element);
+      XmlHighlightVisitor.visitJspElement((OuterLanguageElement)element);
     }
 
     if (hasAnnotators) {
@@ -369,7 +369,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (range.getLength() > 0) {
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range, element.getErrorDescription());
       if (PsiTreeUtil.getParentOfType(element, XmlTag.class) != null) {
-        myXmlVisitor.registerXmlErrorQuickFix(element,highlightInfo);
+        XmlHighlightVisitor.registerXmlErrorQuickFix(element,highlightInfo);
       }
       return highlightInfo;
     }
@@ -732,14 +732,17 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       PsiMethod method = (PsiMethod)parent;
       MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
       if (!method.isConstructor()) {
-        List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
-        List<MethodSignatureBackedByPsiMethod> superMethodCandidateSignatures = method.findSuperMethodSignaturesIncludingStatic(false);
-        if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodWeakerPrivileges(methodSignature, superMethodCandidateSignatures, true));
-        if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodIncompatibleReturnType(methodSignature, superMethodSignatures, true));
-        if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodIncompatibleThrows(methodSignature, superMethodSignatures, true, method.getContainingClass()));
-        if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodOverridesFinal(methodSignature, superMethodSignatures));
+        List<HierarchicalMethodSignature> superMethodSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
+        if (!superMethodSignatures.isEmpty()) {
+          if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodIncompatibleReturnType(methodSignature, superMethodSignatures, true));
+          if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodIncompatibleThrows(methodSignature, superMethodSignatures, true, method.getContainingClass()));
 //        if (!myHolder.hasErrorResults()) myHolder.add(DeprecationInspection.checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, mySettings));
-        if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkUncheckedOverriding(method, superMethodSignatures));
+          if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+            if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodWeakerPrivileges(methodSignature, superMethodSignatures, true));
+            if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkUncheckedOverriding(method, superMethodSignatures));
+            if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodOverridesFinal(methodSignature, superMethodSignatures));
+          }
+        }
       }
       PsiClass aClass = method.getContainingClass();
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodMustHaveBody(method, aClass));

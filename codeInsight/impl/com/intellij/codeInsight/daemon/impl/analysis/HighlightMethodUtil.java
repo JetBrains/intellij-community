@@ -44,7 +44,7 @@ public class HighlightMethodUtil {
 
   //@top
   public static HighlightInfo checkMethodWeakerPrivileges(MethodSignatureBackedByPsiMethod methodSignature,
-                                                          List<? extends MethodSignatureBackedByPsiMethod> superMethodSignatures,
+                                                          List<HierarchicalMethodSignature> superMethodSignatures,
                                                           boolean includeRealPositionInfo) {
     PsiMethod method = methodSignature.getMethod();
     PsiModifierList modifierList = method.getModifierList();
@@ -86,14 +86,13 @@ public class HighlightMethodUtil {
 
   //@top
   public static HighlightInfo checkMethodIncompatibleReturnType(MethodSignatureBackedByPsiMethod methodSignature,
-                                                                List<? extends MethodSignatureBackedByPsiMethod> superMethodSignatures,
+                                                                List<HierarchicalMethodSignature> superMethodSignatures,
                                                                 boolean includeRealPositionInfo) {
     PsiMethod method = methodSignature.getMethod();
     PsiType returnType = methodSignature.getSubstitutor().substitute(method.getReturnType());
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
-      if (!MethodSignatureUtil.isSubsignature(superMethodSignature, methodSignature)) continue;
       PsiMethod superMethod = superMethodSignature.getMethod();
       PsiType superReturnType = superMethodSignature.getSubstitutor().substitute(superMethod.getReturnType());
       if (returnType == null || superReturnType == null || method == superMethod) continue;
@@ -169,7 +168,7 @@ public class HighlightMethodUtil {
 
   //@top
   static HighlightInfo checkMethodOverridesFinal(MethodSignatureBackedByPsiMethod methodSignature,
-                                                 List<MethodSignatureBackedByPsiMethod> superMethodSignatures) {
+                                                 List<HierarchicalMethodSignature> superMethodSignatures) {
     PsiMethod method = methodSignature.getMethod();
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
@@ -193,7 +192,7 @@ public class HighlightMethodUtil {
 
   //@top
   public static HighlightInfo checkMethodIncompatibleThrows(MethodSignatureBackedByPsiMethod methodSignature,
-                                                            List<? extends MethodSignatureBackedByPsiMethod> superMethodSignatures,
+                                                            List<HierarchicalMethodSignature> superMethodSignatures,
                                                             boolean includeRealPositionInfo, PsiClass analyzedClass) {
     PsiMethod method = methodSignature.getMethod();
     PsiClass aClass = method.getContainingClass();
