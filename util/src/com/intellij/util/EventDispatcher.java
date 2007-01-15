@@ -79,7 +79,11 @@ public class EventDispatcher <T extends EventListener>{
         throw e;
       }
       catch (Exception e) {
-        LOG.error(e.getCause());
+        final Throwable cause = e.getCause();
+        if (cause instanceof RuntimeException) {
+          throw (RuntimeException)cause;
+        }
+        LOG.error(cause);
       }
     }
   }
