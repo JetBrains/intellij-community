@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.NewChangelistDialog;
 
 public class AddChangeListAction extends AnAction {
@@ -32,7 +33,10 @@ public class AddChangeListAction extends AnAction {
         name = getUniqueName(project);
       }
 
-      ChangeListManager.getInstance(project).addChangeList(name, dlg.getDescription());
+      final LocalChangeList list = ChangeListManager.getInstance(project).addChangeList(name, dlg.getDescription());
+      if (dlg.isNewChangelistActive()) {
+        ChangeListManager.getInstance(project).setDefaultChangeList(list);
+      }
     }
   }
 

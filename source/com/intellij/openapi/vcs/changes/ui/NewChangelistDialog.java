@@ -11,16 +11,17 @@ import javax.swing.*;
  */
 public class NewChangelistDialog extends DialogWrapper {
   private EditChangelistPanel myPanel;
+  private JPanel myTopPanel;
+  private JCheckBox myMakeActiveCheckBox;
 
   public NewChangelistDialog(Project project) {
     super(project, true);
-    myPanel = new EditChangelistPanel();
     setTitle(VcsBundle.message("changes.dialog.newchangelist.title"));
     init();
   }
 
   protected JComponent createCenterPanel() {
-    return myPanel.getContent();
+    return myTopPanel;
   }
 
   public String getName() {
@@ -37,5 +38,9 @@ public class NewChangelistDialog extends DialogWrapper {
 
   protected String getDimensionServiceKey() {
     return "VCS.NewChangelistDialog";
+  }
+
+  public boolean isNewChangelistActive() {
+    return myMakeActiveCheckBox.isSelected();
   }
 }
