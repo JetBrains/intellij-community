@@ -1,11 +1,11 @@
 package com.intellij.refactoring.extractMethod;
 
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -214,7 +214,7 @@ class ExtractMethodDialog extends DialogWrapper {
       }
 
       protected void doEnterAction() {
-        ExtractMethodDialog.this.clickDefaultButton();
+        clickDefaultButton();
       }
 
       protected void doCancelAction() {
@@ -266,7 +266,7 @@ class ExtractMethodDialog extends DialogWrapper {
       if (data.passAsParameter) {
         //String typeAndModifiers = PsiFormatUtil.formatVariable(data.variable,
         //  PsiFormatUtil.SHOW_MODIFIERS | PsiFormatUtil.SHOW_TYPE);
-        String type = PsiManager.getInstance(myProject).getElementFactory().createTypeElement(data.type).getText();
+        String type = data.type.getPresentableText();
         if (count > 0) {
           buffer.append(",");
         }

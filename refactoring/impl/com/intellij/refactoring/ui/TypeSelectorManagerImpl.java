@@ -70,8 +70,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
         occurrenceClasses.add(aClass);
       }
     }
-    final ExpectedTypesProvider.ExpectedClassProvider expectedClassProvider = new ExpectedTypeUtil.ExpectedClassesFromSetProvider(occurrenceClasses);
-    return expectedClassProvider;
+    return new ExpectedTypeUtil.ExpectedClassesFromSetProvider(occurrenceClasses);
   }
 
   private PsiType[] getTypesForMain() {
@@ -90,8 +89,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
         if (expectedTypes.length > 0) {
           final ExpectedTypeInfo
               typeInfo = myExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE);
-          for (int i = 0; i < expectedTypes.length; i++) {
-            ExpectedTypeInfo expectedType = expectedTypes[i];
+          for (ExpectedTypeInfo expectedType : expectedTypes) {
             if (expectedType.intersect(typeInfo).length != 0) {
               allowedTypes.add(type);
               break;
@@ -146,16 +144,12 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
     final ArrayList<PsiType> result = normalizeTypeList(allowedTypes);
     return result.toArray(new PsiType[result.size()]);
-//    expectedTypesFromAll.add(new ExpectedTypeInfoImpl[]{myDefaultExpectedTypeInfo});
-//    final ExpectedTypeInfoImpl[] expectedTypeInfos = ExpectedTypeUtil.intersect(expectedTypesFromAll);
-//    return getSuggestions(expectedTypeInfos);
   }
 
   private ArrayList<PsiType> normalizeTypeList(final ArrayList<PsiType> typeList) {
     ArrayList<PsiType> result = new ArrayList<PsiType>();
     TypeListCreatingVisitor visitor = new TypeListCreatingVisitor(result, myFactory);
-    for (int i = 0; i < typeList.size(); i++) {
-      PsiType psiType = typeList.get(i);
+    for (PsiType psiType : typeList) {
       visitor.visitType(psiType);
     }
 
