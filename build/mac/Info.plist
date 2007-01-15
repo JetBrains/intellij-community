@@ -32,9 +32,9 @@
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleGetInfoString</key>
-    <string>IntelliJ IDEA Demetra, build @@@@. Copyright JetBrains s.r.o., (c) 2000-2006</string>
+    <string>IntelliJ IDEA Selena, build @@@@. Copyright JetBrains s.r.o., (c) 2000-2007</string>
     <key>CFBundleShortVersionString</key>
-    <string>Demetra</string>
+    <string>Selena</string>
     <key>CFBundleVersion</key>
     <string>@@@@</string>
     <key>Java</key>
@@ -52,13 +52,13 @@
         <key>com.apple.mrj.application.live-resize</key>
         <string>false</string>
         <key>idea.config.path</key>
-        <string>~/Library/Preferences/IntelliJIDEA60</string>
+        <string>~/Library/Preferences/IntelliJIDEA70</string>
         <key>idea.popup.weight</key>
         <string>medium</string>
         <key>idea.system.path</key>
-        <string>~/Library/Caches/IntelliJIDEA60/</string>
+        <string>~/Library/Caches/IntelliJIDEA70/</string>
         <key>idea.plugins.path</key>
-        <string>~/Library/Application Support/IntelliJIDEA60/</string>
+        <string>~/Library/Application Support/IntelliJIDEA70/</string>
         <key>java.endorsed.dirs</key>
         <string></string>
         <key>idea.smooth.progress</key>
