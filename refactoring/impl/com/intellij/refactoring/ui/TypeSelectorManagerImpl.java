@@ -16,7 +16,7 @@ import java.util.Set;
 public class TypeSelectorManagerImpl implements TypeSelectorManager {
   private final PsiType myDefaultType;
   private final PsiExpression myMainOccurence;
-  private final PsiExpression[] myOccurences;
+  private final PsiExpression[] myOccurrences;
   private final PsiType[] myTypesForMain;
   private final PsiType[] myTypesForAll;
   private final boolean myIsOneSuggestion;
@@ -25,11 +25,11 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   private ExpectedTypesProviderImpl.ExpectedClassProvider myOccurrenceClassProvider;
   private ExpectedTypesProvider myExpectedTypesProvider;
 
-  public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression mainOccurence, PsiExpression[] occurences) {
+  public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression mainOccurence, PsiExpression[] occurrences) {
     myFactory = PsiManager.getInstance(project).getElementFactory();
     myDefaultType = type;
     myMainOccurence = mainOccurence;
-    myOccurences = occurences;
+    myOccurrences = occurrences;
     myExpectedTypesProvider = ExpectedTypesProvider.getInstance(project);
 
     myOccurrenceClassProvider = createOccurrenceClassProvider();
@@ -47,11 +47,11 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     }
   }
 
-  public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression[] occurences) {
+  public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression[] occurrences) {
     myFactory = PsiManager.getInstance(project).getElementFactory();
     myDefaultType = type;
     myMainOccurence = null;
-    myOccurences = occurences;
+    myOccurrences = occurrences;
     myExpectedTypesProvider = ExpectedTypesProvider.getInstance(project);
     myOccurrenceClassProvider = createOccurrenceClassProvider();
     myTypesForAll = getTypesForAll();
@@ -63,7 +63,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
   private ExpectedTypesProvider.ExpectedClassProvider createOccurrenceClassProvider() {
     final Set<PsiClass> occurrenceClasses = new HashSet<PsiClass>();
-    for (final PsiExpression occurence : myOccurences) {
+    for (final PsiExpression occurence : myOccurrences) {
       final PsiType occurrenceType = occurence.getType();
       final PsiClass aClass = PsiUtil.resolveClassInType(occurrenceType);
       if (aClass != null) {
@@ -86,7 +86,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
       }
 
       private void checkIfAllowed(PsiType type) {
-        if (expectedTypes.length > 0) {
+        if (expectedTypes != null && expectedTypes.length > 0) {
           final ExpectedTypeInfo
               typeInfo = myExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE);
           for (ExpectedTypeInfo expectedType : expectedTypes) {
@@ -108,9 +108,9 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
   private PsiType[] getTypesForAll() {
     final ArrayList<ExpectedTypeInfo[]> expectedTypesFromAll = new ArrayList<ExpectedTypeInfo[]>();
-    for (PsiExpression occurence : myOccurences) {
+    for (PsiExpression occurrence : myOccurrences) {
 
-      final ExpectedTypeInfo[] expectedTypes = myExpectedTypesProvider.getExpectedTypes(occurence, false, myOccurrenceClassProvider);
+      final ExpectedTypeInfo[] expectedTypes = myExpectedTypesProvider.getExpectedTypes(occurrence, false, myOccurrenceClassProvider);
       if (expectedTypes.length > 0) {
         expectedTypesFromAll.add(expectedTypes);
       }
@@ -127,16 +127,12 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
       }
 
       private void checkIfAllowed(PsiType type) {
-        final ExpectedTypeInfo typeInfo = myExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE);
+        NextInfo:
         for (ExpectedTypeInfo[] expectedTypes : expectedTypesFromAll) {
-          boolean validFound = false;
-          for (ExpectedTypeInfo expectedType : expectedTypes) {
-            if (expectedType.intersect(typeInfo).length != 0) {
-              validFound = true;
-              break;
-            }
+          for (final ExpectedTypeInfo info : expectedTypes) {
+            if (ExpectedTypeUtil.matches(type, info)) continue NextInfo;
           }
-          if (!validFound) return;
+          return;
         }
         allowedTypes.add(type);
       }

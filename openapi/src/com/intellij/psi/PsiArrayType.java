@@ -70,7 +70,7 @@ public class PsiArrayType extends PsiType {
     for (int i = 0; i < superTypes.length; i++) {
       result[i] = superTypes[i].createArrayType();
     }
-    return superTypes;
+    return result;
   }
 
   /**

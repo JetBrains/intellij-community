@@ -399,7 +399,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   public boolean showDialog() {
     ExtractMethodDialog dialog = new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, myReturnType, myTypeParameterList,
                                                          myThrownExceptions, myStatic, myCanBeStatic, myInitialMethodName,
-                                                         myRefactoringName, myHelpId);
+                                                         myRefactoringName, myHelpId, myElements);
     dialog.show();
     if (!dialog.isOK()) return false;
     myMethodName = dialog.getChoosenMethodName();
@@ -413,7 +413,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   public void testRun() throws IncorrectOperationException {
     ExtractMethodDialog dialog = new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, myReturnType, myTypeParameterList,
                                                          myThrownExceptions, myStatic, myCanBeStatic, myInitialMethodName,
-                                                         myRefactoringName, myHelpId);
+                                                         myRefactoringName, myHelpId, myElements);
     myMethodName = dialog.getChoosenMethodName();
     myVariableDatum = dialog.getChoosenParameters();
     doRefactoring();

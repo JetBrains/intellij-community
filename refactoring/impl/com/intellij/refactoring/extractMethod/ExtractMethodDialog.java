@@ -40,6 +40,7 @@ class ExtractMethodDialog extends DialogWrapper {
   private final PsiType[] myExceptions;
   private final boolean myStaticFlag;
   private final boolean myCanBeStatic;
+  private PsiElement[] myElementsToExtract;
   private final String myHelpId;
 
   private final EditorTextField myNameField;
@@ -54,7 +55,9 @@ class ExtractMethodDialog extends DialogWrapper {
   public ExtractMethodDialog(Project project,
                              PsiClass targetClass, final PsiVariable[] inputVariables, PsiType returnType,
                              PsiTypeParameterList typeParameterList, PsiType[] exceptions, boolean isStatic, boolean canBeStatic, String initialMethodName,
-                             String title, String helpId) {
+                             String title,
+                             String helpId,
+                             final PsiElement[] elementsToExtract) {
     super(project, true);
     myProject = project;
     myTargetClass = targetClass;
@@ -63,6 +66,7 @@ class ExtractMethodDialog extends DialogWrapper {
     myExceptions = exceptions;
     myStaticFlag = isStatic;
     myCanBeStatic = canBeStatic;
+    myElementsToExtract = elementsToExtract;
 
     final List<ParameterTablePanel.VariableData> variableData = new ArrayList<ParameterTablePanel.VariableData>(inputVariables.length);
     for (PsiVariable var : inputVariables) {
@@ -157,6 +161,7 @@ class ExtractMethodDialog extends DialogWrapper {
     panel.add(nameLabel);
 
     panel.add(myNameField);
+    nameLabel.setLabelFor(myNameField);
 
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
@@ -208,7 +213,7 @@ class ExtractMethodDialog extends DialogWrapper {
   }
 
   private JComponent createParametersPanel() {
-    JPanel panel = new ParameterTablePanel(myProject, myVariableData) {
+    JPanel panel = new ParameterTablePanel(myProject, myVariableData, myElementsToExtract) {
       protected void updateSignature() {
         ExtractMethodDialog.this.updateSignature();
       }

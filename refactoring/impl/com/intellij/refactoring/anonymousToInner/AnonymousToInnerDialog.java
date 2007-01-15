@@ -10,9 +10,9 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
@@ -187,12 +187,12 @@ class AnonymousToInnerDialog extends DialogWrapper{
   }
 
   private JComponent createParametersPanel() {
-    JPanel panel = new ParameterTablePanel(myProject, myVariableData) {
+    JPanel panel = new ParameterTablePanel(myProject, myVariableData, myAnonClass) {
       protected void updateSignature() {
       }
 
       protected void doEnterAction() {
-        AnonymousToInnerDialog.this.clickDefaultButton();
+        clickDefaultButton();
       }
 
       protected void doCancelAction() {

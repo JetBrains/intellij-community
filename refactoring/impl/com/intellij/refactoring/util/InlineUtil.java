@@ -145,12 +145,14 @@ public class InlineUtil {
           PsiParameter lastParameter = parameters[args.length - 1];
           PsiType lastParamType = lastParameter.getType();
           LOG.assertTrue(lastParamType instanceof PsiEllipsisType);
-          if (lastArg instanceof PsiNewExpression &&
-              substitutor.substitute(((PsiEllipsisType)lastParamType).toArrayType()).equals(lastArg.getType())) {
-            PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)lastArg).getArrayInitializer();
-            PsiExpression[] initializers = arrayInitializer != null ? arrayInitializer.getInitializers() : PsiExpression.EMPTY_ARRAY;
-            if (isSafeToFlatten(expression, method, initializers)) {
-              return true;
+          if (lastArg instanceof PsiNewExpression) {
+            final PsiType lastArgType = lastArg.getType();
+            if (lastArgType != null && substitutor.substitute(((PsiEllipsisType)lastParamType).toArrayType()).isAssignableFrom(lastArgType)) {
+              PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)lastArg).getArrayInitializer();
+              PsiExpression[] initializers = arrayInitializer != null ? arrayInitializer.getInitializers() : PsiExpression.EMPTY_ARRAY;
+              if (isSafeToFlatten(expression, method, initializers)) {
+                return true;
+              }
             }
           }
         }

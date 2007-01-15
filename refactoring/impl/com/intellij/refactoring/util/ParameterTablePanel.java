@@ -1,13 +1,15 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.TypeSelector;
+import com.intellij.refactoring.ui.TypeSelectorManager;
+import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
+import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
 
@@ -21,6 +23,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 
 public abstract class ParameterTablePanel extends JPanel {
   private final Project myProject;
@@ -33,7 +36,7 @@ public abstract class ParameterTablePanel extends JPanel {
 
   public static class VariableData {
     public final PsiVariable variable;
-    public final PsiType type;
+    public PsiType type;
     public String name;
     public boolean passAsParameter;
 
@@ -54,7 +57,7 @@ public abstract class ParameterTablePanel extends JPanel {
 
   protected abstract void doCancelAction();
 
-  public ParameterTablePanel(Project project, VariableData[] variableData) {
+  public ParameterTablePanel(Project project, VariableData[] variableData, final PsiElement... scopeElements) {
     super(new BorderLayout());
     myProject = project;
     myVariableData = variableData;
@@ -83,6 +86,33 @@ public abstract class ParameterTablePanel extends JPanel {
         VariableData data = myVariableData[row];
         setText(data.type.getPresentableText());
         return this;
+      }
+    });
+
+    TypeSelectorManager[] managers = new TypeSelectorManagerImpl[myVariableData.length];
+    for (int i = 0; i < managers.length; i++) {
+      PsiExpression[] occurrences = findVariableOccurrences(scopeElements, myVariableData[i].variable);
+      managers[i] = new TypeSelectorManagerImpl(myProject, myVariableData[i].type, occurrences);
+    }
+
+    final TypeSelector[] selectors = new TypeSelector[managers.length];
+    for (int i = 0; i < selectors.length; i++) {
+      selectors[i] = managers[i].getTypeSelector();
+    }
+
+    myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_TYPE_COLUMN).setCellEditor(new AbstractTableCellEditor() {
+      TypeSelector myCurrentSelector;
+      public Object getCellEditorValue() {
+        return myCurrentSelector.getSelectedType();
+      }
+
+      public Component getTableCellEditorComponent(final JTable table,
+                                                   final Object value,
+                                                   final boolean isSelected,
+                                                   final int row,
+                                                   final int column) {
+        myCurrentSelector = selectors[row];
+        return myCurrentSelector.getComponent();
       }
     });
 
@@ -119,7 +149,7 @@ public abstract class ParameterTablePanel extends JPanel {
         if (!myTable.isEditing()) {
           int row = myTable.getSelectedRow();
           if (row >= 0 && row < myTableModel.getRowCount()) {
-            TableUtil.editCellAt(myTable, row, MyTableModel.PARAMETER_TYPE_COLUMN);
+            TableUtil.editCellAt(myTable, row, MyTableModel.PARAMETER_NAME_COLUMN);
           }
         }
       }
@@ -220,6 +250,20 @@ public abstract class ParameterTablePanel extends JPanel {
     updateMoveButtons();
   }
 
+  private static PsiExpression[] findVariableOccurrences(final PsiElement[] scopeElements, final PsiVariable variable) {
+    final ArrayList<PsiExpression> result = new ArrayList<PsiExpression>();
+    for (final PsiElement element : scopeElements) {
+      element.accept(new PsiRecursiveElementVisitor() {
+        public void visitReferenceExpression(final PsiReferenceExpression expression) {
+          if (!expression.isQualified() && expression.isReferenceTo(variable)) {
+            result.add(expression);
+          }
+        }
+      });
+    }
+    return result.toArray(new PsiExpression[result.size()]);
+  }
+
   private void updateMoveButtons() {
     int row = myTable.getSelectedRow();
     if (0 <= row && row < myVariableData.length) {
@@ -303,7 +347,8 @@ public abstract class ParameterTablePanel extends JPanel {
           break;
         }
         case PARAMETER_TYPE_COLUMN: {
-          assert false;
+          VariableData data = myVariableData[rowIndex];
+          data.type = (PsiType)aValue;
           updateSignature();
           break;
         }
@@ -315,6 +360,7 @@ public abstract class ParameterTablePanel extends JPanel {
         case CHECKMARK_COLUMN:
           return isEnabled();
         case PARAMETER_NAME_COLUMN:
+        case PARAMETER_TYPE_COLUMN:
           return isEnabled() && myVariableData[rowIndex].passAsParameter;
         default:
           return false;

@@ -166,7 +166,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
       panel.add(myMakeFieldParameters, gbConstraints);
       myMakeFieldParameters.setSelected(!myAnyNonFieldMembersUsed);
 
-      myParameterPanel = new ParameterTablePanel(myProject, myVariableData) {
+      myParameterPanel = new ParameterTablePanel(myProject, myVariableData, myMember) {
         protected void updateSignature() {
         }
 

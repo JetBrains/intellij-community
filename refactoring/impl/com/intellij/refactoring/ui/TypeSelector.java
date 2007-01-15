@@ -127,7 +127,7 @@ public class TypeSelector {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
       if (value != null) {
-        setText(((PsiType) value).getCanonicalText());
+        setText(((PsiType) value).getPresentableText());
       }
 
       return this;
