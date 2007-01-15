@@ -105,7 +105,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
   }
 
   public File[] generateSingleFileBuild(Project project, GenerationOptions genOptions, List<File> filesToRefresh) throws IOException {
-    final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getProjectFile().getParent());
+    final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
     projectBuildFileDestDir.mkdirs();
     final File destFile = new File(projectBuildFileDestDir, BuildProperties.getProjectBuildFileName(project) + XML_EXTENSION);
     final File propertiesFile = new File(projectBuildFileDestDir, BuildProperties.getPropertyFileName(project));
@@ -164,7 +164,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
   }
 
   public File[] generateMultipleFileBuild(Project project, GenerationOptions genOptions, List<File> filesToRefresh) throws IOException {
-    final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getProjectFile().getParent());
+    final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
     projectBuildFileDestDir.mkdirs();
     final List<File> generated = new ArrayList<File>();
     final File projectBuildFile = new File(projectBuildFileDestDir, BuildProperties.getProjectBuildFileName(project) + XML_EXTENSION);

@@ -4,8 +4,6 @@ import com.intellij.ide.actions.SynchronizeAction;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileElement;
@@ -66,8 +64,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     VirtualFile selectFile = null;
 
     if (toSelect == null && ourLastFile == null) {
-      if (project != null && project.getProjectFile() != null) {
-        selectFile = project.getProjectFile().getParent();
+      if (project != null && project.getBaseDir() != null) {
+        selectFile = project.getBaseDir();
       }
     } else {
       selectFile = (toSelect == null) ? ourLastFile : toSelect;

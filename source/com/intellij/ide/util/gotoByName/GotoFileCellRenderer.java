@@ -10,6 +10,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.FilePathSplittingPolicy;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
@@ -40,16 +41,17 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile>{
     return "(" + path + ")";
   }
 
+  @Nullable
   private static String getRelativePath(final VirtualFile virtualFile, final Project project) {
     String url = virtualFile.getPresentableUrl();
     if (project == null) {
       return url;
     }
     else {
-      final VirtualFile projectFile = project.getProjectFile();
-      if (projectFile != null) {
+      final VirtualFile baseDir = project.getBaseDir();
+      if (baseDir != null) {
         //noinspection ConstantConditions
-        final String projectHomeUrl = projectFile.getParent().getPresentableUrl();
+        final String projectHomeUrl = baseDir.getPresentableUrl();
         if (url.startsWith(projectHomeUrl)) {
           final String cont = url.substring(projectHomeUrl.length());
           if (cont.length() == 0) return null;

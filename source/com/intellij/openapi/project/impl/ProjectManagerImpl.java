@@ -9,8 +9,6 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -162,7 +160,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public Project loadProject(String filePath) throws IOException, JDOMException, InvalidDataException {
     filePath = canonicalize(filePath);
     ProjectImpl project = createProject(filePath, false, false, false);
-    project.getStateStore().loadProject(this);
+    project.getStateStore().loadProject();
     return project;
   }
 
@@ -350,14 +348,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public void saveChangedProjectFile(final VirtualFile file) {
     final Project[] projects = getOpenProjects();
     for (Project project : projects) {
-      if (file == project.getProjectFile() || file == project.getWorkspaceFile()) {
-        copyToTemp(file);
-        registerProjectToReload(project, file);
-      }
-      ModuleManager moduleManager = ModuleManager.getInstance(project);
-      final Module[] modules = moduleManager.getModules();
-      for (Module module : modules) {
-        if (module.getModuleFile() == file) {
+      final List<VirtualFile> storageFiles = ((ProjectImpl)project).getStateStore().getAllStorageFiles(true);
+      for (VirtualFile storageFile : storageFiles) {
+        if (storageFile.equals(file)) {
           copyToTemp(file);
           registerProjectToReload(project, file);
         }
@@ -422,7 +415,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       public void run() {
         LOG.info("Reloading project.");
         final String path = project[0].getProjectFilePath();
-        final List<VirtualFile> original = getAllProjectFiles(project[0]);
+        final List<VirtualFile> original = ((ProjectImpl)project[0]).getStateStore().getAllStorageFiles(true);
 
         if (project[0].isDisposed() || ProjectUtil.closeProject(project[0])) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -444,19 +437,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         }
       }
     }, ModalityState.NON_MODAL);
-  }
-
-  private static List<VirtualFile> getAllProjectFiles(Project project) {
-    List<VirtualFile> files = new ArrayList<VirtualFile>();
-    files.add(project.getProjectFile());
-    files.add(project.getWorkspaceFile());
-
-    ModuleManager moduleManager = ModuleManager.getInstance(project);
-    final Module[] modules = moduleManager.getModules();
-    for (Module module : modules) {
-      files.add(module.getModuleFile());
-    }
-    return files;
   }
 
   /*

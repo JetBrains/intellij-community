@@ -30,12 +30,30 @@ import org.jetbrains.annotations.Nullable;
  * Project interface class.
  */
 public interface Project extends ComponentManager, AreaInstance, Disposable {
+  /**
+   * @deprecated Since multiple possible project formats it is not allowed to ask for getProjectFile. Other methods should
+   * be used for project introspections, such as {@link #getPresentableUrl()},  {@link #getBaseDir()}, etc.
+   */
   @Nullable
   VirtualFile getProjectFile();
+
+  /**
+   * @deprecated Since multiple possible project formats it is not allowed to ask for getProjectFile. Other methods should
+   * be used for project introspections, such as {@link #getPresentableUrl()},  {@link #getBaseDir()}, etc.
+   */
+  @Nullable
+  VirtualFile getWorkspaceFile();
+
+  @Nullable
+  VirtualFile getBaseDir();
 
   @NotNull
   @NonNls
   String getName();
+
+  @Nullable
+  @NonNls
+  String getPresentableUrl();
 
   /**
    * @return Returns an "java.io.File" path.
@@ -43,8 +61,6 @@ public interface Project extends ComponentManager, AreaInstance, Disposable {
   @NotNull
   String getProjectFilePath();
 
-  @Nullable
-  VirtualFile getWorkspaceFile();
 
   void save();
 

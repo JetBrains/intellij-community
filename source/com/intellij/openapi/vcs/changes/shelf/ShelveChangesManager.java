@@ -19,10 +19,10 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
@@ -34,7 +34,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class ShelveChangesManager implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager");
@@ -112,7 +115,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       writer = new OutputStreamWriter(new FileOutputStream(patchPath));
     }
     try {
-      List<FilePatch> patches = PatchBuilder.buildPatch(changes, myProject.getProjectFile().getParent().getPresentableUrl(), true);
+      List<FilePatch> patches = PatchBuilder.buildPatch(changes, myProject.getBaseDir().getPresentableUrl(), true);
       UnifiedDiffWriter.write(patches, writer);
     }
     finally {
@@ -155,7 +158,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
   public void unshelveChangeList(final ShelvedChangeList change) {
     try {
       List<FilePatch> patches = loadPatches(change.PATH);
-      VirtualFile baseDir = myProject.getProjectFile().getParent();
+      VirtualFile baseDir = myProject.getBaseDir();
       if (ApplyPatchAction.applyPatch(myProject, patches, baseDir, 0, true, true) == ApplyPatchStatus.FAILURE) {
         return;
       }

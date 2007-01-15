@@ -36,7 +36,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.Collection;
 import java.util.List;
 
@@ -114,7 +117,7 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
     public boolean canExecute(Collection<Change> changes, String commitMessage) {
       if (!myFileNameInitialized) {
         if (PATCH_PATH == "") {
-          PATCH_PATH = myProject.getProjectFile().getParent().getPresentableUrl();
+          PATCH_PATH = myProject.getBaseDir().getPresentableUrl();
         }
         myPanel.setFileName(ShelveChangesManager.suggestPatchName(commitMessage, new File(PATCH_PATH)));
         myFileNameInitialized = true;
@@ -129,7 +132,7 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
         PATCH_PATH = file.getParent();
         Writer writer = new OutputStreamWriter(new FileOutputStream(fileName));
         try {
-          List<FilePatch> patches = PatchBuilder.buildPatch(changes, myProject.getProjectFile().getParent().getPresentableUrl(), false);
+          List<FilePatch> patches = PatchBuilder.buildPatch(changes, myProject.getBaseDir().getPresentableUrl(), false);
           UnifiedDiffWriter.write(patches, writer);
         }
         finally {

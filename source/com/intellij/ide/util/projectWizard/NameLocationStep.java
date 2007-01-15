@@ -124,8 +124,8 @@ public class NameLocationStep extends ModuleWizardStep {
         setSyncEnabled(false);
       }
       else { // project already exists
-        final VirtualFile projectFile = myWizardContext.getProject().getProjectFile();
-        final String projectFileDirectory = (projectFile != null) ? VfsUtil.virtualToIoFile(projectFile).getParent() : null;
+        final VirtualFile baseDir = myWizardContext.getProject().getBaseDir();
+        final String projectFileDirectory = (baseDir != null) ? VfsUtil.virtualToIoFile(baseDir).getPath() : null;
         if (projectFileDirectory != null) {
           final String name = ProjectWizardUtil.findNonExistingFileName(projectFileDirectory, suggestModuleName(myBuilder.getModuleType()), "");
           setModuleName(name);

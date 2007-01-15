@@ -209,7 +209,7 @@ public class PatternPackageSet implements PackageSet {
   public static String getRelativePath(final VirtualFile virtualFile, final ProjectFileIndex index, final boolean useFQName) {
     final Module module = index.getModuleForFile(virtualFile);
     if (module != null) {
-      final VirtualFile projectParent = module.getProject().getProjectFile().getParent();
+      final VirtualFile projectParent = module.getProject().getBaseDir();
       if (projectParent != null) {
         if (VfsUtil.isAncestor(projectParent, virtualFile, false)){
           final String projectRelativePath = VfsUtil.getRelativePath(virtualFile, projectParent, '/');

@@ -8,7 +8,9 @@ import com.intellij.pom.PomModel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
 /**
@@ -35,11 +37,22 @@ public class DummyProject extends UserDataHolderBase implements Project {
     return null;
   }
 
+  @Nullable
+  @NonNls
+  public String getPresentableUrl() {
+    return null;
+  }
+
   public String getProjectFilePath() {
     return null;
   }
 
   public VirtualFile getWorkspaceFile() {
+    return null;
+  }
+
+  @Nullable
+  public VirtualFile getBaseDir() {
     return null;
   }
 

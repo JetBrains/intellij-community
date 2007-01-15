@@ -16,10 +16,7 @@ public class ProjectFileDirectoryRule implements GetDataRule {
     if (dir == null) {
       final Project project = (Project)dataProvider.getData(DataConstants.PROJECT);
       if (project != null) {
-        final VirtualFile projectFile = project.getProjectFile();
-        if (projectFile != null && projectFile.isValid()) {
-          dir = projectFile.getParent();
-        }
+        dir = project.getBaseDir();
       }
     }
     return dir;

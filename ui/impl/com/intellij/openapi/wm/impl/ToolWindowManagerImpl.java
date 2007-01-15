@@ -116,11 +116,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(myToolWindowsPane);
     appendUpdateToolWindowsPaneCmd(commandsList);
 
-    final VirtualFile projectFile = myProject.getProjectFile();
-    if (projectFile != null) {
-      final VirtualFile parentDir = projectFile.getParent();
-      LOG.assertTrue(parentDir != null);
-      myFrame.setTitle(projectFile.getName() + " - [" + parentDir.getPresentableUrl() + "]");
+    final VirtualFile baseDir = myProject.getBaseDir();
+    if (baseDir != null) {
+      myFrame.setTitle(baseDir.getName() + " - [" + baseDir.getPresentableUrl() + "]");
     }
     else {
       myFrame.setTitle(myProject.getName());

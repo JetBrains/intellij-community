@@ -73,7 +73,7 @@ public class ShelvedChange {
       ContentRevision beforeRevision = null;
       ContentRevision afterRevision = null;
       FilePath filePath = null;
-      VirtualFile baseDir = project.getProjectFile().getParent();
+      VirtualFile baseDir = project.getBaseDir();
 
       if (myFileStatus != FileStatus.ADDED) {
         VirtualFile changedFile = VfsUtil.findRelativeFile(myBeforePath, baseDir);

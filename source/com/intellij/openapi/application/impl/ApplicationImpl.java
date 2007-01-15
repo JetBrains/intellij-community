@@ -12,8 +12,8 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
-import com.intellij.openapi.components.impl.stores.ApplicationStoreImpl;
 import com.intellij.openapi.components.impl.stores.IApplicationStore;
+import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
@@ -32,8 +32,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.Stack;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,9 +45,9 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.*;
 
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
@@ -112,7 +112,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   protected void boostrapPicoContainer() {
     super.boostrapPicoContainer();
-    getPicoContainer().registerComponentImplementation(ApplicationStoreImpl.class);
+    getPicoContainer().registerComponentImplementation(StoresFactory.getApplicationStoreClass());
   }
 
   @NotNull

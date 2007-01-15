@@ -10,6 +10,7 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
@@ -18,17 +19,16 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -79,7 +79,7 @@ public class ApplyPatchDialog extends DialogWrapper {
       }
     });
 
-    myBaseDirectoryField.setText(project.getProjectFile().getParent().getPresentableUrl());
+    myBaseDirectoryField.setText(project.getBaseDir().getPresentableUrl());
     myBaseDirectoryField.addBrowseFolderListener(VcsBundle.message("patch.apply.select.base.directory.title"), "", project,
                                                  new FileChooserDescriptor(false, true, false, false, false, false));
 
@@ -171,7 +171,7 @@ public class ApplyPatchDialog extends DialogWrapper {
     if (psiFiles.length == 1) {
       PsiDirectory parent = psiFiles [0].getContainingDirectory();
       for(int i=nameComponents.length-2; i >= 0; i--) {
-        if (!parent.getName().equals(nameComponents [i]) || parent.getVirtualFile() == myProject.getProjectFile().getParent()) {
+        if (!parent.getName().equals(nameComponents [i]) || parent.getVirtualFile() == myProject.getBaseDir()) {
           myDetectedStripLeadingDirs = i+1;
           myDetectedBaseDirectory = parent.getVirtualFile().getPresentableUrl();
           return true;

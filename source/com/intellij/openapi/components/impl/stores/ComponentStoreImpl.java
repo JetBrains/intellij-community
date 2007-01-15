@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,32 +22,32 @@ abstract class ComponentStoreImpl implements IComponentStore {
   @NonNls private static final String NAME_ATTR = "name";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentStoreImpl");
-  private Map<String, Element> myNameToConfiguration = new HashMap<String, Element>();
+  private Map<String, Element> myNameToConfiguration = Collections.synchronizedMap(new HashMap<String, Element>());
 
 
   @Nullable
   protected abstract Element getDefaults(Object component) throws IOException, JDOMException, InvalidDataException;
 
-  synchronized void clearDomMap() {
-    myNameToConfiguration = new HashMap<String, Element>();
+  void clearDomMap() {
+    myNameToConfiguration.clear();
   }
 
-  synchronized void addConfiguration(String componentName, Element configuration) {
+  void addConfiguration(String componentName, Element configuration) {
     myNameToConfiguration.put(componentName, configuration);
   }
 
-  synchronized Set<String> getConfigurationNames() {
+  Set<String> getConfigurationNames() {
     return myNameToConfiguration.keySet();
   }
 
   @Nullable
-  synchronized Element getConfiguration(String name) {
+  Element getConfiguration(String name) {
     if (myNameToConfiguration == null) return null;
 
     return myNameToConfiguration.get(name);
   }
 
-  synchronized void removeConfiguration(String name) {
+  void removeConfiguration(String name) {
     myNameToConfiguration.remove(name);
   }
 

@@ -233,4 +233,14 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     mySavePathsRelative = b;
   }
 
+  public List<VirtualFile> getAllStorageFiles(final boolean includingSubStructures) {
+    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+
+    final ConfigurationFile[] configurationFiles = getConfigurationFiles();
+    for (ConfigurationFile configurationFile : configurationFiles) {
+      result.add(configurationFile.getVirtualFile());
+    }
+
+    return result;
+  }
 }

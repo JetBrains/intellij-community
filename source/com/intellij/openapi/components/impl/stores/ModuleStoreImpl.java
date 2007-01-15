@@ -28,7 +28,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 
-public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleStore {
+class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ModuleStoreImpl");
   @NonNls private static final String RELATIVE_PATHS_OPTION = "relativePaths";
 

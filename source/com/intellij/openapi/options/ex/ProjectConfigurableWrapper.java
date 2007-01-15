@@ -6,7 +6,6 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,19 +38,16 @@ public class ProjectConfigurableWrapper implements SearchableConfigurable {
   }
 
   private void checkProjectFileWritable() {
-    final VirtualFile projectFile = myProject.getProjectFile();
-    if (projectFile != null) {
-      String path = projectFile.getPresentableUrl();
-      if (path != null) {
-        File file = new File(path);
-        if (file.exists() && !file.canWrite()) {
-          Messages.showMessageDialog(
-            myProject,
-            OptionsBundle.message("project.file.read.only.error.message"),
-            OptionsBundle.message("cannot.save.settings.default.dialog.title"),
-            Messages.getErrorIcon()
-          );
-        }
+    String path = myProject.getPresentableUrl();
+    if (path != null) {
+      File file = new File(path);
+      if (file.exists() && !file.canWrite()) {
+        Messages.showMessageDialog(
+          myProject,
+          OptionsBundle.message("project.file.read.only.error.message"),
+          OptionsBundle.message("cannot.save.settings.default.dialog.title"),
+          Messages.getErrorIcon()
+        );
       }
     }
   }

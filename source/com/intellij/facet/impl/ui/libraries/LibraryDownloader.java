@@ -134,7 +134,7 @@ public class LibraryDownloader {
 
     final VirtualFile[] files;
     if (myProject != null) {
-      files = FileChooser.chooseFiles(myProject, descriptor, myProject.getProjectFile().getParent());
+      files = FileChooser.chooseFiles(myProject, descriptor, myProject.getBaseDir());
     }
     else {
       files = FileChooser.chooseFiles(myParent, descriptor);

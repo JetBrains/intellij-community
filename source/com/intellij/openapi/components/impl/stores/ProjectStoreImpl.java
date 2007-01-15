@@ -43,13 +43,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
+class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ProjectStoreImpl");
   @NonNls private static final String OLD_PROJECT_SUFFIX = "_old.";
   @NonNls private static final String WORKSPACE_EXTENSION = ".iws";
   @NonNls private static final String OPTION_WORKSPACE = "workspace";
 
   private ProjectImpl myProject;
+  private ProjectManagerImpl myProjectManager;
   private static boolean ourSaveSettingsInProgress = false;
 
   @Nullable
@@ -59,9 +60,10 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
 
   private String myFilePath;
 
-  public ProjectStoreImpl(final ComponentManagerImpl componentManager, final ProjectImpl project) {
+  public ProjectStoreImpl(final ComponentManagerImpl componentManager, final ProjectImpl project, final ProjectManagerImpl projectManager) {
     super(componentManager);
     myProject = project;
+    myProjectManager = projectManager;
   }
 
   private static String[] readUsedMacros(Element root) {
@@ -151,7 +153,7 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
               oldProject = projectDir.createChildData(this, oldProjectName);
             }
             VfsUtil.saveText(oldProject, VfsUtil.loadText(projectFile));
-            VirtualFile workspaceFile = myProject.getWorkspaceFile();
+            VirtualFile workspaceFile = getWorkspaceFile();
             if (workspaceFile != null) {
               final String oldWorkspaceName = workspaceFile.getNameWithoutExtension() + OLD_PROJECT_SUFFIX +
                                               getWorkspaceFile().getExtension();
@@ -262,9 +264,14 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
     }
   }
 
+  @Nullable
+  public VirtualFile getProjectBaseDir() {
+    final VirtualFile projectFile = getProjectFile();
+    return projectFile != null ? projectFile.getParent() : null;
+  }
 
 
-  public void loadProject(final ProjectManagerImpl projectManager) throws IOException, JDOMException, InvalidDataException {
+  public void loadProject() throws IOException, JDOMException, InvalidDataException {
     // http://www.jetbrains.net/jira/browse/IDEA-1556. Enforce refresh. Project files may potentially reside in non-yet valid vfs paths.
     final ConfigurationFile[] files = getConfigurationFiles();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -275,7 +282,7 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
       }
     });
 
-    final boolean macrosOk = checkMacros(projectManager, getDefinedMacros(projectManager));
+    final boolean macrosOk = checkMacros(myProjectManager, getDefinedMacros(myProjectManager));
     if (!macrosOk) {
       throw new IOException(ProjectBundle.message("project.load.undefined.path.variables.error"));
     }
@@ -408,6 +415,21 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
       final ModuleStoreImpl moduleStore = (ModuleStoreImpl)((ModuleImpl)module).getStateStore();
       moduleStore.collectFileNeedsToBeWritten(moduleStore.getConfigurationFiles(), readonlyFiles);
     }
+  }
+
+
+  public List<VirtualFile> getAllStorageFiles(final boolean includingSubStructures) {
+    final List<VirtualFile> result = super.getAllStorageFiles(includingSubStructures);
+
+    if (includingSubStructures) {
+      ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+      final Module[] modules = moduleManager.getModules();
+      for (Module module : modules) {
+        result.addAll(((ModuleImpl)module).getStateStore().getAllStorageFiles(true));
+      }
+    }
+
+    return result;
   }
 }
 

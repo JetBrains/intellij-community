@@ -8,6 +8,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.ExportDialog;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -16,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.util.SystemProperties;
 
 import java.io.BufferedWriter;
@@ -33,14 +33,10 @@ public class ExportThreadsAction extends AnAction {
     DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(project)).getContext();
 
     if(context.getDebuggerSession() != null) {
-      final String destinationDirectory;
-      final VirtualFile projectFile = project.getProjectFile();
-      if (projectFile != null) {
-        destinationDirectory = projectFile.getParent().getPresentableUrl();
-      }
-      else {
-        destinationDirectory = "";
-      }
+      String destinationDirectory = "";
+      final VirtualFile baseDir = project.getBaseDir();
+      if (baseDir != null) destinationDirectory = baseDir.getPresentableUrl();
+
       ExportDialog dialog = new ExportDialog(context.getDebugProcess(),  destinationDirectory);
       dialog.show();
       if (dialog.isOK()) {

@@ -16,7 +16,6 @@ import com.intellij.psi.*;
 import com.intellij.util.containers.HashMap;
 
 import java.io.*;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.TreeMap;
@@ -62,9 +61,10 @@ class ExportToHTMLManager {
 
     ExportToHTMLSettings exportToHTMLSettings = ExportToHTMLSettings.getInstance(project);
     if(exportToHTMLSettings.OUTPUT_DIRECTORY == null) {
-      final VirtualFile projectFile = project.getProjectFile();
-      if (projectFile != null) {
-        exportToHTMLSettings.OUTPUT_DIRECTORY = projectFile.getParent().getPresentableUrl() + File.separator + "exportToHTML";
+      final VirtualFile baseDir = project.getBaseDir();
+
+      if (baseDir != null) {
+        exportToHTMLSettings.OUTPUT_DIRECTORY = baseDir.getPresentableUrl() + File.separator + "exportToHTML";
       }
       else {
         exportToHTMLSettings.OUTPUT_DIRECTORY = "";

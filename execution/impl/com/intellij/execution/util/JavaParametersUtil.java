@@ -13,7 +13,6 @@ import com.intellij.openapi.projectRoots.ex.OrdersMerger;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,10 +32,7 @@ public class JavaParametersUtil {
     parameters.getVMParametersList().addParametersString(configuration.getProperty(RunJavaConfiguration.VM_PARAMETERS_PROPERTY));
     String workingDirectory = configuration.getProperty(RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY);
     if (workingDirectory == null || workingDirectory.trim().length() == 0) {
-      final VirtualFile projectFile = configuration.getProject().getProjectFile();
-      if (projectFile != null) {
-        workingDirectory = PathUtil.getLocalPath(projectFile.getParent());
-      }
+      workingDirectory = PathUtil.getLocalPath(configuration.getProject().getBaseDir());
     }
     parameters.setWorkingDirectory(workingDirectory);
   }

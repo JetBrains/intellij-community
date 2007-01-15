@@ -13,7 +13,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
-import com.intellij.openapi.components.impl.stores.ProjectStoreImpl;
+import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
@@ -82,7 +82,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   protected void boostrapPicoContainer() {
     Extensions.instantiateArea(PluginManager.AREA_IDEA_PROJECT, this, null);
     super.boostrapPicoContainer();
-    getPicoContainer().registerComponentImplementation(ProjectStoreImpl.class);
+    getPicoContainer().registerComponentImplementation(StoresFactory.getProjectStoreClass());
     getPicoContainer().registerComponentImplementation(ProjectPathMacroManager.class);
   }
 
@@ -237,9 +237,18 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return getStateStore().getProjectFilePath();
   }
 
+  /**
+   * @deprecated
+   */
   @Nullable
   public VirtualFile getProjectFile() {
+    LOG.warn("DEPRECATED METHOD USAGE: ProjectImpl.getProjectFile()");
     return getStateStore().getProjectFile();
+  }
+
+  @Nullable
+  public VirtualFile getBaseDir() {
+    return getStateStore().getProjectBaseDir();
   }
 
   @NotNull
@@ -259,7 +268,18 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   @Nullable
+  @NonNls
+  public String getPresentableUrl() {
+    final VirtualFile projectFile = getStateStore().getProjectFile();
+    return projectFile != null ? projectFile.getPresentableUrl() : null;
+  }
+
+  /**
+   * @deprecated
+   */
+  @Nullable
   public VirtualFile getWorkspaceFile() {
+    LOG.warn("DEPRECATED METHOD USAGE: ProjectImpl.getWorkspaceFile()");
     return getStateStore().getWorkspaceFile();
   }
 

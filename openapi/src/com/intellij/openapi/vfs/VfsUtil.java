@@ -530,10 +530,10 @@ public class VfsUtil {
       return url;
     }
     else {
-      final VirtualFile projectFile = project.getProjectFile();
-      if (projectFile != null) {
+      final VirtualFile baseDir = project.getBaseDir();
+      if (baseDir != null) {
         //noinspection ConstantConditions
-        final String projectHomeUrl = projectFile.getParent().getPresentableUrl();
+        final String projectHomeUrl = baseDir.getPresentableUrl();
         if (url.startsWith(projectHomeUrl)) {
           url = "..." + url.substring(projectHomeUrl.length());
         }

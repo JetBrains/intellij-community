@@ -12,6 +12,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
@@ -25,7 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-public class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationStore {
+ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ApplicationStoreImpl");
 
   @NonNls private static final String APPLICATION_ELEMENT = "application";
@@ -44,7 +45,11 @@ public class ApplicationStoreImpl extends ComponentStoreImpl implements IApplica
   public void initStore() {
   }
 
-  private synchronized void loadConfiguration(String path) {
+   public List<VirtualFile> getAllStorageFiles(final boolean includingSubStructures) {
+     throw new UnsupportedOperationException("Method getAllStorageFiles is not supported in " + getClass());
+   }
+
+   private synchronized void loadConfiguration(String path) {
     clearDomMap();
 
     File configurationDir = new File(path);

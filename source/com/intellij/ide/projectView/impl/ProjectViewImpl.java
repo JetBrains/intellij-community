@@ -680,7 +680,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     else {
       title = "";
       if (myProject != null) {
-        title = myProject.getProjectFile() != null ? myProject.getProjectFile().getPresentableUrl() : "";
+        title = myProject.getPresentableUrl();
       }
     }
 

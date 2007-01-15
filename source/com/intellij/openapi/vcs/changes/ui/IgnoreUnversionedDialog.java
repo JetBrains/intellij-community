@@ -12,22 +12,22 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.vcs.changes.IgnoredFileBean;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.IgnoredFileBean;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
-import java.io.File;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 
 public class IgnoreUnversionedDialog extends DialogWrapper {
   private JRadioButton myIgnoreSpecifiedFileRadioButton;
@@ -76,7 +76,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     assert virtualFiles.size() > 0;
     myFilesToIgnore = virtualFiles;
     if (virtualFiles.size() == 1) {
-      VirtualFile projectDir = myProject.getProjectFile().getParent();
+      VirtualFile projectDir = myProject.getBaseDir();
       String path = FileUtil.getRelativePath(new File(projectDir.getPresentableUrl()), new File(virtualFiles.get(0).getPresentableUrl()));
       myIgnoreFileTextField.setText(path);
     }
@@ -128,7 +128,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
   }
 
   public IgnoredFileBean[] getSelectedIgnoredFiles() {
-    VirtualFile projectDir = myProject.getProjectFile().getParent();
+    VirtualFile projectDir = myProject.getBaseDir();
     if (myIgnoreSpecifiedFileRadioButton.isSelected()) {
       if (myFilesToIgnore == null) {
         IgnoredFileBean bean = new IgnoredFileBean();

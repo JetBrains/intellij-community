@@ -9,7 +9,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
 import com.intellij.openapi.components.impl.stores.IModuleStore;
-import com.intellij.openapi.components.impl.stores.ModuleStoreImpl;
+import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.extensions.AreaPicoContainer;
@@ -86,7 +86,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   protected void boostrapPicoContainer() {
     Extensions.instantiateArea(PluginManager.AREA_IDEA_MODULE, this, (AreaInstance)getParentComponentManager());
     super.boostrapPicoContainer();
-    getPicoContainer().registerComponentImplementation(ModuleStoreImpl.class);
+    getPicoContainer().registerComponentImplementation(StoresFactory.getModuleStoreClass());
     getPicoContainer().registerComponentImplementation(ModulePathMacroManager.class);
   }
 

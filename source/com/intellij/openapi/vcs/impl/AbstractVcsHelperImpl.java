@@ -465,7 +465,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   public <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(CommittedChangesProvider<T, U> provider) {
     final List<T> changes;
     try {
-      changes = provider.getCommittedChanges(provider.createDefaultSettings(), myProject.getProjectFile().getParent(), 0);
+      changes = provider.getCommittedChanges(provider.createDefaultSettings(), myProject.getBaseDir(), 0);
     }
     catch (VcsException e) {
       return null;

@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.EventDispatcher;
@@ -950,8 +951,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       if (myFilesToIgnore.size() == 0) {
         return false;
       }
-      String filePath = FileUtil.getRelativePath(new File(myProject.getProjectFile().getParent().getPath()), new File(file.getPath()));
-      filePath = FileUtil.toSystemIndependentName(filePath);
+      String filePath = VfsUtil.getRelativePath(file, myProject.getBaseDir(), '/');
       for(IgnoredFileBean bean: myFilesToIgnore) {
         final String prefix = FileUtil.toSystemIndependentName(bean.getPath());
         if (prefix != null && StringUtil.startsWithIgnoreCase(filePath, prefix)) {
