@@ -7,6 +7,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.ApplicationInfoProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.NonNls;
 
@@ -79,6 +80,10 @@ public class IdeaLogger extends Logger {
   }
 
   public void error(String message, Throwable t, String... details) {
+    if (t instanceof ProcessCanceledException) {
+      myLogger.error("Do not log ProcessCanceledException: ", new Throwable());
+      throw (ProcessCanceledException)t;
+    }
     t.printStackTrace();
     String detailString = "";
     for (String detail : details) {
