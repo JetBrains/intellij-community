@@ -415,7 +415,9 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   @NotNull
   public Module[] getModules() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    if (myModuleModel.myIsWritable) {
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+    }
     return myModuleModel.getModules();
   }
 

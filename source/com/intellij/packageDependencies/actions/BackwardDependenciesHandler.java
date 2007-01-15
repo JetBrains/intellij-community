@@ -12,6 +12,8 @@ import com.intellij.packageDependencies.ui.DependenciesPanel;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 
+import javax.swing.*;
+
 /**
  * User: anna
  * Date: Jan 16, 2005
@@ -27,22 +29,29 @@ public class BackwardDependenciesHandler {
 
   public void analyze() {
     final DependenciesBuilder builder = new BackwardDependenciesBuilder(myProject, myScope);
-
-    if (ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    final Runnable process = new Runnable() {
       public void run() {
         builder.analyze();
       }
-    }, AnalysisScopeBundle.message("backward.dependencies.progress.text"), true, myProject)) {
-      DependenciesPanel panel = new DependenciesPanel(myProject, builder);
-      Content content = PeerFactory.getInstance().getContentFactory().createContent(panel,
-                                                                                    AnalysisScopeBundle.message(
-                                                                                      "backward.dependencies.toolwindow.title",
-                                                                                      builder.getScope().getDisplayName()),
-                                                                                    false);
-      content.setDisposer(panel);
-      panel.setContent(content);
-      ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).addContent(content);
+    };
+    final Runnable successRunnable = new Runnable() {
+      public void run() {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            DependenciesPanel panel = new DependenciesPanel(myProject, builder);
+            Content content = PeerFactory.getInstance().getContentFactory().createContent(panel, AnalysisScopeBundle.message(
+              "backward.dependencies.toolwindow.title", builder.getScope().getDisplayName()), false);
+            content.setDisposer(panel);
+            panel.setContent(content);
+            ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).addContent(content);
+          }
+        });
+      }
+    };
 
-    }
+    ProgressManager.getInstance()
+      .runProcessWithProgressAsynchronously(myProject, AnalysisScopeBundle.message("backward.dependencies.progress.text"),
+                                            process, successRunnable, null);
+
   }
 }

@@ -17,6 +17,7 @@
 
 package com.intellij.analysis;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -313,23 +314,18 @@ public class AnalysisScope {
   public void accept(final PsiElementVisitor visitor) {
     if (myType == VIRTUAL_FILES) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
-      for (VirtualFile file : myFilesSet) {
-        final PsiFile psiFile = psiManager.findFile(file);
-        if (psiFile != null){
-          psiFile.accept(visitor);
-        }
+      for (final VirtualFile file : myFilesSet) {
+        if (!processFile(file, visitor, psiManager)) return;
       }
     } else if (myScope instanceof GlobalSearchScope) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
       final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       projectFileIndex.iterateContent(new ContentIterator() {
-        public boolean processFile(VirtualFile fileOrDir) {
+        @SuppressWarnings({"SimplifiableIfStatement"})
+        public boolean processFile(final VirtualFile fileOrDir) {
           if (fileOrDir.isDirectory()) return true;
           if (((GlobalSearchScope)myScope).contains(fileOrDir) && (myIncludeTestSource || !projectFileIndex.isInTestSourceContent(fileOrDir))) {
-            PsiFile psiFile = psiManager.findFile(fileOrDir);
-            if (psiFile == null) return true; //skip .class files under src directory
-            if (!(psiFile instanceof PsiJavaFile)) return true;
-            psiFile.accept(visitor);
+            return AnalysisScope.processFile(fileOrDir, visitor, psiManager);
           }
           return true;
         }
@@ -343,50 +339,39 @@ public class AnalysisScope {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
       final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       projectFileIndex.iterateContent(new ContentIterator() {
-        public boolean processFile(VirtualFile fileOrDir) {
-          if (fileOrDir.isDirectory()) return true;
-          if (projectFileIndex.isInContent(fileOrDir) && (myIncludeTestSource || !projectFileIndex.isInTestSourceContent(fileOrDir))) {
-            PsiFile psiFile = psiManager.findFile(fileOrDir);
-            if (psiFile == null) return true; //skip .class files under src directory
-            psiFile.accept(visitor);
-          }
-          return true;
+        public boolean processFile(final VirtualFile fileOrDir) {
+          return AnalysisScope.this.processFile(fileOrDir, visitor, projectFileIndex, psiManager);
         }
       });
     }
     else if (myModule != null) {
       final FileIndex moduleFileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
+      final PsiManager psiManager = PsiManager.getInstance(myModule.getProject());
       moduleFileIndex.iterateContent(new ContentIterator() {
         public boolean processFile(VirtualFile fileOrDir) {
-          if (fileOrDir.isDirectory()) return true;
-          if (moduleFileIndex.isInContent(fileOrDir) && (myIncludeTestSource || !moduleFileIndex.isInTestSourceContent(fileOrDir))) {
-            PsiFile psiFile = PsiManager.getInstance(myModule.getProject()).findFile(fileOrDir);
-            if (psiFile == null) return true; //skip .class files under src directory
-            psiFile.accept(visitor);
-          }
-          return true;
+          return AnalysisScope.this.processFile(fileOrDir, visitor, moduleFileIndex, psiManager);
         }
       });
     }
     else if (myModules != null) {
       for (final Module module : myModules) {
+        final PsiManager psiManager = PsiManager.getInstance(module.getProject());
         final FileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
         moduleFileIndex.iterateContent(new ContentIterator() {
           public boolean processFile(VirtualFile fileOrDir) {
-            if (fileOrDir.isDirectory()) return true;
-            if (moduleFileIndex.isInContent(fileOrDir) && (myIncludeTestSource || !moduleFileIndex.isInTestSourceContent(fileOrDir))) {
-              PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(fileOrDir);
-              if (psiFile == null) return true; //skip .class files under src directory
-              psiFile.accept(visitor);
-            }
-            return true;
+            return AnalysisScope.this.processFile(fileOrDir, visitor, moduleFileIndex, psiManager);
           }
         });
       }
     }
     else if (myElement instanceof PsiPackage) {
-      PsiPackage pack = (PsiPackage)myElement;
-      PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(myElement.getProject()));
+      final PsiPackage pack = (PsiPackage)myElement;
+      final Set<PsiDirectory> dirs = new HashSet<PsiDirectory>();
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          dirs.addAll(Arrays.asList(pack.getDirectories(GlobalSearchScope.projectScope(myElement.getProject()))));
+        }
+      });
       for (PsiDirectory dir : dirs) {
         accept(dir, visitor);
       }
@@ -396,18 +381,45 @@ public class AnalysisScope {
     }
   }
 
+  @SuppressWarnings({"SimplifiableIfStatement"})
+  private boolean processFile(final VirtualFile fileOrDir,
+                              final PsiElementVisitor visitor,
+                              final FileIndex projectFileIndex,
+                              final PsiManager psiManager) {
+    if (fileOrDir.isDirectory()) return true;
+    if (projectFileIndex.isInContent(fileOrDir) && (myIncludeTestSource || !projectFileIndex.isInTestSourceContent(fileOrDir))) {
+      return processFile(fileOrDir, visitor, psiManager);
+    }
+    return true;
+  }
+
+  private static boolean processFile(final VirtualFile fileOrDir, final PsiElementVisitor visitor, final PsiManager psiManager) {
+    final boolean[] accepted = new boolean[]{true};
+    ApplicationManager.getApplication().runReadAction(new Runnable(){
+      public void run() {
+        final PsiFile psiFile = psiManager.findFile(fileOrDir);
+        if (psiFile == null){
+          //skip .class files under src directory
+          return;
+        }
+        psiFile.accept(visitor);        
+        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        accepted[0] = indicator == null || !indicator.isCanceled();
+      }
+    });
+    return accepted[0];
+  }
+
   private void accept(@NotNull final PsiDirectory dir, @NotNull final PsiElementVisitor visitor) {
     final Project project = dir.getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     index.iterateContentUnderDirectory(dir.getVirtualFile(), new ContentIterator() {
-      public boolean processFile(VirtualFile fileOrDir) {
+      @SuppressWarnings({"SimplifiableIfStatement"})
+      public boolean processFile(final VirtualFile fileOrDir) {
         if (!myIncludeTestSource && index.isInTestSourceContent(fileOrDir)) return true;
         if (!fileOrDir.isDirectory()) {
-          final PsiFile psiFile = psiManager.findFile(fileOrDir);
-          if (psiFile != null) {
-            psiFile.accept(visitor);
-          }
+          return AnalysisScope.processFile(fileOrDir, visitor, psiManager);
         }
         return true;
       }

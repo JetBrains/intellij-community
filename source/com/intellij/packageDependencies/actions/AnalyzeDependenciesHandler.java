@@ -12,6 +12,8 @@ import com.intellij.packageDependencies.ui.DependenciesPanel;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 
+import javax.swing.*;
+
 public class AnalyzeDependenciesHandler {
   private Project myProject;
   private AnalysisScope myScope;
@@ -23,20 +25,26 @@ public class AnalyzeDependenciesHandler {
 
   public void analyze() {
     final DependenciesBuilder forwardBuilder = new ForwardDependenciesBuilder(myProject, myScope);
-    if (ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    final Runnable process = new Runnable() {
       public void run() {
         forwardBuilder.analyze();
       }
-    }, AnalysisScopeBundle.message("package.dependencies.progress.title"), true, myProject)) {
-      DependenciesPanel panel = new DependenciesPanel(myProject, forwardBuilder);
-      Content content = PeerFactory.getInstance().getContentFactory().createContent(panel,
-                                                                                    AnalysisScopeBundle.message(
-                                                                                      "package.dependencies.toolwindow.title",
-                                                                                      forwardBuilder.getScope().getDisplayName()),
-                                                                                    false);
-      content.setDisposer(panel);
-      panel.setContent(content);
-      ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).addContent(content);
-    }
+    };
+    final Runnable successRunnable = new Runnable() {
+      public void run() {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            DependenciesPanel panel = new DependenciesPanel(myProject, forwardBuilder);
+            Content content = PeerFactory.getInstance().getContentFactory().createContent(panel, AnalysisScopeBundle.message(
+              "package.dependencies.toolwindow.title", forwardBuilder.getScope().getDisplayName()), false);
+            content.setDisposer(panel);
+            panel.setContent(content);
+            ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).addContent(content);
+          }
+        });
+      }
+    };
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, AnalysisScopeBundle.message("package.dependencies.progress.title"),
+                                                                       process, successRunnable, null);
   }
 }

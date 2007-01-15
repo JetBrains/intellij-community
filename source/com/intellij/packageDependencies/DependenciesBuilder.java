@@ -83,7 +83,7 @@ public abstract class DependenciesBuilder {
     return result;
   }
 
-  public void analyzeFileDependencies(PsiFile file, DependencyProcessor processor) {
+  public static void analyzeFileDependencies(PsiFile file, DependencyProcessor processor) {
     file.accept(new DependenciesWalker(processor));
   }
 
