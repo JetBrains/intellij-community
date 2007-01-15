@@ -14,16 +14,16 @@ import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlNSDescriptor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Created by IntelliJ IDEA.
@@ -109,13 +109,16 @@ public class URIReferenceProvider implements PsiReferenceProvider {
       final PsiFile containingFile = myElement.getContainingFile();
 
       if (PsiUtil.isInJspFile(containingFile)) {
-        final Object[] possibleTldUris = JspManager.getInstance(containingFile.getProject()).getPossibleTldUris(
-          PsiUtil.getJspFile(containingFile));
-        Object[] result = new Object[resourceUrls.length + possibleTldUris.length + 1];
-        System.arraycopy(resourceUrls, 0, result, 0, resourceUrls.length);
-        System.arraycopy(possibleTldUris, 0, result, resourceUrls.length, possibleTldUris.length);
-        result[result.length - 1] = JspManager.TAG_DIR_NS_PREFIX + "/WEB-INF/tags";
-        return result;
+        final JspManager jspManager = JspManager.getInstance(containingFile.getProject());
+        if (jspManager != null) {
+          final Object[] possibleTldUris = jspManager.getPossibleTldUris(
+            PsiUtil.getJspFile(containingFile));
+          Object[] result = new Object[resourceUrls.length + possibleTldUris.length + 1];
+          System.arraycopy(resourceUrls, 0, result, 0, resourceUrls.length);
+          System.arraycopy(possibleTldUris, 0, result, resourceUrls.length, possibleTldUris.length);
+          result[result.length - 1] = JspManager.TAG_DIR_NS_PREFIX + "/WEB-INF/tags";
+          return result;
+        }
       }
       return resourceUrls;
     }

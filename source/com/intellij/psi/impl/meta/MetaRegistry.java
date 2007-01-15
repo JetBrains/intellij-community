@@ -182,10 +182,10 @@ public class MetaRegistry extends MetaDataRegistrar implements ApplicationCompon
           }
         }
         catch (IllegalAccessException iae) {
-          value = null;
+          throw new RuntimeException(iae);
         }
         catch (InstantiationException ie) {
-          value = null;
+          throw new RuntimeException(ie);
         }
       }
       element.putUserData(META_DATA_KEY, value != null ? value : NULL);

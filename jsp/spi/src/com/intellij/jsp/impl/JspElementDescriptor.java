@@ -1,12 +1,11 @@
 package com.intellij.jsp.impl;
 
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.openapi.module.Module;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.XmlElementDescriptor;
+import org.jetbrains.annotations.Nullable;
 
 import javax.servlet.jsp.tagext.TagExtraInfo;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.

@@ -12,6 +12,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.jsp.JspTokenTypeEx;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.CharTable;
@@ -277,7 +278,7 @@ public class Helper {
   public static boolean mayShiftIndentInside(final ASTNode leaf) {
     return (isComment(leaf) && !checkJspTexts(leaf))
            || leaf.getElementType() == ElementType.WHITE_SPACE
-           || leaf.getElementType() == ElementType.JSP_TEMPLATE_DATA
+           || leaf.getElementType() == JspTokenTypeEx.JSP_TEMPLATE_DATA
            || leaf.getElementType() == ElementType.XML_DATA_CHARACTERS
            || leaf.getElementType() == ElementType.JAVA_CODE
            || leaf.getElementType() == ElementType.JSP_SCRIPTLET

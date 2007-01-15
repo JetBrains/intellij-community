@@ -43,7 +43,6 @@ import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlText;
@@ -426,7 +425,7 @@ public class FormatterUtil {
       //EnterActionTest && JavaDocParamTest
     }
 
-    if ((node.getElementType() == ElementType.JSP_XML_TEXT || node.getElementType() == JspTokenType.XML_DATA_CHARACTERS) && node.getText().trim().length() == 0) {
+    if ((node.getElementType() == ElementType.JSP_XML_TEXT || node.getElementType() == XmlTokenType.XML_DATA_CHARACTERS) && node.getText().trim().length() == 0) {
       return true;
     }
 

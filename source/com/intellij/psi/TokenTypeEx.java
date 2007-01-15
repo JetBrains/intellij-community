@@ -4,15 +4,13 @@
  */
 package com.intellij.psi;
 
-import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.xml.DTDTokenType;
 import com.intellij.psi.xml.XmlTokenType;
 
 public interface TokenTypeEx extends
                              TokenType,
                            JavaTokenType,
-                           JavaDocTokenType,
-                           JspTokenType,
+                           JavaDocTokenType, 
                            XmlTokenType,
                            DTDTokenType {
 }

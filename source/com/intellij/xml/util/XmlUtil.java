@@ -216,26 +216,27 @@ public class XmlUtil {
 
     if (result == null || !(result instanceof XmlFile)) {
       final JspManager jspManager = JspManager.getInstance(base.getProject());
-
-      if (jspFile != null) {
-        result = jspManager.getTldFileByUri(uri, jspFile);
-        if (result == null && XmlUtil.JSTL_CORE_URI2.equals(uri)) {
-          result = jspManager.getTldFileByUri(XmlUtil.JSTL_CORE_URI, jspFile);
-        }
-      } else {
-        // check facelets file
-        if (base instanceof XmlFile && base.getUserData(findXmlFileInProgressKey) == null) {
-          base.putUserData(findXmlFileInProgressKey, "");
-          try {
-            final XmlDocument document = ((XmlFile)base).getDocument();
-            final XmlTag rootTag = document != null ? document.getRootTag():null;
-
-            if (rootTag != null && rootTag.getPrefixByNamespace(FACELETS_URI) != null) {
-              result = jspManager.getTldFileByUri(uri, ModuleUtil.findModuleForPsiElement(base), null);
-            }
+      if (jspManager != null) {
+        if (jspFile != null) {
+          result = jspManager.getTldFileByUri(uri, jspFile);
+          if (result == null && XmlUtil.JSTL_CORE_URI2.equals(uri)) {
+            result = jspManager.getTldFileByUri(XmlUtil.JSTL_CORE_URI, jspFile);
           }
-          finally {
-            base.putUserData(findXmlFileInProgressKey, null);
+        } else {
+          // check facelets file
+          if (base instanceof XmlFile && base.getUserData(findXmlFileInProgressKey) == null) {
+            base.putUserData(findXmlFileInProgressKey, "");
+            try {
+              final XmlDocument document = ((XmlFile)base).getDocument();
+              final XmlTag rootTag = document != null ? document.getRootTag():null;
+
+              if (rootTag != null && rootTag.getPrefixByNamespace(FACELETS_URI) != null) {
+                result = jspManager.getTldFileByUri(uri, ModuleUtil.findModuleForPsiElement(base), null);
+              }
+            }
+            finally {
+              base.putUserData(findXmlFileInProgressKey, null);
+            }
           }
         }
       }

@@ -19,8 +19,7 @@ import java.util.StringTokenizer;
  * Time: 13:57:35
  * To change this template use Options | File Templates.
  */
-public class TextFilter
- implements ElementFilter, InitializableFilter{
+public class TextFilter implements ElementFilter, InitializableFilter{
   protected String[] myValue;
   private boolean myCaseInsensitiveFlag = false;
 
@@ -38,7 +37,7 @@ public class TextFilter
     myValue[0] = value;
   }
 
-  public TextFilter(@NonNls String[] values){
+  public TextFilter(@NonNls String... values){
     myValue = values;
   }
 

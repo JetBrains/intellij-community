@@ -21,7 +21,7 @@ import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.idea.LoggerFactory;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.jsp.impl.JspElementDescriptor;
-import com.intellij.jsp.impl.JspNsDescriptor;
+import com.intellij.jsp.impl.JspNsDescriptorImpl;
 import com.intellij.jsp.impl.TldDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
@@ -474,14 +474,17 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
           addToResults(highlightInfo);
           final JspFile jspFile = (JspFile)tag.getContainingFile();
-          QuickFixAction.registerQuickFixAction(
+          final JspManager jspManager = JspManager.getInstance(jspFile.getProject());
+          if (jspManager != null) {
+            QuickFixAction.registerQuickFixAction(
             highlightInfo,
             new InsertRequiredAttributeIntention(
-              tag,
-              URI_ATT,
-              JspManager.getInstance(jspFile.getProject()).getPossibleTldUris(jspFile)
-            )
-          );
+                tag,
+                URI_ATT,
+                jspManager.getPossibleTldUris(jspFile)
+              )
+            );
+          }
 
           QuickFixAction.registerQuickFixAction(
             highlightInfo,
@@ -1040,11 +1043,11 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       final XmlTag tag = (XmlTag)myElement;
       final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
 
-      if (acceptTaglib) {
+      final JspManager jspManager = JspManager.getInstance(project);
+      if (acceptTaglib && jspManager != null) {
         if (pi != null) pi.setText(XmlErrorMessages.message("looking.in.tlds"));
-        final JspManager instance = JspManager.getInstance(project);
         final JspFile jspFile = (JspFile)file;
-        final String[] possibleTldUris = instance.getPossibleTldUris(jspFile);
+        final String[] possibleTldUris = jspManager.getPossibleTldUris(jspFile);
 
         Arrays.sort(possibleTldUris);
         int i = 0;
@@ -1057,7 +1060,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             ++i;
           }
 
-          final XmlFile tldFileByUri = instance.getTldFileByUri(uri, jspFile);
+          final XmlFile tldFileByUri = jspManager.getTldFileByUri(uri, jspFile);
           final boolean[] wordFound = new boolean[1];
           IdTableBuilding.ScanWordProcessor wordProcessor = new IdTableBuilding.ScanWordProcessor() {
             public void run(final CharSequence chars, int start, int end, char[] charArray) {
@@ -1084,8 +1087,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         }
 
         if (file.getFileType() == StdFileTypes.JSPX && possibleUris.size() == 0) {
-          final JspManager jspManager = JspManager.getInstance(file.getProject());
-          final XmlElementDescriptor descriptor = ((JspNsDescriptor)jspManager.getActionsLibrary()).getElementDescriptor(localName, XmlUtil.JSP_URI);
+          final XmlElementDescriptor descriptor = ((JspNsDescriptorImpl)jspManager.getActionsLibrary()).getElementDescriptor(localName, XmlUtil.JSP_URI);
           if (descriptor != null) possibleUris.add(XmlUtil.JSP_URI);
         }
       }

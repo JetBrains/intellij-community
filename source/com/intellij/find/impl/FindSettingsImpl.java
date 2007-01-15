@@ -7,7 +7,6 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.*;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.ide.highlighter.NewJspFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.properties.PropertiesFileType;
 import org.jdom.Element;
@@ -58,7 +57,7 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
   public JDOMExternalizableStringList RECENT_FIND_STRINGS = new JDOMExternalizableStringList();
   public JDOMExternalizableStringList RECENT_REPLACE_STRINGS = new JDOMExternalizableStringList();
   public JDOMExternalizableStringList RECENT_DIR_STRINGS = new JDOMExternalizableStringList();
-  public JDOMExternalizableStringList RECENT_FILE_MASKS = new JDOMExternalizableStringList();
+  @NonNls public JDOMExternalizableStringList RECENT_FILE_MASKS = new JDOMExternalizableStringList();
 
   @NotNull
   public String getComponentName(){
@@ -75,7 +74,7 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
     if (RECENT_FILE_MASKS.isEmpty()) {
       RECENT_FILE_MASKS.add("*" + PropertiesFileType.DOT_DEFAULT_EXTENSION);
       RECENT_FILE_MASKS.add("*" + HtmlFileType.DOT_DEFAULT_EXTENSION);
-      RECENT_FILE_MASKS.add("*" + NewJspFileType.DOT_DEFAULT_EXTENSION);
+      RECENT_FILE_MASKS.add("*.jsp");
       RECENT_FILE_MASKS.add("*" + XmlFileType.DOT_DEFAULT_EXTENSION);
       RECENT_FILE_MASKS.add("*" + JavaFileType.DOT_DEFAULT_EXTENSION);
     }

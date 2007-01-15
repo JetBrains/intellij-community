@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspxStaticImportStatement;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
@@ -213,7 +212,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
-  private Object[] processPackage(final PsiPackage aPackage) {
+  private static Object[] processPackage(final PsiPackage aPackage) {
     final PsiPackage[] subPackages = aPackage.getSubPackages();
     final PsiClass[] classes = aPackage.getClasses();
     return ArrayUtil.mergeArrays(subPackages, classes, Object.class);
@@ -254,7 +253,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       resolveResult = manager.findClass(qName, GlobalSearchScope.allScope(myJavaClassReferenceSet.getElement().getProject()));
     }
     if (myInStaticImport && resolveResult == null) {
-      resolveResult = JspxStaticImportStatement.resolveMember(qName, manager, getElement().getResolveScope());
+      resolveResult = resolveMember(qName, manager, getElement().getResolveScope());
     }
     if (resolveResult == null) {
       PsiFile containingFile = myJavaClassReferenceSet.getElement().getContainingFile();
@@ -420,5 +419,22 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       }
     }
     return writableDirectoryList;
+  }
+
+  @Nullable
+  public static PsiElement resolveMember(String fqn, PsiManager manager, GlobalSearchScope resolveScope) {
+    PsiClass aClass = manager.findClass(fqn, resolveScope);
+    if (aClass != null) return aClass;
+    int i = fqn.lastIndexOf('.');
+    if (i==-1) return null;
+    String memberName = fqn.substring(i+1);
+    fqn = fqn.substring(0, i);
+    aClass = manager.findClass(fqn, resolveScope);
+    if (aClass == null) return null;
+    PsiMember member = aClass.findFieldByName(memberName, true);
+    if (member != null) return member;
+
+    PsiMethod[] methods = aClass.findMethodsByName(memberName, true);
+    return methods.length == 0 ? null : methods[0];
   }
 }
