@@ -162,7 +162,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     });
     myFileBrowser.setEnabled(false);
 
-    String projectDir = myProject.getProjectFile().getParent().getPath();
+    String projectDir = myProject.getBaseDir().getPath();
     projectDir = projectDir.replace('/', File.separatorChar);
     myFileBrowser.setText(projectDir + File.separatorChar + "diff.txt");
 

@@ -177,7 +177,7 @@ public class ChooseModulesDialog extends DialogWrapper {
 
           final VirtualFile virtualFile = pluginXml.getVirtualFile();
           assert virtualFile != null;
-          final VirtualFile projectPath = myProject.getProjectFile().getParent();
+          final VirtualFile projectPath = myProject.getBaseDir();
           if (VfsUtil.isAncestor(projectPath, virtualFile, false)) {
             append(" (" + VfsUtil.getRelativePath(virtualFile, projectPath, File.separatorChar) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           } else {
