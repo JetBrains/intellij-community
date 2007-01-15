@@ -242,7 +242,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
    */
   @Nullable
   public VirtualFile getProjectFile() {
-    LOG.warn("DEPRECATED METHOD USAGE: ProjectImpl.getProjectFile()");
+    LOG.warn("DEPRECATED METHOD USAGE: ProjectImpl.getProjectFile()", new Throwable());
     return getStateStore().getProjectFile();
   }
 
@@ -288,7 +288,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
    */
   @Nullable
   public VirtualFile getWorkspaceFile() {
-    LOG.warn("DEPRECATED METHOD USAGE: ProjectImpl.getWorkspaceFile()");
+    LOG.warn("DEPRECATED METHOD USAGE: ProjectImpl.getWorkspaceFile()", new Throwable());
     return getStateStore().getWorkspaceFile();
   }
 
