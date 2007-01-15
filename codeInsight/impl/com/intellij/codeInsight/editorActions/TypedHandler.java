@@ -747,7 +747,9 @@ public class TypedHandler implements TypedActionHandler {
         if (element instanceof XmlToken) {
           IElementType tokenType = ((XmlToken)element).getTokenType();
 
-          if (tokenType == XmlTokenType.XML_START_TAG_START) {
+          if (tokenType == XmlTokenType.XML_START_TAG_START ||
+              tokenType == XmlTokenType.XML_END_TAG_START
+             ) {
             if (offset > 0) {
               PsiElement previousElement = provider.findElementAt(offset - 1, XMLLanguage.class);
 
