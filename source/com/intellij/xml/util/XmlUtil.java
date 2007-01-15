@@ -215,8 +215,13 @@ public class XmlUtil {
     }
 
     if (result == null || !(result instanceof XmlFile)) {
+      final JspManager jspManager = JspManager.getInstance(base.getProject());
+
       if (jspFile != null) {
-        result = JspManager.getInstance(base.getProject()).getTldFileByUri(uri, jspFile);
+        result = jspManager.getTldFileByUri(uri, jspFile);
+        if (result == null && XmlUtil.JSTL_CORE_URI2.equals(uri)) {
+          result = jspManager.getTldFileByUri(XmlUtil.JSTL_CORE_URI, jspFile);
+        }
       } else {
         // check facelets file
         if (base instanceof XmlFile && base.getUserData(findXmlFileInProgressKey) == null) {
@@ -226,7 +231,7 @@ public class XmlUtil {
             final XmlTag rootTag = document != null ? document.getRootTag():null;
 
             if (rootTag != null && rootTag.getPrefixByNamespace(FACELETS_URI) != null) {
-              result = JspManager.getInstance(base.getProject()).getTldFileByUri(uri, ModuleUtil.findModuleForPsiElement(base), null);
+              result = jspManager.getTldFileByUri(uri, ModuleUtil.findModuleForPsiElement(base), null);
             }
           }
           finally {
