@@ -98,12 +98,6 @@ public class HighlightMethodUtil {
       if (returnType == null || superReturnType == null || method == superMethod) continue;
       PsiClass superClass = superMethod.getContainingClass();
       if (superClass == null) continue;
-      // EJB override rules are tricky, they are checked elsewhere in EJB SelectInEditorManager
-      if (!Comparing.strEqual(method.getName(), superMethod.getName())
-          || method.getParameterList().getParametersCount() != superMethod.getParameterList().getParametersCount()) {
-        continue;
-      }
-
       HighlightInfo highlightInfo = checkSuperMethodSignature(superMethod, superMethodSignature, superReturnType, method, methodSignature,
                                                               returnType, includeRealPositionInfo, JavaErrorMessages.message("incompatible.return.type"), method);
       if (highlightInfo != null) return highlightInfo;
