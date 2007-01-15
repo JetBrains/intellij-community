@@ -2,6 +2,7 @@ package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInspection.redundantCast.RedundantCastUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -10,6 +11,9 @@ import com.intellij.util.IncorrectOperationException;
  * @author ven
  */
 public class InlineUtil {
+  private static final Logger LOG = Logger.getInstance("com.intellij.refactoring.util.InlineUtil");
+
+  private InlineUtil() {}
 
   public static PsiExpression inlineVariable(PsiLocalVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref)
     throws IncorrectOperationException {
@@ -89,5 +93,87 @@ public class InlineUtil {
     }
 
     return (PsiExpression)ChangeContextUtil.decodeContextInfo(expr, thisClass, thisAccessExpr);
+  }
+
+  public static void tryToInlineArrayCreationForVarargs(final PsiExpression expr) {
+    if (expr instanceof PsiNewExpression && ((PsiNewExpression)expr).getArrayInitializer() != null) {
+      if (expr.getParent() instanceof PsiExpressionList) {
+        final PsiExpressionList exprList = (PsiExpressionList)expr.getParent();
+        if (exprList.getParent() instanceof PsiCall) {
+          if (isSafeToInlineVarargsArgument((PsiCall)exprList.getParent())) {
+            inlineArrayCreationForVarargs(((PsiNewExpression)expr));
+          }
+        }
+      }
+    }
+  }
+
+  private static void inlineArrayCreationForVarargs(final PsiNewExpression arrayCreation) {
+    PsiExpressionList argumentList = (PsiExpressionList)arrayCreation.getParent();
+    if (argumentList == null) return;
+    PsiExpression[] args = argumentList.getExpressions();
+    PsiArrayInitializerExpression arrayInitializer = arrayCreation.getArrayInitializer();
+    try {
+      if (arrayInitializer == null) {
+        arrayCreation.delete();
+        return;
+      }
+
+      PsiExpression[] initializers = arrayInitializer.getInitializers();
+      if (initializers.length > 0) {
+        argumentList.addRange(initializers[0], initializers[initializers.length - 1]);
+      }
+      args[args.length - 1].delete();
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+  }
+
+  private static boolean isSafeToInlineVarargsArgument(PsiCall expression) {
+    final JavaResolveResult resolveResult = expression.resolveMethodGenerics();
+    PsiElement element = resolveResult.getElement();
+    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    if (element instanceof PsiMethod && ((PsiMethod)element).isVarArgs()) {
+      PsiMethod method = (PsiMethod)element;
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      PsiExpressionList argumentList = expression.getArgumentList();
+      if (argumentList != null) {
+        PsiExpression[] args = argumentList.getExpressions();
+        if (parameters.length == args.length) {
+          PsiExpression lastArg = args[args.length - 1];
+          PsiParameter lastParameter = parameters[args.length - 1];
+          PsiType lastParamType = lastParameter.getType();
+          LOG.assertTrue(lastParamType instanceof PsiEllipsisType);
+          if (lastArg instanceof PsiNewExpression &&
+              substitutor.substitute(((PsiEllipsisType)lastParamType).toArrayType()).equals(lastArg.getType())) {
+            PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)lastArg).getArrayInitializer();
+            PsiExpression[] initializers = arrayInitializer != null ? arrayInitializer.getInitializers() : PsiExpression.EMPTY_ARRAY;
+            if (isSafeToFlatten(expression, method, initializers)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private static boolean isSafeToFlatten(PsiCall callExpression, PsiMethod oldRefMethod, PsiExpression[] arrayElements) {
+    PsiCall copy = (PsiCall)callExpression.copy();
+    PsiExpressionList copyArgumentList = copy.getArgumentList();
+    LOG.assertTrue(copyArgumentList != null);
+    PsiExpression[] args = copyArgumentList.getExpressions();
+    try {
+      args[args.length - 1].delete();
+      if (arrayElements.length > 0) {
+        copyArgumentList.addRange(arrayElements[0], arrayElements[arrayElements.length - 1]);
+      }
+      return copy.resolveMethod() == oldRefMethod;
+    }
+    catch (IncorrectOperationException e) {
+      return false;
+    }
   }
 }

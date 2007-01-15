@@ -155,6 +155,10 @@ class InlineLocalHandler {
             highlightManager.addOccurrenceHighlights(editor, exprs, attributes, true, null);
             WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
           }
+
+          for (final PsiExpression expr : exprs) {
+            InlineUtil.tryToInlineArrayCreationForVarargs(expr);
+          }
         }
         catch (IncorrectOperationException e){
           LOG.error(e);
