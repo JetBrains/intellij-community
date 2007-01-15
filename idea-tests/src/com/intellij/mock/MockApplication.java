@@ -8,9 +8,14 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 public class MockApplication extends MockComponentManager implements ApplicationEx {
@@ -177,6 +182,11 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   public ModalityState getNoneModalityState() {
+    return null;
+  }
+
+  public <T> List<Future<T>> invokeAllUnderReadAction(@NotNull final Collection<Callable<T>> tasks, final ExecutorService executorService)
+    throws Throwable {
     return null;
   }
 }

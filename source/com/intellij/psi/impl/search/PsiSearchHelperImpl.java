@@ -2,8 +2,10 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -13,8 +15,8 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -28,7 +30,6 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -551,30 +552,26 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                   for (int i = index; i < index + chunkSize && i < files.length; i++) {
                     final PsiFile file = files[i];
                     files[i] = null; // prevent strong ref
-                    application.runReadAction(new Runnable() {
-                      public void run() {
-                        try {
-                          PsiElement[] psiRoots = file.getPsiRoots();
-                          Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
-                          for (PsiElement psiRoot : psiRoots) {
-                            ProgressManager.getInstance().checkCanceled();
-                            if (!processed.add(psiRoot)) continue;
-                            if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher)) {
-                              result.set(Boolean.FALSE);
-                              return;
-                            }
-                          }
-                          if (progress != null) {
-                            double fraction = (double)counter.incrementAndGet() / files.length;
-                            progress.setFraction(fraction);
-                          }
-                          myManager.dropResolveCaches();
-                        }
-                        catch (ProcessCanceledException e) {
+                    try {
+                      PsiElement[] psiRoots = file.getPsiRoots();
+                      Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
+                      for (PsiElement psiRoot : psiRoots) {
+                        ProgressManager.getInstance().checkCanceled();
+                        if (!processed.add(psiRoot)) continue;
+                        if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher)) {
                           result.set(Boolean.FALSE);
+                          return;
                         }
                       }
-                    });
+                      if (progress != null) {
+                        double fraction = (double)counter.incrementAndGet() / files.length;
+                        progress.setFraction(fraction);
+                      }
+                      myManager.dropResolveCaches();
+                    }
+                    catch (ProcessCanceledException e) {
+                      result.set(Boolean.FALSE);
+                    }
                     if (!result.get()) return;
                   }
                 }
@@ -585,7 +582,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           callables.add(runnable);
         }
         try {
-          List<Future<Boolean>> futures = ConcurrencyUtil.invokeAll(callables, myThreadPoolExecutor);
+          List<Future<Boolean>> futures = ApplicationManagerEx.getApplicationEx().invokeAllUnderReadAction(callables, myThreadPoolExecutor);
           boolean success = true;
           for (Future<Boolean> future : futures) {
             if (!(success &= future.get())) break;

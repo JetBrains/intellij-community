@@ -2,9 +2,9 @@ package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.concurrent.*;
 
 /**
@@ -22,6 +22,7 @@ public class ConcurrencyUtil {
       }
       return null;
     }
+
     List<Future<T>> futures = new ArrayList<Future<T>>(tasks.size());
     boolean done = false;
     try {

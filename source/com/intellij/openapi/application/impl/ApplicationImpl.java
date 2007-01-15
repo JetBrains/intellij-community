@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
 import org.jetbrains.annotations.NonNls;
@@ -45,6 +46,8 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Collection;
+import java.util.ArrayList;
 import java.util.concurrent.*;
 
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
@@ -270,19 +273,19 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public Future<?> executeOnPooledThread(final Runnable action) {
-    return ourThreadExecutorsService.submit(
-      new Runnable() {
-        public void run() {
-          try {
-            action.run();
-          } catch(Throwable t) {
-            LOG.error(t);
-          } finally {
-            Thread.interrupted(); // reset interrupted status
-          }
+    return ourThreadExecutorsService.submit(new Runnable() {
+      public void run() {
+        try {
+          action.run();
+        }
+        catch (Throwable t) {
+          LOG.error(t);
+        }
+        finally {
+          Thread.interrupted(); // reset interrupted status
         }
       }
-    );
+    });
   }
 
   private static Thread ourDispatchThread = null;
@@ -328,7 +331,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     if (myExceptionalThreadWithReadAccess != null ||
         myExceptionalThreadWithReadAccessRunnable != null ||
-        ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        ApplicationManager.getApplication().isUnitTestMode() ||
+        ApplicationManager.getApplication().isHeadlessEnvironment()) {
       process.run();
       return true;
     }
@@ -342,31 +346,25 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           if (myExceptionalThreadWithReadAccessRunnable != process) {
-            if (myExceptionalThreadWithReadAccessRunnable == null) {
-              LOG.error("myExceptionalThreadWithReadAccessRunnable = null!");
-            }
-            else {
               LOG.error("myExceptionalThreadWithReadAccessRunnable != process, process = " + myExceptionalThreadWithReadAccessRunnable);
-            }
           }
 
           executeOnPooledThread(new Runnable() {
             public void run() {
               if (myExceptionalThreadWithReadAccessRunnable != process) {
-                if (myExceptionalThreadWithReadAccessRunnable == null) {
-                  LOG.error("myExceptionalThreadWithReadAccessRunnable = null!");
-                }
-                else {
-                  LOG.error("myExceptionalThreadWithReadAccessRunnable != process, process = " + myExceptionalThreadWithReadAccessRunnable);
-                }
+                LOG.error("myExceptionalThreadWithReadAccessRunnable != process, process = " + myExceptionalThreadWithReadAccessRunnable);
               }
 
               myExceptionalThreadWithReadAccess = Thread.currentThread();
+              setExceptionalThreadWithReadAccessFlag(true);
               try {
                 ProgressManager.getInstance().runProcess(process, progress);
               }
               catch (ProcessCanceledException e) {
                 // ok to ignore.
+              }
+              finally {
+                setExceptionalThreadWithReadAccessFlag(false);
               }
             }
           });
@@ -384,6 +382,40 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     return !progress.isCanceled();
+  }
+
+  public <T> List<Future<T>> invokeAllUnderReadAction(@NotNull Collection<Callable<T>> tasks, final ExecutorService executorService) throws
+                                                                                                                               Throwable {
+    final List<Callable<T>> newCallables = new ArrayList<Callable<T>>(tasks.size());
+    for (final Callable<T> task : tasks) {
+      Callable<T> newCallable = new Callable<T>() {
+        public T call() throws Exception {
+          setExceptionalThreadWithReadAccessFlag(true);
+          try {
+            LOG.assertTrue(isReadAccessAllowed());
+            return task.call();
+          }
+          finally {
+            setExceptionalThreadWithReadAccessFlag(false);
+          }
+        }
+      };
+      newCallables.add(newCallable);
+    }
+    final Ref<Throwable> exception = new Ref<Throwable>();
+    List<Future<T>> result = runReadAction(new Computable<List<Future<T>>>() {
+      public List<Future<T>> compute() {
+        try {
+          return ConcurrencyUtil.invokeAll(newCallables, executorService);
+        }
+        catch (Throwable throwable) {
+          exception.set(throwable);
+          return null;
+        }
+      }
+    });
+    if (exception.get() != null) throw exception.get();
+    return result;
   }
 
   public void invokeLater(Runnable runnable) {
@@ -533,10 +565,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void runReadAction(final Runnable action) {
-    boolean mustAcquire = !isExceptionalThreadWithReadAccess(Thread.currentThread())
-                          /** if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
-                           * see {@link com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock#allowReader()} */
-                          && !isReadAccessAllowed();
+    /** if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
+     * see {@link com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock#allowReader()} */
+    boolean mustAcquire = !isReadAccessAllowed();
 
     if (mustAcquire) {
       try {
@@ -557,8 +588,18 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  public boolean isExceptionalThreadWithReadAccess(final Thread thread) {
-    return myExceptionalThreadWithReadAccess != null && thread == myExceptionalThreadWithReadAccess;
+  private static final ThreadLocal<Boolean> exceptionalThreadWithReadAccessFlag = new ThreadLocal<Boolean>();
+  private static boolean isExceptionalThreadWithReadAccess() {
+    Boolean flag = exceptionalThreadWithReadAccessFlag.get();
+    return flag != null && flag.booleanValue();
+  }
+  private static void setExceptionalThreadWithReadAccessFlag(boolean flag) {
+    if (flag) {
+      exceptionalThreadWithReadAccessFlag.set(true);
+    }
+    else {
+      exceptionalThreadWithReadAccessFlag.remove();
+    }
   }
 
   public <T> T runReadAction(final Computable<T> computation) {
@@ -677,12 +718,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
       return true;
     }
-    else {
-      if (myExceptionalThreadWithReadAccess == currentThread) return true;
-      if (myActionsLock.isReadLockAcquired(currentThread)) return true;
-      if (myActionsLock.isWriteLockAcquired(currentThread)) return true;
-      return isDispatchThread();
-    }
+    if (isExceptionalThreadWithReadAccess()) return true;
+    if (myActionsLock.isReadLockAcquired(currentThread)) return true;
+    if (myActionsLock.isWriteLockAcquired(currentThread)) return true;
+    return isDispatchThread();
   }
 
   public void assertReadAccessToDocumentsAllowed() {

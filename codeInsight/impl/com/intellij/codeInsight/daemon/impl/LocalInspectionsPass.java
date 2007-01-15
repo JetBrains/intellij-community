@@ -15,7 +15,7 @@ import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.injected.DocumentRange;
@@ -24,11 +24,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedPsiInspectionUtil;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashMap;
@@ -37,9 +37,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author max
@@ -104,7 +106,8 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
     final int chunkSize = Math.max(10, tools.length / Runtime.getRuntime().availableProcessors() / 10); //about 10 chunks per thread, in case some inspections are faster than others
     List<Callable<Boolean>> inspectionChunks = new ArrayList<Callable<Boolean>>();
-
+    myCheckedElements.set(0);
+    progressLimit = tools.length * elements.length;
     for (int v = 0; v < tools.length; v+=chunkSize) {
       final int index = v;
       Callable<Boolean> chunk = new Callable<Boolean>() {
@@ -117,31 +120,28 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
             public void run() {
               @NonNls final String name = "LocalInspections from " + index + " to " + (index + chunkSize);
               PassExecutorService.log(progress, "Started " , name);
-              ApplicationManager.getApplication().runReadAction(new Runnable(){
-                public void run() {
-                  ProblemsHolder holder = new ProblemsHolder(iManager);
-                  try {
-                    for (int i = index; i < index + chunkSize && i < tools.length; i++) {
-                      LocalInspectionTool tool = tools[i];
-                      PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
-                      if(elementVisitor == null) {
-                        LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
-                      }
-                      for (PsiElement element : elements) {
-                        progressManager.checkCanceled();
-                        element.accept(elementVisitor);
-                      }
-                      //System.out.println("tool finished "+tool);
-                      if (holder.hasResults()) {
-                        appendDescriptors(holder.getResults(), tool);
-                      }
-                    }
+              ProblemsHolder holder = new ProblemsHolder(iManager);
+              try {
+                for (int i = index; i < index + chunkSize && i < tools.length; i++) {
+                  LocalInspectionTool tool = tools[i];
+                  PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
+                  if(elementVisitor == null) {
+                    LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
                   }
-                  catch (ProcessCanceledException e) {
-                    PassExecutorService.log(progress, "Canceled " , name);
+                  for (PsiElement element : elements) {
+                    progressManager.checkCanceled();
+                    element.accept(elementVisitor);
+                    myCheckedElements.addAndGet(1);
+                  }
+                  //System.out.println("tool finished "+tool);
+                  if (holder.hasResults()) {
+                    appendDescriptors(holder.getResults(), tool);
                   }
                 }
-              });
+              }
+              catch (ProcessCanceledException e) {
+                PassExecutorService.log(progress, "Canceled " , name);
+              }
               PassExecutorService.log(progress, "Finished ", name);
             }
           },progress);
@@ -152,7 +152,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     }
 
     try {
-      ConcurrencyUtil.invokeAll(inspectionChunks, myExecutorService);
+      ApplicationManagerEx.getApplicationEx().invokeAllUnderReadAction(inspectionChunks, myExecutorService);
     }
     catch (ProcessCanceledException e) {
       //ignore
@@ -249,6 +249,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     myTools = Collections.emptyList();
 
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
+    //daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, Pass.LOCAL_INSPECTIONS);
     daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, FileStatusMap.LOCAL_INSPECTIONS);
 
     HighlightUtil.addErrorsToWolf(infos, myFile);
@@ -381,5 +382,19 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       }
     }
     return result.toArray(new PsiElement[result.size()]);
+  }
+
+  private final AtomicLong myCheckedElements = new AtomicLong();
+  private volatile int progressLimit = 1;
+  public float getProgress() {
+    return (float)(myCheckedElements.get() * 1.0 / progressLimit);
+  }
+
+  public String toString() {
+    return "Inspections";
+  }
+  private static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/inspectionInProgress.png");
+  public Icon getInProgressIcon() {
+    return IN_PROGRESS_ICON;
   }
 }
