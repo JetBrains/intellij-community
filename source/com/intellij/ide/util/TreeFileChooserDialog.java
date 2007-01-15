@@ -12,7 +12,6 @@ import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePanel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -31,8 +31,8 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -48,8 +48,10 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -376,6 +378,17 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   }
 
   private Object[] filterFiles(final Object[] list) {
+    Condition<PsiFile> condition = new Condition<PsiFile>() {
+      public boolean value(final PsiFile psiFile) {
+        if (myFilter != null && !myFilter.accept(psiFile)) {
+          return false;
+        }
+        if (myFileType != null && psiFile.getFileType() != myFileType) {
+          return false;
+        }
+        return true;
+      }
+    };
     final List<Object> result = new ArrayList<Object>(list.length);
     for (Object o : list) {
       final PsiFile psiFile;
@@ -388,19 +401,13 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       else {
         psiFile = null;
       }
-      if (psiFile != null) {
-        if (myFilter != null && !myFilter.accept(psiFile)) {
-          continue;
-        }
-        if (myFileType != null && psiFile.getFileType() != myFileType) {
-          continue;
-        }
+      if (psiFile != null && !condition.value(psiFile)) {
+        continue;
       }
       else {
-       if (o instanceof ProjectViewNode) {
-         final Collection<AbstractTreeNode> children = ((ProjectViewNode)o).getChildren();
-         final Object[] array = children.toArray(new Object[children.size()]);
-          if (filterFiles(array).length == 0) {
+        if (o instanceof ProjectViewNode) {
+          final ProjectViewNode projectViewNode = (ProjectViewNode)o;
+          if (!projectViewNode.canHaveChildrenMatching(condition)) {
             continue;
           }
         }

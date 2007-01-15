@@ -19,7 +19,9 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Condition;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,5 +138,16 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
 
   protected boolean hasProblemFileBeneath() {
     return WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesBeneath(this);
+  }
+
+  /**
+   * Efficiently checks if there are nodes under the project view node which match the specified condition. Should
+   * return true if it's not possible to perform the check efficiently (for example, if recursive traversal of
+   * all child nodes is required to check the condition).
+   *
+   * @param condition the condition to check the nodes.
+   */
+  public boolean canHaveChildrenMatching(Condition<PsiFile> condition) {
+    return true;
   }
 }

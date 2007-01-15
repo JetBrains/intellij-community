@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -85,6 +86,16 @@ public class FormNode extends ProjectViewNode<Form>{
       }
     }
     return FileStatus.NOT_CHANGED;
+  }
+
+  @Override
+  public boolean canHaveChildrenMatching(final Condition<PsiFile> condition) {
+    for(BasePsiNode<? extends PsiElement> child: myChildren) {
+      if (condition.value(child.getValue().getContainingFile())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static AbstractTreeNode constructFormNode(final PsiClass classToBind, final Project project, final ViewSettings settings) {
