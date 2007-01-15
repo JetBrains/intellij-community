@@ -182,15 +182,12 @@ public class Browser extends JPanel {
                 }
               }
               else if (ref.startsWith("descr:")) {
-                int descriptionIndex = Integer.parseInt(ref.substring("descr:".length()));
-                CommonProblemDescriptor descriptor = ((DescriptorProviderInspection)getTool()).getDescriptions(
-                  myCurrentEntity)[descriptionIndex];
-                if (descriptor instanceof ProblemDescriptor) {
-                  PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
+                if (myCurrentDescriptor instanceof ProblemDescriptor) {
+                  PsiElement psiElement = ((ProblemDescriptor)myCurrentDescriptor).getPsiElement();
                   if (psiElement == null) return;
                   VirtualFile vFile = psiElement.getContainingFile().getVirtualFile();
                   if (vFile != null) {
-                    TextRange range = ((ProblemDescriptorImpl)descriptor).getTextRange();
+                    TextRange range = ((ProblemDescriptorImpl)myCurrentDescriptor).getTextRange();
                     fireClickEvent(vFile, range.getStartOffset(), range.getEndOffset());
                   }
                 }

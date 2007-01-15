@@ -81,7 +81,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private Browser myBrowser;
   private Map<HighlightDisplayLevel, Map<String, InspectionGroupNode>> myGroups = null;
   private OccurenceNavigator myOccurenceNavigator;
-  @Nullable private InspectionProfile myInspectionProfile;
+  private InspectionProfile myInspectionProfile;
   private AnalysisScope myScope;
   @NonNls
   public static final String HELP_ID = "ideaInterface.codeInspection";
@@ -689,6 +689,30 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return myRerun;
   }
 
+  private InspectionProfile guessProfileToSelect(final InspectionProjectProfileManager profileManager) {
+    final Set<InspectionProfile> profiles = new HashSet<InspectionProfile>();
+    final RefEntity[] selectedElements = myTree.getSelectedElements();
+    for (RefEntity selectedElement : selectedElements) {
+      if (selectedElement instanceof RefElement) {
+        final RefElement refElement = (RefElement)selectedElement;
+        final PsiElement element = refElement.getElement();
+        if (element != null) {
+          profiles.add(profileManager.getInspectionProfile(element));
+        }
+      }
+    }
+    if (!profiles.isEmpty()) {
+      return profiles.iterator().next();
+    }
+    else {
+      return (InspectionProfile)profileManager.getProjectProfileImpl();
+    }
+  }
+
+  private static boolean isProfileDefined(final InspectionProfile inspectionProfile) {
+    return inspectionProfile != null && inspectionProfile.isEditable();
+  }
+
   private class CloseAction extends AnAction {
     private CloseAction() {
       super(CommonBundle.message("action.close"), null, IconLoader.getIcon("/actions/cancel.png"));
@@ -705,20 +729,26 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
 
     public void actionPerformed(AnActionEvent e) {
+      final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
       final InspectionTool tool = myTree.getSelectedTool();
-      final InspectionProfile inspectionProfile = myInspectionProfile;
-      LOG.assertTrue(inspectionProfile != null);
+      InspectionProfile inspectionProfile = myInspectionProfile;
+      final boolean profileNotDefined = !isProfileDefined(inspectionProfile);
+      if (profileNotDefined) {
+        inspectionProfile = guessProfileToSelect(profileManager);
+      }
+
       if (tool != null) {
         final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName()); //do not search for dead code entry point tool
         if (key != null){
-          if (new EditInspectionToolsSettingsAction(key).editToolSettings(myProject, (InspectionProfileImpl)inspectionProfile, false)){
-            updateCurrentProfile(inspectionProfile);
+          if (new EditInspectionToolsSettingsAction(key).editToolSettings(myProject, (InspectionProfileImpl)inspectionProfile, profileNotDefined)
+              && profileNotDefined){
+            updateCurrentProfile(myInspectionProfile);
           }
           return;
         }
       }
-      if (EditInspectionToolsSettingsAction.editToolSettings(myProject, inspectionProfile, false, null, InspectionProjectProfileManager.getInstance(myProject))) {
-        updateCurrentProfile(inspectionProfile);
+      if (EditInspectionToolsSettingsAction.editToolSettings(myProject, inspectionProfile, profileNotDefined, null, profileManager) && profileNotDefined) {
+        updateCurrentProfile(myInspectionProfile);
       }
     }
 
@@ -727,11 +757,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       final String name = inspectionProfile.getName();
       myInspectionProfile = (InspectionProfile)(projectProfiles.containsKey(name) ? projectProfiles.get(name) : InspectionProfileManager.getInstance().getProfile(name));
     }
-
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myInspectionProfile != null && myInspectionProfile.isEditable());
-    }
-  }
+ }
 
 
 

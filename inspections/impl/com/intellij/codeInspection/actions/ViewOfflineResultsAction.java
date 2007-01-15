@@ -19,11 +19,13 @@ import com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptor;
 import com.intellij.codeInspection.offlineViewer.OfflineViewParseUtil;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -54,13 +56,20 @@ public class ViewOfflineResultsAction extends AnAction {
     final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap = new HashMap<String, Map<String, Set<OfflineProblemDescriptor>>>();
     final VirtualFile[] files = virtualFiles[0].getChildren();
     String profileName = null;
-    for (VirtualFile inspectionFile : files) {
-      final String shortName = inspectionFile.getNameWithoutExtension();
-      if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
-        profileName = OfflineViewParseUtil.parseProfileName(LoadTextUtil.loadText(inspectionFile).toString());
-      } else {
-        resMap.put(shortName, OfflineViewParseUtil.parse(LoadTextUtil.loadText(inspectionFile).toString()));
+    try {
+      for (VirtualFile inspectionFile : files) {
+        if (inspectionFile.isDirectory()) continue;
+        final String shortName = inspectionFile.getNameWithoutExtension();
+        if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
+          profileName = OfflineViewParseUtil.parseProfileName(LoadTextUtil.loadText(inspectionFile).toString());
+        } else if (inspectionFile.getFileType() instanceof XmlFileType){
+          resMap.put(shortName, OfflineViewParseUtil.parse(LoadTextUtil.loadText(inspectionFile).toString()));
+        }
       }
+    }
+    catch (Exception e) {  //all parse exceptions
+      Messages.showInfoMessage(e.getMessage(), InspectionsBundle.message("offline.view.parse.exception.title"));
+      return;
     }
 
     showOfflineView(project, profileName, resMap);
@@ -71,7 +80,16 @@ public class ViewOfflineResultsAction extends AnAction {
                                                       @Nullable final String profileName,
                                                       final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap) {
     final InspectionProfile inspectionProfile;
-    final Profile profile = profileName != null ? InspectionProjectProfileManager.getInstance(project).getProfile(profileName) : null;
+    Profile profile;
+    if (profileName != null) {
+      profile = InspectionProjectProfileManager.getInstance(project).getProfile(profileName);
+      if (profile == null) {
+        profile = InspectionProfileManager.getInstance().getProfile(profileName);
+      }
+    }
+    else {
+      profile = null;
+    }
     if (profile != null) {
       inspectionProfile = (InspectionProfile)profile;
     }
@@ -83,6 +101,10 @@ public class ViewOfflineResultsAction extends AnAction {
 
         public HighlightDisplayLevel getErrorLevel(final HighlightDisplayKey key) {
           return ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(key);
+        }
+
+        public boolean isEditable() {
+          return false;
         }
       };
     }
