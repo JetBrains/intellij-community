@@ -14,9 +14,11 @@ import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.ui.AbstractAddOptionsDialog;
 import com.intellij.cvsSupport2.ui.Options;
+import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.OptionsDialog;
@@ -101,6 +103,22 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
 
 
     return CommandCvsHandler.createAddFilesHandler(roots);
+  }
+
+  @Override
+  protected void onActionPerformed(final CvsContext context,
+                                   final CvsTabbedWindow tabbedWindow, final boolean successfully, final CvsHandler handler) {
+    super.onActionPerformed(context, tabbedWindow, successfully, handler);
+    VirtualFile[] filesToAdd = context.getSelectedFiles();
+    final VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(context.getProject());
+    for(VirtualFile file: filesToAdd) {
+      if (file.isDirectory()) {
+        dirtyScopeManager.dirDirtyRecursively(file, true);
+      }
+      else {
+        dirtyScopeManager.fileDirty(file);        
+      }
+    }
   }
 
   private static ArrayList<VirtualFile> collectFilesToAdd(final VirtualFile[] files) {
