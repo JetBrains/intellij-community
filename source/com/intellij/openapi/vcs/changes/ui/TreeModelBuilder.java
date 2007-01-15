@@ -141,6 +141,10 @@ public class TreeModelBuilder {
           return ((FilePath)o1).getPath().compareToIgnoreCase(((FilePath)o2).getPath());
         }
 
+        if (o1 instanceof Module && o2 instanceof Module) {
+          return ((Module)o1).getName().compareToIgnoreCase(((Module) o2).getName());
+        }
+
         return 0;
       }
 
