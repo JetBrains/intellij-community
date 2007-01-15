@@ -84,16 +84,13 @@ public class OfflineViewParseUtil {
               reader.moveUp();
             }
           }
+          if (PACKAGE.equals(reader.getNodeName())) {
+            appendDescriptor(package2Result, reader.getValue(), descriptor);
+          }
           while(reader.hasMoreChildren()) {
             reader.moveDown();
             if (PACKAGE.equals(reader.getNodeName())) {
-              final String packageName = reader.getValue();
-              Set<OfflineProblemDescriptor> descriptors = package2Result.get(packageName);
-              if (descriptors == null) {
-                descriptors = new HashSet<OfflineProblemDescriptor>();
-                package2Result.put(packageName, descriptors);
-              }
-              descriptors.add(descriptor);
+              appendDescriptor(package2Result, reader.getValue(), descriptor);
             }
             reader.moveUp();
           }
@@ -115,6 +112,17 @@ public class OfflineViewParseUtil {
       reader.close();
     }
     return package2Result;
+  }
+
+  private static void appendDescriptor(final Map<String, Set<OfflineProblemDescriptor>> package2Result,
+                                       final String packageName,
+                                       final OfflineProblemDescriptor descriptor) {
+    Set<OfflineProblemDescriptor> descriptors = package2Result.get(packageName);
+    if (descriptors == null) {
+      descriptors = new HashSet<OfflineProblemDescriptor>();
+      package2Result.put(packageName, descriptors);
+    }
+    descriptors.add(descriptor);
   }
 
   @Nullable
