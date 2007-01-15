@@ -285,7 +285,7 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
     myProject.init();
   }
 
-  private boolean checkMacros(ProjectManagerImpl projectManager, Set<String> definedMacros) throws IOException, JDOMException {
+  private boolean checkMacros(final ProjectManagerImpl projectManager, Set<String> definedMacros) throws IOException, JDOMException {
     String projectFilePath = myProject.getProjectFilePath();
     Document document = JDOMUtil.loadDocument(new File(projectFilePath));
     Element root = document.getRootElement();
@@ -294,11 +294,16 @@ public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements I
     usedMacros.removeAll(definedMacros);
 
     // try to lookup values in System properties
+    @NonNls final String pathMacroSystemPrefix = "path.macro.";
     for (Iterator it = usedMacros.iterator(); it.hasNext();) {
       final String macro = (String)it.next();
-      final String value = System.getProperty(macro, null);
+      final String value = System.getProperty(pathMacroSystemPrefix + macro, null);
       if (value != null) {
-        projectManager.myPathMacros.setMacro(macro, value);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            projectManager.myPathMacros.setMacro(macro, value);
+          }
+        });
         it.remove();
       }
     }
