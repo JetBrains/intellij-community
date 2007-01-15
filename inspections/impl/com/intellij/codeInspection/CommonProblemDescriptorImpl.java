@@ -31,4 +31,8 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
   public QuickFix[] getFixes() {
     return myFixes;
   }
+
+  public String toString() {
+    return myDescriptionTemplate;
+  }
 }

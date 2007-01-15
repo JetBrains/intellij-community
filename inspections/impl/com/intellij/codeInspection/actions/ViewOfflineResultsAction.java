@@ -67,12 +67,9 @@ public class ViewOfflineResultsAction extends AnAction {
   }
 
   @SuppressWarnings({"UnusedDeclaration"})
-  public static void showOfflineView(final Project project,
-                                     @Nullable final String profileName,
-                                     final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap) {
-    final AnalysisScope scope = new AnalysisScope(project);
-    final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));
-    final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
+  public static InspectionResultsView showOfflineView(final Project project,
+                                                      @Nullable final String profileName,
+                                                      final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap) {
     final InspectionProfile inspectionProfile;
     final Profile profile = profileName != null ? InspectionProjectProfileManager.getInstance(project).getProfile(profileName) : null;
     if (profile != null) {
@@ -89,6 +86,15 @@ public class ViewOfflineResultsAction extends AnAction {
         }
       };
     }
+    return showOfflineView(project, resMap, inspectionProfile, profileName);
+  }
+
+  public static InspectionResultsView showOfflineView(final Project project, final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
+                                                      final InspectionProfile inspectionProfile,
+                                                      final String profileName) {
+    final AnalysisScope scope = new AnalysisScope(project);
+    final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));
+    final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
     inspectionContext.setExternalProfile(inspectionProfile);
     inspectionContext.setCurrentScope(scope);
     inspectionContext.initializeTools(scope, new HashMap<String, Set<InspectionTool>>(), new HashMap<String, Set<InspectionTool>>());
@@ -98,7 +104,10 @@ public class ViewOfflineResultsAction extends AnAction {
     ((RefManagerImpl)inspectionContext.getRefManager()).inspectionReadActionStarted();
     view.update();
     TreeUtil.selectFirstNode(view.getTree());
-    inspectionContext.addView(view, InspectionsBundle.message("offline.view.title") +
-                              " (" + (profileName != null ? profileName : InspectionsBundle.message("offline.view.editor.settings.title")) + ")");
+    if (inspectionContext.getContentManager() != null) { //test
+      inspectionContext.addView(view, InspectionsBundle.message("offline.view.title") +
+                                      " (" + (profileName != null ? profileName : InspectionsBundle.message("offline.view.editor.settings.title")) + ")");
+    }
+    return view;
   }
 }
