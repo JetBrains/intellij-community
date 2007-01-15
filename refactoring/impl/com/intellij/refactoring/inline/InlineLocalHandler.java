@@ -63,7 +63,7 @@ class InlineLocalHandler {
     }
 
     final PsiElement[] refsToInline = DefUseUtil.getRefs(containerBlock, local, defToInline);
-    if (refsToInline.length == 0) {
+    if (refsToInline == null || refsToInline.length == 0) {
       String message = RefactoringBundle.message("variable.is.never.used.before.modification", localName);
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
       return;
