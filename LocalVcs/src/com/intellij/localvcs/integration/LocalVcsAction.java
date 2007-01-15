@@ -1,12 +1,12 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.ILocalVcs;
+import com.intellij.localvcs.integration.ILocalVcsAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public class LocalVcsAction {
+public class LocalVcsAction implements ILocalVcsAction {
   public static LocalVcsAction NULL = new Null(); // todo try to get rid of this
 
   private ILocalVcs myVcs;

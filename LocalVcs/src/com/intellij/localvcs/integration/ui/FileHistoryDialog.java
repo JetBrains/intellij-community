@@ -18,6 +18,12 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @Override
+  protected void dispose() {
+    myDiffPanel.dispose();
+    super.dispose();
+  }
+
+  @Override
   protected FileHistoryDialogModel createModelFor(VirtualFile f, ILocalVcs vcs) {
     FileDocumentManager dm = FileDocumentManager.getInstance();
     return new FileHistoryDialogModel(f, vcs, dm);

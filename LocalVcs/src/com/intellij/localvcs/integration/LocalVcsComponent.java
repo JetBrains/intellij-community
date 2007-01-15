@@ -8,7 +8,6 @@ import com.intellij.localvcs.ThreadSafeLocalVcs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
@@ -19,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class LocalVcsComponent implements ProjectComponent, SettingsSavingComponent {
+public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   private Project myProject;
   private StartupManagerEx myStartupManager;
   private ProjectRootManagerEx myRootManager;
@@ -30,13 +29,14 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
   private ILocalVcs myVcs;
   private LocalVcsService myService;
 
+  // todo bad method - extend interface insteat
   public static ILocalVcs getLocalVcsFor(Project p) {
-    return getInstance(p).getLocalVcs();
+    return ((LocalVcsComponent)getInstance(p)).getLocalVcs();
   }
 
-  // try to get rid of this method (and use startActionFor(Project) instead
-  public static LocalVcsComponent getInstance(Project p) {
-    return p.getComponent(LocalVcsComponent.class);
+  // todo try to get rid of this method (and use startActionFor(Project) instead
+  public static ILocalVcsComponent getInstance(Project p) {
+    return p.getComponent(ILocalVcsComponent.class);
   }
 
   public LocalVcsComponent(Project p, StartupManagerEx sm, ProjectRootManagerEx rm, VirtualFileManagerEx fm, FileDocumentManager dm,
@@ -85,6 +85,7 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
   }
 
   public void save() {
+    if (isDisabled()) return;
     if (myVcs != null) myVcs.save();
   }
 
@@ -110,6 +111,7 @@ public class LocalVcsComponent implements ProjectComponent, SettingsSavingCompon
   }
 
   public LocalVcsAction startAction() {
+    if (isDisabled()) return LocalVcsAction.NULL;
     return myService.startAction();
   }
 

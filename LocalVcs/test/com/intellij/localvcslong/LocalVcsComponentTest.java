@@ -154,7 +154,7 @@ public class LocalVcsComponentTest extends IdeaTestCase {
   }
 
   private LocalVcsComponent getVcsComponent() {
-    return getProject().getComponent(LocalVcsComponent.class);
+    return (LocalVcsComponent)LocalVcsComponent.getInstance(getProject());
   }
 
   private VirtualFile addContentRoot() {

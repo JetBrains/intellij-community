@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+// todo bulk update support - add startAction method
 public class LocalVcs implements ILocalVcs {
   private Storage myStorage;
 
