@@ -242,17 +242,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     for (int i = 0; i < myExecutors.size(); i++) {
       final CommitExecutor commitExecutor = myExecutors.get(i);
-      myExecutorActions[i] = new AbstractAction(commitExecutor.getActionText()) {
-        public void actionPerformed(ActionEvent e) {
-          execute(commitExecutor);
-        }
-      };
+      myExecutorActions[i] = new CommitExecutorAction(commitExecutor, i == 0 && !myShowVcsCommit);
     }
     
     init();
     updateButtons();
-    myCommitMessageArea.requestFocusInMessage();;
-
+    myCommitMessageArea.requestFocusInMessage();
   }
 
 
@@ -674,6 +669,22 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         });
         doCancelAction();
       }
+    }
+  }
+
+  private class CommitExecutorAction extends AbstractAction {
+    private final CommitExecutor myCommitExecutor;
+
+    public CommitExecutorAction(final CommitExecutor commitExecutor, final boolean isDefault) {
+      super(commitExecutor.getActionText());
+      myCommitExecutor = commitExecutor;
+      if (isDefault) {
+        putValue(DEFAULT_ACTION, Boolean.TRUE);
+      }
+    }
+
+    public void actionPerformed(ActionEvent e) {
+      execute(myCommitExecutor);
     }
   }
 }
