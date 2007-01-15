@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 
@@ -119,46 +120,72 @@ public class FrameDebuggerTree extends DebuggerTree {
     }
   }
 
+  private static boolean isLineEmpty(Document doc, int line) {
+    int start = doc.getLineStartOffset(line);
+    int end = doc.getLineEndOffset(line);
+    return CharArrayUtil.shiftForward(doc.getCharsSequence(), start, " \n\t") >= end;
+  }
+
   private static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(final SourcePosition position) {
     final PsiFile file = position.getFile();
     final Document doc = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
     final int line = position.getLine();
 
-    final int startOffset = doc.getLineStartOffset(Math.max(0, line - 1));
-    final TextRange lineRange = new TextRange(startOffset, doc.getLineEndOffset(line));
-    final int offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), startOffset, " \t");
+    int startLine = Math.max(0, line - 1);
+    while (startLine > 0 && isLineEmpty(doc, startLine)) startLine--;
+    final int startOffset = doc.getLineStartOffset(startLine);
+
+    int endLine = Math.min(line + 2, doc.getLineCount() - 1);
+    while (endLine < doc.getLineCount() && isLineEmpty(doc, endLine)) endLine++;
+    final int endOffset = doc.getLineEndOffset(endLine);
+
+    final TextRange lineRange = new TextRange(startOffset, endOffset);
+    final int offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), doc.getLineStartOffset(line), " \t");
     PsiElement element = file.findElementAt(offset);
     if (element != null) {
-      do {
-        final PsiElement parent = element.getParent();
-        if (parent == null || (parent.getTextOffset() < lineRange.getStartOffset())) {
-          break;
-        }
-        element = parent;
+      PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(element, PsiStatement.class);
+      if (statement != null) {
+        element = statement;
       }
-      while(true);
+      else {
+        PsiExpression expression = PsiTreeUtil.getNonStrictParentOfType(element, PsiExpression.class);
+        if (expression != null) {
+          element = expression;
+        }
+      }
 
       //noinspection unchecked
       final Set<String> vars = new HashSet<String>();
       final Set<TextWithImports> expressions = new HashSet<TextWithImports>();
       final PsiRecursiveElementVisitor variablesCollector = new PsiRecursiveElementVisitor() {
-        
-        public void visitReferenceElement(final PsiJavaCodeReferenceElement reference) {
-          final PsiElement psiElement = reference.resolve();
-          if (psiElement instanceof PsiVariable) {
-            final PsiVariable var = (PsiVariable)psiElement;
-            if (var instanceof PsiField && reference instanceof PsiReferenceExpression && !hasMethodCall(reference)) {
-              expressions.add(new TextWithImportsImpl((PsiReferenceExpression)reference));
-            }
-            else {
-              vars.add(var.getName());
+
+        public void visitReferenceExpression(final PsiReferenceExpression reference) {
+          if (lineRange.intersects(reference.getTextRange())) {
+            final PsiElement psiElement = reference.resolve();
+            if (psiElement instanceof PsiVariable) {
+              final PsiVariable var = (PsiVariable)psiElement;
+              if (var instanceof PsiField && !hasMethodCall(reference)) {
+                expressions.add(new TextWithImportsImpl(reference));
+              }
+              else {
+                vars.add(var.getName());
+              }
             }
           }
-          super.visitReferenceElement(reference);
+          super.visitReferenceExpression(reference);
         }
-        
+
+        public void visitArrayAccessExpression(final PsiArrayAccessExpression expression) {
+          if (!hasMethodCall(expression)) {
+            expressions.add(new TextWithImportsImpl(expression));
+          }
+          super.visitArrayAccessExpression(expression);
+        }
+
         public void visitLocalVariable(final PsiLocalVariable variable) {
-          vars.add(variable.getName());
+          if (lineRange.intersects(variable.getTextRange())) {
+            vars.add(variable.getName());
+          }
           super.visitLocalVariable(variable);
         }
 
