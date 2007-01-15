@@ -932,8 +932,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
     for(VirtualFile file: ignoredFiles) {
       if (!isIgnoredFile(file)) {
-        myUnversionedFilesHolder.addFile(file);
-        myIgnoredFilesHolder.removeFile(file);
+        // the file may have been reported as ignored by the VCS, so we can't directly move it to unversioned files
+        VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
       }
     }
     ChangesViewManager.getInstance(myProject).scheduleRefresh();
@@ -951,8 +951,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         return false;
       }
       String filePath = FileUtil.getRelativePath(new File(myProject.getProjectFile().getParent().getPath()), new File(file.getPath()));
+      filePath = FileUtil.toSystemIndependentName(filePath);
       for(IgnoredFileBean bean: myFilesToIgnore) {
-        final String prefix = bean.getPath();
+        final String prefix = FileUtil.toSystemIndependentName(bean.getPath());
         if (prefix != null && StringUtil.startsWithIgnoreCase(filePath, prefix)) {
           return true;
         }

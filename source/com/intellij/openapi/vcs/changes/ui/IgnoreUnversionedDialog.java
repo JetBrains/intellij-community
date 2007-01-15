@@ -77,7 +77,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     myFilesToIgnore = virtualFiles;
     if (virtualFiles.size() == 1) {
       VirtualFile projectDir = myProject.getProjectFile().getParent();
-      String path = VfsUtil.getRelativePath(virtualFiles.get(0), projectDir, '/');
+      String path = FileUtil.getRelativePath(new File(projectDir.getPresentableUrl()), new File(virtualFiles.get(0).getPresentableUrl()));
       myIgnoreFileTextField.setText(path);
     }
     else {
@@ -138,7 +138,8 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
       IgnoredFileBean[] result = new IgnoredFileBean[myFilesToIgnore.size()];
       for(int i=0; i<myFilesToIgnore.size(); i++) {
         result [i] = new IgnoredFileBean();
-        result [i].setPath(VfsUtil.getRelativePath(myFilesToIgnore.get(i), projectDir, '/'));
+        String path = FileUtil.getRelativePath(new File(projectDir.getPresentableUrl()), new File(myFilesToIgnore.get(i).getPresentableUrl()));
+        result [i].setPath(path);
       }
       return result;
     }
