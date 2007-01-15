@@ -11,14 +11,11 @@ import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.CompoundBorder;
-import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,11 +36,16 @@ public class InfoAndProgressPanel extends JPanel {
   private MergingUpdateQueue myUpdateQueue;
   private AsyncProcessIcon myProgressIcon;
 
-  private boolean myShouldClosePopupAndAllProcessFinish;
+  private boolean myShouldClosePopupAndOnProcessFinish;
+  private final EmptyBorder myEmptyBorder;
+  private final CompoundBorder myCompoundBorder;
 
   public InfoAndProgressPanel(final StatusBarImpl statusBar) {
     myStatusBar = statusBar;
     setOpaque(false);
+
+    myEmptyBorder = new EmptyBorder(0, 3, 0, 2);
+    myCompoundBorder = BorderFactory.createCompoundBorder(new StatusBarImpl.SeparatorBorder.Left(), new EmptyBorder(0, 2, 0, 2));
 
     myProgressIcon = new AsyncProcessIcon("Background process");
     myProgressIcon.setOpaque(true);
@@ -59,14 +61,6 @@ public class InfoAndProgressPanel extends JPanel {
     myPopup = new ProcessPopup(this);
 
     restoreEmptyStatus();
-  }
-
-  private Border createSeparatorBorder() {
-    return BorderFactory.createCompoundBorder(new StatusBarImpl.SeparatorBorder.Left(), new EmptyBorder(0, 2, 0, 2));
-  }
-
-  private Border createInsetBorder() {
-    return new EmptyBorder(0, 3, 0, 2);
   }
 
   public void addProgress(final ProgressIndicatorEx original, ProcessInfo info) {
@@ -101,12 +95,12 @@ public class InfoAndProgressPanel extends JPanel {
 
     if (last) {
       restoreEmptyStatus();
-      if (myShouldClosePopupAndAllProcessFinish) {
+      if (myShouldClosePopupAndOnProcessFinish) {
         hideProcessPopup();
       } 
     }
     else {
-      if (myPopup.isShowing()) {
+      if (myPopup.isShowing() || myOriginals.size() > 1) {
         buildInProcessCount();
       }
       else if (beforeLast) {
@@ -134,10 +128,10 @@ public class InfoAndProgressPanel extends JPanel {
   private void openProcessPopup() {
     if (myPopup.isShowing()) return;
     if (myOriginals.size() > 0) {
-      myShouldClosePopupAndAllProcessFinish = true;
+      myShouldClosePopupAndOnProcessFinish = true;
       buildInProcessCount();
     } else {
-      myShouldClosePopupAndAllProcessFinish = false;
+      myShouldClosePopupAndOnProcessFinish = false;
       restoreEmptyStatus();
     }
     myPopup.show();
@@ -173,11 +167,11 @@ public class InfoAndProgressPanel extends JPanel {
     label.setOpaque(true);
 
     final Wrapper labelComp = new Wrapper(label);
-    labelComp.setBorder(BorderFactory.createCompoundBorder(createSeparatorBorder(), new EmptyBorder(0, 3, 0, 0)));
+    labelComp.setBorder(BorderFactory.createCompoundBorder(myCompoundBorder, new EmptyBorder(0, 3, 0, 0)));
 
     progressCountPanel.add(labelComp, BorderLayout.CENTER);
 
-    myProgressIcon.setBorder(createInsetBorder());
+    myProgressIcon.setBorder(myEmptyBorder);
     progressCountPanel.add(myProgressIcon, BorderLayout.EAST);
 
     add(myStatusBar.myInfoPanel, BorderLayout.CENTER);
@@ -194,10 +188,10 @@ public class InfoAndProgressPanel extends JPanel {
 
     final JPanel inlinePanel = new JPanel(new BorderLayout());
 
-    inline.getComponent().setBorder(createSeparatorBorder());
+    inline.getComponent().setBorder(myCompoundBorder);
     inlinePanel.add(inline.getComponent(), BorderLayout.CENTER);
 
-    myProgressIcon.setBorder(createSeparatorBorder());
+    myProgressIcon.setBorder(myCompoundBorder);
     inlinePanel.add(myProgressIcon, BorderLayout.EAST);
 
     add(inlinePanel);
@@ -243,7 +237,7 @@ public class InfoAndProgressPanel extends JPanel {
     removeAll();
     setLayout(new BorderLayout());
     add(myStatusBar.myInfoPanel, BorderLayout.CENTER);
-    myProgressIcon.setBorder(createSeparatorBorder());
+    myProgressIcon.setBorder(myCompoundBorder);
     add(myProgressIcon, BorderLayout.EAST);
     myProgressIcon.suspend();
     myStatusBar.myInfoPanel.revalidate();

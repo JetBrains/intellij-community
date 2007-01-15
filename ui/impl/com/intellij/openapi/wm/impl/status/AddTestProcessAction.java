@@ -34,14 +34,14 @@ public class AddTestProcessAction extends AnAction {
     new Thread() {
       public void run() {
         try {
-          countTo(900, new Count() {
+          countTo(1000, new Count() {
             public void onCount(int each) throws InterruptedException {
               indicator.setText("Found: " + each / 20 + 1);
               if (each / 10.0 == Math.round(each / 10.0)) {
                 indicator.setText("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
               }
-              indicator.setFraction(each / 100.0);
-              sleep(300);
+              indicator.setFraction(each / 1000.0);
+              sleep(100);
               indicator.checkCanceled();
               indicator.setText2("bla bla bla");
             }
