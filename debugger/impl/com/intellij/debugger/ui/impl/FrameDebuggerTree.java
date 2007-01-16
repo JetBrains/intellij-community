@@ -189,6 +189,10 @@ public class FrameDebuggerTree extends DebuggerTree {
           super.visitLocalVariable(variable);
         }
 
+        public void visitClass(final PsiClass aClass) {
+          // Do not step in to local and anonymous classes...
+        }
+
         /*
         public void visitStatement(PsiStatement statement) {
           if (lineRange.intersects(statement.getTextRange())) {
