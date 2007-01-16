@@ -49,6 +49,13 @@ public class TreeModelBuilder {
     return model;
   }
 
+  public DefaultTreeModel buildModelFromFiles(final List<VirtualFile> files) {
+    buildVirtualFiles(files, null);
+    collapseDirectories(model, root);
+    sortNodes();
+    return model;
+  }
+
   public DefaultTreeModel buildModel(final List<? extends ChangeList> changeLists,
                                      final List<VirtualFile> unversionedFiles,
                                      final List<FilePath> locallyDeletedFiles,
@@ -92,13 +99,19 @@ public class TreeModelBuilder {
     return model;
   }
 
-  private void buildVirtualFiles(final List<VirtualFile> files, final Object tag) {
-    ChangesBrowserNode filesNode = ChangesBrowserNode.create(myProject, tag);
-    model.insertNodeInto(filesNode, root, root.getChildCount());
+  private void buildVirtualFiles(final List<VirtualFile> files, @Nullable final Object tag) {
+    ChangesBrowserNode baseNode;
+    if (tag != null) {
+      baseNode = ChangesBrowserNode.create(myProject, tag);
+      model.insertNodeInto(baseNode, root, root.getChildCount());
+    }
+    else {
+      baseNode = root;
+    }
     final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
     final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
     for (VirtualFile file : files) {
-      insertChangeNode(file, foldersCache, moduleCache, filesNode);
+      insertChangeNode(file, foldersCache, moduleCache, baseNode);
     }
   }
 
@@ -205,7 +218,7 @@ public class TreeModelBuilder {
     }
   }
 
-  private static FilePath getPathForObject(Object o) {
+  public static FilePath getPathForObject(Object o) {
     if (o instanceof Change) {
       return ChangesUtil.getFilePath((Change)o);
     }

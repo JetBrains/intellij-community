@@ -1,6 +1,5 @@
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.Project;
@@ -10,11 +9,10 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Icons;
 import com.intellij.ui.SeparatorFactory;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.*;
@@ -24,7 +22,7 @@ import java.util.List;
  * @author max
  */
 public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
-  protected ChangesTreeList myViewer;
+  protected ChangesTreeList<Change> myViewer;
   protected ChangeList mySelectedChangeList;
   protected Collection<Change> myChangesToDisplay;
   protected Project myProject;
@@ -38,8 +36,6 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     myViewer.setChangesToDisplay(changes);
   }
 
-  @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
-
   public ChangesBrowser(final Project project, List<? extends ChangeList> changeLists, final List<Change> changes,
                         ChangeList initialListSelection,
                         final boolean capableOfExcludingChanges, final boolean highlightProblems) {
@@ -48,7 +44,17 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     myProject = project;
     myCapableOfExcludingChanges = capableOfExcludingChanges;
 
-    myViewer = new ChangesTreeList(myProject, changes, capableOfExcludingChanges, highlightProblems);
+    myViewer = new ChangesTreeList<Change>(myProject, changes, capableOfExcludingChanges, highlightProblems) {
+      protected DefaultTreeModel buildTreeModel(final List<Change> changes) {
+        TreeModelBuilder builder = new TreeModelBuilder(myProject, false);
+        return builder.buildModel(changes);
+      }
+
+      protected List<Change> getSelectedObjects(final ChangesBrowserNode node) {
+        return node.getAllChangesUnder();
+      }
+    };
+
     myViewer.setDoubleClickHandler(new Runnable() {
       public void run() {
         showDiff();
@@ -70,8 +76,6 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     add(myHeaderPanel, BorderLayout.NORTH);
 
     myViewer.installPopupHandler(myToolBarGroup);
-
-    myViewer.setShowFlatten(PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY));
   }
 
   protected void setInitialSelection(final List<? extends ChangeList> changeLists, final List<Change> changes, final ChangeList initialListSelection) {
@@ -104,7 +108,8 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
   public void calcData(DataKey key, DataSink sink) {
     if (key == DataKeys.CHANGES) {
-      sink.put(DataKeys.CHANGES, myViewer.getSelectedChanges());
+      final List<Change> list = myViewer.getSelectedChanges();
+      sink.put(DataKeys.CHANGES, list.toArray(new Change [list.size()]));
     }
     else if (key == DataKeys.CHANGE_LISTS) {
       sink.put(DataKeys.CHANGE_LISTS, getSelectedChangeLists());
@@ -141,16 +146,17 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
   private void showDiff() {
     final Change leadSelection = myViewer.getLeadSelection();
-    Change[] changes = myViewer.getSelectedChanges();
+    List<Change> changes = myViewer.getSelectedChanges();
 
-    if (changes.length < 2) {
+    if (changes.size() < 2) {
       final Collection<Change> displayedChanges = getCurrentDisplayedChanges();
-      changes = displayedChanges.toArray(new Change[displayedChanges.size()]);
+      changes = new ArrayList<Change>(displayedChanges);
     }
 
-    int indexInSelection = Arrays.asList(changes).indexOf(leadSelection);
+    int indexInSelection = changes.indexOf(leadSelection);
     if (indexInSelection >= 0) {
-      ShowDiffAction.showDiffForChange(changes, indexInSelection, myProject, new DiffToolbarActionsFactory(), false);
+      Change[] changesArray = changes.toArray(new Change[changes.size()]);
+      ShowDiffAction.showDiffForChange(changesArray, indexInSelection, myProject, new DiffToolbarActionsFactory(), false);
     }
     else {
       ShowDiffAction.showDiffForChange(new Change[]{leadSelection}, 0, myProject, new DiffToolbarActionsFactory(), false);
@@ -197,13 +203,6 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK)),
       myViewer);
     toolBarGroup.add(diffAction);
-
-    ToggleShowDirectoriesAction directoriesAction = new ToggleShowDirectoriesAction();
-    directoriesAction.registerCustomShortcutSet(
-      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK)),
-      myViewer);
-
-    toolBarGroup.add(directoriesAction);
   }
 
   public List<Change> getCurrentDisplayedChanges() {
@@ -242,7 +241,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   }
 
   private VirtualFile[] getSelectedFiles() {
-    final Change[] changes = myViewer.getSelectedChanges();
+    final List<Change> changes = myViewer.getSelectedChanges();
     ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
     for (Change change : changes) {
       final ContentRevision afterRevision = change.getAfterRevision();
@@ -254,23 +253,6 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
       }
     }
     return files.toArray(new VirtualFile[files.size()]);
-  }
-
-  public class ToggleShowDirectoriesAction extends ToggleAction {
-    public ToggleShowDirectoriesAction() {
-      super(VcsBundle.message("changes.action.show.directories.text"),
-            VcsBundle.message("changes.action.show.directories.description"),
-            Icons.DIRECTORY_CLOSED_ICON);
-    }
-
-    public boolean isSelected(AnActionEvent e) {
-      return !PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY);
-    }
-
-    public void setSelected(AnActionEvent e, boolean state) {
-      PropertiesComponent.getInstance(myProject).setValue(FLATTEN_OPTION_KEY, String.valueOf(!state));
-      myViewer.setShowFlatten(!state);
-    }
   }
 
   public class RollbackAction extends AnAction {

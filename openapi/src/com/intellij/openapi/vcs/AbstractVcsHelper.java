@@ -115,4 +115,7 @@ public abstract class AbstractVcsHelper {
    */
   public abstract void showRollbackChangesDialog(List<Change> changes);
 
+  @Nullable
+  public abstract Collection<VirtualFile> selectFilesToProcess(List<VirtualFile> files, final String title, @Nullable final String prompt);
+
 }

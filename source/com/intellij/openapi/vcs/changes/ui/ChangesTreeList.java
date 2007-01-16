@@ -2,7 +2,11 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.actionSystem.*;
@@ -15,8 +19,11 @@ import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.Icons;
+import com.intellij.ide.util.PropertiesComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -31,7 +38,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class ChangesTreeList extends JPanel {
+public abstract class ChangesTreeList<T> extends JPanel {
   private Tree myTree;
   private JList myList;
   private Project myProject;
@@ -39,7 +46,7 @@ public class ChangesTreeList extends JPanel {
   private final boolean myHighlightProblems;
   private boolean myShowFlatten;
 
-  private Collection<Change> myIncludedChanges;
+  private Collection<T> myIncludedChanges;
   private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
 
   @NonNls private static final String TREE_CARD = "Tree";
@@ -47,12 +54,14 @@ public class ChangesTreeList extends JPanel {
   @NonNls private static final String ROOT = "root";
   private CardLayout myCards;
 
-  public ChangesTreeList(final Project project, Collection<Change> initiallyIncluded, final boolean showCheckboxes, 
+  @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
+
+  public ChangesTreeList(final Project project, Collection<T> initiallyIncluded, final boolean showCheckboxes,
                          final boolean highlightProblems) {
     myProject = project;
     myShowCheckboxes = showCheckboxes;
     myHighlightProblems = highlightProblems;
-    myIncludedChanges = new HashSet<Change>(initiallyIncluded);
+    myIncludedChanges = new HashSet<T>(initiallyIncluded);
 
     myCards = new CardLayout();
 
@@ -154,6 +163,8 @@ public class ChangesTreeList extends JPanel {
         }
       }
     });
+
+    setShowFlatten(PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY));
   }
 
   public void setDoubleClickHandler(final Runnable doubleClickHandler) {
@@ -195,22 +206,21 @@ public class ChangesTreeList extends JPanel {
     }
   }
 
-  public void setChangesToDisplay(final List<Change> changes) {
+  public void setChangesToDisplay(final List<T> changes) {
     final DefaultListModel listModel = (DefaultListModel)myList.getModel();
-    final List<Change> sortedChanges = new ArrayList<Change>(changes);
-    Collections.sort(sortedChanges, new Comparator<Change>() {
-      public int compare(final Change o1, final Change o2) {
-        return ChangesUtil.getFilePath(o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath(o2).getName());
+    final List<T> sortedChanges = new ArrayList<T>(changes);
+    Collections.sort(sortedChanges, new Comparator<T>() {
+      public int compare(final T o1, final T o2) {
+        return TreeModelBuilder.getPathForObject(o1).getName().compareToIgnoreCase(TreeModelBuilder.getPathForObject(o1).getName());
       }
     });
 
     listModel.removeAllElements();
-    for (Change change : sortedChanges) {
+    for (T change : sortedChanges) {
       listModel.addElement(change);
     }
 
-    TreeModelBuilder builder = new TreeModelBuilder(myProject, false);
-    final DefaultTreeModel model = builder.buildModel(changes);
+    final DefaultTreeModel model = buildTreeModel(changes);
     myTree.setModel(model);
 
     SwingUtilities.invokeLater(new Runnable() {
@@ -220,7 +230,7 @@ public class ChangesTreeList extends JPanel {
         if (myIncludedChanges.size() > 0) {
           int listSelection = 0;
           int count = 0;
-          for (Change change : changes) {
+          for (T change : changes) {
             if (myIncludedChanges.contains(change)) {
               listSelection = count;
               break;
@@ -262,10 +272,12 @@ public class ChangesTreeList extends JPanel {
     });
   }
 
+  protected abstract DefaultTreeModel buildTreeModel(final List<T> changes);
+
   @SuppressWarnings({"SuspiciousMethodCalls"})
   private void toggleSelection() {
     boolean hasExcluded = false;
-    for (Change value : getSelectedChanges()) {
+    for (T value : getSelectedChanges()) {
       if (!myIncludedChanges.contains(value)) {
         hasExcluded = true;
       }
@@ -282,7 +294,7 @@ public class ChangesTreeList extends JPanel {
   }
 
   private void includeSelection() {
-    for (Change change : getSelectedChanges()) {
+    for (T change : getSelectedChanges()) {
       myIncludedChanges.add(change);
     }
     repaint();
@@ -290,84 +302,91 @@ public class ChangesTreeList extends JPanel {
 
   @SuppressWarnings({"SuspiciousMethodCalls"})
   private void excludeSelection() {
-    for (Change change : getSelectedChanges()) {
+    for (T change : getSelectedChanges()) {
       myIncludedChanges.remove(change);
     }
     repaint();
   }
 
   @NotNull
-  public Change[] getSelectedChanges() {
+  public List<T> getSelectedChanges() {
     if (myShowFlatten) {
       final Object[] o = myList.getSelectedValues();
-      final Change[] changes = new Change[o.length];
-      for (int i = 0; i < changes.length; i++) {
-        changes[i] = (Change)o[i];
+      final List<T> changes = new ArrayList<T>();
+      for (Object anO : o) {
+        changes.add((T)anO);
       }
 
       return changes;
     }
     else {
-      List<Change> changes = new ArrayList<Change>();
+      List<T> changes = new ArrayList<T>();
       final TreePath[] paths = myTree.getSelectionPaths();
       if (paths != null) {
         for (TreePath path : paths) {
           ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
-          changes.addAll(node.getAllChangesUnder());
+          changes.addAll(getSelectedObjects(node));
         }
       }
 
-      return changes.toArray(new Change[changes.size()]);
+      return changes;
     }
   }
 
-  public Change getLeadSelection() {
+  protected abstract List<T> getSelectedObjects(final ChangesBrowserNode node);
+
+  @Nullable
+  public T getLeadSelection() {
     if (myShowFlatten) {
       final int index = myList.getLeadSelectionIndex();
       if (index < 0) return null;
-      return (Change)myList.getModel().getElementAt(index);
+      //noinspection unchecked
+      return (T)myList.getModel().getElementAt(index);
     }
     else {
       final TreePath path = myTree.getSelectionPath();
       if (path == null) return null;
-      final List<Change> changes = ((ChangesBrowserNode)path.getLastPathComponent()).getAllChangesUnder();
+      final List<T> changes = getSelectedObjects(((ChangesBrowserNode)path.getLastPathComponent()));
       return changes.size() > 0 ? changes.get(0) : null;
     }
   }
 
-  public void includeChange(final Change change) {
+  public void includeChange(final T change) {
     myIncludedChanges.add(change);
   }
 
-  public void excludeChange(final Change change) {
+  public void excludeChange(final T change) {
     myIncludedChanges.remove(change);
   }
 
-  public boolean isIncluded(final Change change) {
+  public boolean isIncluded(final T change) {
     return myIncludedChanges.contains(change);
   }
 
-  public Collection<Change> getIncludedChanges() {
+  public Collection<T> getIncludedChanges() {
     return myIncludedChanges;
   }
 
   public AnAction[] getTreeActions() {
-    final AnAction[] actions = new AnAction[]{
-      new ExpandAllAction(myTree) {
-        public void update(AnActionEvent e) {
-          e.getPresentation().setVisible(!myShowFlatten);
-        }
-      },
-      new CollapseAllAction(myTree) {
-        public void update(AnActionEvent e) {
-          e.getPresentation().setVisible(!myShowFlatten);
-        }
+    final ToggleShowDirectoriesAction directoriesAction = new ToggleShowDirectoriesAction();
+    final ExpandAllAction expandAllAction = new ExpandAllAction(myTree) {
+      public void update(AnActionEvent e) {
+        e.getPresentation().setVisible(!myShowFlatten);
       }
     };
-    actions [0].registerCustomShortcutSet(
+    final CollapseAllAction collapseAllAction = new CollapseAllAction(myTree) {
+      public void update(AnActionEvent e) {
+        e.getPresentation().setVisible(!myShowFlatten);
+      }
+    };
+    final AnAction[] actions = new AnAction[]{directoriesAction, expandAllAction, collapseAllAction};
+    directoriesAction.registerCustomShortcutSet(
+      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK)),
+      this);
+    expandAllAction.registerCustomShortcutSet(
       new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_EXPAND_ALL)),
       myTree);
-    actions [1].registerCustomShortcutSet(
+    collapseAllAction.registerCustomShortcutSet(
       new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_COLLAPSE_ALL)),
       myTree);
     return actions;
@@ -425,7 +444,7 @@ public class ChangesTreeList extends JPanel {
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
-    for (Change change : node.getAllChangesUnder()) {
+    for (T change : getSelectedObjects(node)) {
       if (myIncludedChanges.contains(change)) {
         hasIncluded = true;
       }
@@ -448,18 +467,20 @@ public class ChangesTreeList extends JPanel {
       myCheckbox = new JCheckBox();
       myTextRenderer = new ColoredListCellRenderer() {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          Change change = (Change)value;
-          final FilePath path = ChangesUtil.getFilePath(change);
+          final FilePath path = TreeModelBuilder.getPathForObject(value);
           setIcon(path.getFileType().getIcon());
-          append(path.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, getColor(change), null));
+          final FileStatus fileStatus;
+          if (value instanceof Change) {
+            fileStatus = ((Change) value).getFileStatus();
+          }
+          else {
+            fileStatus = FileStatusManager.getInstance(myProject).getStatus(path.getVirtualFile());
+          }
+          append(path.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fileStatus.getColor(), null));
           final File parentFile = path.getIOFile().getParentFile();
           if (parentFile != null) {
             append(" (" + parentFile.getPath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
-        }
-
-        private Color getColor(final Change change) {
-          return change.getFileStatus().getColor();
         }
       };
 
@@ -489,4 +510,22 @@ public class ChangesTreeList extends JPanel {
       toggleSelection();
     }
   }
+
+  public class ToggleShowDirectoriesAction extends ToggleAction {
+    public ToggleShowDirectoriesAction() {
+      super(VcsBundle.message("changes.action.show.directories.text"),
+            VcsBundle.message("changes.action.show.directories.description"),
+            Icons.DIRECTORY_CLOSED_ICON);
+    }
+
+    public boolean isSelected(AnActionEvent e) {
+      return !PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY);
+    }
+
+    public void setSelected(AnActionEvent e, boolean state) {
+      PropertiesComponent.getInstance(myProject).setValue(FLATTEN_OPTION_KEY, String.valueOf(!state));
+      setShowFlatten(!state);
+    }
+  }
+
 }

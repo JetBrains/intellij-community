@@ -158,6 +158,14 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     RollbackChangesDialog.rollbackChanges(myProject, changes);
   }
 
+  @Nullable
+  public Collection<VirtualFile> selectFilesToProcess(final List<VirtualFile> files, final String title, @Nullable final String prompt) {
+    SelectFilesDialog dlg = new SelectFilesDialog(myProject, files, prompt);
+    dlg.setTitle(title);
+    dlg.show();
+    return dlg.isOK() ? dlg.getSelectedFiles() : null;
+  }
+
   protected void reportError(Exception exception) {
         exception.printStackTrace();
         Messages.showMessageDialog(exception.getLocalizedMessage(), VcsBundle.message("message.title.could.not.load.file.history"), Messages.getErrorIcon());
