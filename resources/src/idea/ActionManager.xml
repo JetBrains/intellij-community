@@ -170,8 +170,8 @@
       <action id="CreateServletAction" class="com.intellij.javaee.module.view.web.servlet.CreateServletAction" icon="/nodes/servlet.png"/>
       <action id="CreateFilterAction" class="com.intellij.javaee.module.view.web.filter.CreateFilterAction" icon="/ant/filter.png"/>
       <action id="CreateListenerAction" class="com.intellij.javaee.module.view.web.listener.CreateListenerAction" icon="/ant/filter.png"/>
-      <action id="Faces.CreateFacesConfigAction" class="com.intellij.jsf.actions.CreateFacesConfigAction"
-              icon="/fileTypes/facesConfig.png"/>
+      <!--<action id="Faces.CreateFacesConfigAction" class="com.intellij.jsf.actions.CreateFacesConfigAction"
+              icon="/fileTypes/facesConfig.png"/>-->
 
     </group>
     <group id="GenerateGroup">
@@ -186,7 +186,7 @@
       <action id="GenerateSuperMethodCall" class="com.intellij.codeInsight.generation.actions.GenerateSuperMethodCallAction"/>
       <action id="GuiDesigner.GenerateMain" class="com.intellij.uiDesigner.actions.GenerateMainAction"/>
       <reference ref="JavaeeEditorGenerateGroup"/>
-      <action id="Faces.Generate" class="com.intellij.jsf.ui.actions.FacesElementGenerateActionGroup" text="Generate"/>
+      <!--<action id="Faces.Generate" class="com.intellij.jsf.ui.actions.FacesElementGenerateActionGroup" text="Generate"/>-->
     </group>
 
     <action id="NextDiff" class="com.intellij.openapi.diff.actions.NextDiffAction" icon="/actions/moveDown.png"/>
@@ -1506,21 +1506,6 @@
       <add-to-group group-id="J2EEViewPopupMenu" anchor="last"/>
     </group>
 
-    <!-- ***** java server faces actions *************************************** -->
-    <action id="Faces.Create.Model.Element" class="com.intellij.jsf.ui.actions.CreateFacesElementAction"
-            text="Generate" use-shortcut-of="Generate"/>
-
-    <action id="Faces.Generate.From.Persistence" class="com.intellij.jsf.actions.GenerateFacesPagesAction"
-            text="Generate Faces Pages...">
-      <add-to-group group-id="J2EEViewPopupMenu" anchor="last"/>
-    </action>
-
-    <action id="Faces.User.Defined.Faces.Config"
-            class="com.intellij.jsf.actions.UserDefinedFacesConfigAction"
-            text="Use as Faces Config">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-      <add-to-group group-id="J2EEViewPopupMenu" anchor="last"/>
-    </action>
     <!-- ***** yFiles actions *************************************** -->
     <action id="Graph.ZoomIn" class="com.intellij.openapi.graph.builder.actions.ZoomInAction" text="Zoom In">
       <keyboard-shortcut first-keystroke="ADD" keymap="$default"/>
@@ -1575,10 +1560,6 @@
             text="Fit Content After Layout" keymap="$default">
     </action>
 
-    <action id="Graph.Faces.OpenSelectedPages" class="com.intellij.jsf.yfilesGraph.actions.OpenSelectedPagesActon"
-            text="Open Selected Pages" use-shortcut-of="EditSource" keymap="$default">
-    </action>
-
     <group id="Graph.CommonLayoutGroup" text="Layout" popup="true">
       <reference ref="Graph.Layout.BalloonLayouter"/>
       <reference ref="Graph.Layout.CircularLayouter"/>
@@ -1621,15 +1602,6 @@
       <reference ref="Graph.DefaultGraphPopup"/>
     </group>
     <!-- ***** yFiles actions end*************************************** -->
-
-
-    <action id="Faces.Navigation.Graph.PageTree.GotoSourceAction" class="com.intellij.jsf.yfilesGraph.actions.GotoSourceAction"
-            text="_Jump to source">
-    </action>
-    <action id="Faces.Navigation.Graph.PageTree.GotoDeclarationAction"
-            class="com.intellij.jsf.yfilesGraph.actions.GotoDeclarationAction"
-            text="_Goto declaration">
-    </action>
 
 
     <group id="Faces.MainGraphPopup">
