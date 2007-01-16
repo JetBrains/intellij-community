@@ -2,6 +2,7 @@ package com.intellij.mock;
 
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -40,6 +41,16 @@ public class MockProject extends UserDataHolderBase implements ProjectEx {
 
   public boolean isDisposed() {
     return false;
+  }
+
+  @NotNull
+  public ComponentConfig[] getComponentConfigurations() {
+    throw new UnsupportedOperationException("Method getComponentConfigurations is not supported in " + getClass());
+  }
+
+  @Nullable
+  public Object getComponent(final ComponentConfig componentConfig) {
+    throw new UnsupportedOperationException("Method getComponent is not supported in " + getClass());
   }
 
   public boolean isOpen() {
@@ -121,7 +132,7 @@ public class MockProject extends UserDataHolderBase implements ProjectEx {
   }
 
   @NotNull
-  public <T> T[] getComponents(Class<T> baseInterfaceClass) {
+  public <T> T[] getComponents(Class<T> baseClass) {
     return (T[]) ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 

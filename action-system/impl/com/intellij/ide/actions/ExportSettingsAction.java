@@ -78,22 +78,19 @@ public class ExportSettingsAction extends AnAction {
   }
 
   public static Map<File, Set<ExportableApplicationComponent>> getRegisteredComponentsAndFiles(List<ExportableApplicationComponent> exportableComponents) {
-    final Class[] interfaces = ApplicationManager.getApplication().getComponentInterfaces();
     Map<File,Set<ExportableApplicationComponent>> fileToComponents = new HashMap<File, Set<ExportableApplicationComponent>>();
-    for (final Class anInterface : interfaces) {
-      final Object component = ApplicationManager.getApplication().getComponent(anInterface);
-      if (component instanceof ExportableApplicationComponent) {
-        ExportableApplicationComponent exportable = (ExportableApplicationComponent)component;
-        exportableComponents.add(exportable);
-        final File[] exportFiles = exportable.getExportFiles();
-        for (File exportFile : exportFiles) {
-          Set<ExportableApplicationComponent> componentsTied = fileToComponents.get(exportFile);
-          if (componentsTied == null) {
-            componentsTied = new HashSet<ExportableApplicationComponent>();
-            fileToComponents.put(exportFile, componentsTied);
-          }
-          componentsTied.add(exportable);
+
+    final ExportableApplicationComponent[] components = ApplicationManager.getApplication().getComponents(ExportableApplicationComponent.class);
+    for (ExportableApplicationComponent component : components) {
+      exportableComponents.add(component);
+      final File[] exportFiles = component.getExportFiles();
+      for (File exportFile : exportFiles) {
+        Set<ExportableApplicationComponent> componentsTied = fileToComponents.get(exportFile);
+        if (componentsTied == null) {
+          componentsTied = new HashSet<ExportableApplicationComponent>();
+          fileToComponents.put(exportFile, componentsTied);
         }
+        componentsTied.add(component);
       }
     }
     return fileToComponents;

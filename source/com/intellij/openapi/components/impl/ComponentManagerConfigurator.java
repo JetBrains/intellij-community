@@ -1,8 +1,6 @@
 package com.intellij.openapi.components.impl;
 
-import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.ComponentConfig;
@@ -28,65 +26,16 @@ class ComponentManagerConfigurator {
   }
 
   private void loadConfiguration(final ComponentConfig[] configs, final boolean loadDummies, final IdeaPluginDescriptor descriptor) {
-    final boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
-
     for (ComponentConfig config : configs) {
-      if (!loadDummies && config.skipForDummyProject) {
-        continue;
-      }
-
-      String interfaceClass = config.interfaceClass;
-      String implClass = config.implementationClass;
-      if (headless) {
-        String headlessImplClass = config.headlessImplementationClass;
-        if (headlessImplClass != null) {
-          if (headlessImplClass.trim().length() == 0) continue;
-          implClass = headlessImplClass;
-        }
-      }
-
-      if (interfaceClass == null) interfaceClass = implClass;
-
-      Map<String, String> options = config.options;
-
-      //todo: isComponentSuitable should be moved somewhere
-      if (!myComponentManager.isComponentSuitable(options)) continue;
-
-      ClassLoader loader = null;
-      if (descriptor != null) {
-        loader = descriptor.getPluginClassLoader();
-      }
-      if (loader == null) {
-        loader = myComponentManager.getClass().getClassLoader();
-      }
-
-      interfaceClass = interfaceClass.trim();
-      implClass = implClass.trim();
-
-      try {
-        myComponentManager
-          .registerComponent(Class.forName(interfaceClass, true, loader), Class.forName(implClass, true, loader), options, true,
-                          isTrue(options, "lazy"));
-      }
-      catch (Exception e) {
-        @NonNls final String message = "Error while initializing component: " + interfaceClass + ":" + implClass;
-
-        if (descriptor != null) {
-          LOG.error(message, new PluginException(e, descriptor.getPluginId()));
-        }
-        else {
-          LOG.error(message, e);
-        }
-      }
-      catch (Error e) {
-        if (descriptor != null) {
-          LOG.error(new PluginException(e, descriptor.getPluginId()));
-        }
-        else {
-          throw e;
-        }
-      }
+      loadSingleConfig(loadDummies, config, descriptor);
     }
+  }
+
+  private void loadSingleConfig(final boolean loadDummies, final ComponentConfig config, final IdeaPluginDescriptor descriptor) {
+    if (!loadDummies && config.skipForDummyProject) return;
+    if (!myComponentManager.isComponentSuitable(config.options)) return;
+
+    myComponentManager.registerComponent(config, descriptor);
   }
 
   private void loadComponentsConfiguration(String descriptor, String layer, boolean loadDummies) {

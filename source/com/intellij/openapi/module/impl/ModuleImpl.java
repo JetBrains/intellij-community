@@ -12,7 +12,6 @@ import com.intellij.openapi.components.impl.stores.IModuleStore;
 import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
-import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
@@ -176,31 +175,23 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
 
   public void projectOpened() {
-    final Object[] components = getComponents();
-    for (Object component1 : components) {
-      if (component1 instanceof ModuleComponent) {
-        ModuleComponent component = (ModuleComponent)component1;
-        try {
-          component.projectOpened();
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
+    for (ModuleComponent component : getComponents(ModuleComponent.class)) {
+      try {
+        component.projectOpened();
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
   }
 
   public void projectClosed() {
-    final Object[] components = getComponents();
-    for (Object component1 : components) {
-      if (component1 instanceof ModuleComponent) {
-        ModuleComponent component = (ModuleComponent)component1;
-        try {
-          component.projectClosed();
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
+    for (ModuleComponent component : getComponents(ModuleComponent.class)) {
+      try {
+        component.projectClosed();
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
   }
@@ -235,12 +226,8 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
   public void moduleAdded() {
     isModuleAdded = true;
-    final Object[] components = getComponents();
-    for (Object component1 : components) {
-      if (component1 instanceof ModuleComponent) {
-        ModuleComponent component = (ModuleComponent)component1;
-        component.moduleAdded();
-      }
+    for (ModuleComponent component : getComponents(ModuleComponent.class)) {
+      component.moduleAdded();
     }
   }
 
@@ -382,9 +369,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   }
 
   protected MutablePicoContainer createPicoContainer() {
-    final AreaPicoContainer picoContainer = Extensions.getArea(this).getPicoContainer();
-    picoContainer.setComponentAdapterFactory(new ComponentManagerImpl.MyComponentAdapterFactory(this));
-    return picoContainer;
+    return Extensions.getArea(this).getPicoContainer();
   }
 
 

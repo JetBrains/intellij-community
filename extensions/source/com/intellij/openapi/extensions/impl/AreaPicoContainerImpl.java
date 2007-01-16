@@ -17,19 +17,17 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.extensions.AreaPicoContainer;
+import com.intellij.util.IdeaPicoContainer;
 import org.jetbrains.annotations.NonNls;
-import org.picocontainer.*;
+import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.PicoContainer;
 import org.picocontainer.alternatives.AbstractDelegatingMutablePicoContainer;
-import org.picocontainer.defaults.ComponentAdapterFactory;
-import org.picocontainer.defaults.DefaultComponentAdapterFactory;
-import org.picocontainer.defaults.DefaultPicoContainer;
 
 /**
  * @author Alexander Kireyev
  */
 @SuppressWarnings({"unchecked"})
 public class AreaPicoContainerImpl extends AbstractDelegatingMutablePicoContainer implements AreaPicoContainer {
-  private ComponentAdapterFactory myComponentAdapterFactory;
   private final AreaInstance myAreaInstance;
 
   public AreaPicoContainerImpl(PicoContainer parentPicoContainer, AreaInstance areaInstance) {
@@ -46,23 +44,13 @@ public class AreaPicoContainerImpl extends AbstractDelegatingMutablePicoContaine
     throw new UnsupportedOperationException("Method makeChildContainer() is not implemented");
   }
 
-  public void setComponentAdapterFactory(ComponentAdapterFactory factory) {
-    myComponentAdapterFactory = factory;
-  }
-
-  public ComponentAdapterFactory getComponentAdapterFactory() {
-    return myComponentAdapterFactory;
-  }
-
-
   @NonNls
   public String toString() {
     return "AreaPicoContainer[" + myAreaInstance + "]";
   }
 
-  private static class MyPicoContainer extends DefaultPicoContainer {
+  private static class MyPicoContainer extends IdeaPicoContainer {
     private AreaPicoContainerImpl myWrapperContainer;
-    private ComponentAdapterFactory myDefault = new DefaultComponentAdapterFactory();
 
     public MyPicoContainer(final PicoContainer parentPicoContainer) {
       super(parentPicoContainer);
@@ -70,16 +58,6 @@ public class AreaPicoContainerImpl extends AbstractDelegatingMutablePicoContaine
 
     public void setWrapperContainer(AreaPicoContainerImpl wrapperContainer) {
       myWrapperContainer = wrapperContainer;
-    }
-
-    public ComponentAdapter registerComponentImplementation(Object componentKey, Class componentImplementation, Parameter[] parameters) throws PicoRegistrationException {
-        ComponentAdapter componentAdapter = getAdapterFactory().createComponentAdapter(componentKey, componentImplementation, parameters);
-        registerComponent(componentAdapter);
-        return componentAdapter;
-    }
-
-    private ComponentAdapterFactory getAdapterFactory() {
-      return myWrapperContainer.getComponentAdapterFactory() != null ? myWrapperContainer.getComponentAdapterFactory() : myDefault;
     }
 
 

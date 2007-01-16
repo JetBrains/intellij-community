@@ -39,6 +39,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class UnscrambleDialog extends DialogWrapper{
@@ -240,14 +241,8 @@ public class UnscrambleDialog extends DialogWrapper{
 
   private static List<UnscrambleSupport> getRegisteredUnscramblers() {
     List<UnscrambleSupport> unscrambleComponents = new ArrayList<UnscrambleSupport>();
-    Class[] interfaces = ApplicationManager.getApplication().getComponentInterfaces();
-    for (final Class<?> anInterface : interfaces) {
-      Object component = ApplicationManager.getApplication().getComponent(anInterface);
-      if (component instanceof UnscrambleSupport) {
-        unscrambleComponents.add((UnscrambleSupport)component);
-      }
-    }
-    return unscrambleComponents;
+    final UnscrambleSupport[] components = ApplicationManager.getApplication().getComponents(UnscrambleSupport.class);
+    return Arrays.asList(components);
   }
 
   protected JComponent createCenterPanel() {

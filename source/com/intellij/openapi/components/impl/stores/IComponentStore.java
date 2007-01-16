@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface IComponentStore {
   void initStore();
-  void initComponent(Object component, Class componentClass);
+  void initComponent(Object component);
 
   void dispose();
 

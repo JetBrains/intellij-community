@@ -1,12 +1,14 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
 import java.lang.reflect.Array;
@@ -44,8 +46,8 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   @NotNull
-  public <T> T[] getComponents(Class<T> baseInterfaceClass) {
-    return (T[])Array.newInstance(baseInterfaceClass, 0);
+  public <T> T[] getComponents(Class<T> baseClass) {
+    return (T[])Array.newInstance(baseClass, 0);
   }
 
   @NotNull
@@ -59,6 +61,16 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   public boolean isDisposed() {
     return false;
+  }
+
+  @NotNull
+  public ComponentConfig[] getComponentConfigurations() {
+    return new ComponentConfig[0];
+  }
+
+  @Nullable
+  public Object getComponent(final ComponentConfig componentConfig) {
+    return null;
   }
 
   public void dispose() {

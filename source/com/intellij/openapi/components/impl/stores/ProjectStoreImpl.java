@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -242,7 +243,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   void initJdomExternalizable(final Class componentClass, final BaseComponent component) {
     if (myProject.myOptimiseTestLoadSpeed) return; //test load speed optimization
-    super.initJdomExternalizable(componentClass, component);
+    super.initJdomExternalizable(component);
   }
 
   public void setProjectFilePath(final String filePath) {
@@ -375,16 +376,15 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return files.toArray(new ConfigurationFile[files.size()]);
   }
 
-  protected VirtualFile getComponentConfigurationFile(Class componentInterface) {
+  protected VirtualFile getComponentConfigurationFile(ComponentConfig componentConfig) {
     if (myProject.isDefault()) {
       return getProjectFile();
     }
 
-    return isWorkspace(componentInterface) ? getWorkspaceFile() : getProjectFile();
+    return isWorkspace(componentConfig.options) ? getWorkspaceFile() : getProjectFile();
   }
 
-  private boolean isWorkspace(Class componentInterface) {
-    final Map options = getComponentManager().getComponentOptions(componentInterface);
+  private static boolean isWorkspace(final Map options) {
     return options != null && Boolean.parseBoolean((String)options.get(OPTION_WORKSPACE));
   }
 

@@ -1,6 +1,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.application.options.ReplacePathToMacroMap;
+import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,7 +42,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   private static ArrayList<String> ourConversionProblemsStorage = new ArrayList<String>();
 
   @Nullable
-  protected abstract VirtualFile getComponentConfigurationFile(Class componentInterface);
+  protected abstract VirtualFile getComponentConfigurationFile(ComponentConfig componentInterface);
   protected abstract String getRootNodeName();
   protected abstract ConfigurationFile[] getConfigurationFiles();
 
@@ -76,12 +77,12 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
       }
     }
 
-    final Class[] componentInterfaces = myComponentManager.getComponentInterfaces();
-    for (Class<?> componentInterface : componentInterfaces) {
-      VirtualFile componentFile = getComponentConfigurationFile(componentInterface);
+    final ComponentConfig[] componentConfigs = myComponentManager.getComponentConfigurations();
+    for (ComponentConfig componentConfig : componentConfigs) {
+      VirtualFile componentFile = getComponentConfigurationFile(componentConfig);
 
       if (configFile == componentFile) {
-        final Object component = myComponentManager.getComponent(componentInterface);
+        final Object component = myComponentManager.getComponent(componentConfig);
 
         try {
           final Element node = serializeComponent(component);

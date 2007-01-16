@@ -15,7 +15,6 @@ import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.IApplicationStore;
 import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -204,10 +203,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
 
   @Override
-  protected void handleInitComponentError(final Class componentClass, final Throwable ex, final boolean fatal) {
-    if (PluginManager.isPluginClass(componentClass.getName())) {
+  protected void handleInitComponentError(final Throwable ex, final boolean fatal, final String componentClassName) {
+    if (PluginManager.isPluginClass(componentClassName)) {
       LOG.error(ex);
-      PluginId pluginId = PluginManager.getPluginByClassName(componentClass.getName());
+      PluginId pluginId = PluginManager.getPluginByClassName(componentClassName);
       @NonNls final String errorMessage = "Plugin " + pluginId.getIdString() + " failed to initialize:\n" + ex.getMessage() +
                                           "\nPlease remove the plugin and restart " + ApplicationNamesInfo.getInstance().getFullProductName() + ".";
       if (!myHeadlessMode) {
@@ -221,7 +220,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
     else if (fatal) {
       LOG.error(ex);
-      @NonNls final String errorMessage = "Fatal error initializing class " + componentClass.getName() + ":\n" +
+      @NonNls final String errorMessage = "Fatal error initializing class " + componentClassName + ":\n" +
                                           ex.toString() +
                                           "\nComplete error stacktrace was written to idea.log";
       if (!myHeadlessMode) {
@@ -232,7 +231,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         System.out.println(errorMessage);
       }
     }
-    super.handleInitComponentError(componentClass, ex, fatal);
+    super.handleInitComponentError(ex, fatal, componentClassName);
   }
 
   private void loadApplicationComponents() {
@@ -248,9 +247,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   protected MutablePicoContainer createPicoContainer() {
-    final AreaPicoContainer picoContainer = Extensions.getRootArea().getPicoContainer();
-    picoContainer.setComponentAdapterFactory(new MyComponentAdapterFactory(this));
-    return picoContainer;
+    return Extensions.getRootArea().getPicoContainer();
   }
 
   public boolean isInternal() {

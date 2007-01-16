@@ -11,9 +11,9 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.util.IdeaPicoContainer;
 import com.intellij.util.containers.FactoryMap;
 import org.picocontainer.MutablePicoContainer;
-import org.picocontainer.defaults.DefaultPicoContainer;
 
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -29,7 +29,7 @@ class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestF
   public HeavyTestFixtureBuilderImpl(HeavyIdeaTestFixtureImpl fixture, final Map<Class<? extends ModuleFixtureBuilder>, Class<? extends ModuleFixtureBuilder>> providers) {
     myFixture = fixture;
 
-    final MutablePicoContainer container = new DefaultPicoContainer();
+    final MutablePicoContainer container = new IdeaPicoContainer();
     container.registerComponentInstance(this);
 
     myModuleFixtureBuilderFactory = new FactoryMap<Class<? extends ModuleFixtureBuilder>, ModuleFixtureBuilder>() {

@@ -2,6 +2,7 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
+import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -122,9 +123,9 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
 
 
   @Override
-  protected void initJdomExternalizable(final Class componentClass, final Object component) {
+  protected void initJdomExternalizable(final Object component) {
    if (((ProjectImpl)myModule.getProject()).isOptimiseTestLoadSpeed()) return; //test load speed optimization
-    super.initJdomExternalizable(componentClass, component);
+    super.initJdomExternalizable(component);
   }
 
 
@@ -142,7 +143,7 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
   }
 
   @Nullable
-  protected VirtualFile getComponentConfigurationFile(Class componentInterface) {
+  protected VirtualFile getComponentConfigurationFile(ComponentConfig componentInterface) {
     return getModuleFile();
   }
 

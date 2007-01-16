@@ -15,7 +15,6 @@ import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -332,31 +331,25 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   private void projectOpened() {
-    final Object[] components = getComponents();
-    for (Object component : components) {
-      if (component instanceof ProjectComponent) {
-        try {
-          ProjectComponent projectComponent = (ProjectComponent)component;
-          projectComponent.projectOpened();
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
+    final ProjectComponent[] components = getComponents(ProjectComponent.class);
+    for (ProjectComponent component : components) {
+      try {
+        component.projectOpened();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
       }
     }
   }
 
   private void projectClosed() {
-    final Object[] components = getComponents();
-    for (int i = components.length - 1; i >= 0; i--) {
-      if (components[i] instanceof ProjectComponent) {
-        try {
-          ProjectComponent component = (ProjectComponent)components[i];
-          component.projectClosed();
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
+    final ProjectComponent[] components = getComponents(ProjectComponent.class);
+    for (ProjectComponent component : components) {
+      try {
+        component.projectClosed();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
       }
     }
   }
@@ -381,9 +374,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   protected MutablePicoContainer createPicoContainer() {
-    final AreaPicoContainer picoContainer = Extensions.getArea(this).getPicoContainer();
-    picoContainer.setComponentAdapterFactory(new ComponentManagerImpl.MyComponentAdapterFactory(this));
-    return picoContainer;
+    return Extensions.getArea(this).getPicoContainer();
   }
 
   public boolean isDefault() {

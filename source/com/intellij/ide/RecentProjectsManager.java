@@ -10,6 +10,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
@@ -208,7 +209,7 @@ public class RecentProjectsManager implements ApplicationComponent, JDOMExternal
   }
 
   private static String getProjectPath(Project project) {
-    return project.getProjectFilePath();
+    return ((ProjectImpl)project).getStateStore().getProjectFilePath();
   }
 
   private class ReopenProjectAction extends AnAction {

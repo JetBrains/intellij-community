@@ -61,9 +61,7 @@ public interface ComponentManager extends UserDataHolder, Disposable {
   <T> T getComponent(Class<T> interfaceClass, T defaultImplementationIfAbsent);
 
   /**
-   * Gets interface classes for all available components.
-   *
-   * @return array of interface classes
+   * @deprecated Use {@link #getComponents} instead.
    */
   @NotNull Class[] getComponentInterfaces();
 
@@ -77,12 +75,12 @@ public interface ComponentManager extends UserDataHolder, Disposable {
   boolean hasComponent(@NotNull Class interfaceClass);
 
   /**
-   * Gets all components whose interface class is derived from <code>baseInterfaceClass</code>.
+   * Gets all components whose implementation class is derived from <code>baseClass</code>.
    *
-   * @param baseInterfaceClass base class
+   * @param baseClass
    * @return array of components
    */
-  @NotNull <T> T[] getComponents(Class<T> baseInterfaceClass);
+  @NotNull <T> T[] getComponents(Class<T> baseClass);
 
   @NotNull
   PicoContainer getPicoContainer();
@@ -90,4 +88,10 @@ public interface ComponentManager extends UserDataHolder, Disposable {
   MessageBus getMessageBus();
 
   boolean isDisposed();
+
+  @NotNull
+  ComponentConfig[] getComponentConfigurations();
+
+  @Nullable
+  Object getComponent(final ComponentConfig componentConfig);
 }

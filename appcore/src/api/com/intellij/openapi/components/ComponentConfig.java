@@ -1,8 +1,10 @@
 package com.intellij.openapi.components;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,4 +27,12 @@ public class ComponentConfig {
   @Property(surroundWithTag = false)
   @MapAnnotation(surroundWithTag = false, entryTagName = "option", keyAttributeName = "name", valueAttributeName = "value")
   public Map<String,String> options = new HashMap<String, String>();
+
+  @Transient
+  public IdeaPluginDescriptor pluginDescriptor;
+
+  @Transient
+  public ClassLoader getClassLoader() {
+    return pluginDescriptor != null ? pluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
+  }
 }

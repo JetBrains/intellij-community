@@ -51,7 +51,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     myNameToConfiguration.remove(name);
   }
 
-  void initJdomExternalizable(Class componentClass, Object component) {
+  void initJdomExternalizable(Object component) {
     final String componentName = ((BaseComponent)component).getComponentName();
 
     try {
@@ -59,13 +59,13 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
       if (element != null) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Loading defaults for " + componentClass.getName());
+          LOG.debug("Loading defaults for " + component.getClass());
         }
         ((JDOMExternalizable)component).readExternal(element);
       }
     }
     catch (Exception e) {
-      LOG.error("Cannot load defaults for " + componentClass.getName(), e);
+      LOG.error("Cannot load defaults for " + component.getClass(), e);
     }
 
     Element element = getConfiguration(componentName);
@@ -73,7 +73,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     if (element != null) {
       try {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Loading configuration for " + componentClass.getName());
+          LOG.debug("Loading configuration for " + component.getClass());
         }
         ((JDOMExternalizable)component).readExternal(element);
       }
@@ -110,9 +110,9 @@ abstract class ComponentStoreImpl implements IComponentStore {
     return null;
   }
 
-  public void initComponent(final Object component, final Class componentClass) {
+  public void initComponent(final Object component) {
     if (component instanceof JDOMExternalizable) {
-      initJdomExternalizable(componentClass, component);
+      initJdomExternalizable(component);
     }
   }
 

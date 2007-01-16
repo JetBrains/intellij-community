@@ -140,12 +140,10 @@ import java.util.*;
     deleteBackupFiles(path);
     backupFiles(path);
 
-    Class[] componentClasses = myApplication.getComponentInterfaces();
-
     HashMap<String, Element> fileNameToRootElementMap = new HashMap<String, Element>();
 
-    for (Class<?> componentClass : componentClasses) {
-      Object component = myApplication.getComponent(componentClass);
+    final Object[] components = myApplication.getComponents(Object.class);
+    for (Object component : components) {
       if (!(component instanceof BaseComponent)) continue;
       String fileName;
       if (component instanceof NamedJDOMExternalizable) {
