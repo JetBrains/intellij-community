@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,6 +172,19 @@ public class IfStatementWithIdenticalBranchesInspection
                 }
                 nextStatement = PsiTreeUtil.getNextSiblingOfType(statement,
                         PsiStatement.class);
+                if (nextStatement == null) {
+                    continue;
+                }
+                final PsiElement statementParent = statement.getParent();
+                if (!(statementParent instanceof PsiIfStatement)) {
+                    continue;
+                }
+                // nextStatement should not be the else part of an if statement
+                final PsiElement nextStatementParent =
+                        nextStatement.getParent();
+                if (statementParent.equals(nextStatementParent)) {
+                    nextStatement = null;
+                }
             }
             return nextStatement;
         }
