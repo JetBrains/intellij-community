@@ -166,7 +166,7 @@ public class ValueHint {
             final TextWithImports text = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myCurrentExpression.getText());
             final Value value = evaluator.evaluate(evaluationContext);
 
-            final WatchItemDescriptor descriptor = new WatchItemDescriptor(myProject, text, value, false);
+            final WatchItemDescriptor descriptor = new WatchItemDescriptor(myProject, text, value);
             if (!isActiveTootlipApplicable(value) || myType == MOUSE_OVER_HINT) {
               descriptor.setContext(evaluationContext);
               if (myType == MOUSE_OVER_HINT) {

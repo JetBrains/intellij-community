@@ -19,7 +19,6 @@ import java.util.Enumeration;
 
 public class WatchDebuggerTree extends DebuggerTree {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.WatchDebuggerTree");
-  private boolean myAllowBreakpoints = false;
 
   public WatchDebuggerTree(Project project) {
     super(project);
@@ -27,11 +26,12 @@ public class WatchDebuggerTree extends DebuggerTree {
 
   public DebuggerTreeNodeImpl[] getWatches() {
     DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl)getModel().getRoot();
-    DebuggerTreeNodeImpl [] watches = new DebuggerTreeNodeImpl[root.getChildCount()];
+    DebuggerTreeNodeImpl[] watches = new DebuggerTreeNodeImpl[root.getChildCount()];
 
+    final Enumeration e = root.children();
     int i = 0;
-    for(Enumeration e = root.children(); e.hasMoreElements(); i++) {
-      watches[i] = (DebuggerTreeNodeImpl) e.nextElement();
+    while(e.hasMoreElements()) {
+      watches[i++] = (DebuggerTreeNodeImpl)e.nextElement();
     }
 
     return watches;
@@ -45,7 +45,7 @@ public class WatchDebuggerTree extends DebuggerTree {
   public DebuggerTreeNodeImpl addWatch(WatchItemDescriptor descriptor) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     final DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl) getModel().getRoot();
-    WatchItemDescriptor watchDescriptor = new WatchItemDescriptor(getProject(), descriptor.getEvaluationText(), myAllowBreakpoints);
+    WatchItemDescriptor watchDescriptor = new WatchItemDescriptor(getProject(), descriptor.getEvaluationText());
     watchDescriptor.displayAs(descriptor);
 
     final DebuggerTreeNodeImpl node = DebuggerTreeNodeImpl.createNodeNoUpdate(this, watchDescriptor);
@@ -62,7 +62,7 @@ public class WatchDebuggerTree extends DebuggerTree {
   public DebuggerTreeNodeImpl addWatch(TextWithImports text) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     final DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl) getModel().getRoot();
-    DebuggerTreeNodeImpl node = DebuggerTreeNodeImpl.createNodeNoUpdate(this, new WatchItemDescriptor(getProject(), text, myAllowBreakpoints));
+    DebuggerTreeNodeImpl node = DebuggerTreeNodeImpl.createNodeNoUpdate(this, new WatchItemDescriptor(getProject(), text));
     root.add(node);
 
     treeChanged();
@@ -101,12 +101,4 @@ public class WatchDebuggerTree extends DebuggerTree {
     node.calcValue();
   }
 
-  public void setAllowBreakpoints(boolean b) {
-    myAllowBreakpoints = b;
-    DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl)getMutableModel().getRoot();
-    for(Enumeration enumeration = root.children(); enumeration.hasMoreElements();){
-      DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)enumeration.nextElement();
-      ((WatchItemDescriptor)child.getDescriptor()).setAllowBreakpoints(b);
-    }      
-  }
 }

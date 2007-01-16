@@ -20,18 +20,15 @@ import com.sun.jdi.Value;
  * update(Value, boolean) method must be called whenever the state of the target VM changes
  */
 public class WatchItemDescriptor extends EvaluationDescriptor {
-  private boolean myAllowBreakpoints;
 
-  public WatchItemDescriptor(Project project, TextWithImports text, boolean allowBreakpoints) {
+  public WatchItemDescriptor(Project project, TextWithImports text) {
     super(text, project);
     setValueLabel("");
-    myAllowBreakpoints = allowBreakpoints;
   }
 
-  public WatchItemDescriptor(Project project, TextWithImports text, Value value, boolean allowBreakpoints) {
+  public WatchItemDescriptor(Project project, TextWithImports text, Value value) {
     super(text, project, value);
     setValueLabel("");
-    myAllowBreakpoints = allowBreakpoints;
   }
 
   public String getName() {
@@ -53,19 +50,13 @@ public class WatchItemDescriptor extends EvaluationDescriptor {
   }
 
   protected EvaluationContextImpl getEvaluationContext(EvaluationContextImpl evaluationContext) {
-    evaluationContext.setAllowBreakpoints(myAllowBreakpoints);
     return evaluationContext;
   }
 
   protected PsiCodeFragment getEvaluationCode(StackFrameContext context) throws EvaluateException {
     final PsiElement psiContext = PositionUtil.getContextElement(context);
-    final PsiCodeFragment fragment =
-      getEffectiveCodeFragmentFactory(psiContext).createCodeFragment(getEvaluationText(), psiContext, myProject);
+    final PsiCodeFragment fragment = getEffectiveCodeFragmentFactory(psiContext).createCodeFragment(getEvaluationText(), psiContext, myProject);
     fragment.forceResolveScope(GlobalSearchScope.allScope(myProject));
     return fragment;
-  }
-
-  public void setAllowBreakpoints(boolean b) {
-    myAllowBreakpoints = b;
   }
 }

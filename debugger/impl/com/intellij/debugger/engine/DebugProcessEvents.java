@@ -258,7 +258,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     }
 
     private void invokeVMDeathEvent() {
-      DebugProcessEvents.this.getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
+      getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
         protected void action() throws Exception {
           SuspendContextImpl suspendContext = getSuspendManager().pushSuspendContext(EventRequest.SUSPEND_NONE, 1);
           processVMDeathEvent(suspendContext, null);
@@ -395,7 +395,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
         final SuspendManager suspendManager = getSuspendManager();
         SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(suspendManager, getSuspendContext().getThread());
 
-        if(evaluatingContext != null && !evaluatingContext.getEvaluationContext().isAllowBreakpoints()) {
+        if(evaluatingContext != null) {
+          // is inside evaluation, so ignore any breakpoints
           suspendManager.voteResume(suspendContext);
           return;
         }

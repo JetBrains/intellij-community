@@ -7,7 +7,6 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.ClassLoaderReference;
-import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.Value;
 
 /**
@@ -21,10 +20,8 @@ public final class EvaluationContextImpl implements EvaluationContext{
   private final Value myThisObject;
   private final SuspendContextImpl mySuspendContext;
   private final StackFrameProxyImpl myFrameProxy;
-  private boolean myAllowBreakpoints = false;
 
-  public EvaluationContextImpl(SuspendContextImpl suspendContext, StackFrameProxyImpl frameProxy,
-                           Value thisObject) {
+  public EvaluationContextImpl(SuspendContextImpl suspendContext, StackFrameProxyImpl frameProxy, Value thisObject) {
     myThisObject = thisObject;
     myFrameProxy = frameProxy;
     mySuspendContext = suspendContext;
@@ -53,9 +50,7 @@ public final class EvaluationContextImpl implements EvaluationContext{
   }
 
   public EvaluationContextImpl createEvaluationContext(Value value) {
-    EvaluationContextImpl evaluationContext = new EvaluationContextImpl(getSuspendContext(), getFrameProxy(), value);
-    evaluationContext.myAllowBreakpoints = isAllowBreakpoints();
-    return evaluationContext;
+    return new EvaluationContextImpl(getSuspendContext(), getFrameProxy(), value);
   }
 
   public ClassLoaderReference getClassLoader() throws EvaluateException {
@@ -63,11 +58,4 @@ public final class EvaluationContextImpl implements EvaluationContext{
     return myFrameProxy != null ? myFrameProxy.getClassLoader() : null;
   }
 
-  public boolean isAllowBreakpoints() {
-    return myAllowBreakpoints;
-  }
-
-  public void setAllowBreakpoints(boolean allowBreakpoints) {
-    myAllowBreakpoints = allowBreakpoints;
-  }
 }

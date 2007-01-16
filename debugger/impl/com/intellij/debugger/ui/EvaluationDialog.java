@@ -160,7 +160,6 @@ public abstract class EvaluationDialog extends DialogWrapper {
       super(project, (DebuggerManagerEx.getInstanceEx(project)).getContextManager());
       final WatchDebuggerTree watchTree = getWatchTree();
       watchTree.setEvaluationPriority(DebuggerManagerThreadImpl.HIGH_PRIORITY);
-      watchTree.setAllowBreakpoints(true);
       final AnAction setValueAction  = ActionManager.getInstance().getAction(DebuggerActions.SET_VALUE);
       setValueAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), watchTree);
       registerDisposable(new Disposable() {

@@ -115,7 +115,7 @@ public class FrameDebuggerTree extends DebuggerTree {
         }
       }
       for (TextWithImports text : usedVars.second) {
-        myChildren.add(myNodeManager.createNode(new WatchItemDescriptor(getProject(), text, false), evaluationContext));
+        myChildren.add(myNodeManager.createNode(new WatchItemDescriptor(getProject(), text), evaluationContext));
       }
     }
   }
