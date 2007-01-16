@@ -33,6 +33,7 @@ public abstract class ParameterTablePanel extends JPanel {
   private MyTableModel myTableModel;
   private JButton myUpButton;
   private JButton myDownButton;
+  private TypeSelector[] myParameterTypeSelectors;
 
   public static class VariableData {
     public final PsiVariable variable;
@@ -80,24 +81,11 @@ public abstract class ParameterTablePanel extends JPanel {
       }
     });
 
-    myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_TYPE_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
-      public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        VariableData data = myVariableData[row];
-        setText(data.type.getPresentableText());
-        return this;
-      }
-    });
-
-    TypeSelectorManager[] managers = new TypeSelectorManagerImpl[myVariableData.length];
-    for (int i = 0; i < managers.length; i++) {
+    myParameterTypeSelectors = new TypeSelector[myVariableData.length];
+    for (int i = 0; i < myParameterTypeSelectors.length; i++) {
       PsiExpression[] occurrences = findVariableOccurrences(scopeElements, myVariableData[i].variable);
-      managers[i] = new TypeSelectorManagerImpl(myProject, myVariableData[i].type, occurrences);
-    }
-
-    final TypeSelector[] selectors = new TypeSelector[managers.length];
-    for (int i = 0; i < selectors.length; i++) {
-      selectors[i] = managers[i].getTypeSelector();
+      TypeSelectorManager manager = new TypeSelectorManagerImpl(myProject, myVariableData[i].type, occurrences);
+      myParameterTypeSelectors[i] = manager.getTypeSelector();
     }
 
     myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_TYPE_COLUMN).setCellEditor(new AbstractTableCellEditor() {
@@ -111,8 +99,17 @@ public abstract class ParameterTablePanel extends JPanel {
                                                    final boolean isSelected,
                                                    final int row,
                                                    final int column) {
-        myCurrentSelector = selectors[row];
+        myCurrentSelector = myParameterTypeSelectors[row];
         return myCurrentSelector.getComponent();
+      }
+    });
+
+    myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_TYPE_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
+      public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        VariableData data = myVariableData[row];
+        setText(data.type.getPresentableText());
+        return this;
       }
     });
 
@@ -360,8 +357,9 @@ public abstract class ParameterTablePanel extends JPanel {
         case CHECKMARK_COLUMN:
           return isEnabled();
         case PARAMETER_NAME_COLUMN:
-        case PARAMETER_TYPE_COLUMN:
           return isEnabled() && myVariableData[rowIndex].passAsParameter;
+        case PARAMETER_TYPE_COLUMN:
+          return isEnabled() && myVariableData[rowIndex].passAsParameter && !(myParameterTypeSelectors[rowIndex].getComponent() instanceof JLabel);
         default:
           return false;
       }

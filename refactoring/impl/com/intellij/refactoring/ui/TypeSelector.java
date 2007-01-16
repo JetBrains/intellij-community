@@ -17,7 +17,7 @@ public class TypeSelector {
 
   public TypeSelector(PsiType type) {
     myType = type;
-    myComponent = new JLabel(myType.getCanonicalText());
+    myComponent = new JLabel(myType.getPresentableText());
     myComboBoxModel = null;
   }
 
