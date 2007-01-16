@@ -31,6 +31,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 import java.util.List;
 import java.util.zip.ZipException;
@@ -480,7 +481,9 @@ public class PluginManagerMain {
           doc.processHTMLFrameHyperlinkEvent(evt);
         }
         else {
-          BrowserUtil.launchBrowser(e.getURL().toString());
+          URL url = e.getURL();
+          if( url != null )
+            BrowserUtil.launchBrowser( url.toString() );
         }
       }
     }
