@@ -176,7 +176,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
 
   public void projectOpened() {
-    final Object[] components = getComponents(false);
+    final Object[] components = getComponents();
     for (Object component1 : components) {
       if (component1 instanceof ModuleComponent) {
         ModuleComponent component = (ModuleComponent)component1;
@@ -191,7 +191,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   }
 
   public void projectClosed() {
-    final Object[] components = getComponents(false);
+    final Object[] components = getComponents();
     for (Object component1 : components) {
       if (component1 instanceof ModuleComponent) {
         ModuleComponent component = (ModuleComponent)component1;
@@ -235,7 +235,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
   public void moduleAdded() {
     isModuleAdded = true;
-    final Object[] components = getComponents(false);
+    final Object[] components = getComponents();
     for (Object component1 : components) {
       if (component1 instanceof ModuleComponent) {
         ModuleComponent component = (ModuleComponent)component1;

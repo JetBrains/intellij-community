@@ -29,9 +29,7 @@ import org.picocontainer.defaults.*;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author mike
@@ -53,7 +51,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private Map<String, BaseComponent> myNameToComponent = new HashMap<String, BaseComponent>();
   private Map<Class, Object> myInitializedComponents = new HashMap<Class, Object>();
-  private Set<Class> myLazyComponents = new HashSet<Class>();
 
   private MutablePicoContainer myPicoContainer;
   private volatile boolean myDisposed = false;
@@ -91,13 +88,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     try {
       final Class[] componentInterfaces = getComponentInterfaces();
       for (Class componentInterface : componentInterfaces) {
-        if (!myLazyComponents.contains(componentInterface)) {
-          try {
-            createComponent(componentInterface);
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
+        try {
+          createComponent(componentInterface);
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
     }
@@ -120,9 +115,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     if (component instanceof BaseComponent) {
       BaseComponent baseComponent = (BaseComponent)component;
       final String componentName = baseComponent.getComponentName();
-      if (componentName == null) {
-        LOG.error("Component name is null: " + component.getClass().getName());
-      }
 
       if (myNameToComponent.containsKey(componentName)) {
         BaseComponent loadedComponent = myNameToComponent.get(componentName);
@@ -140,7 +132,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected void disposeComponents() {
-    final Object[] components = getComponents(false);
+    final Object[] components = getComponents();
     myDisposed = true;
 
     for (Object component : components) {
@@ -158,6 +150,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myComponentsCreated = false;
   }
 
+  @SuppressWarnings({"unchecked"})
   @Nullable
   private synchronized <T> T getComponentFromContainer(Class<T> interfaceClass) {
     final T initializedComponent = (T)myInitializedComponents.get(interfaceClass);
@@ -174,11 +167,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     Object lock = getLock(interfaceClass);
 
     synchronized (lock) {
-      if (myLazyComponents.contains(interfaceClass)) {
-        createComponent(interfaceClass);
-        myLazyComponents.remove(interfaceClass);
-      }
-
       T component = (T)myInterfaceToComponentMap.get(interfaceClass);
       if (component == null) {
         component = (T)createComponent(interfaceClass);
@@ -247,9 +235,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myInterfaceToClassMap.put(interfaceClass, implementationClass);
     myComponentInterfaces.add(interfaceClass);
     myInterfaceToOptionsMap.put(interfaceClass, options);
-    if (lazy) {
-      myLazyComponents.add(interfaceClass);
-    }
   }
 
   public synchronized void registerComponent(Class interfaceClass, Class implementationClass, Map options) {
@@ -265,18 +250,17 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myInterfaceToClassMap.containsKey(interfaceClass);
   }
 
-  protected synchronized Object[] getComponents(boolean includeLazyComponents) {
+  protected synchronized Object[] getComponents() {
     Class[] componentClasses = getComponentInterfaces();
     ArrayList<Object> components = new ArrayList<Object>(componentClasses.length);
     for (Class<?> interfaceClass : componentClasses) {
-      if (includeLazyComponents || !myLazyComponents.contains(interfaceClass)) {
-        Object component = getComponent(interfaceClass);
-        if (component != null) components.add(component);
-      }
+      Object component = getComponent(interfaceClass);
+      if (component != null) components.add(component);
     }
     return components.toArray(new Object[components.size()]);
   }
 
+  @SuppressWarnings({"unchecked"})
   @NotNull
   public synchronized <T> T[] getComponents(Class<T> baseInterfaceClass) {
     Class[] componentClasses;
@@ -365,7 +349,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return !isTrue(options, "internal") || ApplicationManagerEx.getApplicationEx().isInternal();
   }
 
-  private static boolean isTrue(Map options, @NonNls final String option) {
+  private static boolean isTrue(Map<String, String> options, @NonNls final String option) {
     return options != null && options.containsKey(option) && Boolean.valueOf(options.get(option).toString()).booleanValue();
   }
 
@@ -382,7 +366,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     private final ComponentManagerImpl myComponentManager;
 
     public MyComponentAdapterFactory(final ComponentManagerImpl componentManager) {
-      this.myComponentManager = componentManager;
+      myComponentManager = componentManager;
     }
 
     public ComponentAdapter createComponentAdapter(final Object componentKey, Class componentImplementation, Parameter[] parameters)
@@ -430,7 +414,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myInterfaceToComponentMap = null;
     myInterfaceToLockMap = null;
     myInterfaceToOptionsMap = null;
-    myLazyComponents = null;
     myNameToComponent = null;
     myPicoContainer = null;
 
@@ -449,7 +432,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   public void initComponents() {
     createComponents();
-    getComponents(false);
+    getComponents();
   }
 
   protected void loadComponentsConfiguration(ComponentConfig[] components, @Nullable final IdeaPluginDescriptor descriptor, final boolean loadDummies) {

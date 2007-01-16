@@ -14,7 +14,6 @@ import com.intellij.openapi.project.impl.convertors.Convertor34;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
@@ -116,7 +115,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
 
   public synchronized void loadFromXml(Element root, String filePath) throws InvalidDataException {
-    PathMacroManager.getInstance(myComponentManager).getExpandMacroMap().substitute(root, SystemInfo.isFileSystemCaseSensitive);
+    PathMacroManager.getInstance(myComponentManager).expandPaths(root);
 
     int originalVersion = 0;
     try {

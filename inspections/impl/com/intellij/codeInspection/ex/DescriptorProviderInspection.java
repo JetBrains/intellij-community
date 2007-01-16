@@ -1,6 +1,5 @@
 package com.intellij.codeInspection.ex;
 
-import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.XMLExportUtl;
@@ -9,7 +8,6 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
@@ -79,7 +77,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
 
     @NonNls final String ext = ".xml";
     final String fileName = ourOutputPath + File.separator + getShortName() + ext;
-    final ReplacePathToMacroMap replacements = PathMacroManager.getInstance(getContext().getProject()).getReplacePathMap();
+    final PathMacroManager pathMacroManager = PathMacroManager.getInstance(getContext().getProject());
     PrintWriter printWriter = null;
     try {
       new File(ourOutputPath).mkdirs();
@@ -87,7 +85,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       final CharArrayWriter writer = new CharArrayWriter();
       for (Object o : list) {
         final Element element = (Element)o;
-        replacements.substitute(element, SystemInfo.isFileSystemCaseSensitive);
+        pathMacroManager.collapsePaths(element);
         JDOMUtil.writeElement(element, writer, "\n");
       }
       printWriter = new PrintWriter(new BufferedWriter(new FileWriter(file, true)));

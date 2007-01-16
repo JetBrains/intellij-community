@@ -332,7 +332,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   private void projectOpened() {
-    final Object[] components = getComponents(false);
+    final Object[] components = getComponents();
     for (Object component : components) {
       if (component instanceof ProjectComponent) {
         try {
@@ -347,7 +347,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   private void projectClosed() {
-    final Object[] components = getComponents(false);
+    final Object[] components = getComponents();
     for (int i = components.length - 1; i >= 0; i--) {
       if (components[i] instanceof ProjectComponent) {
         try {

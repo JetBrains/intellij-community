@@ -6,6 +6,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.util.SystemInfo;
+import org.jdom.Element;
 
 public class BasePathMacroManager extends PathMacroManager {
   private PathMacrosImpl myPathMacros ;
@@ -33,6 +34,15 @@ public class BasePathMacroManager extends PathMacroManager {
 
   public String collapsePath(final String path) {
     return getReplacePathMap().substitute(path, SystemInfo.isFileSystemCaseSensitive);
+  }
+
+  public void expandPaths(final Element element) {
+    getExpandMacroMap().substitute(element, SystemInfo.isFileSystemCaseSensitive);
+  }
+
+
+  public void collapsePaths(final Element element) {
+    getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive);
   }
 
   public void setPathMacros(final PathMacrosImpl pathMacros) {

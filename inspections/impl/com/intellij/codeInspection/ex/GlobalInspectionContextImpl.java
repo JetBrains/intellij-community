@@ -30,7 +30,6 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -360,7 +359,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
                 outStream = localInspectionFilePreparations(file, outStream, isLocalToolAttribute, isLocalTool);
               }
               else {
-                PathMacroManager.getInstance(getProject()).getReplacePathMap().substitute(doc.getRootElement(), SystemInfo.isFileSystemCaseSensitive);
+                PathMacroManager.getInstance(getProject()).collapsePaths(doc.getRootElement());
                 outStream = new BufferedOutputStream(new FileOutputStream(file));
                 JDOMUtil.writeDocument(doc, outStream, "\n");
               }

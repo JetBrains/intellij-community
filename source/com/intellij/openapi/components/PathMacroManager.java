@@ -4,6 +4,7 @@ import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.HashSet;
+import org.jdom.Element;
 
 import java.util.Set;
 
@@ -20,7 +21,6 @@ public abstract class PathMacroManager {
     return component;
   }
 
-  public abstract ExpandMacroToPathMap getExpandMacroMap();
   public abstract ReplacePathToMacroMap getReplacePathMap();
   public abstract void setPathMacros(final PathMacrosImpl pathMacros);
 
@@ -28,6 +28,8 @@ public abstract class PathMacroManager {
   public abstract String expandPath(String path);
   public abstract String collapsePath(String path);
 
+  public abstract void expandPaths(Element element);
+  public abstract void collapsePaths(Element element);
 
   public static String[] getUsedMacroNames() {
     return getUsedMacros().toArray(new String[getUsedMacros().size()]);

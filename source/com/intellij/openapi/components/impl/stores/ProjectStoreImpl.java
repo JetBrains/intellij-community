@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -104,7 +103,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         throw new InvalidDataException();
       }
 
-      PathMacroManager.getInstance(myProject).getExpandMacroMap().substitute(root, SystemInfo.isFileSystemCaseSensitive);
+      PathMacroManager.getInstance(myProject).expandPaths(root);
       return root;
     }
     return null;

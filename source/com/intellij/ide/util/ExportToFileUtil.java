@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.SystemProperties;
@@ -169,8 +168,7 @@ public class ExportToFileUtil {
       panel.add(button, gbConstraints);
 
       String defaultFilePath = myExporter.getDefaultFilePath();
-      defaultFilePath = PathMacroManager.getInstance(myProject).getReplacePathMap()
-        .substitute(defaultFilePath, SystemInfo.isFileSystemCaseSensitive).replace('/', File.separatorChar);
+      defaultFilePath = PathMacroManager.getInstance(myProject).collapsePath(defaultFilePath).replace('/', File.separatorChar);
       textField.setText(defaultFilePath);
 
       button.addActionListener(
