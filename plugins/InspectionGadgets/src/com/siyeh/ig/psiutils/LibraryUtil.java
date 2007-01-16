@@ -28,6 +28,12 @@ public class LibraryUtil {
         return aClass instanceof PsiCompiledElement;
     }
 
+    public static boolean callOnLibraryMethod(
+            @NotNull PsiMethodCallExpression expression) {
+        final PsiMethod method = expression.resolveMethod();
+        return method != null && method instanceof PsiCompiledElement;
+    }
+
     public static boolean isOverrideOfLibraryMethod(PsiMethod method){
 		final PsiMethod[] superMethods = method.findSuperMethods();
 		for(PsiMethod superMethod : superMethods){
