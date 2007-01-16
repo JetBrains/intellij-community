@@ -127,11 +127,32 @@ public class VariableAccessUtils{
                     mayEvaluateToVariable(elseExpression, variable);
         }
         if(expression instanceof PsiArrayAccessExpression){
-            final PsiArrayAccessExpression arrayAccessExpression =
+            final PsiElement parent = expression.getParent();
+            if (parent instanceof PsiArrayAccessExpression){
+                return false;
+            }
+            final PsiType type = variable.getType();
+            if (!(type instanceof PsiArrayType)) {
+                return false;
+            }
+            final PsiArrayType arrayType = (PsiArrayType)type;
+            final int dimensions = arrayType.getArrayDimensions();
+            if (dimensions <= 1) {
+                return false;
+            }
+            PsiArrayAccessExpression arrayAccessExpression =
                     (PsiArrayAccessExpression)expression;
-            final PsiExpression arrayExpression =
+            PsiExpression arrayExpression =
                     arrayAccessExpression.getArrayExpression();
-            return mayEvaluateToVariable(arrayExpression, variable);
+            int count = 1;
+            while (arrayExpression instanceof PsiArrayAccessExpression) {
+                arrayAccessExpression =
+                        (PsiArrayAccessExpression)arrayExpression;
+                arrayExpression = arrayAccessExpression.getArrayExpression();
+                count++;
+            }
+            return count != dimensions &&
+                    mayEvaluateToVariable(arrayExpression, variable);
         }
         return evaluatesToVariable(expression, variable);
     }
