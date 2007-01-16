@@ -680,9 +680,11 @@
         <action id="PrevSplitter" class="com.intellij.ide.actions.PrevSplitAction"/>
       </group>
 
+      <!--
       <group id="FeedbackMenu" popup="true">
         <action id="SendFeedback" class="com.intellij.ide.actions.SendFeedbackAction"/>
       </group>
+      -->
 
       <!-- Help -->
       <group id="HelpMenu" popup="true">
