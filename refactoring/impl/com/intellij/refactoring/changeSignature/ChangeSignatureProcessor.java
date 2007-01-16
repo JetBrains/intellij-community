@@ -159,6 +159,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         if (RefactoringUtil.isMethodUsage(element)) {
           result.add(new MethodCallUsageInfo(element, isToModifyArgs, isToCatchExceptions));
         }
+        else if (ref.getElement() instanceof PsiDocTagValue) {
+          result.add(new UsageInfo(ref.getElement()));
+        }
         else {
           result.add(new MoveRenameUsageInfo(element, ref, method));
         }
