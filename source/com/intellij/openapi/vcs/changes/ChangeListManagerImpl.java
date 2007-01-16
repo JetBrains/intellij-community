@@ -953,8 +953,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       }
       String filePath = VfsUtil.getRelativePath(file, myProject.getBaseDir(), '/');
       for(IgnoredFileBean bean: myFilesToIgnore) {
-        final String prefix = FileUtil.toSystemIndependentName(bean.getPath());
-        if (prefix != null && StringUtil.startsWithIgnoreCase(filePath, prefix)) {
+        final String prefix = bean.getPath();
+        if (prefix != null && StringUtil.startsWithIgnoreCase(filePath, FileUtil.toSystemIndependentName(prefix))) {
           return true;
         }
         final Pattern pattern = bean.getPattern();

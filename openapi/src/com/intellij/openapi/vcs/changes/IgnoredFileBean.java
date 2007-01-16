@@ -11,6 +11,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.util.PatternUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
 
@@ -19,6 +20,7 @@ public class IgnoredFileBean {
   private String myMask;
   private Pattern myPattern;
 
+  @Nullable
   public String getPath() {
     return myPath;
   }
@@ -27,6 +29,7 @@ public class IgnoredFileBean {
     myPath = path;
   }
 
+  @Nullable
   public String getMask() {
     return myMask;
   }
