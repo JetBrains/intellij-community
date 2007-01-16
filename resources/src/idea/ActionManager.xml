@@ -170,8 +170,6 @@
       <action id="CreateServletAction" class="com.intellij.javaee.module.view.web.servlet.CreateServletAction" icon="/nodes/servlet.png"/>
       <action id="CreateFilterAction" class="com.intellij.javaee.module.view.web.filter.CreateFilterAction" icon="/ant/filter.png"/>
       <action id="CreateListenerAction" class="com.intellij.javaee.module.view.web.listener.CreateListenerAction" icon="/ant/filter.png"/>
-      <!--<action id="Faces.CreateFacesConfigAction" class="com.intellij.jsf.actions.CreateFacesConfigAction"
-              icon="/fileTypes/facesConfig.png"/>-->
 
     </group>
     <group id="GenerateGroup">
@@ -186,7 +184,6 @@
       <action id="GenerateSuperMethodCall" class="com.intellij.codeInsight.generation.actions.GenerateSuperMethodCallAction"/>
       <action id="GuiDesigner.GenerateMain" class="com.intellij.uiDesigner.actions.GenerateMainAction"/>
       <reference ref="JavaeeEditorGenerateGroup"/>
-      <!--<action id="Faces.Generate" class="com.intellij.jsf.ui.actions.FacesElementGenerateActionGroup" text="Generate"/>-->
     </group>
 
     <action id="NextDiff" class="com.intellij.openapi.diff.actions.NextDiffAction" icon="/actions/moveDown.png"/>
@@ -1593,25 +1590,6 @@
 
       <separator/>
       <reference ref="Graph.Show.Edge.Labels"/>
-    </group>
-
-    <group id="Graph.Faces.DefaultGraphPopup">
-      <reference ref="Graph.Faces.OpenSelectedPages"/>
-
-      <separator/>
-      <reference ref="Graph.DefaultGraphPopup"/>
-    </group>
-    <!-- ***** yFiles actions end*************************************** -->
-
-
-    <group id="Faces.MainGraphPopup">
-
-    </group>
-    <group id="Faces.MainPageGraphPopup">
-    </group>
-    <group id="Faces.MainPageTreePopup">
-      <reference ref="Faces.Navigation.Graph.PageTree.GotoSourceAction"/>
-      <reference ref="Faces.Navigation.Graph.PageTree.GotoDeclarationAction"/>
     </group>
 
     <action id="DomElementsTreeView.GotoDomElementDeclarationAction"
