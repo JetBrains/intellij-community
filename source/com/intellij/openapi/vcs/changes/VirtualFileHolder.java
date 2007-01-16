@@ -26,14 +26,17 @@ public class VirtualFileHolder {
     myFiles.clear();
   }
 
-  public synchronized void cleanScope(final VcsDirtyScope scope) {
+  public void cleanScope(final VcsDirtyScope scope) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        if (myProject.isDisposed()) return;
-        final List<VirtualFile> currentFiles = new ArrayList<VirtualFile>(myFiles);
-        for (VirtualFile file : currentFiles) {
-          if (fileDropped(file) || scope.belongsTo(new FilePathImpl(file))) {
-            myFiles.remove(file);
+        // to avoid deadlocks caused by incorrect lock ordering, need to lock on this after taking read action
+        synchronized(VirtualFileHolder.this) {
+          if (myProject.isDisposed()) return;
+          final List<VirtualFile> currentFiles = new ArrayList<VirtualFile>(myFiles);
+          for (VirtualFile file : currentFiles) {
+            if (fileDropped(file) || scope.belongsTo(new FilePathImpl(file))) {
+              myFiles.remove(file);
+            }
           }
         }
       }
