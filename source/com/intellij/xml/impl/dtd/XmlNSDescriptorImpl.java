@@ -28,7 +28,7 @@ import java.util.Map;
 public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   private XmlElement myElement;
   private XmlFile myDescriptorFile;
-  private CachedValue<Map<String, XmlElementDescriptor>> myCachedDecls;
+  private volatile CachedValue<Map<String, XmlElementDescriptor>> myCachedDecls;
 
   public XmlNSDescriptorImpl() {
   }
@@ -56,28 +56,31 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   }
 
   private Map<String,XmlElementDescriptor> buildDeclarationMap() {
-    synchronized (PsiLock.LOCK) {
-      if (myCachedDecls == null) {
-        myCachedDecls = myElement.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<String, XmlElementDescriptor>>() {
-          public Result<Map<String, XmlElementDescriptor>> compute() {
-            final List<XmlElementDecl> result = new ArrayList<XmlElementDecl>();
-            myElement.processElements(new FilterElementProcessor(new ClassFilter(XmlElementDecl.class), result), getDeclaration());
-            final Map<String, XmlElementDescriptor> ret = new LinkedHashMap<String, XmlElementDescriptor>((int)(result.size() * 1.5));
-            for (final XmlElementDecl xmlElementDecl : result) {
-              final XmlElement nameElement = xmlElementDecl.getNameElement();
-              if (nameElement != null) {
-                String text = nameElement.getText();
-                if (!ret.containsKey(text)) {
-                  ret.put(text, new XmlElementDescriptorImpl(xmlElementDecl));
+    if (myCachedDecls == null) {
+      synchronized (PsiLock.LOCK) {
+        if (myCachedDecls == null) {
+          myCachedDecls = myElement.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<String, XmlElementDescriptor>>() {
+            public Result<Map<String, XmlElementDescriptor>> compute() {
+              final List<XmlElementDecl> result = new ArrayList<XmlElementDecl>();
+              myElement.processElements(new FilterElementProcessor(new ClassFilter(XmlElementDecl.class), result), getDeclaration());
+              final Map<String, XmlElementDescriptor> ret = new LinkedHashMap<String, XmlElementDescriptor>((int)(result.size() * 1.5));
+              for (final XmlElementDecl xmlElementDecl : result) {
+                final XmlElement nameElement = xmlElementDecl.getNameElement();
+                if (nameElement != null) {
+                  String text = nameElement.getText();
+                  if (!ret.containsKey(text)) {
+                    ret.put(text, new XmlElementDescriptorImpl(xmlElementDecl));
+                  }
                 }
               }
-            }
-            return new Result<Map<String, XmlElementDescriptor>>(ret, myDescriptorFile);
-           }
-         }, false);
+              return new Result<Map<String, XmlElementDescriptor>>(ret, myDescriptorFile);
+             }
+           }, false);
+        }
       }
-      return myCachedDecls.getValue();
     }
+    
+    return myCachedDecls.getValue();
   }
 
   public XmlElementDescriptor getElementDescriptor(XmlTag tag) {

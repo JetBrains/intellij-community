@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.html.dtd;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -22,7 +23,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
 
   private XmlNSDescriptor myDelegate;
   private boolean myRelaxed;
-  private Map<String, XmlElementDescriptor> myCachedDecls;
+  private volatile Map<String, XmlElementDescriptor> myCachedDecls;
 
   public HtmlNSDescriptorImpl(XmlNSDescriptor _delegate) {
     myDelegate = _delegate;
@@ -35,23 +36,26 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
 
   private Map<String,XmlElementDescriptor> buildDeclarationMap() {
     if (myCachedDecls == null) {
-      HashMap<String, XmlElementDescriptor> decls = new HashMap<String, XmlElementDescriptor>();
-      XmlElementDescriptor[] elements = myDelegate == null ? XmlElementDescriptor.EMPTY_ARRAY : myDelegate.getRootElementsDescriptors(null);
+      synchronized(PsiLock.LOCK) {
+        if (myCachedDecls == null) {
+          HashMap<String, XmlElementDescriptor> decls = new HashMap<String, XmlElementDescriptor>();
+          XmlElementDescriptor[] elements = myDelegate == null ? XmlElementDescriptor.EMPTY_ARRAY : myDelegate.getRootElementsDescriptors(null);
 
-      for (XmlElementDescriptor element : elements) {
-        decls.put(
-          element.getName(),
-          new HtmlElementDescriptorImpl(element)
-        );
+          for (XmlElementDescriptor element : elements) {
+            decls.put(
+              element.getName(),
+              new HtmlElementDescriptorImpl(element)
+            );
+          }
+          myCachedDecls = decls;
+        }
       }
-      myCachedDecls = decls;
     }
     return myCachedDecls;
   }
 
   public XmlElementDescriptor getElementDescriptor(XmlTag tag) {
-    String name = tag.getName();
-    name = name.toLowerCase();
+    final String name = tag.getName().toLowerCase();
 
     XmlElementDescriptor xmlElementDescriptor = buildDeclarationMap().get(name);
     if (xmlElementDescriptor == null && myRelaxed) {
