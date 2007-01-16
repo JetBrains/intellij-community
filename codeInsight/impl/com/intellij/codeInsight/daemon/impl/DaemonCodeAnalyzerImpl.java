@@ -117,7 +117,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public void prepareForTest(final Object stoppedNotify, final EditorTracker editorTracker) {
     myStatusBarUpdater = new StatusBarUpdater(myProject);
 
-    myEditorTracker = editorTracker;
     myDaemonListeners = new DaemonListeners(myProject, this, editorTracker) {
       protected void stopDaemon(boolean toRestartAlarm) {
       }

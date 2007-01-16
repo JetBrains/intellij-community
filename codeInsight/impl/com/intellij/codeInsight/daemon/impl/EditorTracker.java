@@ -192,8 +192,10 @@ public class EditorTracker implements ProjectComponent {
   }
 
   public void dispose() {
-    myEditorFactoryListener.dispose(null);
-    EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
+    if (myEditorFactoryListener != null) {
+      myEditorFactoryListener.dispose(null);
+    }
+    myEditorFactory.removeEditorFactoryListener(myEditorFactoryListener);
     if (myIdeFrame != null) {
       myIdeFrame.removeWindowFocusListener(myIdeFrameFocusListener);
     }
