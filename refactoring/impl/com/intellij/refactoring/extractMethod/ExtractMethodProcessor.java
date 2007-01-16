@@ -265,20 +265,22 @@ public class ExtractMethodProcessor implements MatchProvider {
       myOutputVariables = outputVariables.toArray(new PsiVariable[outputVariables.size()]);
     }
 
-    List<PsiVariable> inputVariables =
-      new ArrayList<PsiVariable>(Arrays.asList(ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd)));
+    final PsiVariable[] inputVariables = ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd);
     if (myGenerateConditionalExit) {
-      removeParametersUsedInExitsOnly(codeFragment, myExitStatements, myControlFlow, myFlowStart, myFlowEnd, inputVariables);
+      List<PsiVariable> inputVariableList = new ArrayList<PsiVariable>(Arrays.asList(inputVariables));
+      removeParametersUsedInExitsOnly(codeFragment, myExitStatements, myControlFlow, myFlowStart, myFlowEnd, inputVariableList);
+      myInputVariables = inputVariableList.toArray(new PsiVariable[inputVariableList.size()]);
+    } else {
+      myInputVariables = inputVariables;
     }
-    myInputVariables = inputVariables.toArray(new PsiVariable[inputVariables.size()]);
 
-    //varargs variables go last
+    //varargs variables go last, otherwise order is induced by original ordering
     Arrays.sort(myInputVariables, new Comparator<PsiVariable>() {
       public int compare(final PsiVariable v1, final PsiVariable v2) {
-        return v1.getType() instanceof PsiEllipsisType ? 1 : v2.getType() instanceof PsiEllipsisType ? -1 : 0;
+        return v1.getType() instanceof PsiEllipsisType ? 1 : v2.getType() instanceof PsiEllipsisType ? -1 :
+                                                             v1.getTextRange().getStartOffset() - v2.getTextRange().getStartOffset();
       }
     });
-
 
     chooseTargetClass();
 
@@ -364,7 +366,7 @@ public class ExtractMethodProcessor implements MatchProvider {
                                                List<PsiVariable> inputVariables) {
     LocalSearchScope scope = new LocalSearchScope(codeFragment);
     Variables:
-    for (Iterator<? extends PsiVariable> iterator = inputVariables.iterator(); iterator.hasNext();) {
+    for (Iterator<PsiVariable> iterator = inputVariables.iterator(); iterator.hasNext();) {
       PsiVariable variable = iterator.next();
       Collection<PsiReference> refs = ReferencesSearch.search(variable, scope).findAll();
       for (PsiReference ref : refs) {
