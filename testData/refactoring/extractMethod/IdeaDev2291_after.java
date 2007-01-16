@@ -4,7 +4,7 @@ class Tester {
         newMethod(object, array);
     }
 
-    private void newMethod(Object object, Object[] array) {
+    private void newMethod(Object object, Object... array) {
         array.equals(object);
     }
 }

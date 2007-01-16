@@ -413,11 +413,14 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   public void testRun() throws IncorrectOperationException {
-    ExtractMethodDialog dialog = new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, myReturnType, myTypeParameterList,
-                                                         myThrownExceptions, myStatic, myCanBeStatic, myInitialMethodName,
-                                                         myRefactoringName, myHelpId, myElements);
-    myMethodName = dialog.getChoosenMethodName();
-    myVariableDatum = dialog.getChoosenParameters();
+    myMethodName = myInitialMethodName;
+    myVariableDatum = new ParameterTablePanel.VariableData[myInputVariables.length];
+    for (int i = 0; i < myInputVariables.length; i++) {
+      myVariableDatum[i] = new ParameterTablePanel.VariableData(myInputVariables[i], myInputVariables[i].getType());
+      myVariableDatum[i].passAsParameter = true;
+      myVariableDatum[i].name = myInputVariables[i].getName();
+    }
+
     doRefactoring();
   }
 
