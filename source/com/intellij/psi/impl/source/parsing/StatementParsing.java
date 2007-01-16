@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.jsp.AbstractJspJavaLexer;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.parsing.jsp.JspJavaLexer;
 import com.intellij.psi.impl.source.parsing.jsp.JspxJavaLexer;
@@ -98,7 +99,7 @@ public class StatementParsing extends Parsing {
     Lexer badLexer = lexer instanceof StoppableLexerAdapter ? ((StoppableLexerAdapter)lexer).getOriginal() : lexer;
     if (badLexer instanceof FilterLexer){
       final Lexer original = ((FilterLexer)badLexer).getOriginal();
-      if (original instanceof JavaWithJspTemplateDataLexer || original instanceof JspJavaLexer || original instanceof JspxJavaLexer){
+      if (original instanceof JavaWithJspTemplateDataLexer || original instanceof AbstractJspJavaLexer){
         deep = true; // deep parsing of code blocks in JSP would lead to incorrect parsing on transforming
       }
     }

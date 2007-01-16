@@ -241,14 +241,16 @@ public class FileReferenceSet {
       JspFile jspFile = PsiUtil.getJspFile(file);
       if (jspFile != null) {
         final JspContextManager manager = JspContextManager.getInstance(project);
-        JspFile contextFile = manager.getContextFile(jspFile);
-        Set<JspFile> visited = new HashSet<JspFile>();
-        while (contextFile != null && !visited.contains(jspFile)) {
-          visited.add(jspFile);
-          jspFile = contextFile;
-          contextFile = manager.getContextFile(jspFile);
+        if (manager != null) {
+          JspFile contextFile = manager.getContextFile(jspFile);
+          Set<JspFile> visited = new HashSet<JspFile>();
+          while (contextFile != null && !visited.contains(jspFile)) {
+            visited.add(jspFile);
+            jspFile = contextFile;
+            contextFile = manager.getContextFile(jspFile);
+          }
+          file = jspFile;
         }
-        file = jspFile;
       }
     }
 

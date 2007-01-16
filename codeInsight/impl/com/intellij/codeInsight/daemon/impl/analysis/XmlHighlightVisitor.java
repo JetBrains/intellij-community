@@ -21,7 +21,7 @@ import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.idea.LoggerFactory;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.jsp.impl.JspElementDescriptor;
-import com.intellij.jsp.impl.JspNsDescriptorImpl;
+import com.intellij.jsp.impl.JspNsDescriptor;
 import com.intellij.jsp.impl.TldDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,6 +43,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.xml.XmlNotationDeclImpl;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
@@ -1087,7 +1088,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         }
 
         if (file.getFileType() == StdFileTypes.JSPX && possibleUris.size() == 0) {
-          final XmlElementDescriptor descriptor = ((JspNsDescriptorImpl)jspManager.getActionsLibrary()).getElementDescriptor(localName, XmlUtil.JSP_URI);
+          final XmlElementDescriptor descriptor = ((XmlNSDescriptorImpl)jspManager.getActionsLibrary()).getElementDescriptor(localName, XmlUtil.JSP_URI);
           if (descriptor != null) possibleUris.add(XmlUtil.JSP_URI);
         }
       }

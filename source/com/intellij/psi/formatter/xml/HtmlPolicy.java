@@ -10,7 +10,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.jsp.JspUtil;
+import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
 
@@ -154,7 +154,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     final String name = tag.getName();
     if (name.length() == 0) return false;
 
-    return isScriptletObject(tag) || JspUtil.getDirectiveKindByTag(tag) != null;
+    return isScriptletObject(tag) || JspSpiUtil.getDirectiveKindByTag(tag) != null;
   }
 
   private boolean isScriptletObject(final XmlTag tag) {

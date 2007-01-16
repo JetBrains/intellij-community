@@ -11,10 +11,9 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement2;
-import com.intellij.psi.impl.source.parsing.jsp.JspJavaLexer;
-import com.intellij.psi.impl.source.parsing.jsp.JspxJavaLexer;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.ModifierListElement;
+import com.intellij.psi.jsp.AbstractJspJavaLexer;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -164,7 +163,7 @@ public class ParseUtil implements Constants {
       lexer.start(lexer.getBufferSequence(), startOffset, endOffset, state);
     }
 
-    boolean gt = lexer instanceof JavaLexer || lexer instanceof JavaWithJspTemplateDataLexer || lexer instanceof JspJavaLexer || lexer instanceof JspxJavaLexer;
+    boolean gt = lexer instanceof JavaLexer || lexer instanceof JavaWithJspTemplateDataLexer || lexer instanceof AbstractJspJavaLexer;
     LeafElement leaf = TreeUtil.findFirstLeaf(root);
     if (leaf == null) {
       final TreeElement firstMissing = processor.process(lexer, context);

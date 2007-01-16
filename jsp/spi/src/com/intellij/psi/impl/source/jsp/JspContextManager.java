@@ -5,20 +5,20 @@
 package com.intellij.psi.impl.source.jsp;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
 public abstract class JspContextManager {
 
+  @Nullable
   public static JspContextManager getInstance(Project project) {
     return project.getComponent(JspContextManager.class);
   }

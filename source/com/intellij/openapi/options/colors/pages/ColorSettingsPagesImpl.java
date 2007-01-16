@@ -56,7 +56,6 @@ public class ColorSettingsPagesImpl extends ColorSettingsPages implements Applic
     registerPage(new JavaColorSettingsPage());
     registerPage(new HTMLColorsPage());
     registerPage(new XMLColorsPage());
-    registerPage(new JSPColorsPage());
     registerPage(new CustomColorsPage());
     registerPage(new PropertiesColorsPage());
   }

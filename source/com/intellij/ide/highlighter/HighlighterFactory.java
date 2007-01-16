@@ -2,7 +2,6 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.ide.highlighter.custom.CustomFileHighlighter;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
-import com.intellij.lang.jsp.JspEditorHighlighter;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
@@ -10,6 +9,7 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.lang.jsp.JspEditorHighlighter;
 
 public class HighlighterFactory {
   public static LexerEditorHighlighter createJavaHighlighter(EditorColorsScheme settings, LanguageLevel languageLevel){

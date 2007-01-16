@@ -3,6 +3,7 @@ package com.intellij.lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.jsp.el.ELTokenType;
+import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -117,7 +118,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
       }
       newLexer = scriptLexer;
     } else if (super.getTokenType() == ELTokenType.JSP_EL_CONTENT) {
-      if (elLexer==null) elLexer = new ELLexer();
+      if (elLexer==null) elLexer = JspSpiUtil.createElLexer();
       newLexer = elLexer;
     }
 

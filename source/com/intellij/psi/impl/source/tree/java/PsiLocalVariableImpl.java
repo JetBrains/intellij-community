@@ -8,12 +8,12 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
 import com.intellij.psi.impl.PsiVariableEx;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspElementType;
-import com.intellij.psi.jsp.JspUtil;
+import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
@@ -254,7 +254,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
       if (getTreeParent().getElementType() == JavaElementType.DECLARATION_STATEMENT &&
           getTreeParent().getTreeParent().getElementType() == JavaElementType.CODE_BLOCK &&
           getTreeParent().getTreeParent().getTreeParent().getElementType() == JspElementType.HOLDER_METHOD) { //?
-        final PsiFile[] includingFiles = JspUtil.getReferencingFiles(PsiUtil.getJspFile(this));
+        final PsiFile[] includingFiles = JspSpiUtil.getReferencingFiles(PsiUtil.getJspFile(this));
         return new LocalSearchScope(includingFiles);
       }
     }
