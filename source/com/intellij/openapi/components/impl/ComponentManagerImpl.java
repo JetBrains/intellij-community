@@ -503,9 +503,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     public <T> T[] getComponentsByType(final Class<T> baseClass) {
       ArrayList<T> array = new ArrayList<T>();
 
-      for (Object o: myImplementations) {
-        if (baseClass.isInstance(o)) {
-          array.add((T)o);
+      for (Class interfaceClass : myComponentInterfaces) {
+        final Class implClass = myInterfaceToClassMap.get(interfaceClass);
+        if (baseClass.isAssignableFrom(implClass)) {
+          array.add((T)getComponent(interfaceClass));
         }
       }
 

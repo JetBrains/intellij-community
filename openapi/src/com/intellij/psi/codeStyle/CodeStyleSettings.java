@@ -15,16 +15,14 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
-import com.intellij.lang.Language;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -39,11 +37,15 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     initTypeToName();
     initImports();
 
-    for (final CodeStyleSettingsProvider provider : ApplicationManager.getApplication().getComponents(CodeStyleSettingsProvider.class)) {
+    final CodeStyleSettingsProvider[] codeStyleSettingsProviders =
+      ApplicationManager.getApplication().getComponents(CodeStyleSettingsProvider.class);
+    for (final CodeStyleSettingsProvider provider : codeStyleSettingsProviders) {
       addCustomSettings(provider.createCustomSettings(this));
     }
 
-    for (final FileTypeIndentOptionsProvider provider : ApplicationManager.getApplication().getComponents(FileTypeIndentOptionsProvider.class)) {
+    final FileTypeIndentOptionsProvider[] fileTypeIndentOptionsProviders =
+      ApplicationManager.getApplication().getComponents(FileTypeIndentOptionsProvider.class);
+    for (final FileTypeIndentOptionsProvider provider : fileTypeIndentOptionsProviders) {
       registerAdditionalIndentOptions(provider.getFileType(),provider.createIndentOptions());
     }
   }
