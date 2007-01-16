@@ -514,7 +514,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     public ComponentConfig[] getComponentConfigurations() {
-        return myComponentInterfaces.toArray(new ComponentConfig[myComponentInterfaces.size()]);
+        return myComponentConfigs.toArray(new ComponentConfig[myComponentConfigs.size()]);
     }
   }
 

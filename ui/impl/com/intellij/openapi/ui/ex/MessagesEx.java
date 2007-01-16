@@ -1,13 +1,13 @@
 package com.intellij.openapi.ui.ex;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
-import com.intellij.CommonBundle;
+import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 
@@ -115,6 +115,7 @@ public class MessagesEx extends Messages {
     public void showLater() {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            if (ApplicationManager.getApplication().isDisposed()) return;
             showNow();
           }
         });
