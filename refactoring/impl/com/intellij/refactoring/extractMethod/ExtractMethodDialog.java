@@ -46,10 +46,12 @@ class ExtractMethodDialog extends DialogWrapper {
   private final EditorTextField myNameField;
   private final JTextArea mySignatureArea;
   private final JCheckBox myCbMakeStatic;
+  private JCheckBox myCbMakeVarargs;
 
   private final ParameterTablePanel.VariableData[] myVariableData;
   private final PsiClass myTargetClass;
   private VisibilityPanel myVisibilityPanel;
+  private boolean myWasStatic;
 
 
   public ExtractMethodDialog(Project project,
@@ -69,6 +71,7 @@ class ExtractMethodDialog extends DialogWrapper {
     myElementsToExtract = elementsToExtract;
 
     final List<ParameterTablePanel.VariableData> variableData = new ArrayList<ParameterTablePanel.VariableData>(inputVariables.length);
+    boolean canBeVarargs = false;
     for (PsiVariable var : inputVariables) {
       String name = var.getName();
       if (!(var instanceof PsiParameter)) {
@@ -78,9 +81,14 @@ class ExtractMethodDialog extends DialogWrapper {
         name = codeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
       }
       PsiType type = var.getType();
-      if (type instanceof PsiEllipsisType && var != inputVariables[inputVariables.length - 1]) {
+      if (type instanceof PsiEllipsisType) {
+        if (var == inputVariables[inputVariables.length - 1]) {
+          myWasStatic = true;
+        }
         type = ((PsiEllipsisType)type).toArrayType();
       }
+
+      canBeVarargs |= type instanceof PsiArrayType;
 
       ParameterTablePanel.VariableData data = new ParameterTablePanel.VariableData(var, type);
       data.name = name;
@@ -104,6 +112,10 @@ class ExtractMethodDialog extends DialogWrapper {
     mySignatureArea = new JTextArea(height, 30);
     myCbMakeStatic = new NonFocusableCheckBox();
     myCbMakeStatic.setText(RefactoringBundle.message("declare.static.checkbox"));
+    if (canBeVarargs) {
+      myCbMakeVarargs = new NonFocusableCheckBox();
+      myCbMakeVarargs.setText(RefactoringBundle.message("declare.varargs.checkbox"));
+    }
 
     // Initialize UI
 
@@ -149,6 +161,12 @@ class ExtractMethodDialog extends DialogWrapper {
       if (!conflictsDialog.isOK()) return;
     }
 
+    if (myCbMakeVarargs.isSelected()) {
+      final ParameterTablePanel.VariableData data = myVariableData[myVariableData.length - 1];
+      if (data.type instanceof PsiArrayType) {
+        data.type = new PsiEllipsisType(((PsiArrayType)data.type).getComponentType());
+      }
+    }
     super.doOKAction();
   }
 
@@ -183,10 +201,21 @@ class ExtractMethodDialog extends DialogWrapper {
       myCbMakeStatic.setSelected(false);
       myCbMakeStatic.setEnabled(false);
     }
+
+    if (myCbMakeVarargs != null) {
+      updateVarargsEnabled();
+      myCbMakeVarargs.setSelected(myWasStatic);
+      panel.add(myCbMakeVarargs);
+    }
     setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(myNameField.getText()));
 
     return panel;
   }
+
+  private void updateVarargsEnabled() {
+    myCbMakeVarargs.setEnabled(myVariableData[myVariableData.length - 1].type instanceof PsiArrayType);
+  }
+
   private void update() {
     updateSignature();
     setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(myNameField.getText()));
@@ -215,6 +244,7 @@ class ExtractMethodDialog extends DialogWrapper {
   private JComponent createParametersPanel() {
     JPanel panel = new ParameterTablePanel(myProject, myVariableData, myElementsToExtract) {
       protected void updateSignature() {
+        updateVarargsEnabled();
         ExtractMethodDialog.this.updateSignature();
       }
 
@@ -267,17 +297,23 @@ class ExtractMethodDialog extends DialogWrapper {
     buffer.append("(");
     int count = 0;
     final String INDENT = "    ";
-    for (ParameterTablePanel.VariableData data : myVariableData) {
+    for (int i = 0; i < myVariableData.length; i++) {
+      ParameterTablePanel.VariableData data = myVariableData[i];
       if (data.passAsParameter) {
         //String typeAndModifiers = PsiFormatUtil.formatVariable(data.variable,
         //  PsiFormatUtil.SHOW_MODIFIERS | PsiFormatUtil.SHOW_TYPE);
-        String type = data.type.getPresentableText();
+        PsiType type = data.type;
+        if (i == myVariableData.length - 1 && type instanceof PsiArrayType && myCbMakeVarargs.isSelected()) {
+          type = new PsiEllipsisType(((PsiArrayType)type).getComponentType());
+        }
+
+        String typeText = type.getPresentableText();
         if (count > 0) {
           buffer.append(",");
         }
         buffer.append("\n");
         buffer.append(INDENT);
-        buffer.append(type);
+        buffer.append(typeText);
         buffer.append(" ");
         buffer.append(data.name);
         count++;
