@@ -209,7 +209,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
               models.add(model);
             }
           }
-          myFacetsConfigurator.applyAndDispose();
+          myFacetsConfigurator.apply();
 
           J2EEModuleUtilEx.checkJ2EEModulesAcyclic(models);
           final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);

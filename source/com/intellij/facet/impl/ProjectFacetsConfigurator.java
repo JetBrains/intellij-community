@@ -122,14 +122,10 @@ public class ProjectFacetsConfigurator {
     }
   }
 
-  public void applyAndDispose() throws ConfigurationException {
+  public void apply() throws ConfigurationException {
     for (FacetEditor editor : myEditors.values()) {
       editor.apply();
     }
-    for (FacetEditor editor : myEditors.values()) {
-      editor.disposeUIResources();
-    }
-    myEditors.clear();
   }
 
   public boolean isModified() {
