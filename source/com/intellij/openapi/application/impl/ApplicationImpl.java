@@ -80,14 +80,15 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @NonNls private static final String NULL_STR = "null";
 
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
-    15,
+    1,
     Integer.MAX_VALUE,
     30 * 60L,
     TimeUnit.SECONDS,
     new SynchronousQueue<Runnable>(),
     new ThreadFactory() {
       public Thread newThread(Runnable r) {
-        return new Thread(r, "ApplicationImpl pooled thread") {
+        return new Thread(r, "ApplicationImpl pooled thread")
+        {
           public void interrupt() {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Interrupted worker, will remove from pool");
@@ -356,7 +357,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
               }
 
               myExceptionalThreadWithReadAccess = Thread.currentThread();
-              setExceptionalThreadWithReadAccessFlag(true);
+              boolean old = setExceptionalThreadWithReadAccessFlag(true);
+              LOG.assertTrue(isReadAccessAllowed());
               try {
                 ProgressManager.getInstance().runProcess(process, progress);
               }
@@ -364,7 +366,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                 // ok to ignore.
               }
               finally {
-                setExceptionalThreadWithReadAccessFlag(false);
+                setExceptionalThreadWithReadAccessFlag(old);
               }
             }
           });
@@ -390,13 +392,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     for (final Callable<T> task : tasks) {
       Callable<T> newCallable = new Callable<T>() {
         public T call() throws Exception {
-          setExceptionalThreadWithReadAccessFlag(true);
+          boolean old = setExceptionalThreadWithReadAccessFlag(true);
           try {
             LOG.assertTrue(isReadAccessAllowed());
             return task.call();
           }
           finally {
-            setExceptionalThreadWithReadAccessFlag(false);
+            setExceptionalThreadWithReadAccessFlag(old);
           }
         }
       };
@@ -593,13 +595,15 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     Boolean flag = exceptionalThreadWithReadAccessFlag.get();
     return flag != null && flag.booleanValue();
   }
-  private static void setExceptionalThreadWithReadAccessFlag(boolean flag) {
+  private static boolean setExceptionalThreadWithReadAccessFlag(boolean flag) {
+    boolean old = isExceptionalThreadWithReadAccess();
     if (flag) {
       exceptionalThreadWithReadAccessFlag.set(true);
     }
     else {
       exceptionalThreadWithReadAccessFlag.remove();
     }
+    return old;
   }
 
   public <T> T runReadAction(final Computable<T> computation) {
