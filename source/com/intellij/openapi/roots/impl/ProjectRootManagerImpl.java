@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.ProjectRootType;
@@ -609,7 +610,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       rootPaths.add(extractLocalPath(url));
     }
 
-    final String projectFile = myProject.getProjectFilePath();
+    final String projectFile = ((ProjectImpl)myProject).getStateStore().getProjectFilePath();
     if (projectFile != null) {
       rootPaths.add(projectFile);
       // No need to add workspace file separately since they're definetely on same directory with ipr.
