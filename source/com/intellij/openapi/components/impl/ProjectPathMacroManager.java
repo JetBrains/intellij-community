@@ -5,7 +5,6 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -33,14 +32,6 @@ public class ProjectPathMacroManager extends BasePathMacroManager {
     result.putAll(super.getReplacePathMap());
     getProjectHomeReplacements(result, myProject.getStateStore().isSavePathsRelative());
     return result;
-  }
-
-  public String expandPath(final String path) {
-    return getExpandMacroMap().substitute(path, SystemInfo.isFileSystemCaseSensitive);
-  }
-
-  public String collapsePath(final String path) {
-    return getReplacePathMap().substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
   private void getProjectHomeReplacements(@NonNls ReplacePathToMacroMap result, final boolean savePathsRelative) {

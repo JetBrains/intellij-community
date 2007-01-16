@@ -5,6 +5,7 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.util.SystemInfo;
 
 public class BasePathMacroManager extends PathMacroManager {
   private PathMacrosImpl myPathMacros ;
@@ -26,6 +27,13 @@ public class BasePathMacroManager extends PathMacroManager {
     return result;
   }
 
+  public String expandPath(final String path) {
+    return getExpandMacroMap().substitute(path, SystemInfo.isFileSystemCaseSensitive);
+  }
+
+  public String collapsePath(final String path) {
+    return getReplacePathMap().substitute(path, SystemInfo.isFileSystemCaseSensitive);
+  }
 
   public void setPathMacros(final PathMacrosImpl pathMacros) {
     myPathMacros = pathMacros;
