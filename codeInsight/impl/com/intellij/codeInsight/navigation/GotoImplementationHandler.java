@@ -21,14 +21,19 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.jetbrains.annotations.NotNull;
-
 public class GotoImplementationHandler implements CodeInsightActionHandler {
+  public static final int FLAGS = TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
+                | TargetElementUtil.ELEMENT_NAME_ACCEPTED
+              | TargetElementUtil.LOOKUP_ITEM_ACCEPTED
+              | TargetElementUtil.THIS_ACCEPTED
+              | TargetElementUtil.SUPER_ACCEPTED;
+
   protected interface ResultsFilter {
     boolean acceptClass(PsiClass aClass);
 
@@ -36,28 +41,44 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
-    int flags = TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
-                | TargetElementUtil.ELEMENT_NAME_ACCEPTED
-                | TargetElementUtil.LOOKUP_ITEM_ACCEPTED
-                | TargetElementUtil.THIS_ACCEPTED
-                | TargetElementUtil.SUPER_ACCEPTED;
-    final PsiElement element = TargetElementUtil.findTargetElement(editor, flags);
-    boolean isInvokedOnReferenceElement = TargetElementUtil.findTargetElement(editor, flags & ~TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED) == null;
+    final int offset = editor.getCaretModel().getOffset();
+    final PsiElement element = TargetElementUtil.findTargetElement(editor, FLAGS, offset);
 
-    PsiElement[] result = searchImplementations(editor, file, element, false, isInvokedOnReferenceElement);
+    PsiElement[] result = searchImplementations(editor, file, element, offset );
     if (result.length > 0) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.implementation");
       show(editor, element, result);
     }
   }
 
+  public PsiElement[] searchImplementations(final Editor editor, final PsiFile file, final PsiElement element, final int offset) {
+    boolean isInvokedOnReferenceElement = TargetElementUtil.findTargetElement(editor, FLAGS & ~TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED, offset) == null;
+    return searchImplementations(editor, file, element, offset, false, isInvokedOnReferenceElement);
+  }
+
   @NotNull
   public PsiElement[] searchImplementations(final Editor editor,
                                             final PsiFile file,
                                             final PsiElement element,
+                                            int offset,
                                             final boolean includeSelfAlways,
                                             final boolean includeSelfIfNoOthers) {
     if (element == null) return PsiElement.EMPTY_ARRAY;
+    final PsiElement[] elements = searchDefinitions(element);
+    if (elements.length > 0) {
+      if (!includeSelfAlways) return filterElements(editor, file, element, elements, offset);
+      PsiElement[] all = new PsiElement[elements.length + 1];
+      all[0] = element;
+      System.arraycopy(elements, 0, all, 1, elements.length);
+      return filterElements(editor, file, element, all, offset);
+    }
+    return includeSelfAlways || includeSelfIfNoOthers ?
+           new PsiElement[] {element} :
+           PsiElement.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  protected PsiElement[] searchDefinitions(final PsiElement element) {
     final PsiElement[][] result = new PsiElement[1][];
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
@@ -66,25 +87,15 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     }, CodeInsightBundle.message("searching.for.implementations"), true, element.getProject())) {
       return PsiElement.EMPTY_ARRAY;
     }
-
-    if (result[0] != null && result[0].length > 0) {
-      if (!includeSelfAlways) return filterElements(editor, file, element, result[0]);
-      PsiElement[] all = new PsiElement[result[0].length + 1];
-      all[0] = element;
-      System.arraycopy(result[0], 0, all, 1, result[0].length);
-      return filterElements(editor, file, element, all);
-    }
-    return includeSelfAlways || includeSelfIfNoOthers ?
-           new PsiElement[] {element} :
-           PsiElement.EMPTY_ARRAY;
+    return result[0];
   }
 
   public boolean startInWriteAction() {
     return false;
   }
 
-  protected ResultsFilter createFilter(Project project, final Editor editor, final PsiFile file, PsiElement element) {
-    final PsiElement element1 = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+  protected ResultsFilter createFilter(Project project, final Editor editor, final PsiFile file, PsiElement element, final int offset) {
+    final PsiElement element1 = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, offset);
 
     return new ResultsFilter() {
       public boolean acceptClass(PsiClass aClass) {
@@ -103,10 +114,10 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     }
   }
 
-  protected PsiElement[] filterElements(Editor editor, PsiFile file, PsiElement element, PsiElement[] targetElements) {
+  protected PsiElement[] filterElements(Editor editor, PsiFile file, PsiElement element, PsiElement[] targetElements, final int offset) {
     if (targetElements.length <= 1) return targetElements;
     Project project = file.getProject();
-    ResultsFilter filter = createFilter(project, editor, file, element);
+    ResultsFilter filter = createFilter(project, editor, file, element, offset);
 
     ArrayList<PsiElement> result = new ArrayList<PsiElement>();
     for (PsiElement targetElement : targetElements) {
@@ -155,7 +166,9 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     public boolean execute(final PsiElement sourceElement, final Processor<PsiElement> consumer) {
       if (sourceElement instanceof PsiMethod) {
         for (PsiElement implementation : getMethodImplementations((PsiMethod)sourceElement)) {
-          consumer.process(implementation);
+          if ( ! consumer.process(implementation) ) {
+            return false;
+          }
         }
       }
       return true;
@@ -165,7 +178,9 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     public boolean execute(final PsiElement sourceElement, final Processor<PsiElement> consumer) {
       if (sourceElement instanceof PsiClass) {
         for (PsiElement implementation : getClassImplementations((PsiClass)sourceElement)) {
-          consumer.process(implementation);
+          if ( ! consumer.process(implementation) ) {
+            return false;
+          }
         }
       }
       return true;

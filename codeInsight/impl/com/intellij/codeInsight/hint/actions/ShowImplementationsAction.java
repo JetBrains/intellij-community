@@ -187,7 +187,7 @@ public class ShowImplementationsAction extends AnAction {
 
   private static PsiElement[] getSelfAndImplementations(Editor editor, PsiFile file, PsiElement element) {
     GotoImplementationHandler handler = new GotoImplementationHandler() {
-      protected PsiElement[] filterElements(Editor editor, PsiFile file, PsiElement element, PsiElement[] targetElements) {
+      protected PsiElement[] filterElements(Editor editor, PsiFile file, PsiElement element, PsiElement[] targetElements, final int offset) {
         Set<PsiElement> unique = new LinkedHashSet<PsiElement>(Arrays.asList(targetElements));
         for (PsiElement elt : targetElements) {
           PsiFile psiFile = elt.getContainingFile();
@@ -199,7 +199,7 @@ public class ShowImplementationsAction extends AnAction {
       }
     };
 
-    final PsiElement[] handlerImplementations = handler.searchImplementations(editor, file, element, true, true);
+    final PsiElement[] handlerImplementations = handler.searchImplementations(editor, file, element, editor.getCaretModel().getOffset(), true, true);
     if (handlerImplementations.length > 0) return handlerImplementations;
 
     PsiFile psiFile = element.getContainingFile();

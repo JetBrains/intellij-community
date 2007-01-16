@@ -1,12 +1,17 @@
 package com.intellij.codeInsight.navigation;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction;
+import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.MouseShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -20,19 +25,22 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.psi.search.searches.DefinitionsSearch;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +48,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CtrlMouseHandler implements ProjectComponent {
   private final Project myProject;
@@ -48,7 +58,10 @@ public class CtrlMouseHandler implements ProjectComponent {
   private Editor myHighlighterView;
   private Cursor myStoredCursor;
   private Info myStoredInfo;
+  private int myStoredModifiers = 0;
   private TooltipProvider myTooltipProvider = null;
+
+  enum BrowseMode { None, Declaration, TypeDeclaration, Implementation }
 
   private final KeyListener myEditorKeyListener = new KeyAdapter() {
     public void keyPressed(final KeyEvent e) {
@@ -61,20 +74,19 @@ public class CtrlMouseHandler implements ProjectComponent {
 
     private void handleKey(final KeyEvent e) {
       int modifiers = e.getModifiers();
+      if ( modifiers == myStoredModifiers) {
+        return;
+      }
 
-      if (isControlShiftMask(modifiers)) {
+      BrowseMode browseMode = getBrowseMode(modifiers);
+
+      if (browseMode != BrowseMode.None) {
         if (myTooltipProvider != null) {
-          if (!myTooltipProvider.isTypeBrowsed()) {
+          if (browseMode != myTooltipProvider.getBrowseMode()) {
             disposeHighlighter();
           }
-          myTooltipProvider.execute(true);
-        }
-      } else if (isControlMask(modifiers)) {
-        if (myTooltipProvider != null) {
-          if (myTooltipProvider.isTypeBrowsed()) {
-            disposeHighlighter();
-          }
-          myTooltipProvider.execute(false);
+          myStoredModifiers = modifiers;
+          myTooltipProvider.execute(browseMode);
         }
       } else {
         disposeHighlighter();
@@ -122,17 +134,17 @@ public class CtrlMouseHandler implements ProjectComponent {
       int selStart = editor.getSelectionModel().getSelectionStart();
       int selEnd = editor.getSelectionModel().getSelectionEnd();
 
-      int modifiers = mouseEvent.getModifiers();
+      myStoredModifiers = mouseEvent.getModifiers();
+      BrowseMode browseMode = getBrowseMode(myStoredModifiers);
 
-      if (!isControlMask(modifiers) && !isControlShiftMask(modifiers)
-          || offset >= selStart && offset < selEnd) {
+      if (browseMode == BrowseMode.None || offset >= selStart && offset < selEnd) {
         disposeHighlighter();
         myTooltipProvider = null;
         return;
       }
 
       myTooltipProvider = new TooltipProvider(editor, pos);
-      myTooltipProvider.execute(isControlShiftMask(modifiers));
+      myTooltipProvider.execute(browseMode);
     }
   };
 
@@ -170,14 +182,27 @@ public class CtrlMouseHandler implements ProjectComponent {
     eventMulticaster.removeEditorMouseMotionListener(myEditorMouseMotionListener);
   }
 
-  private static boolean isControlMask(int modifiers) {
-    int mask = SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK;
-    return modifiers == mask;
+  private static BrowseMode getBrowseMode(final int modifiers) {
+    if ( modifiers != 0 ) {
+      final Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
+      if (matchMouseShourtcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_DECLARATION)) return BrowseMode.Declaration;
+      if (matchMouseShourtcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_TYPE_DECLARATION)) return BrowseMode.TypeDeclaration;
+      if (matchMouseShourtcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_IMPLEMENTATION)) return BrowseMode.Implementation;
+    }
+    return BrowseMode.None;
   }
 
-  private static boolean isControlShiftMask(int modifiers) {
-    int mask = (SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK;
-    return modifiers == mask;
+  private static boolean matchMouseShourtcut(final Keymap activeKeymap, final int modifiers, final String actionId) {
+    final MouseShortcut syntheticShortcat = new MouseShortcut(MouseEvent.BUTTON1, modifiers, 1);
+    for ( Shortcut shortcut : activeKeymap.getShortcuts(actionId)) {
+      if ( shortcut instanceof MouseShortcut) {
+        final MouseShortcut mouseShortcut = ((MouseShortcut)shortcut);
+        if ( mouseShortcut.getModifiers() == syntheticShortcat.getModifiers() ) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Nullable
@@ -202,29 +227,84 @@ public class CtrlMouseHandler implements ProjectComponent {
     return null;
   }
 
-  private static class Info {
-    public final PsiElement myTargetElement;
-    public final PsiElement myElementAtPointer;
+  private abstract static class Info {
+    @NotNull protected final PsiElement myElementAtPointer;
     public final int myStartOffset;
     public final int myEndOffset;
 
-    public Info(PsiElement targetElement, PsiElement elementAtPointer) {
-      myTargetElement = targetElement;
+    public Info(@NotNull PsiElement elementAtPointer, int startOffset, int endOffset ) {
+      myElementAtPointer = elementAtPointer;
+      myStartOffset = startOffset;
+      myEndOffset = endOffset;
+    }
+
+    public Info(@NotNull PsiElement elementAtPointer ) {
       myElementAtPointer = elementAtPointer;
       myStartOffset = elementAtPointer.getTextOffset();
       myEndOffset = myStartOffset + elementAtPointer.getTextLength();
     }
 
-    public Info(PsiElement targetElement, PsiElement elementAtPointer, int startOffset, int endOffset) {
+    boolean isSimilarTo(final Info that) {
+      return Comparing.equal(myElementAtPointer, that.myElementAtPointer) &&
+             myStartOffset == that.myStartOffset &&
+             myEndOffset == that.myEndOffset;
+    }
+
+    @Nullable
+    abstract public String getInfo();
+
+    abstract public boolean isValid();
+  }
+
+  private static class InfoSingle extends Info {
+    @NotNull private final PsiElement myTargetElement;
+
+    public InfoSingle(@NotNull PsiElement elementAtPointer, @NotNull PsiElement targetElement) {
+      super ( elementAtPointer );
       myTargetElement = targetElement;
-      myElementAtPointer = elementAtPointer;
-      myStartOffset = startOffset;
-      myEndOffset = endOffset;
+    }
+
+    public InfoSingle(final PsiReference ref, @NotNull final PsiElement targetElement) {
+      super ( ref.getElement(),
+              ref.getElement().getTextRange().getStartOffset() + ref.getRangeInElement().getStartOffset(),
+              ref.getElement().getTextRange().getStartOffset() + ref.getRangeInElement().getEndOffset());
+      myTargetElement = targetElement;
+    }
+
+    @Nullable
+    public String getInfo() {
+      return generateInfo(myTargetElement);
+    }
+
+    public boolean isValid() {
+      return  myTargetElement != myElementAtPointer &&
+              myTargetElement != myElementAtPointer.getParent() &&
+              targetNavigateable(myTargetElement);
+    }
+
+    private static boolean targetNavigateable(final PsiElement targetElement) {
+      PsiElement navElement = targetElement.getNavigationElement();
+      return navElement instanceof Navigatable && ((Navigatable)navElement).canNavigate();
+    }
+  }
+
+  private static class InfoMultiple extends Info {
+
+    public InfoMultiple(@NotNull final PsiElement elementAtPointer) {
+      super ( elementAtPointer );
+    }
+
+    public String getInfo() {
+      return CodeInsightBundle.message("multiple.implementations.tooltip");
+    }
+
+    public boolean isValid() {
+      return true;
     }
   }
 
   @Nullable
-  private Info getInfoAt(final Editor editor, LogicalPosition pos, boolean browseType) {
+  private Info getInfoAt(final Editor editor, LogicalPosition pos, BrowseMode browseMode) {
     Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (file == null) return null;
@@ -237,49 +317,91 @@ public class CtrlMouseHandler implements ProjectComponent {
 
     if (offset >= selStart && offset < selEnd) return null;
 
+    PsiElement targetElement = null;
 
-    PsiElement targetElement;
-    if (browseType) {
+    if (browseMode == BrowseMode.TypeDeclaration) {
       targetElement = GotoTypeDeclarationAction.findSymbolType(editor, offset);
     }
-    else {
+    else if (browseMode == BrowseMode.Declaration) {
       PsiReference ref = TargetElementUtil.findReference(editor, offset);
       if (ref != null) {
-        PsiElement resolvedElement;
-
-        if (ref instanceof PsiPolyVariantReference) {
-          final ResolveResult[] psiElements = ((PsiPolyVariantReference)ref).multiResolve(false);
-          resolvedElement = psiElements.length > 0 ? psiElements[0].getElement() : null;
-
-          if (resolvedElement instanceof XmlAttributeValue &&
-              ref.getElement() == resolvedElement &&     // guard for id references
-              psiElements.length > 1
-             ) {
-            resolvedElement = psiElements[1].getElement();
-          }
-        }
-        else {
-          resolvedElement = ref.resolve();
-        }
-
+        PsiElement resolvedElement = resolve(ref);
         if (resolvedElement != null) {
-          PsiElement e = ref.getElement();
-          return new Info(resolvedElement, e, e.getTextRange().getStartOffset() + ref.getRangeInElement().getStartOffset(),
-                          e.getTextRange().getStartOffset() + ref.getRangeInElement().getEndOffset());
+          return new InfoSingle (ref, resolvedElement);
         }
       }
       targetElement = GotoDeclarationAction.findTargetElement(myProject, editor, offset);
-    }
-    if (targetElement != null && targetElement.isPhysical()) {
-      PsiElement elementAtPointer = file.findElementAt(offset);
-      if (elementAtPointer instanceof PsiIdentifier
-          || elementAtPointer instanceof PsiKeyword
-          || elementAtPointer instanceof PsiDocToken
-          || elementAtPointer instanceof XmlToken) {
-        return new Info(targetElement, elementAtPointer);
+    } else if ( browseMode == BrowseMode.Implementation ) {
+      final PsiElement element = TargetElementUtil.findTargetElement(editor, GotoImplementationHandler.FLAGS, offset);
+      PsiElement[] targetElements = new GotoImplementationHandler() {
+        @NotNull
+        protected PsiElement[] searchDefinitions(final PsiElement element) {
+          final List<PsiElement> found = new ArrayList<PsiElement>(2);
+          DefinitionsSearch.search(element).forEach( new Processor<PsiElement>() {
+            public boolean process(final PsiElement psiElement) {
+              found.add ( psiElement );
+              return found.size() != 2;
+            }
+          });
+          return found.toArray(PsiElement.EMPTY_ARRAY);
+        }
+      }.searchImplementations(editor, file, element, offset);
+      if ( targetElements.length > 1) {
+        PsiElement elementAtPointer = findElementAtPointer(file, offset);
+        if (elementAtPointer != null) {
+          return new InfoMultiple(elementAtPointer);
+        }
+        return null;
+      }
+      if (targetElements.length == 1) {
+        Navigatable descriptor = EditSourceUtil.getDescriptor(targetElements[0]);
+        if (descriptor == null || !descriptor.canNavigate()) {
+          return null;
+        }
+        targetElement = targetElements [ 0 ];
       }
     }
 
+    if (targetElement != null && targetElement.isPhysical() ) {
+      PsiElement elementAtPointer = findElementAtPointer(file, offset);
+      if ( elementAtPointer != null ) {
+         return new InfoSingle(elementAtPointer, targetElement);
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static PsiElement resolve(final PsiReference ref) {
+    PsiElement resolvedElement;
+
+    if (ref instanceof PsiPolyVariantReference) {
+      final ResolveResult[] psiElements = ((PsiPolyVariantReference)ref).multiResolve(false);
+      resolvedElement = psiElements.length > 0 ? psiElements[0].getElement() : null;
+
+      if (resolvedElement instanceof XmlAttributeValue &&
+          ref.getElement() == resolvedElement &&     // guard for id references
+          psiElements.length > 1
+         ) {
+        resolvedElement = psiElements[1].getElement();
+      }
+    }
+    else {
+      resolvedElement = ref.resolve();
+    }
+    return resolvedElement;
+  }
+
+  @Nullable
+  private static PsiElement findElementAtPointer(final PsiFile file, final int offset) {
+    PsiElement elementAtPointer = file.findElementAt(offset);
+    if (elementAtPointer instanceof PsiIdentifier ||
+        elementAtPointer instanceof PsiKeyword ||
+        elementAtPointer instanceof PsiDocToken ||
+        elementAtPointer instanceof XmlToken) {
+      return elementAtPointer;
+    }
     return null;
   }
 
@@ -303,27 +425,25 @@ public class CtrlMouseHandler implements ProjectComponent {
   private class TooltipProvider {
     private final Editor myEditor;
     private final LogicalPosition myPosition;
-    private boolean myBrowseType;
+    private BrowseMode myBrowseMode;
 
     public TooltipProvider(Editor editor, LogicalPosition pos) {
       myEditor = editor;
       myPosition = pos;
     }
 
-    public boolean isTypeBrowsed() {
-      return myBrowseType;
+    public BrowseMode getBrowseMode() {
+      return myBrowseMode;
     }
 
-    public void execute(boolean browseType) {
-      myBrowseType = browseType;
-      Info info = getInfoAt(myEditor, myPosition, myBrowseType);
+    public void execute(BrowseMode browseMode) {
+      myBrowseMode = browseMode;
+      Info info = getInfoAt(myEditor, myPosition, myBrowseMode);
       if (info == null) return;
 
       Component internalComponent = myEditor.getContentComponent();
       if (myHighlighter != null) {
-        if (!Comparing.equal(info.myElementAtPointer, myStoredInfo.myElementAtPointer) ||
-            info.myStartOffset != myStoredInfo.myStartOffset ||
-            info.myEndOffset != myStoredInfo.myEndOffset) {
+        if (!info.isSimilarTo(myStoredInfo)) {
           disposeHighlighter();
         } else {
           // highlighter already set
@@ -332,12 +452,7 @@ public class CtrlMouseHandler implements ProjectComponent {
         }
       }
 
-      if (info.myTargetElement != null &&
-          info.myElementAtPointer != null &&
-          info.myTargetElement != info.myElementAtPointer &&
-          info.myTargetElement != info.myElementAtPointer.getParent() &&
-          targetNavigateable(info.myTargetElement)
-        ) {
+      if (info.isValid()) {
 
         installLinkHighlighter(info);
 
@@ -348,7 +463,7 @@ public class CtrlMouseHandler implements ProjectComponent {
         internalComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         FileEditorManager.getInstance(myProject).addFileEditorManagerListener(myFileEditorManagerListener);
 
-        String text = generateInfo(info.myTargetElement);
+        String text = info.getInfo();
 
         if (text == null) return;
 
@@ -371,11 +486,6 @@ public class CtrlMouseHandler implements ProjectComponent {
       }
     }
 
-    private boolean targetNavigateable(final PsiElement targetElement) {
-      PsiElement navElement = targetElement.getNavigationElement();
-      return navElement instanceof Navigatable && ((Navigatable)navElement).canNavigate();
-    }
-
     private void installLinkHighlighter(Info info) {
       int startOffset = info.myStartOffset;
       int endOffset = info.myEndOffset;
@@ -385,5 +495,4 @@ public class CtrlMouseHandler implements ProjectComponent {
       myHighlighterView = myEditor;
     }
   }
-
 }
