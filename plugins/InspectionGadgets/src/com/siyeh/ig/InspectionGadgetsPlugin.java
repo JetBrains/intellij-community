@@ -34,6 +34,7 @@ import com.siyeh.ig.controlflow.*;
 import com.siyeh.ig.dataflow.ReuseOfLocalVariableInspection;
 import com.siyeh.ig.dataflow.TooBroadScopeInspection;
 import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection;
+import com.siyeh.ig.dataflow.LawOfDemeterInspection;
 import com.siyeh.ig.dependency.*;
 import com.siyeh.ig.encapsulation.*;
 import com.siyeh.ig.errorhandling.*;
@@ -727,6 +728,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerDataFlowInspections() {
+        m_inspectionClasses.add(LawOfDemeterInspection.class);
         m_inspectionClasses.add(ReuseOfLocalVariableInspection.class);
         m_inspectionClasses.add(TooBroadScopeInspection.class);
         m_inspectionClasses.add(UnnecessaryLocalVariableInspection.class);
