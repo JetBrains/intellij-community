@@ -329,7 +329,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       myMessageBus = null;
     }
 
-    myComponentStore = null;
     myInitializedComponents = null;
     myPicoContainer = null;
 
