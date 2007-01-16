@@ -54,6 +54,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
+  private EditorTracker myEditorTracker;
   private volatile ProgressIndicator myUpdateProgress = new DaemonProgressIndicator();
 
   private final Runnable myUpdateRunnable = createUpdateRunnable();
@@ -78,10 +79,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private StatusBarUpdater myStatusBarUpdater;
   private final PassExecutorService myPassExecutorService;
 
-  protected DaemonCodeAnalyzerImpl(Project project, DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings) {
+  protected DaemonCodeAnalyzerImpl(Project project, DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings, EditorTracker editorTracker) {
     myProject = project;
 
     mySettings = daemonCodeAnalyzerSettings;
+    myEditorTracker = editorTracker;
     myLastSettings = (DaemonCodeAnalyzerSettings)mySettings.clone();
 
     myFileStatusMap = new FileStatusMap(myProject);
@@ -102,7 +104,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public void projectOpened() {
     myStatusBarUpdater = new StatusBarUpdater(myProject);
 
-    myDaemonListeners = new DaemonListeners(myProject,this,new EditorTracker(myProject));
+    myDaemonListeners = new DaemonListeners(myProject,this, myEditorTracker);
     reloadScopes();
 
     myInitialized = true;
@@ -112,14 +114,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     dispose();
   }
 
-  public void prepareForTest(final Editor editor, final Object stoppedNotify) {
+  public void prepareForTest(final Object stoppedNotify, final EditorTracker editorTracker) {
     myStatusBarUpdater = new StatusBarUpdater(myProject);
 
-    EditorTracker editorTracker = new EditorTracker(myProject) {
-      public Editor[] getActiveEditors() {
-        return new Editor[]{editor};
-      }
-    };
+    myEditorTracker = editorTracker;
     myDaemonListeners = new DaemonListeners(myProject, this, editorTracker) {
       protected void stopDaemon(boolean toRestartAlarm) {
       }

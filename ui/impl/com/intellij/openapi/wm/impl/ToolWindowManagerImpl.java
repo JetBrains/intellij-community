@@ -45,6 +45,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowManagerImpl");
 
   private final Project myProject;
+  private WindowManagerEx myWindowManager;
   private final EventListenerList myListenerList;
   private final DesktopLayout myLayout;
   private final HashMap<String, InternalDecorator> myId2InternalDecorator;
@@ -79,6 +80,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    */
   public ToolWindowManagerImpl(final Project project, WindowManagerEx windowManagerEx) {
     myProject = project;
+    myWindowManager = windowManagerEx;
     myListenerList = new EventListenerList();
 
     myLayout = new DesktopLayout();
@@ -107,7 +109,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     UIManager.addPropertyChangeListener(myUIManagerPropertyChangeListener);
     LafManager.getInstance().addLafManagerListener(myLafManagerListener);
 
-    myFrame = getWindowManager().allocateFrame(myProject);
+    myFrame = myWindowManager.allocateFrame(myProject);
     LOG.assertTrue(myFrame != null);
 
     final ArrayList<FinalizableCommand> commandsList = new ArrayList<FinalizableCommand>();
@@ -143,7 +145,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     // Remove ToolWindowsPane
 
     ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(null);
-    getWindowManager().releaseFrame(myFrame);
+    myWindowManager.releaseFrame(myFrame);
     appendUpdateToolWindowsPaneCmd(commandsList);
 
 
@@ -176,7 +178,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    */
   private void execute(final ArrayList<FinalizableCommand> commandList) {
     fireStateChanged();
-    getWindowManager().getCommandProcessor().execute(commandList);
+    myWindowManager.getCommandProcessor().execute(commandList);
   }
 
   public void activateEditorComponent() {
@@ -684,7 +686,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   public void invokeLater(final Runnable runnable) {
     final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
-    commandList.add(new InvokeLaterCmd(runnable, getWindowManager().getCommandProcessor()));
+    commandList.add(new InvokeLaterCmd(runnable, myWindowManager.getCommandProcessor()));
     execute(commandList);
   }
 
@@ -850,7 +852,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void appendApplyWindowInfoCmd(final WindowInfo info, final List<FinalizableCommand> commandsList) {
     final StripeButton button = getStripeButton(info.getId());
     final InternalDecorator decorator = getInternalDecorator(info.getId());
-    commandsList.add(new ApplyWindowInfoCmd(info, button, decorator, getWindowManager().getCommandProcessor()));
+    commandsList.add(new ApplyWindowInfoCmd(info, button, decorator, myWindowManager.getCommandProcessor()));
   }
 
   /**
@@ -860,7 +862,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                      final WindowInfo info,
                                      final boolean dirtyMode,
                                      final List<FinalizableCommand> commandsList) {
-    final CommandProcessor commandProcessor = getWindowManager().getCommandProcessor();
+    final CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
     final FinalizableCommand command = myToolWindowsPane.createAddDecoratorCmd(decorator, info, dirtyMode, commandProcessor);
     commandsList.add(command);
   }
@@ -869,7 +871,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    * @see com.intellij.openapi.wm.impl.ToolWindowsPane#createRemoveDecoratorCmd
    */
   private void appendRemoveDecoratorCmd(final String id, final boolean dirtyMode, final List<FinalizableCommand> commandsList) {
-    final FinalizableCommand command = myToolWindowsPane.createRemoveDecoratorCmd(id, dirtyMode, getWindowManager().getCommandProcessor());
+    final FinalizableCommand command = myToolWindowsPane.createRemoveDecoratorCmd(id, dirtyMode, myWindowManager.getCommandProcessor());
     commandsList.add(command);
   }
 
@@ -883,7 +885,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    */
   private void appendAddButtonCmd(final StripeButton button, final WindowInfo info, final List<FinalizableCommand> commandsList) {
     final Comparator comparator = myLayout.comparator(info.getAnchor());
-    final CommandProcessor commandProcessor = getWindowManager().getCommandProcessor();
+    final CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
     final FinalizableCommand command = myToolWindowsPane.createAddButtonCmd(button, info, comparator, commandProcessor);
     commandsList.add(command);
   }
@@ -892,13 +894,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    * @see com.intellij.openapi.wm.impl.ToolWindowsPane#createAddButtonCmd
    */
   private void appendRemoveButtonCmd(final String id, final List<FinalizableCommand> commandsList) {
-    final FinalizableCommand command = myToolWindowsPane.createRemoveButtonCmd(id, getWindowManager().getCommandProcessor());
+    final FinalizableCommand command = myToolWindowsPane.createRemoveButtonCmd(id, myWindowManager.getCommandProcessor());
     commandsList.add(command);
   }
 
   private void appendRequestFocusInEditorComponentCmd(final ArrayList<FinalizableCommand> commandList) {
     if (myProject.isDisposed()) return;
-    final CommandProcessor commandProcessor = getWindowManager().getCommandProcessor();
+    final CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
     final RequestFocusInEditorComponentCmd command = new RequestFocusInEditorComponentCmd(FileEditorManagerEx.getInstanceEx(myProject),
                                                                                           commandProcessor);
     commandList.add(command);
@@ -907,26 +909,22 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void appendRequestFocusInToolWindowCmd(final String id, final ArrayList<FinalizableCommand> commandList) {
     final ToolWindowImpl toolWindow = (ToolWindowImpl)getToolWindow(id);
     final FocusWatcher focusWatcher = myId2FocusWatcher.get(id);
-    commandList.add(new RequestFocusInToolWindowCmd(toolWindow, focusWatcher, getWindowManager().getCommandProcessor()));
+    commandList.add(new RequestFocusInToolWindowCmd(toolWindow, focusWatcher, myWindowManager.getCommandProcessor()));
   }
 
   /**
    * @see com.intellij.openapi.wm.impl.ToolWindowsPane#createSetEditorComponentCmd
    */
   private void appendSetEditorComponentCmd(final JComponent component, final List<FinalizableCommand> commandsList) {
-    final CommandProcessor commandProcessor = getWindowManager().getCommandProcessor();
+    final CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
     final FinalizableCommand command = myToolWindowsPane.createSetEditorComponentCmd(component, commandProcessor);
     commandsList.add(command);
   }
 
   private void appendUpdateToolWindowsPaneCmd(final List<FinalizableCommand> commandsList) {
     final JRootPane rootPane = myFrame.getRootPane();
-    final FinalizableCommand command = new UpdateRootPaneCmd(rootPane, getWindowManager().getCommandProcessor());
+    final FinalizableCommand command = new UpdateRootPaneCmd(rootPane, myWindowManager.getCommandProcessor());
     commandsList.add(command);
-  }
-
-  private static WindowManagerEx getWindowManager() {
-    return WindowManagerEx.getInstanceEx();
   }
 
   /**
@@ -1046,7 +1044,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
      * Creates floating decorator for specified floating decorator.
      */
     public AddFloatingDecoratorCmd(final InternalDecorator decorator, final WindowInfo info) {
-      super(getWindowManager().getCommandProcessor());
+      super(myWindowManager.getCommandProcessor());
       myFloatingDecorator = new FloatingDecorator(myFrame, info.copy(), decorator);
       myId2FloatingDecorator.put(info.getId(), myFloatingDecorator);
       final Rectangle bounds = info.getFloatingBounds();
@@ -1054,7 +1052,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         bounds != null &&
         bounds.width > 0 &&
         bounds.height > 0 &&
-        getWindowManager().isInsideScreenBounds(bounds.x, bounds.y, bounds.width)
+        myWindowManager.isInsideScreenBounds(bounds.x, bounds.y, bounds.width)
       ) {
         myFloatingDecorator.setBounds(bounds);
       }
@@ -1086,7 +1084,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     private final FloatingDecorator myFloatingDecorator;
 
     public RemoveFloatingDecoratorCmd(final WindowInfo info) {
-      super(getWindowManager().getCommandProcessor());
+      super(myWindowManager.getCommandProcessor());
       myFloatingDecorator = getFloatingDecorator(info.getId());
       myId2FloatingDecorator.remove(info.getId());
       info.setFloatingBounds(myFloatingDecorator.getBounds());
@@ -1107,7 +1105,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private final class EditorComponentFocusWatcher extends FocusWatcher {
     protected void focusedComponentChanged(final Component component) {
-      if (getWindowManager().getCommandProcessor().getCommandCount() > 0 || component == null) {
+      if (myWindowManager.getCommandProcessor().getCommandCount() > 0 || component == null) {
         return;
       }
       // Sometimes focus gained comes when editor is active. For example it can happen when
@@ -1137,7 +1135,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
 
     protected void focusedComponentChanged(final Component component) {
-      if (getWindowManager().getCommandProcessor().getCommandCount() > 0 || component == null) {
+      if (myWindowManager.getCommandProcessor().getCommandCount() > 0 || component == null) {
         return;
       }
       final WindowInfo info = getInfo(myId);
