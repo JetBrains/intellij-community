@@ -18,6 +18,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.EventDispatcher;
@@ -210,8 +212,18 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
 
   private class MyChangeListListener implements ChangeListListener {
     public void changeListAdded(ChangeList list) {
-      if (myChangeListChooser != null && myShowingAllChangeLists) {
-        myChangeListChooser.updateLists(ChangeListManager.getInstance(myProject).getChangeLists());
+      Runnable runnable = new Runnable() {
+        public void run() {
+          if (myChangeListChooser != null && myShowingAllChangeLists) {
+            myChangeListChooser.updateLists(ChangeListManager.getInstance(myProject).getChangeLists());
+          }
+        }
+      };
+      if (SwingUtilities.isEventDispatchThread()) {
+        runnable.run();
+      }
+      else {
+        ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(MultipleChangeListBrowser.this));
       }
     }
 
