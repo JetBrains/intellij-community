@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -71,12 +72,10 @@ public class LawOfDemeterInspection extends BaseInspection {
         public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            /* TODO: commented out just to fix the compilation
             if (ignoreLibraryCalls &&
                     LibraryUtil.callOnLibraryMethod(expression)) {
                 return;
             }
-            */
             expression.putUserData(key, Integer.valueOf(1));
             checkParents(expression, Integer.valueOf(1));
         }
