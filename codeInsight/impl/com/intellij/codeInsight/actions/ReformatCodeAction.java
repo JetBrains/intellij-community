@@ -61,7 +61,7 @@ public class ReformatCodeAction extends AnAction {
           text = CodeInsightBundle.message("process.scope.module", moduleContext.getModuleFilePath());
         }
         else {
-          text = CodeInsightBundle.message("process.scope.project", projectContext.getProjectFilePath());
+          text = CodeInsightBundle.message("process.scope.project", projectContext.getPresentableUrl());
         }
 
         LayoutProjectCodeDialog dialog = new LayoutProjectCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), text, true);

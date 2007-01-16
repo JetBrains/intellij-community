@@ -4,6 +4,7 @@ package com.intellij.ide.macro;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -15,6 +16,7 @@ public abstract class Macro {
 
   @NonNls public abstract String getName();
   public abstract String getDescription();
+  @Nullable
   public abstract String expand(DataContext dataContext) throws ExecutionCancelledException;
 
   public void cachePreview(DataContext dataContext) {

@@ -5,7 +5,9 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +35,13 @@ public class ProjectPathMacroManager extends BasePathMacroManager {
     return result;
   }
 
+  public String expandPath(final String path) {
+    return getExpandMacroMap().substitute(path, SystemInfo.isFileSystemCaseSensitive);
+  }
+
+  public String collapsePath(final String path) {
+    return getReplacePathMap().substitute(path, SystemInfo.isFileSystemCaseSensitive);
+  }
 
   private void getProjectHomeReplacements(@NonNls ReplacePathToMacroMap result, final boolean savePathsRelative) {
     String projectDir = getProjectDir();
@@ -89,15 +98,9 @@ public class ProjectPathMacroManager extends BasePathMacroManager {
   }
 
   @Nullable
-    private String getProjectDir() {
-    String path = myProject.getProjectFilePath();
-    String projectDir = new File(path).getParent();
-    if (projectDir == null) return null;
-    projectDir = projectDir.replace(File.separatorChar, '/');
-    if (projectDir.endsWith(":/")) {
-      projectDir = projectDir.substring(0, projectDir.length() - 1);
-    }
-    return projectDir;
+  private String getProjectDir() {
+    final VirtualFile baseDir = myProject.getBaseDir();
+    return baseDir != null ? baseDir.getPath() : null;
   }
 
 }

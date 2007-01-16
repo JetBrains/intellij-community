@@ -293,7 +293,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   private boolean checkMacros(final ProjectManagerImpl projectManager, Set<String> definedMacros) throws IOException, JDOMException {
-    String projectFilePath = myProject.getProjectFilePath();
+    String projectFilePath = getProjectFilePath();
     Document document = JDOMUtil.loadDocument(new File(projectFilePath));
     Element root = document.getRootElement();
     final Set<String> usedMacros = new HashSet<String>(Arrays.asList(readUsedMacros(root)));

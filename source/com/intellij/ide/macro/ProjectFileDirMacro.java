@@ -1,10 +1,11 @@
 package com.intellij.ide.macro;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.DataAccessor;
-
-import java.io.File;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 public final class ProjectFileDirMacro extends Macro {
   public String getName() {
@@ -15,15 +16,12 @@ public final class ProjectFileDirMacro extends Macro {
     return IdeBundle.message("macro.project.file.directory");
   }
 
+  @Nullable
   public String expand(DataContext dataContext) {
-    final String path = DataAccessor.PROJECT_FILE_PATH.from(dataContext);
-    if (path == null) {
+    final VirtualFile baseDir = DataAccessor.PROJECT_BASE_DIR.from(dataContext);
+    if (baseDir == null) {
       return null;
     }
-    final File fileDir = new File(path).getParentFile();
-    if (fileDir == null) {
-      return null;
-    }
-    return fileDir.getPath();
+    return VfsUtil.virtualToIoFile(baseDir).getPath();
   }
 }

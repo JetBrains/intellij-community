@@ -44,6 +44,14 @@ public interface Project extends ComponentManager, AreaInstance, Disposable {
   @Nullable
   VirtualFile getWorkspaceFile();
 
+  /**
+   * @deprecated Since multiple possible project formats it is not allowed to ask for getProjectFile. Other methods should
+   * be used for project introspections, such as {@link #getPresentableUrl()},  {@link #getBaseDir()}, etc.
+   */
+  @NotNull
+  String getProjectFilePath();
+
+
   @Nullable
   VirtualFile getBaseDir();
 
@@ -59,11 +67,6 @@ public interface Project extends ComponentManager, AreaInstance, Disposable {
   @NonNls
   String getLocationHash();
 
-  /**
-   * @return Returns an "java.io.File" path.
-   */
-  @NotNull
-  String getProjectFilePath();
 
 
   void save();

@@ -460,7 +460,7 @@ public class AnalysisScope {
         return AnalysisScopeBundle.message("scope.module.list", modules, Integer.valueOf(myModules.size()));
 
       case PROJECT:
-        return AnalysisScopeBundle.message("scope.project", pathToName(myProject.getProjectFilePath()));
+        return AnalysisScopeBundle.message("scope.project", pathToName(myProject.getPresentableUrl()));
 
       case FILE:
         final VirtualFile virtualFile = ((PsiFile)myElement).getVirtualFile();

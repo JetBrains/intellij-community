@@ -65,10 +65,20 @@ public abstract class DataAccessor<T> {
 
   public static final DataAccessor<PsiJavaFile> PSI_JAVA_FILE = SubClassDataAccessor.create(PSI_FILE, PsiJavaFile.class);
 
+  /**
+   * @deprecated
+   */
   public static final DataAccessor<String> PROJECT_FILE_PATH = new DataAccessor<String>() {
     public String getImpl(DataContext dataContext) throws NoDataException {
       Project project = PROJECT.getNotNull(dataContext);
       return project.getProjectFilePath();
+    }
+  };
+
+  public static final DataAccessor<VirtualFile> PROJECT_BASE_DIR = new DataAccessor<VirtualFile>() {
+    public VirtualFile getImpl(DataContext dataContext) throws NoDataException {
+      Project project = PROJECT.getNotNull(dataContext);
+      return project.getBaseDir();
     }
   };
 

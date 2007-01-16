@@ -24,6 +24,11 @@ public abstract class PathMacroManager {
   public abstract ReplacePathToMacroMap getReplacePathMap();
   public abstract void setPathMacros(final PathMacrosImpl pathMacros);
 
+
+  public abstract String expandPath(String path);
+  public abstract String collapsePath(String path);
+
+
   public static String[] getUsedMacroNames() {
     return getUsedMacros().toArray(new String[getUsedMacros().size()]);
   }

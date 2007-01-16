@@ -249,7 +249,7 @@ public abstract class AbstractLayoutCodeProcessor {
   private void runProcessOnProject(final Project project) {
     final ArrayList<PsiFile> array = new ArrayList<PsiFile>();
     collectFilesInProject(project, array);
-    String where = CodeInsightBundle.message("process.scope.project", project.getProjectFilePath());
+    String where = CodeInsightBundle.message("process.scope.project", project.getPresentableUrl());
     runProcessOnFiles(where, array);
   }
 

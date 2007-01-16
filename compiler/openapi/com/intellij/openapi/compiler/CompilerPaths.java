@@ -72,7 +72,7 @@ public class CompilerPaths {
    */
   public static File getCompilerSystemDirectory(Project project) {
     String projectDirName;
-    projectDirName = project.getName() + "." + Integer.toHexString(project.getProjectFilePath().replace(File.separatorChar, '/').hashCode());
+    projectDirName = project.getName() + "." + project.getLocationHash();
 
     //noinspection HardCodedStringLiteral
     final File compilerSystemDir = new File(PathManager.getSystemPath(), "/compiler/" + projectDirName);

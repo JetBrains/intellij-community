@@ -234,6 +234,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   @NotNull
   public String getProjectFilePath() {
+    LOG.warn("DEPRECATED METHOD USAGE: ProjectImpl.getProjectFilePath()", new Throwable());
     return getStateStore().getProjectFilePath();
   }
 

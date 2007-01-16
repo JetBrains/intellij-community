@@ -47,7 +47,7 @@ public class OptimizeImportsAction extends AnAction {
           text = CodeInsightBundle.message("process.scope.module", moduleContext.getName());
         }
         else {
-          text = CodeInsightBundle.message("process.scope.project", projectContext.getProjectFilePath());
+          text = CodeInsightBundle.message("process.scope.project", projectContext.getPresentableUrl());
         }
         LayoutProjectCodeDialog dialog = new LayoutProjectCodeDialog(project, CodeInsightBundle.message("process.optimize.imports"), text, false);
         dialog.show();

@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -158,7 +159,7 @@ public abstract class BuildProperties extends CompositeGenerator {
   }
 
   public static File getProjectBaseDir(final Project project) {
-    return new File(project.getProjectFilePath()).getParentFile();
+    return VfsUtil.virtualToIoFile(project.getBaseDir());
   }
 
   public static @NonNls String convertName(@NonNls final String name) {

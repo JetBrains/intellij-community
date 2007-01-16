@@ -1,14 +1,12 @@
 
 package com.intellij.ide.macro;
 
+import com.intellij.ide.DataAccessor;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.DataAccessor;
-
-import java.io.File;
+import com.intellij.openapi.vfs.VirtualFile;
 
 public class FileRelativePathMacro extends Macro {
   public String getName() {
@@ -20,10 +18,13 @@ public class FileRelativePathMacro extends Macro {
   }
 
   public String expand(DataContext dataContext) {
-    String path = DataAccessor.PROJECT_FILE_PATH.from(dataContext);
-    if (path == null) return null;
+    final VirtualFile baseDir = DataAccessor.PROJECT_BASE_DIR.from(dataContext);
+    if (baseDir == null) {
+      return null;
+    }
+
     VirtualFile file = DataAccessor.VIRTUAL_FILE.from(dataContext);
     if (file == null) return null;
-    return FileUtil.getRelativePath(new File(path), VfsUtil.virtualToIoFile(file));
+    return FileUtil.getRelativePath(VfsUtil.virtualToIoFile(baseDir), VfsUtil.virtualToIoFile(file));
   }
 }

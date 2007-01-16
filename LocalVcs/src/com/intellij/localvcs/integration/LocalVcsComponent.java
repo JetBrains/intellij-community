@@ -75,7 +75,7 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
     File vcs = new File(getSystemPath(), "vcs");
 
     String prefix = myProject.getName();
-    String postfix = Integer.toHexString(myProject.getProjectFilePath().hashCode());
+    String postfix = myProject.getLocationHash();
 
     return new File(vcs, prefix + "." + postfix);
   }
