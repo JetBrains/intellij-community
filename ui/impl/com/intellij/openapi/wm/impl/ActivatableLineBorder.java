@@ -14,12 +14,6 @@ public class ActivatableLineBorder implements Border {
 
   private boolean active = false;
 
-  private InternalDecorator myDecorator;
-
-  public ActivatableLineBorder(final InternalDecorator decorator) {
-    myDecorator = decorator;
-  }
-
   public boolean isActive() {
     return active;
   }
@@ -40,16 +34,9 @@ public class ActivatableLineBorder implements Border {
     final Color lineColor = active ? ACTIVE_COLOR : INACTIVE_COLOR;
     g.setColor(lineColor);
 
-    final JComponent buttons = myDecorator.getTitlePanel().getSideButtonsComponent();
-    final Rectangle buttonsRec = SwingUtilities.convertRectangle(buttons.getParent(), buttons.getBounds(), c);
-    UIUtil.drawLine(g, x + 1, y, buttonsRec.x - 1, y);
+    UIUtil.drawLine(g, x + 1, y, x + width - 2, y);
     UIUtil.drawLine(g, x + 1, y + height - 1, x + width - 2, y + height - 1);
     UIUtil.drawLine(g, x, y + 1, x, y + height - 2);
     UIUtil.drawLine(g, x + width - 1, y + 1, x + width - 1, y + height - 2);
-
-    g.setColor(TitlePanel.BUTTON_SEPARATOR_COLOR);
-    g.drawLine(buttonsRec.x, y, buttonsRec.x, y);
-    g.setColor(lineColor);
-    UIUtil.drawLine(g, buttonsRec.x + 1, y, x + width - 2, y);
   }
 }

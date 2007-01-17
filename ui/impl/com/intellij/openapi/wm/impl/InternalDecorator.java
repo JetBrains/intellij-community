@@ -380,7 +380,7 @@ public final class InternalDecorator extends JPanel {
     myTitlePanel.addButtons(buttonPanel, myHideSideButton);
 
     final JPanel contentPane = new JPanel(new BorderLayout());
-    contentPane.setBorder(new ActivatableLineBorder(this));
+    contentPane.setBorder(new ActivatableLineBorder());
     contentPane.add(myTitlePanel, BorderLayout.NORTH);
     JPanel innerPanel = new JPanel(new BorderLayout());
     innerPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));

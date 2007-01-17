@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -40,6 +41,11 @@ public final class TitlePanel extends JPanel {
   private JComponent mySideButtons;
 
   public static final Color BUTTON_SEPARATOR_COLOR = Color.white;
+  private final Icon mySeparatorActive = IconLoader.getIcon("/general/separator.png");
+  private final Icon mySeparatorInactive = IconLoader.getIcon("/general/inactiveSeparator.png");
+
+  private final static Color ACTIVE_SIDE_BUTTON_BG = new Color(179, 197, 231);
+  private final static Color INACTIVE_SIDE_BUTTON_BG = new Color(200, 200, 200);
 
   TitlePanel() {
     super(new BorderLayout());
@@ -165,18 +171,14 @@ public final class TitlePanel extends JPanel {
       final Rectangle sideRec = SwingUtilities.convertRectangle(mySideButtonsComponent.getParent(), mySideButtonsComponent.getBounds(), this);
       g2d.fillRect(0, 0, getWidth() - sideRec.width, getHeight());
 
-      g2d.setColor(BUTTON_SEPARATOR_COLOR);
-      g2d.drawLine(sideRec.x, 0, sideRec.x, getHeight());
-
-      g2d.setColor(myActive ? new Color(78, 94, 121) : ActivatableLineBorder.INACTIVE_COLOR);
-      UIUtil.drawLine(g, sideRec.x + 1, sideRec.y, sideRec.x + 1, getHeight());
-      UIUtil.drawLine(g, (int)sideRec.getMaxX() - 1, sideRec.y, (int)sideRec.getMaxX() - 1, getHeight());
-      UIUtil.drawLine(g, sideRec.x + 1, getHeight() - 1, (int)sideRec.getMaxX() - 1, getHeight() - 1);
-
-      final Color buttonInnerColor = myActive ? new Color(179, 197, 231) : new Color(200, 200, 200);
+      g2d.setColor(ActivatableLineBorder.INACTIVE_COLOR);
+      final Color buttonInnerColor = myActive ? ACTIVE_SIDE_BUTTON_BG : INACTIVE_SIDE_BUTTON_BG;
       g2d.setPaint(new GradientPaint(sideRec.x, sideRec.y + 1, Color.white, sideRec.x, (int)sideRec.getMaxY() - 1, buttonInnerColor));
-      g2d.fillRect(sideRec.x + 2, sideRec.y + 1, sideRec.width - 3, sideRec.height - 2);
+      g2d.fillRect(sideRec.x + 2, sideRec.y + 1, sideRec.width - 2, sideRec.height);
 
+
+      Icon separator = myActive ? mySeparatorActive : mySeparatorInactive;
+      separator.paintIcon(this, g, sideRec.x, sideRec.y);
 
     } else {
       g2d.fillRect(0, 0, getWidth(), getHeight());
