@@ -161,7 +161,7 @@ class ExtractMethodDialog extends DialogWrapper {
       if (!conflictsDialog.isOK()) return;
     }
 
-    if (myCbMakeVarargs.isSelected()) {
+    if (myCbMakeVarargs != null && myCbMakeVarargs.isSelected()) {
       final ParameterTablePanel.VariableData data = myVariableData[myVariableData.length - 1];
       if (data.type instanceof PsiArrayType) {
         data.type = new PsiEllipsisType(((PsiArrayType)data.type).getComponentType());
