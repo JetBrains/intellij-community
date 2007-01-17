@@ -186,7 +186,10 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   }
 
   public void projectClosed() {
-    for (ModuleComponent component : getComponents(ModuleComponent.class)) {
+    List<ModuleComponent> components = new ArrayList<ModuleComponent>(Arrays.asList(getComponents(ModuleComponent.class)));
+    Collections.reverse(components);
+
+    for (ModuleComponent component : components) {
       try {
         component.projectClosed();
       }

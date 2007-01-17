@@ -36,6 +36,8 @@ import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -341,9 +343,11 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
       }
     }
   }
+  
 
   private void projectClosed() {
-    final ProjectComponent[] components = getComponents(ProjectComponent.class);
+    List<ProjectComponent> components = new ArrayList<ProjectComponent>(Arrays.asList(getComponents(ProjectComponent.class)));
+    Collections.reverse(components);
     for (ProjectComponent component : components) {
       try {
         component.projectClosed();
