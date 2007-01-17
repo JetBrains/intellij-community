@@ -58,12 +58,30 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
     myEditorMouseMulticaster.addListener(listener);
   }
 
+  public void addEditorMouseListener(final EditorMouseListener listener, final Disposable parentDisposable) {
+    addEditorMouseListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        removeEditorMouseListener(listener);
+      }
+    });
+  }
+
   public void removeEditorMouseListener(EditorMouseListener listener) {
     myEditorMouseMulticaster.removeListener(listener);
   }
 
   public void addEditorMouseMotionListener(EditorMouseMotionListener listener) {
     myEditorMouseMotionMulticaster.addListener(listener);
+  }
+
+  public void addEditorMouseMotionListener(final EditorMouseMotionListener listener, final Disposable parentDisposable) {
+    addEditorMouseMotionListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        removeEditorMouseMotionListener(listener);
+      }
+    });
   }
 
   public void removeEditorMouseMotionListener(EditorMouseMotionListener listener) {
