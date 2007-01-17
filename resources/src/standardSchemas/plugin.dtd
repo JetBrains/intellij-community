@@ -57,11 +57,13 @@
     plugin could work with
 -->
 <!ELEMENT idea-version EMPTY>
+<!-- min / max attributes are left for compatibility -->
+
 <!ATTLIST idea-version
     since-build CDATA #REQUIRED
     until-build CDATA #IMPLIED
-    min CDATA #IMPLIED  -- for compatibility --
-    max CDATA #IMPLIED -- for compatibility --
+    min CDATA #IMPLIED
+    max CDATA #IMPLIED
     >
 
 <!-- change notes of current version -->
@@ -71,11 +73,14 @@
 <!ATTLIST depends
    optional (true | false) #IMPLIED>
 
-<!-- extensions. Most relaxed constraints since content of the particular extension cannot be expressed with DTD -->
+<!-- extensions. Most relaxed constraints since content of the particular extension cannot be expressed with DTD
+  defaultExtensionNs - namespace prepended to referenced extension name to get qname,
+  xmlns same as previous, left for compatibility 
+ -->
 <!ELEMENT extensions ANY>
 <!ATTLIST extensions
-   defaultExtensionNs CDATA #REQUIRED -- namespace prepended to referenced extension name to get qname--
-   xmlns CDATA #IMPLIED -- same as previous, left for compatibility --
+   defaultExtensionNs CDATA #REQUIRED
+   xmlns CDATA #IMPLIED
    >
 
 <!ELEMENT application-components (component*)>
