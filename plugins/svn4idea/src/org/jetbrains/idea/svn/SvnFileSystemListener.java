@@ -39,23 +39,37 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ModuleLevelVcsManager;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.*;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class SvnFileSystemListener implements LocalFileOperationsHandler, CommandListener {
-  private static Boolean myCachedConfirmation;
+
+  private static class AddedFileInfo {
+    private final Project myProject;
+    private final VirtualFile myDir;
+    private final String myName;
+
+    public AddedFileInfo(final Project project, final VirtualFile dir, final String name) {
+      myProject = project;
+      myDir = dir;
+      myName = name;
+    }
+  }
+
+  private List<AddedFileInfo> myAddedFiles = new ArrayList<AddedFileInfo>();
 
   public boolean move(VirtualFile file, VirtualFile toDir) throws IOException {
     File srcFile = getIOFile(file);
@@ -183,7 +197,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
    * deleted: 'undo' mode: try to revert non-recursively, if kind is the same, otherwise do nothing, return false.
    * anything else: return false.
    */
-  private static boolean createItem(VirtualFile dir, String name, boolean directory) throws IOException {
+  private boolean createItem(VirtualFile dir, String name, boolean directory) throws IOException {
     SvnVcs vcs = getVCS(dir);
     if (vcs == null) {
       return false;
@@ -198,17 +212,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     SVNStatus status = getFileStatus(targetFile);
 
     if (status == null || status.getContentsStatus() == SVNStatusType.STATUS_NONE) {
-      if (confirmAdd(getVCS(dir))) {
-        createNewFile(targetFile, directory);
-        try {
-          wcClient.doAdd(targetFile, false, false, false, false);
-        }
-        catch (SVNException e) {
-          SVNFileUtil.deleteAll(targetFile, true);
-          return false;
-        }
-        return true;
-      }
+      myAddedFiles.add(new AddedFileInfo(vcs.getProject(), dir, name));
+      return false;
     }
     else if (status.getContentsStatus() == SVNStatusType.STATUS_MISSING) {
       return false;
@@ -222,15 +227,10 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       try {
         if (isUndo(vcs)) {
           wcClient.doRevert(targetFile, false);
+          return true;
         }
-        else if (confirmAdd(getVCS(dir))) {
-          createNewFile(targetFile, directory);
-          wcClient.doAdd(targetFile, false, false, false, false);
-        }
-        else {
-          return false;
-        }
-        return true;
+        myAddedFiles.add(new AddedFileInfo(vcs.getProject(), dir, name));
+        return false;
       }
       catch (SVNException e) {
         SVNFileUtil.deleteAll(targetFile, true);
@@ -240,15 +240,6 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     return false;
   }
 
-  private static void createNewFile(File file, boolean dir) throws IOException {
-    if (dir) {
-      file.mkdirs();
-    }
-    else {
-      file.createNewFile();
-    }
-  }
-
   public void commandStarted(CommandEvent event) {
   }
 
@@ -256,7 +247,50 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
   }
 
   public void commandFinished(CommandEvent event) {
-    myCachedConfirmation = null;
+    if (myAddedFiles.size() > 0) {
+      MultiMap<Project, VirtualFile> addedVFiles = new MultiMap<Project, VirtualFile>();
+      for(AddedFileInfo addedFileInfo: myAddedFiles) {
+        VirtualFile addedFile = addedFileInfo.myDir.findChild(addedFileInfo.myName);
+        if (addedFile != null) {
+          addedVFiles.putValue(addedFileInfo.myProject, addedFile);
+        }
+      }
+      for(Project project: addedVFiles.keySet()) {
+        SvnVcs vcs = SvnVcs.getInstance(project);
+        final VcsShowConfirmationOption.Value value = vcs.getAddConfirmation().getValue();
+        if (value != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
+          final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(project);
+          List<VirtualFile> vFiles = addedVFiles.get(project);
+          Collection<VirtualFile> filesToProcess;
+          if (value == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+            filesToProcess = vFiles;
+          }
+          else {
+            filesToProcess = vcsHelper.selectFilesToProcess(vFiles, "Select Files to Add to Subversion",
+                                                            null,
+                                                            SvnBundle.message("confirmation.title.add.file"),
+                                                            SvnBundle.message("confirmation.text.add.file"));
+          }
+          if (filesToProcess != null) {
+            List<VcsException> exceptions = new ArrayList<VcsException>();
+            SVNWCClient wcClient = new SVNWCClient(null, vcs.getSvnOptions());
+            for(VirtualFile file: filesToProcess) {
+              File ioFile = new File(file.getPath());
+              try {
+                wcClient.doAdd(ioFile, false, false, false, false);
+              }
+              catch (SVNException e) {
+                exceptions.add(new VcsException(e));
+              }
+            }
+            if (!exceptions.isEmpty()) {
+              vcsHelper.showErrors(exceptions, "Errors Adding Files");              
+            }
+          }
+        }
+      }
+      myAddedFiles.clear();
+    }
   }
 
   public void undoTransparentActionStarted() {
@@ -289,6 +323,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     return new File(vf.getPath()).getAbsoluteFile();
   }
 
+  @Nullable
   private static SVNStatus getFileStatus(File file) {
     SVNStatusClient stClient = new SVNStatusClient(null, null);
     SVNStatus status;
@@ -307,30 +342,5 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     }
     Project p = vcs.getProject();
     return UndoManager.getInstance(p).isUndoInProgress();
-  }
-
-  private static boolean confirmAdd(SvnVcs vcs) {
-    if (vcs == null) {
-      // file outside of the project
-      return true;
-    }
-    if (myCachedConfirmation != null) {
-      return myCachedConfirmation.booleanValue();
-    }
-    switch (vcs.getAddConfirmation().getValue()) {
-      case DO_NOTHING_SILENTLY:
-        myCachedConfirmation = Boolean.FALSE;
-        return false;
-      case SHOW_CONFIRMATION: {
-        final boolean confirmed =
-          Messages.showYesNoDialog(vcs.getProject(), SvnBundle.message("confirmation.text.add.file"), SvnBundle.message("confirmation.title.add.file"),
-                                   Messages.getQuestionIcon())
-          == JOptionPane.YES_OPTION;
-        myCachedConfirmation = Boolean.valueOf(confirmed);
-        return confirmed;
-      }
-    }
-    myCachedConfirmation = Boolean.TRUE;
-    return true;
   }
 }
