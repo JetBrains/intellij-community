@@ -89,6 +89,9 @@ public class ProjectListBuilder extends AbstractListBuilder {
   }
 
   public void addUpdateRequest() {
+    addUpdateRequest(false);
+  }
+  public void addUpdateRequest(final boolean shouldRefreshSelection) {
     final Runnable request = new Runnable() {
       public void run() {
         if (!myProject.isDisposed()) {
@@ -99,6 +102,9 @@ public class ProjectListBuilder extends AbstractListBuilder {
             return;
           }
           updateList();
+          if ( shouldRefreshSelection ) {
+            refreshSelection ();
+          }
         }
       }
     };
@@ -111,6 +117,8 @@ public class ProjectListBuilder extends AbstractListBuilder {
       request.run();
     }
   }
+
+  protected void refreshSelection() {}
 
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
     public void childRemoved(final PsiTreeChangeEvent event) {

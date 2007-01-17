@@ -152,10 +152,16 @@ public class FileStructureDialog extends DialogWrapper {
         return Comparing.equal(((StructureViewTreeElement)node.getValue()).getValue(), element);
       }
 
+      protected void refreshSelection() {
+        if ( myShouldNarrowDown ) {
+          myCommanderPanel.updateSpeedSearch();
+        }
+      }
+
       protected List<AbstractTreeNode> getAllAcceptableNodes(final Object[] childElements, VirtualFile file) {
         ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-        for (int i = 0; i < childElements.length; i++) {
-          result.add((AbstractTreeNode)childElements[i]);
+        for (Object childElement : childElements) {
+          result.add((AbstractTreeNode)childElement);
         }
         return result;
       }
@@ -219,7 +225,7 @@ public class FileStructureDialog extends DialogWrapper {
           if (builder == null) {
             return;
           }
-          builder.addUpdateRequest();
+          builder.addUpdateRequest(hasPrefixShortened(evt));
           ApplicationManager.getApplication().invokeLater(new Runnable() {
                   public void run(){
                     int index = myList.getSelectedIndex();
@@ -234,7 +240,12 @@ public class FileStructureDialog extends DialogWrapper {
                 });
         }
       });
+      myListSpeedSearch.setComparator(createSpeedSearchComparator());
+    }
 
+    private boolean hasPrefixShortened(final PropertyChangeEvent evt) {
+      return evt.getNewValue()!=null && evt.getOldValue()!=null &&
+            (((String)evt.getNewValue()).length()<((String)evt.getOldValue()).length());
     }
 
     public boolean navigateSelectedElement() {
@@ -259,6 +270,10 @@ public class FileStructureDialog extends DialogWrapper {
     public String getEnteredPrefix(){
       return myListSpeedSearch.getEnteredPrefix();
     }
+
+    public void updateSpeedSearch() {
+      myListSpeedSearch.refreshSelection();
+    }
   }
 
   private class MyStructureTreeStructure extends SmartTreeStructure {
@@ -279,10 +294,9 @@ public class FileStructureDialog extends DialogWrapper {
       }
 
       ArrayList<Object> filteredElements = new ArrayList<Object>(childElements.length);
-      SpeedSearchBase.SpeedSearchComparator speedSearchComparator = new SpeedSearchBase.SpeedSearchComparator();
+      SpeedSearchBase.SpeedSearchComparator speedSearchComparator = createSpeedSearchComparator();
 
-      for (int i = 0; i < childElements.length; i++) {
-        Object child = childElements[i];
+      for (Object child : childElements) {
         if (child instanceof AbstractTreeNode) {
           Object value = ((AbstractTreeNode)child).getValue();
           if (value instanceof TreeElement) {
@@ -299,6 +313,22 @@ public class FileStructureDialog extends DialogWrapper {
       }
       return filteredElements.toArray(new Object[filteredElements.size()]);
     }
+
   }
 
+  private static SpeedSearchBase.SpeedSearchComparator createSpeedSearchComparator() {
+    return new SpeedSearchBase.SpeedSearchComparator() {
+      public void translateCharacter(final StringBuffer buf, final char ch) {
+        if (ch == '*') {
+          buf.append(".*"); // overrides '*' handling to skip (,) in parameter lists
+        }
+        else {
+          if (ch == ':') {
+            buf.append(".*"); //    get:int should match any getter returning int
+          }
+          super.translateCharacter(buf, ch);
+        }
+      }
+    };
+  }
 }

@@ -107,17 +107,19 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
     return myComparator.doCompare(pattern, text);
   }
 
+  public SpeedSearchComparator getComparator() {
+    return myComparator;
+  }
+
+  public void setComparator(final SpeedSearchComparator comparator) {
+    myComparator = comparator;
+  }
+
   public static class SpeedSearchComparator {
     private Matcher myRecentSearchMatcher;
     private String myRecentSearchText;
 
     public boolean doCompare(String pattern, String text) {
-      //final int asteriskIndex = pattern.indexOf('*');
-
-      // asterisk on is of no interest
-      //if (asteriskIndex==-1 || asteriskIndex == pattern.length()-1) {
-      //  return text.startsWith( pattern );
-      //}
       if (myRecentSearchText != null &&
           myRecentSearchText.equals(pattern)
         ) {
@@ -127,33 +129,12 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
       else {
         myRecentSearchText = pattern;
         @NonNls final StringBuffer buf = new StringBuffer(pattern.length());
-        final int len = pattern.length();
-        boolean hasCapitals = false;
-        buf.append('^');
 
-        for (int i = 0; i < len; ++i) {
-          final char ch = pattern.charAt(i);
-
-          // bother only * withing text
-          if (ch == '*' && (i != len - 1 || i == 0)) {
-            buf.append("(\\w|:)"); // ':' for xml tags
-          }
-          else if ("{}[].+^$*()?".indexOf(ch) != -1) {
-            // do not bother with other metachars
-            buf.append('\\');
-          }
-
-          if (Character.isUpperCase(ch)) {
-            // for camel humps
-            buf.append("[a-z]*");
-            hasCapitals = true;
-          }
-          buf.append(ch);
-        }
+        translatePattern(buf, pattern);
 
         try {
-          final Pattern recentSearchPattern;
-          recentSearchPattern = Pattern.compile(buf.toString(), hasCapitals ? 0 : Pattern.CASE_INSENSITIVE);
+          boolean allLowercase = pattern.equals(pattern.toLowerCase());
+          final Pattern recentSearchPattern = Pattern.compile(buf.toString(), allLowercase ? Pattern.CASE_INSENSITIVE : 0);
           return (myRecentSearchMatcher = recentSearchPattern.matcher(text)).find();
         }
         catch (PatternSyntaxException ex) {
@@ -162,6 +143,29 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
 
         return false;
       }
+    }
+
+    public void translatePattern(final StringBuffer buf, final String pattern) {
+      buf.append('^'); // match from the line start
+      final int len = pattern.length();
+      for (int i = 0; i < len; ++i) {
+        translateCharacter(buf, pattern.charAt(i));
+      }
+    }
+
+    public void translateCharacter(final StringBuffer buf, final char ch) {
+      if (ch == '*' ) {
+        buf.append("(\\w|:)"); // ':' for xml tags
+      }
+      else if ("{}[].+^$()?".indexOf(ch) != -1) {
+        // do not bother with other metachars
+        buf.append('\\');
+      }
+      if (Character.isUpperCase(ch)) {
+        // for camel humps
+        buf.append("[a-z]*");
+      }
+      buf.append(ch);
     }
   }
 
@@ -237,7 +241,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
       if (!UIUtil.isReallyTypedEvent(e)) return;
 
       char c = e.getKeyChar();
-      if (Character.isLetterOrDigit(c) || c == '_' || c == '*' || c == '/') {
+      if (Character.isLetterOrDigit(c) || c == '_' || c == '*' || c == '/' || c == ':') {
         manageSearchPopup(new SearchPopup(String.valueOf(c)));
         e.consume();
       }
@@ -255,6 +259,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
 
   public String getEnteredPrefix() {
     return mySearchPopup != null ? mySearchPopup.mySearchField.getText() : null;
+  }
+
+  public void refreshSelection() {
+    if ( mySearchPopup != null ) mySearchPopup.refreshSelection();
   }
 
   private class SearchPopup extends JPanel {
@@ -325,6 +333,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
         }
         updateSelection(element);
       }
+    }
+
+    public void refreshSelection () {
+      updateSelection(findElement(mySearchField.getText()));
     }
 
     private void updateSelection(Object element) {
