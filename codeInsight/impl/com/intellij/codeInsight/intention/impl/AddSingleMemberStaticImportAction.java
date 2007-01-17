@@ -15,8 +15,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction");
@@ -65,14 +65,13 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
 
     file.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
-        if (!expression.isQualified() && refExpr.getReferenceName().equals(expression.getReferenceName())) {
+        super.visitReferenceExpression(expression);
+        if (refExpr.getReferenceName().equals(expression.getReferenceName())) {
           PsiElement resolved = expression.resolve();
           if (resolved != null) {
             expression.putUserData(TEMP_REFERENT_USER_DATA, resolved);
           }
         }
-
-        if (expression.getQualifierExpression() != null) super.visitElement(expression.getQualifierExpression());
       }
     });
 
@@ -116,9 +115,8 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
           }
         }
 
-        if (expression.getQualifierExpression() != null) super.visitElement(expression.getQualifierExpression());
+        super.visitReferenceExpression(expression);
       }
     });
   }
-
 }
