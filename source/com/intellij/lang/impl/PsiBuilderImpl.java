@@ -959,6 +959,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myDebugMode = dbgMode;
   }
 
+  public Lexer getLexer() {
+    return myLexer;
+  }
 
   @NotNull
   private LeafElement createLeaf(final IElementType type, final int start, final int end) {
