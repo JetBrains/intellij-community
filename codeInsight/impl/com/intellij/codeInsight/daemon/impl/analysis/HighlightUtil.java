@@ -1711,18 +1711,19 @@ public class HighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkSingleImportClassConflict(PsiImportStatement statement, Map<String, Pair<PsiImportStatement,PsiClass>> singleImportedClasses) {
+  public static HighlightInfo checkSingleImportClassConflict(PsiImportStatement statement,
+                                                             Map<String, Pair<PsiImportStatementBase, PsiClass>> singleImportedClasses) {
     if (statement.isOnDemand()) return null;
     PsiElement element = statement.resolve();
     if (element instanceof PsiClass) {
       String name = ((PsiClass)element).getName();
-      Pair<PsiImportStatement, PsiClass> imported = singleImportedClasses.get(name);
+      Pair<PsiImportStatementBase, PsiClass> imported = singleImportedClasses.get(name);
       PsiClass importedClass = imported == null ? null : imported.getSecond();
       if (importedClass != null && !element.getManager().areElementsEquivalent(importedClass, element)) {
         String description = JavaErrorMessages.message("single.import.class.conflict", formatClass(importedClass));
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, description);
       }
-      singleImportedClasses.put(name, Pair.create(statement, (PsiClass)element));
+      singleImportedClasses.put(name, Pair.<PsiImportStatementBase, PsiClass>create(statement, (PsiClass)element));
     }
     return null;
   }
