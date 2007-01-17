@@ -213,7 +213,9 @@ class ExtractMethodDialog extends DialogWrapper {
   }
 
   private void updateVarargsEnabled() {
-    myCbMakeVarargs.setEnabled(myVariableData[myVariableData.length - 1].type instanceof PsiArrayType);
+    if (myCbMakeVarargs != null) {
+      myCbMakeVarargs.setEnabled(myVariableData[myVariableData.length - 1].type instanceof PsiArrayType);
+    }
   }
 
   private void update() {
