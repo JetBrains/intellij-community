@@ -29,9 +29,11 @@ public interface EditorEventMulticaster {
   void removeDocumentListener(DocumentListener listener);
 
   void addEditorMouseListener(EditorMouseListener listener);
+  void addEditorMouseListener(EditorMouseListener listener, Disposable parentDisposable);
   void removeEditorMouseListener(EditorMouseListener listener);
 
   void addEditorMouseMotionListener(EditorMouseMotionListener listener);
+  void addEditorMouseMotionListener(EditorMouseMotionListener listener, Disposable parentDisposable);
   void removeEditorMouseMotionListener(EditorMouseMotionListener listener);
 
   void addCaretListener(CaretListener listener);

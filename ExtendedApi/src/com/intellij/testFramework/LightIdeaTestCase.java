@@ -375,6 +375,7 @@ import java.util.Map;
       //assertTrue("Logger errors occurred. ", IdeaLogger.ourErrorsOccurred == null);
     }
 
+    UndoManager.getGlobalInstance().dropHistory();
     ourApplication.setDataProvider(null);
     ourTestCase = null;
     ((PsiManagerImpl)ourPsiManager).cleanupForNextTest();

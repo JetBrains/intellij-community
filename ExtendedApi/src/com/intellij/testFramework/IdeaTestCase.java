@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -238,6 +239,8 @@ import java.util.HashSet;
 
       try {
         Disposer.dispose(myProject);
+
+        UndoManager.getGlobalInstance().dropHistory();
 
         for (final File fileToDelete : myFilesToDelete) {
           delete(fileToDelete);

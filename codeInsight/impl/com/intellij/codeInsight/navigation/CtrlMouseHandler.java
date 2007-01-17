@@ -151,13 +151,13 @@ public class CtrlMouseHandler implements ProjectComponent {
   public static final TextAttributesKey CTRL_CLICKABLE_ATTRIBUTES_KEY =
     TextAttributesKey.createTextAttributesKey("CTRL_CLICKABLE", new TextAttributes(Color.blue, null, Color.blue, EffectType.LINE_UNDERSCORE, 0));
 
-  public CtrlMouseHandler(Project project, StartupManager startupManager, EditorColorsManager colorsManager) {
+  public CtrlMouseHandler(final Project project, StartupManager startupManager, EditorColorsManager colorsManager) {
     myProject = project;
     startupManager.registerPostStartupActivity(new Runnable(){
       public void run() {
         EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-        eventMulticaster.addEditorMouseListener(myEditorMouseAdapter);
-        eventMulticaster.addEditorMouseMotionListener(myEditorMouseMotionListener);
+        eventMulticaster.addEditorMouseListener(myEditorMouseAdapter, project);
+        eventMulticaster.addEditorMouseMotionListener(myEditorMouseMotionListener, project);
       }
     });
     ourReferenceAttributes = colorsManager.getGlobalScheme().getAttributes(CTRL_CLICKABLE_ATTRIBUTES_KEY);
@@ -177,9 +177,6 @@ public class CtrlMouseHandler implements ProjectComponent {
   }
 
   public void projectClosed() {
-    EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-    eventMulticaster.removeEditorMouseListener(myEditorMouseAdapter);
-    eventMulticaster.removeEditorMouseMotionListener(myEditorMouseMotionListener);
   }
 
   private static BrowseMode getBrowseMode(final int modifiers) {
