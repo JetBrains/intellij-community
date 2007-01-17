@@ -590,7 +590,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
           Pair<PsiImportStaticReferenceElement, PsiField> imported = mySingleImportedFields.get(refName);
           PsiField field = imported == null ? null : imported.getSecond();
 
-          if (field != null && !manager.areElementsEquivalent(field, element) && !!imported.getFirst().equals(ref.getParent())) {
+          if (field != null && !manager.areElementsEquivalent(field, element) && !imported.getFirst().equals(ref.getParent())) {
             messageKey = "field.is.already.defined.in.single.type.import";
           }
           mySingleImportedFields.put(refName, Pair.create(ref, (PsiField)element));
