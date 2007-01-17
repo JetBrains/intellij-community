@@ -88,6 +88,20 @@ public abstract class ParameterTablePanel extends JPanel {
       myParameterTypeSelectors[i] = manager.getTypeSelector();
     }
 
+    final JComboBox combo = new JComboBox(myVariableData); //used for rendering types with multiple choices
+    combo.setOpaque(true);
+    combo.setBorder(null);
+
+    combo.setRenderer(new DefaultListCellRenderer() {
+
+      public Component getListCellRendererComponent(final JList list,
+                                                    final Object value,
+                                                    final int index, final boolean isSelected, final boolean cellHasFocus) {
+        setText(((VariableData)value).type.getPresentableText());
+        return this;
+      }
+    });
+    
     myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_TYPE_COLUMN).setCellEditor(new AbstractTableCellEditor() {
       TypeSelector myCurrentSelector;
       public Object getCellEditorValue() {
@@ -106,6 +120,11 @@ public abstract class ParameterTablePanel extends JPanel {
 
     myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_TYPE_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        if (myParameterTypeSelectors[row].getComponent() instanceof JComboBox) {
+          combo.setSelectedIndex(row);
+          return combo;
+        }
+
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         VariableData data = myVariableData[row];
         setText(data.type.getPresentableText());
@@ -322,6 +341,7 @@ public abstract class ParameterTablePanel extends JPanel {
           return myVariableData[rowIndex].type.getPresentableText();
         }
       }
+      assert false;
       return null;
     }
 
