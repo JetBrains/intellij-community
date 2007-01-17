@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -97,15 +98,21 @@ public class InspectionApplication {
         InspectionMain.printHelp();
       }
 
-      final Profile inspectionProfile = InspectionProfileManager.getInstance().loadProfile(myProfileName);
+      logMessage(1, InspectionsBundle.message("inspection.application.opening.project"));
+      myProject = ProjectManagerEx.getInstanceEx().loadAndOpenProject(myProjectPath);
+
+      //fetch profile by name from project file (project profiles can be disabled)
+      Profile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfiles().get(myProfileName);
+
+      //otherwise look for profile file or use default
+      if (inspectionProfile == null) {
+        inspectionProfile = InspectionProfileManager.getInstance().loadProfile(myProfileName);
+      }
+
       if (inspectionProfile == null) {
         logError(InspectionsBundle.message("inspection.application.file.cannot.be.found", myProfileName));
         InspectionMain.printHelp();
       }
-
-
-      logMessage(1, InspectionsBundle.message("inspection.application.opening.project"));
-      myProject = ProjectManagerEx.getInstanceEx().loadAndOpenProject(myProjectPath);
 
       ideaProjectPreparations();
 
