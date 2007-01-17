@@ -12,6 +12,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.*;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.messages.MessageBusConnection;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.io.File;
 
 /**
  * @author max
@@ -188,7 +190,9 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
     @Override
     public void beforeFileMovement(VirtualFileMoveEvent event) {
-      fileDirty(event.getFile());
+      // need to create FilePath explicitly without referring to VirtualFile because otherwise the FilePath
+      // will reference the path after the move
+      fileDirty(new FilePathImpl(new File(event.getFile().getPath()), event.getFile().isDirectory()));
     }
 
     @Override
