@@ -137,7 +137,7 @@
 
       <separator/>
 
-      <action id="Cvs.BrowseChanges" class="com.intellij.cvsSupport2.actions.BrowseChangesAction"/>
+      <reference id="ChangesView.Browse"/>
 
       <add-to-group group-id="CvsFilePopupGroup" anchor="last"/>
       <add-to-group group-id="CvsGlobalGroup" anchor="last"/>
