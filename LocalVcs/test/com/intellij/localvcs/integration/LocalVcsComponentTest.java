@@ -22,10 +22,10 @@ public class LocalVcsComponentTest extends TempDirTestCase {
 
   @Test
   public void testStorageLocation() {
-    Project p = createProject("projectName", "c:/projects/projectName.ipr");
+    Project p = createProject("projectName", "hash");
     LocalVcsComponent c = new MyLocalVcsComponent("c:/idea/system", p, null);
 
-    File expected = new File("c:/idea/system/vcs/projectName.aabb57c4");
+    File expected = new File("c:/idea/system/vcs/projectName.hash");
     assertEquals(expected, c.getStorageDir());
   }
 
@@ -84,7 +84,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
   private Project createProject(String name, String filePath) {
     Project p = EasyMock.createMock(Project.class);
     EasyMock.expect(p.getName()).andStubReturn(name);
-    EasyMock.expect(p.getProjectFilePath()).andStubReturn(filePath);
+    EasyMock.expect(p.getLocationHash()).andStubReturn(filePath);
     EasyMock.replay(p);
     return p;
   }

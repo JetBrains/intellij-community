@@ -21,11 +21,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.idea.Bombed;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+@Bombed(year = 2008, month=2, day=3, time=4, user="anton.makeev")
 public class LocalVcsComponentTest extends IdeaTestCase {
   private VirtualFile root;
 
@@ -118,6 +120,14 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     getVcs().changeFileContent(f.getPath(), new byte[]{2}, null);
     getVcs().apply();
     assertEquals(2, f.contentsToByteArray()[0]);
+  }
+
+  public void testContentForFilteredFiles() throws Exception {
+    VirtualFile f = root.createChildData(null, "file.exe");
+    f.setBinaryContent(new byte[]{1});
+
+    assertFalse(getVcs().hasEntry(f.getPath()));
+    assertEquals(1, f.contentsToByteArray()[0]);
   }
 
   public void testActions() throws Exception {

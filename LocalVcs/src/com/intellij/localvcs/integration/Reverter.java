@@ -1,22 +1,26 @@
 package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.Entry;
-import com.intellij.localvcs.Label;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 
 public class Reverter {
-  public static void revert(LocalFileSystem fs, String path, Entry old) throws IOException {
-    VirtualFile cur = fs.findFileByPath(path);
+  public static void revert(LocalFileSystem fs, Entry newer, Entry older) throws IOException {
+    VirtualFile f = fs.findFileByPath(newer.getPath());
 
-    if (!old.getName().equals(cur.getName())) {
-      cur.rename(null, old.getName());
+    if (older == null) {
+      f.delete(null);
+      return;
     }
 
-    if (cur.getTimeStamp() != old.getTimestamp()) {
-      cur.setBinaryContent(old.getContent().getBytes(), -1, old.getTimestamp());
+    if (!older.getName().equals(f.getName())) {
+      f.rename(null, older.getName());
+    }
+
+    if (f.getTimeStamp() != older.getTimestamp()) {
+      f.setBinaryContent(older.getContent().getBytes(), -1, older.getTimestamp());
     }
   }
 }

@@ -14,7 +14,12 @@ public class FileFilter {
   }
 
   public boolean isFileAllowed(VirtualFile f) {
-    return isUnderContentRoots(f) && isFileTypeAllowed(f);
+    return isUnderContentRoots(f) && isFileTypeAllowed(f) && isFileSizeAllowed(f);
+  }
+
+  private boolean isFileSizeAllowed(VirtualFile f) {
+    if (f.isDirectory()) return true;
+    return f.getLength() < 100 * 1024;
   }
 
   public boolean isUnderContentRoots(VirtualFile f) {

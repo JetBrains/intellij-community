@@ -16,16 +16,22 @@ public class TestVirtualFile extends VirtualFile {
   private String myName;
   private String myContent;
   private Long myTimestamp;
+  private Long myLength;
 
   private boolean myIsDirectory;
   private VirtualFile myParent;
   private List<TestVirtualFile> myChildren = new ArrayList<TestVirtualFile>();
 
   public TestVirtualFile(String name, String content, Long timestamp) {
+    this(name, content, timestamp, null);
+  }
+
+  public TestVirtualFile(String name, String content, Long timestamp, Long length) {
     myName = name;
     myContent = content;
     myTimestamp = timestamp;
     myIsDirectory = false;
+    myLength = length;
   }
 
   public TestVirtualFile(String name, Long timestamp) {
@@ -49,6 +55,11 @@ public class TestVirtualFile extends VirtualFile {
 
   public long getTimeStamp() {
     return myTimestamp == null ? 0 : myTimestamp;
+  }
+
+  public long getLength() {
+    if (isDirectory()) throw new RuntimeException("getting length from directory!");
+    return myLength == null ? 0: myLength; 
   }
 
   public VirtualFile[] getChildren() {
@@ -88,10 +99,6 @@ public class TestVirtualFile extends VirtualFile {
   }
 
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
-  public long getLength() {
     throw new UnsupportedOperationException();
   }
 

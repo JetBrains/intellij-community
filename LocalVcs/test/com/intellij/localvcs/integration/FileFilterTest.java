@@ -13,8 +13,8 @@ public class FileFilterTest {
   private TestVirtualFile f1 = new TestVirtualFile(null, null, null);
   private TestVirtualFile f2 = new TestVirtualFile(null, null, null);
 
-  private FileType binaryType = createFileType(true);
-  private FileType nonBinaryType = createFileType(false);
+  private FileType binary = createFileType(true);
+  private FileType nonBinary = createFileType(false);
 
   private FileIndex fi = createMock(FileIndex.class);
   private FileTypeManager tm = createMock(FileTypeManager.class);
@@ -25,7 +25,7 @@ public class FileFilterTest {
     expect(fi.isInContent(f2)).andReturn(false);
     replay(fi);
 
-    expect(tm.getFileTypeByFile((VirtualFile)anyObject())).andStubReturn(nonBinaryType);
+    expect(tm.getFileTypeByFile((VirtualFile)anyObject())).andStubReturn(nonBinary);
     replay(tm);
 
     FileFilter f = new FileFilter(fi, tm);
@@ -39,8 +39,8 @@ public class FileFilterTest {
     expect(fi.isInContent((VirtualFile)anyObject())).andStubReturn(true);
     replay(fi);
 
-    expect(tm.getFileTypeByFile(f1)).andStubReturn(nonBinaryType);
-    expect(tm.getFileTypeByFile(f2)).andStubReturn(binaryType);
+    expect(tm.getFileTypeByFile(f1)).andStubReturn(nonBinary);
+    expect(tm.getFileTypeByFile(f2)).andStubReturn(binary);
     replay(tm);
 
     FileFilter f = new FileFilter(fi, tm);
@@ -58,7 +58,7 @@ public class FileFilterTest {
     expect(fi.isInContent(f2)).andReturn(false);
     replay(fi);
 
-    expect(tm.getFileTypeByFile((VirtualFile)anyObject())).andStubReturn(binaryType);
+    expect(tm.getFileTypeByFile((VirtualFile)anyObject())).andStubReturn(binary);
     replay(tm);
 
     FileFilter f = new FileFilter(fi, tm);
@@ -67,9 +67,28 @@ public class FileFilterTest {
     assertFalse(f.isFileAllowed(f2));
   }
 
+  @Test
+  public void testFilteringBigFiles() {
+    VirtualFile big = new TestVirtualFile(null, null, null, 100L * 1024L);
+    VirtualFile small = new TestVirtualFile(null, null, null, 99L * 1024L);
+    VirtualFile dir = new TestVirtualFile(null, null);
+
+    expect(fi.isInContent((VirtualFile)anyObject())).andStubReturn(true);
+    replay(fi);
+
+    expect(tm.getFileTypeByFile((VirtualFile)anyObject())).andStubReturn(nonBinary);
+    replay(tm);
+
+    FileFilter f = new FileFilter(fi, tm);
+
+    assertFalse(f.isFileAllowed(big));
+    assertTrue(f.isFileAllowed(small));
+    assertTrue(f.isFileAllowed(dir));
+  }
+
   private FileType createFileType(boolean isBinary) {
     FileType t = createMock(FileType.class);
-    expect(t.isBinary()).andReturn(isBinary);
+    expect(t.isBinary()).andStubReturn(isBinary);
     replay(t);
     return t;
   }
