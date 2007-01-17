@@ -28,6 +28,9 @@ public class MockEditorEventMulticaster implements EditorEventMulticaster {
   public void addEditorMouseMotionListener(EditorMouseMotionListener listener) {
   }
 
+  public void addEditorMouseMotionListener(EditorMouseMotionListener listener, Disposable parentDisposable) {
+  }
+
   public void removeEditorMouseMotionListener(EditorMouseMotionListener listener) {
   }
 
