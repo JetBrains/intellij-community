@@ -136,7 +136,7 @@ public class FrameDebuggerTree extends DebuggerTree {
     final int startOffset = doc.getLineStartOffset(startLine);
 
     int endLine = Math.min(line + 2, doc.getLineCount() - 1);
-    while (endLine < doc.getLineCount() && isLineEmpty(doc, endLine)) endLine++;
+    while (endLine < doc.getLineCount() - 1 && isLineEmpty(doc, endLine)) endLine++;
     final int endOffset = doc.getLineEndOffset(endLine);
 
     final TextRange lineRange = new TextRange(startOffset, endOffset);
