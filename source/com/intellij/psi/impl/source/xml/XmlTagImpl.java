@@ -360,8 +360,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
   }
 
   public String getAttributeValue(String qname) { //todo ?
-    if(myAttributeValueMap == null) getAttributes();
-    return myAttributeValueMap.get(qname);
+    Map<String, String> map = myAttributeValueMap;
+    while (map == null) {
+      getAttributes();
+      map = myAttributeValueMap;
+    }
+    return map.get(qname);
   }
 
   public String getAttributeValue(String name, String namespace) {
