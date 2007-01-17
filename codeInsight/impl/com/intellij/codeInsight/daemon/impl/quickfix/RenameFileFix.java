@@ -8,15 +8,14 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -59,11 +58,13 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
 
   public final boolean isAvailable(Project project, Editor editor, PsiFile file) {
     if (!file.isValid()) return false;
-    PsiDirectory directory = file.getContainingDirectory();
     VirtualFile vFile = file.getVirtualFile();
     String newName = myNewName + "." + vFile.getExtension();
 
-    return directory.findFile(newName) == null;
+    final VirtualFile parent = vFile.getParent();
+    assert parent != null;
+    final VirtualFile newVFile = parent.findChild(newName);
+    return newVFile == null || newVFile.equals(vFile);
   }
 
 
