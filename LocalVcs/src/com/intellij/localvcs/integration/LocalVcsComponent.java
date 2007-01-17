@@ -106,6 +106,7 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
 
   public boolean isEnabled() {
     // todo dont forget to chenge CommonLvcs too
+    if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) return true;
     if (ApplicationManagerEx.getApplicationEx().isInternal()) return true;
     return System.getProperty("localvcs.disabled") == null;
   }
