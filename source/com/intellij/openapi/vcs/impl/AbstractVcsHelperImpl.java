@@ -60,6 +60,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.text.MessageFormat;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl");
@@ -159,7 +160,17 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   @Nullable
-  public Collection<VirtualFile> selectFilesToProcess(final List<VirtualFile> files, final String title, @Nullable final String prompt) {
+  public Collection<VirtualFile> selectFilesToProcess(final List<VirtualFile> files, final String title, @Nullable final String prompt,
+                                                      final String singleFileTitle, final String singleFilePromptTemplate) {
+    if (files.size() == 1 && singleFilePromptTemplate != null) {
+      String filePrompt = MessageFormat.format(singleFilePromptTemplate, files.get(0).getPresentableUrl());
+      int rc = Messages.showYesNoDialog(myProject, filePrompt, singleFileTitle, Messages.getQuestionIcon());
+      if (rc == 0) {
+        return files;
+      }
+      return null;
+    }
+
     SelectFilesDialog dlg = new SelectFilesDialog(myProject, files, prompt);
     dlg.setTitle(title);
     dlg.show();
