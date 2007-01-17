@@ -123,9 +123,10 @@ public class SuspendManagerUtil {
   }
 
   public static SuspendContextImpl getEvaluatingContext(SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
-    for (Iterator<SuspendContextImpl> iterator = ((SuspendManagerImpl)suspendManager).getPausedContexts().iterator(); iterator.hasNext();) {
-      SuspendContextImpl suspendContext = iterator.next();
-      if(suspendContext.isEvaluating() && suspendContext.getThread() == thread) return suspendContext;
+    for (SuspendContextImpl suspendContext : ((SuspendManagerImpl)suspendManager).getEventContexts()) {
+      if (suspendContext.isEvaluating() && suspendContext.getThread() == thread) {
+        return suspendContext;
+      }
     }
     return null;
   }
