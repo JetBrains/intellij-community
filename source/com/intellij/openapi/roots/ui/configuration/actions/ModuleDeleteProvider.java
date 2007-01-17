@@ -61,7 +61,7 @@ public class ModuleDeleteProvider  implements DeleteProvider  {
     for (final ModifiableRootModel modifiableRootModel : otherModuleRootModels) {
       final OrderEntry[] orderEntries = modifiableRootModel.getOrderEntries();
       for (final OrderEntry orderEntry : orderEntries) {
-        if (orderEntry.isValid() && orderEntry instanceof ModuleOrderEntry) {
+        if (orderEntry instanceof ModuleOrderEntry && orderEntry.isValid()) {
           final Module orderEntryModule = ((ModuleOrderEntry)orderEntry).getModule();
           if (orderEntryModule != null && orderEntryModule.equals(moduleToRemove)) {
             modifiableRootModel.removeOrderEntry(orderEntry);
