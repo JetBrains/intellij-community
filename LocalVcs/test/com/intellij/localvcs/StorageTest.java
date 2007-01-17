@@ -41,6 +41,6 @@ public class StorageTest extends TempDirTestCase {
     s = new Storage(tempDir);
 
     Content c = s.createContent(new byte[]{1, 2, 3});
-    assertEquals(new byte[]{1, 2, 3}, c.getData());
+    assertEquals(new byte[]{1, 2, 3}, c.getBytes());
   }
 }

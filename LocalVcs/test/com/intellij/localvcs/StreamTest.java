@@ -63,7 +63,7 @@ public class StreamTest extends TestCase {
     Content c = s.createContent(new byte[]{1, 2, 3});
     os.writeContent(c);
 
-    assertEquals(new byte[]{1, 2, 3}, is.readContent().getData());
+    assertEquals(new byte[]{1, 2, 3}, is.readContent().getBytes());
   }
 
   @Test
@@ -91,7 +91,7 @@ public class StreamTest extends TestCase {
 
     assertEquals(42, result.getId());
     assertEquals("file", result.getName());
-    assertEquals(b("content"), result.getContent().getData());
+    assertEquals(b("content"), result.getContent().getBytes());
     assertEquals(123L, result.getTimestamp());
   }
 

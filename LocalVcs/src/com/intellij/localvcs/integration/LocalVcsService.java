@@ -101,8 +101,8 @@ public class LocalVcsService {
     }
   }
 
-  public LocalVcsAction startAction() {
-    LocalVcsAction a = new LocalVcsAction(myVcs, myDocumentManager, myFileFilter);
+  public LocalVcsAction startAction(final String label) {
+    LocalVcsAction a = new LocalVcsAction(myVcs, myDocumentManager, myFileFilter, label);
     a.start();
     return a;
   }

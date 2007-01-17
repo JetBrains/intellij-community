@@ -1,6 +1,5 @@
 package com.intellij.localvcs.integration.ui;
 
-import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Content;
 import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.integration.LocalVcsComponent;
@@ -77,8 +76,8 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     // todo add timestamps
     SimpleDiffRequest r = new SimpleDiffRequest(null, "title");
     // todo review byte conversion
-    r.setContents(new SimpleContent(new String(left.getData())),
-                  new SimpleContent(new String(right.getData())));
+    r.setContents(new SimpleContent(new String(left.getBytes())),
+                  new SimpleContent(new String(right.getBytes())));
     return r;
   }
 

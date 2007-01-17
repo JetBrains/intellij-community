@@ -2,10 +2,7 @@ package com.intellij.localvcslong;
 
 
 import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.localvcs.Entry;
-import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.Storage;
-import com.intellij.localvcs.ILocalVcs;
+import com.intellij.localvcs.*;
 import com.intellij.localvcs.integration.LocalVcsAction;
 import com.intellij.localvcs.integration.LocalVcsComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,6 +24,7 @@ import com.intellij.testFramework.IdeaTestCase;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 public class LocalVcsComponentTest extends IdeaTestCase {
   private VirtualFile root;
@@ -130,13 +128,17 @@ public class LocalVcsComponentTest extends IdeaTestCase {
 
     assertEquals(0, getVcsContentOf(f)[0]);
 
-    LocalVcsAction a = getVcsComponent().startAction();
+    LocalVcsAction a = getVcsComponent().startAction("label");
     assertEquals(1, getVcsContentOf(f)[0]);
 
     setDocumentTextFor(f, new byte[]{2});
 
     a.finish();
     assertEquals(2, getVcsContentOf(f)[0]);
+
+    List<Label> l = getVcs().getLabelsFor(f.getPath());
+    assertEquals("label", l.get(0).getName());
+    assertNull(l.get(1).getName());
   }
 
   private void setDocumentTextFor(VirtualFile f, byte[] bytes) {
@@ -146,7 +148,7 @@ public class LocalVcsComponentTest extends IdeaTestCase {
   }
 
   private byte[] getVcsContentOf(VirtualFile f) {
-    return getVcs().getEntry(f.getPath()).getContent().getData();
+    return getVcs().getEntry(f.getPath()).getContent().getBytes();
   }
 
   private ILocalVcs getVcs() {

@@ -5,8 +5,8 @@ import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Storage;
 import com.intellij.localvcs.ThreadSafeLocalVcs;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
+// todo get rid of all singletons
 public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   private Project myProject;
   private StartupManagerEx myStartupManager;
@@ -50,7 +51,7 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   }
 
   public void initComponent() {
-    if (isDisabled()) return;
+    if (!isEnabled()) return;
 
     // todo review startup order
     myStartupManager.registerPreStartupActivity(new Runnable() {
@@ -85,12 +86,12 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   }
 
   public void save() {
-    if (isDisabled()) return;
+    if (!isEnabled()) return;
     if (myVcs != null) myVcs.save();
   }
 
   public void disposeComponent() {
-    if (isDisabled()) return;
+    if (!isEnabled()) return;
     closeVcs();
     closeService();
   }
@@ -103,16 +104,15 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
     myService.shutdown();
   }
 
-  protected boolean isDisabled() {
+  public boolean isEnabled() {
     // todo dont forget to chenge CommonLvcs too
-    if (ApplicationManager.getApplication().isUnitTestMode()) return false;
-    if (System.getProperty("localvcs.enabled") != null) return false;
-    return true;
+    if (ApplicationManagerEx.getApplicationEx().isInternal()) return true;
+    return System.getProperty("localvcs.disabled") == null;
   }
 
-  public LocalVcsAction startAction() {
-    if (isDisabled()) return LocalVcsAction.NULL;
-    return myService.startAction();
+  public LocalVcsAction startAction(String label) {
+    if (!isEnabled()) return LocalVcsAction.NULL;
+    return myService.startAction(label);
   }
 
   @NonNls
@@ -122,7 +122,7 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   }
 
   public ILocalVcs getLocalVcs() {
-    if (isDisabled()) throw new RuntimeException("new local vcs is disabled");
+    if (!isEnabled()) throw new RuntimeException("new local vcs is disabled");
     return myVcs;
   }
 

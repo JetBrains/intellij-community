@@ -117,7 +117,7 @@ public class FileHistoryDialogModelTest extends TestCase {
 
     private String getContent(VirtualFile f) {
       // todo review conversion (charsets)
-      return new String(vcs.getEntry(f.getPath()).getContent().getData());
+      return new String(vcs.getEntry(f.getPath()).getContent().getBytes());
     }
 
     private void setCurrentContent(String s) {

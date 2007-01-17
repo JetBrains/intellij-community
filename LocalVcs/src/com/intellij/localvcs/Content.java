@@ -22,24 +22,24 @@ public class Content {
     s.writeInteger(myId);
   }
 
-  public byte[] getData() {
+  public byte[] getBytes() {
     return myStorage.loadContent(myId);
   }
 
   public int getLength() {
     // todo make it faster!!!
-    return getData().length;
+    return getBytes().length;
   }
 
   public InputStream getInputStream() {
     // todo make it faster!!!
-    return new ByteArrayInputStream(getData());
+    return new ByteArrayInputStream(getBytes());
   }
 
 
   @Override
   public String toString() {
-    return new String(getData());
+    return new String(getBytes());
   }
 
   @Override

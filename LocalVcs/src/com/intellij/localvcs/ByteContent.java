@@ -11,13 +11,13 @@ public class ByteContent extends Content {
   }
 
   @Override
-  public byte[] getData() {
+  public byte[] getBytes() {
     return myData;
   }
 
   @Override
   public boolean equals(Object o) {
-    return Arrays.equals(myData, ((Content)o).getData());
+    return Arrays.equals(myData, ((Content)o).getBytes());
   }
 
   @Override

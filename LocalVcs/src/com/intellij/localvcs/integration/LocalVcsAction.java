@@ -1,22 +1,24 @@
 package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.ILocalVcs;
-import com.intellij.localvcs.integration.ILocalVcsAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
+// todo add LocalVcs.startAction for bulk updates
 public class LocalVcsAction implements ILocalVcsAction {
   public static LocalVcsAction NULL = new Null(); // todo try to get rid of this
 
   private ILocalVcs myVcs;
   private FileDocumentManager myDocumentManager;
   private FileFilter myFilter;
+  private String myLabel;
 
-  public LocalVcsAction(ILocalVcs vcs, FileDocumentManager dm, FileFilter f) {
+  public LocalVcsAction(ILocalVcs vcs, FileDocumentManager dm, FileFilter f, String label) {
     myVcs = vcs;
     myDocumentManager = dm;
     myFilter = f;
+    myLabel = label;
   }
 
   public void start() {
@@ -25,6 +27,7 @@ public class LocalVcsAction implements ILocalVcsAction {
 
   public void finish() {
     applyUnsavedDocuments();
+    myVcs.putLabel(myLabel);
   }
 
   private void applyUnsavedDocuments() {
@@ -40,7 +43,7 @@ public class LocalVcsAction implements ILocalVcsAction {
 
   private static class Null extends LocalVcsAction {
     public Null() {
-      super(null, null, null);
+      super(null, null, null, null);
     }
 
     @Override

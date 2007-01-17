@@ -115,7 +115,6 @@ public class LocalVcsComponentTest extends TempDirTestCase {
       return mySystemPath;
     }
 
-
     @Override
     protected void initVcs() {
       super.initVcs();
@@ -136,8 +135,8 @@ public class LocalVcsComponentTest extends TempDirTestCase {
     }
 
     @Override
-    protected boolean isDisabled() {
-      return false;
+    public boolean isEnabled() {
+      return true;
     }
   }
 }
