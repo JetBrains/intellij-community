@@ -156,6 +156,9 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   }
 
   public void fileStatusesChanged() {
+    if (myProject.isDisposed()) {
+      return;
+    }
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
