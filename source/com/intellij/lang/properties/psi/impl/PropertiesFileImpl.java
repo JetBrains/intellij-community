@@ -44,8 +44,10 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
 
   @NotNull
   public List<Property> getProperties() {
+    synchronized (PsiLock.LOCK) {
     ensurePropertiesLoaded();
     return myProperties;
+    }
   }
 
   private ASTNode getPropertiesList() {
@@ -54,7 +56,6 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   private void ensurePropertiesLoaded() {
-    synchronized (PsiLock.LOCK) {
       if (myPropertiesMap != null) {
         return;
       }
@@ -72,20 +73,23 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
         list.add(property);
         myProperties.add(property);
       }
-    }
   }
 
   public Property findPropertyByKey(@NotNull String key) {
-    ensurePropertiesLoaded();
-    List<Property> list = myPropertiesMap.get(key);
-    return list == null ? null : list.get(0);
+    synchronized (PsiLock.LOCK) {
+      ensurePropertiesLoaded();
+      List<Property> list = myPropertiesMap.get(key);
+      return list == null ? null : list.get(0);
+    }
   }
 
   @NotNull
   public List<Property> findPropertiesByKey(@NotNull String key) {
+    synchronized (PsiLock.LOCK) {
     ensurePropertiesLoaded();
     List<Property> list = myPropertiesMap.get(key);
     return list == null ? Collections.<Property>emptyList() : list;
+    }
   }
 
   @NotNull
@@ -138,10 +142,14 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return result;
   }
 
-  public synchronized void subtreeChanged() {
+  public void subtreeChanged() {
     super.subtreeChanged();
-    PropertiesReferenceManager.getInstance(getProject()).beforePropertiesFileChange(this, myPropertiesMap == null ? null : myPropertiesMap.keySet());
-    myPropertiesMap = null;
-    myProperties = null;
+    Map<String, List<Property>> propertiesMap = myPropertiesMap;
+    PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(getProject());
+    referenceManager.beforePropertiesFileChange(this, propertiesMap == null ? null : propertiesMap.keySet());
+    synchronized (PsiLock.LOCK) {
+      myPropertiesMap = null;
+      myProperties = null;
+    }
   }
 }
