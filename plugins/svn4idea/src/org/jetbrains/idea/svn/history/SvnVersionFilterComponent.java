@@ -15,9 +15,8 @@
  */
 package org.jetbrains.idea.svn.history;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.versionBrowser.StandardVersionFilterComponent;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
+import com.intellij.openapi.vcs.versionBrowser.StandardVersionFilterComponent;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,13 +29,11 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent<Ch
   private JTextField myAuthorField;
   private JPanel myPanel;
   private JPanel myStandardPanel;
-  private final Project myProject;
 
-  public SvnVersionFilterComponent(Project project) {
-    super();
+  public SvnVersionFilterComponent(final boolean showDateFilter) {
+    super(showDateFilter);
     myStandardPanel.setLayout(new BorderLayout());
     myStandardPanel.add(getStandardPanel(), BorderLayout.CENTER);
-    myProject = project;
     init(new ChangeBrowserSettings());
   }
 

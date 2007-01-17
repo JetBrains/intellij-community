@@ -66,8 +66,8 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
     return new ChangeBrowserSettings();
   }
 
-  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI() {
-    return new SvnVersionFilterComponent(myProject);
+  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(final boolean showDateFilter) {
+    return new SvnVersionFilterComponent(showDateFilter);
   }
 
   public List<SvnChangeList> getAllCommittedChanges(ChangeBrowserSettings settings, final int maxCount) throws VcsException {
