@@ -43,7 +43,7 @@ public class ExternalToolPassFactory extends AbstractProjectComponent implements
   private static TextRange calculateRangeToProcess(Editor editor) {
     Document document = editor.getDocument();
 
-    int part = FileStatusMap.NORMAL_HIGHLIGHTERS;
+    int part = Pass.UPDATE_ALL;
 
     PsiElement dirtyScope = DaemonCodeAnalyzer.getInstance(editor.getProject()).getFileStatusMap().getFileDirtyScope(document, part);
     int startOffset;

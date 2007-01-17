@@ -1,18 +1,18 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
-import com.intellij.codeHighlighting.Pass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiElement;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +39,8 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = calculateRangeToProcess(editor);
-    if (textRange == null) return null;
+    if (textRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument(), LocalInspectionsPass.IN_PROGRESS_ICON,
+                                                                             LocalInspectionsPass.PRESENTABLE_NAME);
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     ExecutorService executorService = daemonCodeAnalyzer.getDaemonExecutorService();
     return new LocalInspectionsPass(file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(),executorService);
@@ -48,7 +49,7 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
   private static TextRange calculateRangeToProcess(Editor editor) {
     Document document = editor.getDocument();
 
-    int part = FileStatusMap.LOCAL_INSPECTIONS;
+    int part = Pass.LOCAL_INSPECTIONS;
 
     PsiElement dirtyScope = DaemonCodeAnalyzer.getInstance(editor.getProject()).getFileStatusMap().getFileDirtyScope(document, part);
     if (dirtyScope == null || !dirtyScope.isValid()) {

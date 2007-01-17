@@ -1,9 +1,6 @@
 package com.intellij.codeInsight.problems;
 
-import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
@@ -187,11 +184,12 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   }
 
-  public void startCheckingIfVincentSolvedProblemsYet(final ProgressIndicator progress) {
+  public void startCheckingIfVincentSolvedProblemsYet(final ProgressIndicator progress, ProgressableTextEditorHighlightingPass progressablePass) {
     if (!myProject.isOpen()) return;
     long psiModificationCount = PsiManager.getInstance(myProject).getModificationTracker().getOutOfCodeBlockModificationCount();
     if (psiModificationCount == myPsiModificationCount) return; //optimization
 
+    progressablePass.setProgressLimit(myCheckingQueue.size());
     try {
       for (VirtualFile virtualFile : myCheckingQueue) {
         if (progress.isCanceled()) break;
@@ -200,6 +198,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
           myCheckingQueue.remove(virtualFile);
           myCheckingQueue.add(virtualFile);
           orderVincentToCleanTheCar(virtualFile, progress);
+          progressablePass.advanceProgress();
         }
         else {
           synchronized (myProblems) {

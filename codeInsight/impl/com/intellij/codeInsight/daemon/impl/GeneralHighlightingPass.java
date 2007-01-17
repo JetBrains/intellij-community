@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -10,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -24,7 +24,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
@@ -38,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.*;
 
-public class GeneralHighlightingPass extends TextEditorHighlightingPass {
+public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass");
   private static final Icon OVERRIDING_METHOD_ICON = IconLoader.getIcon("/gutter/overridingMethod.png");
   private static final Icon IMPLEMENTING_METHOD_ICON = IconLoader.getIcon("/gutter/implementingMethod.png");
@@ -56,13 +55,14 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
 
   private final DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
   protected boolean myHasErrorElement;
+  static final String PRESENTABLE_NAME = "Syntax";
 
   public GeneralHighlightingPass(@NotNull Project project,
                                  @NotNull PsiFile file,
                                  @NotNull Document document,
                                  int startOffset,
                                  int endOffset, boolean updateAll) {
-    super(project, document);
+    super(project, document, IN_PROGRESS_ICON, PRESENTABLE_NAME);
     myFile = file;
     myDocument = document;
     myStartOffset = startOffset;
@@ -105,13 +105,13 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     }
   }
 
-  public void doCollectInformation(ProgressIndicator progress) {
+  protected void collectInformationWithProgress(final ProgressIndicator progress) {
     if (myUpdateAll) {
       DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
       RefCountHolder refCountHolder = daemonCodeAnalyzer.getFileStatusMap().getRefCountHolder(myDocument, myFile);
       setRefCountHolders(refCountHolder);
 
-      PsiElement dirtyScope = daemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(myDocument, FileStatusMap.NORMAL_HIGHLIGHTERS);
+      PsiElement dirtyScope = daemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(myDocument, Pass.UPDATE_ALL);
       if (dirtyScope != null) {
         if (dirtyScope instanceof PsiFile) {
           refCountHolder.clear();
@@ -162,11 +162,14 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     }
   }
 
-  public void doApplyInformationToEditor() {
+  protected void applyInformationWithProgress() {
     UpdateHighlightersUtil.setLineMarkersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myMarkers, Pass.UPDATE_ALL);
 
     // highlights from both passes should be in the same layer 
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myHighlights, Pass.UPDATE_ALL);
+
+    DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
+    daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
   }
 
   public Collection<LineMarkerInfo> queryLineMarkers() {
@@ -207,6 +210,8 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
 
     final HighlightInfoHolder holder = createInfoHolder();
     ProgressManager progressManager = ProgressManager.getInstance();
+    setProgressLimit(1L * elements.size() * visitors.size());
+
     for (PsiElement element : elements) {
       progressManager.checkCanceled();
 
@@ -223,6 +228,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
         holder.clear();
         for (HighlightVisitor visitor : visitors) {
           visitor.visit(element, holder);
+          advanceProgress();
         }
       }
       finally {
@@ -363,7 +369,10 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     wolf.reportProblems(file, problems);
   }
 
-  public String toString() {
-    return "GHP "+myUpdateAll +"("+myStartOffset+"-"+myEndOffset+")";
+  static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/errorsInProgress.png");
+
+  public double getProgress() {
+    // do not show progress of visible highlighters update
+    return myUpdateAll ? super.getProgress() : -1;
   }
 }

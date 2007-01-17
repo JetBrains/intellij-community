@@ -21,7 +21,6 @@ public class PostHighlightingPassFactory extends AbstractProjectComponent implem
   public PostHighlightingPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{
-      Pass.UPDATE_VISIBLE,
       Pass.UPDATE_ALL,
     }, null, true, Pass.POST_UPDATE_ALL);
   }

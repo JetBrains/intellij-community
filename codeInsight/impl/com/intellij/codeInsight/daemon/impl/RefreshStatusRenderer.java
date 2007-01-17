@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.ide.IconUtilEx;
@@ -16,7 +17,9 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 public class RefreshStatusRenderer implements ErrorStripeRenderer {
   private static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/errorsInProgress.png");
@@ -27,7 +30,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
   private final Project myProject;
   private final Document myDocument;
   private final PsiFile myFile;
-  private final DaemonCodeAnalyzerImpl myHighlighter;
+  private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
 
   @NonNls private static final String HTML_HEADER = "<html><body>";
   @NonNls private static final String HTML_FOOTER = "</body></html>";
@@ -35,20 +38,40 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
   @NonNls private static final String NO_PASS_FOR_MESSAGE_KEY_SUFFIX = ".for";
 
   public static class DaemonCodeAnalyzerStatus {
-    public boolean errorAnalyzingFinished;
-    public boolean inspectionFinished;
-    public String [] noHighlightingRoots;
+    public boolean errorAnalyzingFinished; // all passes done
+    
+    public static class PassStatus {
+      private final String name;
+      private final double progress;
+      private final boolean finished;
+      private final Icon inProgressIcon;
+
+      public PassStatus(final String name, final double progress, final boolean finished, Icon inProgressIcon) {
+        this.name = name;
+        this.progress = progress;
+        this.finished = finished;
+        this.inProgressIcon = inProgressIcon;
+      }
+    }
+    public List<PassStatus> passStati = new ArrayList<PassStatus>(); 
+
+    public String[/*rootsNumber*/] noHighlightingRoots;
+    public String[/*rootsNumber*/] noInspectionRoots;
     public int[] errorCount = new int[SeverityRegistrar.getSeveritiesCount()];
-    public String [] noInspectionRoots;
     public int rootsNumber;
 
     public String toString() {
-      return !errorAnalyzingFinished ? "syntaxing" : !inspectionFinished ? "inspecting" : "finshed";
+      String s = "DS: finished=" + errorAnalyzingFinished;
+      s += "; pass statuses: " + passStati.size() + "; ";
+      for (PassStatus passStatus : passStati) {
+        s += String.format("(%s %2.0f%% %b)", passStatus.name, passStatus.progress*100, passStatus.finished);
+      }
+      return s;
     }
   }
 
   protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus() {
-    if (myFile == null || myProject.isDisposed() || !myHighlighter.isHighlightingAvailable(myFile)) return null;
+    if (myFile == null || myProject.isDisposed() || !myDaemonCodeAnalyzer.isHighlightingAvailable(myFile)) return null;
 
     ArrayList<String> noInspectionRoots = new ArrayList<String>();
     ArrayList<String> noHighlightingRoots = new ArrayList<String>();
@@ -66,23 +89,34 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     status.noHighlightingRoots = noHighlightingRoots.isEmpty() ? null : noHighlightingRoots.toArray(new String[noHighlightingRoots.size()]);
     status.rootsNumber = roots.length;
 
-    if (isErrorAnalyzingFinished()) {
-      status.errorAnalyzingFinished = true;
-      for (int i = 0; i < status.errorCount.length; i++) {
-        final HighlightSeverity minSeverity = SeverityRegistrar.getSeverityByIndex(i);
-        status.errorCount[i] = getErrorsCount(minSeverity);
-      }
-      status.inspectionFinished = isInspectionCompleted();
+    for (int i = 0; i < status.errorCount.length; i++) {
+      final HighlightSeverity minSeverity = SeverityRegistrar.getSeverityByIndex(i);
+      status.errorCount[i] = getErrorsCount(minSeverity);
     }
+    List<TextEditorHighlightingPass> passes = myDaemonCodeAnalyzer.getPassesToShowProgressFor(myFile);
+    ArrayList<DaemonCodeAnalyzerStatus.PassStatus> passStati = new ArrayList<DaemonCodeAnalyzerStatus.PassStatus>();
+    for (TextEditorHighlightingPass tepass : passes) {
+      if (!(tepass instanceof ProgressableTextEditorHighlightingPass)) continue;
+      ProgressableTextEditorHighlightingPass pass = (ProgressableTextEditorHighlightingPass)tepass;
+
+      double progress = pass.getProgress();
+      if (progress < 0) continue;
+      DaemonCodeAnalyzerStatus.PassStatus passStatus =
+        new DaemonCodeAnalyzerStatus.PassStatus(pass.getPresentableName(), progress, pass.isFinished(), pass.getInProgressIcon());
+      passStati.add(passStatus);
+    }
+    status.passStati = passStati;
+    status.errorAnalyzingFinished = myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile);
+
     return status;
   }
 
   protected boolean isInspectionCompleted() {
-    return myHighlighter.isInspectionCompleted(myFile);
+    return myDaemonCodeAnalyzer.isInspectionCompleted(myFile);
   }
 
   protected boolean isErrorAnalyzingFinished() {
-    return myHighlighter.isErrorAnalyzingFinished(myFile);
+    return myDaemonCodeAnalyzer.isErrorAnalyzingFinished(myFile);
   }
 
   protected int getErrorsCount(final HighlightSeverity minSeverity) {
@@ -95,7 +129,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
 
   public RefreshStatusRenderer(Project project, DaemonCodeAnalyzerImpl highlighter, Document document, PsiFile file) {
     myProject = project;
-    myHighlighter = highlighter;
+    myDaemonCodeAnalyzer = highlighter;
     myDocument = document;
     myFile = file;
   }
@@ -110,46 +144,74 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
       text += HTML_FOOTER;
       return text;
     }
-    else if (status.errorAnalyzingFinished) {
-      boolean inspecting = !status.inspectionFinished;
-      text += inspecting ? DaemonBundle.message("pass.inspection") : DaemonBundle.message("analysis.completed");
-      if (status.errorCount[0] == 0){
-        text += BR;
-        if (inspecting) {
-          text += DaemonBundle.message("no.errors.or.warnings.found.so.far");
-        }
-        else {
-          text += DaemonBundle.message("no.errors.or.warnings.found");
-        }
-      } else {
-        int currentSeverityErrors = 0;
-        for (int i = status.errorCount.length - 1; i >=0; i--){
-          final HighlightSeverity severity = SeverityRegistrar.getSeverityByIndex(i);
-          final int count = status.errorCount[i] - currentSeverityErrors;
-          if (count > 0){
-            text += BR;
-            if (inspecting){
-              text += DaemonBundle.message("errors.found.so.far", count, count > 1
-                                                                         ? StringUtil.pluralize(severity.toString().toLowerCase())
-                                                                         : severity.toString().toLowerCase());
-            } else {
-              text += DaemonBundle.message("errors.found", count, count > 1
-                                                                  ? StringUtil.pluralize(severity.toString().toLowerCase())
-                                                                  : severity.toString().toLowerCase());
-            }
-            currentSeverityErrors += count;
-          }
-        }
-      }
 
-      text += getMessageByRoots(status.noHighlightingRoots, status.rootsNumber, "no.syntax.highlighting.performed");
-      text += getMessageByRoots(status.noInspectionRoots, status.rootsNumber, "no.inspections.performed");
-      text += HTML_FOOTER;
-      return text;
+    if (status.errorAnalyzingFinished) {
+      text += DaemonBundle.message("analysis.completed");
     }
     else {
-      return DaemonBundle.message("pass.syntax");
+      text += DaemonBundle.message("performing.code.analysis");
+      text += "<table>";
+      for (DaemonCodeAnalyzerStatus.PassStatus passStatus : status.passStati) {
+        if (passStatus.finished) continue;
+        text += "<tr><td>" + passStatus.name + ":</td><td>" + renderProgressHtml(passStatus.progress) +  "</td></tr>";
+      }
+      text += "</table>";
     }
+
+    if (status.errorCount[0] == 0) {
+      text += BR;
+      if (!status.errorAnalyzingFinished) {
+        text += DaemonBundle.message("no.errors.or.warnings.found.so.far");
+      }
+      else {
+        text += DaemonBundle.message("no.errors.or.warnings.found");
+      }
+    }
+    else {
+      int currentSeverityErrors = 0;
+      for (int i = status.errorCount.length - 1; i >= 0; i--) {
+        final HighlightSeverity severity = SeverityRegistrar.getSeverityByIndex(i);
+        final int count = status.errorCount[i] - currentSeverityErrors;
+        if (count > 0) {
+          text += BR;
+          String name = count > 1 ? StringUtil.pluralize(severity.toString().toLowerCase()) : severity.toString().toLowerCase();
+          if (!status.errorAnalyzingFinished) {
+            text += DaemonBundle.message("errors.found.so.far", count, name);
+          }
+          else {
+            text += DaemonBundle.message("errors.found", count, name);
+          }
+          currentSeverityErrors += count;
+        }
+      }
+    }
+
+    text += getMessageByRoots(status.noHighlightingRoots, status.rootsNumber, "no.syntax.highlighting.performed");
+    text += getMessageByRoots(status.noInspectionRoots, status.rootsNumber, "no.inspections.performed");
+    text += HTML_FOOTER;
+    return text;
+    //if (atLeastOnePassFinished) {
+    //}
+    //return DaemonBundle.message("pass.syntax");
+  }
+
+  private static final URL progressUrl = RefreshStatusRenderer.class.getClassLoader().getResource("/general/progress.png");
+  private static final URL progressPlaceHolderUrl = RefreshStatusRenderer.class.getClassLoader().getResource("/general/progressPlaceHolder.png");
+
+  private static String renderProgressHtml(double progress) {
+    String text = "<table><tr><td>";
+    int nBricks = 5;
+    int nFilledBricks = (int)(nBricks * progress);
+    int i;
+    for (i = 0; i < nFilledBricks; i++) {
+      text += "<img src=\"" + progressUrl + "\">";
+    }
+    for (; i < nBricks; i++) {
+      text += "<img src=\"" + progressPlaceHolderUrl + "\">";
+    }
+    text += "&nbsp;"+String.format("%2.0f%%", progress * 100);
+    text += "</td></tr></table>";
+    return text;
   }
 
   private static String getMessageByRoots(String [] roots, int rootsNumber, @NonNls String prefix){
@@ -173,23 +235,34 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     Icon icon;
     if (status == null) {
       icon = NO_ICON;
-    } else if (status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber){
+    }
+    else if (status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
       icon = NO_ANALYSIS_ICON;
     }
-    else if (!status.errorAnalyzingFinished) {
-      icon = IN_PROGRESS_ICON;
-    }
     else {
-      icon = HighlightDisplayLevel.DO_NOT_SHOW.getIcon();
-      for (int i = status.errorCount.length - 1; i >= 0; i--) {
-        if (status.errorCount[i] != 0) {
-          icon = HighlightDisplayLevel.createIconByMask(SeverityRegistrar.getRendererColorByIndex(i));
-          break;
+      Icon inProgressMask = null;
+      boolean atLeastOnePassFinished = status.errorAnalyzingFinished;
+      for (DaemonCodeAnalyzerStatus.PassStatus passStatus : status.passStati) {
+        atLeastOnePassFinished |= passStatus.finished;
+        if (!passStatus.finished) {
+          Icon progressIcon = passStatus.inProgressIcon;
+          if (progressIcon != null) {
+            inProgressMask = inProgressMask == null ? progressIcon : IconUtilEx.createLayeredIcon(inProgressMask, progressIcon);
+          }
         }
       }
-      boolean inspecting = !status.inspectionFinished;
-      if (inspecting) {
-        icon = IconUtilEx.createLayeredIcon(icon, INSPECTION_ICON);
+      icon = status.errorAnalyzingFinished ? HighlightDisplayLevel.DO_NOT_SHOW.getIcon() : IN_PROGRESS_ICON;
+      if (atLeastOnePassFinished) {
+        for (int i = status.errorCount.length - 1; i >= 0; i--) {
+          if (status.errorCount[i] != 0) {
+            icon = HighlightDisplayLevel.createIconByMask(SeverityRegistrar.getRendererColorByIndex(i));
+            break;
+          }
+        }
+      }
+
+      if (inProgressMask != null) {
+        icon = IconUtilEx.createLayeredIcon(icon, inProgressMask);
       }
     }
 

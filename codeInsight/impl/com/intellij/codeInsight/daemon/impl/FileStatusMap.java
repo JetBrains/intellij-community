@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.WeakHashMap;
+import com.intellij.codeHighlighting.Pass;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -39,10 +40,6 @@ public class FileStatusMap {
     }
   }
 
-  public static final int NORMAL_HIGHLIGHTERS = 1;
-  public static final int OVERRIDEN_MARKERS = 2;
-  public static final int LOCAL_INSPECTIONS = 3;
-
   public FileStatusMap(@NotNull Project project) {
     myProject = project;
   }
@@ -60,7 +57,7 @@ public class FileStatusMap {
     }
   }
 
-  public void markFileUpToDate(@NotNull Document document, int part) {
+  public void markFileUpToDate(@NotNull Document document, int passId) {
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
@@ -69,22 +66,25 @@ public class FileStatusMap {
         myDocumentToStatusMap.put(document, status);
       }
       status.defensivelyMarked=false;
-      if (part == NORMAL_HIGHLIGHTERS){
-        status.dirtyScope = null;
-      }
-      else if (part == OVERRIDEN_MARKERS){
-        status.overridenDirtyScope = null;
-      }
-      else if (part == LOCAL_INSPECTIONS){
-        status.localInspectionsDirtyScope = null;
-      }
-      else{
-        LOG.assertTrue(false);
+      switch (passId) {
+        case Pass.UPDATE_ALL:
+        case Pass.POST_UPDATE_ALL:
+          status.dirtyScope = null;
+          break;
+        case Pass.UPDATE_OVERRIDEN_MARKERS:
+          status.overridenDirtyScope = null;
+          break;
+        case Pass.LOCAL_INSPECTIONS:
+          status.localInspectionsDirtyScope = null;
+          break;
+        default:
+          //LOG.error("unknown id "+passId);
+          break;
       }
     }
   }
 
-  public PsiElement getFileDirtyScope(@NotNull Document document, int part) {
+  public PsiElement getFileDirtyScope(@NotNull Document document, int passId) {
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
@@ -94,18 +94,16 @@ public class FileStatusMap {
         status.dirtyScope = status.localInspectionsDirtyScope = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         status.defensivelyMarked = false;
       }
-      if (part == NORMAL_HIGHLIGHTERS){
-        return status.dirtyScope;
-      }
-      else if (part == OVERRIDEN_MARKERS){
-        return status.overridenDirtyScope;
-      }
-      else if (part == LOCAL_INSPECTIONS) {
-        return status.localInspectionsDirtyScope;
-      }
-      else{
-        LOG.assertTrue(false);
-        return null;
+      switch (passId) {
+        case Pass.UPDATE_ALL:
+          return status.dirtyScope;
+        case Pass.UPDATE_OVERRIDEN_MARKERS:
+          return status.overridenDirtyScope;
+        case Pass.LOCAL_INSPECTIONS:
+          return status.localInspectionsDirtyScope;
+        default:
+          LOG.assertTrue(false);
+          return null;
       }
     }
   }
@@ -157,5 +155,15 @@ public class FileStatusMap {
       }
     }
     return refCountHolder;
+  }
+  public boolean getAllDirtyScopesAreNull(final Document document) {
+    synchronized (myDocumentToStatusMap) {
+      FileStatus status = myDocumentToStatusMap.get(document);
+      return status != null
+             && !status.defensivelyMarked
+             && status.dirtyScope == null
+             && status.overridenDirtyScope == null
+             && status.localInspectionsDirtyScope == null;
+    }
   }
 }

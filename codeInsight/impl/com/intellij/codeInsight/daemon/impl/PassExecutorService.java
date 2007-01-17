@@ -2,15 +2,12 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author cdr
  */
-public class PassExecutorService {
+public abstract class PassExecutorService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PassExecutorService");
   public static int PROCESSORS = /*10;//*/Runtime.getRuntime().availableProcessors();
   private final ThreadPoolExecutor myExecutorService = new ThreadPoolExecutor(PROCESSORS, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
@@ -248,7 +245,8 @@ public class PassExecutorService {
         applyInformationToEditor(this);
       }
 
-      mySubmittedPasses.remove(this);
+      //mySubmittedPasses.remove(this);
+
       // check that it is not remnant from the previous attempt, canceled long ago
       if (!myUpdateProgress.isCanceled()) {
         int toexec = myThreadsToStartCountdown.decrementAndGet();
@@ -266,27 +264,19 @@ public class PassExecutorService {
   }
 
   private void applyInformationToEditor(final ScheduledPass pass) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    final boolean wasCanceled = pass.myUpdateProgress.isCanceled();
-    final FileEditor editor = pass.myFileEditor;
-    if (editor != null && !wasCanceled) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (myProject.isDisposed()) return;
-
-          if (editor.getComponent().isDisplayable() || ApplicationManager.getApplication().isUnitTestMode()) {
-            pass.myPass.applyInformationToEditor();
-            if (editor instanceof TextEditor) {
-              LOG.debug("Apply "+pass.myPass);
-              ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).
-                repaintErrorStripeRenderer(((TextEditor)editor).getEditor());
-            }
-          }
-        }
-      }, ModalityState.stateForComponent(editor.getComponent()));
-    }
+    applyInformationToEditor(pass.myPass, pass.myFileEditor, pass.myUpdateProgress);
   }
 
+  protected abstract void applyInformationToEditor(final TextEditorHighlightingPass pass, final FileEditor fileEditor,
+                                        final ProgressIndicator updateProgress);
+
+  public List<TextEditorHighlightingPass> getAllSubmittedPasses() {
+    ArrayList<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(mySubmittedPasses.size());
+    for (ScheduledPass scheduledPass : mySubmittedPasses.keySet()) {
+      result.add(scheduledPass.myPass);
+    }
+    return result;
+  }
 
   private static final ConcurrentHashMap<Thread, Integer> threads = new ConcurrentHashMap<Thread, Integer>();
   private static int getThreadNum() {
@@ -308,4 +298,6 @@ public class PassExecutorService {
       }
     }
   }
+
+
 }

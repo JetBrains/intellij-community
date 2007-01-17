@@ -2,15 +2,15 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
@@ -39,16 +39,15 @@ public class GeneralHighlightingPassFactory extends AbstractProjectComponent imp
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = calculateRangeToProcess(editor);
-    if (textRange == null) return null;
-    return new GeneralHighlightingPass(file.getProject(), file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true);
+    if (textRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument(), GeneralHighlightingPass.IN_PROGRESS_ICON,
+                                                                             GeneralHighlightingPass.PRESENTABLE_NAME);
+    return new GeneralHighlightingPass(myProject, file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true);
   }
 
   private static TextRange calculateRangeToProcess(Editor editor) {
     Document document = editor.getDocument();
 
-    int part = FileStatusMap.NORMAL_HIGHLIGHTERS;
-
-    PsiElement dirtyScope = DaemonCodeAnalyzer.getInstance(editor.getProject()).getFileStatusMap().getFileDirtyScope(document, part);
+    PsiElement dirtyScope = DaemonCodeAnalyzer.getInstance(editor.getProject()).getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
     if (dirtyScope == null || !dirtyScope.isValid()) {
       return null;
     }
@@ -66,7 +65,6 @@ public class GeneralHighlightingPassFactory extends AbstractProjectComponent imp
     if (LOG.isDebugEnabled()) {
       LOG.debug("Dirty block optimization works");
     }
-    TextRange range = dirtyScope.getTextRange();
-    return range;
+    return dirtyScope.getTextRange();
   }
 }

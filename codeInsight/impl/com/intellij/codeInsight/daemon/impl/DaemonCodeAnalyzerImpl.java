@@ -2,6 +2,8 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.HintManager;
@@ -10,6 +12,7 @@ import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -87,7 +90,29 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myLastSettings = (DaemonCodeAnalyzerSettings)mySettings.clone();
 
     myFileStatusMap = new FileStatusMap(myProject);
-    myPassExecutorService = new PassExecutorService(myProject);
+    myPassExecutorService = new PassExecutorService(myProject){
+      protected void applyInformationToEditor(final TextEditorHighlightingPass pass, final FileEditor fileEditor,
+                                              final ProgressIndicator updateProgress) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) return;
+        final boolean wasCanceled = updateProgress.isCanceled();
+        if (fileEditor != null && !wasCanceled) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              if (myProject.isDisposed()) return;
+              if (fileEditor.getComponent().isDisplayable() || ApplicationManager.getApplication().isUnitTestMode()) {
+                pass.applyInformationToEditor();
+                
+                if (fileEditor instanceof TextEditor) {
+                  log(updateProgress, "Apply ",pass);
+                  Editor editor = ((TextEditor)fileEditor).getEditor();
+                  repaintErrorStripeRenderer(editor);
+                }
+              }
+            }
+          }, ModalityState.stateForComponent(fileEditor.getComponent()));
+        }
+      }
+    };
   }
 
   @NotNull
@@ -279,12 +304,32 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     stopProcess(true);
   }
 
+  public List<TextEditorHighlightingPass> getPassesToShowProgressFor(PsiFile file) {
+    Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+    List<TextEditorHighlightingPass> allPasses = myPassExecutorService.getAllSubmittedPasses();
+    ArrayList<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(allPasses.size());
+    for (TextEditorHighlightingPass pass : allPasses) {
+      if (pass.getDocument() == document || pass.getDocument() == null) {
+        result.add(pass);
+      }
+    }
+    return result;
+  }
+
+  public boolean isAllAnalysisFinished(PsiFile file) {
+    if (myDisposed) return false;
+    Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
+    return document != null &&
+           document.getModificationStamp() == file.getModificationStamp() &&
+           myFileStatusMap.getAllDirtyScopesAreNull(document);
+  }
+
   public boolean isErrorAnalyzingFinished(PsiFile file) {
     if (myDisposed) return false;
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
     return document != null &&
            document.getModificationStamp() == file.getModificationStamp() &&
-           myFileStatusMap.getFileDirtyScope(document, FileStatusMap.NORMAL_HIGHLIGHTERS) == null;
+           myFileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL) == null;
   }
 
   public boolean isInspectionCompleted(PsiFile file) {
@@ -292,7 +337,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
     return document != null &&
            document.getModificationStamp() == file.getModificationStamp() &&
-           myFileStatusMap.getFileDirtyScope(document, FileStatusMap.LOCAL_INSPECTIONS) == null;
+           myFileStatusMap.getFileDirtyScope(document, Pass.LOCAL_INSPECTIONS) == null;
   }
 
   public FileStatusMap getFileStatusMap() {
@@ -306,25 +351,25 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public synchronized void stopProcess(boolean toRestartAlarm) {
     renewUpdateProgress(toRestartAlarm);
     myAlarm.cancelAllRequests();
-    myPassExecutorService.cancelAll();
     boolean restart = toRestartAlarm && !myDisposed && myInitialized && myDaemonListeners.myIsFrameFocused;
     if (restart) {
       myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
       //LOG.debug("restarted ",new Throwable());
-    }
-    else {
-      int i = 0;        
     }
   }
 
   private synchronized void renewUpdateProgress(final boolean start) {
     myUpdateProgress.cancel();
     myPassExecutorService.cancelAll();
-    myUpdateProgress = myUpdateProgress instanceof MyMockProgressIndicator ?
-                       new MyMockProgressIndicator(((MyMockProgressIndicator)myUpdateProgress).myStoppedNotify) :
-                       new DaemonProgressIndicator();
-    if (start && myUpdateProgress instanceof DaemonProgressIndicator) {
-      ((DaemonProgressIndicator)myUpdateProgress).restart();
+    if (myUpdateProgress instanceof MyMockProgressIndicator) {
+      myUpdateProgress = new MyMockProgressIndicator(((MyMockProgressIndicator)myUpdateProgress).myStoppedNotify);
+    }
+    else {
+      DaemonProgressIndicator indicator = new DaemonProgressIndicator();
+      myUpdateProgress = indicator;
+      if (start) {
+        indicator.restart();
+      }
     }
   }
 

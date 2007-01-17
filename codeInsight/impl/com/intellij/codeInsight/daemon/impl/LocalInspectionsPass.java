@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -23,8 +22,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -41,12 +40,11 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author max
  */
-public class LocalInspectionsPass extends TextEditorHighlightingPass {
+public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LocalInspectionsPass");
   private final PsiFile myFile;
   private final int myStartOffset;
@@ -56,16 +54,17 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   @NotNull private List<HighlightInfoType> myLevels = Collections.emptyList();
   @NotNull private List<LocalInspectionTool> myTools = Collections.emptyList();
   @NotNull private List<InjectedPsiInspectionUtil.InjectedPsiInspectionResult> myInjectedPsiInspectionResults = Collections.emptyList();
+  static final String PRESENTABLE_NAME = "Inspections";
 
   public LocalInspectionsPass(@NotNull PsiFile file, @Nullable Document document, int startOffset, int endOffset, @Nullable ExecutorService executorService) {
-    super(file.getProject(), document);
+    super(file.getProject(), document, IN_PROGRESS_ICON, PRESENTABLE_NAME);
     myFile = file;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myExecutorService = executorService;
   }
 
-  public void doCollectInformation(ProgressIndicator progress) {
+  protected void collectInformationWithProgress(final ProgressIndicator progress) {
     myDescriptors = new ArrayList<ProblemDescriptor>();
     myLevels = new ArrayList<HighlightInfoType>();
     myTools = new ArrayList<LocalInspectionTool>();
@@ -106,8 +105,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
     final int chunkSize = Math.max(10, tools.length / Runtime.getRuntime().availableProcessors() / 10); //about 10 chunks per thread, in case some inspections are faster than others
     List<Callable<Boolean>> inspectionChunks = new ArrayList<Callable<Boolean>>();
-    myCheckedElements.set(0);
-    progressLimit = tools.length * elements.length;
+    setProgressLimit(1L * tools.length * elements.length);
     for (int v = 0; v < tools.length; v+=chunkSize) {
       final int index = v;
       Callable<Boolean> chunk = new Callable<Boolean>() {
@@ -131,7 +129,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
                   for (PsiElement element : elements) {
                     progressManager.checkCanceled();
                     element.accept(elementVisitor);
-                    myCheckedElements.addAndGet(1);
+                    advanceProgress();
                   }
                   //System.out.println("tool finished "+tool);
                   if (holder.hasResults()) {
@@ -237,7 +235,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     return type;
   }
 
-  public void doApplyInformationToEditor() {
+  protected void applyInformationWithProgress() {
     List<HighlightInfo> infos = new ArrayList<HighlightInfo>(myDescriptors.size());
     addHighlightsFromDescriptors(infos);
     addHighlightsFromInjectedPsiProblems(infos);
@@ -249,8 +247,8 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     myTools = Collections.emptyList();
 
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    //daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, Pass.LOCAL_INSPECTIONS);
-    daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, FileStatusMap.LOCAL_INSPECTIONS);
+    daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, Pass.LOCAL_INSPECTIONS);
+    //daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, FileStatusMap.LOCAL_INSPECTIONS);
 
     HighlightUtil.addErrorsToWolf(infos, myFile);
   }
@@ -384,17 +382,5 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     return result.toArray(new PsiElement[result.size()]);
   }
 
-  private final AtomicLong myCheckedElements = new AtomicLong();
-  private volatile int progressLimit = 1;
-  public float getProgress() {
-    return (float)(myCheckedElements.get() * 1.0 / progressLimit);
-  }
-
-  public String toString() {
-    return "Inspections";
-  }
-  private static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/inspectionInProgress.png");
-  public Icon getInProgressIcon() {
-    return IN_PROGRESS_ICON;
-  }
+  static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/inspectionInProgress.png");
 }

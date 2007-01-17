@@ -44,7 +44,7 @@ public class OverriddenMarkersPassFactory extends AbstractProjectComponent imple
   private static TextRange calculateRangeToProcess(Editor editor) {
     Document document = editor.getDocument();
 
-    int part = FileStatusMap.OVERRIDEN_MARKERS;
+    int part = Pass.UPDATE_OVERRIDEN_MARKERS;
 
     PsiElement dirtyScope = DaemonCodeAnalyzer.getInstance(editor.getProject()).getFileStatusMap().getFileDirtyScope(document, part);
     if (dirtyScope == null || !dirtyScope.isValid()) return null;

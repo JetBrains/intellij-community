@@ -69,7 +69,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
       myMarkers, Pass.UPDATE_OVERRIDEN_MARKERS);
 
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, FileStatusMap.OVERRIDEN_MARKERS);
+    daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, Pass.UPDATE_OVERRIDEN_MARKERS);
   }
 
   private static Collection<LineMarkerInfo> collectLineMarkers(List<PsiElement> elements) throws ProcessCanceledException {

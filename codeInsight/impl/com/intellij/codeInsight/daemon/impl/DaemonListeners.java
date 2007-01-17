@@ -101,8 +101,8 @@ public class DaemonListeners {
 
   private ErrorStripeHandler myErrorStripeHandler;
 
-  private boolean cutOperationJustHappened;
-  boolean myIsFrameFocused = true;
+  volatile private boolean cutOperationJustHappened;
+  volatile boolean myIsFrameFocused = true;
   private final EditorTracker myEditorTracker;
 
   public DaemonListeners(Project project, DaemonCodeAnalyzerImpl daemonCodeAnalyzer, EditorTracker editorTracker) {
