@@ -109,7 +109,7 @@ public class CompletionVariant {
     return ret;
   }
 
-  public void excludeScopeClass(Class aClass){
+  public void excludeScopeClass(Class<?> aClass){
     myScopeClassExceptions.add(aClass);
   }
 
