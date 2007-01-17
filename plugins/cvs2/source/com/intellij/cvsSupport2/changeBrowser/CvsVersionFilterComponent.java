@@ -1,6 +1,5 @@
 package com.intellij.cvsSupport2.changeBrowser;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.StandardVersionFilterComponent;
 
@@ -14,14 +13,13 @@ public class CvsVersionFilterComponent extends StandardVersionFilterComponent<Ch
   private JCheckBox myUseUserFilter;
 
   private JPanel myPanel;
-  private final Project myProject;
   private JPanel myStandardPanel;
 
-  public CvsVersionFilterComponent(final Project project) {
-    super();
-    myProject = project;
+  public CvsVersionFilterComponent(final boolean showDateFilter) {
     myStandardPanel.setLayout(new BorderLayout());
-    myStandardPanel.add(super.getDatePanel(), BorderLayout.CENTER);
+    if (showDateFilter) {
+      myStandardPanel.add(super.getDatePanel(), BorderLayout.CENTER);
+    }
     init(new ChangeBrowserSettings());
   }
 

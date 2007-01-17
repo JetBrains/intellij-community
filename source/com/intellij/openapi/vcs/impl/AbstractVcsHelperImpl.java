@@ -420,7 +420,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
   }
 
   public void showChangesBrowser(final CommittedChangesProvider provider, final VirtualFile root, @Nls String title) {
-    final ChangesBrowserSettingsEditor filterUI = provider.createFilterUI();
+    final ChangesBrowserSettingsEditor filterUI = provider.createFilterUI(true);
     ChangeBrowserSettings settings = provider.createDefaultSettings();
     boolean ok = true;
     if (filterUI != null) {

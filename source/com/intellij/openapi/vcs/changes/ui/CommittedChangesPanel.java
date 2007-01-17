@@ -89,7 +89,7 @@ public class CommittedChangesPanel extends JPanel {
   }
 
   private void setChangesFilter() {
-    CommittedChangesFilterDialog filterDialog = new CommittedChangesFilterDialog(myProject, myProvider.createFilterUI(), mySettings);
+    CommittedChangesFilterDialog filterDialog = new CommittedChangesFilterDialog(myProject, myProvider.createFilterUI(true), mySettings);
     filterDialog.show();
     if (filterDialog.isOK()) {
       mySettings = filterDialog.getSettings();

@@ -32,7 +32,7 @@ import java.util.List;
 
 public interface CommittedChangesProvider<T extends CommittedChangeList, U extends ChangeBrowserSettings> {
   U createDefaultSettings();
-  ChangesBrowserSettingsEditor<U> createFilterUI();
+  ChangesBrowserSettingsEditor<U> createFilterUI(final boolean showDateFilter);
   List<T> getAllCommittedChanges(U settings, final int maxCount) throws VcsException;
   List<T> getCommittedChanges(U settings, VirtualFile root, final int maxCount) throws VcsException;
   ChangeListColumn[] getColumns();

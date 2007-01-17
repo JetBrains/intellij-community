@@ -15,46 +15,43 @@
  */
 package com.intellij.openapi.vcs.versionBrowser;
 
-import com.michaelbaranov.microba.calendar.DatePicker;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.openapi.vcs.VcsBundle;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyVetoException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 
 public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSettings> implements ChangesBrowserSettingsEditor<T> {
   private JPanel myPanel;
 
   protected JPanel getDatePanel() {
-    return myDatePanel;
+    return myDateFilterComponent.getPanel();
   }
 
   protected Component getStandardPanel() {
     return myPanel;
   }
 
-  private JCheckBox myUseDateBeforeFilter;
   private JTextField myNumBefore;
-  private JCheckBox myUseDateAfterFilter;
   private JCheckBox myUseNumBeforeFilter;
   private JCheckBox myUseNumAfterFilter;
   private JTextField myNumAfter;
-  private JPanel myDatePanel;
+  private DateFilterComponent myDateFilterComponent;
   private JPanel myVersionNumberPanel;
-  private DatePicker myDateAfter;
-  private DatePicker myDateBefore;
 
   private T mySettings;
 
   public StandardVersionFilterComponent() {
-    myDateAfter.setDateFormat(SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM));
-    myDateBefore.setDateFormat(SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM));
+  }
+
+  public StandardVersionFilterComponent(boolean showDateFilter) {
+    myDateFilterComponent.getPanel().setVisible(showDateFilter);
   }
 
   protected void init(final T settings) {
+    myVersionNumberPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("border.changes.filter.change.number.filter")));
     installCheckBoxesListeners();
     initValues(settings);
     updateAllEnabled(null);
@@ -71,7 +68,7 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
     installCheckBoxListener(filterListener);
   }
 
-  protected static void updatePair(JCheckBox checkBox, JComponent textField, ActionEvent e) {
+  public static void updatePair(JCheckBox checkBox, JComponent textField, ActionEvent e) {
     textField.setEnabled(checkBox.isSelected());
     if (e != null && e.getSource() instanceof JCheckBox && ((JCheckBox)e.getSource()).isSelected()) {
       final Object source = e.getSource();
@@ -83,45 +80,29 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
   }
 
   protected void updateAllEnabled(final ActionEvent e) {
-    updatePair(myUseDateBeforeFilter, myDateBefore, e);
-    updatePair(myUseDateAfterFilter, myDateAfter, e);
     updatePair(myUseNumBeforeFilter, myNumBefore, e);
     updatePair(myUseNumAfterFilter, myNumAfter, e);
   }
 
   protected void initValues(T settings) {
-    myUseDateBeforeFilter.setSelected(settings.USE_DATE_BEFORE_FILTER);
-    myUseDateAfterFilter.setSelected(settings.USE_DATE_AFTER_FILTER);
     myUseNumBeforeFilter.setSelected(settings.USE_CHANGE_BEFORE_FILTER);
     myUseNumAfterFilter.setSelected(settings.USE_CHANGE_AFTER_FILTER);
 
-    try {
-      myDateBefore.setDate(settings.getDateBefore());
-      myDateAfter.setDate(settings.getDateAfter());
-    }
-    catch (PropertyVetoException e) {
-      // TODO: handle?
-    }
+    myDateFilterComponent.initValues(settings);
     myNumBefore.setText(settings.CHANGE_BEFORE);
     myNumAfter.setText(settings.CHANGE_AFTER);
-
-
   }
+  
   public void saveValues(T settings) {
-    settings.USE_DATE_BEFORE_FILTER = myUseDateBeforeFilter.isSelected();
-    settings.USE_DATE_AFTER_FILTER = myUseDateAfterFilter.isSelected();
+    myDateFilterComponent.saveValues(settings);
     settings.USE_CHANGE_BEFORE_FILTER = myUseNumBeforeFilter.isSelected();
     settings.USE_CHANGE_AFTER_FILTER = myUseNumAfterFilter.isSelected();
 
-    settings.setDateBefore(myDateBefore.getDate());
-    settings.setDateAfter(myDateAfter.getDate());
     settings.CHANGE_BEFORE = myNumBefore.getText();
     settings.CHANGE_AFTER = myNumAfter.getText();
   }
 
   protected void installCheckBoxListener(final ActionListener filterListener) {
-    myUseDateBeforeFilter.addActionListener(filterListener);
-    myUseDateAfterFilter.addActionListener(filterListener);
     myUseNumBeforeFilter.addActionListener(filterListener);
     myUseNumAfterFilter.addActionListener(filterListener);
   }
@@ -154,13 +135,15 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
         return "Change To must be a valid number";
       }
     }
-    if (myUseDateAfterFilter.isSelected() && myDateAfter.getDate() == null) {
-      return "Date After must be a valid date";
-    }
-    if (myUseDateBeforeFilter.isSelected() && myDateBefore.getDate() == null) {
-      return "Date Before must be a valid date";
-    }
-    return null;
+    return myDateFilterComponent.validateInput();
+  }
+
+  public void updateEnabledControls() {
+    updateAllEnabled(null);
+  }
+
+  public String getDimensionServiceKey() {
+    return getClass().getName();
   }
 }
 

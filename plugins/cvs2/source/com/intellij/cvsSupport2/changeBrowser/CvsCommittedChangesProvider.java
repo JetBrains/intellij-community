@@ -49,8 +49,8 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
     return new ChangeBrowserSettings();
   }
 
-  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI() {
-    return new CvsVersionFilterComponent(myProject);
+  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(final boolean showDateFilter) {
+    return new CvsVersionFilterComponent(showDateFilter);
   }
 
   public List<CvsChangeList> getAllCommittedChanges(ChangeBrowserSettings settings, final int maxCount) throws VcsException {

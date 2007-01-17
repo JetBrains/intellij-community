@@ -37,7 +37,7 @@ public class BrowseChangesAction extends AnAction {
     final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
     assert provider != null;
     ChangeBrowserSettings settings = provider.createDefaultSettings();
-    CommittedChangesFilterDialog dlg = new CommittedChangesFilterDialog(project, provider.createFilterUI(), settings);
+    CommittedChangesFilterDialog dlg = new CommittedChangesFilterDialog(project, provider.createFilterUI(true), settings);
     dlg.show();
     if (!dlg.isOK()) return;
 

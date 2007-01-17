@@ -77,6 +77,6 @@ public class CommittedChangesFilterDialog extends DialogWrapper {
 
   @Override @NonNls
   protected String getDimensionServiceKey() {
-    return "AbstractVcsHelper.FilterDialog";
+    return "AbstractVcsHelper.FilterDialog." + myPanel.getDimensionServiceKey();
   }
 }

@@ -33,5 +33,9 @@ public interface ChangesBrowserSettingsEditor<T extends ChangeBrowserSettings> {
   void setSettings(T settings);
 
   @Nullable
-  String validateInput(); 
+  String validateInput();
+
+  void updateEnabledControls();
+
+  String getDimensionServiceKey();
 }
