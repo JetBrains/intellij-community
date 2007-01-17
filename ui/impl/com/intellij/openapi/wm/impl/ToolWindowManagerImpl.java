@@ -101,9 +101,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     mySideStack = new SideStack();
   }
 
-  public void initComponent() {}
+  public void initComponent() {
+  }
 
-  public void disposeComponent() {}
+  public void disposeComponent() {
+  }
 
   public void projectOpened() {
     UIManager.addPropertyChangeListener(myUIManagerPropertyChangeListener);
@@ -147,7 +149,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(null);
     myWindowManager.releaseFrame(myFrame);
     appendUpdateToolWindowsPaneCmd(commandsList);
-
 
     // Hide all tool windows
 
@@ -198,8 +199,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final WindowInfo[] infos = myLayout.getInfos();
     for (int i = 0; i < infos.length; i++) {
       final WindowInfo info = infos[i];
-      deactivateToolWindowImpl(info.getId(),
-                               (info.isAutoHide() || info.isSliding()) && !(info.isFloating() && hasModalChild(info)),
+      deactivateToolWindowImpl(info.getId(), (info.isAutoHide() || info.isSliding()) && !(info.isFloating() && hasModalChild(info)),
                                commandList);
     }
     myEditorComponentActive = true;
@@ -382,12 +382,71 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     execute(commandList);
   }
 
+  public void hideToolWindow(final String id, final boolean hideSide) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    checkId(id);
+    final WindowInfo info = getInfo(id);
+    if (!info.isVisible()) return;
+    final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
+    final boolean wasActive = info.isActive();
+
+    // hide and deactivate
+
+    deactivateToolWindowImpl(id, true, commandList);
+
+    if (hideSide || info.isFloating()) {
+      while (!mySideStack.isEmpty(info.getAnchor())) {
+        mySideStack.pop(info.getAnchor());
+      }
+      activateEditorComponentImpl(commandList);
+    } else {
+
+      // first of all we have to find tool window that was located at the same side and
+      // was hidden.
+
+      WindowInfo info2 = null;
+      while (!mySideStack.isEmpty(info.getAnchor())) {
+        final WindowInfo storedInfo = mySideStack.pop(info.getAnchor());
+        final WindowInfo currentInfo = getInfo(storedInfo.getId());
+        LOG.assertTrue(currentInfo != null);
+        // SideStack contains copies of real WindowInfos. It means that
+        // these stored infos can be invalid. The following loop removes invalid WindowInfos.
+        if (storedInfo.getAnchor() == currentInfo.getAnchor() && storedInfo.getType() == currentInfo.getType() &&
+            storedInfo.isAutoHide() == currentInfo.isAutoHide()) {
+          info2 = storedInfo;
+          break;
+        }
+      }
+      if (info2 != null) {
+        showToolWindowImpl(info2.getId(), false, commandList);
+      }
+
+      // If we hide currently active tool window then we should activate the previous
+      // one which is located in the tool window stack.
+      // Activate another tool window if no active tool window exists and
+      // window stack is enabled.
+
+      myActiveStack.remove(id, false); // hidden window should be at the top of stack
+      if (wasActive) {
+        if (myActiveStack.isEmpty()) {
+          activateEditorComponentImpl(commandList);
+        }
+        else {
+          final String toBeActivatedId = myActiveStack.pop();
+          if (toBeActivatedId != null) {
+            activateToolWindowImpl(toBeActivatedId, commandList);
+          }
+        }
+      }
+    }
+
+    execute(commandList);
+  }
+
   /**
    * @param dirtyMode if <code>true</code> then all UI operations are performed in dirty mode.
    */
-  private void showToolWindowImpl(final String id,
-                                  final boolean dirtyMode,
-                                  final List<FinalizableCommand> commandsList) {
+  private void showToolWindowImpl(final String id, final boolean dirtyMode, final List<FinalizableCommand> commandsList) {
     final WindowInfo toBeShownInfo = getInfo(id);
     if (toBeShownInfo.isVisible() || !getToolWindow(id).isAvailable()) {
       return;
@@ -414,11 +473,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (id.equals(info.getId())) {
           continue;
         }
-        if (
-          info.isVisible() &&
-          info.getType() == toBeShownInfo.getType() &&
-          info.getAnchor() == toBeShownInfo.getAnchor()
-        ) {
+        if (info.isVisible() && info.getType() == toBeShownInfo.getType() && info.getAnchor() == toBeShownInfo.getAnchor()) {
           // hide and deactivate tool window
           info.setVisible(false);
           appendRemoveDecoratorCmd(info.getId(), false, commandsList);
@@ -442,63 +497,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     appendApplyWindowInfoCmd(toBeShownInfo, commandsList);
   }
 
-  void hideToolWindow(final String id) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    checkId(id);
-    final WindowInfo info = getInfo(id);
-    if (!info.isVisible()) return;
-    final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
-    final boolean wasActive = info.isActive();
-
-    // hide and deactivate
-
-    deactivateToolWindowImpl(id, true, commandList);
-
-    // first of all we have to find tool window that was located at the same side and
-    // was hidden.
-
-    WindowInfo info2 = null;
-    while (!mySideStack.isEmpty(info.getAnchor())) {
-      final WindowInfo storedInfo = mySideStack.pop(info.getAnchor());
-      final WindowInfo currentInfo = getInfo(storedInfo.getId());
-      LOG.assertTrue(currentInfo != null);
-      // SideStack contains copies of real WindowInfos. It means that
-      // these stored infos can be invalid. The following loop removes invalid WindowInfos.
-      if (
-        storedInfo.getAnchor() == currentInfo.getAnchor() &&
-        storedInfo.getType() == currentInfo.getType() &&
-        storedInfo.isAutoHide() == currentInfo.isAutoHide()
-      ) {
-        info2 = storedInfo;
-        break;
-      }
-    }
-    if (info2 != null) {
-      showToolWindowImpl(info2.getId(), false, commandList);
-    }
-
-    // If we hide currently active tool window then we should activate the previous
-    // one which is located in the tool window stack.
-    // Activate another tool window if no active tool window exists and
-    // window stack is enabled.
-
-    myActiveStack.remove(id, false); // hidden window should be at the top of stack
-    if (wasActive) {
-      if (myActiveStack.isEmpty()) {
-        activateEditorComponentImpl(commandList);
-      }
-      else {
-        final String toBeActivatedId = myActiveStack.pop();
-        if (toBeActivatedId != null) {
-          activateToolWindowImpl(toBeActivatedId, commandList);
-        }
-      }
-    }
-
-    execute(commandList);
-  }
-
-  public ToolWindow registerToolWindow(@NotNull final String id, @NotNull final JComponent component, @NotNull final ToolWindowAnchor anchor) {
+  public ToolWindow registerToolWindow(@NotNull final String id,
+                                       @NotNull final JComponent component,
+                                       @NotNull final ToolWindowAnchor anchor) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: installToolWindow(" + id + "," + component + "," + anchor + "\")");
     }
@@ -551,7 +552,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return toolWindow;
   }
 
-  public ToolWindow registerToolWindow(@NotNull final String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor, Disposable parentDisposable) {
+  public ToolWindow registerToolWindow(@NotNull final String id,
+                                       @NotNull JComponent component,
+                                       @NotNull ToolWindowAnchor anchor,
+                                       Disposable parentDisposable) {
     final ToolWindow window = registerToolWindow(id, component, anchor);
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
@@ -713,7 +717,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     execute(commandList);
   }
 
-  private void setToolWindowAnchorImpl(final String id, final ToolWindowAnchor anchor, final int order, final ArrayList<FinalizableCommand> commandsList) {
+  private void setToolWindowAnchorImpl(final String id,
+                                       final ToolWindowAnchor anchor,
+                                       final int order,
+                                       final ArrayList<FinalizableCommand> commandsList) {
     checkId(id);
     final WindowInfo info = getInfo(id);
     if (anchor == info.getAnchor() && order == info.getOrder()) {
@@ -786,6 +793,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     ApplicationManager.getApplication().assertIsDispatchThread();
     checkId(id);
     return getInfo(id).isAutoHide();
+  }
+
+  public boolean isToolWindowFloating(final String id) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    checkId(id);
+    return getInfo(id).isFloating();
   }
 
   boolean isToolWindowVisible(final String id) {
@@ -901,8 +914,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void appendRequestFocusInEditorComponentCmd(final ArrayList<FinalizableCommand> commandList) {
     if (myProject.isDisposed()) return;
     final CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
-    final RequestFocusInEditorComponentCmd command = new RequestFocusInEditorComponentCmd(FileEditorManagerEx.getInstanceEx(myProject),
-                                                                                          commandProcessor);
+    final RequestFocusInEditorComponentCmd command =
+      new RequestFocusInEditorComponentCmd(FileEditorManagerEx.getInstanceEx(myProject), commandProcessor);
     commandList.add(command);
   }
 
@@ -973,10 +986,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         deactivateToolWindowImpl(info.getId(), info.isAutoHide() || info.isSliding(), commandList);
       }
       else { // floating window is being activated
-        deactivateToolWindowImpl(info.getId(),
-                                 info.isAutoHide() && info.isFloating() && !hasModalChild(info),
-                                 commandList)
-          ;
+        deactivateToolWindowImpl(info.getId(), info.isAutoHide() && info.isFloating() && !hasModalChild(info), commandList);
       }
     }
   }
@@ -1034,6 +1044,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myLayout.writeExternal(layoutElement);
   }
 
+
   /**
    * This command creates and shows <code>FloatingDecorator</code>.
    */
@@ -1048,12 +1059,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       myFloatingDecorator = new FloatingDecorator(myFrame, info.copy(), decorator);
       myId2FloatingDecorator.put(info.getId(), myFloatingDecorator);
       final Rectangle bounds = info.getFloatingBounds();
-      if (
-        bounds != null &&
-        bounds.width > 0 &&
-        bounds.height > 0 &&
-        myWindowManager.isInsideScreenBounds(bounds.x, bounds.y, bounds.width)
-      ) {
+      if (bounds != null && bounds.width > 0 && bounds.height > 0 &&
+          myWindowManager.isInsideScreenBounds(bounds.x, bounds.y, bounds.width)) {
         myFloatingDecorator.setBounds(bounds);
       }
       else { // place new frame at the center of main frame if there are no floating bounds
@@ -1115,11 +1122,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         return;
       }
       invokeLater(// we have to be last listener
-        new Runnable() {
-          public void run() {
-            activateEditorComponent();
-          }
-        });
+                  new Runnable() {
+                    public void run() {
+                      activateEditorComponent();
+                    }
+                  });
     }
   }
 
@@ -1155,7 +1162,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       if (ToolWindowEx.PROP_AVAILABLE.equals(e.getPropertyName())) {
         final WindowInfo info = getInfo(toolWindow.getId());
         if (!toolWindow.isAvailable() && info.isVisible()) {
-          hideToolWindow(toolWindow.getId());
+          hideToolWindow(toolWindow.getId(), false);
         }
       }
     }
@@ -1174,7 +1181,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
 
     public void hidden(final InternalDecorator source) {
-      hideToolWindow(source.getToolWindow().getId());
+      hideToolWindow(source.getToolWindow().getId(), false);
+    }
+
+    public void hiddenSide(final InternalDecorator source) {
+      hideToolWindow(source.getToolWindow().getId(), true);
     }
 
     /**
@@ -1207,6 +1218,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       setToolWindowType(source.getToolWindow().getId(), type);
     }
   }
+
 
   private void updateComponentTreeUI() {
     ApplicationManager.getApplication().assertIsDispatchThread();

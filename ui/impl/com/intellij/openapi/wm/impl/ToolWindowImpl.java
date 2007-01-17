@@ -67,7 +67,7 @@ public final class ToolWindowImpl implements ToolWindowEx{
 
   public final void hide(final Runnable runnable){
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myToolWindowManager.hideToolWindow(myId);
+    myToolWindowManager.hideToolWindow(myId, false);
     if (runnable != null) {
       myToolWindowManager.invokeLater(runnable);
     }
@@ -99,6 +99,11 @@ public final class ToolWindowImpl implements ToolWindowEx{
   public final boolean isAutoHide(){
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myToolWindowManager.isToolWindowAutoHide(myId);
+  }
+
+  public final boolean isFloating(){
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return myToolWindowManager.isToolWindowFloating(myId);
   }
 
   public final ToolWindowType getType(){

@@ -11,7 +11,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -19,16 +19,19 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.ui.ActivatableLineBorder;
+import com.intellij.ui.InplaceButton;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.event.EventListenerList;
-import javax.swing.plaf.metal.MetalButtonUI;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
@@ -64,12 +67,23 @@ public final class InternalDecorator extends JPanel {
   private static final Icon ourFixIcon = IconLoader.getIcon("/general/fix.png");
   private static final Icon ourFixInactiveIcon = IconLoader.getIcon("/general/fixInactive.png");
 
+  private static final Icon ourHideSideUp = IconLoader.getIcon("/general/hideSideUp.png");
+  private static final Icon ourHideSideUpInactive = IconLoader.getIcon("/general/hideSideUpInactive.png");
+
+  private static final Icon ourHideSideDown = IconLoader.getIcon("/general/hideSideDown.png");
+  private static final Icon ourHideSideDownInactive = IconLoader.getIcon("/general/hideSideDownInactive.png");
+
+  private static final Icon ourHideSideLeft = IconLoader.getIcon("/general/hideSideLeft.png");
+  private static final Icon ourHideSideLeftInactive = IconLoader.getIcon("/general/hideSideLeftInactive.png");
+
+  private static final Icon ourHideSideRight = IconLoader.getIcon("/general/hideSideRight.png");
+  private static final Icon ourHideSideRightInactive = IconLoader.getIcon("/general/hideSideRightInactive.png");
+
   private Project myProject;
   private WindowInfo myInfo;
   private final ToolWindowImpl myToolWindow;
   private final MyDivider myDivider;
   private final TitlePanel myTitlePanel;
-  private final ActivatableLineBorder myToolWindowBorder;
   private final MyTitleLabel myTitleLabel;
   private final MyTitleButton myToggleFloatingModeButton;
   private final Separator myFloatingDockSeparator;
@@ -84,6 +98,7 @@ public final class InternalDecorator extends JPanel {
    */
   private final TogglePinnedModeAction myToggleAutoHideModeAction;
   private final HideAction myHideAction;
+  private final HideSideAction myHideSideAction;
   private final ToggleDockModeAction myToggleDockModeAction;
   private final ToggleFloatingModeAction myToggleFloatingModeAction;
   /**
@@ -96,6 +111,8 @@ public final class InternalDecorator extends JPanel {
   @NonNls protected static final String TOGGLE_DOCK_MODE_ACTION_ID = "ToggleDockMode";
   @NonNls protected static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";
   @NonNls protected static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
+  @NonNls protected static final String HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID = "HideSideWindows";
+  private MyTitleButton myHideSideButton;
 
   InternalDecorator(final Project project, final WindowInfo info, final ToolWindowImpl toolWindow) {
     super(new BorderLayout());
@@ -104,12 +121,6 @@ public final class InternalDecorator extends JPanel {
     myDivider = new MyDivider();
     myTitlePanel = new TitlePanel();
     myTitleLabel = new MyTitleLabel();
-    myToolWindowBorder = new ActivatableLineBorder();
-    myToggleFloatingModeButton = new MyTitleButton();
-    myToggleDockModeButton = new MyTitleButton();
-    myToggleAutoHideModeButton = new MyTitleButton();
-    myHideButton = new MyTitleButton();
-    myListenerList = new EventListenerList();
 
     myToggleFloatingModeAction = new ToggleFloatingModeAction();
     myFloatingDockSeparator = new Separator();
@@ -119,6 +130,15 @@ public final class InternalDecorator extends JPanel {
     myToggleAutoHideModeAction = new TogglePinnedModeAction();
     myAutoHideHideSeparator = new Separator();
     myHideAction = new HideAction();
+    myHideSideAction = new HideSideAction();
+
+    myToggleFloatingModeButton = new MyTitleButton(myToggleFloatingModeAction);
+    myToggleDockModeButton = new MyTitleButton(myToggleDockModeAction);
+    myToggleAutoHideModeButton = new MyTitleButton(myToggleAutoHideModeAction);
+    myHideButton = new MyTitleButton(myHideAction);
+    myHideSideButton = new MyTitleButton(myHideSideAction);
+    myListenerList = new EventListenerList();
+
 
     myKeymapManagerListener = new MyKeymapManagerListener();
     final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
@@ -179,6 +199,27 @@ public final class InternalDecorator extends JPanel {
     else { // docked and floating windows don't have divider
       remove(myDivider);
     }
+
+
+    if (!info.isFloating()) {
+      myHideSideButton.setVisible(true);
+      if (ToolWindowAnchor.TOP == anchor) {
+        myHideSideButton.setIcon(active ? ourHideSideUp : ourHideSideUpInactive);
+      }
+      else if (ToolWindowAnchor.LEFT == anchor) {
+        myHideSideButton.setIcon(active ? ourHideSideLeft : ourHideSideLeftInactive);
+      }
+      else if (ToolWindowAnchor.BOTTOM == anchor) {
+        myHideSideButton.setIcon(active ? ourHideSideDown : ourHideSideDownInactive);
+      }
+      else if (ToolWindowAnchor.RIGHT == anchor) {
+        myHideSideButton.setIcon(active ? ourHideSideRight : ourHideSideRightInactive);
+      }
+    }
+    else {
+      myHideSideButton.setVisible(false);
+    }
+
     validate();
     repaint();
     // Type
@@ -189,9 +230,9 @@ public final class InternalDecorator extends JPanel {
       myToggleDockModeButton.setIcon(active ? ourSlidingIcon : ourSlidingInactiveIcon);
       myToggleAutoHideModeButton.setVisible(true);
       myAutoHideHideSeparator.setVisible(true);
-      myToggleAutoHideModeButton.setIcon(active ?
-                                         (myInfo.isAutoHide() ? ourAuthoHideOnIcon : ourAuthoHideOffIcon) :
-                                         (myInfo.isAutoHide() ? ourAuthoHideOnInactiveIcon : ourAuthoHideOffInactiveIcon));
+      myToggleAutoHideModeButton.setIcon(active
+                                         ? (myInfo.isAutoHide() ? ourAuthoHideOnIcon : ourAuthoHideOffIcon)
+                                         : (myInfo.isAutoHide() ? ourAuthoHideOnInactiveIcon : ourAuthoHideOffInactiveIcon));
       myHideButton.setVisible(true);
     }
     else if (myInfo.isFloating()) {
@@ -200,9 +241,9 @@ public final class InternalDecorator extends JPanel {
       myDockAutoHideSeparator.setVisible(false);
       myToggleAutoHideModeButton.setVisible(true);
       myAutoHideHideSeparator.setVisible(true);
-      myToggleAutoHideModeButton.setIcon(active ?
-                                         myInfo.isAutoHide() ? ourAuthoHideOnIcon : ourAuthoHideOffIcon :
-                                         myInfo.isAutoHide() ? ourAuthoHideOnInactiveIcon : ourAuthoHideOffInactiveIcon);
+      myToggleAutoHideModeButton.setIcon(active
+                                         ? myInfo.isAutoHide() ? ourAuthoHideOnIcon : ourAuthoHideOffIcon
+                                         : myInfo.isAutoHide() ? ourAuthoHideOnInactiveIcon : ourAuthoHideOffInactiveIcon);
       myHideButton.setVisible(true);
     }
     else if (myInfo.isSliding()) {
@@ -215,6 +256,7 @@ public final class InternalDecorator extends JPanel {
       myHideButton.setVisible(true);
     }
     myHideButton.setIcon(active ? ourHideIcon : ourHideInactiveIcon);
+
     //
     updateTitle();
     updateTooltips();
@@ -222,7 +264,7 @@ public final class InternalDecorator extends JPanel {
     // Push "apply" request forward
 
     if (myInfo.isFloating() && myInfo.isVisible()) {
-      final FloatingDecorator floatingDecorator = (FloatingDecorator) SwingUtilities.getAncestorOfClass(FloatingDecorator.class, this);
+      final FloatingDecorator floatingDecorator = (FloatingDecorator)SwingUtilities.getAncestorOfClass(FloatingDecorator.class, this);
       LOG.assertTrue(floatingDecorator != null);
       floatingDecorator.apply(myInfo);
     }
@@ -253,14 +295,14 @@ public final class InternalDecorator extends JPanel {
   }
 
   private void fireAnchorChanged(final ToolWindowAnchor anchor) {
-    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[]) myListenerList.getListeners(InternalDecoratorListener.class);
+    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[])myListenerList.getListeners(InternalDecoratorListener.class);
     for (int i = 0; i < listeners.length; i++) {
       listeners[i].anchorChanged(this, anchor);
     }
   }
 
   private void fireAutoHideChanged(final boolean autoHide) {
-    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[]) myListenerList.getListeners(InternalDecoratorListener.class);
+    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[])myListenerList.getListeners(InternalDecoratorListener.class);
     for (int i = 0; i < listeners.length; i++) {
       listeners[i].autoHideChanged(this, autoHide);
     }
@@ -270,9 +312,19 @@ public final class InternalDecorator extends JPanel {
    * Fires event that "hide" button has been pressed.
    */
   final void fireHidden() {
-    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[]) myListenerList.getListeners(InternalDecoratorListener.class);
+    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[])myListenerList.getListeners(InternalDecoratorListener.class);
     for (int i = 0; i < listeners.length; i++) {
       listeners[i].hidden(this);
+    }
+  }
+
+  /**
+   * Fires event that "hide" button has been pressed.
+   */
+  final void fireHiddenSide() {
+    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[])myListenerList.getListeners(InternalDecoratorListener.class);
+    for (int i = 0; i < listeners.length; i++) {
+      listeners[i].hiddenSide(this);
     }
   }
 
@@ -280,21 +332,21 @@ public final class InternalDecorator extends JPanel {
    * Fires event that user performed click into the title bar area.
    */
   final void fireActivated() {
-    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[]) myListenerList.getListeners(InternalDecoratorListener.class);
+    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[])myListenerList.getListeners(InternalDecoratorListener.class);
     for (int i = 0; i < listeners.length; i++) {
       listeners[i].activated(this);
     }
   }
 
   private void fireTypeChanged(final ToolWindowType type) {
-    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[]) myListenerList.getListeners(InternalDecoratorListener.class);
+    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[])myListenerList.getListeners(InternalDecoratorListener.class);
     for (int i = 0; i < listeners.length; i++) {
       listeners[i].typeChanged(this, type);
     }
   }
 
   final void fireResized() {
-    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[]) myListenerList.getListeners(InternalDecoratorListener.class);
+    final InternalDecoratorListener[] listeners = (InternalDecoratorListener[])myListenerList.getListeners(InternalDecoratorListener.class);
     for (int i = 0; i < listeners.length; i++) {
       listeners[i].resized(this);
     }
@@ -303,32 +355,32 @@ public final class InternalDecorator extends JPanel {
   private void init() {
     enableEvents(ComponentEvent.COMPONENT_EVENT_MASK);
     // Compose title bar
-    final Component strut = Box.createHorizontalStrut(3);
-    myTitlePanel.add(strut, BorderLayout.WEST);
     myTitleLabel.setForeground(Color.white);
-    myTitlePanel.add(myTitleLabel, BorderLayout.CENTER);
+    myTitleLabel.setBorder(new EmptyBorder(0, 2, 0, 0));
+    myTitlePanel.addTitle(myTitleLabel);
 
     final JPanel buttonPanel = new JPanel(new GridBagLayout());
     buttonPanel.setOpaque(false);
     buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
-    buttonPanel.add(myToggleFloatingModeButton,
-                    new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    buttonPanel.add(myFloatingDockSeparator,
-                    new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    buttonPanel.add(myToggleDockModeButton,
-                    new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    buttonPanel.add(myDockAutoHideSeparator,
-                    new GridBagConstraints(3, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    buttonPanel.add(myToggleAutoHideModeButton,
-                    new GridBagConstraints(4, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    buttonPanel.add(myAutoHideHideSeparator,
-                    new GridBagConstraints(5, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    buttonPanel.add(myHideButton,
-                    new GridBagConstraints(6, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    buttonPanel.add(myToggleFloatingModeButton, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+                                                                       new Insets(0, 0, 0, 0), 0, 0));
+    buttonPanel.add(myFloatingDockSeparator, new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                                                    new Insets(0, 0, 0, 0), 0, 0));
+    buttonPanel.add(myToggleDockModeButton, new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                                                   new Insets(0, 0, 0, 0), 0, 0));
+    buttonPanel.add(myDockAutoHideSeparator, new GridBagConstraints(3, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                                                    new Insets(0, 0, 0, 0), 0, 0));
+    buttonPanel.add(myToggleAutoHideModeButton, new GridBagConstraints(4, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                                                       new Insets(0, 0, 0, 0), 0, 0));
+    buttonPanel.add(myAutoHideHideSeparator, new GridBagConstraints(5, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                                                    new Insets(0, 0, 0, 0), 0, 0));
+    buttonPanel.add(myHideButton, new GridBagConstraints(6, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                                         new Insets(0, 0, 0, 0), 0, 0));
 
-    myTitlePanel.add(buttonPanel, BorderLayout.EAST);
+    myTitlePanel.addButtons(buttonPanel, myHideSideButton);
+
     final JPanel contentPane = new JPanel(new BorderLayout());
-    contentPane.setBorder(myToolWindowBorder);
+    contentPane.setBorder(new ActivatableLineBorder(this));
     contentPane.add(myTitlePanel, BorderLayout.NORTH);
     JPanel innerPanel = new JPanel(new BorderLayout());
     innerPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
@@ -339,10 +391,6 @@ public final class InternalDecorator extends JPanel {
 
     // Add listeners
 
-    myToggleFloatingModeButton.addActionListener(myToggleFloatingModeAction);
-    myToggleDockModeButton.addActionListener(myToggleDockModeAction);
-    myToggleAutoHideModeButton.addActionListener(myToggleAutoHideModeAction);
-    myHideButton.addActionListener(myHideAction);
     myTitleLabel.addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {
         final ActionGroup group = createPopupGroup();
@@ -362,9 +410,7 @@ public final class InternalDecorator extends JPanel {
       public void actionPerformed(final ActionEvent e) {
         ToolWindowManager.getInstance(myProject).activateEditorComponent();
       }
-    },
-                           KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-                           JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
 
   final ActionGroup createPopupGroup() {
@@ -395,11 +441,13 @@ public final class InternalDecorator extends JPanel {
       moveGroup.add(leftAction);
     }
     if (anchor != ToolWindowAnchor.BOTTOM) {
-      final AnAction bottomAction = new ChangeAnchorAction(UIBundle.message("tool.window.move.to.bottom.action.name"), ToolWindowAnchor.BOTTOM);
+      final AnAction bottomAction =
+        new ChangeAnchorAction(UIBundle.message("tool.window.move.to.bottom.action.name"), ToolWindowAnchor.BOTTOM);
       moveGroup.add(bottomAction);
     }
     if (anchor != ToolWindowAnchor.RIGHT) {
-      final AnAction rightAction = new ChangeAnchorAction(UIBundle.message("tool.window.move.to.right.action.name"), ToolWindowAnchor.RIGHT);
+      final AnAction rightAction =
+        new ChangeAnchorAction(UIBundle.message("tool.window.move.to.right.action.name"), ToolWindowAnchor.RIGHT);
       moveGroup.add(rightAction);
     }
     group.add(moveGroup);
@@ -456,18 +504,20 @@ public final class InternalDecorator extends JPanel {
 
   private void updateTooltips() {
     if (myInfo.isDocked()) {
-      myToggleDockModeButton.setToolTipText(getToolTipTextByAction(TOGGLE_DOCK_MODE_ACTION_ID,
-                                                                   UIBundle.message("tool.wondow.undock.action.name")));
+      myToggleDockModeButton
+        .setToolTipText(getToolTipTextByAction(TOGGLE_DOCK_MODE_ACTION_ID, UIBundle.message("tool.wondow.undock.action.name")));
     }
     else if (myInfo.isSliding()) {
-      myToggleDockModeButton.setToolTipText(getToolTipTextByAction(TOGGLE_DOCK_MODE_ACTION_ID,
-                                                                   UIBundle.message("tool.wondow.dock.action.name")));
+      myToggleDockModeButton
+        .setToolTipText(getToolTipTextByAction(TOGGLE_DOCK_MODE_ACTION_ID, UIBundle.message("tool.wondow.dock.action.name")));
     }
     myToggleFloatingModeButton.setToolTipText(getToolTipTextByAction(TOGGLE_FLOATING_MODE_ACTION_ID, myInfo.isFloating() ? UIBundle
       .message("tool.wondow.fix.action.name") : UIBundle.message("tool.wondow.float.action.name")));
     myToggleAutoHideModeButton.setToolTipText(getToolTipTextByAction(TOGGLE_PINNED_MODE_ACTION_ID, myInfo.isAutoHide() ? UIBundle
       .message("tool.wondow.pin.action.name") : UIBundle.message("tool.wondow.unpin.action.name")));
     myHideButton.setToolTipText(getToolTipTextByAction(HIDE_ACTIVE_WINDOW_ACTION_ID, UIBundle.message("tool.window.hide.action.name")));
+    myHideSideButton
+      .setToolTipText(getToolTipTextByAction(HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID, UIBundle.message("tool.window.hideSide.action.name")));
   }
 
   private final class ChangeAnchorAction extends AnAction {
@@ -493,6 +543,24 @@ public final class InternalDecorator extends JPanel {
 
     public final void actionPerformed(final AnActionEvent e) {
       fireHidden();
+    }
+
+    public final void update(final AnActionEvent event) {
+      final Presentation presentation = event.getPresentation();
+      presentation.setEnabled(myInfo.isVisible());
+    }
+  }
+
+  private final class HideSideAction extends AnAction {
+    @NonNls public static final String HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID = InternalDecorator.HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID;
+
+    public HideSideAction() {
+      copyFrom(ActionManager.getInstance().getAction(HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID));
+      getTemplatePresentation().setText(UIBundle.message("tool.window.hideSide.action.name"));
+    }
+
+    public final void actionPerformed(final AnActionEvent e) {
+      fireHiddenSide();
     }
 
     public final void update(final AnActionEvent event) {
@@ -615,9 +683,8 @@ public final class InternalDecorator extends JPanel {
         default:
           break;
         case MouseEvent.MOUSE_ENTERED:
-          setCursor(isVerticalCursor
-                    ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR)
-                    : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+          setCursor(
+            isVerticalCursor ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
           break;
         case MouseEvent.MOUSE_EXITED:
           if (!myDragging) {
@@ -625,9 +692,8 @@ public final class InternalDecorator extends JPanel {
           }
           break;
         case MouseEvent.MOUSE_PRESSED:
-          setCursor(isVerticalCursor
-                    ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR)
-                    : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+          setCursor(
+            isVerticalCursor ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
           break;
         case MouseEvent.MOUSE_RELEASED:
           myDragging = false;
@@ -701,34 +767,32 @@ public final class InternalDecorator extends JPanel {
     protected final void processMouseEvent(final MouseEvent e) {
       super.processMouseEvent(e);
       switch (e.getID()) {
-        case MouseEvent.MOUSE_PRESSED:
-          {
-            myLastPoint = e.getPoint();
-            SwingUtilities.convertPointToScreen(myLastPoint, this);
-            break;
-          }
+        case MouseEvent.MOUSE_PRESSED: {
+          myLastPoint = e.getPoint();
+          SwingUtilities.convertPointToScreen(myLastPoint, this);
+          break;
+        }
       }
     }
 
     protected final void processMouseMotionEvent(final MouseEvent e) {
       super.processMouseMotionEvent(e);
       switch (e.getID()) {
-        case MouseEvent.MOUSE_DRAGGED:
-          {
-            // 1. myLast point can be null due to bugs in Swing.
-            // 2. do not allow drag enclosed window if ToolWindow isn't floating
-            if (myLastPoint == null || !myInfo.isFloating()) {
-              return;
-            }
-            final Window window = SwingUtilities.windowForComponent(this);
-            final Rectangle oldBounds = window.getBounds();
-            final Point newPoint = e.getPoint();
-            SwingUtilities.convertPointToScreen(newPoint, this);
-            final Point offset = new Point(newPoint.x - myLastPoint.x, newPoint.y - myLastPoint.y);
-            window.setLocation(oldBounds.x + offset.x, oldBounds.y + offset.y);
-            myLastPoint = newPoint;
-            break;
+        case MouseEvent.MOUSE_DRAGGED: {
+          // 1. myLast point can be null due to bugs in Swing.
+          // 2. do not allow drag enclosed window if ToolWindow isn't floating
+          if (myLastPoint == null || !myInfo.isFloating()) {
+            return;
           }
+          final Window window = SwingUtilities.windowForComponent(this);
+          final Rectangle oldBounds = window.getBounds();
+          final Point newPoint = e.getPoint();
+          SwingUtilities.convertPointToScreen(newPoint, this);
+          final Point offset = new Point(newPoint.x - myLastPoint.x, newPoint.y - myLastPoint.y);
+          window.setLocation(oldBounds.x + offset.x, oldBounds.y + offset.y);
+          myLastPoint = newPoint;
+          break;
+        }
       }
     }
   }
@@ -742,53 +806,89 @@ public final class InternalDecorator extends JPanel {
     }
   }
 
-  private static final class MyTitleButton extends FixedSizeButton {
-    public MyTitleButton() {
-      super(16);
-      setBorder(BorderFactory.createEmptyBorder());
-    }
 
-    public final void addActionListener(final AnAction action) {
-      final DataContext dataContext = DataManager.getInstance().getDataContext(this);
+  private static final class MyTitleButton extends Wrapper implements ActionListener {
 
-      final ActionListener actionListener = new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-          actionManager.fireBeforeActionPerformed(action, dataContext);
-          final Component component = ((Component) dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT));
-          if (component != null && !component.isShowing()) {
-            return;
-          }
-          action.actionPerformed(new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation(),
-                                                   ActionManager.getInstance(),
-                                                   0));
-        }
-      };
+    private InplaceButton myButton;
+    private AnAction myAction;
 
-      addActionListener(actionListener);
-    }
-
-    /**
-     * Some UIs paint only opague buttons. It causes that button has gray background color.
-     * To prevent this I don't allow to change UI.
-     */
-    public final void updateUI() {
-      setUI(new MyTitleButtonUI());
+    public MyTitleButton(AnAction action) {
+      myAction = action;
+      myButton = new InplaceButton(null, new EmptyIcon(16), this);
+      myButton.setTransform(0, -1);
+      setContent(myButton);
       setOpaque(false);
-      setRolloverEnabled(true);
-      setContentAreaFilled(false);
+    }
+
+    public void actionPerformed(final ActionEvent e) {
+      final DataContext dataContext = DataManager.getInstance().getDataContext(this);
+      final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+      actionManager.fireBeforeActionPerformed(myAction, dataContext);
+      final Component component = ((Component)dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT));
+      if (component != null && !component.isShowing()) {
+        return;
+      }
+      myAction.actionPerformed(
+        new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, myAction.getTemplatePresentation(), ActionManager.getInstance(), 0));
+    }
+
+    public void setIcon(final Icon icon) {
+      myButton.setIcon(icon);
+    }
+
+
+    public void setToolTipText(final String text) {
+      myButton.setToolTipText(text);
     }
   }
 
-  private static final class MyTitleButtonUI extends MetalButtonUI {
-    @Override protected void paintIcon(Graphics g, JComponent c, Rectangle iconRect) {
-      MyTitleButton btn = (MyTitleButton)c;
-      if (btn.getModel().isArmed() && btn.getModel().isPressed()) {
-        iconRect = new Rectangle(iconRect.x - 1, iconRect.y, iconRect.width, iconRect.height);
-      }
-      super.paintIcon(g, c, iconRect);
-    }
-  }
+  //private static final class MyTitleButton extends FixedSizeButton {
+  //  public MyTitleButton() {
+  //    super(16);
+  //    setBorder(BorderFactory.createEmptyBorder());
+  //  }
+  //
+  //  public final void addActionListener(final AnAction action) {
+  //    final DataContext dataContext = DataManager.getInstance().getDataContext(this);
+  //
+  //    final ActionListener actionListener = new ActionListener() {
+  //      public void actionPerformed(final ActionEvent e) {
+  //        final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+  //        actionManager.fireBeforeActionPerformed(action, dataContext);
+  //        final Component component = ((Component) dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT));
+  //        if (component != null && !component.isShowing()) {
+  //          return;
+  //        }
+  //        action.actionPerformed(new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation(),
+  //                                                 ActionManager.getInstance(),
+  //                                                 0));
+  //      }
+  //    };
+  //
+  //    addActionListener(actionListener);
+  //  }
+  //
+  //  /**
+  //   * Some UIs paint only opague buttons. It causes that button has gray background color.
+  //   * To prevent this I don't allow to change UI.
+  //   */
+  //  public final void updateUI() {
+  //    setUI(new MyTitleButtonUI());
+  //    setOpaque(false);
+  //    setRolloverEnabled(true);
+  //    setContentAreaFilled(false);
+  //  }
+  //}
+  //
+  //private static final class MyTitleButtonUI extends MetalButtonUI {
+  //  @Override protected void paintIcon(Graphics g, JComponent c, Rectangle iconRect) {
+  //    MyTitleButton btn = (MyTitleButton)c;
+  //    if (btn.getModel().isArmed() && btn.getModel().isPressed()) {
+  //      iconRect = new Rectangle(iconRect.x - 1, iconRect.y, iconRect.width, iconRect.height);
+  //    }
+  //    super.paintIcon(g, c, iconRect);
+  //  }
+  //}
 
   private static final class Separator extends JLabel {
     private static final Icon ourActiveSeparator = IconLoader.getIcon("/general/separator.png");
@@ -814,5 +914,10 @@ public final class InternalDecorator extends JPanel {
         updateTitle();
       }
     }
+  }
+
+
+  public TitlePanel getTitlePanel() {
+    return myTitlePanel;
   }
 }

@@ -2,15 +2,17 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.components.panels.Wrapper;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class TitlePanel extends JPanel {
+public final class TitlePanel extends JPanel {
   private static final int DELAY = 5; // Delay between frames
   private static final int TOTAL_FRAME_COUNT = 7; // Total number of frames in animation sequence
 
@@ -34,9 +36,14 @@ final class TitlePanel extends JPanel {
   private final Alarm myFrameTicker; // Determines moments of rendering of next frame
   private final MyAnimator myAnimator; // Renders panel's color
   private boolean myActive = true;
+  private JComponent mySideButtonsComponent;
+  private JComponent mySideButtons;
+
+  public static final Color BUTTON_SEPARATOR_COLOR = Color.white;
 
   TitlePanel() {
     super(new BorderLayout());
+
     myFrameTicker = new Alarm();
     myAnimator = new MyAnimator();
     setLayout(new BorderLayout());
@@ -45,6 +52,11 @@ final class TitlePanel extends JPanel {
 
     myCurrentFrame = TOTAL_FRAME_COUNT;
     updateColor();
+  }
+
+
+  public void addTitle(JComponent component) {
+    add(component, BorderLayout.CENTER);
   }
 
   public final void setActive(final boolean active, boolean animate) {
@@ -145,13 +157,52 @@ final class TitlePanel extends JPanel {
 
   protected final void paintComponent(final Graphics g) {
     super.paintComponent(g);
+
     final Graphics2D g2d = (Graphics2D) g;
+
     g2d.setPaint(new GradientPaint(0, 0, myBndColor, 0, getHeight(), myCntColor));
-    g2d.fillRect(0, 0, getWidth(), getHeight());
-    /*
-    g2d.setColor(myActive ? SystemColor.activeCaptionBorder : SystemColor.inactiveCaptionBorder);
-    g2d.drawLine(0, 0, getWidth(), 0);
-    */
+    if (mySideButtons.isVisible()) {
+      final Rectangle sideRec = SwingUtilities.convertRectangle(mySideButtonsComponent.getParent(), mySideButtonsComponent.getBounds(), this);
+      g2d.fillRect(0, 0, getWidth() - sideRec.width, getHeight());
+
+      g2d.setColor(BUTTON_SEPARATOR_COLOR);
+      g2d.drawLine(sideRec.x, 0, sideRec.x, getHeight());
+
+      g2d.setColor(myActive ? new Color(78, 94, 121) : ActivatableLineBorder.INACTIVE_COLOR);
+      UIUtil.drawLine(g, sideRec.x + 1, sideRec.y, sideRec.x + 1, getHeight());
+      UIUtil.drawLine(g, (int)sideRec.getMaxX() - 1, sideRec.y, (int)sideRec.getMaxX() - 1, getHeight());
+      UIUtil.drawLine(g, sideRec.x + 1, getHeight() - 1, (int)sideRec.getMaxX() - 1, getHeight() - 1);
+
+      final Color buttonInnerColor = myActive ? new Color(179, 197, 231) : new Color(200, 200, 200);
+      g2d.setPaint(new GradientPaint(sideRec.x, sideRec.y + 1, Color.white, sideRec.x, (int)sideRec.getMaxY() - 1, buttonInnerColor));
+      g2d.fillRect(sideRec.x + 2, sideRec.y + 1, sideRec.width - 3, sideRec.height - 2);
+
+
+    } else {
+      g2d.fillRect(0, 0, getWidth(), getHeight());
+    }
+  }
+  public JComponent getSideButtonsComponent() {
+    return mySideButtonsComponent;
+  }
+
+  public void addButtons(final JComponent buttons, JComponent sideButtons) {
+    mySideButtons = sideButtons;
+
+    mySideButtonsComponent = new Wrapper(sideButtons);
+    mySideButtonsComponent.setOpaque(false);
+    mySideButtonsComponent.setBorder(new EmptyBorder(0, 6, 0, 6));
+
+    final JPanel wrapper = new JPanel(new BorderLayout());
+    wrapper.setOpaque(false);
+
+    UIUtil.removeQuaquaVisualMarginsIn(buttons);
+    UIUtil.removeQuaquaVisualMarginsIn(sideButtons);
+
+    wrapper.add(buttons, BorderLayout.CENTER);
+    wrapper.add(mySideButtonsComponent, BorderLayout.EAST);
+
+    add(wrapper, BorderLayout.EAST);
   }
 
   private final class MyAnimator implements Runnable {
@@ -167,4 +218,5 @@ final class TitlePanel extends JPanel {
       }
     }
   }
+
 }

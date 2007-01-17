@@ -16,6 +16,8 @@ interface InternalDecoratorListener extends EventListener{
 
   public void hidden(InternalDecorator source);
 
+  public void hiddenSide(InternalDecorator source);
+
   public void resized(InternalDecorator source);
 
   public void activated(InternalDecorator source);

@@ -56,6 +56,8 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void setAutoHide(boolean state) {
     }
 
+
+
     public ToolWindowType getType() {
       return ToolWindowType.SLIDING;
     }
@@ -154,5 +156,8 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   public void clearSideStack() {
+  }
+
+  public void hideToolWindow(final String id, final boolean hideSide) {
   }
 }

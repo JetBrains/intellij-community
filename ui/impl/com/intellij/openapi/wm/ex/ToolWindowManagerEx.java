@@ -41,4 +41,6 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager{
   public abstract void setLayout(DesktopLayout layout);
 
   public abstract void clearSideStack();
+
+  public abstract void hideToolWindow(String id, boolean hideSide);
 }

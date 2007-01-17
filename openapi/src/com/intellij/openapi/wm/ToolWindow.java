@@ -121,4 +121,5 @@ public interface ToolWindow {
    * @return component which represents window content.
    */
   JComponent getComponent();
+
 }
