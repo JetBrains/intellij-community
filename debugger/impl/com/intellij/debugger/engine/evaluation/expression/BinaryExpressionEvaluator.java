@@ -56,9 +56,14 @@ class BinaryExpressionEvaluator implements Evaluator {
     }
     Value rightResult = (Value)rightOperand.evaluate(context);
     if (opType == JavaTokenType.PLUS) {
+      if (DebuggerUtilsEx.isInteger(leftResult) && DebuggerUtilsEx.isInteger(rightResult)) {
+        final long v1 = ((PrimitiveValue)leftResult).longValue();
+        final long v2 = ((PrimitiveValue)rightResult).longValue();
+        return DebuggerUtilsEx.createValue(vm, expectedType, v1 + v2);
+      }
       if (DebuggerUtilsEx.isNumeric(leftResult) && DebuggerUtilsEx.isNumeric(rightResult)) {
-        double v1 = ((PrimitiveValue)leftResult).doubleValue();
-        double v2 = ((PrimitiveValue)rightResult).doubleValue();
+        final double v1 = ((PrimitiveValue)leftResult).doubleValue();
+        final double v2 = ((PrimitiveValue)rightResult).doubleValue();
         return DebuggerUtilsEx.createValue(vm, expectedType, v1 + v2);
       }
       if (leftResult instanceof CharValue && rightResult instanceof CharValue) {
@@ -74,6 +79,11 @@ class BinaryExpressionEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.incompatible.types", "+"));
     }
     else if (opType == JavaTokenType.MINUS) {
+      if (DebuggerUtilsEx.isInteger(leftResult) && DebuggerUtilsEx.isInteger(rightResult)) {
+        final long v1 = ((PrimitiveValue)leftResult).longValue();
+        final long v2 = ((PrimitiveValue)rightResult).longValue();
+        return DebuggerUtilsEx.createValue(vm, expectedType, v1 - v2);
+      }
       if (DebuggerUtilsEx.isNumeric(leftResult) && DebuggerUtilsEx.isNumeric(rightResult)) {
         double v1 = ((PrimitiveValue)leftResult).doubleValue();
         double v2 = ((PrimitiveValue)rightResult).doubleValue();
@@ -87,6 +97,11 @@ class BinaryExpressionEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.incompatible.types", "-"));
     }
     else if (opType == JavaTokenType.ASTERISK) {
+      if (DebuggerUtilsEx.isInteger(leftResult) && DebuggerUtilsEx.isInteger(rightResult)) {
+        final long v1 = ((PrimitiveValue)leftResult).longValue();
+        final long v2 = ((PrimitiveValue)rightResult).longValue();
+        return DebuggerUtilsEx.createValue(vm, expectedType, v1 * v2);
+      }
       if (DebuggerUtilsEx.isNumeric(leftResult) && DebuggerUtilsEx.isNumeric(rightResult)) {
         double v1 = ((PrimitiveValue)leftResult).doubleValue();
         double v2 = ((PrimitiveValue)rightResult).doubleValue();
@@ -247,9 +262,20 @@ class BinaryExpressionEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.incompatible.types", "^"));
     }
     else if (opType == JavaTokenType.EQEQ) {
-      if (leftResult == null && rightResult == null) return DebuggerUtilsEx.createValue(vm, expectedType, true);
-      if (leftResult == null) return DebuggerUtilsEx.createValue(vm, expectedType, rightResult.equals(leftResult));
-      if (rightResult == null) return DebuggerUtilsEx.createValue(vm, expectedType, leftResult.equals(rightResult));
+      if (leftResult == null && rightResult == null) {
+        return DebuggerUtilsEx.createValue(vm, expectedType, true);
+      }
+      if (leftResult == null) {
+        return DebuggerUtilsEx.createValue(vm, expectedType, rightResult.equals(leftResult));
+      }
+      if (rightResult == null) {
+        return DebuggerUtilsEx.createValue(vm, expectedType, leftResult.equals(rightResult));
+      }
+      if (DebuggerUtilsEx.isInteger(leftResult) && DebuggerUtilsEx.isInteger(rightResult)) {
+        final long v1 = ((PrimitiveValue)leftResult).longValue();
+        final long v2 = ((PrimitiveValue)rightResult).longValue();
+        return DebuggerUtilsEx.createValue(vm, expectedType, v1 == v2);
+      }
       if (DebuggerUtilsEx.isNumeric(leftResult) && DebuggerUtilsEx.isNumeric(rightResult)) {
         double v1 = ((PrimitiveValue)leftResult).doubleValue();
         double v2 = ((PrimitiveValue)rightResult).doubleValue();
@@ -292,6 +318,11 @@ class BinaryExpressionEvaluator implements Evaluator {
       if (leftResult == null && rightResult == null) return DebuggerUtilsEx.createValue(vm, expectedType, false);
       if (leftResult == null) return DebuggerUtilsEx.createValue(vm, expectedType, !rightResult.equals(leftResult));
       if (rightResult == null) return DebuggerUtilsEx.createValue(vm, expectedType, !leftResult.equals(rightResult));
+      if (DebuggerUtilsEx.isInteger(leftResult) && DebuggerUtilsEx.isInteger(rightResult)) {
+        final long v1 = ((PrimitiveValue)leftResult).longValue();
+        final long v2 = ((PrimitiveValue)rightResult).longValue();
+        return DebuggerUtilsEx.createValue(vm, expectedType, v1 != v2);
+      }
       if (DebuggerUtilsEx.isNumeric(leftResult) && DebuggerUtilsEx.isNumeric(rightResult)) {
         double v1 = ((PrimitiveValue)leftResult).doubleValue();
         double v2 = ((PrimitiveValue)rightResult).doubleValue();
@@ -315,6 +346,11 @@ class BinaryExpressionEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.incompatible.types", "!="));
     }
     else if (opType == JavaTokenType.LT) {
+      if (DebuggerUtilsEx.isInteger(leftResult) && DebuggerUtilsEx.isInteger(rightResult)) {
+        final long v1 = ((PrimitiveValue)leftResult).longValue();
+        final long v2 = ((PrimitiveValue)rightResult).longValue();
+        return DebuggerUtilsEx.createValue(vm, expectedType, v1 < v2);
+      }
       if (DebuggerUtilsEx.isNumeric(leftResult) && DebuggerUtilsEx.isNumeric(rightResult)) {
         double v1 = ((PrimitiveValue)leftResult).doubleValue();
         double v2 = ((PrimitiveValue)rightResult).doubleValue();
@@ -328,6 +364,11 @@ class BinaryExpressionEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.incompatible.types", "<"));
     }
     else if (opType == JavaTokenType.GT) {
+      if (DebuggerUtilsEx.isInteger(leftResult) && DebuggerUtilsEx.isInteger(rightResult)) {
+        final long v1 = ((PrimitiveValue)leftResult).longValue();
+        final long v2 = ((PrimitiveValue)rightResult).longValue();
+        return DebuggerUtilsEx.createValue(vm, expectedType, v1 > v2);
+      }
       if (DebuggerUtilsEx.isNumeric(leftResult) && DebuggerUtilsEx.isNumeric(rightResult)) {
         double v1 = ((PrimitiveValue)leftResult).doubleValue();
         double v2 = ((PrimitiveValue)rightResult).doubleValue();
@@ -341,6 +382,11 @@ class BinaryExpressionEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.incompatible.types", ">"));
     }
     else if (opType == JavaTokenType.LE) {
+      if (DebuggerUtilsEx.isInteger(leftResult) && DebuggerUtilsEx.isInteger(rightResult)) {
+        final long v1 = ((PrimitiveValue)leftResult).longValue();
+        final long v2 = ((PrimitiveValue)rightResult).longValue();
+        return DebuggerUtilsEx.createValue(vm, expectedType, v1 <= v2);
+      }
       if (DebuggerUtilsEx.isNumeric(leftResult) && DebuggerUtilsEx.isNumeric(rightResult)) {
         double v1 = ((PrimitiveValue)leftResult).doubleValue();
         double v2 = ((PrimitiveValue)rightResult).doubleValue();
@@ -354,6 +400,11 @@ class BinaryExpressionEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.incompatible.types", "<="));
     }
     else if (opType == JavaTokenType.GE) {
+      if (DebuggerUtilsEx.isInteger(leftResult) && DebuggerUtilsEx.isInteger(rightResult)) {
+        final long v1 = ((PrimitiveValue)leftResult).longValue();
+        final long v2 = ((PrimitiveValue)rightResult).longValue();
+        return DebuggerUtilsEx.createValue(vm, expectedType, v1 >= v2);
+      }
       if (DebuggerUtilsEx.isNumeric(leftResult) && DebuggerUtilsEx.isNumeric(rightResult)) {
         double v1 = ((PrimitiveValue)leftResult).doubleValue();
         double v2 = ((PrimitiveValue)rightResult).doubleValue();

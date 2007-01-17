@@ -4,14 +4,12 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.DebuggerBundle;
 import com.sun.jdi.BooleanValue;
 import com.sun.jdi.CharValue;
 import com.sun.jdi.PrimitiveValue;
@@ -41,7 +39,13 @@ public class TypeCastEvaluator implements Evaluator {
       return null;
     }
     VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
-    if (DebuggerUtilsEx.isNumeric(value)) {
+    if (DebuggerUtilsEx.isInteger(value)) {
+      value = DebuggerUtilsEx.createValue(vm, myCastType, ((PrimitiveValue)value).longValue());
+      if (value == null) {
+        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.cast.numeric", myCastType));
+      }
+    }
+    else if (DebuggerUtilsEx.isNumeric(value)) {
       value = DebuggerUtilsEx.createValue(vm, myCastType, ((PrimitiveValue)value).doubleValue());
       if (value == null) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.cast.numeric", myCastType));

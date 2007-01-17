@@ -4,13 +4,12 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.sun.jdi.BooleanValue;
@@ -44,6 +43,10 @@ class UnaryExpressionEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.numeric.expected"));
     }
     else if (myOperationType == JavaTokenType.MINUS) {
+      if (DebuggerUtilsEx.isInteger(operand)) {
+        long v = ((PrimitiveValue)operand).longValue();
+        return DebuggerUtilsEx.createValue(vm, myExpectedType, -v);
+      }
       if (DebuggerUtilsEx.isNumeric(operand)) {
         double v = ((PrimitiveValue)operand).doubleValue();
         return DebuggerUtilsEx.createValue(vm, myExpectedType, -v);
