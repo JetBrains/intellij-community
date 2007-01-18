@@ -38,7 +38,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      * The default load factor for this table.  Used when not
      * otherwise specified in constructor.
      */
-    static final float DEFAULT_LOAD_FACTOR = 0.75f;
+    public static final float DEFAULT_LOAD_FACTOR = 0.75f;
 
     /**
      * The default number of concurrency control segments.

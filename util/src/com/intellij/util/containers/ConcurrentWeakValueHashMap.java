@@ -9,7 +9,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
 public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V> {
-  private final ConcurrentHashMap<K,MyReference<K,V>> myMap = new ConcurrentHashMap<K, MyReference<K,V>>();
+  private final ConcurrentHashMap<K,MyReference<K,V>> myMap;
   private ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
   public ConcurrentWeakValueHashMap(final Map<K, V> map) {
@@ -18,6 +18,10 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
   }
 
   public ConcurrentWeakValueHashMap() {
+    myMap = new ConcurrentHashMap<K, MyReference<K,V>>();
+  }
+  public ConcurrentWeakValueHashMap(int initialCapaciy, float loadFactor, int concurrenycLevel) {
+    myMap = new ConcurrentHashMap<K, MyReference<K,V>>(initialCapaciy, loadFactor, concurrenycLevel);
   }
 
   private static class MyReference<K,T> extends WeakReference<T> {

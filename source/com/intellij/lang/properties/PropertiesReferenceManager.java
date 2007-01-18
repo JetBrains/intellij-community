@@ -38,7 +38,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
   private final Project myProject;
   private final PropertiesFilesManager myPropertiesFilesManager;
   private final PsiManager myPsiManager;
-  private final ConcurrentMap<String, Collection<VirtualFile>> myPropertiesMap = new ConcurrentHashMap<String, Collection<VirtualFile>>();
+  private final ConcurrentMap<String, Collection<VirtualFile>> myPropertiesMap = new ConcurrentHashMap<String, Collection<VirtualFile>>(10, ConcurrentHashMap.DEFAULT_LOAD_FACTOR, 1);
   private final Queue<VirtualFile> myChangedFiles = new ConcurrentLinkedQueue<VirtualFile>();
   private final MessageBusConnection myConnection;
 
