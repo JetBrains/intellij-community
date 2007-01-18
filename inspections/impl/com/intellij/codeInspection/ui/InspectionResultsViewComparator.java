@@ -32,8 +32,8 @@ public class InspectionResultsViewComparator implements Comparator {
     if (node1 instanceof InspectionNode && node2 instanceof InspectionGroupNode) return -1;
     if (node2 instanceof InspectionNode && node1 instanceof InspectionGroupNode) return 1;
 
-    if (node1 instanceof EntryPointsNode && node2 instanceof InspectionPackageNode) return -1;
-    if (node2 instanceof EntryPointsNode && node1 instanceof InspectionPackageNode) return 1;
+    if (node1 instanceof EntryPointsNode) return -1;
+    if (node2 instanceof EntryPointsNode) return 1;
 
     if (node1 instanceof InspectionNode && node2 instanceof InspectionNode)
       return SingleInspectionProfilePanel.getDisplayTextToSort(node1.toString())

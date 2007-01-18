@@ -318,6 +318,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
         myModulesProblems.add((RefModule)element);
       }
     }
+    myIgnoredElements = null;
   }
 
   public Map<String, Set<RefElement>> getPackageContent() {

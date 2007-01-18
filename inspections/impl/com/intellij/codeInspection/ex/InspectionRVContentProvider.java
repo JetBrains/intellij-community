@@ -62,25 +62,31 @@ public abstract class InspectionRVContentProvider {
                                                    final Function<T, UserObjectContainer<T>> computeContainer,
                                                    final boolean showStructure) {
     final List<InspectionTreeNode> content = new ArrayList<InspectionTreeNode>();
+    final Map<String, Map<String, InspectionPackageNode>> module2PackageMap = new HashMap<String, Map<String, InspectionPackageNode>>();
     for (String packageName : packageContents.keySet()) {
-      final Map<String, InspectionPackageNode> module2PackageMap = new HashMap<String, InspectionPackageNode>();
-      InspectionPackageNode pNode = null;
       final Set<T> elements = packageContents.get(packageName);
       for (T userObject : elements) {
         final UserObjectContainer<T> container = computeContainer.fun(userObject);
         final String moduleName = showStructure ? container.getModule() : null;
-        pNode = module2PackageMap.get(moduleName);
+        Map<String, InspectionPackageNode> packageNodes = module2PackageMap.get(moduleName);
+        if (packageNodes == null) {
+          packageNodes = new HashMap<String, InspectionPackageNode>();
+          module2PackageMap.put(moduleName, packageNodes);
+        }
+        InspectionPackageNode pNode = packageNodes.get(packageName);
         if (pNode == null) {
           pNode = new InspectionPackageNode(packageName);
-          module2PackageMap.put(moduleName, pNode);
+          packageNodes.put(packageName, pNode);
         }
         appendDescriptor(tool, container, pNode, canPackageRepeat);
       }
-      if (showStructure) {
-        final HashMap<String, InspectionModuleNode> moduleNodes = new HashMap<String, InspectionModuleNode>();
-        for (final String moduleName : module2PackageMap.keySet()) {
-          final InspectionPackageNode packNode = module2PackageMap.get(moduleName);
-          if (packNode.getChildCount() > 0) {
+    }
+    if (showStructure) {
+      final HashMap<String, InspectionModuleNode> moduleNodes = new HashMap<String, InspectionModuleNode>();
+      for (final String moduleName : module2PackageMap.keySet()) {
+        final Map<String, InspectionPackageNode> packageNodes = module2PackageMap.get(moduleName);
+        for (InspectionPackageNode packageNode : packageNodes.values()) {
+          if (packageNode.getChildCount() > 0) {
             InspectionModuleNode moduleNode = moduleNodes.get(moduleName);
             if (moduleNode == null) {
               final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleName);
@@ -92,14 +98,18 @@ public abstract class InspectionRVContentProvider {
                 continue;
               }
             }
-            moduleNode.add(packNode);
+            moduleNode.add(packageNode);
           }
         }
-        content.addAll(moduleNodes.values());
       }
-      else if (pNode != null) {
-        for (int i = 0; i < pNode.getChildCount(); i++) {
-          content.add(((RefElementNode)pNode.getChildAt(i)));
+      content.addAll(moduleNodes.values());
+    }
+    else {
+      for (Map<String, InspectionPackageNode> packageNodes : module2PackageMap.values()) {
+        for (InspectionPackageNode pNode : packageNodes.values()) {
+          for (int i = 0; i < pNode.getChildCount(); i++) {
+            content.add(((RefElementNode)pNode.getChildAt(i)));
+          }
         }
       }
     }
