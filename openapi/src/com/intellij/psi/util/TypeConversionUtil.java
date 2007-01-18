@@ -124,6 +124,15 @@ public class TypeConversionUtil {
       return isAssignable(fromType, toType);
     }
     if (fromType instanceof PsiArrayType) {
+      if (toType instanceof PsiClassType) {
+        final PsiClass resolved = ((PsiClassType)toType).resolve();
+        if (resolved instanceof PsiTypeParameter) {
+          for (final PsiClassType boundType : resolved.getExtendsListTypes()) {
+            if (!isNarrowingReferenceConversionAllowed(fromType, boundType)) return false;
+          }
+          return true;
+        }
+      }
       return toType instanceof PsiArrayType
              && isNarrowingReferenceConversionAllowed(((PsiArrayType)fromType).getComponentType(),
                                                       ((PsiArrayType)toType).getComponentType());
