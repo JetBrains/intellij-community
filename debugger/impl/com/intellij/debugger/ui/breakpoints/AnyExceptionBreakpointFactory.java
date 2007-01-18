@@ -6,6 +6,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Key;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,7 @@ public class AnyExceptionBreakpointFactory extends BreakpointFactory{
     return null;
   }
 
-  public String getBreakpointCategory() {
+  public Key<AnyExceptionBreakpoint> getBreakpointCategory() {
     return AnyExceptionBreakpoint.ANY_EXCEPTION_BREAKPOINT;
   }
 

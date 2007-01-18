@@ -4,7 +4,10 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -13,30 +16,33 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 public class ToggleBreakpointEnabledAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    Breakpoint breakpoint = findBreakpoint(dataContext);
-    final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
-    breakpointManager.setBreakpointEnabled(breakpoint, !breakpoint.ENABLED);
+    final Project project = e.getData(DataKeys.PROJECT);
+    Breakpoint breakpoint = findBreakpoint(project);
+    if (breakpoint != null) {
+      final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
+      breakpointManager.setBreakpointEnabled(breakpoint, !breakpoint.ENABLED);
+    }
   }
 
-  private Breakpoint findBreakpoint(DataContext dataContext) {
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+  @Nullable
+  private static Breakpoint findBreakpoint(final Project project) {
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if(editor == null) return null;
-    BreakpointManager manager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
+    if(editor == null) {
+      return null;
+    }
+    BreakpointManager manager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
     int offset = editor.getCaretModel().getOffset();
-    return manager.findBreakpoint(editor.getDocument(), offset);
+    return manager.findBreakpoint(editor.getDocument(), offset, null);
   }
 
   public void update(AnActionEvent event){
-    Presentation presentation = event.getPresentation();
-    DataContext dataContext = event.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Presentation presentation = event.getPresentation();
+    Project project = event.getData(DataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;
@@ -57,7 +63,7 @@ public class ToggleBreakpointEnabledAction extends AnAction {
     final VirtualFile virtualFile = file.getVirtualFile();
     FileType fileType = virtualFile != null ? fileTypeManager.getFileTypeByFile(virtualFile) : null;
     if (DebuggerUtils.supportsJVMDebugging(fileType)) {
-      Breakpoint breakpoint = findBreakpoint(dataContext);
+      Breakpoint breakpoint = findBreakpoint(project);
       if (breakpoint == null) {
         presentation.setEnabled(false);
         return;

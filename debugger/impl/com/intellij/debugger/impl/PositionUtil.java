@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: lex
@@ -31,16 +32,15 @@ public class PositionUtil extends ContextUtil {
     return ContextUtil.getContextElement(context);
   }
 
+  @Nullable
   public static <T extends PsiElement> T getPsiElementAt(final Project project, final Class<T> expectedPsiElementClass, final SourcePosition sourcePosition) {
     return ApplicationManager.getApplication().runReadAction(new Computable<T>() {
       public T compute() {
-        PsiFile psiFile = sourcePosition.getFile();
-        Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-
+        final PsiFile psiFile = sourcePosition.getFile();
+        final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
         if(document == null) {
           return null;
         }
-
         final int spOffset = sourcePosition.getOffset();
         if (spOffset < 0) {
           return null;

@@ -26,6 +26,7 @@ import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -63,7 +64,7 @@ public class WildcardMethodBreakpoint extends Breakpoint {
     super(project);
   }
 
-  public String getCategory() {
+  public Key<MethodBreakpoint> getCategory() {
     return MethodBreakpoint.CATEGORY;
   }
 

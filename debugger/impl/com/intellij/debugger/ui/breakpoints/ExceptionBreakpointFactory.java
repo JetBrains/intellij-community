@@ -12,6 +12,7 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
@@ -82,7 +83,7 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
     };
   }
 
-  public String getBreakpointCategory() {
+  public Key<ExceptionBreakpoint> getBreakpointCategory() {
     return ExceptionBreakpoint.CATEGORY;
   }
 

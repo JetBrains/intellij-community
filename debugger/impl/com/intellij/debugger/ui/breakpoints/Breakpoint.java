@@ -21,10 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizerUtil;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiClass;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
@@ -94,7 +91,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
 
   public abstract boolean isValid();
 
-  public abstract String getCategory();
+  public abstract Key<? extends Breakpoint> getCategory();
 
   /**
    * Associates breakpoint with class.

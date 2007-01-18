@@ -1,16 +1,18 @@
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.CommonBundle;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.DebuggerExpressionTextField;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -20,8 +22,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NonNls;
+import java.util.List;
 
 /**
  * created Jun 18, 2001
@@ -129,7 +130,7 @@ public class BreakpointsConfigurationDialogFactory {
 
     @SuppressWarnings({"HardCodedStringLiteral"}) private void setupPanelUI(BreakpointPanel panel) {
       final BreakpointManager breakpointManager = getBreakpointManager();
-      final String category = panel.getBreakpointCategory();
+      final Key<? extends Breakpoint> category = panel.getBreakpointCategory();
       final BreakpointTree tree = panel.getTree();
       final String flattenPackages = breakpointManager.getProperty(category + "_flattenPackages");
       if (flattenPackages != null) {
@@ -150,7 +151,7 @@ public class BreakpointsConfigurationDialogFactory {
       }
     }
 
-    @SuppressWarnings({"HardCodedStringLiteral"}) private void savePanelSettings(BreakpointPanel panel, String category) {
+    @SuppressWarnings({"HardCodedStringLiteral"}) private void savePanelSettings(BreakpointPanel panel, Key<? extends Breakpoint> category) {
       final BreakpointManager breakpointManager = getBreakpointManager();
 
       final BreakpointTree tree = panel.getTree();
@@ -243,7 +244,7 @@ public class BreakpointsConfigurationDialogFactory {
       if (breakpoint == null) {
         return;
       }
-      final String category = breakpoint.getCategory();
+      final Key<? extends Breakpoint> category = breakpoint.getCategory();
       for (BreakpointPanel breakpointPanel : myPanels) {
         if (category.equals(breakpointPanel.getBreakpointCategory())) {
           myTabbedPane.setSelectedComponent(breakpointPanel.getPanel());
@@ -271,7 +272,7 @@ public class BreakpointsConfigurationDialogFactory {
     }
 
     private boolean hasEnabledBreakpoints(BreakpointPanel panel) {
-      final java.util.List<Breakpoint> breakpoints = panel.getBreakpoints();
+      final List<Breakpoint> breakpoints = panel.getBreakpoints();
       for (Breakpoint breakpoint : breakpoints) {
         if (breakpoint.ENABLED) {
           return true;

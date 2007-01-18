@@ -15,10 +15,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -46,13 +43,13 @@ public class ExceptionBreakpoint extends Breakpoint {
   public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_exception_breakpoint.png");
   public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_exception_breakpoint.png");
   protected final static String READ_NO_CLASS_NAME = DebuggerBundle.message("error.absent.exception.breakpoint.class.name");
-  public static final @NonNls String CATEGORY = "exception_breakpoints";
+  public static final @NonNls Key<ExceptionBreakpoint> CATEGORY = BreakpointCategory.lookup("exception_breakpoints");
 
   public ExceptionBreakpoint(Project project) {
     super(project);
   }
 
-  public String getCategory() {
+  public Key<? extends ExceptionBreakpoint> getCategory() {
     return CATEGORY;
   }
 

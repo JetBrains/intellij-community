@@ -19,10 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
@@ -52,7 +49,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_field_breakpoint.png");
   private static Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_field_breakpoint.png");
   private static Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_field_breakpoint.png");
-  public static final @NonNls String CATEGORY = "field_breakpoints";
+  public static final @NonNls Key<FieldBreakpoint> CATEGORY = BreakpointCategory.lookup("field_breakpoints");
 
   protected FieldBreakpoint(Project project) {
     super(project);
@@ -90,7 +87,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     return ourVerifiedIcon;
   }
 
-  public String getCategory() {
+  public Key<FieldBreakpoint> getCategory() {
     return CATEGORY;
   }
 

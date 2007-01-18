@@ -4,17 +4,15 @@
  */
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
-import com.intellij.debugger.ui.breakpoints.BreakpointPropertiesPanel;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.idea.ActionsBundle;
 
 public class ViewBreakpointsAction extends AnAction {
   private Breakpoint myInitialBreakpoint;
@@ -43,7 +41,7 @@ public class ViewBreakpointsAction extends AnAction {
         BreakpointManager manager = debugManager.getBreakpointManager();
         int offset = editor.getCaretModel().getOffset();
         Document editorDocument = editor.getDocument();
-        myInitialBreakpoint = manager.findBreakpoint(editorDocument, offset);
+        myInitialBreakpoint = manager.findBreakpoint(editorDocument, offset, null);
       }
     }
 

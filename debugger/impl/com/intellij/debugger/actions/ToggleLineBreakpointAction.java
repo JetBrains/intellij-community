@@ -5,7 +5,6 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
-import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
@@ -14,18 +13,25 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 public class ToggleLineBreakpointAction extends AnAction {
+  
   public void actionPerformed(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    if (project == null) return;
+    final Project project = e.getData(DataKeys.PROJECT);
+    if (project == null) {
+      return;
+    }
     PlaceInDocument place = getPlace(e);
-    if(place == null) return;
+    if(place == null) {
+      return;
+    }
     DebuggerManagerEx debugManager = DebuggerManagerEx.getInstanceEx(project);
-    if (debugManager == null) return;
+    if (debugManager == null) {
+      return;
+    }
     BreakpointManager manager = debugManager.getBreakpointManager();
-    Breakpoint breakpoint = manager.findLineBreakpoint(place.getDocument(), place.getOffset());
+    final Breakpoint breakpoint = manager.findBreakpoint(place.getDocument(), place.getOffset(), LineBreakpoint.CATEGORY);
     if(breakpoint == null) {
       int line = place.getDocument().getLineNumber(place.getOffset());
       LineBreakpoint lineBreakpoint = manager.addLineBreakpoint(place.getDocument(), line);
@@ -37,11 +43,13 @@ public class ToggleLineBreakpointAction extends AnAction {
     }
   }
 
+  @Nullable
   public static PlaceInDocument getPlace(AnActionEvent event) {
-    DataContext dataContext = event.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    if(project == null) return null;
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Project project = event.getData(DataKeys.PROJECT);
+    if(project == null) {
+      return null;
+    }
+    Editor editor = event.getData(DataKeys.EDITOR);
     if(editor == null) {
       editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     }
@@ -70,19 +78,13 @@ public class ToggleLineBreakpointAction extends AnAction {
     boolean toEnable = false;
     PlaceInDocument place = getPlace(event);
     if (place != null) {
-      Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
+      final Project project = event.getData(DataKeys.PROJECT);
       final Document document = place.getDocument();
       final int offset = place.getOffset();
-      final BreakpointWithHighlighter breakpointAtLine = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().findBreakpoint(document, offset);
-      if (breakpointAtLine != null && LineBreakpoint.CATEGORY.equals(breakpointAtLine.getCategory())) {
-        toEnable = true;
-      }
-      else {
-        toEnable = LineBreakpoint.canAddLineBreakpoint(project, document, document.getLineNumber(offset));
-      }
+      toEnable = LineBreakpoint.canAddLineBreakpoint(project, document, document.getLineNumber(offset));
     }
 
-    Presentation presentation = event.getPresentation();
+    final Presentation presentation = event.getPresentation();
     if (ActionPlaces.EDITOR_POPUP.equals(event.getPlace()) ||
         ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace())) {

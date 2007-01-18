@@ -28,6 +28,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -447,15 +448,34 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     });
   }
 
+  public abstract Key<? extends BreakpointWithHighlighter> getCategory();
+
   public boolean canMoveTo(final SourcePosition position) {
-    return isPositionValid(position);
+    if (position == null || !position.getFile().isValid()) {
+      return false;
+    }
+    final PsiFile psiFile = position.getFile();
+    final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+    if (document == null) {
+      return false;
+    }
+    final int spOffset = position.getOffset();
+    if (spOffset < 0) {
+      return false;
+    }
+    final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
+    return breakpointManager.findBreakpoint(document, spOffset, getCategory()) == null;
   }
 
   public boolean moveTo(SourcePosition position) {
     if (!canMoveTo(position)) {
       return false;
     }
-    Document document = getDocument();
+    final PsiFile psiFile = position.getFile();
+    final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+    if (document == null) {
+      return false;
+    }
     final RangeHighlighter newHighlighter = createHighlighter(myProject, document, position.getLine());
     if (newHighlighter == null) {
       return false;
@@ -464,6 +484,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     myHighlighter = newHighlighter;
 
     reload();
+    
     if(!isValid()) {
       document.getMarkupModel(myProject).removeHighlighter(myHighlighter);
       myHighlighter = oldHighlighter;

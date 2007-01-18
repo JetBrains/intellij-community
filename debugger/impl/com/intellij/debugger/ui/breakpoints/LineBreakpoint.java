@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
@@ -45,7 +46,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   private static Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_breakpoint.png");
 
   private String myMethodName;
-  public static final @NonNls String CATEGORY = "line_breakpoints";
+  public static final @NonNls Key<LineBreakpoint> CATEGORY = BreakpointCategory.lookup("line_breakpoints");
 
   protected LineBreakpoint(Project project) {
     super(project);
@@ -72,7 +73,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return ourVerifiedIcon;
   }
 
-  public String getCategory() {
+  public Key<LineBreakpoint> getCategory() {
     return CATEGORY;
   }
 
@@ -232,28 +233,26 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   public boolean canMoveTo(SourcePosition position) {
-    if (!canAddLineBreakpoint(myProject, getDocument(), position.getLine())) {
+    if (!super.canMoveTo(position)) {
       return false;
     }
-    return super.canMoveTo(position);
+    final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(position.getFile());
+    return canAddLineBreakpoint(myProject, document, position.getLine());
   }
 
   public static boolean canAddLineBreakpoint(Project project, final Document document, final int lineIndex) {
     if (lineIndex < 0 || lineIndex >= document.getLineCount()) {
       return false;
     }
-    final BreakpointWithHighlighter breakpointAtLine = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().findBreakpoint(
-      document,
-      document.getLineStartOffset(lineIndex)
-    );
-    if (breakpointAtLine != null && CATEGORY.equals(breakpointAtLine.getCategory())) {
+    final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
+    final LineBreakpoint breakpointAtLine = breakpointManager.findBreakpoint( document, document.getLineStartOffset(lineIndex), CATEGORY);
+    if (breakpointAtLine != null) {
       // there already exists a line breakpoint at this line
       return false;
     }
-    final boolean[] canAdd = new boolean[]{false};
-
     PsiDocumentManager.getInstance(project).commitDocument(document);
 
+    final boolean[] canAdd = new boolean[]{false};
     DebuggerUtilsEx.iterateLine(project, document, lineIndex, new DebuggerUtilsEx.ElementVisitor() {
       public boolean acceptElement(PsiElement element) {
         if ((element instanceof PsiWhiteSpace) || (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null)) {

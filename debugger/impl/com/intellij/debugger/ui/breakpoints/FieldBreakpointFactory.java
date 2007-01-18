@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jdom.Element;
@@ -56,7 +57,7 @@ public class FieldBreakpointFactory extends BreakpointFactory{
     return panel;
   }
 
-  public String getBreakpointCategory() {
+  public Key<FieldBreakpoint> getBreakpointCategory() {
     return FieldBreakpoint.CATEGORY;
   }
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.text.CharArrayUtil;
@@ -53,7 +54,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_method_breakpoint.png");
   private static Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_method_breakpoint.png");
   private static Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_method_breakpoint.png");
-  public static final @NonNls String CATEGORY = "method_breakpoints";
+  public static final @NonNls Key<MethodBreakpoint> CATEGORY = BreakpointCategory.lookup("method_breakpoints");
 
   protected MethodBreakpoint(Project project) {
     super(project);
@@ -67,7 +68,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
     return myIsStatic;
   }
 
-  public String getCategory() {
+  public Key<MethodBreakpoint> getCategory() {
     return CATEGORY;
   }
 

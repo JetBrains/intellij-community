@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiField;
 import com.intellij.ui.IdeBorderFactory;
@@ -29,7 +30,7 @@ import java.util.EventListener;
 public class BreakpointPanel {
   private final BreakpointPropertiesPanel myPropertiesPanel;
   private final BreakpointPanelAction[] myActions;
-  private final String myBreakpointCategory;
+  private final Key<? extends Breakpoint> myBreakpointCategory;
   private final String myDisplayName;
   private final String myHelpID;
   private Breakpoint myCurrentViewableBreakpoint;
@@ -101,7 +102,7 @@ public class BreakpointPanel {
   public BreakpointPanel(final Project project,
                          BreakpointPropertiesPanel propertiesPanel,
                          final BreakpointPanelAction[] actions,
-                         String breakpointCategory,
+                         Key<? extends Breakpoint> breakpointCategory,
                          String displayName,
                          String helpId) {
     myPropertiesPanel = propertiesPanel;
@@ -244,7 +245,7 @@ public class BreakpointPanel {
     });
   }
 
-  public String getBreakpointCategory() {
+  public Key<? extends Breakpoint> getBreakpointCategory() {
     return myBreakpointCategory;
   }
 
