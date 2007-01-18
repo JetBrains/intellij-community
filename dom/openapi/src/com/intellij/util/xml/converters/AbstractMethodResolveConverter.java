@@ -137,7 +137,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
 
   public static boolean methodSuits(final PsiMethod psiMethod) {
     if (psiMethod.isConstructor()) return false;
-    return psiMethod.getContainingClass().isInterface() || (psiMethod.hasModifierProperty(PsiModifier.PUBLIC) && !psiMethod.hasModifierProperty(PsiModifier.STATIC));
+    return psiMethod.getContainingClass().isInterface() || (!psiMethod.hasModifierProperty(PsiModifier.FINAL) && !psiMethod.hasModifierProperty(PsiModifier.STATIC));
   }
 
   public Set<String> getAdditionalVariants() {
