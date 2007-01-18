@@ -10,7 +10,6 @@ import org.jdom.Element;
 
 public class PsiManagerConfiguration implements ApplicationComponent, JDOMExternalizable {
   public boolean REPOSITORY_ENABLED = true;
-  public boolean CREATE_DUMMY_PROJECT_FOR_OBFUSCATION = true;
 
   public static PsiManagerConfiguration getInstance() {
     return ApplicationManager.getApplication().getComponent(PsiManagerConfiguration.class);

@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -54,6 +53,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   private final ArrayList<Project> myOpenProjects = new ArrayList<Project>();
   private final ArrayList<ProjectManagerListener> myListeners = new ArrayList<ProjectManagerListener>();
+
+  private Project myCurrentTestProject = null;
 
   /**
    * More then 0 while openProject is being executed: [openProject..runStartupActivities...runPostStartupActivitites].
@@ -147,8 +148,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private ProjectImpl createProject(String filePath, boolean isDefault, boolean isDummy, boolean isOptimiseTestLoadSpeed) {
     final ProjectImpl project;
     if (isDummy) {
-      project = new DummyProject(filePath, isDefault, isOptimiseTestLoadSpeed);
-      project.setDummy(isDummy);
+      throw new UnsupportedOperationException("Dummy project is deprecated and shall not be used anymore.");
     }
     else {
       project = new ProjectImpl(this, filePath, isDefault, isOptimiseTestLoadSpeed, myPathMacros);
@@ -227,6 +227,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return myOpenProjects.contains(project);
   }
 
+  public void openProjectDontNotifyComponents(Project project) {
+    myOpenProjects.add(project);
+  }
+
+  public void closeProjectDontNotifyComponents(Project project) {
+    myOpenProjects.remove(project);
+  }
+
   public boolean openProject(final Project project) {
     if (myOpenProjects.contains(project)) return false;
     if (!ApplicationManager.getApplication().isUnitTestMode() && !((ProjectImpl)project).getStateStore().checkVersion()) return false;
@@ -243,12 +251,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }, ProjectBundle.message("project.load.progress"), false, project);
     ((StartupManagerImpl)StartupManager.getInstance(project)).runPostStartupActivities();
 
-    // Hack. We need to initialize FileDocumentManagerImpl's dummy project since it is lazy initialized and initialization can happen in
-    // non-swing thread which could lead to some dummy components fail to initialize.
-    FileDocumentManager fdManager = FileDocumentManager.getInstance();
-    if (fdManager instanceof FileDocumentManagerImpl) {
-      ((FileDocumentManagerImpl)fdManager).getDummyProject();
-    }
     myCountOfProjectsBeingOpen--;
     return true;
   }
@@ -343,6 +345,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public void unblockReloadingProjectOnExternalChanges() {
     myReloadBlockCount--;
     askToReloadProjectIfConfigFilesChangedExternally();
+  }
+
+  public void setCurrentTestProject(@Nullable final Project project) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myCurrentTestProject = project;
+  }
+
+  @Nullable
+  public Project getCurrentTestProject() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    return myCurrentTestProject;
   }
 
   public void saveChangedProjectFile(final VirtualFile file) {
@@ -596,11 +609,4 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public String getPresentableName() {
     return ProjectBundle.message("project.default.settings");
   }
-
-  private class DummyProject extends ProjectImpl {
-    public DummyProject(final String filePath, final boolean aDefault, final boolean optimiseTestLoadSpeed) {
-      super(ProjectManagerImpl.this, filePath, aDefault, optimiseTestLoadSpeed, ProjectManagerImpl.this.myPathMacros);
-    }
-  }
-
 }

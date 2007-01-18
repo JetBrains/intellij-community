@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -571,6 +572,20 @@ public class VfsUtil {
     }
 
     return null;
+  }
+
+  @Nullable
+  public static Project guessProjectForFile(VirtualFile file) {
+    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    if (projects.length == 1) return projects[0];
+
+    for (Project project : projects) {
+      if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
+        return project;
+      }
+    }
+
+    return projects.length == 0 ? null : projects[0];
   }
 
   public static boolean isValidName(String name) {

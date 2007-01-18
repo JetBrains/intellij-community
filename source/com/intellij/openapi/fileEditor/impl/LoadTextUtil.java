@@ -2,22 +2,22 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.Patches;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetSettings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.SmartEncodingInputStream;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.xml.util.XmlUtil;
 
 import java.io.*;
@@ -30,7 +30,8 @@ import java.nio.charset.UnsupportedCharsetException;
 public final class LoadTextUtil {
   static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");
 
-  private LoadTextUtil() {}
+  private LoadTextUtil() {
+  }
 
   private static Pair<CharSequence, String> convertLineSeparators(final CharBuffer buffer) {
     final int LF = 1;
@@ -64,10 +65,16 @@ public final class LoadTextUtil {
     }
 
     String detectedLineSeparator = null;
-    switch( line_separator ) {
-      case CR: detectedLineSeparator = "\r"; break;
-      case LF: detectedLineSeparator = "\n"; break;
-      case CR + LF: detectedLineSeparator = "\r\n"; break;
+    switch (line_separator) {
+      case CR:
+        detectedLineSeparator = "\r";
+        break;
+      case LF:
+        detectedLineSeparator = "\n";
+        break;
+      case CR + LF:
+        detectedLineSeparator = "\r\n";
+        break;
     }
 
     CharSequence result;
@@ -90,7 +97,7 @@ public final class LoadTextUtil {
       }
       catch (IllegalCharsetNameException e) {
       }
-      catch(UnsupportedCharsetException e){
+      catch (UnsupportedCharsetException e) {
       }
       virtualFile.setCharset(charset);
       return;
@@ -112,7 +119,8 @@ public final class LoadTextUtil {
   private static int skipBOM(final VirtualFile virtualFile, byte[] content) {
     if (Patches.SUN_BUG_ID_4508058) {
       //noinspection HardCodedStringLiteral
-      if (virtualFile.getCharset() != null && virtualFile.getCharset().name().contains(CharsetToolkit.UTF8) && CharsetToolkit.hasUTF8Bom(content)) {
+      if (virtualFile.getCharset() != null && virtualFile.getCharset().name().contains(CharsetToolkit.UTF8) &&
+          CharsetToolkit.hasUTF8Bom(content)) {
         virtualFile.setBOM(CharsetToolkit.UTF8_BOM);
         return CharsetToolkit.UTF8_BOM.length;
       }
@@ -131,13 +139,13 @@ public final class LoadTextUtil {
   /**
    * Gets the <code>Writer</code> for this file and sets modification stamp and time stamp to the specified values
    * after closing the Writer.<p>
-   *
+   * <p/>
    * Normally you should not use this method.
    *
    * @param virtualFile
-   * @param requestor any object to control who called this method. Note that
-   * it is considered to be an external change if <code>requestor</code> is <code>null</code>.
-   * See {@link com.intellij.openapi.vfs.VirtualFileEvent#getRequestor}
+   * @param requestor            any object to control who called this method. Note that
+   *                             it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                             See {@link com.intellij.openapi.vfs.VirtualFileEvent#getRequestor}
    * @param text
    * @param newModificationStamp new modification stamp or -1 if no special value should be set
    * @return <code>Writer</code>
@@ -145,7 +153,8 @@ public final class LoadTextUtil {
    * @see VirtualFile#getModificationStamp()
    */
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  public static Writer getWriter(final VirtualFile virtualFile, Object requestor, final String text, final long newModificationStamp) throws IOException{
+  public static Writer getWriter(final VirtualFile virtualFile, Object requestor, final String text, final long newModificationStamp)
+    throws IOException {
     Charset charset = getCharsetForWriting(virtualFile, text);
     OutputStream outputStream = virtualFile.getOutputStream(requestor, newModificationStamp, -1);
     return new BufferedWriter(charset == null ? new OutputStreamWriter(outputStream) : new OutputStreamWriter(outputStream, charset));
@@ -163,7 +172,7 @@ public final class LoadTextUtil {
         }
         catch (IllegalCharsetNameException e) {
         }
-        catch(UnsupportedCharsetException e){
+        catch (UnsupportedCharsetException e) {
         }
       }
     }
@@ -178,7 +187,7 @@ public final class LoadTextUtil {
     assert !file.isDirectory() : file.getPresentableUrl() + "is directory";
     final FileType fileType = file.getFileType();
 
-    if (fileType.equals(StdFileTypes.CLASS)){
+    if (fileType.equals(StdFileTypes.CLASS)) {
       return decompile(file);
     }
     assert !fileType.isBinary() : file.getPresentableUrl() + "is binary";
@@ -193,34 +202,27 @@ public final class LoadTextUtil {
   }
 
   private static CharSequence decompile(VirtualFile file) {
-    //try {
-      final ProjectEx dummyProject = ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).getDummyProject();
-      PsiManager manager = PsiManager.getInstance(dummyProject);
-      final String text = ClsFileImpl.decompile(manager, file);
+    final Project project;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      project = ((ProjectManagerEx)ProjectManager.getInstance()).getCurrentTestProject();
+      assert project != null;
+    }
+    else {
+      final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+      if (projects.length == 0) return "";
+      project = projects[0];
+    }
 
-      PsiFile mirror = manager.getElementFactory().createFileFromText("test.java", text);
-
-      //CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(dummyProject); // do not use project's code style!
-      //CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(dummyProject);
-      //boolean saved = settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
-      //settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-      //codeStyleManager.shortenClassReferences(mirror);
-      //codeStyleManager.reformat(mirror);
-      //settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = saved;
-
-      return mirror.getViewProvider().getContents();
-    //}
-    //catch(IncorrectOperationException e){
-    //  LOG.error(e);
-    //  return null;
-    //}
+    return ClsFileImpl.decompile(PsiManager.getInstance(project), file);
   }
 
   public static CharSequence getTextByBinaryPresentation(final byte[] bytes, final VirtualFile virtualFile) {
     return getTextByBinaryPresentation(bytes, virtualFile, true);
   }
 
-  public static CharSequence getTextByBinaryPresentation(final byte[] bytes, final VirtualFile virtualFile, final boolean rememberDetectedSeparators) {
+  public static CharSequence getTextByBinaryPresentation(final byte[] bytes,
+                                                         final VirtualFile virtualFile,
+                                                         final boolean rememberDetectedSeparators) {
     detectCharset(virtualFile, bytes);
     int offset = skipBOM(virtualFile, bytes);
     ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, offset, bytes.length - offset);

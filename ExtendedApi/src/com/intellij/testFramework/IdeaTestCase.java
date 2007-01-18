@@ -145,6 +145,7 @@ import java.util.HashSet;
     myFilesToDelete.add(projectFile);
 
     myProject = myProjectManager.newProject(projectFile.getPath(), false, false);
+    ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
 
     setUpModule();
 
@@ -239,6 +240,7 @@ import java.util.HashSet;
 
       try {
         Disposer.dispose(myProject);
+        ProjectManagerEx.getInstanceEx().setCurrentTestProject(null);
 
         UndoManager.getGlobalInstance().dropHistory();
 

@@ -1,7 +1,6 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
-import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -24,11 +23,9 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -64,10 +61,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private Set<Document> myUnsavedDocuments = new HashSet<Document>();
   private EditReadOnlyListener myReadOnlyListener = new MyEditReadOnlyListener();
 
-  private ProjectEx myDummyProject = null;
-  private boolean myDummyProjectInitialized = false;
-  private final Object myDummyProjectInitializationLock = new Object();
-
   private EventDispatcher<FileDocumentSynchronizationVetoListener> myVetoDispatcher = EventDispatcher.create(FileDocumentSynchronizationVetoListener.class);
 
   private final PsiManagerConfiguration myPsiManagerConfiguration;
@@ -98,9 +91,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   public void disposeComponent() {
-    if (myDummyProject != null) {
-      Disposer.dispose(myDummyProject);
-    }
   }
 
   public Document getDocument(VirtualFile file) {
@@ -443,15 +433,17 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")){
       public void actionPerformed(ActionEvent e) {
         String windowtitle = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
-        SimpleDiffRequest request = new SimpleDiffRequest(getDummyProject(), windowtitle);
+        final ProjectEx project = (ProjectEx)VfsUtil.guessProjectForFile(file);
+
+        SimpleDiffRequest request = new SimpleDiffRequest(project, windowtitle);
         FileType fileType = file.getFileType();
         String fsContent = LoadTextUtil.loadText(file).toString();
         request.setContents(new SimpleContent(fsContent, fileType),
-                            new DocumentContent(myDummyProject, document, fileType));
+                            new DocumentContent(project, document, fileType));
         request.setContentTitles(UIBundle.message("file.cache.conflict.diff.content.file.system.content"),
                                  UIBundle.message("file.cache.conflict.diff.content.memory.content"));
-        DialogBuilder diffBuidler = new DialogBuilder(getDummyProject());
-        DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManager.getInstance().createDiffPanel(diffBuidler.getWindow(), getDummyProject());
+        DialogBuilder diffBuidler = new DialogBuilder(project);
+        DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManager.getInstance().createDiffPanel(diffBuidler.getWindow(), project);
         diffPanel.getOptions().setShowSourcePolicy(DiffPanelOptions.ShowSourcePolicy.DONT_SHOW);
         diffBuidler.setCenterPanel(diffPanel.getComponent());
         diffPanel.setDiffRequest(request);
@@ -502,20 +494,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   public void beforeFileMovement(VirtualFileMoveEvent event) {
-  }
-
-  public ProjectEx getDummyProject() {
-    synchronized (myDummyProjectInitializationLock) {
-      if (!myDummyProjectInitialized) {
-        myDummyProjectInitialized = true;
-
-        if (myPsiManagerConfiguration.CREATE_DUMMY_PROJECT_FOR_OBFUSCATION) {
-          myDummyProject = (ProjectEx)myProjectManagerEx.newProject("", false, true);
-          ((StartupManagerImpl)StartupManager.getInstance(myDummyProject)).runStartupActivities();
-        }
-      }
-    }
-    return myDummyProject;
   }
 
   private final class MyEditReadOnlyListener implements EditReadOnlyListener {

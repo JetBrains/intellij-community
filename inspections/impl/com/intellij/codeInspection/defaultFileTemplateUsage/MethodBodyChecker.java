@@ -7,9 +7,8 @@ import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -30,28 +29,24 @@ public class MethodBodyChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defaultFileTemplateUsage.MethodBodyChecker");
 
   // return type canonical name + superMethodName + file template name -> method template
-  private static final Map<String, PsiMethod> TEMPLATE_METHOD_BODIES = new THashMap<String, PsiMethod>();
-  private static Project DEFAULT_PROJECT;
   private static PsiClassType OBJECT_TYPE;
 
   private static PsiMethod getTemplateMethod(PsiType returnType, List<HierarchicalMethodSignature> superSignatures, final PsiClass aClass) {
-    if (DEFAULT_PROJECT == null) {
-      //DEFAULT_PROJECT = ProjectManager.getInstance().getDefaultProject();
-      DEFAULT_PROJECT = ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).getDummyProject();
-      OBJECT_TYPE = PsiType.getJavaLangObject(PsiManager.getInstance(DEFAULT_PROJECT), GlobalSearchScope.allScope(DEFAULT_PROJECT));
-    }
+    Project project = aClass.getProject();
+
     if (!(returnType instanceof PsiPrimitiveType)) {
-      returnType = OBJECT_TYPE;
+      returnType = PsiType.getJavaLangObject(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
     }
     try {
       final String fileTemplateName = getMethodFileTemplate(superSignatures, true).getName();
       String methodName = superSignatures.isEmpty() ? "" : superSignatures.get(0).getName();
       String key = returnType.getCanonicalText() + "+" + methodName + "+"+fileTemplateName;
-      PsiMethod method = TEMPLATE_METHOD_BODIES.get(key);
+      final Map<String, PsiMethod> cache = getTemplatesCache(project);
+      PsiMethod method = cache.get(key);
       if (method == null) {
-        method = PsiManager.getInstance(DEFAULT_PROJECT).getElementFactory().createMethod("x", returnType);
+        method = PsiManager.getInstance(project).getElementFactory().createMethod("x", returnType);
         setupMethodBody(superSignatures, method, aClass, true);
-        TEMPLATE_METHOD_BODIES.put(key, method);
+        cache.put(key, method);
       }
       return method;
     }
@@ -59,6 +54,17 @@ public class MethodBodyChecker {
       LOG.error(e);
       return null;
     }
+  }
+
+  private static final Key<Map<String, PsiMethod>> CACHE_IN_PROJECT_KEY = new Key<Map<String, PsiMethod>>("MethodBodyChecker templates cache");
+
+  private static Map<String, PsiMethod> getTemplatesCache(Project project) {
+    Map<String, PsiMethod> cache = project.getUserData(CACHE_IN_PROJECT_KEY);
+    if (cache == null) {
+      cache = new THashMap<String, PsiMethod>();
+      project.putUserData(CACHE_IN_PROJECT_KEY, cache);
+    }
+    return cache;
   }
 
   static void checkMethodBody(final PsiMethod method,

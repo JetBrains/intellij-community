@@ -238,7 +238,10 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
 
     final ConfigurationFile[] configurationFiles = getConfigurationFiles();
     for (ConfigurationFile configurationFile : configurationFiles) {
-      result.add(configurationFile.getVirtualFile());
+      final VirtualFile vFile = configurationFile.getVirtualFile();
+      if (vFile != null) {
+        result.add(vFile);
+      }
     }
 
     return result;

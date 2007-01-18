@@ -6,6 +6,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -33,4 +34,8 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   public abstract void blockReloadingProjectOnExternalChanges();
   public abstract void unblockReloadingProjectOnExternalChanges();
+
+  @Nullable
+  public abstract Project getCurrentTestProject();
+  public abstract void setCurrentTestProject(@Nullable Project project);
 }

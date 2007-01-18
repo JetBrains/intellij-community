@@ -254,6 +254,7 @@ import java.util.Map;
     if (ourProject == null || isJDKChanged(projectJDK)) {
       initProject(projectJDK);
     }
+    ProjectManagerEx.getInstanceEx().setCurrentTestProject(ourProject);
 
     for (LocalInspectionTool tool : localInspectionTools) {
       _enableInspectionTool(tool, availableToolsMap, availableLocalTools);
@@ -376,6 +377,8 @@ import java.util.Map;
     }
 
     UndoManager.getGlobalInstance().dropHistory();
+
+    ProjectManagerEx.getInstanceEx().setCurrentTestProject(null);
     ourApplication.setDataProvider(null);
     ourTestCase = null;
     ((PsiManagerImpl)ourPsiManager).cleanupForNextTest();
