@@ -181,10 +181,10 @@ public class PatchBuilder {
 
   private static String getRevisionName(final ContentRevision revision, final File ioFile) {
     String revisionName = revision.getRevisionNumber().asString();
-    if (revisionName.length() == 0) {
-      revisionName = new Date(ioFile.lastModified()).toString();
+    if (revisionName.length() > 0) {
+      return "(revision " + revisionName + ")";
     }
-    return revisionName;
+    return new Date(ioFile.lastModified()).toString();
   }
 
   private static FilePatch buildPatchHeading(final String basePath, final ContentRevision beforeRevision, final ContentRevision afterRevision) {

@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -229,6 +230,11 @@ public abstract class AbstractVcs {
   }
 
   public ContentRevision createUpToDateRevision(final VirtualFile file) {
+    return null;
+  }
+
+  @Nullable
+  public VcsRevisionNumber parseRevisionNumber(String revisionNumberString) {
     return null;
   }
 }

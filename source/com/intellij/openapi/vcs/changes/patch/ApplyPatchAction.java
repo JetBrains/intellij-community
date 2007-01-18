@@ -37,7 +37,6 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -139,8 +138,8 @@ public class ApplyPatchAction extends AnAction {
     }
     catch(ApplyPatchException ex) {
       if (!patch.isNewFile() && !patch.isDeletedFile()) {
-        PatchBaseVersionProvider provider = findBaseVersionProvider(project, patch, file);
-        if (provider != null) {
+        final DefaultPatchBaseVersionProvider provider = new DefaultPatchBaseVersionProvider(project);
+        if (provider.canProvideContent(file, patch.getBeforeVersionId())) {
           final StringBuilder newText = new StringBuilder();
           final Ref<CharSequence> contentRef = new Ref<CharSequence>();
           final Ref<ApplyPatchStatus> statusRef = new Ref<ApplyPatchStatus>();
@@ -193,21 +192,6 @@ public class ApplyPatchAction extends AnAction {
       return ApplyPatchStatus.SUCCESS;
     }
     return ApplyPatchStatus.FAILURE;
-  }
-
-  @Nullable
-  private static PatchBaseVersionProvider findBaseVersionProvider(final Project project, final FilePatch patch, final VirtualFile file) {
-    final PatchBaseVersionProvider[] baseVersionProviders = project.getComponents(PatchBaseVersionProvider.class);
-    for(PatchBaseVersionProvider provider: baseVersionProviders) {
-      if (provider.canProvideContent(file, patch.getBeforeVersionId())) {
-        return provider;
-      }
-    }
-    final DefaultPatchBaseVersionProvider defaultProvider = new DefaultPatchBaseVersionProvider(project);
-    if (defaultProvider.canProvideContent(file, patch.getBeforeVersionId())) {
-      return defaultProvider;
-    }
-    return null;
   }
 
   @Override
