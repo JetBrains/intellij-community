@@ -146,16 +146,22 @@ public class FilePatch {
       if (!beforeNameComponents [beforeNameComponents.length-1].equals(afterNameComponents [afterNameComponents.length-1])) {
         file.rename(this, afterNameComponents [afterNameComponents.length-1]);
       }
-      for(int i=skipTopDirs; i<afterNameComponents.length-1; i++) {
-        if (!beforeNameComponents [i].equals(afterNameComponents [i])) {
-          VirtualFile moveTarget = findFileToPatchByComponents(patchedDir, skipTopDirs, afterNameComponents, afterNameComponents.length-1,
-                                                               createDirectories);
-          if (moveTarget == null) {
-            return null;
+      boolean pathChanged = (beforeNameComponents.length != afterNameComponents.length);
+      if (!pathChanged) {
+        for(int i=skipTopDirs; i<afterNameComponents.length-1; i++) {
+          if (!beforeNameComponents [i].equals(afterNameComponents [i])) {
+            pathChanged = true;
+            break;
           }
-          file.move(this, moveTarget);
-          break;
         }
+      }
+      if (pathChanged) {
+        VirtualFile moveTarget = findFileToPatchByComponents(patchedDir, skipTopDirs, afterNameComponents, afterNameComponents.length-1,
+                                                             createDirectories);
+        if (moveTarget == null) {
+          return null;
+        }
+        file.move(this, moveTarget);
       }
     }
     return file;
