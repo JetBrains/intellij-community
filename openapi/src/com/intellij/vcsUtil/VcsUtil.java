@@ -15,6 +15,8 @@
  */
 package com.intellij.vcsUtil;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -54,6 +56,8 @@ import java.util.*;
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class VcsUtil
 {
+  protected static final VirtualFile[] EMPTY_VF_ARRAY = new VirtualFile[]{};
+
   public static void markFileAsUpToDate(VirtualFile file, Project project) {
     markAsUpToDate(project, file.isDirectory(), file.getPath());
     FileStatusManager.getInstance(project).fileStatusChanged(file);
@@ -377,6 +381,29 @@ public class VcsUtil
       }
     });
     return files;
+  }
+
+  /**
+   * @param e ActionEvent object
+   * @return <code>VirtualFile</code> available in the current context.
+   *         Returns not <code>null</code> if and only if exectly one file is available.
+   */
+  @Nullable
+  public static VirtualFile getOneVirtualFile( AnActionEvent e )
+  {
+    VirtualFile[] files = getVirtualFiles( e );
+    return (files.length != 1) ? null : files[ 0 ];
+  }
+
+  /**
+   * @param e ActionEvent object
+   * @return <code>VirtualFile</code>s available in the current context.
+   *         Returns empty array if there are no available files.
+   */
+  public static VirtualFile[] getVirtualFiles( AnActionEvent e )
+  {
+    VirtualFile[] files = e.getData( DataKeys.VIRTUAL_FILE_ARRAY );
+    return (files == null) ? EMPTY_VF_ARRAY : files;
   }
 
   /**
