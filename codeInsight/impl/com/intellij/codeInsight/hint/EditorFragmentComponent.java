@@ -16,15 +16,14 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.ui.LightweightHint;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.Map;
 import java.util.HashMap;
-
-import org.jetbrains.annotations.NotNull;
+import java.util.Map;
 
 public class EditorFragmentComponent extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.EditorFragmentComponent");
@@ -32,7 +31,7 @@ public class EditorFragmentComponent extends JPanel {
   private EditorFragmentComponent(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
     Document doc = editor.getDocument();
     final int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(endLine) : doc.getTextLength();
-    int textWidth = editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset);
+    int textWidth = Math.min(editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset), editor.getComponent().getWidth());
 
     FoldingModelEx foldingModel = (FoldingModelEx) editor.getFoldingModel();
     boolean isFoldingEnabled = foldingModel.isFoldingEnabled();
