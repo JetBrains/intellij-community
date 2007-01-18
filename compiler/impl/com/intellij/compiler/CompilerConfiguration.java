@@ -20,11 +20,12 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.LogicalRoot;
+import com.intellij.util.LogicalRootsManager;
 import com.intellij.util.Options;
 import org.apache.oro.text.regex.*;
 import org.jdom.Element;
@@ -69,9 +70,9 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
     myExcludedEntriesConfiguration = new ExcludedEntriesConfiguration(new Factory<FileChooserDescriptor>() {
       public FileChooserDescriptor create() {
         final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true);
-        final VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentSourceRoots();
-        for (VirtualFile contentSourceRoot : roots) {
-          descriptor.addRoot(contentSourceRoot);
+
+        for (LogicalRoot contentSourceRoot : LogicalRootsManager.getLogicalRootsManager(myProject).getLogicalRoots()) {
+          descriptor.addRoot(contentSourceRoot.getVirtualFile());
         }
         return descriptor;
       }

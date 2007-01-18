@@ -129,6 +129,14 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
     return result;
   }
 
+  public List<LogicalRoot> getLogicalRoots() {
+    return ContainerUtil.concat(myModuleManager.getModules(), new Function<Module, Collection<? extends LogicalRoot>>() {
+      public Collection<? extends LogicalRoot> fun(final Module module) {
+        return getLogicalRoots(module);
+      }
+    });
+  }
+
   public List<LogicalRoot> getLogicalRoots(@NotNull final Module module) {
     return new ArrayList<LogicalRoot>(myRoots.get(module).values());
   }
