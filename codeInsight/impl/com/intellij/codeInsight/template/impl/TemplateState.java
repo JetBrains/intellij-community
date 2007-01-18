@@ -24,7 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.jsp.JspUtil;
+import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -256,7 +256,7 @@ public class TemplateState implements Disposable {
     if (file.getLanguage().equals(StdLanguages.JSPX)) {
       if (XmlUtil.toCode(textToInsert)) {
         try {
-          caretOffset += JspUtil.escapeCharsInJspContext((JspFile)file, caretOffset, myTemplate.getTemplateText());
+          caretOffset += JspSpiUtil.escapeCharsInJspContext((JspFile)file, caretOffset, myTemplate.getTemplateText());
           PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
           myEditor.getCaretModel().moveToOffset(caretOffset);
         }

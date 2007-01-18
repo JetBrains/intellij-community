@@ -98,13 +98,13 @@ public class XmlBlock extends AbstractXmlBlock {
     if (myNode.getElementType() == ElementType.XML_PROLOG) {
       return Indent.getNoneIndent();
     }
-    if (myNode.getElementType() == ElementType.JSP_SCRIPTLET) {
+    if (myNode.getElementType() == JspElementType.JSP_SCRIPTLET) {
       return Indent.getNoneIndent();
     }
-    if (myNode.getElementType() == ElementType.JSP_DECLARATION) {
+    if (myNode.getElementType() == JspElementType.JSP_DECLARATION) {
       return Indent.getNoneIndent();
     }
-    if (myNode.getElementType() == ElementType.JSP_EXPRESSION) {
+    if (myNode.getElementType() == JspElementType.JSP_EXPRESSION) {
       return Indent.getNoneIndent();
     }
 
@@ -129,12 +129,12 @@ public class XmlBlock extends AbstractXmlBlock {
       return Spacing.getReadOnlySpacing();
     }
 
-    if (type1 == ElementType.JSP_DECLARATION_START || type1 == ElementType.JSP_SCRIPTLET_START) {
+    if (type1 == JspElementType.JSP_DECLARATION_START || type1 == JspElementType.JSP_SCRIPTLET_START) {
       return Spacing.createDependentLFSpacing(0, 1, node2.getTextRange(), myXmlFormattingPolicy.getShouldKeepLineBreaks(),
                                               myXmlFormattingPolicy.getKeepBlankLines());
     }
 
-    if (type2 == ElementType.JSP_DECLARATION_END || type2 == ElementType.JSP_SCRIPTLET_END) {
+    if (type2 == JspElementType.JSP_DECLARATION_END || type2 == JspElementType.JSP_SCRIPTLET_END) {
       return Spacing.createDependentLFSpacing(0, 1, node1.getTextRange(), myXmlFormattingPolicy.getShouldKeepLineBreaks(),
                                               myXmlFormattingPolicy.getKeepBlankLines());
 
@@ -240,7 +240,7 @@ public class XmlBlock extends AbstractXmlBlock {
   @Override
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    if (myNode.getElementType() == ElementType.JSP_DECLARATION || myNode.getElementType() == JspElementType.JSP_SCRIPTLET) {
+    if (myNode.getElementType() == JspElementType.JSP_DECLARATION || myNode.getElementType() == JspElementType.JSP_SCRIPTLET) {
       final List<Block> subBlocks = getSubBlocks();
       if (subBlocks.size() == 3 && subBlocks.get(1) instanceof JspTextBlock) {
         final JspTextBlock jspTextBlock = ((JspTextBlock)subBlocks.get(1));

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -39,6 +40,7 @@ import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Compiler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +54,7 @@ public class CompletionUtil {
     Key.create("qualifierType"); // SmartPsiElementPointer to PsiType of "qualifier"
   private static final CompletionData ourJavaCompletionData = new JavaCompletionData();
   private static final CompletionData ourJava15CompletionData = new Java15CompletionData();
-  private static final CompletionData ourJSPCompletionData = new JSPCompletionData();
+  @Nullable private static final CompletionData ourJSPCompletionData = JspSpiUtil.createJspCompletionData();
   private static final CompletionData ourXmlCompletionData = new XmlCompletionData();
   private static final CompletionData ourGenericCompletionData = new CompletionData() {
     {
@@ -63,10 +65,6 @@ public class CompletionUtil {
   };
   private static final CompletionData ourWordCompletionData = new WordCompletionData();
   private static final CompletionData ourJavaDocCompletionData = new JavaDocCompletionData();
-
-  static {
-    registerCompletionData(StdFileTypes.JSPX, new JspxCompletionData());
-  }
 
   private static HashMap<FileType, CompletionData> completionDatas;
   public static final Key<CompletionData> ENFORCE_COMPLETION_DATA_KEY = new Key<CompletionData>("Enforce completionData");

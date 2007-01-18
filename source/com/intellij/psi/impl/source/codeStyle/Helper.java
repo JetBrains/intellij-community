@@ -7,12 +7,12 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.jsp.JspTokenTypeEx;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.CharTable;
@@ -215,7 +215,7 @@ public class Helper {
           ASTNode next = element.findLeafElementAt(offset1);
           if ((next.getElementType() == ElementType.END_OF_LINE_COMMENT 
                || next.getElementType() == ElementType.C_STYLE_COMMENT
-               || next.getElementType() == ElementType.JSP_COMMENT
+               || next.getElementType() == JspElementType.JSP_COMMENT
           ) &&
               next != element) {
             if (mySettings.KEEP_FIRST_COLUMN_COMMENT) {
@@ -278,10 +278,9 @@ public class Helper {
   public static boolean mayShiftIndentInside(final ASTNode leaf) {
     return (isComment(leaf) && !checkJspTexts(leaf))
            || leaf.getElementType() == ElementType.WHITE_SPACE
-           || leaf.getElementType() == JspTokenTypeEx.JSP_TEMPLATE_DATA
            || leaf.getElementType() == ElementType.XML_DATA_CHARACTERS
-           || leaf.getElementType() == ElementType.JAVA_CODE
-           || leaf.getElementType() == ElementType.JSP_SCRIPTLET
+           || leaf.getElementType() == JspElementType.JAVA_CODE
+           || leaf.getElementType() == JspElementType.JSP_SCRIPTLET
            || leaf.getElementType() == ElementType.XML_ATTRIBUTE_VALUE_TOKEN;
   }
 

@@ -16,21 +16,21 @@
 package com.intellij.openapi.fileTypes;
 
 public class StdFileTypes {
-  public static LanguageFileType JAVA;
-  public static FileType CLASS;
-  public static LanguageFileType JSP;
-  public static LanguageFileType JSPX;
-  public static LanguageFileType XML;
-  public static LanguageFileType DTD;
-  public static LanguageFileType HTML;
-  public static LanguageFileType XHTML;
-  public static LanguageFileType PROPERTIES;
-  public static FileType PLAIN_TEXT;
-  public static FileType ARCHIVE;
-  public static FileType UNKNOWN;
-  public static FileType GUI_DESIGNER_FORM;
-  public static FileType IDEA_WORKSPACE;
-  public static FileType IDEA_PROJECT;
-  public static FileType IDEA_MODULE;
-  public static FileType PATCH;
+  public static final LanguageFileType JAVA = FileTypeFactory.getFileTypeFactory().createLanguageFileType("JAVA");
+  public static final FileType CLASS = FileTypeFactory.getFileTypeFactory().createFileType("CLASS");
+  public static final LanguageFileType JSP = FileTypeFactory.getFileTypeFactory().createLanguageFileType("JSP");
+  public static final LanguageFileType JSPX = FileTypeFactory.getFileTypeFactory().createLanguageFileType("JSPX");
+  public static final LanguageFileType XML = FileTypeFactory.getFileTypeFactory().createLanguageFileType("XML");
+  public static final LanguageFileType DTD = FileTypeFactory.getFileTypeFactory().createLanguageFileType("DTD");
+  public static final LanguageFileType HTML = FileTypeFactory.getFileTypeFactory().createLanguageFileType("HTML");
+  public static final LanguageFileType XHTML = FileTypeFactory.getFileTypeFactory().createLanguageFileType("XHTML");
+  public static final LanguageFileType PROPERTIES = FileTypeFactory.getFileTypeFactory().createLanguageFileType("PROPERTIES");
+  public static final FileType PLAIN_TEXT = FileTypeFactory.getFileTypeFactory().createFileType("PLAIN_TEXT");
+  public static final FileType ARCHIVE = FileTypeFactory.getFileTypeFactory().createFileType("ARCHIVE");
+  public static final FileType UNKNOWN = FileTypeFactory.getFileTypeFactory().createFileType("UNKNOWN");
+  public static final FileType GUI_DESIGNER_FORM = FileTypeFactory.getFileTypeFactory().createFileType("GUI_DESIGNER_FORM");
+  public static final FileType IDEA_WORKSPACE = FileTypeFactory.getFileTypeFactory().createFileType("IDEA_WORKSPACE");
+  public static final FileType IDEA_PROJECT = FileTypeFactory.getFileTypeFactory().createFileType("IDEA_PROJECT");
+  public static final FileType IDEA_MODULE = FileTypeFactory.getFileTypeFactory().createFileType("IDEA_MODULE");
+  public static final FileType PATCH = FileTypeFactory.getFileTypeFactory().createFileType("PATCH");
 }

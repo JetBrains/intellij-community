@@ -6,8 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.jsp.AbstractJspJavaLexer;
 import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.parsing.jsp.JspJavaLexer;
-import com.intellij.psi.impl.source.parsing.jsp.JspxJavaLexer;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;

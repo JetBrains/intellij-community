@@ -5,8 +5,8 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.jsp.JspFileImpl;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -43,7 +43,7 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
     else{
       toParseTreeText(myFile);
     }
-    if(myFile instanceof JspFileImpl) ((MultiplePsiFilesPerDocumentFileViewProvider)((JspFileImpl)myFile).getViewProvider()).checkAllTreesEqual();
+    if(myFile instanceof JspFile) ((MultiplePsiFilesPerDocumentFileViewProvider)((JspFile)myFile).getViewProvider()).checkAllTreesEqual();
   }
 
   protected void checkResult(@NonNls String targetDataName, final PsiFile file) throws Exception {

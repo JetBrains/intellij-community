@@ -9,7 +9,8 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.lang.jsp.JspEditorHighlighter;
+import com.intellij.psi.jsp.JspSpiUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class HighlighterFactory {
   public static LexerEditorHighlighter createJavaHighlighter(EditorColorsScheme settings, LanguageLevel languageLevel){
@@ -29,8 +30,9 @@ public class HighlighterFactory {
     return createHighlighter(new XmlFileHighlighter(), settings);
   }
 
+  @Nullable
   public static LexerEditorHighlighter createJSPHighlighter(EditorColorsScheme settings, Project project, VirtualFile virtualFile) {
-    return new JspEditorHighlighter(settings, project, virtualFile);
+    return JspSpiUtil.createJSPHighlighter(settings, project, virtualFile);
   }
 
   public static LexerEditorHighlighter createCustomHighlighter(SyntaxTable syntaxTable, EditorColorsScheme settings){
@@ -56,7 +58,10 @@ public class HighlighterFactory {
 
   public static LexerEditorHighlighter createHighlighter(FileType fileType, EditorColorsScheme settings, Project project) {
     if (fileType == StdFileTypes.JSP) {
-      return createJSPHighlighter(settings, project, null);
+      final LexerEditorHighlighter highlighter = createJSPHighlighter(settings, project, null);
+      if (highlighter != null) {
+        return highlighter;
+      }
     }
 
     SyntaxHighlighter highlighter = fileType.getHighlighter(project, null);
@@ -66,7 +71,10 @@ public class HighlighterFactory {
   public static LexerEditorHighlighter createHighlighter(VirtualFile vFile, EditorColorsScheme settings, Project project) {
     final FileType fileType = vFile.getFileType();
     if (fileType == StdFileTypes.JSP) {
-      return createJSPHighlighter(settings, project, vFile);
+      final LexerEditorHighlighter highlighter = createJSPHighlighter(settings, project, vFile);
+      if (highlighter != null) {
+        return highlighter;
+      }
     }
 
     SyntaxHighlighter highlighter = fileType.getHighlighter(project, vFile);

@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="jsp-openapi" exported="" />
     <orderEntry type="module" module-name="openapi" exported="" />
     <orderEntry type="library" name="Servlets" level="project" />
+    <orderEntry type="module" module-name="idea" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

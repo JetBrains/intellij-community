@@ -4,7 +4,13 @@
 package com.intellij.psi.jsp;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
@@ -12,6 +18,7 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.lexer.Lexer;
+import com.intellij.codeInsight.completion.CompletionData;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -102,4 +109,24 @@ public abstract class JspSpiUtil {
 
   protected abstract Lexer _createElLexer();
 
+  @Nullable
+  public static LexerEditorHighlighter createJSPHighlighter(EditorColorsScheme settings, Project project, VirtualFile virtualFile) {
+    final JspSpiUtil util = getJspSpiUtil();
+    return util == null ? null : util._createJSPHighlighter(settings, project, virtualFile);
+  }
+
+  protected abstract LexerEditorHighlighter _createJSPHighlighter(EditorColorsScheme settings, Project project, VirtualFile virtualFile);
+
+  @Nullable
+  public static CompletionData createJspCompletionData() {
+    final JspSpiUtil util = getJspSpiUtil();
+    return util != null ? util._createJspCompletionData() : null;
+  }
+
+  protected abstract CompletionData _createJspCompletionData();
+
+  public static boolean isJavaContext(PsiElement position) {
+    if(PsiTreeUtil.getContextOfType(position, JspClass.class, false) != null) return true;
+    return false;
+  }
 }

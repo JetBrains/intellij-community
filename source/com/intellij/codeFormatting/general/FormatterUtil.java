@@ -37,6 +37,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.Helper;
@@ -425,7 +426,7 @@ public class FormatterUtil {
       //EnterActionTest && JavaDocParamTest
     }
 
-    if ((node.getElementType() == ElementType.JSP_XML_TEXT || node.getElementType() == XmlTokenType.XML_DATA_CHARACTERS) && node.getText().trim().length() == 0) {
+    if ((node.getElementType() == JspElementType.JSP_XML_TEXT || node.getElementType() == XmlTokenType.XML_DATA_CHARACTERS) && node.getText().trim().length() == 0) {
       return true;
     }
 

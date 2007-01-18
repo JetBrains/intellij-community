@@ -6,6 +6,7 @@ import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.jsp.JspElementType;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
@@ -155,9 +156,9 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
   private boolean isTextFragment(final ASTNode node) {
     return node.getTreeParent().getElementType() == ElementType.XML_TEXT
            || node.getElementType() == ElementType.XML_DATA_CHARACTERS
-           || node.getElementType() == ElementType.JSP_SCRIPTLET
-           || node.getElementType() == ElementType.JSP_DECLARATION
-           || node.getElementType() == ElementType.JSP_EXPRESSION
+           || node.getElementType() == JspElementType.JSP_SCRIPTLET
+           || node.getElementType() == JspElementType.JSP_DECLARATION
+           || node.getElementType() == JspElementType.JSP_EXPRESSION
       ;
   }
 

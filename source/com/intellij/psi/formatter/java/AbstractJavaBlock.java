@@ -6,6 +6,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -135,8 +136,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   @Nullable
   private static Indent getChildIndent(final ASTNode parent) {
     if (parent.getElementType() == ElementType.MODIFIER_LIST) return Indent.getNoneIndent();
-    if (parent.getElementType() == ElementType.JSP_CODE_BLOCK) return Indent.getNormalIndent();
-    if (parent.getElementType() == ElementType.JSP_CLASS_LEVEL_DECLARATION_STATEMENT) return Indent.getNormalIndent();
+    if (parent.getElementType() == JspElementType.JSP_CODE_BLOCK) return Indent.getNormalIndent();
+    if (parent.getElementType() == JspElementType.JSP_CLASS_LEVEL_DECLARATION_STATEMENT) return Indent.getNormalIndent();
     if (parent.getElementType() == ElementType.DUMMY_HOLDER) return Indent.getNoneIndent();
     if (parent.getElementType() == ElementType.CLASS) return Indent.getNoneIndent();
     if (parent.getElementType() == ElementType.IF_STATEMENT) return Indent.getNoneIndent();

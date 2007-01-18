@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -247,7 +248,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
                                   final Wrap wrap,
                                   final Alignment alignment) {
     if (myXmlFormattingPolicy.processJsp() &&
-        (child.getElementType() == ElementType.JSP_XML_TEXT
+        (child.getElementType() == JspElementType.JSP_XML_TEXT
          || child.getPsi() instanceof OuterLanguageElement)) {
       final Pair<PsiElement, Language> root = JspTextBlock.findPsiRootAt(child, myXmlFormattingPolicy.processJavaTree());
       if (root != null) {
@@ -347,7 +348,7 @@ private boolean canBeAnotherTreeTagStart(final ASTNode child) {
     return myXmlFormattingPolicy.processJsp()
            && PsiUtil.getJspFile(myNode.getPsi()) != null
            && (isXmlTag(myNode) || myNode.getElementType() == ElementType.HTML_DOCUMENT || myNode.getPsi() instanceof PsiFile) &&
-           (child.getElementType() == ElementType.XML_DATA_CHARACTERS || child.getElementType() == ElementType.JSP_XML_TEXT ||
+           (child.getElementType() == ElementType.XML_DATA_CHARACTERS || child.getElementType() == JspElementType.JSP_XML_TEXT ||
             child.getPsi() instanceof OuterLanguageElement);
 
   }

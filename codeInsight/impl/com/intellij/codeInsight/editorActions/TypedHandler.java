@@ -2,7 +2,6 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.JspxCompletionData;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
@@ -32,6 +31,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.jsp.el.ELTokenType;
 import com.intellij.psi.tree.IElementType;
@@ -595,7 +595,7 @@ public class TypedHandler implements TypedActionHandler {
     final PsiElement elementAt = file.findElementAt(offset-1);
 
     // TODO: handle it with insertAfterLParen(...)
-    if (!JspxCompletionData.isJavaContext(elementAt) &&
+    if (!JspSpiUtil.isJavaContext(elementAt) &&
         ( elementAt.getText().equals("${") ||
           elementAt.getText().equals("#{")
         )

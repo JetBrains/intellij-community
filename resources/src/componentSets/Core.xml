@@ -40,6 +40,10 @@
       <implementation-class>com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl</implementation-class>
     </component>
     <component>
+      <interface-class>com.intellij.openapi.fileTypes.FileTypeFactory</interface-class>
+      <implementation-class>com.intellij.openapi.fileTypes.impl.FileTypeFactoryImpl</implementation-class>
+    </component>
+    <component>
       <interface-class>com.intellij.openapi.module.ModuleTypeManager</interface-class>
       <implementation-class>com.intellij.openapi.module.impl.ModuleTypeManagerImpl</implementation-class>
     </component>

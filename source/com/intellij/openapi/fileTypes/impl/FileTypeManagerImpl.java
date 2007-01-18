@@ -1,11 +1,8 @@
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.AppTopics;
-import com.intellij.ide.highlighter.*;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
-import com.intellij.lang.Language;
-import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,9 +14,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.jsp.el.ELLanguage;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.messages.MessageBus;
@@ -37,6 +32,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -103,10 +99,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   // Constructor
   // -------------------------------------------------------------------------
 
-  public FileTypeManagerImpl(MessageBus bus) {
-    registerStandardFileTypes();
-    boolean standardFileTypeRead = loadAllFileTypes();
-    if (standardFileTypeRead) {
+  public FileTypeManagerImpl(MessageBus bus, FileTypeFactoryImpl fileTypeFactory) {
+    registerStandardFileTypes(fileTypeFactory);
+    if (loadAllFileTypes()) {
       restoreStandardFileExtensions();
     }
     myMessageBus = bus;
@@ -531,29 +526,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
-  private void registerStandardFileTypes() {
-    // Do not remove. This loads StdLanguage.
-    //noinspection UnusedDeclaration
-    Language elLanguage = ELLanguage.INSTANCE;
-
-    if (StdFileTypes.ARCHIVE != null) return;
-    registerFileTypeWithoutNotification(StdFileTypes.ARCHIVE = new ArchiveFileType(), parse("zip;jar;war;ear"));
-    registerFileTypeWithoutNotification(StdFileTypes.CLASS = new JavaClassFileType(), parse("class"));
-    registerFileTypeWithoutNotification(StdFileTypes.HTML = new HtmlFileType(), parse("html;htm;sht;shtm;shtml"));
-    registerFileTypeWithoutNotification(StdFileTypes.XHTML = new XHtmlFileType(), parse("xhtml"));
-    registerFileTypeWithoutNotification(StdFileTypes.JAVA = new JavaFileType(), parse("java"));
-    registerFileTypeWithoutNotification(StdFileTypes.JSP = new NewJspFileType(), parse("xjsp;jsp;jsf;jspf;tag;tagf"));
-    registerFileTypeWithoutNotification(StdFileTypes.JSPX = new JspxFileType(), parse ("jspx;tagx"));
-    registerFileTypeWithoutNotification(StdFileTypes.PLAIN_TEXT = new PlainTextFileType(), parse("txt;sh;bat;cmd;policy;log;cgi;pl;MF;sql;jad;jam"));
-    registerFileTypeWithoutNotification(StdFileTypes.XML = new XmlFileType(), parse("xml;xsd;tld;xsl;jnlp;wsdl;hs;jhm;ant"));
-    registerFileTypeWithoutNotification(StdFileTypes.DTD = new DTDFileType(), parse("dtd;ent;mod"));
-    registerFileTypeWithoutNotification(StdFileTypes.GUI_DESIGNER_FORM = new GuiFormFileType(), parse("form"));
-    registerFileTypeWithoutNotification(StdFileTypes.IDEA_WORKSPACE = new WorkspaceFileType(), parse("iws"));
-    registerFileTypeWithoutNotification(StdFileTypes.IDEA_PROJECT = new ProjectFileType(), parse("ipr"));
-    registerFileTypeWithoutNotification(StdFileTypes.IDEA_MODULE = new ModuleFileType(), parse("iml"));
-    registerFileTypeWithoutNotification(StdFileTypes.UNKNOWN = new UnknownFileType(), Collections.<FileNameMatcher>emptyList());
-    registerFileTypeWithoutNotification(StdFileTypes.PROPERTIES = PropertiesFileType.FILE_TYPE, parse("properties"));
-    registerFileTypeWithoutNotification(StdFileTypes.PATCH = new PatchFileType(), parse("patch;diff"));
+  private void registerStandardFileTypes(FileTypeFactoryImpl factory) {
+    try {
+      for (final Field field : StdFileTypes.class.getDeclaredFields()) {
+        FileType fileType = (FileType)field.get(null);
+        registerFileTypeWithoutNotification(fileType, parse(factory.getDefaultExtensions(fileType)));
+      }
+    }
+    catch (IllegalAccessException e) {
+      LOG.error(e);
+    }
   }
 
   private static List<FileNameMatcher> parse(@NonNls String semicolonDelimited) {
