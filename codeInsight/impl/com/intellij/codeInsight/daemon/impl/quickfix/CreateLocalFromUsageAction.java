@@ -1,11 +1,11 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -34,7 +34,8 @@ public class CreateLocalFromUsageAction extends CreateVarFromUsageAction {
     if (!super.isAvailableImpl(offset)) return false;
     if(!!myReferenceExpression.isQualified()) return false;
     PsiElement scope = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiModifierListOwner.class);
-    return scope instanceof PsiMethod || scope instanceof PsiClassInitializer || scope instanceof PsiLocalVariable;
+    return scope instanceof PsiMethod || scope instanceof PsiClassInitializer ||
+           scope instanceof PsiLocalVariable || scope instanceof PsiAnonymousClass;
   }
 
   protected void invokeImpl(PsiClass targetClass) {
