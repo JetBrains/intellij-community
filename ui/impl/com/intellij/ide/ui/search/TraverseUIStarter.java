@@ -55,10 +55,13 @@ public class TraverseUIStarter implements ApplicationStarter {
   }
 
   public void main(String[] args){
+    System.out.println("Starting searchable options index builder");
     try {
       startup();
+      System.out.println("Searchable options index builder completed");
     }
-    catch (IOException e) {
+    catch (Exception e) {
+      System.out.println("Searchable options index builder failed");
       e.printStackTrace();
     }
   }
