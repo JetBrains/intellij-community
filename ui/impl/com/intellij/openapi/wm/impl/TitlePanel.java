@@ -37,7 +37,6 @@ public final class TitlePanel extends JPanel {
   private final Alarm myFrameTicker; // Determines moments of rendering of next frame
   private final MyAnimator myAnimator; // Renders panel's color
   private boolean myActive = true;
-  private JComponent mySideButtonsComponent;
   private JComponent mySideButtons;
 
   public static final Color BUTTON_SEPARATOR_COLOR = Color.white;
@@ -168,7 +167,7 @@ public final class TitlePanel extends JPanel {
 
     g2d.setPaint(new GradientPaint(0, 0, myBndColor, 0, getHeight(), myCntColor));
     if (mySideButtons.isVisible()) {
-      final Rectangle sideRec = SwingUtilities.convertRectangle(mySideButtonsComponent.getParent(), mySideButtonsComponent.getBounds(), this);
+      final Rectangle sideRec = SwingUtilities.convertRectangle(mySideButtons.getParent(), mySideButtons.getBounds(), this);
       g2d.fillRect(0, 0, getWidth() - sideRec.width, getHeight());
 
       g2d.setColor(ActivatableLineBorder.INACTIVE_COLOR);
@@ -185,15 +184,12 @@ public final class TitlePanel extends JPanel {
     }
   }
   public JComponent getSideButtonsComponent() {
-    return mySideButtonsComponent;
+    return mySideButtons;
   }
 
   public void addButtons(final JComponent buttons, JComponent sideButtons) {
     mySideButtons = sideButtons;
-
-    mySideButtonsComponent = new Wrapper(sideButtons);
-    mySideButtonsComponent.setOpaque(false);
-    mySideButtonsComponent.setBorder(new EmptyBorder(0, 6, 0, 6));
+    mySideButtons.setBorder(new EmptyBorder(0, 6, 0, 6));
 
     final JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.setOpaque(false);
@@ -202,7 +198,7 @@ public final class TitlePanel extends JPanel {
     UIUtil.removeQuaquaVisualMarginsIn(sideButtons);
 
     wrapper.add(buttons, BorderLayout.CENTER);
-    wrapper.add(mySideButtonsComponent, BorderLayout.EAST);
+    wrapper.add(mySideButtons, BorderLayout.EAST);
 
     add(wrapper, BorderLayout.EAST);
   }
