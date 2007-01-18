@@ -5,8 +5,8 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
-import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
@@ -16,18 +16,18 @@ import java.util.List;
 /**
  * @author yole
  */
-public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
+public class SelectFilePathsDialog extends AbstractSelectFilesDialog<FilePath> {
 
-  public SelectFilesDialog(final Project project, List<VirtualFile> originalFiles, final String prompt,
+  public SelectFilePathsDialog(final Project project, List<FilePath> originalFiles, final String prompt,
                            final VcsShowConfirmationOption confirmationOption) {
     super(project, false, confirmationOption, prompt);
-    myFileList = new ChangesTreeList<VirtualFile>(project, originalFiles, true, true) {
-      protected DefaultTreeModel buildTreeModel(final List<VirtualFile> changes) {
-        return new TreeModelBuilder(project, false).buildModelFromFiles(changes);
+    myFileList = new ChangesTreeList<FilePath>(project, originalFiles, true, true) {
+      protected DefaultTreeModel buildTreeModel(final List<FilePath> changes) {
+        return new TreeModelBuilder(project, false).buildModelFromFilePaths(changes);
       }
 
-      protected List<VirtualFile> getSelectedObjects(final ChangesBrowserNode node) {
-        return node.getAllFilesUnder();
+      protected List<FilePath> getSelectedObjects(final ChangesBrowserNode node) {
+        return node.getAllFilePathsUnder();
       }
     };
     myFileList.setChangesToDisplay(originalFiles);
@@ -35,7 +35,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
     init();
   }
 
-  public Collection<VirtualFile> getSelectedFiles() {
+  public Collection<FilePath> getSelectedFiles() {
     return myFileList.getIncludedChanges();
   }
 }

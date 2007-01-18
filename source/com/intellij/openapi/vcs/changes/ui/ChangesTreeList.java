@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
@@ -474,7 +475,13 @@ public abstract class ChangesTreeList<T> extends JPanel {
             fileStatus = ((Change) value).getFileStatus();
           }
           else {
-            fileStatus = FileStatusManager.getInstance(myProject).getStatus(path.getVirtualFile());
+            final VirtualFile virtualFile = path.getVirtualFile();
+            if (virtualFile != null) {
+              fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
+            }
+            else {
+              fileStatus = FileStatus.NOT_CHANGED;
+            }
           }
           append(path.getName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fileStatus.getColor(), null));
           final File parentFile = path.getIOFile().getParentFile();

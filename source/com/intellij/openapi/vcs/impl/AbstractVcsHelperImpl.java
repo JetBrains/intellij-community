@@ -178,6 +178,24 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     return dlg.isOK() ? dlg.getSelectedFiles() : null;
   }
 
+  @Nullable
+  public Collection<FilePath> selectFilePathsToProcess(final List<FilePath> files, final String title, @Nullable final String prompt,
+                                                       final String singleFileTitle, final String singleFilePromptTemplate,
+                                                       final VcsShowConfirmationOption confirmationOption) {
+    if (files.size() == 1 && singleFilePromptTemplate != null) {
+      String filePrompt = MessageFormat.format(singleFilePromptTemplate, files.get(0).getPresentableUrl());
+      if (ConfirmationDialog.requestForConfirmation(confirmationOption, myProject, filePrompt, singleFileTitle, Messages.getQuestionIcon())) {
+        return files;
+      }
+      return null;
+    }
+
+    SelectFilePathsDialog dlg = new SelectFilePathsDialog(myProject, files, prompt, confirmationOption);
+    dlg.setTitle(title);
+    dlg.show();
+    return dlg.isOK() ? dlg.getSelectedFiles() : null;
+  }
+
   protected void reportError(Exception exception) {
         exception.printStackTrace();
         Messages.showMessageDialog(exception.getLocalizedMessage(), VcsBundle.message("message.title.could.not.load.file.history"), Messages.getErrorIcon());

@@ -56,6 +56,13 @@ public class TreeModelBuilder {
     return model;
   }
 
+  public DefaultTreeModel buildModelFromFilePaths(final List<FilePath> files) {
+    buildFilePaths(files, root);
+    collapseDirectories(model, root);
+    sortNodes();
+    return model;
+  }
+
   public DefaultTreeModel buildModel(final List<? extends ChangeList> changeLists,
                                      final List<VirtualFile> unversionedFiles,
                                      final List<FilePath> locallyDeletedFiles,
@@ -85,12 +92,7 @@ public class TreeModelBuilder {
     if (!locallyDeletedFiles.isEmpty()) {
       ChangesBrowserNode locallyDeletedNode = ChangesBrowserNode.create(myProject, VcsBundle.message("changes.nodetitle.locally.deleted.files"));
       model.insertNodeInto(locallyDeletedNode, root, root.getChildCount());
-      final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
-      final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
-      for (FilePath file : locallyDeletedFiles) {
-        final ChangesBrowserNode node = ChangesBrowserNode.create(myProject, file);
-        model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, locallyDeletedNode), 0);
-      }
+      buildFilePaths(locallyDeletedFiles, locallyDeletedNode);
     }
 
     collapseDirectories(model, root);
@@ -112,6 +114,15 @@ public class TreeModelBuilder {
     final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
     for (VirtualFile file : files) {
       insertChangeNode(file, foldersCache, moduleCache, baseNode);
+    }
+  }
+
+  private void buildFilePaths(final List<FilePath> filePaths, final ChangesBrowserNode baseNode) {
+    final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
+    final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
+    for (FilePath file : filePaths) {
+      final ChangesBrowserNode node = ChangesBrowserNode.create(myProject, file);
+      model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, baseNode), 0);
     }
   }
 

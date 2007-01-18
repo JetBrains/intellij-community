@@ -120,4 +120,8 @@ public abstract class AbstractVcsHelper {
                                                                final String singleFileTitle, final String singleFilePromptTemplate,
                                                                final VcsShowConfirmationOption confirmationOption);
 
+  @Nullable
+  public abstract Collection<FilePath> selectFilePathsToProcess(List<FilePath> files, final String title, @Nullable final String prompt,
+                                                                final String singleFileTitle, final String singleFilePromptTemplate,
+                                                                final VcsShowConfirmationOption confirmationOption);
 }
