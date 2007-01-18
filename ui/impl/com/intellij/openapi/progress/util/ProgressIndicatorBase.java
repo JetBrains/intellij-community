@@ -37,7 +37,7 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
   private ModalityState myModalityState = ModalityState.NON_MODAL;
   private boolean myModalityEntered = false;
 
-  private Set<ProgressIndicatorEx> myStateDelegates = new HashSet<ProgressIndicatorEx>();
+  private final Set<ProgressIndicatorEx> myStateDelegates = new HashSet<ProgressIndicatorEx>();
 
   public void start() {
     synchronized (this) {
@@ -277,8 +277,10 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
   }
 
   public final void addStateDelegate(ProgressIndicatorEx delegate) {
-    delegate.initStateFrom(this);
-    myStateDelegates.add(delegate);
+    synchronized(myStateDelegates) {
+      delegate.initStateFrom(this);
+      myStateDelegates.add(delegate);
+    }
   }
 
   private void delegateProgressChange(IndicatorAction action) {
@@ -292,8 +294,10 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
   }
 
   private void delegate(IndicatorAction action) {
-    for (ProgressIndicatorEx each : myStateDelegates) {
-      action.execute(each);
+    synchronized(myStateDelegates) {
+      for (ProgressIndicatorEx each : myStateDelegates) {
+        action.execute(each);
+      }
     }
   }
 
