@@ -1,5 +1,6 @@
 package com.intellij.ide.plugins;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -70,6 +71,7 @@ public class PluginManagerMain {
   private JButton btnCancel;
   private JLabel mySynchStatus;
   private JPanel myTablePanel;
+  private JButton myReloadButton;
   private TabbedPaneWrapper myTabbedPane;
 
   private DefaultActionGroup actionGroup;
@@ -102,6 +104,15 @@ public class PluginManagerMain {
         HTTPProxySettingsDialog settingsDialog = new HTTPProxySettingsDialog();
         settingsDialog.pack();
         settingsDialog.show();
+        if ( settingsDialog.isOK() ) {
+          loadAvailablePlugins();
+        }
+      }
+    });
+
+    myReloadButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        loadAvailablePlugins();
       }
     });
 
@@ -264,12 +275,17 @@ public class PluginManagerMain {
       public void finished() {
         if (list != null) {
           modifyPluginsList(list);
+          setDownloadStatus(false);
         }
         else if (error != null) {
-          Messages.showErrorDialog(IdeBundle.message("error.list.of.plugins.was.not.loaded", error.getMessage()),
-                                   IdeBundle.message("title.plugins"));
+          setDownloadStatus(false);
+          if (0==Messages.showDialog(
+            IdeBundle.message("error.list.of.plugins.was.not.loaded", error.getMessage()),
+            IdeBundle.message("title.plugins"),
+            new String[]{CommonBundle.message("button.retry"), CommonBundle.getCancelButtonText()}, 0, Messages.getErrorIcon())) {
+            loadPluginsFromHostInBackground();
+          }
         }
-        setDownloadStatus(false);
       }
     }.start();
   }

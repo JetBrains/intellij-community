@@ -15,9 +15,8 @@
  */
 package com.intellij.util.net;
 
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.CommonBundle;
+import com.intellij.openapi.ui.DialogWrapper;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -42,13 +41,13 @@ public class HTTPProxySettingsDialog extends DialogWrapper {
     okAction = new AbstractAction (CommonBundle.getOkButtonText()) {
       public void actionPerformed(ActionEvent e) {
         panel.apply();
-        Disposer.dispose(myDisposable);
+        close ( OK_EXIT_CODE );
       }
     };
     okAction.putValue(DEFAULT_ACTION, Boolean.TRUE.toString());
     cancelAction = new AbstractAction(CommonBundle.getCancelButtonText()) {
       public void actionPerformed(ActionEvent e) {
-        Disposer.dispose(myDisposable);
+        close ( CANCEL_EXIT_CODE );
       }
     };
     init();
