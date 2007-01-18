@@ -46,7 +46,7 @@ public class ShelveChangesAction extends AbstractCommonCheckinAction {
     if (presentation.isVisible() && presentation.isEnabled() && vcsContext.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
       final ChangeList[] selectedChangeLists = vcsContext.getSelectedChangeLists();
       final Change[] selectedChanges = vcsContext.getSelectedChanges();
-      if (selectedChangeLists != null) {
+      if (selectedChangeLists != null && selectedChangeLists.length > 0) {
         presentation.setEnabled(selectedChangeLists.length == 1);
       }
       else {
