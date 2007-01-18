@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.Nullable;
 
 abstract class BaseDiffAction extends AnAction {
   protected static final Function<PsiElement, PsiElement> SOURCE_ELEMENT = new Function<PsiElement, PsiElement>() {
@@ -80,6 +81,7 @@ abstract class BaseDiffAction extends AnAction {
 
   protected void disableAction(Presentation presentation) {}
 
+  @Nullable
   protected abstract DiffRequest getDiffData(DataContext dataContext) throws DataAccessor.NoDataException;
 
   protected static VirtualFile getDocumentFile(Document document) {

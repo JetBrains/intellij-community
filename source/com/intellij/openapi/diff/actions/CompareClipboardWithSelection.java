@@ -1,7 +1,7 @@
 package com.intellij.openapi.diff.actions;
 
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -10,21 +10,20 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 
 public class CompareClipboardWithSelection extends BaseDiffAction {
 
+  @Nullable
   protected DiffRequest getDiffData(DataContext dataContext) {
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
-    Object editorData = dataContext.getData(DataConstants.EDITOR);
-    Editor editor = editorData != null ?
-                      (Editor)editorData :
-                      FileEditorManager.getInstance(project).getSelectedTextEditor();
+    Editor editorData = DataKeys.EDITOR.getData(dataContext);
+    Editor editor = editorData != null ? editorData : FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor == null) return null;
-    if (!editor.getSelectionModel().hasSelection()) return null;
     return new ClipboardSelectionContents(editor, project);
   }
 
@@ -53,9 +52,14 @@ public class CompareClipboardWithSelection extends BaseDiffAction {
       myContents[0] = clipboardContent;
 
       SelectionModel selectionModel = myEditor.getSelectionModel();
-      TextRange range = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
-      myContents[1] = new FragmentContent(DocumentContent.fromDocument(getProject(), getDocument()),
-                                          range, getProject(), getDocumentFile(getDocument()));
+      if (selectionModel.hasSelection()) {
+        TextRange range = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+        myContents[1] = new FragmentContent(DocumentContent.fromDocument(getProject(), getDocument()),
+                                            range, getProject(), getDocumentFile(getDocument()));
+      }
+      else {
+        myContents [1] = DocumentContent.fromDocument(getProject(), getDocument());
+      }
       return myContents;
     }
 
@@ -71,7 +75,7 @@ public class CompareClipboardWithSelection extends BaseDiffAction {
       }
     }
 
-    private DiffContent createClipboardContent() {
+    private static DiffContent createClipboardContent() {
       Transferable content = CopyPasteManager.getInstance().getContents();
       String text;
       try {
