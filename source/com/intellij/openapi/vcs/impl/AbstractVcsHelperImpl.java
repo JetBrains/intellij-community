@@ -53,6 +53,7 @@ import com.intellij.ui.content.*;
 import com.intellij.util.ContentsUtil;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
+import com.intellij.util.ui.ConfirmationDialog;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,17 +162,17 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
   @Nullable
   public Collection<VirtualFile> selectFilesToProcess(final List<VirtualFile> files, final String title, @Nullable final String prompt,
-                                                      final String singleFileTitle, final String singleFilePromptTemplate) {
+                                                      final String singleFileTitle, final String singleFilePromptTemplate,
+                                                      final VcsShowConfirmationOption confirmationOption) {
     if (files.size() == 1 && singleFilePromptTemplate != null) {
       String filePrompt = MessageFormat.format(singleFilePromptTemplate, files.get(0).getPresentableUrl());
-      int rc = Messages.showYesNoDialog(myProject, filePrompt, singleFileTitle, Messages.getQuestionIcon());
-      if (rc == 0) {
+      if (ConfirmationDialog.requestForConfirmation(confirmationOption, myProject, filePrompt, singleFileTitle, Messages.getQuestionIcon())) {
         return files;
       }
       return null;
     }
 
-    SelectFilesDialog dlg = new SelectFilesDialog(myProject, files, prompt);
+    SelectFilesDialog dlg = new SelectFilesDialog(myProject, files, prompt, confirmationOption);
     dlg.setTitle(title);
     dlg.show();
     return dlg.isOK() ? dlg.getSelectedFiles() : null;

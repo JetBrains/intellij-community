@@ -9,6 +9,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -23,9 +25,13 @@ import java.util.List;
 public class SelectFilesDialog extends DialogWrapper {
   private ChangesTreeList<VirtualFile> myFileList;
   private JPanel myPanel;
+  private JCheckBox myDoNotShowCheckbox;
+  private final VcsShowConfirmationOption myConfirmationOption;
 
-  public SelectFilesDialog(final Project project, List<VirtualFile> originalFiles, final String prompt) {
+  public SelectFilesDialog(final Project project, List<VirtualFile> originalFiles, final String prompt,
+                           final VcsShowConfirmationOption confirmationOption) {
     super(project, false);
+    myConfirmationOption = confirmationOption;
     myFileList = new ChangesTreeList<VirtualFile>(project, originalFiles, true, true) {
       protected DefaultTreeModel buildTreeModel(final List<VirtualFile> changes) {
         return new TreeModelBuilder(project, false).buildModelFromFiles(changes);
@@ -44,6 +50,9 @@ public class SelectFilesDialog extends DialogWrapper {
       label.setUI(new MultiLineLabelUI());
       myPanel.add(label, BorderLayout.NORTH);
     }
+
+    myDoNotShowCheckbox = new JCheckBox(CommonBundle.message("dialog.options.do.not.show"));
+    myPanel.add(myDoNotShowCheckbox, BorderLayout.SOUTH);
 
     init();
   }
@@ -71,5 +80,12 @@ public class SelectFilesDialog extends DialogWrapper {
 
   public Collection<VirtualFile> getSelectedFiles() {
     return myFileList.getIncludedChanges();
+  }
+
+  protected void doOKAction() {
+    if (myDoNotShowCheckbox.isSelected()) {
+      myConfirmationOption.setValue(VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
+    }
+    super.doOKAction();
   }
 }

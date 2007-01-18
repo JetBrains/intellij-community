@@ -117,6 +117,7 @@ public abstract class AbstractVcsHelper {
 
   @Nullable
   public abstract Collection<VirtualFile> selectFilesToProcess(List<VirtualFile> files, final String title, @Nullable final String prompt,
-                                                               final String singleFileTitle, final String singleFilePromptTemplate);
+                                                               final String singleFileTitle, final String singleFilePromptTemplate,
+                                                               final VcsShowConfirmationOption confirmationOption);
 
 }
