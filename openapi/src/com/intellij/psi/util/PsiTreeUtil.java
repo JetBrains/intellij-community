@@ -234,11 +234,16 @@ public class PsiTreeUtil {
 
   @Nullable
   public static <T extends PsiElement> T getNonStrictParentOfType(@NotNull PsiElement element, @NotNull Class<? extends T>... classes) {
+    boolean canRunOutOfTheFile = false;
+    for (Class<? extends T> aClass : classes) {
+      canRunOutOfTheFile |= ReflectionCache.isAssignable(PsiDirectory.class, aClass);
+    }
     PsiElement run = element;
     while (run != null) {
       for (Class<? extends T> aClass : classes) {
         if (instanceOf(aClass, run)) return (T)run;
       }
+      if (!canRunOutOfTheFile && run instanceof PsiFile) break;
       run = run.getParent();
     }
 
