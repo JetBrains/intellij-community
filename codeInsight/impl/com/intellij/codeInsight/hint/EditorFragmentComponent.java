@@ -16,6 +16,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.ScreenUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +32,7 @@ public class EditorFragmentComponent extends JPanel {
   private EditorFragmentComponent(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
     Document doc = editor.getDocument();
     final int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(endLine) : doc.getTextLength();
-    int textWidth = Math.min(editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset), editor.getComponent().getWidth());
+    int textWidth = Math.min(editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset), ScreenUtil.getScreenRectangle(1, 1).width);
 
     FoldingModelEx foldingModel = (FoldingModelEx) editor.getFoldingModel();
     boolean isFoldingEnabled = foldingModel.isFoldingEnabled();
