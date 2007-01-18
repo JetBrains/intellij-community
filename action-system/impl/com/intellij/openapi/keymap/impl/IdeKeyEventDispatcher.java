@@ -272,7 +272,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       final InputContext inputContext = focusOwner.getInputContext();
       if (inputContext != null) {
         Locale locale = inputContext.getLocale();
-        if (locale.getLanguage().equals("pl")) {
+        if (locale.getLanguage().equals("pl") || locale.getLanguage().equals("de")) {
           // don't search for shortcuts
           return false;
         }
