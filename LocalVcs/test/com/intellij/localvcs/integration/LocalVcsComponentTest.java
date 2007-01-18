@@ -22,10 +22,10 @@ public class LocalVcsComponentTest extends TempDirTestCase {
 
   @Test
   public void testStorageLocation() {
-    Project p = createProject("projectName", "hash");
+    Project p = createProject("projectLocationHash");
     LocalVcsComponent c = new MyLocalVcsComponent("c:/idea/system", p, null);
 
-    File expected = new File("c:/idea/system/vcs/projectName.hash");
+    File expected = new File("c:/idea/system/vcs_new/projectLocationHash");
     assertEquals(expected, c.getStorageDir());
   }
 
@@ -46,7 +46,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
   }
 
   private void initComponent() {
-    Project p = createProject("a", "b");
+    Project p = createProject("project");
     sm = new MyStartupManager();
     c = new MyLocalVcsComponent(tempDir.getPath(), p, sm);
     c.initComponent();
@@ -81,10 +81,9 @@ public class LocalVcsComponentTest extends TempDirTestCase {
     }
   }
 
-  private Project createProject(String name, String filePath) {
+  private Project createProject(String locationHash) {
     Project p = EasyMock.createMock(Project.class);
-    EasyMock.expect(p.getName()).andStubReturn(name);
-    EasyMock.expect(p.getLocationHash()).andStubReturn(filePath);
+    EasyMock.expect(p.getLocationHash()).andStubReturn(locationHash);
     EasyMock.replay(p);
     return p;
   }

@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-@Bombed(year = 2008, month=2, day=3, time=4, user="anton.makeev")
 public class LocalVcsComponentTest extends IdeaTestCase {
   private VirtualFile root;
 

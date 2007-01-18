@@ -73,13 +73,9 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   }
 
   public File getStorageDir() {
-    File vcs = new File(getSystemPath(), "vcs");
-
-    // todo remove prefix after removing old local vcs.
-    String prefix = myProject.getName();
-    String postfix = myProject.getLocationHash();
-
-    return new File(vcs, prefix + "." + postfix);
+    // todo dont forget to change folder name
+    File vcsDir = new File(getSystemPath(), "vcs_new");
+    return new File(vcsDir, myProject.getLocationHash());
   }
 
   protected String getSystemPath() {
@@ -106,10 +102,9 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   }
 
   public boolean isEnabled() {
-    //if (System.getProperty("localvcs.disabled") != null) return false;
-    //if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) return true;
-    //return ApplicationManagerEx.getApplicationEx().isInternal();
-    return false;
+    if (System.getProperty("localvcs.disabled") != null) return false;
+    if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) return true;
+    return ApplicationManagerEx.getApplicationEx().isInternal();
   }
 
   public LocalVcsAction startAction(String label) {
@@ -120,6 +115,7 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   @NonNls
   @NotNull
   public String getComponentName() {
+    // todo dont forget to change name
     return "NewLocalVcs";
   }
 
