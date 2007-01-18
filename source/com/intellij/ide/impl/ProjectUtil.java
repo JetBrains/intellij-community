@@ -14,6 +14,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -218,7 +219,7 @@ public class ProjectUtil {
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : openProjects) {
-      if (Comparing.equal(path, project.getProjectFilePath())) {
+      if (Comparing.equal(path, ((ProjectImpl)project).getStateStore().getProjectFilePath())) {
         return project;
       }
     }
