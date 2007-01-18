@@ -40,9 +40,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -69,7 +71,18 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     }
   }
 
+  private static class DeletedFileInfo {
+    private final Project myProject;
+    private final File myFile;
+
+    public DeletedFileInfo(final Project project, final File file) {
+      myProject = project;
+      myFile = file;
+    }
+  }
+
   private List<AddedFileInfo> myAddedFiles = new ArrayList<AddedFileInfo>();
+  private List<DeletedFileInfo> myDeletedFiles = new ArrayList<DeletedFileInfo>();
 
   public boolean move(VirtualFile file, VirtualFile toDir) throws IOException {
     File srcFile = getIOFile(file);
@@ -162,7 +175,6 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
 
     SVNStatus status = getFileStatus(ioFile);
 
-    SVNWCClient wcClient = new SVNWCClient(null, null);
     if (status == null ||
         status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED ||
         status.getContentsStatus() == SVNStatusType.STATUS_OBSTRUCTED ||
@@ -174,13 +186,11 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       return true;
     }
     else {
-      try {
-        wcClient.doDelete(ioFile, true, false);
+      SvnVcs vcs = getVCS(file);
+      if (vcs != null) {
+        myDeletedFiles.add(new DeletedFileInfo(vcs.getProject(), ioFile));
       }
-      catch (SVNException e) {
-        //
-      }
-      return true;
+      return false;
     }
   }
 
@@ -248,49 +258,101 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
 
   public void commandFinished(CommandEvent event) {
     if (myAddedFiles.size() > 0) {
-      MultiMap<Project, VirtualFile> addedVFiles = new MultiMap<Project, VirtualFile>();
-      for(AddedFileInfo addedFileInfo: myAddedFiles) {
-        VirtualFile addedFile = addedFileInfo.myDir.findChild(addedFileInfo.myName);
-        if (addedFile != null) {
-          addedVFiles.putValue(addedFileInfo.myProject, addedFile);
-        }
-      }
-      for(Project project: addedVFiles.keySet()) {
-        SvnVcs vcs = SvnVcs.getInstance(project);
-        final VcsShowConfirmationOption.Value value = vcs.getAddConfirmation().getValue();
-        if (value != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
-          final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(project);
-          List<VirtualFile> vFiles = addedVFiles.get(project);
-          Collection<VirtualFile> filesToProcess;
-          if (value == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
-            filesToProcess = vFiles;
-          }
-          else {
-            filesToProcess = vcsHelper.selectFilesToProcess(vFiles, SvnBundle.message("confirmation.title.add.multiple.files"),
-                                                            null,
-                                                            SvnBundle.message("confirmation.title.add.file"),
-                                                            SvnBundle.message("confirmation.text.add.file"),
-                                                            vcs.getAddConfirmation());
-          }
-          if (filesToProcess != null) {
-            List<VcsException> exceptions = new ArrayList<VcsException>();
-            SVNWCClient wcClient = new SVNWCClient(null, vcs.getSvnOptions());
-            for(VirtualFile file: filesToProcess) {
-              File ioFile = new File(file.getPath());
-              try {
-                wcClient.doAdd(ioFile, false, false, false, false);
-              }
-              catch (SVNException e) {
-                exceptions.add(new VcsException(e));
-              }
-            }
-            if (!exceptions.isEmpty()) {
-              vcsHelper.showErrors(exceptions, "Errors Adding Files");              
-            }
-          }
-        }
-      }
+      processAddedFiles();
       myAddedFiles.clear();
+    }
+    if (myDeletedFiles.size() > 0) {
+      processDeletedFiles();
+      myDeletedFiles.clear();
+    }
+  }
+
+  private void processAddedFiles() {
+    MultiMap<Project, VirtualFile> addedVFiles = new MultiMap<Project, VirtualFile>();
+    for(AddedFileInfo addedFileInfo: myAddedFiles) {
+      VirtualFile addedFile = addedFileInfo.myDir.findChild(addedFileInfo.myName);
+      if (addedFile != null) {
+        addedVFiles.putValue(addedFileInfo.myProject, addedFile);
+      }
+    }
+    for(Project project: addedVFiles.keySet()) {
+      SvnVcs vcs = SvnVcs.getInstance(project);
+      final VcsShowConfirmationOption.Value value = vcs.getAddConfirmation().getValue();
+      if (value != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
+        final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(project);
+        List<VirtualFile> vFiles = addedVFiles.get(project);
+        Collection<VirtualFile> filesToProcess;
+        if (value == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+          filesToProcess = vFiles;
+        }
+        else {
+          filesToProcess = vcsHelper.selectFilesToProcess(vFiles, SvnBundle.message("confirmation.title.add.multiple.files"),
+                                                          null,
+                                                          SvnBundle.message("confirmation.title.add.file"),
+                                                          SvnBundle.message("confirmation.text.add.file"),
+                                                          vcs.getAddConfirmation());
+        }
+        if (filesToProcess != null) {
+          List<VcsException> exceptions = new ArrayList<VcsException>();
+          SVNWCClient wcClient = new SVNWCClient(null, vcs.getSvnOptions());
+          for(VirtualFile file: filesToProcess) {
+            File ioFile = new File(file.getPath());
+            try {
+              wcClient.doAdd(ioFile, false, false, false, false);
+            }
+            catch (SVNException e) {
+              exceptions.add(new VcsException(e));
+            }
+          }
+          if (!exceptions.isEmpty()) {
+            vcsHelper.showErrors(exceptions, "Errors Adding Files");
+          }
+        }
+      }
+    }
+  }
+
+  private void processDeletedFiles() {
+    MultiMap<Project, FilePath> deletedFiles = new MultiMap<Project, FilePath>();
+    for(DeletedFileInfo deletedFileInfo: myDeletedFiles) {
+      final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(deletedFileInfo.myFile);
+      deletedFiles.putValue(deletedFileInfo.myProject, filePath);
+    }
+    for(Project project: deletedFiles.keySet()) {
+      SvnVcs vcs = SvnVcs.getInstance(project);
+      final VcsShowConfirmationOption.Value value = vcs.getDeleteConfirmation().getValue();
+      if (value != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
+        final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(project);
+        List<FilePath> filePaths = deletedFiles.get(project);
+        Collection<FilePath> filesToProcess;
+        if (value == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+          filesToProcess = filePaths;
+        }
+        else {
+          filesToProcess = vcsHelper.selectFilePathsToProcess(filePaths, SvnBundle.message("confirmation.title.delete.multiple.files"),
+                                                              null,
+                                                              SvnBundle.message("confirmation.title.delete.file"),
+                                                              SvnBundle.message("confirmation.text.delete.file"),
+                                                              vcs.getAddConfirmation());
+        }
+        if (filesToProcess != null) {
+          List<VcsException> exceptions = new ArrayList<VcsException>();
+          SVNWCClient wcClient = new SVNWCClient(null, vcs.getSvnOptions());
+          for(FilePath file: filesToProcess) {
+            File ioFile = new File(file.getPath());
+            try {
+              wcClient.doDelete(ioFile, true, false);
+              VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+            }
+            catch (SVNException e) {
+              exceptions.add(new VcsException(e));
+            }
+          }
+          if (!exceptions.isEmpty()) {
+            vcsHelper.showErrors(exceptions, "Errors Deleting Files");
+          }
+        }
+      }
     }
   }
 

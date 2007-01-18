@@ -97,6 +97,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   private final SvnAnnotationProvider myAnnotationProvider;
   private final SvnDiffProvider mySvnDiffProvider;
   private VcsShowConfirmationOption myAddConfirmation;
+  private VcsShowConfirmationOption myDeleteConfirmation;
   private SvnEditFileProvider myEditFilesProvider;
   private SvnCommittedChangesProvider myCommittedChangesProvider;
 
@@ -152,6 +153,10 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   public VcsShowConfirmationOption getAddConfirmation() {
     return myAddConfirmation;
+  }
+
+  public VcsShowConfirmationOption getDeleteConfirmation() {
+    return myDeleteConfirmation;
   }
 
   public EditFileProvider getEditFileProvider() {
@@ -243,6 +248,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   public void projectOpened() {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(getProject());
     myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
+    myDeleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
     VirtualFileManager.getInstance().addVirtualFileListener(myEntriesFileListener);
   }
 
