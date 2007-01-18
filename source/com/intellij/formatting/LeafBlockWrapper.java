@@ -3,21 +3,16 @@ package com.intellij.formatting;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
-import java.util.ArrayList;
-import java.util.List;
-
 class LeafBlockWrapper extends AbstractBlockWrapper {
-  private static final ArrayList<Block> EMPTY = new ArrayList<Block>(0);
-
-  private static int CONTAIN_LINE_FEEDS = 2;
-  private static int READ_ONLY = 4;
-  private static int LEAF = 8;
+  private static int CONTAIN_LINE_FEEDS = 4;
+  private static int READ_ONLY = 8;
+  private static int LEAF = 16;
 
   private final int mySymbolsAtTheLastLine;
-  private final LeafBlockWrapper myPreviousBlock;
+  private LeafBlockWrapper myPreviousBlock;
   private LeafBlockWrapper myNextBlock;
   private SpacingImpl mySpaceProperty;
-  private final IndentInside myLastLineIndent;
+  private IndentInside myLastLineIndent;
 
   public LeafBlockWrapper(final Block block,
                           AbstractBlockWrapper parent,
@@ -67,17 +62,18 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     myNextBlock = nextBlock;
   }
 
+  public void dispose() {
+    super.dispose();
+    myPreviousBlock = null;
+    myNextBlock = null;
+    mySpaceProperty = null;
+    myLastLineIndent = null;
+  }
+
   public SpacingImpl getSpaceProperty() {
     return mySpaceProperty;
   }
-  public List<Block> getSubBlocks(){
-    if ((myFlags & READ_ONLY) != 0) {
-      return EMPTY;
-    } else {
-      return getBlock().getSubBlocks();
-    }
-  }
-
+  
   public IndentData calculateOffset(final CodeStyleSettings.IndentOptions options) {
     
     if (myIndentFromParent != null) {
@@ -130,6 +126,10 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
   }
 
   public boolean contains(final int offset) {
-    return myTextRange.getStartOffset() < offset && myTextRange.getEndOffset() > offset;
+    return myStart < offset && myEnd > offset;
+  }
+
+  public TextRange getTextRange() {
+    return new TextRange(myStart, myEnd);
   }
 }

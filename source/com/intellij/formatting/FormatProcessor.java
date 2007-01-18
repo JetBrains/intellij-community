@@ -21,8 +21,9 @@ class FormatProcessor {
 
   private LeafBlockWrapper myCurrentBlock;
 
-  private final Map<Block, AbstractBlockWrapper> myInfos;
-  private final TIntObjectHashMap<LeafBlockWrapper> myTextRangeToWrapper;
+  private Map<AbstractBlockWrapper, Block> myInfos;
+  private CompositeBlockWrapper myRootBlockWrapper;
+  private TIntObjectHashMap<LeafBlockWrapper> myTextRangeToWrapper;
 
   private final CodeStyleSettings.IndentOptions myIndentOption;
   private CodeStyleSettings mySettings;
@@ -32,8 +33,8 @@ class FormatProcessor {
   private LeafBlockWrapper myWrapCandidate = null;
   private LeafBlockWrapper myFirstWrappedBlockOnLine = null;
 
-  private final LeafBlockWrapper myFirstTokenBlock;
-  private final LeafBlockWrapper myLastTokenBlock;
+  private LeafBlockWrapper myFirstTokenBlock;
+  private LeafBlockWrapper myLastTokenBlock;
 
   private SortedMap<TextRange,Pair<AbstractBlockWrapper, Boolean>> myPreviousDependancies =
     new TreeMap<TextRange, Pair<AbstractBlockWrapper, Boolean>>(new Comparator<TextRange>() {
@@ -48,27 +49,39 @@ class FormatProcessor {
     });
 
   private Collection<WhiteSpace> myAlignAgain = new HashSet<WhiteSpace>();
-  private final WhiteSpace myLastWhiteSpace;
+  private WhiteSpace myLastWhiteSpace;
+  private boolean myDisposed;
 
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
                          CodeStyleSettings settings,
                          CodeStyleSettings.IndentOptions indentOptions,
                          TextRange affectedRange,
-                         final boolean processHeadingWhitespace) {
+                         final boolean processHeadingWhitespace
+                         ) {
+    this(docModel, rootBlock, settings, indentOptions, affectedRange, processHeadingWhitespace, -1);
+  }
+  public FormatProcessor(final FormattingDocumentModel docModel,
+                         Block rootBlock,
+                         CodeStyleSettings settings,
+                         CodeStyleSettings.IndentOptions indentOptions,
+                         TextRange affectedRange,
+                         final boolean processHeadingWhitespace, int interestingOffset) {
     myIndentOption = indentOptions;
     mySettings = settings;
     final InitialInfoBuilder builder = InitialInfoBuilder.buildBlocks(rootBlock,
                                                                       docModel,
                                                                       affectedRange,
                                                                       indentOptions,
-                                                                      processHeadingWhitespace);
+                                                                      processHeadingWhitespace,
+                                                                      interestingOffset);
     myInfos = builder.getBlockToInfoMap();
+    myRootBlockWrapper = builder.getRootBlockWrapper();
     myFirstTokenBlock = builder.getFirstTokenBlock();
     myLastTokenBlock = builder.getLastTokenBlock();
     myCurrentBlock = myFirstTokenBlock;
     myTextRangeToWrapper = buildTextRangeToInfoMap(myFirstTokenBlock);
-    myLastWhiteSpace = new WhiteSpace(getLastBlock().getTextRange().getEndOffset(), false);
+    myLastWhiteSpace = new WhiteSpace(getLastBlock().getEndOffset(), false);
     myLastWhiteSpace.append(docModel.getTextLength(), docModel, indentOptions);
   }
 
@@ -84,7 +97,7 @@ class FormatProcessor {
     final TIntObjectHashMap<LeafBlockWrapper> result = new TIntObjectHashMap<LeafBlockWrapper>();
     LeafBlockWrapper current = first;
     while (current != null) {
-      result.put(current.getTextRange().getStartOffset(), current);
+      result.put(current.getStartOffset(), current);
       current = current.getNextBlock();
     }
     return result;
@@ -180,15 +193,31 @@ class FormatProcessor {
     myAlignedAlignments.clear();
     myPreviousDependancies.clear();
     myWrapCandidate = null;
-    for (AbstractBlockWrapper blockWrapper : myInfos.values()) {
-      blockWrapper.reset();
-    }
+    myRootBlockWrapper.reset();
   }
 
   public void performModifications(FormattingModel model) {
+    assert !myDisposed;
+    final List<LeafBlockWrapper> blocksToModify = collectBlocksToModify();
 
-    List<LeafBlockWrapper> blocksToModify = collectBlocksToModify();
+    // call doModifications static method to ensure no access to state
+    // thus we may clear formatting state
+    reset();
 
+    myInfos = null;
+    myRootBlockWrapper = null;
+    myTextRangeToWrapper = null;
+    myPreviousDependancies = null;
+    myLastWhiteSpace = null;
+    myFirstTokenBlock = null;
+    myLastTokenBlock = null;
+    myDisposed = true;
+
+    doModify(blocksToModify, model,myIndentOption,mySettings.JAVA_INDENT_OPTIONS); 
+  }
+
+  private static void doModify(final List<LeafBlockWrapper> blocksToModify, final FormattingModel model,
+                               CodeStyleSettings.IndentOptions indentOption, CodeStyleSettings.IndentOptions javaOptions) {
     int shift = 0;
     boolean bulkReformat = false;
     DocumentEx updatedDocument = null;
@@ -205,14 +234,20 @@ class FormatProcessor {
 
       int index = 0;
 
-      for (LeafBlockWrapper block : blocksToModify) {
-        shift = replaceWhiteSpace(model, block, shift, block.getWhiteSpace().generateWhiteSpace(myIndentOption));
+      for (int i = 0; i < blocksToModifyCount; ++i) {
+        final LeafBlockWrapper block = blocksToModify.get(i);
+        shift = replaceWhiteSpace(model, block, shift, block.getWhiteSpace().generateWhiteSpace(indentOption),javaOptions);
         ++index;
 
         if (index + 1 == blocksToModifyCount) {
           if(updatedDocument != null) updatedDocument.setInBulkUpdate(false);
           updatedDocument = null;
         }
+
+        // block could be gc'd
+        block.getParent().dispose();
+        block.dispose();
+        blocksToModify.set(i, null);
       }
     }
     finally {
@@ -231,13 +266,16 @@ class FormatProcessor {
     return null;
   }
 
-  protected int replaceWhiteSpace(final FormattingModel model,
+  protected static int replaceWhiteSpace(final FormattingModel model,
                                   @NotNull final LeafBlockWrapper block,
                                   int shift,
-                                  final String newWhiteSpace) {
+                                  final CharSequence _newWhiteSpace,
+                                  final CodeStyleSettings.IndentOptions options
+                                  ) {
     final WhiteSpace whiteSpace = block.getWhiteSpace();
     final TextRange textRange = whiteSpace.getTextRange();
     final TextRange wsRange = shiftRange(textRange, shift);
+    final String newWhiteSpace = _newWhiteSpace.toString();
     TextRange newWhiteSpaceRange = model.replaceWhiteSpace(wsRange, newWhiteSpace);
 
     shift += (newWhiteSpaceRange.getLength() - (textRange.getLength()));
@@ -247,10 +285,10 @@ class FormatProcessor {
 
       IndentInside lastLineIndent = block.getLastLineIndent();
       IndentInside whiteSpaceIndent = IndentInside.createIndentOn(IndentInside.getLastLine(newWhiteSpace));
-      final int shiftInside = calcShift(lastLineIndent, whiteSpaceIndent);
+      final int shiftInside = calcShift(lastLineIndent, whiteSpaceIndent, options);
 
       final TextRange newBlockRange = model.shiftIndentInsideRange(currentBlockRange, shiftInside);
-      shift += newBlockRange.getLength() - block.getTextRange().getLength();
+      shift += newBlockRange.getLength() - block.getLength();
     }
     return shift;
   }
@@ -274,14 +312,7 @@ class FormatProcessor {
     return new TextRange(textRange.getStartOffset() + shift, textRange.getEndOffset() + shift);
   }
 
-  @Nullable
-  private AbstractBlockWrapper getBlockInfo(final Block rootBlock) {
-    if (rootBlock == null) return null;
-    return myInfos.get(rootBlock);
-  }
-
   private void processToken() {
-
     final SpacingImpl spaceProperty = myCurrentBlock.getSpaceProperty();
     final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
 
@@ -370,12 +401,11 @@ class FormatProcessor {
     if (whiteSpace.isReadOnly() || whiteSpace.isLineFeedsAreReadOnly()) return false;
 
     final TextRange dependancy = ((DependantSpacingImpl)spaceProperty).getDependancy();
-    return whiteSpace.getTextRange().getStartOffset() < dependancy.getEndOffset();
+    return whiteSpace.getStartOffset() < dependancy.getEndOffset();
   }
 
   private boolean processWrap(Spacing spacing) {
     final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
-    final TextRange textRange = myCurrentBlock.getTextRange();
     final WrapImpl[] wraps = myCurrentBlock.getWraps();
 
     boolean wrapWasPresent = whiteSpace.containsLineFeeds();
@@ -391,7 +421,7 @@ class FormatProcessor {
     boolean wrapIsPresent = whiteSpace.containsLineFeeds();
 
     for (WrapImpl wrap : wraps) {
-      wrap.processNextEntry(textRange.getStartOffset());
+      wrap.processNextEntry(myCurrentBlock.getStartOffset());
     }
 
     WrapImpl wrap = getWrapToBeUsed(wraps);
@@ -495,7 +525,7 @@ class FormatProcessor {
   }
 
   private boolean isSuitableInTheCurrentPosition(final WrapImpl wrap) {
-    if (wrap.getFirstPosition() < myCurrentBlock.getTextRange().getStartOffset()) {
+    if (wrap.getFirstPosition() < myCurrentBlock.getStartOffset()) {
       return true;
     }
 
@@ -517,10 +547,10 @@ class FormatProcessor {
     final int spaces = whiteSpace.getSpaces();
     int indentSpaces = whiteSpace.getIndentSpaces();
     try {
-      final int offsetBefore = getOffsetBefore(myCurrentBlock.getBlock());
+      final int offsetBefore = getOffsetBefore(myCurrentBlock);
       whiteSpace.ensureLineFeed();
       adjustLineIndent();
-      final int offsetAfter = getOffsetBefore(myCurrentBlock.getBlock());
+      final int offsetAfter = getOffsetBefore(myCurrentBlock);
       if (offsetBefore <= offsetAfter) {
         result = false;
       }
@@ -553,12 +583,12 @@ class FormatProcessor {
 
   private boolean lineOver() {
     return !myCurrentBlock.containsLineFeeds() &&
-           getOffsetBefore(myCurrentBlock.getBlock()) + myCurrentBlock.getTextRange().getLength() > mySettings.RIGHT_MARGIN;
+           getOffsetBefore(myCurrentBlock) + myCurrentBlock.getLength() > mySettings.RIGHT_MARGIN;
   }
 
-  private int getOffsetBefore(final Block block) {
+  private int getOffsetBefore(LeafBlockWrapper info) {
     int result = 0;
-    LeafBlockWrapper info = (LeafBlockWrapper)getBlockInfo(block);
+
     if (info != null) {
       while (true) {
         final WhiteSpace whiteSpace = info.getWhiteSpace();
@@ -580,7 +610,7 @@ class FormatProcessor {
   private void setAlignOffset(final LeafBlockWrapper block) {
     AbstractBlockWrapper current = myCurrentBlock;
     while (true) {
-      final AlignmentImpl alignment = (AlignmentImpl)current.getBlock().getAlignment();
+      final AlignmentImpl alignment = (AlignmentImpl)current.getAlignment();
       if (alignment != null && !myAlignedAlignments.contains(alignment)) {
         alignment.setOffsetRespBlock(block);
         myAlignedAlignments.add(alignment);
@@ -596,7 +626,7 @@ class FormatProcessor {
   private IndentData getAlignOffset() {
     AbstractBlockWrapper current = myCurrentBlock;
     while (true) {
-      final AlignmentImpl alignment = (AlignmentImpl)current.getBlock().getAlignment();
+      final AlignmentImpl alignment = current.getAlignment();
       if (alignment != null && alignment.getOffsetRespBlockBefore(myCurrentBlock) != null) {
         final LeafBlockWrapper block = alignment.getOffsetRespBlockBefore(myCurrentBlock);
         final WhiteSpace whiteSpace = block.getWhiteSpace();
@@ -604,7 +634,7 @@ class FormatProcessor {
           return new IndentData(whiteSpace.getIndentSpaces(), whiteSpace.getSpaces());
         }
         else {
-          final int offsetBeforeBlock = getOffsetBefore(block.getBlock());
+          final int offsetBeforeBlock = getOffsetBefore(block);
           final AbstractBlockWrapper prevIndentedBlock = getPreviousIndentedBlock();
           if (prevIndentedBlock == null) {
             return new IndentData(0, offsetBeforeBlock);
@@ -634,7 +664,7 @@ class FormatProcessor {
     if (child == null) return false;
     if (child.containsLineFeeds()) return true;
     final int endOffset = dependance.getEndOffset();
-    while (child.getTextRange().getEndOffset() < endOffset) {
+    while (child.getEndOffset() < endOffset) {
       child = child.getNextBlock();
       if (child.getWhiteSpace().containsLineFeeds()) return true;
       if (child.containsLineFeeds()) return true;
@@ -646,7 +676,7 @@ class FormatProcessor {
   public LeafBlockWrapper getBlockAfter(final int startOffset) {
     int current = startOffset;
     LeafBlockWrapper result = null;
-    while (current < myLastWhiteSpace.getTextRange().getStartOffset()) {
+    while (current < myLastWhiteSpace.getStartOffset()) {
       final LeafBlockWrapper currentValue = myTextRangeToWrapper.get(current);
       if (currentValue != null) {
         result = currentValue;
@@ -683,11 +713,11 @@ class FormatProcessor {
   }
 
   static class ChildAttributesInfo {
-    public Block parent;
+    public AbstractBlockWrapper parent;
     ChildAttributes attributes;
     int index;
 
-    public ChildAttributesInfo(final Block parent, final ChildAttributes attributes, final int index) {
+    public ChildAttributesInfo(final AbstractBlockWrapper parent, final ChildAttributes attributes, final int index) {
       this.parent = parent;
       this.attributes = attributes;
       this.index = index;
@@ -699,29 +729,29 @@ class FormatProcessor {
     AbstractBlockWrapper parent = getParentFor(offset, myCurrentBlock);
     if (parent == null) return new IndentInfo(0, 0, 0);
     int index = getNewChildPosition(parent, offset);
-    final Block block = parent.getBlock();
+    final Block block = myInfos.get(parent);
+    assert block != null;
 
-    ChildAttributesInfo info = getChildAttributesInfo(block, index);
+    ChildAttributesInfo info = getChildAttributesInfo(block, index, parent);
 
-
-    return adjustLineIndent(myInfos.get(info.parent), info.attributes, info.index);
+    return adjustLineIndent(info.parent, info.attributes, info.index);
   }
 
-  private static ChildAttributesInfo getChildAttributesInfo(final Block block, final int index) {
+  private static ChildAttributesInfo getChildAttributesInfo(final Block block, final int index, AbstractBlockWrapper parent) {
     ChildAttributes childAttributes = block.getChildAttributes(index);
 
     if (childAttributes == ChildAttributes.DELEGATE_TO_PREV_CHILD) {
       final Block newBlock = block.getSubBlocks().get(index - 1);
-      return getChildAttributesInfo(newBlock, newBlock.getSubBlocks().size());
+      return getChildAttributesInfo(newBlock, newBlock.getSubBlocks().size(), ((CompositeBlockWrapper)parent).getChildren().get(index - 1));
 
     }
 
     else if (childAttributes == ChildAttributes.DELEGATE_TO_NEXT_CHILD) {
-      return getChildAttributesInfo(block.getSubBlocks().get(index), 0);
+      return getChildAttributesInfo(block.getSubBlocks().get(index), 0, ((CompositeBlockWrapper)parent).getChildren().get(index));
     }
 
     else {
-      return new ChildAttributesInfo(block, childAttributes, index);
+      return new ChildAttributesInfo(parent, childAttributes, index);
     }
 
   }
@@ -752,20 +782,21 @@ class FormatProcessor {
     if (alignment == null) return -1;
     final LeafBlockWrapper alignRespBlock = ((AlignmentImpl)alignment).getOffsetRespBlockBefore(blockAfter);
     if (alignRespBlock != null) {
-      return getOffsetBefore(alignRespBlock.getBlock());
+      return getOffsetBefore(alignRespBlock);
     }
     else {
       return -1;
     }
   }
 
-  private int getNewChildPosition(final AbstractBlockWrapper parent, final int offset) {
-    final List<Block> subBlocks = parent.getBlock().getSubBlocks();
+  private static int getNewChildPosition(final AbstractBlockWrapper parent, final int offset) {
+    if (!(parent instanceof CompositeBlockWrapper)) return 0;
+    final List<AbstractBlockWrapper> subBlocks = ((CompositeBlockWrapper)parent).getChildren();
     //noinspection ConstantConditions
     if (subBlocks != null) {
       for (int i = 0; i < subBlocks.size(); i++) {
-        Block block = subBlocks.get(i);
-        if (myInfos.get(block).getTextRange().getStartOffset() >= offset) return i;
+        AbstractBlockWrapper block = subBlocks.get(i);
+        if (block.getStartOffset() >= offset) return i;
       }
       return subBlocks.size();
     }
@@ -778,8 +809,7 @@ class FormatProcessor {
   private static AbstractBlockWrapper getParentFor(final int offset, AbstractBlockWrapper block) {
     AbstractBlockWrapper current = block;
     while (current != null) {
-      final TextRange textRange = current.getTextRange();
-      if (textRange.getStartOffset() < offset && textRange.getEndOffset() >= offset) {
+      if (current.getStartOffset() < offset && current.getEndOffset() >= offset) {
         return current;
       }
       current = current.getParent();
@@ -789,9 +819,9 @@ class FormatProcessor {
 
   @Nullable
   private AbstractBlockWrapper getParentFor(final int offset, LeafBlockWrapper block) {
-    Block previous = getPreviousIncompletedBlock(block, offset);
+    AbstractBlockWrapper previous = getPreviousIncompletedBlock(block, offset);
     if (previous != null) {
-      return myInfos.get(previous);
+      return previous;
     }
     else {
       return getParentFor(offset, ((AbstractBlockWrapper)block));
@@ -799,10 +829,10 @@ class FormatProcessor {
   }
 
   @Nullable
-  private Block getPreviousIncompletedBlock(final LeafBlockWrapper block, final int offset) {
+  private AbstractBlockWrapper getPreviousIncompletedBlock(final LeafBlockWrapper block, final int offset) {
     if (block == null) {
-      if (myLastTokenBlock.getBlock().isIncomplete()) {
-        return myLastTokenBlock.getBlock();
+      if (myLastTokenBlock.isIncomplete()) {
+        return myLastTokenBlock;
       }
       else {
         return null;
@@ -814,32 +844,30 @@ class FormatProcessor {
       current = current.getParent();
     }
 
-
-
     if (current.getParent() == null) return null;
 
-    if (current.getTextRange().getEndOffset() <= offset) {
-      while (!current.getBlock().isIncomplete() && 
+    if (current.getEndOffset() <= offset) {
+      while (!current.isIncomplete() &&
              current.getParent() != null && 
-             current.getParent().getTextRange().getEndOffset() <= offset) {
+             current.getParent().getEndOffset() <= offset) {
         current = current.getParent();
       }
-      if (current.getBlock().isIncomplete()) return current.getBlock();
+      if (current.isIncomplete()) return current;
     }
 
     if (current.getParent() == null) return null;
 
-    final List<Block> subBlocks = current.getParent().getBlock().getSubBlocks();
-    final int index = subBlocks.indexOf(current.getBlock());
+    final List<AbstractBlockWrapper> subBlocks = ((CompositeBlockWrapper)current.getParent()).getChildren();
+    final int index = subBlocks.indexOf(current);
     if (index < 0) {
-      LOG.assertTrue(false, current.getParent().getBlock().getClass().getName());
+      LOG.assertTrue(false);
     }
     if (index == 0) return null;
 
-    Block currentResult = subBlocks.get(index - 1);
+    AbstractBlockWrapper currentResult = subBlocks.get(index - 1);
     if (!currentResult.isIncomplete()) return null;
 
-    Block lastChild = getLastChildOf(currentResult);
+    AbstractBlockWrapper lastChild = getLastChildOf(currentResult);
     while (lastChild != null && lastChild.isIncomplete()) {
       currentResult = lastChild;
       lastChild = getLastChildOf(currentResult);
@@ -848,8 +876,9 @@ class FormatProcessor {
   }
 
   @Nullable
-  private static Block getLastChildOf(final Block currentResult) {
-    final List<Block> subBlocks = currentResult.getSubBlocks();
+  private static AbstractBlockWrapper getLastChildOf(final AbstractBlockWrapper currentResult) {
+    if (!(currentResult instanceof CompositeBlockWrapper)) return null;
+    final List<AbstractBlockWrapper> subBlocks = ((CompositeBlockWrapper)currentResult).getChildren();
     if (subBlocks.isEmpty()) return null;
     return subBlocks.get(subBlocks.size() - 1);
   }
@@ -878,8 +907,9 @@ class FormatProcessor {
     return myLastWhiteSpace;
   }
 
-  private int calcShift(final IndentInside lastLineIndent, final IndentInside whiteSpaceIndent) {
-    final CodeStyleSettings.IndentOptions options = mySettings.JAVA_INDENT_OPTIONS;
+  private static int calcShift(final IndentInside lastLineIndent, final IndentInside whiteSpaceIndent,
+                               final CodeStyleSettings.IndentOptions options
+                               ) {
     if (lastLineIndent.equals(whiteSpaceIndent)) return 0;
     if (options.USE_TAB_CHARACTER) {
       if (lastLineIndent.whiteSpaces > 0) {
@@ -907,7 +937,7 @@ class FormatProcessor {
     if (current == null) return true;
 
     while (current.getParent() != null && current.getParent().getEndOffset() == current.getEndOffset()) {
-      if (current.getBlock().isIncomplete()) return false;
+      if (current.isIncomplete()) return false;
       current = current.getParent();
     }
 

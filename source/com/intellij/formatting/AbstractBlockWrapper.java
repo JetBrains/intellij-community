@@ -13,38 +13,40 @@ import java.util.ArrayList;
  * To change this template use File | Settings | File Templates.
  */
 public class AbstractBlockWrapper {
-  protected final Block myBlock;
-  protected final WhiteSpace myWhiteSpace;
-  protected final AbstractBlockWrapper myParent;
-  protected TextRange myTextRange;
+  protected WhiteSpace myWhiteSpace;
+  protected AbstractBlockWrapper myParent;
+  protected int myStart;
+  protected int myEnd;
   protected int myFlags;
 
   static int CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT = 1;
-  
+  static int INCOMPLETE = 2;
+
   protected IndentInfo myIndentFromParent = null;
   private IndentImpl myIndent = null;
+  private AlignmentImpl myAlignment;
+  private WrapImpl myWrap;
 
   public AbstractBlockWrapper(final Block block, final WhiteSpace whiteSpace, final AbstractBlockWrapper parent, final TextRange textRange) {
-    myBlock = block;
     myWhiteSpace = whiteSpace;
     myParent = parent;
-    myTextRange = textRange;
-    myFlags = CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT;
+    myStart = textRange.getStartOffset();
+    myEnd = textRange.getEndOffset();
+
+    myFlags = CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT | (block.isIncomplete() ? INCOMPLETE:0);
+    myAlignment = (AlignmentImpl)block.getAlignment();
+    myWrap = (WrapImpl)block.getWrap();
   }
 
   public WhiteSpace getWhiteSpace() {
     return myWhiteSpace;
   }
 
-  public Block getBlock() {
-    return myBlock;
-  }
-
   public WrapImpl[] getWraps() {
     final ArrayList<WrapImpl> result = new ArrayList<WrapImpl>();
     AbstractBlockWrapper current = this;
     while(current != null && current.getStartOffset() == getStartOffset()) {
-      final WrapImpl wrap = (WrapImpl)current.getBlock().getWrap();
+      final WrapImpl wrap = current.getOwnWrap();
       if (wrap != null && !result.contains(wrap)) result.add(0, wrap);
       if (wrap != null && wrap.getIgnoreParentWraps()) break;
       current = current.myParent;
@@ -52,21 +54,25 @@ public class AbstractBlockWrapper {
     return result.toArray(new WrapImpl[result.size()]);
   }
 
-  public TextRange getTextRange() {
-    return myTextRange;
+  public int getStartOffset() {
+    return myStart;
+  }
+
+  public int getEndOffset() {
+    return myEnd;
+  }
+
+  public int getLength() {
+    return myEnd - myStart;
   }
 
   protected void arrangeStartOffset(final int startOffset) {
     if (getStartOffset() == startOffset) return;
     boolean isFirst = getParent() != null && getStartOffset() == getParent().getStartOffset();
-    myTextRange = new TextRange(startOffset, myTextRange.getEndOffset());
+    myStart = startOffset;
     if (isFirst) {
       getParent().arrangeStartOffset(startOffset);
     }
-  }
-
-  public int getStartOffset() {
-    return getTextRange().getStartOffset();
   }
 
   public IndentImpl getIndent(){
@@ -83,11 +89,15 @@ public class AbstractBlockWrapper {
     return wraps[0];
   }
 
+  public WrapImpl getOwnWrap() {
+    return myWrap;
+  }
+
   public void reset() {
     myFlags |= CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT;
-    final AlignmentImpl alignment = ((AlignmentImpl)getBlock().getAlignment());
+    final AlignmentImpl alignment = myAlignment;
     if (alignment != null) alignment.reset();
-    final WrapImpl wrap = ((WrapImpl)getBlock().getWrap());
+    final WrapImpl wrap = myWrap;
     if (wrap != null) wrap.reset();
 
   }
@@ -164,7 +174,7 @@ public class AbstractBlockWrapper {
 
   public void arrangeParentTextRange() {
     if (myParent != null) {
-      myParent.arrangeStartOffset(getTextRange().getStartOffset());
+      myParent.arrangeStartOffset(getStartOffset());
     }
   }
   public IndentData calculateChildOffset(final CodeStyleSettings.IndentOptions indentOption, final ChildAttributes childAttributes,
@@ -208,7 +218,7 @@ public class AbstractBlockWrapper {
     myIndentFromParent = indentFromParent;
     if (myIndentFromParent != null) {
       AbstractBlockWrapper parent = myParent;
-      if (myParent != null && myParent.getTextRange().getStartOffset() == getTextRange().getStartOffset()) {
+      if (myParent != null && myParent.getStartOffset() == myStart) {
         parent.setIndentFromParent(myIndentFromParent);
       }
     }    
@@ -216,7 +226,7 @@ public class AbstractBlockWrapper {
   
   protected AbstractBlockWrapper findFirstIndentedParent() {
     if (myParent == null) return null;
-    if (getStartOffset() != myParent.getStartOffset() && myParent.getWhiteSpace().containsLineFeeds()) return myParent;
+    if (myStart != myParent.getStartOffset() && myParent.getWhiteSpace().containsLineFeeds()) return myParent;
     return myParent.findFirstIndentedParent();
   }
 
@@ -224,7 +234,20 @@ public class AbstractBlockWrapper {
     myIndent = indent;
   }
 
-  public int getEndOffset() {
-    return getTextRange().getEndOffset();
+  public AlignmentImpl getAlignment() {
+    return myAlignment;
+  }
+
+  public boolean isIncomplete() {
+    return (myFlags & INCOMPLETE) != 0;
+  }
+
+  public void dispose() {
+    myAlignment = null;
+    myWrap = null;
+    myIndent = null;
+    myIndentFromParent = null;
+    myParent = null;
+    myWhiteSpace = null;
   }
 }

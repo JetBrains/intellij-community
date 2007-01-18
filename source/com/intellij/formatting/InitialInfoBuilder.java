@@ -5,6 +5,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
+import com.intellij.psi.formatter.xml.SyntheticBlock;
 import com.intellij.psi.impl.DebugUtil;
 import gnu.trove.THashMap;
 
@@ -16,8 +17,10 @@ class InitialInfoBuilder {
   private WhiteSpace myCurrentWhiteSpace;
   private final FormattingDocumentModel myModel;
   private TextRange myAffectedRange;
+  private final int myPositionOfInterest;
   private boolean myProcessHeadingWhitespace;
-  private final Map<Block, AbstractBlockWrapper> myResult = new THashMap<Block, AbstractBlockWrapper>();
+  private final Map<AbstractBlockWrapper, Block> myResult = new THashMap<AbstractBlockWrapper, Block>();
+  private CompositeBlockWrapper myRootBlockWrapper;
   private LeafBlockWrapper myPreviousBlock;
   private LeafBlockWrapper myFirstTokenBlock;
   private LeafBlockWrapper myLastTokenBlock;
@@ -29,22 +32,25 @@ class InitialInfoBuilder {
   private InitialInfoBuilder(final FormattingDocumentModel model,
                              final TextRange affectedRange,
                              final CodeStyleSettings.IndentOptions options,
-                             final boolean processHeadingWhitespace) {
+                             final boolean processHeadingWhitespace,
+                             final int positionOfInterest
+                             ) {
     myModel = model;
     myAffectedRange = affectedRange;
     myProcessHeadingWhitespace = processHeadingWhitespace;
     myCurrentWhiteSpace = new WhiteSpace(0, true);
     myOptions = options;
+    myPositionOfInterest = positionOfInterest;
   }
 
   public static InitialInfoBuilder buildBlocks(Block root,
                                                FormattingDocumentModel model,
                                                final TextRange affectedRange,
                                                final CodeStyleSettings.IndentOptions options,
-                                               final boolean processHeadingWhitespace) {
-    final InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRange, options, processHeadingWhitespace);
+                                               final boolean processHeadingWhitespace, int interestingOffset) {
+    final InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRange, options, processHeadingWhitespace, interestingOffset);
     builder.myRightBlocks.add(root);
-    final AbstractBlockWrapper wrapper = builder.buildFrom(root, 0, null, null, root.getTextRange());
+    final AbstractBlockWrapper wrapper = builder.buildFrom(root, 0, null, null, root.getTextRange(), null);
     wrapper.setIndent((IndentImpl)Indent.getNoneIndent());
     return builder;
   }
@@ -53,7 +59,9 @@ class InitialInfoBuilder {
                                          final int index,
                                          final AbstractBlockWrapper parent,
                                          WrapImpl currentWrapParent,
-                                         final TextRange textRange) {
+                                         final TextRange textRange,
+                                         final Block parentBlock
+                                         ) {
     final WrapImpl wrap = ((WrapImpl)rootBlock.getWrap());
     if (wrap != null) {
       wrap.registerParent(currentWrapParent);
@@ -62,19 +70,19 @@ class InitialInfoBuilder {
     final int blockStartOffset = textRange.getStartOffset();
 
     if (parent != null) {
-      if (textRange.getStartOffset() < parent.getTextRange().getStartOffset()) {
+      if (textRange.getStartOffset() < parent.getStartOffset()) {
         assertInvalidRanges(
           textRange.getStartOffset(),
-          parent.getTextRange().getStartOffset(),
+          parent.getStartOffset(),
           myModel,
           "child block start is less than parent block start"
         );
       }
 
-      if (textRange.getEndOffset() > parent.getTextRange().getEndOffset()) {
+      if (textRange.getEndOffset() > parent.getEndOffset()) {
         assertInvalidRanges(
           textRange.getEndOffset(),
-          parent.getTextRange().getEndOffset(),
+          parent.getEndOffset(),
           myModel,
           "child block end is after parent block end"
         );
@@ -85,12 +93,12 @@ class InitialInfoBuilder {
     boolean isReadOnly = isReadOnly(textRange, rootBlock);
 
     if (isReadOnly) {
-      return processSimpleBlock(rootBlock, parent, isReadOnly, textRange, index);
+      return processSimpleBlock(rootBlock, parent, isReadOnly, textRange, index, parentBlock);
     }
     else {
       final List<Block> subBlocks = rootBlock.getSubBlocks();
       if (subBlocks.isEmpty()) {
-        return processSimpleBlock(rootBlock, parent, isReadOnly, textRange, index);
+        return processSimpleBlock(rootBlock, parent, isReadOnly, textRange, index,parentBlock);
       }
       else {
         return processCompositeBlock(rootBlock, parent, textRange, index, subBlocks, currentWrapParent);
@@ -108,10 +116,19 @@ class InitialInfoBuilder {
     if (index == 0) {
       info.arrangeParentTextRange();
     }
-    myResult.put(rootBlock, info);
+
+    if (myRootBlockWrapper == null) myRootBlockWrapper = info;
+    boolean blocksMayBeOfInterest = false;
+
+    if (myPositionOfInterest != -1) {
+      myResult.put(info, rootBlock);
+      blocksMayBeOfInterest = true;
+    }
 
     Block previous = null;
     List<AbstractBlockWrapper> list = new ArrayList<AbstractBlockWrapper>(subBlocks.size());
+    final boolean blocksAreReadOnly = rootBlock instanceof SyntheticBlock || blocksMayBeOfInterest;
+
     for (int i = 0; i < subBlocks.size(); i++) {
       final Block block = subBlocks.get(i);
       if (previous != null) {
@@ -121,13 +138,16 @@ class InitialInfoBuilder {
       if (i == subBlocks.size() - 1 && myRightBlocks.contains(rootBlock)) {
         myRightBlocks.add(subBlocks.get(subBlocks.size() - 1));
       }      
-      final AbstractBlockWrapper wrapper = buildFrom(block, i, info, currentWrapParent, blockRange);
+      final AbstractBlockWrapper wrapper = buildFrom(block, i, info, currentWrapParent, blockRange,rootBlock);
       list.add(wrapper);
       final IndentImpl indent = (IndentImpl)block.getIndent();
       wrapper.setIndent(indent);
       previous = block;
+
+      if (!blocksAreReadOnly) subBlocks.set(i, null); // to prevent extra strong refs during model building
     }
     setDefaultIndents(list);
+    info.setChildren(list);
     return info;
   }
 
@@ -144,13 +164,15 @@ class InitialInfoBuilder {
   private AbstractBlockWrapper processSimpleBlock(final Block rootBlock,
                                                   final AbstractBlockWrapper parent,
                                                   final boolean readOnly,
-                                                  final TextRange textRange, final int index) {
+                                                  final TextRange textRange,
+                                                  final int index,
+                                                  Block parentBlock
+                                                  ) {
     final LeafBlockWrapper info = new LeafBlockWrapper(rootBlock, parent, myCurrentWhiteSpace, myModel, myPreviousBlock, readOnly,
                                                        textRange);
     if (index == 0) {
       info.arrangeParentTextRange();
     }
-    myResult.put(rootBlock, info);
 
     if (textRange.getLength() == 0) {
       assertInvalidRanges(
@@ -167,7 +189,7 @@ class InitialInfoBuilder {
       myFirstTokenBlock = info;
     }
     myLastTokenBlock = info;
-    if (currentWhiteSpaceIsRreadOnly()) {
+    if (currentWhiteSpaceIsReadOnly()) {
       myCurrentWhiteSpace.setReadOnly(true);
     }
     if (myCurrentSpaceProperty != null) {
@@ -178,23 +200,27 @@ class InitialInfoBuilder {
     info.setSpaceProperty(myCurrentSpaceProperty);
     myCurrentWhiteSpace = new WhiteSpace(textRange.getEndOffset(), false);
     myPreviousBlock = info;
+
+    if (myPositionOfInterest != -1 && (textRange.contains(myPositionOfInterest) || textRange.getEndOffset() == myPositionOfInterest)) {
+      myResult.put(info, rootBlock);
+      if (parent != null) myResult.put(parent, parentBlock);
+    }
     return info;
   }
 
-  private boolean currentWhiteSpaceIsRreadOnly() {
+  private boolean currentWhiteSpaceIsReadOnly() {
     if (myCurrentSpaceProperty != null && myCurrentSpaceProperty.isReadOnly()) {
       return true;
     }
     else {
       if (myAffectedRange == null) return false;
-      final TextRange textRange = myCurrentWhiteSpace.getTextRange();
 
-      if (textRange.getStartOffset() >= myAffectedRange.getEndOffset()) return true;
+      if (myCurrentWhiteSpace.getStartOffset() >= myAffectedRange.getEndOffset()) return true;
       if (myProcessHeadingWhitespace) {
-        return textRange.getEndOffset() < myAffectedRange.getStartOffset();
+        return myCurrentWhiteSpace.getEndOffset() < myAffectedRange.getStartOffset();
       }
       else {
-        return textRange.getEndOffset() <= myAffectedRange.getStartOffset();
+        return myCurrentWhiteSpace.getEndOffset() <= myAffectedRange.getStartOffset();
       }
     }
   }
@@ -208,8 +234,12 @@ class InitialInfoBuilder {
     return textRange.getEndOffset() < myAffectedRange.getStartOffset();
   }
 
-  public Map<Block, AbstractBlockWrapper> getBlockToInfoMap() {
+  public Map<AbstractBlockWrapper,Block> getBlockToInfoMap() {
     return myResult;
+  }
+
+  public CompositeBlockWrapper getRootBlockWrapper() {
+    return myRootBlockWrapper;
   }
 
   public LeafBlockWrapper getFirstTokenBlock() {

@@ -1,5 +1,6 @@
 package com.intellij.formatting;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -11,63 +12,58 @@ import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import java.util.ArrayList;
 
 class WhiteSpace {
-
-
-  private TextRange myTextRange;
+  private int myStart;
+  private int myEnd;
 
   private int mySpaces;
   private int myIndentSpaces;
-  private int myLineFeeds;
 
-  private int myInitialLineFeeds;
-  private int myInitialSpaces = 0;
   private CharSequence myInitial;
-
   private int myFlags;
 
+  private final static byte FIRST = 1;
   private final static byte SAFE = 0x2;
   private final static byte KEEP_FIRST_COLUMN = 0x4;
-  private final static byte FIRST = 0x40;
   private final static byte LINE_FEEDS_ARE_READ_ONLY = 0x8;
   private final static byte READ_ONLY = 0x10;
+  private final static byte CONTAINS_LF_INITIALLY = 0x20;
+  private final static byte CONTAINS_SPACES_INITIALLY = 0x40;
+  private final static int LF_COUNT_SHIFT = 7;
+  private final static int MAX_LF_COUNT = 1 << 24;
 
   public WhiteSpace(int startOffset, boolean isFirst) {
-    myTextRange = new TextRange(startOffset, startOffset);
-    mySpaces = 0;
-    myIndentSpaces = 0;
-    myLineFeeds = 0;
-    myInitialLineFeeds = 0;
+    myStart = startOffset;
+    myEnd = startOffset;
     setIsFirstWhiteSpace(isFirst);
   }
 
   public void append(int newEndOffset, FormattingDocumentModel model, CodeStyleSettings.IndentOptions options) {
-    final int oldEndOffset = myTextRange.getEndOffset();
+    final int oldEndOffset = myEnd;
     if (newEndOffset == oldEndOffset) return;
-    if (myTextRange.getStartOffset() >= newEndOffset) {
-      InitialInfoBuilder.assertInvalidRanges(
-        myTextRange.getStartOffset(),
+    if (myStart >= newEndOffset) {
+      InitialInfoBuilder.assertInvalidRanges(myStart,
         newEndOffset,
         model,
         "some block intersects with whitespace"
       );
     }
-    myTextRange = new TextRange(myTextRange.getStartOffset(), newEndOffset);
-    myInitial = model.getText(myTextRange);
+
+    TextRange range = new TextRange(myStart, myEnd = newEndOffset);
+    myInitial = model.getText(range);
     
     if (!coveredByBlock(model)) {
-      InitialInfoBuilder.assertInvalidRanges(
-        myTextRange.getStartOffset(),
-        myTextRange.getEndOffset(),
+      InitialInfoBuilder.assertInvalidRanges(myStart,
+        myEnd,
         model,
         "nonempty text is not covered by block"
       );
     }
 
     final int tabsize = options.TAB_SIZE;
-    for (int i = oldEndOffset - myTextRange.getStartOffset(); i < newEndOffset - myTextRange.getStartOffset(); i++) {
+    for (int i = oldEndOffset - myStart; i < newEndOffset - myStart; i++) {
       switch (myInitial.charAt(i)) {
         case '\n':
-          myLineFeeds++;
+          setLineFeeds(getLineFeeds() + 1);
           mySpaces = 0;
           myIndentSpaces = 0;
           break;
@@ -80,8 +76,12 @@ class WhiteSpace {
       }
     }
 
-    myInitialLineFeeds = myLineFeeds;
-    myInitialSpaces = getTotalSpaces();
+    if (getLineFeeds() > 0) myFlags |= CONTAINS_LF_INITIALLY;
+    else myFlags &= ~CONTAINS_LF_INITIALLY;
+
+    final int totalSpaces = getTotalSpaces();
+    if (totalSpaces > 0) myFlags |= CONTAINS_SPACES_INITIALLY;
+    else myFlags &=~ CONTAINS_SPACES_INITIALLY;
   }
 
   private boolean coveredByBlock(final FormattingDocumentModel model) {
@@ -90,24 +90,22 @@ class WhiteSpace {
     if (!(model instanceof FormattingDocumentModelImpl)) return false;
     PsiFile psiFile = ((FormattingDocumentModelImpl)model).getFile();
     if (psiFile == null) return false;
-    PsiElement start = psiFile.findElementAt(myTextRange.getStartOffset());
-    PsiElement end = psiFile.findElementAt(myTextRange.getEndOffset()-1);
+    PsiElement start = psiFile.findElementAt(myStart);
+    PsiElement end = psiFile.findElementAt(myEnd-1);
     return start == end && start instanceof PsiWhiteSpace; // there maybe non-white text inside CDATA-encoded elements
   }
 
   public String generateWhiteSpace(CodeStyleSettings.IndentOptions options) {
-
-    StringBuffer buffer = new StringBuffer();
-    StringUtil.repeatSymbol(buffer, '\n', myLineFeeds);
+    StringBuilder buffer = new StringBuilder();
+    StringUtil.repeatSymbol(buffer, '\n', getLineFeeds());
 
     repeatTrailingSymbols(options, buffer, myIndentSpaces, mySpaces);
 
     return buffer.toString();
-
   }
 
   private static void repeatTrailingSymbols(final CodeStyleSettings.IndentOptions options,
-                                     final StringBuffer buffer,
+                                     final StringBuilder buffer,
                                      final int indentSpaces,
                                      final int spaces) {
     if (options.USE_TAB_CHARACTER) {
@@ -139,7 +137,7 @@ class WhiteSpace {
   public void setSpaces(final int spaces, final int indent) {
     performModification(new Runnable() {
       public void run() {
-        if (!isKeepFirstColumn() || myInitialSpaces > 0) {
+        if (!isKeepFirstColumn() || (myFlags & CONTAINS_SPACES_INITIALLY) != 0) {
           mySpaces = spaces;
           myIndentSpaces = indent;
         }
@@ -148,11 +146,15 @@ class WhiteSpace {
   }
 
   private boolean doesNotContainAnySpaces() {
-    return getTotalSpaces() == 0 && myLineFeeds == 0;
+    return getTotalSpaces() == 0 && getLineFeeds() == 0;
   }
 
-  public TextRange getTextRange() {
-    return myTextRange;
+  public int getStartOffset() {
+    return myStart;
+  }
+  
+  public int getEndOffset() {
+    return myEnd;
   }
 
   private void performModification(Runnable action) {
@@ -161,14 +163,14 @@ class WhiteSpace {
     final int lineFeedsBefore = getLineFeeds();
     action.run();
     if (isLineFeedsAreReadOnly()) {
-      myLineFeeds = lineFeedsBefore;
+      setLineFeeds(lineFeedsBefore);
     }
     if (isIsSafe()) {
       final boolean after = doesNotContainAnySpaces();
       if (before && !after) {
         mySpaces = 0;
         myIndentSpaces = 0;
-        myLineFeeds = 0;
+        setLineFeeds(0);
       }
       else if (!before && after) {
         mySpaces = 1;
@@ -181,7 +183,7 @@ class WhiteSpace {
     performModification(new Runnable() {
       public void run() {
         if (spaceProperty != null) {
-          if (myLineFeeds == 0) {
+          if (getLineFeeds() == 0) {
             if (getTotalSpaces() < spaceProperty.getMinSpaces()) {
               setSpaces(spaceProperty.getMinSpaces(), 0);
             }
@@ -202,33 +204,33 @@ class WhiteSpace {
         if (spaceProperty != null) {
           spaceProperty.refresh(formatProcessor);
 
-          if (spaceProperty.getMinLineFeeds() >= 0 && myLineFeeds < spaceProperty.getMinLineFeeds()) {
-            myLineFeeds = spaceProperty.getMinLineFeeds();
+          if (spaceProperty.getMinLineFeeds() >= 0 && getLineFeeds() < spaceProperty.getMinLineFeeds()) {
+            setLineFeeds(spaceProperty.getMinLineFeeds());
           }
-          if (myLineFeeds > 0) {
+          if (getLineFeeds() > 0) {
             if (spaceProperty.getKeepBlankLines() > 0) {
-              if (myLineFeeds >= spaceProperty.getKeepBlankLines() + 1) {
-                myLineFeeds = spaceProperty.getKeepBlankLines() + 1;
+              if (getLineFeeds() >= spaceProperty.getKeepBlankLines() + 1) {
+                setLineFeeds(spaceProperty.getKeepBlankLines() + 1);
               }
             }
             else {
-              if (myLineFeeds > spaceProperty.getMinLineFeeds()) {
+              if (getLineFeeds() > spaceProperty.getMinLineFeeds()) {
                 if (spaceProperty.shouldKeepLineFeeds()) {
-                  myLineFeeds = Math.max(spaceProperty.getMinLineFeeds(), 1);
+                  setLineFeeds(Math.max(spaceProperty.getMinLineFeeds(), 1));
                 }
                 else {
-                  myLineFeeds = spaceProperty.getMinLineFeeds();
-                  if (myLineFeeds == 0) mySpaces = 0;
+                  setLineFeeds(spaceProperty.getMinLineFeeds());
+                  if (getLineFeeds() == 0) mySpaces = 0;
                 }
               }
             }
-            if (myLineFeeds == 1 && !spaceProperty.shouldKeepLineFeeds() && spaceProperty.getMinLineFeeds() == 0) {
-              myLineFeeds = 0;
+            if (getLineFeeds() == 1 && !spaceProperty.shouldKeepLineFeeds() && spaceProperty.getMinLineFeeds() == 0) {
+              setLineFeeds(0);
               mySpaces = 0;
             }
           }
         } else if (isFirst()) {
-          myLineFeeds = 0;
+          setLineFeeds(0);
           mySpaces = 0;
         }
       }
@@ -236,12 +238,8 @@ class WhiteSpace {
 
   }
 
-  public int getLineFeeds() {
-    return myLineFeeds;
-  }
-
   public boolean containsLineFeeds() {
-    return isIsFirstWhiteSpace() || myLineFeeds > 0;
+    return isIsFirstWhiteSpace() || getLineFeeds() > 0;
   }
 
   public int getTotalSpaces() {
@@ -252,7 +250,7 @@ class WhiteSpace {
     performModification(new Runnable() {
       public void run() {
         if (!containsLineFeeds()) {
-          myLineFeeds = 1;
+          setLineFeeds(1);
           mySpaces = 0;
         }
       }
@@ -263,9 +261,9 @@ class WhiteSpace {
     return isIsReadOnly() || (isIsSafe() && doesNotContainAnySpaces());
   }
 
-  public boolean equalsToString(String ws) {
+  public boolean equalsToString(CharSequence ws) {
     if (myInitial == null) return ws.length() == 0;
-    return myInitial.toString().equals(ws);
+    return Comparing.equal(ws,myInitial,true);
   }
 
   public void setIsSafe(final boolean value) {
@@ -291,13 +289,13 @@ class WhiteSpace {
 
   public boolean containsLineFeedsInitially() {
     if (myInitial == null) return false;
-    return myInitialLineFeeds > 0;
+    return (myFlags & CONTAINS_LF_INITIALLY) != 0;
   }
 
   public void removeLineFeeds(final Spacing spacing, final FormatProcessor formatProcessor) {
     performModification(new Runnable() {
       public void run() {
-        myLineFeeds = 0;
+        setLineFeeds(0);
         mySpaces = 0;
         myIndentSpaces = 0;
       }
@@ -358,12 +356,12 @@ class WhiteSpace {
     setFlag(FIRST, isFirstWhiteSpace);
   }
 
-  public String generateWhiteSpace(final CodeStyleSettings.IndentOptions indentOptions,
+  public StringBuilder generateWhiteSpace(final CodeStyleSettings.IndentOptions indentOptions,
                                                   final int offset,
                                                   final IndentInfo indent) {
-    final StringBuffer result = new StringBuffer();
-    int currentOffset = getTextRange().getStartOffset();
-    String[] lines = getInitialLines();
+    final StringBuilder result = new StringBuilder();
+    int currentOffset = getStartOffset();
+    CharSequence[] lines = getInitialLines();
     int currentLine = 0;
     for (int i = 0; i < lines.length - 1 && currentOffset + lines[i].length() <= offset; i++) {
       result.append(lines[i]);
@@ -386,56 +384,51 @@ class WhiteSpace {
       }
       repeatTrailingSymbols(indentOptions, result, myIndentSpaces, mySpaces);
     }
-    return result.toString();
+    return result;
   }
 
-/*  
-  public String generateWhiteSpace(final CodeStyleSettings.IndentOptions indentOptions,
-                                   final int offset,
-                                   final IndentInfo indent,
-                                   final PsiBasedFormattingModel model) {
-    final int modifiedLine = model.getLineNumber(offset);
-    int currentLine = modifiedLine;
-
-    final StringBuffer result = new StringBuffer();
-
-    for (int i = currentLine; i < currentLine + myLineFeeds - 1; i++) {
-      result.append('\n');
-      if (i >= modifiedLine) {
-        result.append(indent.generateNewWhiteSpace(indentOptions));
-      }
-    }
-    result.append('\n');
-
-    if (myLineFeeds == 1) {
-      result.append(indent.generateNewWhiteSpace(indentOptions));
-    } else {
-      repeatTrailingSymbols(indentOptions, result);
-    }
-    return result.toString();
-  }
-*/
-
-  private String[] getInitialLines() {
-    if (myInitial == null) return new String[]{""};
-    final ArrayList<String> result = new ArrayList<String>();
+  private CharSequence[] getInitialLines() {
+    if (myInitial == null) return new CharSequence[]{""};
+    final ArrayList<CharSequence> result = new ArrayList<CharSequence>();
     StringBuffer currentLine = new StringBuffer();
     for (int i = 0; i < myInitial.length(); i++) {
       final char c = myInitial.charAt(i);
       if (c == '\n') {
-        result.add(currentLine.toString());
+        result.add(currentLine);
         currentLine = new StringBuffer();
       }
       else {
         currentLine.append(c);
       }
     }
-    result.add(currentLine.toString());
-    return result.toArray(new String[result.size()]);
+    result.add(currentLine);
+    return result.toArray(new CharSequence[result.size()]);
   }
 
   public int getIndentSpaces() {
     return myIndentSpaces;
+  }
+
+  public int getLength() {
+    return myEnd - myStart;
+  }
+
+  public final int getLineFeeds() {
+    return myFlags >>> LF_COUNT_SHIFT;
+  }
+
+  public void setLineFeeds(final int lineFeeds) {
+    assert lineFeeds < MAX_LF_COUNT;
+    final int flags = myFlags;
+    myFlags &= ~0xFFFFFF80;
+    myFlags |= (lineFeeds << LF_COUNT_SHIFT);
+
+    assert getLineFeeds() == lineFeeds;
+    assert (flags & 0x7F) == (myFlags & 0x7F);
+  }
+
+  public TextRange getTextRange() {
+    return new TextRange(myStart, myEnd);
   }
 }
 

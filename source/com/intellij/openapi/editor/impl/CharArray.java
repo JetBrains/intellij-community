@@ -50,6 +50,9 @@ abstract class CharArray implements CharSequenceBackedByArray {
   }
 
   private void doRemove(final int startIndex, final int endIndex) {
+    if (startIndex == endIndex) {
+      return;
+    }
     prepareForModification();
 
     if (endIndex < myCount) {
@@ -73,7 +76,12 @@ abstract class CharArray implements CharSequenceBackedByArray {
     if (startIndex < myCount) {
       System.arraycopy(myArray, startIndex, myArray, startIndex + insertLength, myCount - startIndex);
     }
-    CharArrayUtil.getChars(s, myArray,startIndex);
+    
+    if (s instanceof String) {
+      ((String)s).getChars(0,insertLength,myArray,startIndex);
+    } else {
+      CharArrayUtil.getChars(s, myArray,startIndex);
+    }
     myCount += insertLength;
   }
 

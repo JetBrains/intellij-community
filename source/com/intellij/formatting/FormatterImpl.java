@@ -1,6 +1,5 @@
 package com.intellij.formatting;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -179,17 +178,16 @@ public class FormatterImpl extends FormatterEx
       while (tokenBlock != null) {
         final WhiteSpace whiteSpace = tokenBlock.getWhiteSpace();
 
-        final TextRange whiteSpaceRange = whiteSpace.getTextRange();
-        if (whiteSpaceRange.getEndOffset() < textRange.getStartOffset()) {
+        if (whiteSpace.getEndOffset() < textRange.getStartOffset()) {
           whiteSpace.setIsReadOnly(true);
-        } else if (whiteSpaceRange.getStartOffset() > textRange.getStartOffset() &&
-                   whiteSpaceRange.getEndOffset() < textRange.getEndOffset()){
+        } else if (whiteSpace.getStartOffset() > textRange.getStartOffset() &&
+                   whiteSpace.getEndOffset() < textRange.getEndOffset()){
           if (whiteSpace.containsLineFeeds()) {
             whiteSpace.setLineFeedsAreReadOnly(true);
           } else {
             whiteSpace.setIsReadOnly(true);
           }
-        } else if (whiteSpaceRange.getEndOffset() > textRange.getEndOffset() + 1) {
+        } else if (whiteSpace.getEndOffset() > textRange.getEndOffset() + 1) {
           whiteSpace.setIsReadOnly(true);
         }
 
@@ -216,7 +214,7 @@ public class FormatterImpl extends FormatterEx
       final FormattingDocumentModel documentModel = model.getDocumentModel();
       final Block block = model.getRootBlock();
       final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions, affectedRange,
-                                                            true);
+                                                            true, offset);
 
       final LeafBlockWrapper blockAfterOffset = processor.getBlockAfter(offset);
 
@@ -242,7 +240,7 @@ public class FormatterImpl extends FormatterEx
     final FormattingModel model,
     final WhiteSpace whiteSpace)
   {
-    boolean wsContainsCaret = whiteSpace.getTextRange().getStartOffset() <= offset && whiteSpace.getTextRange().getEndOffset() > offset;
+    boolean wsContainsCaret = whiteSpace.getStartOffset() <= offset && whiteSpace.getEndOffset() > offset;
 
     final CharSequence text = getCharSequence(documentModel);
     int lineStartOffset = getLineStartOffset(offset, whiteSpace, text, documentModel);
@@ -259,7 +257,7 @@ public class FormatterImpl extends FormatterEx
       indent = processor.getIndentAt(offset);
     }
 
-    final String newWS = whiteSpace.generateWhiteSpace(indentOptions, lineStartOffset, indent);
+    final String newWS = whiteSpace.generateWhiteSpace(indentOptions, lineStartOffset, indent).toString();
     try {
       model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS);
     }
@@ -267,17 +265,16 @@ public class FormatterImpl extends FormatterEx
       model.commitChanges();
     }
 
-
     if (wsContainsCaret) {
-      return whiteSpace.getTextRange().getStartOffset()
-             + CharArrayUtil.shiftForward(newWS.toCharArray(), lineStartOffset - whiteSpace.getTextRange().getStartOffset(), " \t");
+      return whiteSpace.getStartOffset()
+             + CharArrayUtil.shiftForward(newWS, lineStartOffset - whiteSpace.getStartOffset(), " \t");
     } else {
-      return offset - whiteSpace.getTextRange().getLength() + newWS.length();
+      return offset - whiteSpace.getLength() + newWS.length();
     }
   }
 
   private static boolean hasContentAfterLineBreak(final FormattingDocumentModel documentModel, final int offset, final WhiteSpace whiteSpace) {
-    return documentModel.getLineNumber(offset) == documentModel.getLineNumber(whiteSpace.getTextRange().getEndOffset()) &&
+    return documentModel.getLineNumber(offset) == documentModel.getLineNumber(whiteSpace.getEndOffset()) &&
            documentModel.getTextLength() != offset;
   }
 
@@ -289,7 +286,7 @@ public class FormatterImpl extends FormatterEx
       final FormattingDocumentModel documentModel = model.getDocumentModel();
       final Block block = model.getRootBlock();
       final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions, affectedRange,
-                                                            true);
+                                                            true, offset);
 
       final LeafBlockWrapper blockAfterOffset = processor.getBlockAfter(offset);
 
@@ -307,7 +304,7 @@ public class FormatterImpl extends FormatterEx
           indent = processor.getIndentAt(offset);
         }
 
-        return indent.generateNewWhiteSpace(indentOptions);
+        return indent.generateNewWhiteSpace(indentOptions).toString();
 
       } else {
         return null;
@@ -329,10 +326,10 @@ public class FormatterImpl extends FormatterEx
     int lineStartOffset = offset;
 
     lineStartOffset = CharArrayUtil.shiftBackwardUntil(text, lineStartOffset, " \t\n");
-    if (lineStartOffset > whiteSpace.getTextRange().getStartOffset()) {
+    if (lineStartOffset > whiteSpace.getStartOffset()) {
       if (lineStartOffset >= text.length()) lineStartOffset = text.length() - 1;
       if (text.charAt(lineStartOffset) == '\n'
-          && whiteSpace.getTextRange().getStartOffset() <= documentModel.getLineStartOffset(documentModel.getLineNumber(lineStartOffset - 1))) {
+          && whiteSpace.getStartOffset() <= documentModel.getLineStartOffset(documentModel.getLineNumber(lineStartOffset - 1))) {
         lineStartOffset--;
       }
       lineStartOffset = CharArrayUtil.shiftBackward(text, lineStartOffset, "\t ");
@@ -362,7 +359,7 @@ public class FormatterImpl extends FormatterEx
         WhiteSpace whiteSpace = current.getWhiteSpace();
 
         if (!whiteSpace.isReadOnly()) {
-          if (whiteSpace.getTextRange().getStartOffset() > affectedRange.getStartOffset()) {
+          if (whiteSpace.getStartOffset() > affectedRange.getStartOffset()) {
             if (whiteSpace.containsLineFeeds() && indentInfoStorage != null) {
               whiteSpace.setLineFeedsAreReadOnly(true);
               current.setIndentFromParent(indentInfoStorage.getIndentInfo(current.getStartOffset()));
@@ -426,7 +423,7 @@ public class FormatterImpl extends FormatterEx
         WhiteSpace whiteSpace = current.getWhiteSpace();
 
         if (!whiteSpace.isReadOnly()) {
-          if (whiteSpace.getTextRange().getStartOffset() > affectedRange.getStartOffset()) {
+          if (whiteSpace.getStartOffset() > affectedRange.getStartOffset()) {
             whiteSpace.setReadOnly(true);
           } else {
             whiteSpace.setReadOnly(false);
@@ -453,7 +450,7 @@ public class FormatterImpl extends FormatterEx
       WhiteSpace whiteSpace = current.getWhiteSpace();
 
       if (!whiteSpace.isReadOnly() && whiteSpace.containsLineFeeds()) {
-        storage.saveIndentInfo(current.calcIndentFromParent(), current.getTextRange().getStartOffset());
+        storage.saveIndentInfo(current.calcIndentFromParent(), current.getStartOffset());
       }
       current = current.getNextBlock();
     }
