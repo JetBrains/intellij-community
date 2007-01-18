@@ -43,8 +43,8 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.peer.PeerFactory;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -272,7 +272,10 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     for(AddedFileInfo addedFileInfo: myAddedFiles) {
       VirtualFile addedFile = addedFileInfo.myDir.findChild(addedFileInfo.myName);
       if (addedFile != null) {
-        addedVFiles.putValue(addedFileInfo.myProject, addedFile);
+        final SVNStatus fileStatus = getFileStatus(new File(getIOFile(addedFileInfo.myDir), addedFileInfo.myName));
+        if (fileStatus == null || fileStatus.getContentsStatus() != SVNStatusType.STATUS_IGNORED) {
+          addedVFiles.putValue(addedFileInfo.myProject, addedFile);
+        }
       }
     }
     for(Project project: addedVFiles.keySet()) {
