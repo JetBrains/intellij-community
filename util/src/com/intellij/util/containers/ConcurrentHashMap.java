@@ -9,7 +9,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
 
-// added hashing strategy argument and cacheOrGet convenience method
+// added hashing strategy argument
+// added cacheOrGet convenience method
+// changed DEFAULT_SEGMENTS to 2 from 16
 public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, Serializable, TObjectHashingStrategy<K> {
     private static final long serialVersionUID = 7249069246763182397L;
 
@@ -43,7 +45,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     /**
      * The default number of concurrency control segments.
      **/
-    static final int DEFAULT_SEGMENTS = 16;
+    static final int DEFAULT_SEGMENTS = Math.min(2, Runtime.getRuntime().availableProcessors()); // CHANGED FROM 16
 
     /**
      * The maximum number of segments to allow; used to bound
