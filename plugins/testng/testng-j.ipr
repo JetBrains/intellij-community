@@ -4,10 +4,12 @@
     <defaultAnt bundledAnt="true" />
     <buildFile url="file://$PROJECT_DIR$/build.xml">
       <additionalClassPath />
-      <antReference projectDefault="true" />
-      <customJdkName value="" />
+      <antReference name="Apache Ant version 1.6.5" />
+      <customJdkName value="IDEA SDK" />
       <maximumHeapSize value="128" />
-      <properties />
+      <properties>
+        <property name="idea.home" value="C:\Program Files\JetBrains\IntelliJ IDEA 6.0" />
+      </properties>
     </buildFile>
   </component>
   <component name="BuildJarProjectSettings">
