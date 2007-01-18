@@ -266,10 +266,11 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
             filesToProcess = vFiles;
           }
           else {
-            filesToProcess = vcsHelper.selectFilesToProcess(vFiles, "Select Files to Add to Subversion",
+            filesToProcess = vcsHelper.selectFilesToProcess(vFiles, SvnBundle.message("confirmation.title.add.multiple.files"),
                                                             null,
                                                             SvnBundle.message("confirmation.title.add.file"),
-                                                            SvnBundle.message("confirmation.text.add.file"));
+                                                            SvnBundle.message("confirmation.text.add.file"),
+                                                            vcs.getAddConfirmation());
           }
           if (filesToProcess != null) {
             List<VcsException> exceptions = new ArrayList<VcsException>();
