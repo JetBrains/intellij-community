@@ -223,7 +223,14 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
             statement = (PsiStatement) expr.getParent();
           }
           final PsiExpression expr1 = fieldConflictsResolver.fixInitializer(expr);
-          PsiDeclarationStatement declaration = factory.createVariableDeclarationStatement(variableName, type, expr1);
+          PsiExpression initializer = expr1;
+          if (expr1 instanceof PsiNewExpression) {
+            final PsiNewExpression newExpression = (PsiNewExpression)expr1;
+            if (newExpression.getArrayInitializer() != null) {
+              initializer = newExpression.getArrayInitializer();
+            }
+          }
+          PsiDeclarationStatement declaration = factory.createVariableDeclarationStatement(variableName, type, initializer);
           if (!isInsideLoop) {
             declaration = (PsiDeclarationStatement) container.addBefore(declaration, anchor);
             LOG.assertTrue(expr1.isValid());
