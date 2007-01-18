@@ -196,7 +196,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
   }
 
   private static final URL progressUrl = RefreshStatusRenderer.class.getClassLoader().getResource("/general/progress.png");
-  private static final URL progressPlaceHolderUrl = RefreshStatusRenderer.class.getClassLoader().getResource("/general/progressPlaceHolder.png");
+  private static final URL progressPlaceHolderUrl = RefreshStatusRenderer.class.getClassLoader().getResource("/general/progressTransparentPlaceHolder.png");
 
   private static String renderProgressHtml(double progress) {
     String text = "<table><tr><td>";
