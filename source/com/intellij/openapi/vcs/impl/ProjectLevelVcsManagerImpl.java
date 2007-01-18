@@ -612,8 +612,21 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       if (ModuleLevelVcsManager.getInstance(module).getActiveVcs() == vcs) {
         for(VirtualFile contentRoot: ModuleRootManager.getInstance(module).getContentRoots()) {
           result.add(contentRoot);
-          // TODO: filter out ancestors
         }
+      }
+    }
+    Collections.sort(result, new Comparator<VirtualFile>() {
+      public int compare(final VirtualFile o1, final VirtualFile o2) {
+        return o1.getPath().compareTo(o2.getPath());
+      }
+    });
+    int i=1;
+    while(i < result.size()) {
+      if (VfsUtil.isAncestor(result.get(i-1), result.get(i), false)) {
+        result.remove(i);
+      }
+      else {
+        i++;
       }
     }
     return result.toArray(new VirtualFile[result.size()]);
