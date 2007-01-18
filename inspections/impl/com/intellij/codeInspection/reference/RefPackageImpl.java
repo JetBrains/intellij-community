@@ -8,6 +8,7 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.openapi.application.ApplicationManager;
 
 
 public class RefPackageImpl extends RefEntityImpl implements RefPackage {
@@ -28,7 +29,11 @@ public class RefPackageImpl extends RefEntityImpl implements RefPackage {
   }
 
 
-  public void accept(RefVisitor refVisitor) {
-    refVisitor.visitPackage(this);
+  public void accept(final RefVisitor refVisitor) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        refVisitor.visitPackage(RefPackageImpl.this);
+      }
+    });
   }
 }

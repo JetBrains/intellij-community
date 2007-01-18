@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -79,8 +80,12 @@ public class RefFileImpl extends RefElementImpl implements RefFile {
     return (PsiFile)super.getElement();
   }
 
-  public void accept(RefVisitor visitor) {
-    visitor.visitFile(this);
+  public void accept(final RefVisitor visitor) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        visitor.visitFile(RefFileImpl.this);
+      }
+    });
   }
 
   @Nullable

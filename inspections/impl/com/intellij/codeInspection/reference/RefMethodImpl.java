@@ -307,8 +307,12 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
     }
   }
 
-  public void accept(RefVisitor visitor) {
-    visitor.visitMethod(this);
+  public void accept(final RefVisitor visitor) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        visitor.visitMethod(RefMethodImpl.this);
+      }
+    });
   }
 
   public boolean isExternalOverride() {

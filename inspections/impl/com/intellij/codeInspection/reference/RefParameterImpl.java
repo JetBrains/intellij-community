@@ -58,8 +58,12 @@ public class RefParameterImpl extends RefElementImpl implements RefParameter {
     setFlag(true, USED_FOR_WRITING_MASK);
   }
 
-  public void accept(RefVisitor visitor) {
-    visitor.visitParameter(this);
+  public void accept(final RefVisitor visitor) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        visitor.visitParameter(RefParameterImpl.this);
+      }
+    });
   }
 
   public int getIndex() {

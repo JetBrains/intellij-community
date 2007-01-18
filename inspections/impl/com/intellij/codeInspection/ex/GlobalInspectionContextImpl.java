@@ -15,6 +15,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.ide.util.projectWizard.JdkChooserPanel;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,6 +29,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -442,25 +444,30 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             return false;
           }
         };
+        final Application application = ApplicationManager.getApplication();
         if (myDerivedClassesRequests != null) {
           List<PsiElement> sortedIDs = getSortedIDs(myDerivedClassesRequests);
           for (PsiElement sortedID : sortedIDs) {
-            PsiClass psiClass = (PsiClass)sortedID;
+            final PsiClass psiClass = (PsiClass)sortedID;
             incrementJobDoneAmount(FIND_EXTERNAL_USAGES, psiClass.getQualifiedName());
 
             final List<DerivedClassesProcessor> processors = myDerivedClassesRequests.get(psiClass);
-            helper.processInheritors(new PsiElementProcessor<PsiClass>() {
-              public boolean execute(PsiClass inheritor) {
-                if (scope.contains(inheritor)) return true;
-                DerivedClassesProcessor[] processorsArrayed = processors.toArray(new DerivedClassesProcessor[processors.size()]);
-                for (DerivedClassesProcessor processor : processorsArrayed) {
-                  if (!processor.process(inheritor)) {
-                    processors.remove(processor);
+            application.runReadAction(new Runnable() {
+              public void run() {
+                helper.processInheritors(new PsiElementProcessor<PsiClass>() {
+                  public boolean execute(PsiClass inheritor) {
+                    if (scope.contains(inheritor)) return true;
+                    DerivedClassesProcessor[] processorsArrayed = processors.toArray(new DerivedClassesProcessor[processors.size()]);
+                    for (DerivedClassesProcessor processor : processorsArrayed) {
+                      if (!processor.process(inheritor)) {
+                        processors.remove(processor);
+                      }
+                    }
+                    return !processors.isEmpty();
                   }
-                }
-                return !processors.isEmpty();
+                }, psiClass, searchScope, false);
               }
-            }, psiClass, searchScope, false);
+            });
           }
 
           myDerivedClassesRequests = null;
@@ -469,25 +476,29 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         if (myDerivedMethodsRequests != null) {
           List<PsiElement> sortedIDs = getSortedIDs(myDerivedMethodsRequests);
           for (PsiElement sortedID : sortedIDs) {
-            PsiMethod psiMethod = (PsiMethod)sortedID;
+            final PsiMethod psiMethod = (PsiMethod)sortedID;
             final RefMethod refMethod = (RefMethod)refManager.getReference(psiMethod);
 
             incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getInstance().getQualifiedName(refMethod));
 
             final List<DerivedMethodsProcessor> processors = myDerivedMethodsRequests.get(psiMethod);
-            helper.processOverridingMethods(new PsiElementProcessor<PsiMethod>() {
-              public boolean execute(PsiMethod derivedMethod) {
-                if (scope.contains(derivedMethod)) return true;
-                DerivedMethodsProcessor[] processorsArrayed = processors.toArray(new DerivedMethodsProcessor[processors.size()]);
-                for (DerivedMethodsProcessor processor : processorsArrayed) {
-                  if (!processor.process(derivedMethod)) {
-                    processors.remove(processor);
-                  }
-                }
+            application.runReadAction(new Runnable() {
+              public void run() {
+                helper.processOverridingMethods(new PsiElementProcessor<PsiMethod>() {
+                  public boolean execute(PsiMethod derivedMethod) {
+                    if (scope.contains(derivedMethod)) return true;
+                    DerivedMethodsProcessor[] processorsArrayed = processors.toArray(new DerivedMethodsProcessor[processors.size()]);
+                    for (DerivedMethodsProcessor processor : processorsArrayed) {
+                      if (!processor.process(derivedMethod)) {
+                        processors.remove(processor);
+                      }
+                    }
 
-                return !processors.isEmpty();
+                    return !processors.isEmpty();
+                  }
+                }, psiMethod, searchScope, true);
               }
-            }, psiMethod, searchScope, true);
+            });
           }
 
           myDerivedMethodsRequests = null;
@@ -496,13 +507,17 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         if (myFieldUsagesRequests != null) {
           List<PsiElement> sortedIDs = getSortedIDs(myFieldUsagesRequests);
           for (PsiElement sortedID : sortedIDs) {
-            PsiField psiField = (PsiField)sortedID;
+            final PsiField psiField = (PsiField)sortedID;
             final List<UsagesProcessor> processors = myFieldUsagesRequests.get(psiField);
 
             incrementJobDoneAmount(FIND_EXTERNAL_USAGES,
                                    RefUtil.getInstance().getQualifiedName(refManager.getReference(psiField)));
 
-            helper.processReferences(createReferenceProcessor(processors), psiField, searchScope, false);
+            application.runReadAction(new Runnable() {
+              public void run() {
+                helper.processReferences(createReferenceProcessor(processors), psiField, searchScope, false);
+              }
+            });
           }
 
           myFieldUsagesRequests = null;
@@ -511,12 +526,16 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         if (myClassUsagesRequests != null) {
           List<PsiElement> sortedIDs = getSortedIDs(myClassUsagesRequests);
           for (PsiElement sortedID : sortedIDs) {
-            PsiClass psiClass = (PsiClass)sortedID;
+            final PsiClass psiClass = (PsiClass)sortedID;
             final List<UsagesProcessor> processors = myClassUsagesRequests.get(psiClass);
 
             incrementJobDoneAmount(FIND_EXTERNAL_USAGES, psiClass.getQualifiedName());
 
-            helper.processReferences(createReferenceProcessor(processors), psiClass, searchScope, false);
+            application.runReadAction(new Runnable() {
+              public void run() {
+                helper.processReferences(createReferenceProcessor(processors), psiClass, searchScope, false);
+              }
+            });
           }
 
           myClassUsagesRequests = null;
@@ -525,18 +544,22 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         if (myMethodUsagesRequests != null) {
           List<PsiElement> sortedIDs = getSortedIDs(myMethodUsagesRequests);
           for (PsiElement sortedID : sortedIDs) {
-            PsiMethod psiMethod = (PsiMethod)sortedID;
+            final PsiMethod psiMethod = (PsiMethod)sortedID;
             final List<UsagesProcessor> processors = myMethodUsagesRequests.get(psiMethod);
 
             incrementJobDoneAmount(FIND_EXTERNAL_USAGES,
                                    RefUtil.getInstance().getQualifiedName(refManager.getReference(psiMethod)));
 
-            helper.processReferencesIncludingOverriding(createReferenceProcessor(processors), psiMethod, searchScope);
+            application.runReadAction(new Runnable() {
+              public void run() {
+                helper.processReferencesIncludingOverriding(createReferenceProcessor(processors), psiMethod, searchScope);
+              }
+            });
           }
 
           myMethodUsagesRequests = null;
         }
-      }
+       }
     }, progress);
   }
 
@@ -707,14 +730,22 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   private static List<PsiElement> getSortedIDs(Map<PsiElement, ?> requests) {
-    List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<PsiElement>();
     for (PsiElement id : requests.keySet()) {
       result.add(id);
     }
 
-    Collections.sort(result, new Comparator<PsiElement>() {
-      public int compare(PsiElement o1, PsiElement o2) {
-        return o1.getContainingFile().getName().compareTo(o2.getContainingFile().getName());
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        Collections.sort(result, new Comparator<PsiElement>() {
+          public int compare(PsiElement o1, PsiElement o2) {
+            final PsiFile psiFile1 = o1.getContainingFile();
+            LOG.assertTrue(psiFile1 != null);
+            final PsiFile psiFile2 = o2.getContainingFile();
+            LOG.assertTrue(psiFile2 != null);
+            return psiFile1.getName().compareTo(psiFile2.getName());
+          }
+        });
       }
     });
 
@@ -757,33 +788,47 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       }
     };
 
-    if (!ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously(runInspection, InspectionsBundle.message("inspection.progress.title"), true, myProject)) {
-      return;
-    }
 
-    LOG.info("Code inspection finished");
+    final Runnable successRunnable = new Runnable() {
+      public void run() {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            LOG.info("Code inspection finished");
 
-    final InspectionResultsView view = new InspectionResultsView(myProject, RUN_WITH_EDITOR_PROFILE ? null : getCurrentProfile(), scope, this, new InspectionRVContentProviderImpl(myProject));
-    if (!view.update() && !getUIOptions().SHOW_ONLY_DIFF) {
-      Messages.showMessageDialog(myProject, InspectionsBundle.message("inspection.no.problems.message"),
-                                 InspectionsBundle.message("inspection.no.problems.dialog.title"), Messages.getInformationIcon());
-      close(true);
-    }
-    else {
-      addView(view);
-    }
+            final InspectionResultsView view = new InspectionResultsView(myProject, RUN_WITH_EDITOR_PROFILE ? null : getCurrentProfile(),
+                                                                         scope, GlobalInspectionContextImpl.this,
+                                                                         new InspectionRVContentProviderImpl(myProject));
+            if (!view.update() && !getUIOptions().SHOW_ONLY_DIFF) {
+              Messages.showMessageDialog(myProject, InspectionsBundle.message("inspection.no.problems.message"),
+                                         InspectionsBundle.message("inspection.no.problems.dialog.title"), Messages.getInformationIcon());
+              close(true);
+            }
+            else {
+              addView(view);
+            }
+          }
+        });
+      }
+    };
+    ProgressManager.getInstance()
+      .runProcessWithProgressAsynchronously(myProject, InspectionsBundle.message("inspection.progress.title"), runInspection,
+                                            successRunnable, null);
+
   }
 
   private void performInspectionsWithProgress(final AnalysisScope scope, final InspectionManager manager) {
     try {
       myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          final PsiManager psiManager = PsiManager.getInstance(myProject);
-          try {
+      final PsiManager psiManager = PsiManager.getInstance(myProject);
+      final Application application = ApplicationManager.getApplication();
+      try {
+        application.runReadAction(new Runnable(){
+          public void run() {
             psiManager.startBatchFilesProcessingMode();
-            ((RefManagerImpl)getRefManager()).inspectionReadActionStarted();
+            ((RefManagerImpl)getRefManager()).inspectionReadActionStarted(); //init manager in read action
+          }
+        });
+        try {
             EntryPointsManager.getInstance(getProject()).resolveEntryPoints(getRefManager());
             List<InspectionTool> needRepeatSearchRequest = new ArrayList<InspectionTool>();
             runTools(needRepeatSearchRequest, scope, manager);
@@ -794,11 +839,14 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           } catch (Exception e){
             LOG.error(e);
           }
-          finally {
+      }
+      finally {
+        application.runReadAction(new Runnable(){
+          public void run() {
             psiManager.finishBatchFilesProcessingMode();
           }
-        }
-      });
+        });
+      }
     }
     finally {
       if (myRefManager != null) {
@@ -873,9 +921,16 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             incrementJobDoneAmount(LOCAL_ANALYSIS, VfsUtil.calcRelativeToProjectPath(virtualFile, myProject));
           }
           final Set<InspectionTool> tools = localTools.get(profile.getName());
+          final com.intellij.openapi.editor.Document document = ApplicationManager.getApplication().runReadAction(new Computable<com.intellij.openapi.editor.Document>() {
+            @Nullable
+            public com.intellij.openapi.editor.Document compute() {
+              final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
+              return viewProvider != null ? viewProvider.getDocument() : null;
+            }
+          });
+          if (document == null) return; //do not inspect binary files
           final LocalInspectionsPass pass =
-            new LocalInspectionsPass(file,
-                                     psiManager.findViewProvider(virtualFile).getDocument(),
+            new LocalInspectionsPass(file, document,
                                      0,
                                      file.getTextLength(),
                                      DaemonCodeAnalyzer.getInstance(myProject).getDaemonExecutorService());
@@ -890,7 +945,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           }
           psiManager.dropResolveCaches();
         }
-      });
+      }, false);
     }
   }
 

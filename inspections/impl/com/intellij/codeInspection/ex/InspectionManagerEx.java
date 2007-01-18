@@ -185,43 +185,48 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   @Nullable
-  public static PsiElement getElementToolSuppressedIn(PsiElement place, String toolId) {
+  public static PsiElement getElementToolSuppressedIn(final PsiElement place, final String toolId) {
     if (place == null) return null;
-    PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class);
-    if (statement != null) {
-      PsiElement prev = PsiTreeUtil.skipSiblingsBackward(statement, PsiWhiteSpace.class);
-      if (prev instanceof PsiComment) {
-        String text = prev.getText();
-        Matcher matcher = GlobalInspectionContextImpl.SUPPRESS_IN_LINE_COMMENT_PATTERN.matcher(text);
-        if (matcher.matches() && GlobalInspectionContextImpl.isInspectionToolIdMentioned(matcher.group(1), toolId)) {
-          return prev;
+    return ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+      @Nullable
+      public PsiElement compute() {
+        PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class);
+        if (statement != null) {
+          PsiElement prev = PsiTreeUtil.skipSiblingsBackward(statement, PsiWhiteSpace.class);
+          if (prev instanceof PsiComment) {
+            String text = prev.getText();
+            Matcher matcher = GlobalInspectionContextImpl.SUPPRESS_IN_LINE_COMMENT_PATTERN.matcher(text);
+            if (matcher.matches() && GlobalInspectionContextImpl.isInspectionToolIdMentioned(matcher.group(1), toolId)) {
+              return prev;
+            }
+          }
         }
+
+        PsiLocalVariable local = PsiTreeUtil.getParentOfType(place, PsiLocalVariable.class);
+        if (local != null && GlobalInspectionContextImpl.getAnnotationMemberSuppressedIn(local, toolId) != null) {
+          PsiModifierList modifierList = local.getModifierList();
+          return modifierList != null ? modifierList.findAnnotation(GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME) : null;
+        }
+
+        PsiElement container = PsiTreeUtil.getNonStrictParentOfType(place, PsiDocCommentOwner.class);
+        while (true) {
+          if (!(container instanceof PsiTypeParameter)) break;
+          container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class);
+        }
+
+        if (container != null) {
+          PsiElement element = GlobalInspectionContextImpl.getElementMemberSuppressedIn((PsiDocCommentOwner)container, toolId);
+          if (element != null) return element;
+        }
+        PsiDocCommentOwner classContainer = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class, true);
+        if (classContainer != null) {
+          PsiElement element = GlobalInspectionContextImpl.getElementMemberSuppressedIn(classContainer, toolId);
+          if (element != null) return element;
+        }
+
+        return null;
       }
-    }
-
-    PsiLocalVariable local = PsiTreeUtil.getParentOfType(place, PsiLocalVariable.class);
-    if (local != null && GlobalInspectionContextImpl.getAnnotationMemberSuppressedIn(local, toolId) != null) {
-      PsiModifierList modifierList = local.getModifierList();
-      return modifierList.findAnnotation(GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
-    }
-
-    PsiElement container = PsiTreeUtil.getNonStrictParentOfType(place, PsiDocCommentOwner.class);
-    while(true) {
-      if (!(container instanceof PsiTypeParameter)) break;
-      container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class);
-    }
-
-    if (container != null) {
-      PsiElement element = GlobalInspectionContextImpl.getElementMemberSuppressedIn((PsiDocCommentOwner)container, toolId);
-      if (element != null) return element;
-    }
-    PsiDocCommentOwner classContainer = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class, true);
-    if (classContainer != null) {
-      PsiElement element = GlobalInspectionContextImpl.getElementMemberSuppressedIn(classContainer, toolId);
-      if (element != null) return element;
-    }
-
-    return null;
+    });
   }
 
   @NotNull

@@ -18,6 +18,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -396,7 +397,7 @@ public class RefManagerImpl extends RefManager {
     return myServlet;
   }
 
-  @Nullable public RefElement getReference(PsiElement elem) {
+  @Nullable public RefElement getReference(final PsiElement elem) {
     if (elem != null && !(elem instanceof PsiPackage) && RefUtil.getInstance().belongsToScope(elem, this)) {
       if (!elem.isValid()) return null;
 
@@ -406,21 +407,28 @@ public class RefManagerImpl extends RefManager {
           //LOG.assertTrue(true, "References may become invalid after process is finished");
           return null;
         }
-        if (elem instanceof PsiClass) {
-          ref = new RefClassImpl((PsiClass)elem, this);
-        }
-        else if (elem instanceof PsiMethod) {
-          ref = new RefMethodImpl((PsiMethod)elem, this);
-        }
-        else if (elem instanceof PsiField) {
-          ref = new RefFieldImpl((PsiField)elem, this);
-        }
-        else if (elem instanceof PsiFile) {
-          ref = new RefFileImpl((PsiFile)elem, this);
-        }
-        else {
-          return null;
-        }
+        ref = ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
+          @Nullable
+          public RefElementImpl compute() {
+            if (elem instanceof PsiClass) {
+              return new RefClassImpl((PsiClass)elem, RefManagerImpl.this);
+            }
+            else if (elem instanceof PsiMethod) {
+              return new RefMethodImpl((PsiMethod)elem, RefManagerImpl.this);
+            }
+            else if (elem instanceof PsiField) {
+              return new RefFieldImpl((PsiField)elem, RefManagerImpl.this);
+            }
+            else if (elem instanceof PsiFile) {
+              return new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
+            }
+            else {
+              return null;
+            }
+          }
+        });
+
+        if (ref == null) return null;
 
         getRefTable().put(elem, ref);
         ((RefElementImpl)ref).initialize();

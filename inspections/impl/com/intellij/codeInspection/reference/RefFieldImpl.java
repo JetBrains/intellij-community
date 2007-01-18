@@ -86,8 +86,12 @@ public class RefFieldImpl extends RefElementImpl implements RefField {
     return checkFlag(ASSIGNED_ONLY_IN_INITIALIZER);
   }
 
-  public void accept(RefVisitor visitor) {
-    visitor.visitField(this);
+  public void accept(final RefVisitor visitor) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        visitor.visitField(RefFieldImpl.this);
+      }
+    });
   }
 
   public void buildReferences() {

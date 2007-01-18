@@ -14,6 +14,7 @@ import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -166,8 +167,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     myInjectedPsiInspectionResults = new SmartList<InjectedPsiInspectionUtil.InjectedPsiInspectionResult>();
     for (PsiElement element : elements) {
       if (element instanceof PsiLanguageInjectionHost) {
-        PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)element;
-        myInjectedPsiInspectionResults.addAll(InjectedPsiInspectionUtil.inspectInjectedPsi(host));
+        final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)element;
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            myInjectedPsiInspectionResults.addAll(InjectedPsiInspectionUtil.inspectInjectedPsi(host));
+          }
+        });
       }
     }
   }
@@ -376,7 +381,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     for (Language language : viewProvider.getPrimaryLanguages()) {
       final PsiFile psiRoot = viewProvider.getPsi(language);
       if (HighlightUtil.shouldInspect(psiRoot)) {
-        result.addAll(CodeInsightUtil.getElementsInRange(psiRoot, startOffset, endOffset, true));
+        ApplicationManager.getApplication().runReadAction(new Runnable(){
+          public void run() {
+            result.addAll(CodeInsightUtil.getElementsInRange(psiRoot, startOffset, endOffset, true));
+          }
+        });
       }
     }
     return result.toArray(new PsiElement[result.size()]);

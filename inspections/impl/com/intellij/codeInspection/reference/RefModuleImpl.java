@@ -3,6 +3,7 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 
 import java.util.ArrayList;
@@ -33,7 +34,11 @@ public class RefModuleImpl extends RefEntityImpl implements RefModule {
   }
 
   public void accept(final RefVisitor refVisitor) {
-    refVisitor.visitModule(this);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        refVisitor.visitModule(RefModuleImpl.this);
+      }
+    });
   }
 
   public Module getModule() {

@@ -41,6 +41,7 @@ public abstract class RefUtil implements ApplicationComponent {
 
   public abstract boolean belongsToScope(PsiElement psiElement, RefManager refManager);
 
+  @Nullable
   public abstract RefPackage getPackage(RefEntity refEntity);
 
   public abstract RefClass getTopLevelClass(RefElement refElement);

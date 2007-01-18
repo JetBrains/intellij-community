@@ -229,8 +229,12 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
     }
   }
 
-  public void accept(RefVisitor visitor) {
-    visitor.visitClass(this);
+  public void accept(final RefVisitor visitor) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        visitor.visitClass(RefClassImpl.this);
+      }
+    });
   }
 
   @NotNull
