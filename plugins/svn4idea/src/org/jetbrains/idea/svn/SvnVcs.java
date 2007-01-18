@@ -42,6 +42,7 @@ import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -527,5 +528,15 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   @Override @Nullable
   public CommittedChangesProvider getCommittedChangesProvider() {
     return myCommittedChangesProvider;
+  }
+
+  @Nullable
+  @Override
+  public VcsRevisionNumber parseRevisionNumber(final String revisionNumberString) {
+    final SVNRevision revision = SVNRevision.parse(revisionNumberString);
+    if (revision.equals(SVNRevision.UNDEFINED)) {
+      return null;
+    }
+    return new SvnRevisionNumber(revision);
   }
 }
