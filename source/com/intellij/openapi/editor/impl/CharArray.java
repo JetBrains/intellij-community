@@ -147,6 +147,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
   }
 
   public CharSequence substring(int start, int end) {
+    if (start == end) return "";
     if (myOriginalSequence != null) {
       return myOriginalSequence.subSequence(start, end);
     }
