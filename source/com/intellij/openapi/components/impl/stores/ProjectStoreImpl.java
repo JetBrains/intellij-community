@@ -341,9 +341,13 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   public void loadProjectFromTemplate(final Project project) {
-    ProjectImpl defaultProject = (ProjectImpl)project;
-    Element element = defaultProject.getStateStore().saveToXml(defaultProject.getStateStore().getProjectFile());
     try {
+      assert myProjectFile != null;
+      myProjectFile.createFile();
+
+      ProjectImpl defaultProject = (ProjectImpl)project;
+      Element element = defaultProject.getStateStore().saveToXml(defaultProject.getStateStore().getProjectFile());
+
       loadFromXml(element, myFilePath);
     }
     catch (Exception e) {
