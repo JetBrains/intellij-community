@@ -11,11 +11,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Anton Katilin
@@ -58,7 +57,9 @@ class SaveAndSyncHandler implements ApplicationComponent {
 
     frameStateManager.addListener(new FrameStateListener() {
       public void onFrameDeactivated() {
-        saveProjectsAndDocuments();
+        if (canSyncOrSave()) {
+          saveProjectsAndDocuments();
+        }
       }
 
       public void onFrameActivated() {
