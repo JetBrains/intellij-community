@@ -513,6 +513,9 @@ class LookupCellRenderer implements ListCellRenderer {
     }
     else{
       Object o = item.getObject();
+      if (o instanceof LookupValueWithPsiElement) {
+        o = ((LookupValueWithPsiElement)o).getElement();
+      }
       if (o instanceof PsiElement) {
         final PsiElement element = (PsiElement)o;
         if (element.isValid()) {
