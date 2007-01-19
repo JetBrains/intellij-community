@@ -99,7 +99,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               if (myProject.isDisposed()) return;
-              if (fileEditor.getComponent().isDisplayable() || ApplicationManager.getApplication().isUnitTestMode()) {
+              if (fileEditor.getComponent().isDisplayable()) {
                 pass.applyInformationToEditor();
                 
                 if (fileEditor instanceof TextEditor) {
@@ -351,7 +351,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public synchronized void stopProcess(boolean toRestartAlarm) {
     renewUpdateProgress(toRestartAlarm);
     myAlarm.cancelAllRequests();
-    boolean restart = toRestartAlarm && !myDisposed && myInitialized && myDaemonListeners.myIsFrameFocused;
+    boolean restart = toRestartAlarm && !myDisposed && myInitialized/* && myDaemonListeners.myIsFrameFocused*/;
     if (restart) {
       myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
       //LOG.debug("restarted ",new Throwable());

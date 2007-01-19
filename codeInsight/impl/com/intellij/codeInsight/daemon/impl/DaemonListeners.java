@@ -48,9 +48,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -61,14 +58,9 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.messages.MessageBusConnection;
 
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowFocusListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author cdr
@@ -87,8 +79,6 @@ public class DaemonListeners {
   private final EditorMouseListener myEditorMouseListener = new MyEditorMouseListener();
   private final ProfileChangeAdapter myProfileChangeListener = new MyProfileChangeListener();
 
-  private final WindowFocusListener myIdeFrameFocusListener = new MyWindowFocusListener();
-
   private DocumentListener myDocumentListener;
   private VirtualFileAdapter myVirtualFileListener;
   private EditorFactoryListener myEditorFactoryListener;
@@ -104,6 +94,7 @@ public class DaemonListeners {
   volatile private boolean cutOperationJustHappened;
   volatile boolean myIsFrameFocused = true;
   private final EditorTracker myEditorTracker;
+  private final EditorTrackerListener myEditorTrackerListener;
 
   public DaemonListeners(Project project, DaemonCodeAnalyzerImpl daemonCodeAnalyzer, EditorTracker editorTracker) {
     myProject = project;
@@ -131,14 +122,16 @@ public class DaemonListeners {
     eventMulticaster.addEditorMouseListener(myEditorMouseListener);
 
     myEditorTracker = editorTracker;
-    myEditorTracker.addEditorTrackerListener(new EditorTrackerListener() {
+    myEditorTrackerListener = new EditorTrackerListener() {
       public void activeEditorsChanged(final Editor[] editors) {
         if (editors.length > 0) {
           myIsFrameFocused = true; // Happens when debugger evaluation window gains focus out of main frame.
         }
+        List<Editor> list = Arrays.asList(editors);
         stopDaemon(true);
       }
-    });
+    };
+    myEditorTracker.addEditorTrackerListener(myEditorTrackerListener);
 
     myEditorFactoryListener = new EditorFactoryAdapter() {
       public void editorCreated(EditorFactoryEvent event) {
@@ -206,20 +199,6 @@ public class DaemonListeners {
     myErrorStripeHandler = new ErrorStripeHandler(myProject);
     ((EditorEventMulticasterEx)eventMulticaster).addErrorStripeListener(myErrorStripeHandler);
 
-    //ProjectManager.getInstance().addProjectManagerListener(
-    //  myProject,
-    //  new ProjectManagerAdapter() {
-    //    public void projectClosing(Project project) {
-    //      dispose();
-    //    }
-    //  }
-    //);
-
-    IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).getFrame(myProject);
-    if (frame != null) {
-      frame.addWindowFocusListener(myIdeFrameFocusListener);
-    }
-
     final NamedScopesHolder[] holders = myProject.getComponents(NamedScopesHolder.class);
     NamedScopesHolder.ScopeListener scopeListener = new NamedScopesHolder.ScopeListener() {
       public void scopesChanged() {
@@ -229,7 +208,6 @@ public class DaemonListeners {
     for (NamedScopesHolder holder : holders) {
       holder.addScopeListener(scopeListener);
     }
-
   }
 
   public void dispose() {
@@ -254,11 +232,7 @@ public class DaemonListeners {
     }
 
     ((EditorEventMulticasterEx)eventMulticaster).removeErrorStripeListener(myErrorStripeHandler);
-    IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).getFrame(myProject);
-    if (frame != null) {
-      frame.removeWindowFocusListener(myIdeFrameFocusListener);
-    }
-    myEditorTracker.dispose();
+    myEditorTracker.removeEditorTrackerListener(myEditorTrackerListener);
   }
 
   boolean canChangeFileSilently(PsiFile file) {
@@ -339,13 +313,7 @@ public class DaemonListeners {
   private class MyAnActionListener implements AnActionListener {
     private final AnAction escapeAction = ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE);
     public void beforeActionPerformed(AnAction action, DataContext dataContext) {
-      if (action == escapeAction) {
-        myEscPressed = true;
-      }
-      else {
-        //myDaemonCodeAnalyzer.stopProcess(true);
-        myEscPressed = false;
-      }
+      myEscPressed = action == escapeAction;
     }
 
     public void beforeEditorTyping(char c, DataContext dataContext) {
@@ -409,27 +377,10 @@ public class DaemonListeners {
     }
   }
 
-  private class MyWindowFocusListener implements WindowFocusListener {
-    public void windowGainedFocus(WindowEvent e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("windowGainedFocus for IdeFrame");
-      }
-      myIsFrameFocused = true;
-      stopDaemon(true);
-    }
-
-    public void windowLostFocus(WindowEvent e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("windowLostFocus for IdeFrame");
-      }
-      myIsFrameFocused = false;
-      stopDaemon(false);
-    }
-  }
-  
   protected void stopDaemon(boolean toRestartAlarm) {
     myDaemonCodeAnalyzer.stopProcess(toRestartAlarm);
   }
+
   FileEditor[] getSelectedEditors() {
     // Editors in modal context
     Editor[] editors = myEditorTracker.getActiveEditors();

@@ -95,6 +95,13 @@ public class EditorTracker implements ProjectComponent {
   }
 
   public void projectClosed() {
+    if (myEditorFactoryListener != null) {
+      myEditorFactoryListener.dispose(null);
+    }
+    myEditorFactory.removeEditorFactoryListener(myEditorFactoryListener);
+    if (myIdeFrame != null) {
+      myIdeFrame.removeWindowFocusListener(myIdeFrameFocusListener);
+    }
   }
 
   @NonNls
@@ -189,16 +196,6 @@ public class EditorTracker implements ProjectComponent {
       if (window != myIdeFrame) return null;
     }
     return window;
-  }
-
-  public void dispose() {
-    if (myEditorFactoryListener != null) {
-      myEditorFactoryListener.dispose(null);
-    }
-    myEditorFactory.removeEditorFactoryListener(myEditorFactoryListener);
-    if (myIdeFrame != null) {
-      myIdeFrame.removeWindowFocusListener(myIdeFrameFocusListener);
-    }
   }
 
   public Editor[] getActiveEditors() {
