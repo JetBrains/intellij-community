@@ -18,11 +18,12 @@ import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.BasePopup;
 import com.intellij.ui.treeStructure.*;
+import com.intellij.util.Range;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -336,54 +337,8 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
   }
 
   private static boolean isLocationInExpandControl(JTree aTree, TreePath path, int mouseX, int mouseY) {
-    TreeModel treeModel = aTree.getModel();
-
-    final BasicTreeUI basicTreeUI = (BasicTreeUI)aTree.getUI();
-    Icon expandedIcon = basicTreeUI.getExpandedIcon();
-
-    if (path != null && !treeModel.isLeaf(path.getLastPathComponent())) {
-      int boxWidth;
-      Insets i = aTree.getInsets();
-
-      if (expandedIcon != null) {
-        boxWidth = expandedIcon.getIconWidth();
-      }
-      else {
-        boxWidth = 8;
-      }
-
-      int boxLeftX = i != null ? i.left : 0;
-
-      boolean leftToRight = aTree.getComponentOrientation().isLeftToRight();
-      int depthOffset = getDepthOffset(aTree);
-      int totalChildIndent = basicTreeUI.getLeftChildIndent() + basicTreeUI.getRightChildIndent();
-
-      if (leftToRight) {
-        boxLeftX += ((path.getPathCount() + depthOffset - 2) * totalChildIndent + basicTreeUI.getLeftChildIndent()) -
-            boxWidth / 2;
-      }
-      int boxRightX = boxLeftX + boxWidth;
-
-      return mouseX >= boxLeftX && mouseX <= boxRightX;
-    }
-    return false;
-  }
-
-  private static int getDepthOffset(JTree aTree) {
-    if (aTree.isRootVisible()) {
-      if (aTree.getShowsRootHandles()) {
-        return 1;
-      }
-      else {
-        return 0;
-      }
-    }
-    else if (!aTree.getShowsRootHandles()) {
-      return -1;
-    }
-    else {
-      return 0;
-    }
+    Range<Integer> box = TreeUtil.getExpandControlRange(aTree, path);
+    return box != null && box.isWithin(mouseX);
   }
 
   protected void process(KeyEvent aEvent) {

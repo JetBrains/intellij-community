@@ -19,10 +19,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.util.Range;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -344,7 +346,7 @@ public final class TreeUtil {
     int row = getSelectedRow(tree);
     if (row < size - 1) {
       row++;
-      showAndSelect(tree, row, row + 2, row, true);
+      showAndSelect(tree, row, row + 2, row, getSelectedRow(tree));
     }
   }
 
@@ -352,7 +354,7 @@ public final class TreeUtil {
     int row = getSelectedRow(tree);
     if (row > 0) {
       row--;
-      showAndSelect(tree, row - 2, row, row, true);
+      showAndSelect(tree, row - 2, row, row, getSelectedRow(tree));
     }
   }
 
@@ -366,7 +368,7 @@ public final class TreeUtil {
     final int row = Math.max(getSelectedRow(tree) - decrement, 0);
     final int top = getFirstVisibleRow(tree) - decrement;
     final int bottom = top + visible - 1;
-    showAndSelect(tree, top, bottom, row, true);
+    showAndSelect(tree, top, bottom, row, getSelectedRow(tree));
   }
 
   private static void movePageDown(final JTree tree) {
@@ -380,7 +382,7 @@ public final class TreeUtil {
     final int index = Math.min(getSelectedRow(tree) + increment, size - 1);
     final int top = getFirstVisibleRow(tree) + increment;
     final int bottom = top + visible - 1;
-    showAndSelect(tree, top, bottom, index, true);
+    showAndSelect(tree, top, bottom, index, getSelectedRow(tree));
   }
 
   private static void moveHome(final JTree tree) {
@@ -399,10 +401,13 @@ public final class TreeUtil {
     final int visible = getVisibleRowCount(tree);
     final int top = visible > 0 ? row - (visible - 1)/ 2 : row;
     final int bottom = visible > 0 ? top + visible - 1 : row;
-    showAndSelect(tree, top, bottom, row, centerHorizontally);
+    showAndSelect(tree, top, bottom, row, -1);
   }
 
-  private static void showAndSelect(final JTree tree, int top, int bottom, final int row, final boolean centerHorizontally) {
+  private static void showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous) {
+    final TreePath path = tree.getPathForRow(row);
+    if (path == null) return;
+
     final int size = tree.getRowCount();
     if (size == 0) {
       tree.clearSelection();
@@ -435,7 +440,6 @@ public final class TreeUtil {
     if (visible.contains(bounds)) {
       bounds = null;
     } else {
-      final TreePath path = tree.getPathForRow(row);
       final Component comp =
         tree.getCellRenderer().getTreeCellRendererComponent(tree, path.getLastPathComponent(), true, true, false, row, false);
 
@@ -452,8 +456,42 @@ public final class TreeUtil {
     }
 
     if (bounds != null) {
+      final Range<Integer> range = getExpandControlRange(tree, path);
+      if (range != null) {
+        int delta = bounds.x - range.getFrom().intValue();
+        bounds.x -= delta;
+        bounds.width -= delta;
+      }
+
+      if (visible.width < bounds.width) {
+        bounds.width = visible.width;
+      }
+
+      final boolean siblings = areSiblings(path, tree.getPathForRow(previous));
+      boolean totallyInvisible = !visible.contains(bounds) && !visible.intersects(bounds);
+
+      if (siblings && !totallyInvisible) {
+        bounds.x = visible.x;
+        bounds.width = visible.width;
+      }
+
       tree.scrollRectToVisible(bounds);
     }
+  }
+
+  private static boolean areSiblings(final TreePath path, final TreePath prevPath) {
+    if (prevPath != null) {
+      final TreePath parent = path.getParentPath();
+      final TreePath prevParent = prevPath.getParentPath();
+      if (parent != null && prevParent != null) {
+        final Object first = parent.getLastPathComponent();
+        final Object second = prevParent.getLastPathComponent();
+
+        if (first != null && first.equals(second)) return true;
+      }
+    }
+
+    return false;
   }
 
   private static int getSelectedRow(final JTree tree) {
@@ -646,6 +684,60 @@ public final class TreeUtil {
           tree.removeSelectionPath(selectionPath);
         }
       }
+    }
+  }
+
+  @Nullable
+  public static Range<Integer> getExpandControlRange(final JTree aTree, final TreePath path) {
+    TreeModel treeModel = aTree.getModel();
+
+    final BasicTreeUI basicTreeUI = (BasicTreeUI)aTree.getUI();
+    Icon expandedIcon = basicTreeUI.getExpandedIcon();
+
+
+    Range<Integer> box = null;
+    if (path != null && !treeModel.isLeaf(path.getLastPathComponent())) {
+      int boxWidth;
+      Insets i = aTree.getInsets();
+
+      if (expandedIcon != null) {
+        boxWidth = expandedIcon.getIconWidth();
+      }
+      else {
+        boxWidth = 8;
+      }
+
+      int boxLeftX = i != null ? i.left : 0;
+
+      boolean leftToRight = aTree.getComponentOrientation().isLeftToRight();
+      int depthOffset = getDepthOffset(aTree);
+      int totalChildIndent = basicTreeUI.getLeftChildIndent() + basicTreeUI.getRightChildIndent();
+
+      if (leftToRight) {
+        boxLeftX += ((path.getPathCount() + depthOffset - 2) * totalChildIndent + basicTreeUI.getLeftChildIndent()) -
+            boxWidth / 2;
+      }
+      int boxRightX = boxLeftX + boxWidth;
+
+      box = new Range<Integer>(boxLeftX, boxRightX);
+    }
+    return box;
+  }
+
+  public static int getDepthOffset(JTree aTree) {
+    if (aTree.isRootVisible()) {
+      if (aTree.getShowsRootHandles()) {
+        return 1;
+      }
+      else {
+        return 0;
+      }
+    }
+    else if (!aTree.getShowsRootHandles()) {
+      return -1;
+    }
+    else {
+      return 0;
     }
   }
 
