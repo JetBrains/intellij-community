@@ -1,6 +1,7 @@
 package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -64,5 +65,23 @@ public class ConcurrencyUtil {
   public static <K,V> V cacheOrGet(ConcurrentMap<K, V> map, @NotNull final K key, @NotNull final V defaultValue) {
     V prev = map.putIfAbsent(key, defaultValue);
     return prev == null ? defaultValue : prev;
+  }
+  public static ThreadPoolExecutor newSingleThreadExecutor(@NonNls final String threadFactoryName) {
+    return new ThreadPoolExecutor(1, 1,
+                                    0L, TimeUnit.MILLISECONDS,
+                                    new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+      public Thread newThread(final Runnable r) {
+        return new Thread(r, threadFactoryName);
+      }
+    });
+  }
+  public static ScheduledExecutorService newSingleScheduledThreadExecutor(@NonNls final String threadFactoryName) {
+    ScheduledThreadPoolExecutor threadPoolExecutor = new ScheduledThreadPoolExecutor(1);
+    threadPoolExecutor.setThreadFactory(new ThreadFactory() {
+      public Thread newThread(final Runnable r) {
+        return new Thread(r, threadFactoryName);
+      }
+    });
+    return threadPoolExecutor;
   }
 }

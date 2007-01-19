@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.HashSet;
@@ -28,7 +29,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public final class LocalFileSystemImpl extends LocalFileSystem implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl");
@@ -44,7 +44,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   private final Set<String> myDirtyFiles = new HashSet<String>(); // dirty files when FileWatcher is available
   private final Set<String> myDeletedFiles = new HashSet<String>();
 
-  private final ExecutorService mySynchronizeExecutor = Executors.newSingleThreadExecutor();
+  private final ExecutorService mySynchronizeExecutor = ConcurrencyUtil.newSingleThreadExecutor("File System Synchronize Executor");
 
   private final Map<VirtualFile,Key> myRefreshStatusMap = new WeakHashMap<VirtualFile, Key>(); // VirtualFile --> 'status'
   private static final Key DIRTY_STATUS = Key.create("DIRTY_STATUS");

@@ -17,10 +17,10 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ConcurrencyUtil;
 
 import javax.swing.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Base class for the actions, which update() method might be potentially slow to be executed synchronously in Swing UI thread.
@@ -30,7 +30,7 @@ import java.util.concurrent.Executors;
 public abstract class AsyncUpdateAction<T> extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.AsyncUpdateAction");
 
-  private static final ExecutorService ourUpdaterService = Executors.newSingleThreadExecutor();
+  private static final ExecutorService ourUpdaterService = ConcurrencyUtil.newSingleThreadExecutor("Action Updater");
 
   // Async update
   public final void update(AnActionEvent e) {
