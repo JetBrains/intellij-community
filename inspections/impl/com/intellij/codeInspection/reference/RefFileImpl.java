@@ -17,6 +17,7 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -88,6 +89,12 @@ public class RefFileImpl extends RefElementImpl implements RefFile {
     });
   }
 
+  public String getExternalName() {
+    final PsiFile psiFile = getElement();
+    final VirtualFile virtualFile = psiFile != null ? psiFile.getVirtualFile() : null;
+    return virtualFile != null ? virtualFile.getUrl() : getName();
+  }
+
   @Nullable
   public String getAccessModifier() {
     return null;
@@ -99,7 +106,7 @@ public class RefFileImpl extends RefElementImpl implements RefFile {
 
   @Nullable
   public static RefElement fileFromExternalName(final RefManager manager, final String fqName) {
-    final VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(fqName);
+    final VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(PathMacroManager.getInstance(manager.getProject()).expandPath(fqName));
     if (virtualFile != null) {
       final PsiFile psiFile = PsiManager.getInstance(manager.getProject()).findFile(virtualFile);
       if (psiFile != null) {

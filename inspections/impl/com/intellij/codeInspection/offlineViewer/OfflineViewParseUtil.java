@@ -12,12 +12,17 @@ import com.intellij.codeInspection.ex.InspectionApplication;
 import com.intellij.codeInspection.reference.SmartRefElementPointerImpl;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.StringReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OfflineViewParseUtil {
   @NonNls private static final String PACKAGE = "package";
@@ -41,7 +46,16 @@ public class OfflineViewParseUtil {
           reader.moveDown();
           if (SmartRefElementPointerImpl.ENTRY_POINT.equals(reader.getNodeName())) {
             descriptor.setType(reader.getAttribute(SmartRefElementPointerImpl.TYPE_ATTR));
-            descriptor.setFQName(reader.getAttribute(SmartRefElementPointerImpl.FQNAME_ATTR));
+            final String fqName = reader.getAttribute(SmartRefElementPointerImpl.FQNAME_ATTR);
+            descriptor.setFQName(fqName);
+
+            if (!fqName2IdxMap.containsKey(fqName)) {
+              fqName2IdxMap.put(fqName, 0);
+            }
+            int idx = fqName2IdxMap.get(fqName);
+            descriptor.setProblemIndex(idx);
+            fqName2IdxMap.put(fqName, idx + 1);
+
             final List<String> parentTypes = new ArrayList<String>();
             final List<String> parentNames = new ArrayList<String>();
             int deep = 0;
@@ -97,14 +111,6 @@ public class OfflineViewParseUtil {
           reader.moveUp();
         }
 
-        final String fqName = descriptor.getFQName();
-        if (!fqName2IdxMap.containsKey(fqName)) {
-          fqName2IdxMap.put(fqName, 0);
-        }
-        int idx = fqName2IdxMap.get(fqName);
-        descriptor.setProblemIndex(idx);
-        fqName2IdxMap.put(fqName, idx + 1);
-
         reader.moveUp();
       }
     }
@@ -119,7 +125,16 @@ public class OfflineViewParseUtil {
                                        final OfflineProblemDescriptor descriptor) {
     Set<OfflineProblemDescriptor> descriptors = package2Result.get(packageName);
     if (descriptors == null) {
-      descriptors = new HashSet<OfflineProblemDescriptor>();
+      descriptors = new THashSet<OfflineProblemDescriptor>(new TObjectHashingStrategy<OfflineProblemDescriptor>() { //consider problem index
+        public int computeHashCode(final OfflineProblemDescriptor descriptor) {
+          return 31 * descriptor.hashCode() + descriptor.getProblemIndex();
+        }
+
+        public boolean equals(final OfflineProblemDescriptor descriptor1, final OfflineProblemDescriptor descriptor2) {
+          if (!descriptor1.equals(descriptor2)) return false;
+          return descriptor1.getProblemIndex() == descriptor2.getProblemIndex();
+        }
+      });
       package2Result.put(packageName, descriptors);
     }
     descriptors.add(descriptor);

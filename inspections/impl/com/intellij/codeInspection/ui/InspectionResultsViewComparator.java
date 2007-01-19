@@ -48,6 +48,12 @@ public class InspectionResultsViewComparator implements Comparator {
         if (descriptor1.getLine() != descriptor2.getLine()) return descriptor1.getLine() - descriptor2.getLine();
         return descriptor1.getFQName().compareTo(descriptor2.getFQName());
       }
+      if (userObject1 instanceof OfflineProblemDescriptor) { //todo sort properly
+        return 1;
+      }
+      if (userObject2 instanceof OfflineProblemDescriptor) {
+        return -1;
+      }
     }
 
     if (node1 instanceof RefElementNode && node2 instanceof RefElementNode){   //sort by filename and inside file by start offset

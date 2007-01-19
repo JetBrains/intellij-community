@@ -8,7 +8,7 @@
  */
 package com.intellij.codeInspection.offlineViewer;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
@@ -19,6 +19,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
@@ -61,10 +62,9 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
         final PsiElement psiElement = ((RefElement)element).getElement();
         if (psiElement != null) {
           final PsiElementVisitor visitor = ((LocalInspectionToolWrapper)myTool).getTool().buildVisitor(holder, false);
-          final List<PsiElement> elementsInRange = CodeInsightUtil.getElementsInRange(psiElement.getContainingFile(),
-                                                                                      psiElement.getTextRange().getStartOffset(),
-                                                                                      psiElement.getTextRange().getEndOffset(),
-                                                                                      true);
+          final PsiElement[] elementsInRange = LocalInspectionsPass.getElementsIntersectingRange(psiElement.getContainingFile(),
+                                                                                                 psiElement.getTextRange().getStartOffset(),
+                                                                                                 psiElement.getTextRange().getEndOffset());
           for (PsiElement el : elementsInRange) {
             el.accept(visitor);
           }
@@ -75,7 +75,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
               int curIdx = 0;
               for (ProblemDescriptor descriptor : list) {
                 final PsiMember member = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMember.class, false);
-                if (member != null && member.equals(psiElement)) {
+                if (psiElement instanceof PsiFile || (member != null && member.equals(psiElement))) {
                   if (curIdx == idx) {
                     setUserObject(descriptor);
                     return descriptor;

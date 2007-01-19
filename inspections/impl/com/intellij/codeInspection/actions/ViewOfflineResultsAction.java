@@ -22,10 +22,15 @@ import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -33,11 +38,13 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 public class ViewOfflineResultsAction extends AnAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.ViewOfflineResultsAction");
 
   public void update(AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
@@ -49,30 +56,62 @@ public class ViewOfflineResultsAction extends AnAction {
   public void actionPerformed(AnActionEvent event) {
     final Project project = event.getData(DataKeys.PROJECT);
 
+    LOG.assertTrue(project != null);
+
     final VirtualFile[] virtualFiles = FileChooser.chooseFiles(project, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
     if (virtualFiles == null || virtualFiles.length == 0) return;
     if (!virtualFiles[0].isDirectory()) return;
 
-    final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap = new HashMap<String, Map<String, Set<OfflineProblemDescriptor>>>();
-    final VirtualFile[] files = virtualFiles[0].getChildren();
-    String profileName = null;
-    try {
-      for (VirtualFile inspectionFile : files) {
-        if (inspectionFile.isDirectory()) continue;
-        final String shortName = inspectionFile.getNameWithoutExtension();
-        if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
-          profileName = OfflineViewParseUtil.parseProfileName(LoadTextUtil.loadText(inspectionFile).toString());
-        } else if (inspectionFile.getFileType() instanceof XmlFileType){
-          resMap.put(shortName, OfflineViewParseUtil.parse(LoadTextUtil.loadText(inspectionFile).toString()));
+    final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap =
+      new HashMap<String, Map<String, Set<OfflineProblemDescriptor>>>();
+    final String [] profileName = new String[1];
+    final Runnable process = new Runnable() {
+      public void run() {
+        final VirtualFile[] files = virtualFiles[0].getChildren();
+        try {
+          for (final VirtualFile inspectionFile : files) {
+            if (inspectionFile.isDirectory()) continue;
+            final String shortName = inspectionFile.getNameWithoutExtension();
+            if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
+              profileName[0] = ApplicationManager.getApplication().runReadAction(
+                  new Computable<String>() {
+                    @Nullable
+                    public String compute() {
+                      return OfflineViewParseUtil.parseProfileName(LoadTextUtil.loadText(inspectionFile).toString());
+                    }
+                  }
+              );
+            }
+            else if (inspectionFile.getFileType() instanceof XmlFileType) {
+              resMap.put(shortName, ApplicationManager.getApplication().runReadAction(
+                  new Computable<Map<String, Set<OfflineProblemDescriptor>>>() {
+                    public Map<String, Set<OfflineProblemDescriptor>> compute() {
+                      return OfflineViewParseUtil.parse(LoadTextUtil.loadText(inspectionFile).toString());
+                    }
+                  }
+              ));
+            }
+          }
+        }
+        catch (final Exception e) {  //all parse exceptions
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              Messages.showInfoMessage(e.getMessage(), InspectionsBundle.message("offline.view.parse.exception.title"));
+            }
+          });
+          throw new ProcessCanceledException(); //cancel process
         }
       }
-    }
-    catch (Exception e) {  //all parse exceptions
-      Messages.showInfoMessage(e.getMessage(), InspectionsBundle.message("offline.view.parse.exception.title"));
-      return;
-    }
-
-    showOfflineView(project, profileName, resMap);
+    };
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(project, InspectionsBundle.message("parsing.inspections.dump.progress.title"), process, new Runnable() {
+      public void run() {
+        SwingUtilities.invokeLater(new Runnable(){
+          public void run() {
+            showOfflineView(project, profileName[0], resMap);
+          }
+        });
+      }
+    }, null);
   }
 
   @SuppressWarnings({"UnusedDeclaration"})
@@ -111,7 +150,8 @@ public class ViewOfflineResultsAction extends AnAction {
     return showOfflineView(project, resMap, inspectionProfile, profileName);
   }
 
-  public static InspectionResultsView showOfflineView(final Project project, final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
+  public static InspectionResultsView showOfflineView(final Project project,
+                                                      final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
                                                       final InspectionProfile inspectionProfile,
                                                       final String profileName) {
     final AnalysisScope scope = new AnalysisScope(project);
@@ -120,15 +160,17 @@ public class ViewOfflineResultsAction extends AnAction {
     inspectionContext.setExternalProfile(inspectionProfile);
     inspectionContext.setCurrentScope(scope);
     inspectionContext.initializeTools(scope, new HashMap<String, Set<InspectionTool>>(), new HashMap<String, Set<InspectionTool>>());
-    final InspectionResultsView view = new InspectionResultsView(project, inspectionProfile, scope,
-                                                                 inspectionContext,
+    final InspectionResultsView view = new InspectionResultsView(project, inspectionProfile, scope, inspectionContext,
                                                                  new OfflineInspectionRVContentProvider(resMap, project));
     ((RefManagerImpl)inspectionContext.getRefManager()).inspectionReadActionStarted();
     view.update();
     TreeUtil.selectFirstNode(view.getTree());
     if (inspectionContext.getContentManager() != null) { //test
-      inspectionContext.addView(view, InspectionsBundle.message("offline.view.title") +
-                                      " (" + (profileName != null ? profileName : InspectionsBundle.message("offline.view.editor.settings.title")) + ")");
+      inspectionContext.addView(view, InspectionsBundle.message("offline.view.title") + " (" + (profileName != null
+                                                                                                ? profileName
+                                                                                                : InspectionsBundle.message(
+                                                                                                  "offline.view.editor.settings.title")) +
+                                                                                                                                         ")");
     }
     return view;
   }

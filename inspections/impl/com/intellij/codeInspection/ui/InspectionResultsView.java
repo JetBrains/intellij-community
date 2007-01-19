@@ -282,10 +282,16 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     group.add(actionsManager.createPrevOccurenceAction(getOccurenceNavigator()));
     group.add(actionsManager.createNextOccurenceAction(getOccurenceNavigator()));
     group.add(myGlobalInspectionContext.createToggleAutoscrollAction());
-    group.add(new ExportHTMLAction(this));
+    final ExportHTMLAction exportAction = new ExportHTMLAction(this);
+    group.add(exportAction);
     group.add(new HelpAction());
 
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.CODE_INSPECTION, group, false).getComponent();
+    final JComponent toolbarComponent =
+      ActionManager.getInstance().createActionToolbar(ActionPlaces.CODE_INSPECTION, group, false).getComponent();
+    final Component actionButton = toolbarComponent.getComponent(ArrayUtil.find(group.getChildren(null), exportAction) + 1);
+    exportAction.setPoint(new RelativePoint(actionButton, new Point(0, actionButton.getHeight())));
+
+    return toolbarComponent;
   }
 
   public void dispose(){

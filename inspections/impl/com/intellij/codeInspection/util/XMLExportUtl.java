@@ -72,8 +72,8 @@ public class XMLExportUtl {
       final Element fileElement = new Element("file");
       fileElement.addContent(moduleFile.getUrl());
       problem.addContent(fileElement);
+      appendFakePackage(problem);
     }
-
 
     if (refEntity instanceof RefMethod) {
       RefMethod refMethod = (RefMethod)refEntity;
@@ -86,6 +86,8 @@ public class XMLExportUtl {
     else if (refEntity instanceof RefClass) {
       RefClass refClass = (RefClass)refEntity;
       appendClass(refClass, problem);
+    } else if (refEntity instanceof RefFile) {
+      appendFakePackage(problem);
     }
     else {
       LOG.info("Unknown refElement: " + refEntity);
@@ -93,6 +95,12 @@ public class XMLExportUtl {
     parentNode.addContent(problem);
 
     return problem;
+  }
+
+  private static void appendFakePackage(final Element problem) {
+    final Element fakePackage = new Element("package");
+    fakePackage.addContent(InspectionsBundle.message("inspection.export.results.default"));
+    problem.addContent(fakePackage);
   }
 
   private static void appendClass(RefClass refClass, Element parentNode) {
