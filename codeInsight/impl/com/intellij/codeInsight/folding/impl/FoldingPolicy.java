@@ -277,6 +277,9 @@ class FoldingPolicy {
       return settings.isCollapseImports();
     }
     else if (element instanceof PsiMethod || element instanceof PsiClassInitializer) {
+      if (!settings.isCollapseAccessors() && !settings.isCollapseMethods()) {
+        return false;
+      }
       if (element instanceof PsiMethod && isSimplePropertyAccessor((PsiMethod)element)) {
         return settings.isCollapseAccessors();
       }
