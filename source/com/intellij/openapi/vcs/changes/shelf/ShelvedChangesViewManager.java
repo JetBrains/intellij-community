@@ -12,17 +12,18 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
@@ -42,11 +43,12 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 
 public class ShelvedChangesViewManager implements ProjectComponent {
   private ChangesViewContentManager myContentManager;
@@ -58,6 +60,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   public static DataKey<ShelvedChangeList[]> SHELVED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedChangeListData");
   public static DataKey<List<ShelvedChange>> SHELVED_CHANGE_KEY = DataKey.create("ShelveChangesManager.ShelvedChange");
+  public static DataKey<List<ShelvedBinaryFile>> SHELVED_BINARY_FILE_KEY = DataKey.create("ShelveChangesManager.ShelvedBinaryFile");
 
   public ShelvedChangesViewManager(Project project, ChangesViewContentManager contentManager, ShelveChangesManager shelveChangesManager,
                                    final MessageBus bus) {
@@ -125,13 +128,18 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel model = new DefaultTreeModel(root);
     final List<ShelvedChangeList> changeLists = myShelveChangesManager.getShelvedChangeLists();
-    for(ShelvedChangeList changeListData: changeLists) {
-      DefaultMutableTreeNode node = new DefaultMutableTreeNode(changeListData);
+    for(ShelvedChangeList changeList: changeLists) {
+      DefaultMutableTreeNode node = new DefaultMutableTreeNode(changeList);
       model.insertNodeInto(node, root, root.getChildCount());
 
-      List<ShelvedChange> changes = changeListData.getChanges();
+      List<ShelvedChange> changes = changeList.getChanges();
       for(ShelvedChange change: changes) {
         DefaultMutableTreeNode pathNode = new DefaultMutableTreeNode(change);
+        model.insertNodeInto(pathNode, node, node.getChildCount());
+      }
+      List<ShelvedBinaryFile> binaryFiles = changeList.getBinaryFiles();
+      for(ShelvedBinaryFile file: binaryFiles) {
+        DefaultMutableTreeNode pathNode = new DefaultMutableTreeNode(file);
         model.insertNodeInto(pathNode, node, node.getChildCount());
       }
     }
@@ -157,10 +165,10 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         }
       }
       else if (key == SHELVED_CHANGE_KEY) {
-        final List<ShelvedChange> list = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class);
-        if (list != null) {
-          sink.put(SHELVED_CHANGE_KEY, list);
-        }
+        sink.put(SHELVED_CHANGE_KEY, TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class));
+      }
+      else if (key == SHELVED_BINARY_FILE_KEY) {
+        sink.put(SHELVED_BINARY_FILE_KEY, TreeUtil.collectSelectedObjectsOfType(this, ShelvedBinaryFile.class));
       }
       else if (key == DataKeys.CHANGES) {
         List<ShelvedChange> shelvedChanges = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class);
@@ -204,10 +212,34 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
       else if (nodeValue instanceof ShelvedChange) {
         ShelvedChange change = (ShelvedChange) nodeValue;
-        append(change.getBeforeFileName(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, change.getFileStatus().getColor()));
-        append(" ("+ change.getBeforeDirectory() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        setIcon(FileTypeManager.getInstance().getFileTypeByFileName(change.getBeforeFileName()).getIcon());
+        renderFileName(change.getBeforePath(), change.getFileStatus());
       }
+      else if (nodeValue instanceof ShelvedBinaryFile) {
+        ShelvedBinaryFile binaryFile = (ShelvedBinaryFile) nodeValue;
+        String path = binaryFile.BEFORE_PATH;
+        if (path == null) {
+          path = binaryFile.AFTER_PATH;
+        }
+        renderFileName(path, binaryFile.getFileStatus());
+      }
+    }
+
+    private void renderFileName(String path, final FileStatus fileStatus) {
+      path = path.replace('/', File.separatorChar);
+      int pos = path.lastIndexOf(File.separatorChar);
+      String fileName;
+      String directory;
+      if (pos >= 0) {
+        directory = path.substring(0, pos).replace(File.separatorChar, File.separatorChar);
+        fileName = path.substring(pos+1);
+      }
+      else {
+        directory = "<project root>";
+        fileName = path;
+      }
+      append(fileName, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fileStatus.getColor()));
+      append(" ("+ directory + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      setIcon(FileTypeManager.getInstance().getFileTypeByFileName(fileName).getIcon());
     }
   }
 

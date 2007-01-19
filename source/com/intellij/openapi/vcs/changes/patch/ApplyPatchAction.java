@@ -58,38 +58,21 @@ public class ApplyPatchAction extends AnAction {
   public static ApplyPatchStatus applyPatch(final Project project, final List<FilePatch> patches, final VirtualFile baseDirectory,
                                             final int stripLeadingDirectories, final boolean createDirectories, final boolean allowRename) {
     List<VirtualFile> filesToMakeWritable = new ArrayList<VirtualFile>();
-    for(FilePatch patch: patches) {
-      VirtualFile fileToPatch;
-      try {
-        fileToPatch = patch.findFileToPatch(baseDirectory, stripLeadingDirectories, false, false);
-      }
-      catch (IOException e) {
-        Messages.showErrorDialog(project, "Error when searching for file to patch: " + patch.getBeforeName() + ": " + e.getMessage(),
-                                 "Apply Patch");
-        return ApplyPatchStatus.FAILURE;
-      }
-      // security check to avoid overwriting system files with a patch
-      if (fileToPatch != null && !ProjectRootManager.getInstance(project).getFileIndex().isInContent(fileToPatch)) {
-        Messages.showErrorDialog(project, "File to patch found outside content root: " + patch.getBeforeName(),
-                                 "Apply Patch");
-        return ApplyPatchStatus.FAILURE;
-      }
-      if (fileToPatch != null && !fileToPatch.isDirectory()) {
-        filesToMakeWritable.add(fileToPatch);
-        FileType fileType = fileToPatch.getFileType();
-        if (fileType == StdFileTypes.UNKNOWN) {
-          fileType = FileTypeChooser.associateFileType(fileToPatch.getPresentableName());
-          if (fileType == null) {
-            return ApplyPatchStatus.FAILURE;
-          }
-        }
-      }
+    if (!prepareFiles(project, patches, baseDirectory, stripLeadingDirectories, filesToMakeWritable)) {
+      return ApplyPatchStatus.FAILURE;
     }
     final VirtualFile[] fileArray = filesToMakeWritable.toArray(new VirtualFile[filesToMakeWritable.size()]);
     final ReadonlyStatusHandler.OperationStatus readonlyStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(fileArray);
     if (readonlyStatus.hasReadonlyFiles()) {
       return ApplyPatchStatus.FAILURE;
     }
+    return applyFilePatches(project, patches, baseDirectory, stripLeadingDirectories, createDirectories, allowRename);
+  }
+
+  public static ApplyPatchStatus applyFilePatches(final Project project, final List<FilePatch> patches, final VirtualFile baseDirectory,
+                                                  final int stripLeadingDirectories,
+                                                  final boolean createDirectories,
+                                                  final boolean allowRename) {
     final Ref<ApplyPatchStatus> statusRef = new Ref<ApplyPatchStatus>();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -115,6 +98,39 @@ public class ApplyPatchAction extends AnAction {
       }
     });
     return statusRef.get();
+  }
+
+  public static boolean prepareFiles(final Project project, final List<FilePatch> patches, final VirtualFile baseDirectory,
+                                     final int stripLeadingDirectories,
+                                     final List<VirtualFile> filesToMakeWritable) {
+    for(FilePatch patch: patches) {
+      VirtualFile fileToPatch;
+      try {
+        fileToPatch = patch.findFileToPatch(baseDirectory, stripLeadingDirectories, false, false);
+      }
+      catch (IOException e) {
+        Messages.showErrorDialog(project, "Error when searching for file to patch: " + patch.getBeforeName() + ": " + e.getMessage(),
+                                 "Apply Patch");
+        return false;
+      }
+      // security check to avoid overwriting system files with a patch
+      if (fileToPatch != null && !ProjectRootManager.getInstance(project).getFileIndex().isInContent(fileToPatch)) {
+        Messages.showErrorDialog(project, "File to patch found outside content root: " + patch.getBeforeName(),
+                                 "Apply Patch");
+        return false;
+      }
+      if (fileToPatch != null && !fileToPatch.isDirectory()) {
+        filesToMakeWritable.add(fileToPatch);
+        FileType fileType = fileToPatch.getFileType();
+        if (fileType == StdFileTypes.UNKNOWN) {
+          fileType = FileTypeChooser.associateFileType(fileToPatch.getPresentableName());
+          if (fileType == null) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
   }
 
   private static ApplyPatchStatus applySinglePatch(final Project project, final FilePatch patch, final VirtualFile baseDirectory,

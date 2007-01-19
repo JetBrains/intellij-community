@@ -136,15 +136,26 @@ public class FilePatch {
   @Nullable
   public VirtualFile findFileToPatch(@NotNull final VirtualFile patchedDir, final int skipTopDirs, final boolean createDirectories,
                                      final boolean allowRename) throws IOException {
-    VirtualFile file = findFileToPatchByName(patchedDir, skipTopDirs, myBeforeName, createDirectories);
-    if (file == null) {
-      file = findFileToPatchByName(patchedDir, skipTopDirs, myAfterName, createDirectories);
+    return findPatchTarget(patchedDir, myBeforeName, myAfterName, skipTopDirs, isNewFile(), createDirectories, allowRename);
+  }
+
+  @Nullable
+  public static VirtualFile findPatchTarget(final VirtualFile baseDir, final String beforeName, final String afterName, final int skipTopDirs,
+                                            final boolean isNewFile,
+                                            final boolean createDirectories,
+                                            final boolean allowRename) throws IOException {
+    VirtualFile file = null;
+    if (beforeName != null) {
+      file = findFileToPatchByName(baseDir, skipTopDirs, beforeName, isNewFile, createDirectories);
     }
-    else if (allowRename && !myBeforeName.equals(myAfterName)) {
-      String[] beforeNameComponents = myBeforeName.split("/");
-      String[] afterNameComponents = myAfterName.split("/");
+    if (file == null) {
+      file = findFileToPatchByName(baseDir, skipTopDirs, afterName, isNewFile, createDirectories);
+    }
+    else if (allowRename && !beforeName.equals(afterName)) {
+      String[] beforeNameComponents = beforeName.split("/");
+      String[] afterNameComponents = afterName.split("/");
       if (!beforeNameComponents [beforeNameComponents.length-1].equals(afterNameComponents [afterNameComponents.length-1])) {
-        file.rename(this, afterNameComponents [afterNameComponents.length-1]);
+        file.rename(null, afterNameComponents [afterNameComponents.length-1]);
       }
       boolean pathChanged = (beforeNameComponents.length != afterNameComponents.length);
       if (!pathChanged) {
@@ -156,31 +167,31 @@ public class FilePatch {
         }
       }
       if (pathChanged) {
-        VirtualFile moveTarget = findFileToPatchByComponents(patchedDir, skipTopDirs, afterNameComponents, afterNameComponents.length-1,
+        VirtualFile moveTarget = findFileToPatchByComponents(baseDir, skipTopDirs, afterNameComponents, afterNameComponents.length-1,
                                                              createDirectories);
         if (moveTarget == null) {
           return null;
         }
-        file.move(this, moveTarget);
+        file.move(null, moveTarget);
       }
     }
     return file;
   }
 
   @Nullable
-  private VirtualFile findFileToPatchByName(@NotNull final VirtualFile patchedDir, final int skipTopDirs, final String fileName,
-                                            final boolean createDirectories) {
+  private static VirtualFile findFileToPatchByName(@NotNull final VirtualFile patchedDir, final int skipTopDirs, final String fileName,
+                                                   boolean isNewFile, final boolean createDirectories) {
     String[] pathNameComponents = fileName.split("/");
-    int lastComponentToFind = isNewFile() ? pathNameComponents.length-1 : pathNameComponents.length;
+    int lastComponentToFind = isNewFile ? pathNameComponents.length-1 : pathNameComponents.length;
     return findFileToPatchByComponents(patchedDir, skipTopDirs, pathNameComponents, lastComponentToFind, createDirectories);
   }
 
   @Nullable
-  private VirtualFile findFileToPatchByComponents(VirtualFile patchedDir,
-                                                  final int skipTopDirs,
-                                                  final String[] pathNameComponents,
-                                                  final int lastComponentToFind,
-                                                  final boolean createDirectories) {
+  private static VirtualFile findFileToPatchByComponents(VirtualFile patchedDir,
+                                                         final int skipTopDirs,
+                                                         final String[] pathNameComponents,
+                                                         final int lastComponentToFind,
+                                                         final boolean createDirectories) {
     for(int i=skipTopDirs; i<lastComponentToFind; i++) {
       VirtualFile nextChild;
       if (pathNameComponents [i].equals("..")) {
@@ -192,7 +203,7 @@ public class FilePatch {
       if (nextChild == null) {
         if (createDirectories) {
           try {
-            nextChild = patchedDir.createChildDirectory(this, pathNameComponents [i]);
+            nextChild = patchedDir.createChildDirectory(null, pathNameComponents [i]);
           }
           catch (IOException e) {
             return null;

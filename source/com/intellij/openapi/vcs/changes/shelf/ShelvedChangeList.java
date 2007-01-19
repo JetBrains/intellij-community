@@ -28,29 +28,46 @@ public class ShelvedChangeList implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList");
 
   @NonNls private static final String ATTRIBUTE_DATE = "date";
+  @NonNls private static final String ELEMENT_BINARY = "binary";
 
   public String PATH;
   public String DESCRIPTION;
   public Date DATE;
   private List<ShelvedChange> myChanges;
+  private List<ShelvedBinaryFile> myBinaryFiles;
 
   public ShelvedChangeList() {
   }
 
-  public ShelvedChangeList(final String path, final String description) {
+  public ShelvedChangeList(final String path, final String description, final List<ShelvedBinaryFile> binaryFiles) {
     PATH = path;
     DESCRIPTION = description;
     DATE = new Date();
+    myBinaryFiles = binaryFiles;
   }
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     DATE = new Date(Long.parseLong(element.getAttributeValue(ATTRIBUTE_DATE)));
+
+    myBinaryFiles = new ArrayList<ShelvedBinaryFile>();
+    //noinspection unchecked
+    final List<Element> children = (List<Element>)element.getChildren(ELEMENT_BINARY);
+    for(Element child: children) {
+      ShelvedBinaryFile binaryFile = new ShelvedBinaryFile();
+      binaryFile.readExternal(child);
+      myBinaryFiles.add(binaryFile);
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
     element.setAttribute(ATTRIBUTE_DATE, Long.toString(DATE.getTime()));
+    for(ShelvedBinaryFile file: myBinaryFiles) {
+      Element child = new Element(ELEMENT_BINARY);
+      file.writeExternal(child);
+      element.addContent(child);
+    }
   }
 
   @Override
@@ -86,5 +103,9 @@ public class ShelvedChangeList implements JDOMExternalizable {
 
   public void clearLoadedChanges() {
     myChanges = null;
+  }
+
+  public List<ShelvedBinaryFile> getBinaryFiles() {
+    return myBinaryFiles;
   }
 }
