@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.javaee.JavaeeModuleProperties;
+import com.intellij.javaee.J2EEBundle;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -209,7 +210,7 @@ public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase imple
   }
 
   public String toString() {
-    return CompilerBundle
+    return J2EEBundle
       .message("j2ee.build.instruction.module.to.file.message", ModuleUtil.getModuleNameInReadAction(getModule()), getOutputRelativePath());
   }
 
