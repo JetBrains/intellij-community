@@ -76,8 +76,8 @@ public class SimpleNodeRenderer extends NodeRenderer {
     }
   }
 
-  public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
-    super.append(fragment, attributes);
+  public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
+    super.append(fragment, attributes, isMainText);
     setName(getName() + fragment);
   }
 

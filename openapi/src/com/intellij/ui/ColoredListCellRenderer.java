@@ -58,20 +58,19 @@ public abstract class ColoredListCellRenderer extends SimpleColoredComponent imp
    * When the item is selected then we use default tree's selection foreground.
    * It guaranties readability of selected text in any LAF.
    */
-  public final void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes) {
+  public final void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, boolean isMainText) {
     if(mySelected) {
       super.append(
         fragment,
         new SimpleTextAttributes(
           attributes.getStyle(), UIUtil.getListSelectionForeground()
-        )
-      );
+        ), isMainText);
     }
     else if (attributes.getFgColor() == null) {
-      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getListForeground()));
+      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getListForeground()), isMainText);
     }
     else {
-      super.append(fragment, attributes);
+      super.append(fragment, attributes, isMainText);
     }
   }
 

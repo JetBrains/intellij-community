@@ -17,6 +17,8 @@ package com.intellij.util.ui.tree;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.ui.SimpleColoredComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -412,36 +414,45 @@ public final class TreeUtil {
     if (bottom >= size){
       bottom = size - 1;
     }
-    final Rectangle topBounds = tree.getRowBounds(top);
-    final Rectangle bottomBounds = tree.getRowBounds(bottom);
-    final Rectangle bounds;
+    final Rectangle rowBounds = tree.getRowBounds(row);
+    if (rowBounds == null) return;
+
+    Rectangle topBounds = tree.getRowBounds(top);
     if (topBounds == null) {
-      bounds = bottomBounds;
+      topBounds = rowBounds;
     }
-    else if (bottomBounds == null) {
-      bounds = topBounds;
+
+    Rectangle bottomBounds = tree.getRowBounds(bottom);
+    if (bottomBounds == null) {
+      bottomBounds = rowBounds;
     }
-    else {
-      bounds = topBounds.union(bottomBounds);
-    }
-    if (bounds != null) {
+
+    Rectangle bounds = topBounds.union(bottomBounds);
+    bounds.x = rowBounds.x;
+    bounds.width = rowBounds.width;
+
+    final Rectangle visible = tree.getVisibleRect();
+    if (visible.contains(bounds)) {
+      bounds = null;
+    } else {
       final TreePath path = tree.getPathForRow(row);
-      if (path != null && path.getParentPath() != null) {
-        final Rectangle parentBounds = tree.getPathBounds(path.getParentPath());
-        if (parentBounds != null) {
-          bounds.x = parentBounds.x;
-        }
+      final Component comp =
+        tree.getCellRenderer().getTreeCellRendererComponent(tree, path.getLastPathComponent(), true, true, false, row, false);
+
+      if (comp instanceof SimpleColoredComponent) {
+        final SimpleColoredComponent renderer = ((SimpleColoredComponent)comp);
+        final Dimension scrollableSize = renderer.computePreferredSize(true);
+        bounds.width = scrollableSize.width;
       }
-      if (!centerHorizontally) {
-        bounds.x = 0;
-        bounds.width = tree.getWidth();
-      } else {
-        bounds.width = Math.min(bounds.width, tree.getVisibleRect().width);
-      }
-      tree.scrollRectToVisible(bounds);
     }
+
+
     if (!tree.isRowSelected(row)) {
       tree.setSelectionRow(row);
+    }
+
+    if (bounds != null) {
+      tree.scrollRectToVisible(bounds);
     }
   }
 

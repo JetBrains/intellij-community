@@ -25,8 +25,8 @@ public class SimpleColoredRenderer extends SimpleColoredComponent {
     myCellState.collectState(table, isSelected, hasFocus, row, column);
   }
 
-  public void append(String fragment, SimpleTextAttributes attributes) {
-    super.append(fragment, modifyAttributes(attributes));
+  public void append(String fragment, SimpleTextAttributes attributes, boolean isMainText) {
+    super.append(fragment, modifyAttributes(attributes), isMainText);
   }
 
   protected SimpleTextAttributes modifyAttributes(final SimpleTextAttributes attributes) {

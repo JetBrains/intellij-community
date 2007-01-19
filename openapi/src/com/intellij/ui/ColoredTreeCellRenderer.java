@@ -36,6 +36,8 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
    */
   protected boolean myFocused;
 
+  protected JTree myTree;
+
   public final Component getTreeCellRendererComponent(
     JTree tree,
     Object value,
@@ -45,6 +47,8 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     int row,
     boolean hasFocus
   ){
+    myTree = tree;
+
     clear();
 
     mySelected = selected;
@@ -75,6 +79,10 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
 
     customizeCellRenderer(tree,value,selected,expanded,leaf,row,hasFocus);
 
+    if (getFont() == null) {
+      setFont(tree.getFont());
+    }
+
     return this;
   }
 
@@ -82,16 +90,15 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
    * When the item is selected then we use default tree's selection foreground.
    * It guaranties readability of selected text in any LAF.
    */
-  public void append(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes){
+  public void append(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText){
     if(mySelected && myFocused){
       super.append(
         fragment,
         new SimpleTextAttributes(
           attributes.getStyle(), UIUtil.getTreeSelectionForeground()
-        )
-      );
+        ), isMainText);
     }else{
-      super.append(fragment,attributes);
+      super.append(fragment,attributes, isMainText);
     }
   }
 

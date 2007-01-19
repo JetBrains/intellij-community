@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.SimpleColoredComponent;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
