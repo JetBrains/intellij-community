@@ -467,32 +467,10 @@ public final class TreeUtil {
         bounds.width = visible.width;
       }
 
-      final boolean siblings = areSiblings(path, tree.getPathForRow(previous));
-      boolean totallyInvisible = !visible.contains(bounds) && !visible.intersects(bounds);
-
-      if (siblings && !totallyInvisible) {
-        bounds.x = visible.x;
-        bounds.width = visible.width;
-      }
-
       tree.scrollRectToVisible(bounds);
     }
   }
 
-  private static boolean areSiblings(final TreePath path, final TreePath prevPath) {
-    if (prevPath != null) {
-      final TreePath parent = path.getParentPath();
-      final TreePath prevParent = prevPath.getParentPath();
-      if (parent != null && prevParent != null) {
-        final Object first = parent.getLastPathComponent();
-        final Object second = prevParent.getLastPathComponent();
-
-        if (first != null && first.equals(second)) return true;
-      }
-    }
-
-    return false;
-  }
 
   private static int getSelectedRow(final JTree tree) {
     return tree.getRowForPath(tree.getSelectionPath());
