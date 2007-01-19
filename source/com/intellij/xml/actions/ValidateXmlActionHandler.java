@@ -86,16 +86,17 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
     if (path != null) return VfsUtil.findRelativeFile(path,null);
     return null;
   }
-  
+
   public abstract class ErrorReporter {
     public abstract void processError(SAXParseException ex,boolean warning);
 
     public boolean filterValidationException(Exception ex) {
       if (ex instanceof ProcessCanceledException) throw (ProcessCanceledException)ex;
-      
+      if (ex instanceof XmlResourceResolver.IgnoredResourceException) throw (XmlResourceResolver.IgnoredResourceException)ex;
+
       if (ex instanceof FileNotFoundException ||
-            ex instanceof MalformedURLException || 
-            ex instanceof NoRouteToHostException || 
+            ex instanceof MalformedURLException ||
+            ex instanceof NoRouteToHostException ||
             ex instanceof ConnectException
             ) {
         // do not log problems caused by malformed and/or ignored external resources
@@ -121,7 +122,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
   private String buildMessageString(SAXParseException ex) {
     String msg = "(" + ex.getLineNumber() + ":" + ex.getColumnNumber() + ") " + ex.getMessage();
     final VirtualFile file = getFile(ex.getPublicId());
-    
+
     if ( file != null && !file.equals(myFile.getVirtualFile())) {
       msg = file.getName() + ":" + msg;
     }
@@ -130,6 +131,10 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
 
   public class TestErrorReporter extends ErrorReporter {
     private ArrayList<String> errors = new ArrayList<String>(3);
+
+    public boolean isStopOnUndeclaredResource() {
+      return true;
+    }
 
     public void processError(SAXParseException ex, boolean warning) {
       errors.add(buildMessageString(ex));
@@ -323,6 +328,8 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
 
       myErrorReporter.startProcessing();
     }
+    catch (XmlResourceResolver.IgnoredResourceException e) {
+    }
     catch (Exception exception) {
       filterAppException(exception);
     }
@@ -373,14 +380,14 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
 
 
           });
-          
+
           final String[] resourcePaths = myXmlResourceResolver.getResourcePaths();
           if (resourcePaths.length > 0) { // if caches are used
             final VirtualFile[] files = new VirtualFile[resourcePaths.length];
             for(int i = 0; i < resourcePaths.length; ++i) {
               files[i] = VfsUtil.findRelativeFile(resourcePaths[i], null);
             }
-            
+
             myFile.putUserData(DEPENDENT_FILES_KEY, files);
             myFile.putUserData(GRAMMAR_POOL_TIME_STAMP_KEY, new Long(calculateTimeStamp(files,myProject)));
           }
@@ -413,7 +420,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
       if (hasDtdDeclaration()) {
         factory.setValidating(true);
       }
-      
+
       if (needsSchemaChecking()) {
         factory.setValidating(true);
         factory.setNamespaceAware(true);
@@ -423,7 +430,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
         } catch(NoSuchMethodError e) {}
         schemaChecking = true;
       }
-      
+
       SAXParser parser = factory.newSAXParser();
 
       parser.setProperty(ENTITY_RESOLVER_PROPERTY_NAME, myXmlResourceResolver);
@@ -488,7 +495,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
         return false;
       }
     }
-    
+
     return true;
   }
 

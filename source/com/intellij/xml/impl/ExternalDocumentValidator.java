@@ -1,6 +1,7 @@
 package com.intellij.xml.impl;
 
 import com.intellij.codeInsight.daemon.Validator;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -16,8 +17,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.xml.actions.ValidateXmlActionHandler;
+import com.intellij.xml.util.XmlResourceResolver;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.lang.Language;
 import org.jetbrains.annotations.NonNls;
 import org.xml.sax.SAXParseException;
 
@@ -26,7 +27,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * @author maxim
+ * Created by IntelliJ IDEA.
+ * User: maxim
+ * Date: 21.01.2005
+ * Time: 0:07:51
+ * To change this template use File | Settings | File Templates.
  */
 public class ExternalDocumentValidator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.impl.ExternalDocumentValidator");
@@ -98,16 +103,6 @@ public class ExternalDocumentValidator {
         return true;
       }
 
-      public boolean filterValidationException(Exception ex) {
-        if (ex instanceof ProcessCanceledException &&
-            ApplicationManager.getApplication().isUnitTestMode()
-           ) {
-          return true;
-        }
-
-        return super.filterValidationException(ex);
-      }
-
       public void processError(final SAXParseException e, final boolean warning) {
         try {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -153,7 +148,7 @@ public class ExternalDocumentValidator {
               } else if (messageId.startsWith(ATTRIBUTE_MESSAGE_PREFIX)) {
                 @NonNls String prefix = "of attribute ";
                 final int i = localizedMessage.indexOf(prefix);
-
+                
                 if (i != -1) {
                   int messagePrefixLength = prefix.length() + i;
                   final int nextQuoteIndex = localizedMessage.indexOf(localizedMessage.charAt(messagePrefixLength), messagePrefixLength + 1);
@@ -221,6 +216,7 @@ public class ExternalDocumentValidator {
         }
         catch (Exception ex) {
           if (ex instanceof ProcessCanceledException) throw (ProcessCanceledException)ex;
+          if (ex instanceof XmlResourceResolver.IgnoredResourceException) throw (XmlResourceResolver.IgnoredResourceException)ex;
           LOG.error(ex);
         }
       }

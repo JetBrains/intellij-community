@@ -3,7 +3,6 @@ package com.intellij.xml.util;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -54,7 +53,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
   public String[] getResourcePaths() {
     return myExternalResourcesMap.values().toArray(new String[myExternalResourcesMap.size()]);
   }
-  
+
   public PsiFile resolve(final String baseSystemId, final String systemId) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: resolveEntity(baseSystemId='" + baseSystemId + "' systemId='" + systemId + "," + super.toString() + "')");
@@ -63,7 +62,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
     if (systemId == null) return null;
     if (myStopOnUnDeclaredResource &&
         ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(systemId)) {
-      throw new ProcessCanceledException();
+      throw new IgnoredResourceException();
     }
     final PsiFile[] result = new PsiFile[] { null };
     final Runnable action = new Runnable() {
@@ -115,7 +114,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
         if (psiFile == null && systemId != null && baseSystemId == null) { // entity file
           File workingFile = new File("");
           String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/') + "/";
-          
+
           String relativePath = StringUtil.replace(
             systemId,
             workingDir,
@@ -202,5 +201,8 @@ public class XmlResourceResolver implements XMLEntityResolver {
 
   public void setStopOnUnDeclaredResource(final boolean stopOnUnDeclaredResource) {
     myStopOnUnDeclaredResource = stopOnUnDeclaredResource;
+  }
+
+  public static class IgnoredResourceException extends RuntimeException {
   }
 }
