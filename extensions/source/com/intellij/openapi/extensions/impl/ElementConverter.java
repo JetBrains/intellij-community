@@ -25,7 +25,7 @@ import org.jdom.Element;
 /**
  * @author Alexander Kireyev
  */
-public class ElementConverter implements Converter {
+class ElementConverter implements Converter {
   public boolean canConvert(Class aClass) {
     return Element.class.isAssignableFrom(aClass);
   }
@@ -35,6 +35,7 @@ public class ElementConverter implements Converter {
   }
 
   public Object unmarshal(HierarchicalStreamReader hierarchicalStreamReader, UnmarshallingContext unmarshallingContext) {
-    return hierarchicalStreamReader.peekUnderlyingNode();
+    //return hierarchicalStreamReader.peekUnderlyingNode();
+    throw new UnsupportedOperationException("This method is not yet implemented");
   }
 }

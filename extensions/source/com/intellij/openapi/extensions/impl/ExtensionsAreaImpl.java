@@ -36,7 +36,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private final LogProvider myLogger;
   private static final String ATTRIBUTE_AREA = "area";
 
-  static Map<String,String> ourDefaultEPs = new HashMap<String, String>();
+  private static Map<String,String> ourDefaultEPs = new HashMap<String, String>();
 
   static {
     ourDefaultEPs.put(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME, EPAvailabilityListenerExtension.class.getName());
@@ -221,7 +221,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
-  public void initialize() {
+  private void initialize() {
     for (String epName : ourDefaultEPs.keySet()) {
       registerExtensionPoint(epName, ourDefaultEPs.get(epName));
     }
@@ -307,8 +307,11 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
     if (extensions != null) {
       for (Element element : extensions) {
-        if (equal(areaClass, element.getAttributeValue(ATTRIBUTE_AREA))) {
+        if (hasExtensionPoint(extractEPName(element))) {
           registerExtension(pluginDescriptor, element);
+        }
+        else {
+          //todo check that other classes have EP
         }
       }
     }

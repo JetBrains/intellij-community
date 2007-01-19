@@ -4,10 +4,13 @@
  */
 package com.intellij.openapi.extensions.impl;
 
+import com.thoughtworks.xstream.annotations.XStreamAlias;
+
 /**
  * @author Alexander Kireyev
  */
 public class TestExtensionClassOne {
+  @XStreamAlias("text")
   private String myText;
 
   public TestExtensionClassOne() {
@@ -19,9 +22,5 @@ public class TestExtensionClassOne {
 
   public String getText() {
     return myText;
-  }
-
-  public void setText(String text) {
-    myText = text;
   }
 }

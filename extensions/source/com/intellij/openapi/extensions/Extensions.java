@@ -28,7 +28,7 @@ import java.util.Set;
 public abstract class Extensions {
   private static LogProvider ourLogger = new SimpleLogProvider();
 
-  public static final String AREA_LISTENER_EXTENSION_POINT = "jetbrains.fabrique.platform.areaListeners";
+  public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<AreaListener>("com.intellij.arealistener");
 
   private static Map ourAreaClass2prototypeArea;
   private static Map<AreaInstance,ExtensionsAreaImpl> ourAreaInstance2area;
@@ -57,6 +57,13 @@ public abstract class Extensions {
     return (T[])getExtensions(extensionPointName.getName(), null);
   }
 
+  @SuppressWarnings({"unchecked"})
+  public static <T> T[] getExtensions(ExtensionPointName<T> extensionPointName, AreaInstance areaInstance) {
+    return (T[])getExtensions(extensionPointName.getName(), areaInstance);
+  }
+
+
+
   public static Object[] getExtensions(String extensionPointName, AreaInstance areaInstance) {
     ExtensionsArea area = getArea(areaInstance);
     assert area != null: "Unable to get area for " + areaInstance;
@@ -75,7 +82,7 @@ public abstract class Extensions {
       ExtensionsAreaImpl rootArea = new ExtensionsAreaImpl(null, null, null, ourLogger);
       ourAreaInstance2area.put(null, rootArea);
       ourAreaClass2prototypeArea.put(null, rootArea);
-      rootArea.registerExtensionPoint(AREA_LISTENER_EXTENSION_POINT, AreaListener.class.getName());
+      rootArea.registerExtensionPoint(AREA_LISTENER_EXTENSION_POINT.getName(), AreaListener.class.getName());
     }
   }
 
@@ -104,15 +111,13 @@ public abstract class Extensions {
     ourAreaClass2instances.put(areaClass, areaInstance);
     ourAreaInstance2class.put(areaInstance, areaClass);
     AreaListener[] listeners = getAreaListeners();
-    for (int i = 0; i < listeners.length; i++) {
-      AreaListener listener = listeners[i];
+    for (AreaListener listener : listeners) {
       listener.areaCreated(areaClass, areaInstance);
     }
   }
 
   private static AreaListener[] getAreaListeners() {
-    AreaListener[] listeners = (AreaListener[]) getRootArea().getExtensionPoint(AREA_LISTENER_EXTENSION_POINT).getExtensions();
-    return listeners;
+    return getRootArea().getExtensionPoint(AREA_LISTENER_EXTENSION_POINT).getExtensions();
   }
 
   public static void registerAreaClass(@NonNls String areaClass, @NonNls String parentAreaClass) {
@@ -153,7 +158,7 @@ public abstract class Extensions {
   public static AreaInstance[] getAllAreas() {
     init();
     final Set<AreaInstance> keys = ourAreaInstance2area.keySet();
-    return (AreaInstance[]) keys.toArray(new AreaInstance[keys.size()]);
+    return keys.toArray(new AreaInstance[keys.size()]);
   }
 
   public static AreaInstance[] getAllAreas(String areaClass) {

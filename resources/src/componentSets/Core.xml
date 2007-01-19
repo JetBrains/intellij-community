@@ -180,11 +180,10 @@
     <component>
       <implementation-class>com.intellij.ide.Exe4jListener</implementation-class>
     </component>
+
     <component>
-          <interface-class>com.intellij.util.xml.ui.DomUIFactory</interface-class>
-          <implementation-class>com.intellij.util.xml.ui.DomUIFactoryImpl</implementation-class>
-        </component>
-        
+      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
+    </component>
   </application-components>
 
 
@@ -206,10 +205,6 @@
     <component>
       <interface-class>com.intellij.util.xml.DomElementsNavigationManager</interface-class>
       <implementation-class>com.intellij.util.xml.impl.DomElementsNavigationManagerImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.util.xml.ui.EditorTextFieldControlHighlighter</implementation-class>
       <skipForDummyProject/>
     </component>
     <component>
@@ -354,6 +349,10 @@
       <interface-class>com.intellij.facet.FacetExistentceListenersRegistry</interface-class>
       <implementation-class>com.intellij.facet.impl.FacetExistentceListenersRegistryImpl</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
+    </component>
   </project-components>
 
 
@@ -368,6 +367,10 @@
     </component>
     <component>
       <implementation-class>com.intellij.jar.BuildJarSettings</implementation-class>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
     </component>
   </module-components>
 </components>

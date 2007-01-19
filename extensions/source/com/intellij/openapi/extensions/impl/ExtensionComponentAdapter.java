@@ -17,6 +17,7 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.annotations.Annotations;
 import com.thoughtworks.xstream.core.util.CompositeClassLoader;
 import com.thoughtworks.xstream.io.xml.JDomReader;
 import org.jdom.Element;
@@ -52,14 +53,16 @@ public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdap
         if (myPluginDescriptor.getPluginClassLoader() != null) {
           classLoader.add(myPluginDescriptor.getPluginClassLoader());
         }
-        XStream xStream = new XStream(new PropertyReflectionProvider());
+        //XStream xStream = new XStream(new PropertyReflectionProvider());
+        XStream xStream = new XStream();
         xStream.setClassLoader(classLoader);
-        xStream.registerConverter(new ElementConverter());
+        //xStream.registerConverter(new ElementConverter());
         Object componentInstance = super.getComponentInstance(container);
         if (componentInstance instanceof ReaderConfigurator) {
           ReaderConfigurator readerConfigurator = (ReaderConfigurator) componentInstance;
           readerConfigurator.configureReader(xStream);
         }
+        Annotations.configureAliases(xStream, componentInstance.getClass());
         xStream.alias(myExtensionElement.getName(), componentInstance.getClass());
         myComponentInstance = xStream.unmarshal(new JDomReader(myExtensionElement), componentInstance);
       }
@@ -88,7 +91,7 @@ public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdap
     return myExtensionElement.getAttributeValue("id");
   }
 
-  public Element getExtensionElement() {
+  private Element getExtensionElement() {
     return myExtensionElement;
   }
 

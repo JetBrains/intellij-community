@@ -109,7 +109,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     if (PluginManager.shouldLoadPlugins()) {
       final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
       for (IdeaPluginDescriptor plugin : plugins) {
-        if (!PluginManager.shouldLoadPlugin(plugin)) continue;
+        if (PluginManager.shouldSkipPlugin(plugin)) continue;
         loadComponentsConfiguration(plugin.getModuleComponents(), plugin, true);
       }
     }

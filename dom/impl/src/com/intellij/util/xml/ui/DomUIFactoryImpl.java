@@ -18,17 +18,15 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.BooleanTableCellEditor;
-import com.intellij.ui.UserActivityWatcher;
 import com.intellij.ui.UserActivityListener;
+import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ClassMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomReflectionUtil;
-import com.intellij.util.xml.highlighting.DomElementsErrorPanel;
-import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.xml.highlighting.DomElementsErrorPanel;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -175,16 +173,5 @@ public class DomUIFactoryImpl extends DomUIFactory {
   private static <T extends JComponent> T removeBorder(final T component) {
     component.setBorder(new EmptyBorder(0, 0, 0, 0));
     return component;
-  }
-
-  @NonNls
-  public String getComponentName() {
-    return getClass().getName();
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

@@ -4,8 +4,7 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -27,7 +26,7 @@ import java.lang.reflect.Type;
 /**
  * @author peter
  */
-public abstract class DomUIFactory implements ApplicationComponent {
+public abstract class DomUIFactory {
   public static Method GET_VALUE_METHOD = null;
   public static Method SET_VALUE_METHOD = null;
   public static Method GET_STRING_METHOD = null;
@@ -141,7 +140,7 @@ public abstract class DomUIFactory implements ApplicationComponent {
   }
 
   public static DomUIFactory getDomUIFactory() {
-    return ApplicationManager.getApplication().getComponent(DomUIFactory.class);
+    return ServiceManager.getService(DomUIFactory.class);
   }
 
   public DomUIControl createCollectionControl(DomElement element, DomCollectionChildDescription description) {

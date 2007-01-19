@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -33,6 +34,7 @@ import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -79,7 +81,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     HighlightVisitor[] highlightVisitors;
     synchronized (myProject) {
       Integer num = myProject.getUserData(HIGHLIGHT_VISITOR_THREADS_IN_USE);
-      highlightVisitors = myProject.getComponents(HighlightVisitor.class);
+      highlightVisitors = Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, myProject);
       if (num == null) {
         num = 0;
       }
@@ -292,6 +294,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return array;
   }
 
+  @Nullable
   private LineMarkerInfo getLineMarkerInfo(PsiElement element) {
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element.getParent();

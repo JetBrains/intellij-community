@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.extensions;
 
-public interface ExtensionPointListener {
-  void extensionAdded(Object extension);
-  void extensionRemoved(Object extension);
+public interface ExtensionPointListener<T> {
+  void extensionAdded(T extension);
+  void extensionRemoved(T extension);
 }

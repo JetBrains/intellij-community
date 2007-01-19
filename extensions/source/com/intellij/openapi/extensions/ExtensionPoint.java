@@ -24,17 +24,17 @@ public interface ExtensionPoint<T> {
 
   String getBeanClassName();
 
-  void registerExtension(Object extension);
-  void registerExtension(Object extension, LoadingOrder order);
+  void registerExtension(T extension);
+  void registerExtension(T extension, LoadingOrder order);
 
   T[] getExtensions();
   T getExtension();
-  boolean hasExtension(Object extension);
+  boolean hasExtension(T extension);
 
-  void unregisterExtension(Object extension);
+  void unregisterExtension(T extension);
 
-  void addExtensionPointListener(ExtensionPointListener listener);
-  void removeExtensionPointListener(ExtensionPointListener extensionPointListener);
+  void addExtensionPointListener(ExtensionPointListener<T> listener);
+  void removeExtensionPointListener(ExtensionPointListener<T> extensionPointListener);
 
   void reset();
 

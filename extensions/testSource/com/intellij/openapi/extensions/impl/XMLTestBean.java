@@ -14,58 +14,58 @@ import java.util.Collection;
  * @author Alexander Kireyev
  */
 public class XMLTestBean implements PluginAware {
-  private boolean myOtherProperty;
-  private int myProp1;
-  private Object myProp2;
-  private Collection myCollectionProperty;
-  private PluginId myPluginId;
+  private boolean otherProperty;
+  private int prop1;
+  private Object prop2;
+  private Collection collectionProperty;
+  private PluginId pluginId;
 
   public XMLTestBean() {
   }
 
   public XMLTestBean(Collection aCollectionProperty, boolean aOtherProperty, int aProp1) {
-    myCollectionProperty = aCollectionProperty;
-    myOtherProperty = aOtherProperty;
-    myProp1 = aProp1;
+    collectionProperty = aCollectionProperty;
+    otherProperty = aOtherProperty;
+    prop1 = aProp1;
   }
 
   public boolean isOtherProperty() {
-    return myOtherProperty;
+    return otherProperty;
   }
 
   public void setOtherProperty(boolean otherProperty) {
-    myOtherProperty = otherProperty;
+    this.otherProperty = otherProperty;
   }
 
   public int getProp1() {
-    return myProp1;
+    return prop1;
   }
 
   public void setProp1(int prop1) {
-    myProp1 = prop1;
+    this.prop1 = prop1;
   }
 
   public Object getProp2() {
-    return myProp2;
+    return prop2;
   }
 
   public void setProp2(Object prop2) {
-    myProp2 = prop2;
+    this.prop2 = prop2;
   }
 
   public Collection getCollectionProperty() {
-    return myCollectionProperty;
+    return collectionProperty;
   }
 
   public void setCollectionProperty(Collection collectionProperty) {
-    myCollectionProperty = collectionProperty;
+    this.collectionProperty = collectionProperty;
   }
 
   public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
-    myPluginId = pluginDescriptor.getPluginId();
+    pluginId = pluginDescriptor.getPluginId();
   }
 
   public PluginId getPluginId() {
-    return myPluginId;
+    return pluginId;
   }
 }

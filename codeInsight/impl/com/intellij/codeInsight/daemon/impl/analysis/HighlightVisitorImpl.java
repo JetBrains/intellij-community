@@ -9,7 +9,6 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.jsp.JspxFileViewProvider;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.injected.DocumentRange;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -37,13 +36,12 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class HighlightVisitorImpl extends PsiElementVisitor implements HighlightVisitor, ProjectComponent {
+public class HighlightVisitorImpl extends PsiElementVisitor implements HighlightVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl");
 
   private final PsiResolveHelper myResolveHelper;
@@ -62,20 +60,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   private final Map<String, Pair<PsiImportStatementBase, PsiClass>> mySingleImportedClasses = new THashMap<String, Pair<PsiImportStatementBase, PsiClass>>();
   private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new THashMap<String, Pair<PsiImportStaticReferenceElement, PsiField>>();
   private final AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl();
-
-  @NotNull
-  public String getComponentName() {
-    return "HighlightVisitorImpl";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {}
-
-  public void projectOpened() {}
-
-  public void projectClosed() {}
 
   public HighlightVisitorImpl(PsiManager manager) {
     this(manager.getResolveHelper());

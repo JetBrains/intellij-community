@@ -9,9 +9,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.LogProvider;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -20,9 +21,6 @@ import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringTokenizer;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import sun.reflect.Reflection;
@@ -31,7 +29,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -55,6 +52,7 @@ public class PluginManager {
   @NonNls private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
   private static final Object PLUGIN_CLASSES_LOCK = new Object();
   private static String myPluginError = null;
+  private static final String CORE_PLUGIN_ID = "com.intellij";
 
   private static Logger getLogger() {
     if (ourLogger == null) {
@@ -119,6 +117,15 @@ public class PluginManager {
     for (final IdeaPluginDescriptor descriptor : pluginDescriptors) {
       idToDescriptorMap.put(descriptor.getPluginId(), descriptor);
     }
+
+    final IdeaPluginDescriptor corePluginDescriptor = idToDescriptorMap.get(PluginId.getId(CORE_PLUGIN_ID));
+    assert corePluginDescriptor != null;
+    for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
+      if (descriptor != corePluginDescriptor) {
+        descriptor.insertDependency(corePluginDescriptor);
+      }
+    }
+
     // sort descriptors according to plugin dependencies
     Arrays.sort(pluginDescriptors, getPluginDescriptorComparator(idToDescriptorMap));
 
@@ -140,51 +147,9 @@ public class PluginManager {
   }
 
   private static void configureExtensions() {
-    final List<Element> extensionPoints = new ArrayList<Element>();
-    final List<Element> extensions = new ArrayList<Element>();
-
-    try {
-      final InputStream stdExtensionsStream = PluginManager.class.getResourceAsStream("/standard-extensions.xml");
-      final Document stdExtensions = JDOMUtil.loadDocument(stdExtensionsStream);
-      final Element root = stdExtensions.getRootElement();
-      final List<Element> epRoots = JDOMUtil.getChildrenFromAllNamespaces(root, "extensionPoints");
-      for (Element epRoot : epRoots) {
-        for (Object o : epRoot.getChildren()) {
-          extensionPoints.add((Element)o);
-        }
-      }
-
-      final List<Element> extensionRoots = JDOMUtil.getChildrenFromAllNamespaces(root, "extensions");
-      for (Element extRoot : extensionRoots) {
-        for (Object o : extRoot.getChildren()) {
-          extensions.add((Element)o);
-        }
-      }
-    }
-    catch (JDOMException e) {
-      e.printStackTrace();
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
-
     Extensions.setLogProvider(new IdeaLogProvider());
     Extensions.registerAreaClass(AREA_IDEA_PROJECT, null);
     Extensions.registerAreaClass(AREA_IDEA_MODULE, AREA_IDEA_PROJECT);
-
-    Extensions.getRootArea().registerAreaExtensionsAndPoints(RootPluginDescriptor.INSTANCE, extensionPoints, extensions);
-
-    Extensions.getRootArea().getExtensionPoint(Extensions.AREA_LISTENER_EXTENSION_POINT).registerExtension(new AreaListener() {
-      public void areaCreated(String areaClass, AreaInstance areaInstance) {
-        if (AREA_IDEA_PROJECT.equals(areaClass) || AREA_IDEA_MODULE.equals(areaClass)) {
-          final ExtensionsArea area = Extensions.getArea(areaInstance);
-          area.registerAreaExtensionsAndPoints(RootPluginDescriptor.INSTANCE, extensionPoints, extensions);
-        }
-      }
-
-      public void areaDisposing(String areaClass, AreaInstance areaInstance) {
-      }
-    }, LoadingOrder.FIRST);
   }
 
   public static boolean shouldLoadPlugins() {
@@ -200,18 +165,31 @@ public class PluginManager {
     return loadPlugins == null || Boolean.TRUE.toString().equals(loadPlugins);
   }
 
-  public static boolean shouldLoadPlugin(IdeaPluginDescriptor descriptor) {
-    //noinspection HardCodedStringLiteral
-    final String loadPluginCategory = System.getProperty("idea.load.plugins.category");
-    if (loadPluginCategory != null) {
-      return loadPluginCategory.equals(descriptor.getCategory());
+  public static boolean shouldSkipPlugin(IdeaPluginDescriptor descriptor) {
+    final boolean shouldLoad;
+
+    if (descriptor.getPluginId().getIdString().equals(CORE_PLUGIN_ID)) {
+      shouldLoad = true;
     }
-    //noinspection HardCodedStringLiteral
-    final String pluginId = System.getProperty("idea.load.plugins.id");
-    return pluginId == null || (descriptor.getPluginId() != null &&
-                                descriptor.getPluginId().getIdString() != null &&
-                                pluginId.equals(descriptor.getPluginId().getIdString()));
+    else {
+      //noinspection HardCodedStringLiteral
+      final String loadPluginCategory = System.getProperty("idea.load.plugins.category");
+      if (loadPluginCategory != null) {
+        shouldLoad = loadPluginCategory.equals(descriptor.getCategory());
+      }
+      else {
+        //noinspection HardCodedStringLiteral
+        final String pluginId = System.getProperty("idea.load.plugins.id");
+        shouldLoad = pluginId == null || (descriptor.getPluginId() != null &&
+                                    descriptor.getPluginId().getIdString() != null &&
+                                    pluginId.equals(descriptor.getPluginId().getIdString()));
+      }
+    }
+
+
+    return !shouldLoad;
   }
+
 
 
   private static Comparator<IdeaPluginDescriptor> getPluginDescriptorComparator(Map<PluginId, IdeaPluginDescriptor> idToDescriptorMap) {
@@ -368,7 +346,6 @@ public class PluginManager {
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
   private static void loadDescriptorsFromClassPath(final List<IdeaPluginDescriptorImpl> result) {
     try {
-      final String homePath = PathManager.getHomePath();
       final Collection<URL> urls = getClassLoaderUrls();
       for (URL url : urls) {
         final String protocol = url.getProtocol();
@@ -395,8 +372,7 @@ public class PluginManager {
     final Class<? extends ClassLoader> aClass = classLoader.getClass();
     if (aClass.getName().equals(UrlClassLoader.class.getName())) {
       try {
-        final List<URL> urls = (List<URL>)aClass.getDeclaredMethod("getUrls").invoke(classLoader);
-        return urls;
+        return (List<URL>)aClass.getDeclaredMethod("getUrls").invoke(classLoader);
       }
       catch (IllegalAccessException e) {
       }
@@ -458,7 +434,7 @@ public class PluginManager {
     }
     for (Iterator<IdeaPluginDescriptorImpl> iterator = result.iterator(); iterator.hasNext();) {
       IdeaPluginDescriptor descriptor = iterator.next();
-      if (!shouldLoadPlugins() || !shouldLoadPlugin(descriptor)) {
+      if (!shouldLoadPlugins() || shouldSkipPlugin(descriptor)) {
         iterator.remove();
       }
     }
@@ -479,6 +455,7 @@ public class PluginManager {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
+  @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptor(final File file) {
     IdeaPluginDescriptorImpl descriptor = null;
 

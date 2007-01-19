@@ -5,6 +5,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
@@ -19,6 +20,7 @@ public class StatusBarProgress extends ProgressIndicatorBase {
     SwingUtilities.invokeLater (
       new Runnable() {
         public void run() {
+          if (ApplicationManager.getApplication().isDisposed()) return;
           Project[] projects=ProjectManager.getInstance().getOpenProjects();
           if(projects.length==0){
             projects=new Project[]{null};

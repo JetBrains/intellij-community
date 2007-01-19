@@ -225,6 +225,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myDependencies;
   }
 
+
   @NotNull
   public PluginId[] getOptionalDependentPluginIds() {
     return myOptionalDependencies;
@@ -440,4 +441,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myDescription = loadDescription(myDescriptionChildText, bundle, myId);
   }
 
+  public void insertDependency(final IdeaPluginDescriptor d) {
+    PluginId[] deps = new PluginId[getDependentPluginIds().length + 1];
+    deps[0] = d.getPluginId();
+    System.arraycopy(myDependencies, 0, deps, 1, deps.length - 1);
+    myDependencies = deps;
+  }
 }

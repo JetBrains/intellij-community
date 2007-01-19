@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.extensions.impl;
 
-public class ExtensionClassAndAreaInstance {
+class ExtensionClassAndAreaInstance {
   private final Class myExtensionClass;
   private final Object myAreaInstance;
 

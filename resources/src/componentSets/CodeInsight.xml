@@ -102,10 +102,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <interface-class>com.intellij.codeInsight.guess.GuessManager</interface-class>
       <implementation-class>com.intellij.codeInsight.guess.impl.GuessManagerImpl</implementation-class>
       <skipForDummyProject/>

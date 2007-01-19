@@ -196,12 +196,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return myName;
   }
 
-  public void initComponents() {
-    initComponentsFromExtensions(Extensions.getRootArea());
-    super.initComponents();
-  }
-
-
   @Override
   protected void handleInitComponentError(final Throwable ex, final boolean fatal, final String componentClassName) {
     if (PluginManager.isPluginClass(componentClassName)) {
@@ -240,7 +234,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     if (PluginManager.shouldLoadPlugins()) {
       final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
       for (IdeaPluginDescriptor plugin : plugins) {
-        if (!PluginManager.shouldLoadPlugin(plugin)) continue;
+        if (PluginManager.shouldSkipPlugin(plugin)) continue;
         loadComponentsConfiguration(plugin.getAppComponents(), plugin, true);
       }
     }

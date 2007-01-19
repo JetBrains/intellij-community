@@ -40,9 +40,9 @@ public abstract class LoadingOrder {
     }
   };
 
-  static final int DONT_CARE = -1;
+  private static final int DONT_CARE = -1;
   static final int ACCEPTABLE = -2;
-  static final int SPECIAL = -3;
+  private static final int SPECIAL = -3;
 
   private final String myName; // for debug only
   private static final String BEFORE_STR = "BEFORE:";

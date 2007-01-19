@@ -231,6 +231,8 @@ public class ExtensionPointImpl implements ExtensionPoint {
   }
 
   public void addExtensionPointListener(ExtensionPointListener listener) {
+    processAdapters();
+
     if (myEPListeners.add(listener)) {
       for (Iterator iterator = myExtensions.iterator(); iterator.hasNext();) {
         try {

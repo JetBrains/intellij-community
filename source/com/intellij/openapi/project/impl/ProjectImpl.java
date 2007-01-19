@@ -227,7 +227,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
       final Application app = ApplicationManager.getApplication();
       final IdeaPluginDescriptor[] plugins = app.getPlugins();
       for (IdeaPluginDescriptor plugin : plugins) {
-        if (!PluginManager.shouldLoadPlugin(plugin)) continue;
+        if (PluginManager.shouldSkipPlugin(plugin)) continue;
         loadComponentsConfiguration(plugin.getProjectComponents(), plugin, true);
       }
     }

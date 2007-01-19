@@ -27,7 +27,7 @@ import org.picocontainer.alternatives.AbstractDelegatingMutablePicoContainer;
  * @author Alexander Kireyev
  */
 @SuppressWarnings({"unchecked"})
-public class AreaPicoContainerImpl extends AbstractDelegatingMutablePicoContainer implements AreaPicoContainer {
+class AreaPicoContainerImpl extends AbstractDelegatingMutablePicoContainer implements AreaPicoContainer {
   private final AreaInstance myAreaInstance;
 
   public AreaPicoContainerImpl(PicoContainer parentPicoContainer, AreaInstance areaInstance) {

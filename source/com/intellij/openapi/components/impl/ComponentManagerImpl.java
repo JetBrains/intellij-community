@@ -1,10 +1,7 @@
 package com.intellij.openapi.components.impl;
 
-import com.intellij.ExtensionPoints;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.ComponentDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.BaseComponent;
@@ -14,10 +11,7 @@ import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionsArea;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.IdeaPicoContainer;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
@@ -260,44 +254,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return result;
   }
 
-  public void initComponentsFromExtensions(final ExtensionsArea extensionsArea) {
-    //if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) return; // TODO: quick and dirty. To make tests running.
-    final Application app = ApplicationManager.getApplication();
-    final boolean headless = app.isHeadlessEnvironment();
-
-    final ComponentDescriptor[] componentDescriptors =
-      (ComponentDescriptor[])extensionsArea.getExtensionPoint(ExtensionPoints.COMPONENT).getExtensions();
-    for (ComponentDescriptor descriptor : componentDescriptors) {
-      final Map<String, String> options = descriptor.getOptionsMap();
-      if (isComponentSuitable(options)) {
-
-        ClassLoader loader = findLoader(descriptor.getPluginId());
-        try {
-          final String implementation = headless ? descriptor.getHeadlessImplementation() : descriptor.getImplementation();
-          if (!StringUtil.isEmpty(implementation)) {
-            registerComponent(Class.forName(descriptor.getInterface(), true, loader), Class.forName(implementation, true, loader), options);
-          }
-        }
-        catch (Exception e) {
-          LOG.error(new PluginException(e, descriptor.getPluginId()));
-        }
-        catch (Error e) {
-          LOG.error(new PluginException(e, descriptor.getPluginId()));
-        }
-      }
-    }
-
-  }
-
-  private ClassLoader findLoader(final PluginId id) {
-    final Application app = ApplicationManager.getApplication();
-    ClassLoader loader = app.getPlugin(id).getPluginClassLoader();
-    if (loader == null) {
-      loader = getClass().getClassLoader();
-    }
-    return loader;
-  }
-
   public synchronized BaseComponent getComponent(String name) {
     return myComponentsRegistry.getComponentByName(name);
   }
@@ -463,7 +419,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     private boolean containsInterface(final Class interfaceClass) {
-      assert myClassesLoaded;
+      if (!myClassesLoaded) loadClasses();
       return myInterfaceToClassMap.containsKey(interfaceClass);
     }
 
