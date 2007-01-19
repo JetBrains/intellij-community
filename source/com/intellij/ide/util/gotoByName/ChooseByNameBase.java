@@ -1006,7 +1006,7 @@ public abstract class ChooseByNameBase{
 patterns:
     for (String pattern : patterns) {
       int j;
-      for (j = matchPosition; j < suspects.size(); j++) {
+      for (j = matchPosition; j < suspects.size() - 1; j++) {
         String suspect = suspects.get(j);
         if (StringUtil.startsWithIgnoreCase(suspect, pattern)) {
           matchPosition = j + 1;
