@@ -111,13 +111,13 @@ public class NameUtil {
     for (int i = exactPrefixLen; i < pattern.length(); i++) {
       final char c = pattern.charAt(i);
       lastIsUppercase = false;
-      if (Character.isLetterOrDigit(c) || c == '.') {
+      if (Character.isLetterOrDigit(c)) {
         // This logic allows to use uppercase letters only to catch the name like PDM for PsiDocumentManager
         if (Character.isUpperCase(c) || Character.isDigit(c)) {
           buffer.append('(');
 
           if (!firstIdentifierLetter) {
-            buffer.append("[a-z0-9_\\$]*");
+            buffer.append("[a-z0-9\\$]*");
           }
 
           buffer.append(c);
@@ -142,11 +142,6 @@ public class NameUtil {
           buffer.append(Character.toUpperCase(c));
           buffer.append(']');
         }
-        else if (c == '.') {
-          if (!firstIdentifierLetter) {
-            buffer.append("[a-z0-9_\\$]*\\.");
-          }
-        }
         else {
           buffer.append(c);
         }
@@ -155,6 +150,12 @@ public class NameUtil {
       }
       else if (c == '*') {
         buffer.append(".*");
+        firstIdentifierLetter = true;
+      }
+      else if (c == '.') {
+        if (!firstIdentifierLetter) {
+          buffer.append("[A-Za-z0-9\\$]*\\.");
+        }
         firstIdentifierLetter = true;
       }
       else {
@@ -173,7 +174,7 @@ public class NameUtil {
       buffer.append(".*");
     }
     else if (lastIsUppercase) {
-      buffer.append("[a-z0-9_\\$]*");
+      buffer.append("[a-z0-9\\$]*");
     }
 
     return buffer.toString();
