@@ -368,6 +368,20 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       return ((PsiFile)element).getName();
     }
 
+    @Nullable
+    public String getFullName(final Object element) {
+      if (element instanceof PsiFile) {
+        final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
+        return virtualFile != null ? virtualFile.getPath() : null;
+      }
+
+      return getElementName(element);
+    }
+
+    @NotNull
+    public String[] getSeparators() {
+      return new String[] {"/", "\\"};
+    }
   }
 
   private final class MyCallback extends ChooseByNamePopupComponent.Callback {

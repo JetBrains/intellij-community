@@ -36,6 +36,9 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class GotoClassModel2 extends ContributorsBasedGotoByModel {
@@ -77,5 +80,23 @@ public class GotoClassModel2 extends ContributorsBasedGotoByModel {
     if (Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToClass.toSaveIncludeLibraries"))){
       propertiesComponent.setValue("GoToClass.includeLibraries", Boolean.toString(state));
     }
+  }
+
+  public String getFullName(final Object element) {
+    if (element instanceof PsiClass) {
+      final PsiClass psiClass = (PsiClass)element;
+      final String qName = psiClass.getQualifiedName();
+      if (qName != null) return qName;
+
+      final String containerText = SymbolPresentationUtil.getSymbolContainerText(psiClass);
+      return containerText + "." + psiClass.getName();
+    }
+
+    return getElementName(element);
+  }
+
+  @NotNull
+  public String[] getSeparators() {
+    return new String[] {"."};
   }
 }

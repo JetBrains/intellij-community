@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
@@ -52,8 +53,8 @@ public abstract class ChooseByNameBase{
 
   protected JPanelProvider myTextFieldPanel;// Located in the layered pane
   protected JTextField myTextField;
-  protected JPanel myCardContainer;
-  protected CardLayout myCard;
+  private JPanel myCardContainer;
+  private CardLayout myCard;
   protected JCheckBox myCheckBox;
 
   protected JScrollPane myListScrollPane; // Located in the layered pane
@@ -68,7 +69,7 @@ public abstract class ChooseByNameBase{
 
   private final ListUpdater myListUpdater = new ListUpdater();
 
-  protected boolean myListIsUpToDate = false;
+  private boolean myListIsUpToDate = false;
   protected boolean myDisposedFlag = false;
 
   private String[][] myNames = new String[2][];
@@ -188,16 +189,6 @@ public abstract class ChooseByNameBase{
         popupUpdater.value(element);
       }
     }
-  }
-
-
-
-  protected void setCheckbox () {
-
-  }
-
-  protected void setSysLibMessage () {
-
   }
 
   /**
@@ -500,7 +491,7 @@ public abstract class ChooseByNameBase{
     return layeredPane;
   }
 
-  protected final Object myRebuildMutex = new Object ();
+  private final Object myRebuildMutex = new Object ();
 
   protected void rebuildList(final int pos, final int delay, final Runnable postRunnable, final ModalityState modalityState) {
     myListIsUpToDate = false;
@@ -611,6 +602,26 @@ public abstract class ChooseByNameBase{
       myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
       showList();
     }
+  }
+
+  private String getQualifierPattern(String pattern) {
+    final String[] separators = myModel.getSeparators();
+    int lastSeparatorOccurence = 0;
+    for (String separator : separators) {
+      lastSeparatorOccurence = Math.max(lastSeparatorOccurence, pattern.lastIndexOf(separator));
+    }
+    return pattern.substring(0, lastSeparatorOccurence);
+  }
+
+  public String getNamePattern(String pattern) {
+    final String[] separators = myModel.getSeparators();
+    int lastSeparatorOccurence = 0;
+    for (String separator : separators) {
+      final int idx = pattern.lastIndexOf(separator);
+      lastSeparatorOccurence = Math.max(lastSeparatorOccurence, idx != -1 ? idx + separator.length() : idx);
+    }
+
+    return pattern.substring(lastSeparatorOccurence);
   }
 
   private interface Cmd {
@@ -724,10 +735,6 @@ public abstract class ChooseByNameBase{
   protected void choosenElementMightChange() {
   }
 
-  public static boolean isMyComponent(final Component component) {
-    return component instanceof MyTextField;
-  }
-
   private final class MyTextField extends JTextField implements PopupOwner {
     private final KeyStroke myCompletionKeyStroke;
     private final KeyStroke forwardStroke;
@@ -799,7 +806,7 @@ public abstract class ChooseByNameBase{
       final ArrayList<String> list = new ArrayList<String>();
       getNamesByPattern(myCheckBox.isSelected(), null, list, pattern);
 
-      if (pattern.indexOf('*') >= 0) return; //TODO: support '*'
+      if (isComplexPattern(pattern)) return; //TODO: support '*'
       final String oldText = myTextField.getText();
       final int oldPos = myList.getSelectedIndex();
 
@@ -837,6 +844,15 @@ public abstract class ChooseByNameBase{
       myTextField.setCaretPosition(newPattern.length());
 
       rebuildList(0, REBUILD_DELAY, null, ModalityState.current());
+    }
+
+    private boolean isComplexPattern(final String pattern) {
+      if (pattern.indexOf('*') >= 0) return true;
+      for (String s : myModel.getSeparators()) {
+        if (pattern.indexOf(s) >= 0) return true;
+      }
+
+      return false;
     }
 
     @Nullable
@@ -928,13 +944,19 @@ public abstract class ChooseByNameBase{
 
 
     private void addElementsByPattern(Set<Object> elementsArray, String pattern) {
+      String namePattern = getNamePattern(pattern);
+      String qualifierPattern = getQualifierPattern(pattern);
+
+      if (namePattern.length() == 0 && !isShowListForEmptyPattern()) return;
+      
       List<String> namesList = new ArrayList<String>();
-      boolean overflow = getNamesByPattern(myCheckboxState, myCancelled, namesList, pattern);
+      getNamesByPattern(myCheckboxState, myCancelled, namesList, namePattern);
       if (myCancelled[0]) {
         throw new ProcessCanceledException();
       }
       Collections.sort(namesList, new MatchesComparator(pattern));
 
+      boolean overflow = false;
       All:
       for (String name : namesList) {
         if (myCancelled[0]) {
@@ -942,10 +964,12 @@ public abstract class ChooseByNameBase{
         }
         final Object[] elements = myModel.getElementsByName(name, myCheckboxState);
         for (final Object element : elements) {
-          elementsArray.add(element);
-          if (elementsArray.size() >= myMaximumListSizeLimit) {
-            overflow = true;
-            break All;
+          if (matchesQualifier(element, qualifierPattern)) {
+            elementsArray.add(element);
+            if (elementsArray.size() >= myMaximumListSizeLimit) {
+              overflow = true;
+              break All;
+            }
           }
         }
       }
@@ -962,10 +986,44 @@ public abstract class ChooseByNameBase{
     }
   }
 
-  private boolean getNamesByPattern(final boolean checkboxState,
-                                    final boolean[] cancelled,
-                                    final List<String> list,
-                                    final String pattern) throws ProcessCanceledException {
+  private List<String> split(String s) {
+    for (String separator : myModel.getSeparators()) {
+      final List<String> result = StringUtil.split(s, separator);
+      if (result.size() > 0) return result;
+    }
+    return Collections.singletonList(s);
+  }
+
+  private boolean matchesQualifier(final Object element, final String qualifierPattern) {
+    final String name = myModel.getFullName(element);
+    if (name == null) return false;
+
+    final List<String> suspects = split(name);
+    final List<String> patterns = split(qualifierPattern);
+
+    int matchPosition = 0;
+
+patterns:
+    for (String pattern : patterns) {
+      int j;
+      for (j = matchPosition; j < suspects.size(); j++) {
+        String suspect = suspects.get(j);
+        if (StringUtil.startsWithIgnoreCase(suspect, pattern)) {
+          matchPosition = j + 1;
+          continue patterns;
+        }
+      }
+
+      return false;
+    }
+
+    return true;
+  }
+
+  private void getNamesByPattern(final boolean checkboxState,
+                                 final boolean[] cancelled,
+                                 final List<String> list,
+                                 final String pattern) throws ProcessCanceledException {
     if (!isShowListForEmptyPattern()) {
       LOG.assertTrue(pattern.length() > 0);
     }
@@ -990,9 +1048,8 @@ public abstract class ChooseByNameBase{
       }
     }
     catch (MalformedPatternException e) {
+      // Do nothing. No matches appears valid result for "bad" pattern
     }
-
-    return false;
   }
 
   private static interface CalcElementsCallback {

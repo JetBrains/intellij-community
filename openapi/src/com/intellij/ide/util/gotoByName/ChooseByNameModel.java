@@ -15,6 +15,7 @@
 */
 package com.intellij.ide.util.gotoByName;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -49,4 +50,10 @@ public interface ChooseByNameModel {
   Object[] getElementsByName(String name, boolean checkBoxState);
   @Nullable
   String getElementName(Object element);
+
+  @NotNull
+  String[] getSeparators();
+
+  @Nullable
+  String getFullName(Object element);
 }

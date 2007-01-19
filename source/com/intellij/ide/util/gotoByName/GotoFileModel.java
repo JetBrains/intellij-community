@@ -6,9 +6,12 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -74,6 +77,21 @@ public class GotoFileModel implements ChooseByNameModel {
     }
 
     return list.toArray(new PsiFile[list.size()]);
+  }
+
+  @Nullable
+  public String getFullName(final Object element) {
+    if (element instanceof PsiFile) {
+      final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
+      return virtualFile != null ? virtualFile.getPath() : null;
+    }
+
+    return getElementName(element);
+  }
+
+  @NotNull
+  public String[] getSeparators() {
+    return new String[] {"/", "\\"};
   }
 
   public String getElementName(final Object element) {

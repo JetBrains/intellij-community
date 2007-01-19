@@ -31,10 +31,12 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ide.IdeBundle;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 
 public class GotoSymbolModel2 extends ContributorsBasedGotoByModel {
   public GotoSymbolModel2(Project project) {
@@ -68,5 +70,20 @@ public class GotoSymbolModel2 extends ContributorsBasedGotoByModel {
   }
 
   public void saveInitialCheckBoxState(boolean state) {
+  }
+
+  public String getFullName(final Object element) {
+    if (element instanceof PsiElement) {
+      final PsiElement psiElement = (PsiElement)element;
+
+      final String containerText = SymbolPresentationUtil.getSymbolContainerText(psiElement);
+      return containerText + "." + getElementName(element);
+    }
+
+    return getElementName(element);
+  }
+
+  public String[] getSeparators() {
+    return new String[] {".", ":"};
   }
 }
