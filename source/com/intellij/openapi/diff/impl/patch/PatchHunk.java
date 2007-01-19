@@ -95,8 +95,8 @@ public class PatchHunk {
 
   private int findStartLine(final List<String> lines) throws ApplyPatchException {
     int totalContextLines = countContextLines();
-    if (getLinesMatchingContext(lines, myStartLineBefore-1) == totalContextLines) {
-      return myStartLineBefore-1;
+    if (getLinesMatchingContext(lines, myStartLineBefore) == totalContextLines) {
+      return myStartLineBefore;
     }
     int maxContextStartLine = -1;
     int maxContextLines = 0;
@@ -143,11 +143,11 @@ public class PatchHunk {
   }
 
   public boolean isNewContent() {
-    return myStartLineBefore == 0 && myEndLineBefore == 0;
+    return myStartLineBefore == -1 && myEndLineBefore == -1;
   }
 
   public boolean isDeletedContent() {
-    return myStartLineAfter == 0 && myEndLineAfter == 0;
+    return myStartLineAfter == -1 && myEndLineAfter == -1;
   }
 
   public String getText() {

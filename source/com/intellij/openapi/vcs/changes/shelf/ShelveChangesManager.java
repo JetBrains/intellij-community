@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -30,14 +31,12 @@ import com.intellij.util.text.CharArrayCharSequence;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class ShelveChangesManager implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager");
@@ -155,9 +154,20 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return new File(file, path);
   }
 
-  public void unshelveChangeList(final ShelvedChangeList change) {
+  public void unshelveChangeList(final ShelvedChangeList changeList, @Nullable final List<ShelvedChange> changes) {
+    List<FilePatch> remainingPatches = new ArrayList<FilePatch>();
     try {
-      List<FilePatch> patches = loadPatches(change.PATH);
+      List<FilePatch> patches = loadPatches(changeList.PATH);
+      if (changes != null) {
+        final Iterator<FilePatch> iterator = patches.iterator();
+        while (iterator.hasNext()) {
+          FilePatch patch = iterator.next();
+          if (!needUnshelve(patch, changes)) {
+            remainingPatches.add(patch);
+            iterator.remove();
+          }
+        }
+      }
       VirtualFile baseDir = myProject.getBaseDir();
       if (ApplyPatchAction.applyPatch(myProject, patches, baseDir, 0, true, true) == ApplyPatchStatus.FAILURE) {
         return;
@@ -171,7 +181,39 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       LOG.error(e);
       return;
     }
-    deleteChangeList(change);
+    if (remainingPatches.size() == 0) {
+      deleteChangeList(changeList);
+    }
+    else {
+      saveRemainingPatches(changeList, remainingPatches);
+    }
+  }
+
+  private static boolean needUnshelve(final FilePatch patch, final List<ShelvedChange> changes) {
+    for(ShelvedChange change: changes) {
+      if (Comparing.equal(patch.getBeforeName(), change.getBeforePath())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void saveRemainingPatches(final ShelvedChangeList changeList, final List<FilePatch> remainingPatches) {
+    OutputStreamWriter writer;
+    try {
+      writer = new OutputStreamWriter(new FileOutputStream(changeList.PATH));
+      try {
+        UnifiedDiffWriter.write(remainingPatches, writer);
+      }
+      finally {
+        writer.close();
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    changeList.clearLoadedChanges();
+    notifyStateChanged();
   }
 
   public void deleteChangeList(final ShelvedChangeList change) {

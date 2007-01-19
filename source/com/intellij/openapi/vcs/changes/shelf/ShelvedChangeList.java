@@ -83,4 +83,8 @@ public class ShelvedChangeList implements JDOMExternalizable {
     }
     return myChanges;
   }
+
+  public void clearLoadedChanges() {
+    myChanges = null;
+  }
 }

@@ -17,16 +17,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 
+import java.util.List;
+
 public class UnshelveChangesAction extends AnAction {
   private Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction");
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(DataKeys.PROJECT);
-    final ShelvedChangeList[] changes = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
-    LOG.assertTrue(changes != null);
+    final ShelvedChangeList[] changeLists = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
+    final List<ShelvedChange> changes = e.getData(ShelvedChangesViewManager.SHELVED_CHANGE_KEY);
+    LOG.assertTrue(changeLists != null);
     FileDocumentManager.getInstance().saveAllDocuments();
-    for(ShelvedChangeList change: changes) {
-      ShelveChangesManager.getInstance(project).unshelveChangeList(change);
+    for(ShelvedChangeList changeList: changeLists) {
+      ShelveChangesManager.getInstance(project).unshelveChangeList(changeList, changes);
     }
   }
 

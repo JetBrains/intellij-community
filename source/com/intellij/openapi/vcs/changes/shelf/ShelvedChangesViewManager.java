@@ -40,10 +40,13 @@ import javax.swing.event.ChangeListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.event.KeyEvent;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 public class ShelvedChangesViewManager implements ProjectComponent {
   private ChangesViewContentManager myContentManager;
@@ -54,6 +57,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private ShelvedChangeDeleteProvider myDeleteProvider = new ShelvedChangeDeleteProvider();
 
   public static DataKey<ShelvedChangeList[]> SHELVED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedChangeListData");
+  public static DataKey<List<ShelvedChange>> SHELVED_CHANGE_KEY = DataKey.create("ShelveChangesManager.ShelvedChange");
 
   public ShelvedChangesViewManager(Project project, ChangesViewContentManager contentManager, ShelveChangesManager shelveChangesManager,
                                    final MessageBus bus) {
@@ -137,9 +141,25 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private class ShelfTree extends Tree implements TypeSafeDataProvider {
     public void calcData(DataKey key, DataSink sink) {
       if (key == SHELVED_CHANGELIST_KEY) {
-        final List<ShelvedChangeList> list = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChangeList.class);
+        final TreePath[] selections = getSelectionPaths();
+        final Set<ShelvedChangeList> changeLists = new HashSet<ShelvedChangeList>();
+        for(TreePath path: selections) {
+          if (path.getPathCount() >= 2) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getPathComponent(1);
+            if (node.getUserObject() instanceof ShelvedChangeList) {
+              changeLists.add((ShelvedChangeList) node.getUserObject());
+            }
+          }
+        }
+        
+        if (changeLists.size() > 0) {
+          sink.put(SHELVED_CHANGELIST_KEY, changeLists.toArray(new ShelvedChangeList[changeLists.size()]));
+        }
+      }
+      else if (key == SHELVED_CHANGE_KEY) {
+        final List<ShelvedChange> list = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class);
         if (list != null) {
-          sink.put(SHELVED_CHANGELIST_KEY, list.toArray(new ShelvedChangeList[list.size()]));
+          sink.put(SHELVED_CHANGE_KEY, list);
         }
       }
       else if (key == DataKeys.CHANGES) {

@@ -120,10 +120,10 @@ public class PatchReader {
       throw new PatchSyntaxException(myLineIndex, "Unknown hunk start syntax");
     }
     int startLineBefore = Integer.parseInt(m.group(1));
-    int endLineBefore = Integer.parseInt(m.group(2));
+    int linesBefore = Integer.parseInt(m.group(2));
     int startLineAfter = Integer.parseInt(m.group(3));
-    int endLineAfter = Integer.parseInt(m.group(4));
-    PatchHunk hunk = new PatchHunk(startLineBefore, endLineBefore, startLineAfter, endLineAfter);
+    int linesAfter = Integer.parseInt(m.group(4));
+    PatchHunk hunk = new PatchHunk(startLineBefore-1, startLineBefore+linesBefore-1, startLineAfter-1, startLineAfter+linesAfter-1);
     myLineIndex++;
     PatchLine lastLine = null;
     while(myLineIndex < myLines.length) {
@@ -206,7 +206,7 @@ public class PatchReader {
     int endLineBefore = Integer.parseInt(beforeMatcher.group(2));
     int startLineAfter = Integer.parseInt(afterMatcher.group(1));
     int endLineAfter = Integer.parseInt(afterMatcher.group(2));
-    PatchHunk hunk = new PatchHunk(startLineBefore, endLineBefore, startLineAfter, endLineAfter);
+    PatchHunk hunk = new PatchHunk(startLineBefore-1, endLineBefore-1, startLineAfter-1, endLineAfter-1);
 
     int beforeLineIndex = 0;
     int afterLineIndex = 0;

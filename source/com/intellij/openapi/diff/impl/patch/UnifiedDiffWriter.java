@@ -15,6 +15,9 @@ import java.io.Writer;
 import java.util.Collection;
 
 public class UnifiedDiffWriter {
+  private UnifiedDiffWriter() {
+  }
+
   public static void write(Collection<FilePatch> patches, Writer writer) throws IOException {
     for(FilePatch patch: patches) {
       writeFileHeading(patch, writer);
@@ -30,6 +33,9 @@ public class UnifiedDiffWriter {
           writeLine(writer, line.getText(), prefixChar);
           if (line.isSuppressNewLine()) {
             writer.write("\n" + PatchReader.NO_NEWLINE_SIGNATURE + "\n");
+          }
+          else if (!line.getText().endsWith("\n")) {
+            writer.write("\n");
           }
         }
       }
