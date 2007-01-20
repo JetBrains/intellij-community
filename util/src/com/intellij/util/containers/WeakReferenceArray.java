@@ -23,6 +23,8 @@ import java.lang.ref.WeakReference;
 
 public class WeakReferenceArray <T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.containers.WeakReferenceArray");
+  private static final Object ourLock = new Object();
+
   static boolean PEFORM_CHECK_THREAD = true;
   static final int MINIMUM_CAPACITY = 5;
   private ReferenceQueue<T> myQueue = new ReferenceQueue<T>();
@@ -163,7 +165,7 @@ public class WeakReferenceArray <T> {
     MyWeakReference<T> reference = MyWeakReference.getFrom(myReferences, index);
     if (reference == null) return null;
     else
-      synchronized(reference) {
+      synchronized(ourLock) {
         return reference.get();
       }
   }
@@ -233,7 +235,7 @@ public class WeakReferenceArray <T> {
     }
 
     public boolean removeFrom(MyWeakReference[] array) {
-      synchronized(this) {
+      synchronized(ourLock) {
         LOG.assertTrue(array[myIndex] == this);
         clear();
         array[myIndex] = null;
