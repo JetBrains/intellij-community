@@ -13,7 +13,6 @@ import com.intellij.codeInspection.reference.SmartRefElementPointerImpl;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -125,16 +124,7 @@ public class OfflineViewParseUtil {
                                        final OfflineProblemDescriptor descriptor) {
     Set<OfflineProblemDescriptor> descriptors = package2Result.get(packageName);
     if (descriptors == null) {
-      descriptors = new THashSet<OfflineProblemDescriptor>(new TObjectHashingStrategy<OfflineProblemDescriptor>() { //consider problem index
-        public int computeHashCode(final OfflineProblemDescriptor descriptor) {
-          return 31 * descriptor.hashCode() + descriptor.getProblemIndex();
-        }
-
-        public boolean equals(final OfflineProblemDescriptor descriptor1, final OfflineProblemDescriptor descriptor2) {
-          if (!descriptor1.equals(descriptor2)) return false;
-          return descriptor1.getProblemIndex() == descriptor2.getProblemIndex();
-        }
-      });
+      descriptors = new THashSet<OfflineProblemDescriptor>();
       package2Result.put(packageName, descriptors);
     }
     descriptors.add(descriptor);

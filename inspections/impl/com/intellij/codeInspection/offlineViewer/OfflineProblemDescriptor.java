@@ -128,22 +128,30 @@ public class OfflineProblemDescriptor {
 
     final OfflineProblemDescriptor that = (OfflineProblemDescriptor)o;
 
-    if (!myFQName.equals(that.myFQName)) return false;
-    if (!myType.equals(that.myType)) return false;
+    if (myLine != that.myLine) return false;
+    if (myProblemIndex != that.myProblemIndex) return false;
+    if (myDescription != null ? !myDescription.equals(that.myDescription) : that.myDescription != null) return false;
+    if (myFQName != null ? !myFQName.equals(that.myFQName) : that.myFQName != null) return false;
+    if (myHints != null ? !myHints.equals(that.myHints) : that.myHints != null) return false;
+    if (myModuleName != null ? !myModuleName.equals(that.myModuleName) : that.myModuleName != null) return false;
     if (!Arrays.equals(myParentFQName, that.myParentFQName)) return false;
     if (!Arrays.equals(myParentType, that.myParentType)) return false;
-    if (!myType.equals(that.myType)) return false;
+    if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
 
     return true;
   }
 
-  //build tree: do not include other fields
   public int hashCode() {
     int result;
-    result = myType.hashCode();
-    result = 31 * result + myFQName.hashCode();
+    result = (myType != null ? myType.hashCode() : 0);
+    result = 31 * result + (myFQName != null ? myFQName.hashCode() : 0);
+    result = 31 * result + (myDescription != null ? myDescription.hashCode() : 0);
+    result = 31 * result + (myHints != null ? myHints.hashCode() : 0);
+    result = 31 * result + myProblemIndex;
+    result = 31 * result + myLine;
     result = 31 * result + (myParentType != null ? Arrays.hashCode(myParentType) : 0);
     result = 31 * result + (myParentFQName != null ? Arrays.hashCode(myParentFQName) : 0);
+    result = 31 * result + (myModuleName != null ? myModuleName.hashCode() : 0);
     return result;
   }
 

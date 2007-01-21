@@ -15,6 +15,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
@@ -151,6 +152,10 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     public String getModule() {
       final RefModule refModule = myElement.getModule();
       return refModule != null ? refModule.getName() : null;
+    }
+
+    public boolean areEqual(final RefElement o1, final RefElement o2) {
+      return Comparing.equal(o1, o2);
     }
 
     public CommonProblemDescriptor[] getProblemDescriptors() {

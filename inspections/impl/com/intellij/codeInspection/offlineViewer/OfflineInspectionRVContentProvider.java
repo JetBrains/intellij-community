@@ -18,6 +18,7 @@ import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -143,6 +144,17 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
     public String getModule() {
       return myDescriptor.getModuleName();
+    }
+
+    public boolean areEqual(final OfflineProblemDescriptor o1, final OfflineProblemDescriptor o2) {
+      if (o1 == null || o2 == null) {
+        return o1 == o2;
+      }
+
+      if (!Comparing.strEqual(o1.getFQName(), o2.getFQName())) return false;
+      if (!Comparing.strEqual(o1.getType(), o2.getType())) return false;
+
+      return true;
     }
   }
 }

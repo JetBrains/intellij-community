@@ -12,7 +12,6 @@ import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -37,6 +36,8 @@ public abstract class InspectionRVContentProvider {
 
     @Nullable
     String getModule();
+
+    boolean areEqual(final T o1, final T o2);
   }
 
   public abstract boolean hasReportedProblems(final InspectionTool tool);
@@ -134,7 +135,7 @@ public abstract class InspectionRVContentProvider {
       for (InspectionTreeNode node : children) {
         if (node instanceof RefElementNode) {
           final RefElementNode refElementNode = (RefElementNode)node;
-          if (Comparing.equal(refElementNode.getUserObject(), container.getUserObject())) {
+          if (container.areEqual(refElementNode.getUserObject(), container.getUserObject())) {
             if (firstLevel) {
               return refElementNode;
             }
