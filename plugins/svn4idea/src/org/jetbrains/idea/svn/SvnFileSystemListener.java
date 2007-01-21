@@ -84,6 +84,11 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
   private List<AddedFileInfo> myAddedFiles = new ArrayList<AddedFileInfo>();
   private List<DeletedFileInfo> myDeletedFiles = new ArrayList<DeletedFileInfo>();
 
+  public File copy(final VirtualFile file, final VirtualFile toDir, final String copyName) throws IOException {
+    //TODO
+    return null;
+  }
+
   public boolean move(VirtualFile file, VirtualFile toDir) throws IOException {
     File srcFile = getIOFile(file);
     File dstFile = new File(getIOFile(toDir), file.getName());
