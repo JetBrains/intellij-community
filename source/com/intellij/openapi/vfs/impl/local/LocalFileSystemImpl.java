@@ -1005,6 +1005,15 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return false;
   }
 
+  @Nullable
+  private File auxCopy(VirtualFile file, VirtualFile toDir, final String copyName) throws IOException {
+    for (LocalFileOperationsHandler handler : myHandlers) {
+      final File copy = handler.copy(file, toDir, copyName);
+      if (copy != null) return copy;
+    }
+    return null;
+  }
+
   private boolean auxRename(VirtualFile file, String newName) throws IOException {
     for (LocalFileOperationsHandler handler : myHandlers) {
       if (handler.rename(file, newName)) return true;
@@ -1033,6 +1042,36 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         setUpFileWatcher();
       }
     }
+  }
+
+  protected VirtualFile copyFile(final Object requestor, final VirtualFile vFile, final VirtualFile newParent, final String copyName) throws IOException {
+    final VirtualFileImpl file = (VirtualFileImpl)vFile;
+    File physicalCopy = auxCopy(vFile, newParent, copyName);
+
+    if (physicalCopy == null) {
+      File physicalFile = file.getPhysicalFile();
+
+      File newPhysicalParent = ((VirtualFileImpl)newParent).getPhysicalFile();
+      physicalCopy = new File (newPhysicalParent, copyName);
+
+      try {
+        if (physicalFile.isDirectory()) {
+          FileUtil.copyDir(physicalFile, physicalCopy);
+        } else {
+          physicalCopy.createNewFile();
+          FileUtil.copy(physicalFile, physicalCopy);
+        }
+      }
+      catch (IOException e) {
+        FileUtil.delete(physicalCopy);
+        throw e;
+      }
+    }
+
+    final VirtualFileImpl created = new VirtualFileImpl((VirtualFileImpl)newParent, physicalCopy, physicalCopy.isDirectory());
+    ((VirtualFileImpl)newParent).addChild(created);
+    fireFileCopied(requestor, vFile, created);
+    return created;
   }
 
   public void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {

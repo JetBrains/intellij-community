@@ -16,9 +16,9 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
@@ -180,6 +180,22 @@ public abstract class VirtualFileSystem {
     }
   }
 
+  protected void fireFileCopied(@Nullable Object requestor, @NotNull VirtualFile originalFile, @NotNull final VirtualFile createdFile) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+
+    if (!myFileListeners.isEmpty()) {
+      VirtualFileCopyEvent event = new VirtualFileCopyEvent(requestor, originalFile, createdFile);
+      for (VirtualFileListener listener : myFileListeners) {
+        try {
+          listener.fileCopied(event);
+        }
+        catch (AbstractMethodError e) { //compatibility with 6.0
+          listener.fileCreated(event);
+        }
+      }
+    }
+  }
+
   protected void fireBeforePropertyChange(Object requestor, VirtualFile file, String propertyName, Object oldValue, Object newValue) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
@@ -271,4 +287,12 @@ public abstract class VirtualFileSystem {
    * @see VirtualFile#createChildDirectory(Object, String)
    */
   protected abstract VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException;
+
+  /**
+   * Implementation of copying files in this file system
+   *
+   * @see VirtualFile#copy(Object,VirtualFile,String)
+   */
+  protected abstract VirtualFile copyFile(final Object requestor, final VirtualFile virtualFile, final VirtualFile newParent,
+                                          final String copyName) throws IOException;
 }

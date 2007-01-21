@@ -77,6 +77,10 @@ public class DummyFileSystem extends VirtualFileSystem implements ApplicationCom
     throw new UnsupportedOperationException();
   }
 
+  public VirtualFile copyFile(Object requestor, VirtualFile vFile, VirtualFile newParent, final String copyName) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
   public void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException {
     final String oldName = vFile.getName();
     fireBeforePropertyChange(requestor, vFile, VirtualFile.PROP_NAME, oldName, newName);

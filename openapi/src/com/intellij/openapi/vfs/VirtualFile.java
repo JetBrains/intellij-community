@@ -369,11 +369,24 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    */
   public void move(Object requestor, VirtualFile newParent) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
-         throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
-       }
+      throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
+    }
 
-       getFileSystem().moveFile(requestor, this, newParent);
-   }
+    getFileSystem().moveFile(requestor, this, newParent);
+  }
+
+  public VirtualFile copy(Object requestor, VirtualFile newParent, final String copyName) throws IOException {
+    if (getFileSystem() != newParent.getFileSystem()) {
+      throw new IOException(VfsBundle.message("file.copy.error", newParent.getPresentableUrl()));
+    }
+
+    if (!newParent.isDirectory()) {
+      throw new IOException(VfsBundle.message("file.copy.target.must.be.directory"));
+    }
+
+    return getFileSystem().copyFile(requestor, this, newParent, copyName);
+  }
+
 
   public final void setBinaryContent(byte[] content) throws IOException{
     setBinaryContent(content, -1, -1);

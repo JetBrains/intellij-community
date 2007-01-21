@@ -4,20 +4,19 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.zip.ZipFile;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 public class JarFileSystemImpl extends JarFileSystem implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl");
@@ -343,6 +342,10 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   public void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {
+    throw new IOException(VfsBundle.message("jar.modification.not.supported.error", ((VirtualFileImpl)vFile).getFile().getPath()));
+  }
+
+  public VirtualFile copyFile(Object requestor, VirtualFile vFile, VirtualFile newParent, final String copyName) throws IOException {
     throw new IOException(VfsBundle.message("jar.modification.not.supported.error", ((VirtualFileImpl)vFile).getFile().getPath()));
   }
 

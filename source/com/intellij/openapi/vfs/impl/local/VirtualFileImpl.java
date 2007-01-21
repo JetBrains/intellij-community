@@ -678,15 +678,18 @@ public class VirtualFileImpl extends VirtualFile {
 
 
   void addChild(VirtualFileImpl child) {
-    getChildren(); // to initialize myChildren
-
     synchronized (ourFileSystem.LOCK) {
-      VirtualFileImpl[] newChildren = new VirtualFileImpl[myChildren.length + 1];
-      System.arraycopy(myChildren, 0, newChildren, 0, myChildren.length);
-      newChildren[myChildren.length] = child;
-      myChildren = newChildren;
       child.setParent(this);
-      ourFileSystem.myUnaccountedFiles.remove(child.getPath());
+      if (myChildren != null) {
+        VirtualFileImpl[] newChildren = new VirtualFileImpl[myChildren.length + 1];
+        System.arraycopy(myChildren, 0, newChildren, 0, myChildren.length);
+        newChildren[myChildren.length] = child;
+        myChildren = newChildren;
+        ourFileSystem.myUnaccountedFiles.remove(child.getPath());
+      }
+      else {
+        ourFileSystem.myUnaccountedFiles.put(child.getPath(), child);
+      }
     }
   }
 

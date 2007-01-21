@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -254,7 +255,12 @@ public class CopyHandler {
               PsiClass classCopy = (PsiClass) aClass.getNavigationElement().copy();
               ChangeContextUtil.clearContextInfo(aClass);
               classCopy.setName(copyClassName);
-              PsiClass newClass = (PsiClass) targetDirectory.add(classCopy);
+              final String fileName = copyClassName + "." + StdFileTypes.JAVA.getDefaultExtension();
+              final PsiJavaFile createdFile = (PsiJavaFile)targetDirectory.copyFileFrom(fileName, aClass.getContainingFile());
+              final PsiClass[] classes = createdFile.getClasses();
+              assert classes.length > 0;
+              createdFile.deleteChildRange(classes[0], classes[classes.length - 1]);
+              PsiClass newClass = (PsiClass) createdFile.add(classCopy);
               ChangeContextUtil.decodeContextInfo(newClass, null, null);
               updateSelectionInActiveProjectView(newClass, project, selectInActivePanel);
               EditorHelper.openInEditor(newClass);
@@ -308,12 +314,7 @@ public class CopyHandler {
   @Nullable
   private static PsiFile copyToDirectory(final PsiElement elementToCopy, String newName, final PsiDirectory targetDirectory) throws IncorrectOperationException{
     if (elementToCopy instanceof PsiFile) {
-      PsiFile file = (PsiFile)elementToCopy;
-      if (newName != null) {
-        file = (PsiFile)file.copy();
-        file = (PsiFile) file.setName(newName);
-      }
-      return (PsiFile)targetDirectory.add(file);
+      return targetDirectory.copyFileFrom(newName, (PsiFile)elementToCopy);
     }
     else if (elementToCopy instanceof PsiDirectory) {
       PsiDirectory directory = (PsiDirectory)elementToCopy;

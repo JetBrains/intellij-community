@@ -34,6 +34,10 @@ abstract public class VirtualFileAdapter implements VirtualFileListener {
   public void fileMoved(VirtualFileMoveEvent event){
   }
 
+  public void fileCopied(VirtualFileCopyEvent event) {
+    fileCreated(event);
+  }
+
   public void beforePropertyChange(VirtualFilePropertyEvent event){
   }
 

@@ -61,6 +61,13 @@ public interface VirtualFileListener extends EventListener {
   void fileMoved(VirtualFileMoveEvent event);
 
   /**
+   * Fired when a virtual file is copied from within IDEA.
+   *
+   * @param event the event object containing information about the change.
+   */
+  void fileCopied(VirtualFileCopyEvent event);
+
+  /**
    * Fired before the change of a name or writable status of a file is processed.
    *
    * @param event the event object containing information about the change.

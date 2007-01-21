@@ -9,5 +9,7 @@ public class VirtualFileListenerBase implements VirtualFileListener{
   public void beforePropertyChange(VirtualFilePropertyEvent event) {}
   public void beforeContentsChange(VirtualFileEvent event) {}
   public void beforeFileDeletion(VirtualFileEvent event) {}
+  public void fileCopied(final VirtualFileCopyEvent event) {}
+
   public void beforeFileMovement(VirtualFileMoveEvent event) {}
 }

@@ -17,9 +17,9 @@ package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vcs.VcsBundle;
 
 import java.io.IOException;
 
@@ -87,6 +87,10 @@ public class VcsFileSystem extends VirtualFileSystem implements ApplicationCompo
   }
 
   public void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {
+    throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
+  }
+
+  public VirtualFile copyFile(Object requestor, VirtualFile vFile, VirtualFile newParent, final String copyName) throws IOException {
     throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
   }
 

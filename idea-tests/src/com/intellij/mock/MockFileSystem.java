@@ -1,16 +1,15 @@
 package com.intellij.mock;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightVirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
-
-import org.jetbrains.annotations.NotNull;
 
 public class MockFileSystem extends VirtualFileSystem {
   private final MyVirtualFile myRoot = new MyVirtualFile("", null);
@@ -43,6 +42,10 @@ public class MockFileSystem extends VirtualFileSystem {
   }
 
   public void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {
+  }
+
+  public VirtualFile copyFile(Object requestor, VirtualFile vFile, VirtualFile newParent, final String copyName) throws IOException {
+    return null;
   }
 
   public void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException {

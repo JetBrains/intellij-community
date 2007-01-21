@@ -812,7 +812,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     return parentPackageName.length() > 0 ? parentPackageName + "." + subdirName : subdirName;
   }
 
-  private class MyVirtualFileListener implements VirtualFileListener {
+  private class MyVirtualFileListener extends VirtualFileAdapter {
     private final Key<List<VirtualFile>> FILES_TO_RELEASE_KEY = Key.create("DirectoryIndexImpl.MyVirtualFileListener.FILES_TO_RELEASE_KEY");
 
     public void fileCreated(VirtualFileEvent event) {

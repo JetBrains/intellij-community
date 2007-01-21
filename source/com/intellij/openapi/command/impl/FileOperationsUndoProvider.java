@@ -25,7 +25,7 @@ import java.util.*;
  * author: lesya
  */
 
-class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLocker {
+class FileOperationsUndoProvider extends VirtualFileAdapter implements LocalVcsItemsLocker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.FileOperationsUndoProvider");
   private final UndoManagerImpl myUndoManager;
   private final Project myProject;

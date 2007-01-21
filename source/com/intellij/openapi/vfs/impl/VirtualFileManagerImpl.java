@@ -407,6 +407,14 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
       );
     }
 
+    public void fileCopied(VirtualFileCopyEvent event) {
+      LOG.debug(
+        "fileCopied: file = " + event.getFile().getUrl() +
+        "originalFile = " + event.getOriginalFile().getUrl() +
+        ", requestor = " + event.getRequestor()
+      );
+    }
+
     public void beforeContentsChange(VirtualFileEvent event) {
       LOG.debug(
         "beforeContentsChange: file = " + event.getFile().getUrl() +

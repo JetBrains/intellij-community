@@ -484,6 +484,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   public void fileMoved(VirtualFileMoveEvent event) {
   }
 
+  public void fileCopied(VirtualFileCopyEvent event) {
+    fileCreated(event);
+  }
+
   public void beforePropertyChange(VirtualFilePropertyEvent event) {
   }
 

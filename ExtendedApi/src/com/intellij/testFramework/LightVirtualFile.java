@@ -98,6 +98,10 @@ public class LightVirtualFile extends VirtualFile {
 
     protected void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {}
 
+    protected VirtualFile copyFile(Object requestor, VirtualFile vFile, VirtualFile newParent, final String copyName) throws IOException {
+      throw new IOException("Cannot copy files");
+    }
+
     protected void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException {}
 
     protected VirtualFile createChildFile(Object requestor, VirtualFile vDir, String fileName) throws IOException {

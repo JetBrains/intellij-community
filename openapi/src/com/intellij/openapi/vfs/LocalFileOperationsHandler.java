@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -23,6 +24,7 @@ import java.io.IOException;
 public interface LocalFileOperationsHandler {
   boolean delete(VirtualFile file) throws IOException;
   boolean move(VirtualFile file, VirtualFile toDir) throws IOException;
+  File copy(VirtualFile file, VirtualFile toDir, final String copyName) throws IOException;
   boolean rename(VirtualFile file, String newName) throws IOException;
 
   boolean createFile(VirtualFile dir, String name) throws IOException;
