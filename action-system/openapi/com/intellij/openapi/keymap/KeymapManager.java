@@ -17,6 +17,7 @@ package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class KeymapManager {
   @NonNls public static final String DEFAULT_IDEA_KEYMAP = "$default";
@@ -24,6 +25,7 @@ public abstract class KeymapManager {
 
   public abstract Keymap getActiveKeymap();
 
+  @Nullable
   public abstract Keymap getKeymap(String name);
 
   public static KeymapManager getInstance(){
