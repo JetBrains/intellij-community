@@ -16,8 +16,8 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -198,6 +198,8 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @throws IncorrectOperationException if the operation failed for some reason.
    */
   @NotNull PsiFile createFile(String name) throws IncorrectOperationException;
+
+  @NotNull PsiFile copyFileFrom(String newName, PsiFile originalFile) throws IncorrectOperationException;
 
   /**
    * Checks if it's possible to create a file with the specified name in the directory,

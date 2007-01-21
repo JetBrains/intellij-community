@@ -9,9 +9,14 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
@@ -21,13 +26,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.editor.Document;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
@@ -36,10 +36,10 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -449,6 +449,33 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     catch (IOException e) {
       throw new IncorrectOperationException(e.toString());
     }
+  }
+
+  @NotNull
+  public PsiFile copyFileFrom(final String newName, final PsiFile originalFile) throws IncorrectOperationException {
+    checkCreateFile(newName);
+
+    final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(originalFile);
+    FileDocumentManager.getInstance().saveDocument(document);
+
+    final VirtualFile parent = getVirtualFile();
+    try {
+      final VirtualFile vFile = originalFile.getVirtualFile();
+      if (vFile == null) throw new IncorrectOperationException("Cannot copy nonphysical file");
+      final VirtualFile copyVFile = vFile.copy(this, parent, newName);
+      final PsiFile copyPsi = myManager.findFile(copyVFile);
+      LOG.assertTrue(copyPsi != null);
+      if (copyPsi instanceof PsiFileImpl) {
+        ChangeUtil.encodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(copyPsi));
+        PsiUtil.updatePackageStatement(copyPsi);
+        ChangeUtil.decodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(copyPsi));
+      }
+      return copyPsi;
+    }
+    catch (IOException e) {
+      throw new IncorrectOperationException(e.toString(),e);
+    }
+
   }
 
   public void checkCreateFile(String name) throws IncorrectOperationException {
