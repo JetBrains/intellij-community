@@ -36,6 +36,7 @@ public class ProcessPopup  {
 
     buildActiveContent();
     myInactiveContentComponent = new JLabel(IdeBundle.message("progress.window.empty.text"), null, JLabel.CENTER);
+    myInactiveContentComponent.setFocusable(true);
 
     switchToPassive();
   }
@@ -93,7 +94,9 @@ public class ProcessPopup  {
   }
 
   public void show() {
-    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myRootContent, myActiveFocusedContent);
+    JComponent toFocus = myRootContent.getTargetComponent() == myActiveContentComponent ? myActiveFocusedContent : myInactiveContentComponent;
+
+    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myRootContent, toFocus);
     builder.addListener(new JBPopupListener() {
       public void onClosed(final JBPopup popup) {
         myProgressPanel.hideProcessPopup();

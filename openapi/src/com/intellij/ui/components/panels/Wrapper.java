@@ -80,7 +80,7 @@ public class Wrapper extends JPanel {
     return getTargetComponent().requestFocus(temporary);
   }
 
-  private JComponent getTargetComponent() {
+  public JComponent getTargetComponent() {
     if (getComponentCount() == 1) {
       return (JComponent) getComponent(0);
     } else {
