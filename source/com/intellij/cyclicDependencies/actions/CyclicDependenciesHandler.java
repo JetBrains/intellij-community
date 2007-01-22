@@ -2,6 +2,7 @@ package com.intellij.cyclicDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.cyclicDependencies.ui.CyclicDependenciesPanel;
 import com.intellij.openapi.progress.ProgressManager;
@@ -49,6 +50,6 @@ public class CyclicDependenciesHandler {
     };
     ProgressManager.getInstance()
       .runProcessWithProgressAsynchronously(myProject, AnalysisScopeBundle.message("package.dependencies.progress.title"),
-                                            process, successRunnable, null);
+                                            process, successRunnable, null, new PerformAnalysisInBackgroundOption(myProject));
   }
 }

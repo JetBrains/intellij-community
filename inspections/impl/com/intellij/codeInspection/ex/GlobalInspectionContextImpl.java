@@ -6,6 +6,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
@@ -812,7 +813,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     };
     ProgressManager.getInstance()
       .runProcessWithProgressAsynchronously(myProject, InspectionsBundle.message("inspection.progress.title"), runInspection,
-                                            successRunnable, null);
+                                            successRunnable, null, new PerformAnalysisInBackgroundOption(myProject));
 
   }
 

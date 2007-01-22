@@ -2,6 +2,7 @@ package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.BackwardDependenciesBuilder;
@@ -51,7 +52,7 @@ public class BackwardDependenciesHandler {
 
     ProgressManager.getInstance()
       .runProcessWithProgressAsynchronously(myProject, AnalysisScopeBundle.message("backward.dependencies.progress.text"),
-                                            process, successRunnable, null);
+                                            process, successRunnable, null, new PerformAnalysisInBackgroundOption(myProject));
 
   }
 }

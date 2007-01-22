@@ -32,6 +32,8 @@ public class UIOptions implements JDOMExternalizable {
   public boolean SHOW_ONLY_DIFF = false;
   public boolean SHOW_STRUCTURE = true;
 
+  public boolean ANALYSIS_IN_BACKGROUND = false;
+
   public UIOptions() {
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       protected boolean isAutoScrollMode() {

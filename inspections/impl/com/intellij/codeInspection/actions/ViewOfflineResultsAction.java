@@ -9,6 +9,7 @@
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
@@ -114,7 +115,7 @@ public class ViewOfflineResultsAction extends AnAction {
           }
         });
       }
-    }, null);
+    }, null, new PerformAnalysisInBackgroundOption(project));
   }
 
   @SuppressWarnings({"UnusedDeclaration"})

@@ -2,6 +2,7 @@ package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.DependenciesBuilder;
@@ -45,6 +46,6 @@ public class AnalyzeDependenciesHandler {
       }
     };
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, AnalysisScopeBundle.message("package.dependencies.progress.title"),
-                                                                       process, successRunnable, null);
+                                                                       process, successRunnable, null, new PerformAnalysisInBackgroundOption(myProject));
   }
 }
