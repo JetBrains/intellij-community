@@ -271,6 +271,7 @@ public abstract class ParameterTablePanel extends JPanel {
     for (final PsiElement element : scopeElements) {
       element.accept(new PsiRecursiveElementVisitor() {
         public void visitReferenceExpression(final PsiReferenceExpression expression) {
+          super.visitReferenceExpression(expression);
           if (!expression.isQualified() && expression.isReferenceTo(variable)) {
             result.add(expression);
           }
