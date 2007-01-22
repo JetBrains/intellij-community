@@ -325,7 +325,12 @@ public class AnalysisScope {
         @SuppressWarnings({"SimplifiableIfStatement"})
         public boolean processFile(final VirtualFile fileOrDir) {
           if (fileOrDir.isDirectory()) return true;
-          if (((GlobalSearchScope)myScope).contains(fileOrDir) && (myIncludeTestSource || !projectFileIndex.isInTestSourceContent(fileOrDir))) {
+          final boolean isInScope = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+            public Boolean compute() {
+              return Boolean.valueOf(((GlobalSearchScope)myScope).contains(fileOrDir));
+            }
+          }).booleanValue();
+          if (isInScope && (myIncludeTestSource || !projectFileIndex.isInTestSourceContent(fileOrDir))) {
             return AnalysisScope.processFile(fileOrDir, visitor, psiManager, needReadAction);
           }
           return true;

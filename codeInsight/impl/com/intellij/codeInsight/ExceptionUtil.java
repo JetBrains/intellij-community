@@ -1,5 +1,7 @@
 package com.intellij.codeInsight;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -302,7 +304,12 @@ public class ExceptionUtil {
   public static PsiClassType[] getUnhandledExceptions(PsiCallExpression methodCall, PsiElement topElement, boolean checkThrowsClause) {
     final JavaResolveResult result = methodCall.resolveMethodGenerics();
     PsiMethod method = (PsiMethod)result.getElement();
-    return getUnhandledExceptions(method, methodCall, topElement, result.getSubstitutor(), checkThrowsClause);
+    return getUnhandledExceptions(method, methodCall, topElement,
+                                  ApplicationManager.getApplication().runReadAction(new Computable<PsiSubstitutor>() {
+                                    public PsiSubstitutor compute() {
+                                      return result.getSubstitutor();
+                                    }
+                                  }), checkThrowsClause);
   }
 
   public static PsiClassType[] getUnhandledExceptions(PsiThrowStatement throwStatement, PsiElement topElement){

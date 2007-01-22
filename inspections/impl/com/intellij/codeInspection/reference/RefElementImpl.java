@@ -9,9 +9,11 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
@@ -151,7 +153,11 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   public boolean isValid() {
     if (myIsDeleted) return false;
     final PsiElement element = getElement();
-    return element != null && element.isPhysical();
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        return element != null && element.isPhysical();
+      }
+    }).booleanValue();
   }
 
   public RefModule getModule() {

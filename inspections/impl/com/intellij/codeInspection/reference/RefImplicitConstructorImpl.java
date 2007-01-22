@@ -9,6 +9,8 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiModifierListOwner;
 
 public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImplicitConstructor {
@@ -34,7 +36,11 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
   }
 
   public boolean isValid() {
-    return getOwnerClass().isValid();
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        return getOwnerClass().isValid();
+      }
+    }).booleanValue();
   }
 
   public String getAccessModifier() {
