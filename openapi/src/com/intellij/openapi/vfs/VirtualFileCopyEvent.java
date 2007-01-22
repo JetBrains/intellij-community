@@ -11,8 +11,8 @@ public class VirtualFileCopyEvent extends VirtualFileEvent {
   private final VirtualFile myOriginalFile;
 
   public VirtualFileCopyEvent(Object requestor, VirtualFile original, VirtualFile created){
-    super(requestor, created, original.getName(), created.getParent());
-    myOriginalFile = created;
+    super(requestor, created, created.getName(), created.getParent());
+    myOriginalFile = original;
   }
 
   /**
