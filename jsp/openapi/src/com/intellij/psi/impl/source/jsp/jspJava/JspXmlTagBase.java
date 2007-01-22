@@ -3,8 +3,8 @@
  */
 package com.intellij.psi.impl.source.jsp.jspJava;
 
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.impl.source.jsp.jspXml.JspTag;
+import com.intellij.psi.xml.XmlTag;
 
 /**
  * @author peter

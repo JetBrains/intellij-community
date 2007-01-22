@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo.ApplicabilityLevel;
 import com.intellij.psi.jsp.JspFile;
@@ -508,7 +509,7 @@ public final class PsiUtil {
       if (element instanceof PsiCodeBlock || element instanceof PsiForStatement || element instanceof PsiForeachStatement) {
         blockSoFar = element;
       }
-      final PsiElement parent = element.getParent();
+      PsiElement parent = element.getParent();
       if (parent instanceof PsiMethod
           && parent.getParent() instanceof PsiClass
           && !isLocalOrAnonymousClass((PsiClass)parent.getParent()))
@@ -516,6 +517,9 @@ public final class PsiUtil {
       if (parent instanceof PsiClassInitializer && !(parent.getParent() instanceof PsiAnonymousClass)) break;
       if (parent instanceof PsiField && ((PsiField) parent).getInitializer() == element) {
         blockSoFar = element;
+      }
+      if (parent instanceof JspClassLevelDeclarationStatement) {
+        parent = parent.getParent();
       }
       if (element instanceof PsiClass && !isLocalOrAnonymousClass((PsiClass)element)) {
         break;
@@ -571,6 +575,7 @@ public final class PsiUtil {
       final PsiClass aClass = ((PsiField) variable).getContainingClass();
       while (context != null && context.getParent() != aClass) {
         context = context.getParent();
+        if (context instanceof JspClassLevelDeclarationStatement) return null;
       }
       return context instanceof PsiMethod ?
              ((PsiMethod) context).getBody() :
