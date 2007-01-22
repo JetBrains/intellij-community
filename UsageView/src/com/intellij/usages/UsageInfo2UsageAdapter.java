@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.rules.*;
@@ -39,7 +40,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibrary, UsageInFile, PsiElementUsage, MergeableUsage, Comparable<UsageInfo2UsageAdapter>, RenameableUsage {
+public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, UsageInFile, PsiElementUsage, MergeableUsage, Comparable<UsageInfo2UsageAdapter>, RenameableUsage {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.UsageInfo2UsageAdapter");
 
   private final UsageInfo myUsageInfo;
@@ -52,35 +53,39 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
 
   public UsageInfo2UsageAdapter(final UsageInfo usageInfo) {
     myUsageInfo = usageInfo;
-    PsiElement element = getElement();
-    PsiFile psiFile = element.getContainingFile();
-    Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(psiFile);
 
-    TextRange range = element.getTextRange();
-    int startOffset = range.getStartOffset() + myUsageInfo.startOffset;
-    int endOffset = range.getStartOffset() + myUsageInfo.endOffset;
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        PsiElement element = getElement();
+        PsiFile psiFile = element.getContainingFile();
+        Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(psiFile);
 
-    myLineNumber = document.getLineNumber(startOffset);
+        TextRange range = element.getTextRange();
+        int startOffset = range.getStartOffset() + myUsageInfo.startOffset;
+        int endOffset = range.getStartOffset() + myUsageInfo.endOffset;
 
-    if (endOffset > document.getTextLength()) {
-      LOG.assertTrue(false,
-        "Invalid usage info, psiElement:" + element + " end offset: " + endOffset + " psiFile: " + psiFile.getName()
-      );
-    }
+        myLineNumber = document.getLineNumber(startOffset);
 
-    myRangeMarkers.add(document.createRangeMarker(startOffset, endOffset));
+        if (endOffset > document.getTextLength()) {
+          LOG.assertTrue(false,
+                         "Invalid usage info, psiElement:" + element + " end offset: " + endOffset + " psiFile: " + psiFile.getName());
+        }
 
-    if (element instanceof PsiFile) {
-      myIcon = null;
-    }
-    else {
-      myIcon = element.getIcon(0);
-    }
+        myRangeMarkers.add(document.createRangeMarker(startOffset, endOffset));
 
-    myTooltipText = myUsageInfo.getTooltipText();
+        if (element instanceof PsiFile) {
+          myIcon = null;
+        }
+        else {
+          myIcon = element.getIcon(0);
+        }
 
-    initChunks();
-    myUsagePresentation = new MyUsagePresentation();
+        myTooltipText = myUsageInfo.getTooltipText();
+
+        initChunks();
+        myUsagePresentation = new MyUsagePresentation();
+      }
+    });
   }
 
   private void initChunks() {
