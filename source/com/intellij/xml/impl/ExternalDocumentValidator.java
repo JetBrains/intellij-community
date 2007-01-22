@@ -205,7 +205,7 @@ public class ExternalDocumentValidator {
                 }
               }
               else {
-                currentElement = getNodeForMessage(currentElement);
+                currentElement = getNodeForMessage(currentElement != null ? currentElement:originalElement);
                 assertValidElement(currentElement, originalElement,localizedMessage);
                 if (currentElement!=null) {
                   myHost.addMessage(currentElement,localizedMessage,warning ? Validator.ValidationHost.WARNING:Validator.ValidationHost.ERROR);
