@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsDialog;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -11,6 +12,8 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.List;
 
@@ -42,6 +45,7 @@ public class VcsGeneralConfigurationPanel {
   private JCheckBox myCbOfferToMoveChanges;
   private JCheckBox myCbUpdateInBackground;
   private JCheckBox myCbCommitInBackground;
+  private JButton myConfigureIgnoredFilesButton;
 
   public VcsGeneralConfigurationPanel(final Project project) {
 
@@ -71,19 +75,14 @@ public class VcsGeneralConfigurationPanel {
       }
     }
 
-    final ButtonGroup add = new ButtonGroup();
-    for (JRadioButton aMyOnFileAddingGroup : myOnFileAddingGroup) {
-      add.add(aMyOnFileAddingGroup);
-    }
-
-    final ButtonGroup remove = new ButtonGroup();
-    for (JRadioButton aMyOnFileAddingGroup : myOnFileRemovingGroup) {
-      remove.add(aMyOnFileAddingGroup);
-    }
-
     myPromptsPanel.setSize(myPromptsPanel.getPreferredSize());
 
 
+    myConfigureIgnoredFilesButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        IgnoredSettingsDialog.configure(myProject);
+      }
+    });
   }
 
   public void apply() throws ConfigurationException {
@@ -117,7 +116,7 @@ public class VcsGeneralConfigurationPanel {
   }
 
 
-  private VcsShowConfirmationOption.Value getSelected(JRadioButton[] group) {
+  private static VcsShowConfirmationOption.Value getSelected(JRadioButton[] group) {
     if (group[0].isSelected()) return VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
     if (group[1].isSelected()) return VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY;
     return VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY;

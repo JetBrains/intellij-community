@@ -13,6 +13,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.changes.IgnoredFileBean;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -109,15 +110,27 @@ public class IgnoredSettingsDialog extends DialogWrapper {
     }
   }
 
+  public static void configure(final Project project) {
+    IgnoredSettingsDialog dlg = new IgnoredSettingsDialog(project);
+    dlg.setItems(ChangeListManager.getInstance(project).getFilesToIgnore());
+    dlg.show();
+    if (!dlg.isOK()) {
+      return;
+    }
+    ChangeListManager.getInstance(project).setFilesToIgnore(dlg.getItems());
+    dlg.dispose();
+  }
+
   private static class MyCellRenderer extends ColoredListCellRenderer {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       IgnoredFileBean bean = (IgnoredFileBean) value;
-      if (bean.getPath() != null) {
-        if (bean.getPath().endsWith("/")) {
-          append(VcsBundle.message("ignored.configure.item.directory", bean.getPath()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      final String path = bean.getPath();
+      if (path != null) {
+        if (path.endsWith("/")) {
+          append(VcsBundle.message("ignored.configure.item.directory", path), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
         else {
-          append(VcsBundle.message("ignored.configure.item.file", bean.getPath()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          append(VcsBundle.message("ignored.configure.item.file", path), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       }
       else if (bean.getMask() != null) {

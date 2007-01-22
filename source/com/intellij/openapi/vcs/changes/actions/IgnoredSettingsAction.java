@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsDialog;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 
 public class IgnoredSettingsAction extends AnAction {
   public IgnoredSettingsAction() {
@@ -26,12 +25,7 @@ public class IgnoredSettingsAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(DataKeys.PROJECT);
-    IgnoredSettingsDialog dlg = new IgnoredSettingsDialog(project);
-    dlg.setItems(ChangeListManager.getInstance(project).getFilesToIgnore());
-    dlg.show();
-    if (!dlg.isOK()) {
-      return;
-    }
-    ChangeListManager.getInstance(project).setFilesToIgnore(dlg.getItems());
+    IgnoredSettingsDialog.configure(project);
   }
+
 }
