@@ -33,8 +33,8 @@ import com.intellij.ui.FieldPanel;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -769,7 +769,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return false;
     }
 
-    if (!methodName.startsWith("assert")) {
+    if (!methodName.startsWith("assert") && !methodName.equals("fail")) {
       return false;
     }
     final PsiMethod method = call.resolveMethod();
