@@ -84,9 +84,35 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
   private List<AddedFileInfo> myAddedFiles = new ArrayList<AddedFileInfo>();
   private List<DeletedFileInfo> myDeletedFiles = new ArrayList<DeletedFileInfo>();
 
+  @Nullable
   public File copy(final VirtualFile file, final VirtualFile toDir, final String copyName) throws IOException {
-    //TODO
-    return null;
+    SvnVcs vcs = getVCS(toDir);
+    if (vcs == null) {
+      vcs = getVCS(file);
+    }
+    if (vcs == null) {
+      return null;
+    }
+
+    File srcFile = new File(file.getPath());
+    File destFile = new File(new File(toDir.getPath()), copyName);
+    if (!SVNWCUtil.isVersionedDirectory(destFile.getParentFile())) {
+      return null;
+    }
+
+    if (!SVNWCUtil.isVersionedDirectory(srcFile.getParentFile())) {
+      myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName));
+      return null;
+    }
+
+    SVNCopyClient client = new SVNCopyClient(null, vcs.getSvnOptions());
+    try {
+      client.doCopy(srcFile, SVNRevision.WORKING, destFile, false, false);
+    }
+    catch (SVNException e) {
+      return null;
+    }
+    return destFile;
   }
 
   public boolean move(VirtualFile file, VirtualFile toDir) throws IOException {
