@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,21 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiEnumConstantInitializer;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AnonymousInnerClassInspection extends ClassInspection {
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "anonymous.inner.class.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.CLASSLAYOUT_GROUP_NAME;
@@ -60,6 +66,9 @@ public class AnonymousInnerClassInspection extends ClassInspection {
 
         public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
             super.visitAnonymousClass(aClass);
+            if (aClass instanceof PsiEnumConstantInitializer) {
+                return;
+            }
             registerClassError(aClass);
         }
     }
