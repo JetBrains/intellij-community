@@ -29,6 +29,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -137,7 +138,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       element.putUserData(DOM_PROBLEM_HOLDER_KEY, holder);
       final CachedValue<Boolean> cachedValue = myCachedValuesManager.createCachedValue(new CachedValueProvider<Boolean>() {
         public Result<Boolean> compute() {
-          return new Result<Boolean>(Boolean.FALSE, element, myModificationTracker, myProjectRootManager);
+          return new Result<Boolean>(Boolean.FALSE, element, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myModificationTracker, myProjectRootManager);
         }
       }, false);
       cachedValue.getValue();
