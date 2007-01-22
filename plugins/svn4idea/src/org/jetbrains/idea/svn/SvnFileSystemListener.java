@@ -41,6 +41,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
@@ -305,7 +306,10 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       if (addedFile != null) {
         final SVNStatus fileStatus = getFileStatus(new File(getIOFile(addedFileInfo.myDir), addedFileInfo.myName));
         if (fileStatus == null || fileStatus.getContentsStatus() != SVNStatusType.STATUS_IGNORED) {
-          addedVFiles.putValue(addedFileInfo.myProject, addedFile);
+          boolean isIgnored = ChangeListManager.getInstance(addedFileInfo.myProject).isIgnoredFile(addedFile);
+          if (!isIgnored) {
+            addedVFiles.putValue(addedFileInfo.myProject, addedFile);
+          }
         }
       }
     }
