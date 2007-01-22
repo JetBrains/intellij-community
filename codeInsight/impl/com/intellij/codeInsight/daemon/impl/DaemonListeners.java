@@ -91,8 +91,7 @@ public class DaemonListeners {
 
   private ErrorStripeHandler myErrorStripeHandler;
 
-  volatile private boolean cutOperationJustHappened;
-  volatile boolean myIsFrameFocused = true;
+  private volatile boolean cutOperationJustHappened;
   private final EditorTracker myEditorTracker;
   private final EditorTrackerListener myEditorTrackerListener;
 
@@ -125,10 +124,9 @@ public class DaemonListeners {
     myEditorTrackerListener = new EditorTrackerListener() {
       public void activeEditorsChanged(final Editor[] editors) {
         if (editors.length > 0) {
-          myIsFrameFocused = true; // Happens when debugger evaluation window gains focus out of main frame.
+          stopDaemon(true);  // do not stop daemon if idea loses focus
         }
         List<Editor> list = Arrays.asList(editors);
-        stopDaemon(true);
       }
     };
     myEditorTracker.addEditorTrackerListener(myEditorTrackerListener);
