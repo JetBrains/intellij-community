@@ -4,13 +4,13 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.ClassType;
 import com.sun.jdi.Method;
@@ -44,7 +44,8 @@ public class MethodEvaluator implements Evaluator {
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     if(!context.getDebugProcess().isAttached()) return null;
     DebugProcessImpl debugProcess = context.getDebugProcess();
-    Object object = myObjectEvaluator.evaluate(context);
+    final boolean requiresSuperObject = myObjectEvaluator instanceof SuperEvaluator;
+    final Object object = myObjectEvaluator.evaluate(context);
     if (LOG.isDebugEnabled()) {
       LOG.debug("MethodEvaluator: object = " + object);
     }
@@ -72,7 +73,6 @@ public class MethodEvaluator implements Evaluator {
       else {
         referenceType = debugProcess.findClass(context, className, context.getClassLoader());
       }
-
       final String signature = myMethodSignature != null ? myMethodSignature.getName(debugProcess) : null;
       final String methodName = DebuggerUtilsEx.methodName(referenceType.name(), myMethodName, signature);
       if (object instanceof ClassType) {
@@ -96,6 +96,9 @@ public class MethodEvaluator implements Evaluator {
       Method jdiMethod = DebuggerUtilsEx.findMethod(referenceType, myMethodName, signature);
       if (jdiMethod == null) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.instance.method", methodName));
+      }
+      if (requiresSuperObject) {
+        return debugProcess.invokeMethodNonVirtual(context, objRef, jdiMethod, args);
       }
       return debugProcess.invokeMethod(context, objRef, jdiMethod, args);
     }

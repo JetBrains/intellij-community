@@ -4,16 +4,15 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.DebuggerBundle;
 import com.sun.jdi.Field;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
 import java.util.List;
 
 public class ThisEvaluator implements Evaluator {
@@ -40,19 +39,23 @@ public class ThisEvaluator implements Evaluator {
       }
       objRef = thisRef;
     }
-    if(objRef == null) throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.this.not.avalilable"));
+    if(objRef == null) {
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.this.not.avalilable"));
+    }
     return objRef;
   }
 
+  @Nullable
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static ObjectReference getOuterObject(ObjectReference objRef) {
-    if (objRef == null) return null;
-    List list = objRef.referenceType().fields();
-    for (Iterator it = list.iterator(); it.hasNext();) {
-      Field field = (Field)it.next();
-      String name = field.name();
+    if (objRef == null) {
+      return null;
+    }
+    List<Field> list = objRef.referenceType().fields();
+    for (final Field field : list) {
+      final String name = field.name();
       if (name != null && name.startsWith("this$")) {
-        ObjectReference rv = (ObjectReference)objRef.getValue(field);
+        final ObjectReference rv = (ObjectReference)objRef.getValue(field);
         if (rv != null) {
           return rv;
         }

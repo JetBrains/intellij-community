@@ -1024,20 +1024,27 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
   }
 
-  public Value invokeMethod(final EvaluationContext evaluationContext, final ObjectReference objRef,
-                            final Method method,
-                            final List args) throws EvaluateException {
-
+  public Value invokeMethod(final EvaluationContext evaluationContext, final ObjectReference objRef, final Method method, final List args) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
     InvokeCommand<Value> invokeCommand = new InvokeCommand<Value>(args) {
-      protected Value invokeMethod(int invokePolicy, final List args) throws InvocationException,
-                                                                             ClassNotLoadedException,
-                                                                             IncompatibleThreadStateException,
-                                                                             InvalidTypeException {
+      protected Value invokeMethod(int invokePolicy, final List args) throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invoke " + method.name());
         }
         return objRef.invokeMethod(thread, method, args, invokePolicy);
+      }
+    };
+    return invokeCommand.start((EvaluationContextImpl)evaluationContext, method);
+  }
+
+  public Value invokeMethodNonVirtual(final EvaluationContext evaluationContext, final ObjectReference objRef, final Method method, final List args) throws EvaluateException {
+    final ThreadReference thread = getEvaluationThread(evaluationContext);
+    InvokeCommand<Value> invokeCommand = new InvokeCommand<Value>(args) {
+      protected Value invokeMethod(int invokePolicy, final List args) throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Invoke " + method.name());
+        }
+        return objRef.invokeMethod(thread, method, args, invokePolicy | ObjectReference.INVOKE_NONVIRTUAL);
       }
     };
     return invokeCommand.start((EvaluationContextImpl)evaluationContext, method);

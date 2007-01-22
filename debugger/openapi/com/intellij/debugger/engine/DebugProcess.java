@@ -65,8 +65,13 @@ public interface DebugProcess {
 
   Value invokeMethod(EvaluationContext evaluationContext,
                      ObjectReference objRef,
-                     Method toStringMethod,
-                     List emptyList) throws EvaluateException;
+                     Method method,
+                     List args) throws EvaluateException;
+
+  Value invokeMethodNonVirtual(EvaluationContext evaluationContext, 
+                               ObjectReference objRef, 
+                               Method method, 
+                               List args) throws EvaluateException;
 
   Value invokeMethod(EvaluationContext evaluationContext,
                      ClassType classType,
