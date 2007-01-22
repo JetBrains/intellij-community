@@ -27,9 +27,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * The standard {@link StructureViewModel} implementation which is linked to a text editor.
@@ -40,7 +41,7 @@ import java.util.List;
 public abstract class TextEditorBasedStructureViewModel implements StructureViewModel {
   private final Editor myEditor;
   private final CaretListener myCaretListener;
-  private final List<FileEditorPositionListener> myListeners = new ArrayList<FileEditorPositionListener>();
+  private final List<FileEditorPositionListener> myListeners = new CopyOnWriteArrayList<FileEditorPositionListener>();
 
   /**
    * Creates a structure view model instance linked to a text editor displaying the specified
@@ -67,9 +68,8 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
       }
 
       private void fireCaretPositionChanged() {
-        final FileEditorPositionListener[] listeners = myListeners.toArray(new FileEditorPositionListener[myListeners.size()]);
-        for (int i = 0; i < listeners.length; i++) {
-          listeners[i].onCurrentElementChanged();
+        for (FileEditorPositionListener listener : myListeners) {
+          listener.onCurrentElementChanged();
         }
       }
     };
@@ -77,6 +77,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     EditorFactory.getInstance().getEventMulticaster().addCaretListener(myCaretListener);
   }
 
+  @Nullable
   private static Editor getEditorForFile(@NotNull final PsiFile psiFile) {
     VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) {
