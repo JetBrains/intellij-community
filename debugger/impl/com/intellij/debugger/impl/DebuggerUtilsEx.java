@@ -4,27 +4,27 @@
  */
 package com.intellij.debugger.impl;
 
-import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.requests.Requestor;
-import com.intellij.debugger.ui.breakpoints.Breakpoint;
-import com.intellij.debugger.ui.tree.DebuggerTreeNode;
-import com.intellij.debugger.ui.CompletionEditor;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.requests.Requestor;
+import com.intellij.debugger.ui.CompletionEditor;
+import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.tree.DebuggerTreeNode;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.classFilter.ClassFilter;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
 import org.jdom.Attribute;
@@ -610,7 +610,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
           return;
         }
         else {
-          off = element.getTextRange().getEndOffset() + 1;
+          off = element.getTextRange().getEndOffset();
         }
       }
       else {
