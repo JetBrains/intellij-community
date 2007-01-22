@@ -254,7 +254,8 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     }
 
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-      g.setColor(c.getBackground().darker());
+      final Color bg = c.getBackground();
+      g.setColor(bg != null ? bg.darker() : Color.darkGray);
       final int inset = 1;
       if (myLeft) {
         g.drawLine(0, inset, 0, c.getHeight() - inset - 1);
