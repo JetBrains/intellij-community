@@ -21,6 +21,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -54,6 +55,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     myRange = range;
   }
 
+  @NotNull
   public String getValue() {
     String text = myElement.getText();
     return getRangeInElement().substring(text);

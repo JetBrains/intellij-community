@@ -59,6 +59,7 @@ public class XmlAttributeValueManipulator extends AbstractElementManipulator<Xml
   }
 
   public TextRange getRangeInElement(final XmlAttributeValue xmlAttributeValue) {
-    return new TextRange(1, xmlAttributeValue.getTextLength() - 1);
+    final int textLength = xmlAttributeValue.getTextLength();
+    return textLength == 0 ? new TextRange(0, 0) : new TextRange(1, textLength - 1);
   }
 }

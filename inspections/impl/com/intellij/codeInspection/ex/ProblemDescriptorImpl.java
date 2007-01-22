@@ -40,7 +40,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     LOG.assertTrue(endElement.isValid(), "Invalid PsiElement");
     LOG.assertTrue(endElement.isPhysical(), "Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree");
 
-    if (startElement.getTextRange().getStartOffset() >= endElement.getTextRange().getEndOffset()) {
+    if (startElement.getTextRange().getStartOffset() >= endElement.getTextRange().getEndOffset() && rangeInElement.getStartOffset() >= rangeInElement.getEndOffset()) {
       LOG.error("Empty PSI elements should not be passed to createDescriptor");
     }
 
