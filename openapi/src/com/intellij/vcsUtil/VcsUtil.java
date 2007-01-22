@@ -40,6 +40,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -350,17 +351,13 @@ public class VcsUtil
   public static boolean isRenameChange( Change change )
   {
     boolean isRenamed = false;
-    try
+    ContentRevision before = change.getBeforeRevision();
+    ContentRevision after = change.getAfterRevision();
+    if( before != null && after != null )
     {
-      if( change.getBeforeRevision() != null && change.getAfterRevision() != null )
-      {
-        String prevFile = change.getBeforeRevision().getFile().getPath();
-        String newFile  = change.getAfterRevision().getFile().getPath();
-        isRenamed = !prevFile.equals( newFile );
-      }
-    }
-    catch( NullPointerException e ) {
-      //  Nothing to do - valid behavior for a revision file to be null.
+      String prevFile = before.getFile().getPath();
+      String newFile  = after.getFile().getPath();
+      isRenamed = !prevFile.equals( newFile );
     }
     return isRenamed;
   }
