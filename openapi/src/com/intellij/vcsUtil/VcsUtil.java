@@ -30,6 +30,7 @@ import com.intellij.openapi.localVcs.LvcsObject;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -256,6 +257,7 @@ public class VcsUtil
     return result;
   }
 
+  @Nullable
   private static VirtualFile findFileFor(final File root) {
     File current = root;
     while (current != null) {
@@ -267,6 +269,7 @@ public class VcsUtil
     return null;
   }
 
+  @Nullable
   public static VirtualFile getVirtualFile( final String path ) {
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
@@ -275,6 +278,7 @@ public class VcsUtil
     });
   }
 
+  @Nullable
   public static VirtualFile getVirtualFile( final File file ) {
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
@@ -320,6 +324,24 @@ public class VcsUtil
   }
 
   /**
+   * Shows error message with specified message text and title.
+   * The parent component is the root frame.
+   * @param project Current project component
+   * @param message information message
+   * @param title   Dialog title
+   */
+  public static void showErrorMessage( final Project project, final String message, final String title )
+  {
+    if( ApplicationManager.getApplication().isDispatchThread() )
+      Messages.showMessageDialog( project, message, title, Messages.getErrorIcon());
+    else
+      ApplicationManager.getApplication().invokeLater( new Runnable()
+      {
+        public void run() { Messages.showMessageDialog( project, message, title, Messages.getErrorIcon()); }
+      });
+  }
+
+  /**
    * @param  change "Change" description.
    * @return Return true if the "Change" object is created for "Rename" operation:
    * in this case name of files for "before" and "after" revisions must not
@@ -337,7 +359,9 @@ public class VcsUtil
         isRenamed = !prevFile.equals( newFile );
       }
     }
-    catch( NullPointerException e ) {}
+    catch( NullPointerException e ) {
+      //  Nothing to do - valid behavior for a revision file to be null.
+    }
     return isRenamed;
   }
 
