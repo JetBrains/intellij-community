@@ -37,6 +37,8 @@ public class XmlAutoLookupHandler extends CodeCompletionHandler {
     }
     if (text.equals("<") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt)) {
       return super.getLookupData(context);
+    } else if (text.equals(" ") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt)) {
+      return super.getLookupData(context);
     }
     else if (text.endsWith("${") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue()) {
       return super.getLookupData(context);

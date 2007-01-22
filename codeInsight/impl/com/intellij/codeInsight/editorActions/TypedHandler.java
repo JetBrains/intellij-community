@@ -375,7 +375,21 @@ public class TypedHandler implements TypedActionHandler {
     }
 
     final boolean isXmlLikeFile = file.getViewProvider().getBaseLanguage() instanceof XMLLanguage;
-    if ((charTyped == '<' || charTyped == '{' || charTyped == '/') && isXmlLikeFile) {
+    boolean spaceInTag = isXmlLikeFile && charTyped == ' ';
+
+    if (spaceInTag) {
+      spaceInTag = false;
+      final PsiElement at = file.findElementAt(editor.getCaretModel().getOffset());
+      
+      if (at != null) {
+        final PsiElement parent = at.getParent();
+        if (parent instanceof XmlTag) {
+          spaceInTag = true;
+        }
+      }
+    }
+
+    if ((charTyped == '<' || charTyped == '{' || charTyped == '/' || spaceInTag) && isXmlLikeFile) {
       autoPopupController.autoPopupXmlLookup(editor);
     }
 
