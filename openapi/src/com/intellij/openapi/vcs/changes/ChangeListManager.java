@@ -72,4 +72,5 @@ public abstract class ChangeListManager {
   public abstract void addFilesToIgnore(final IgnoredFileBean... ignoredFiles);
   public abstract void setFilesToIgnore(final IgnoredFileBean... ignoredFiles);
   public abstract IgnoredFileBean[] getFilesToIgnore();
+  public abstract boolean isIgnoredFile(VirtualFile file);
 }

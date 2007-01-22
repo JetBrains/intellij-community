@@ -945,13 +945,17 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
-  private boolean isIgnoredFile(VirtualFile file) {
+  public boolean isIgnoredFile(VirtualFile file) {
     synchronized(myFilesToIgnore) {
       if (myFilesToIgnore.size() == 0) {
         return false;
       }
       // don't use VfsUtil.getRelativePath() here because it can't handle paths where one file is not a direct ancestor of another one
       String filePath = FileUtil.getRelativePath(new File(myProject.getBaseDir().getPath()), new File(file.getPath()));
+      if (filePath == null) {
+        return false;
+      }
+      filePath = FileUtil.toSystemIndependentName(filePath);
       for(IgnoredFileBean bean: myFilesToIgnore) {
         final String prefix = bean.getPath();
         if (prefix != null && StringUtil.startsWithIgnoreCase(filePath, FileUtil.toSystemIndependentName(prefix))) {
