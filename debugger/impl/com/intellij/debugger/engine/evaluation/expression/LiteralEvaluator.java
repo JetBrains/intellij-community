@@ -4,12 +4,12 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.DebuggerBundle;
 
 class LiteralEvaluator implements Evaluator {
   private Object myValue;
@@ -35,8 +35,14 @@ class LiteralEvaluator implements Evaluator {
     if (myValue instanceof Character) {
       return DebuggerUtilsEx.createValue(vm, myExpectedType, ((Character)myValue).charValue());
     }
-    if (myValue instanceof Number) {
+    if (myValue instanceof Double) {
       return DebuggerUtilsEx.createValue(vm, myExpectedType, ((Number)myValue).doubleValue());
+    }
+    if (myValue instanceof Float) {
+      return DebuggerUtilsEx.createValue(vm, myExpectedType, ((Number)myValue).floatValue());
+    }
+    if (myValue instanceof Number) {
+      return DebuggerUtilsEx.createValue(vm, myExpectedType, ((Number)myValue).longValue());
     }
     if (myValue instanceof String) {
       return vm.mirrorOf((String)myValue);
