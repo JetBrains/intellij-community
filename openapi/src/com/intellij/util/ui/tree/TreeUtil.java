@@ -17,7 +17,7 @@ package com.intellij.util.ui.tree;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.Range;
 import org.jetbrains.annotations.NotNull;
@@ -220,7 +220,7 @@ public final class TreeUtil {
 
   @Nullable
   public static DefaultMutableTreeNode findNodeWithObject(final DefaultMutableTreeNode aRoot, final Object aObject) {
-    if (aRoot.getUserObject().equals(aObject)) {
+    if (Comparing.equal(aRoot.getUserObject(), aObject)) {
       return aRoot;
     } else {
       for (int i = 0; i < aRoot.getChildCount(); i++) {

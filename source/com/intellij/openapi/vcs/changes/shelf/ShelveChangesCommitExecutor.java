@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.util.Collection;
 
 public class ShelveChangesCommitExecutor implements CommitExecutor {
@@ -77,7 +76,8 @@ public class ShelveChangesCommitExecutor implements CommitExecutor {
         return;
       }
       try {
-        ShelveChangesManager.getInstance(myProject).shelveChanges(changes, commitMessage);
+        final ShelvedChangeList list = ShelveChangesManager.getInstance(myProject).shelveChanges(changes, commitMessage);
+        ShelvedChangesViewManager.getInstance(myProject).activateView(list);
       }
       catch (final Exception ex) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {

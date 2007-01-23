@@ -105,7 +105,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return Collections.unmodifiableList(myShelvedChangeLists);
   }
 
-  public void shelveChanges(final Collection<Change> changes, final String commitMessage) throws IOException, VcsException {
+  public ShelvedChangeList shelveChanges(final Collection<Change> changes, final String commitMessage) throws IOException, VcsException {
     final List<Change> textChanges = new ArrayList<Change>();
     final List<ShelvedBinaryFile> binaryFiles = new ArrayList<ShelvedBinaryFile>();
     for(Change change: changes) {
@@ -136,8 +136,10 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
 
     RollbackChangesDialog.doRollback(myProject, changes, true, false);
 
-    myShelvedChangeLists.add(new ShelvedChangeList(patchPath.toString(), commitMessage.replace('\n', ' '), binaryFiles));
+    final ShelvedChangeList changeList = new ShelvedChangeList(patchPath.toString(), commitMessage.replace('\n', ' '), binaryFiles);
+    myShelvedChangeLists.add(changeList);
     notifyStateChanged();
+    return changeList;
   }
 
   private ShelvedBinaryFile shelveBinaryFile(final Change change) throws IOException {

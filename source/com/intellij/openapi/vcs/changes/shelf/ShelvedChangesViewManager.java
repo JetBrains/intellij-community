@@ -24,6 +24,8 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
@@ -57,10 +59,17 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private Tree myTree = new ShelfTree();
   private Content myContent = null;
   private ShelvedChangeDeleteProvider myDeleteProvider = new ShelvedChangeDeleteProvider();
+  private boolean myUpdatePending = false;
+  private Runnable myPostUpdateRunnable = null;
 
   public static DataKey<ShelvedChangeList[]> SHELVED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedChangeListData");
   public static DataKey<List<ShelvedChange>> SHELVED_CHANGE_KEY = DataKey.create("ShelveChangesManager.ShelvedChange");
   public static DataKey<List<ShelvedBinaryFile>> SHELVED_BINARY_FILE_KEY = DataKey.create("ShelveChangesManager.ShelvedBinaryFile");
+  private DefaultMutableTreeNode myRoot;
+
+  public static ShelvedChangesViewManager getInstance(Project project) {
+    return project.getComponent(ShelvedChangesViewManager.class);
+  }
 
   public ShelvedChangesViewManager(Project project, ChangesViewContentManager contentManager, ShelveChangesManager shelveChangesManager,
                                    final MessageBus bus) {
@@ -69,6 +78,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myShelveChangesManager = shelveChangesManager;
     bus.connect().subscribe(ShelveChangesManager.SHELF_TOPIC, new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
+        myUpdatePending = true;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             updateChangesContent();
@@ -107,6 +117,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   private void updateChangesContent() {
+    myUpdatePending = false;
     final List<ShelvedChangeList> changes = myShelveChangesManager.getShelvedChangeLists();
     if (changes.size() == 0) {
       if (myContent != null) {
@@ -116,21 +127,25 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
     else {
       if (myContent == null) {
-        myContent = PeerFactory.getInstance().getContentFactory().createContent(new JScrollPane(myTree), "Shelf", false);
+        myContent = PeerFactory.getInstance().getContentFactory().createContent(new JScrollPane(myTree), VcsBundle.message("shelf.tab"), false);
         myContent.setCloseable(false);
         myContentManager.addContent(myContent);
       }
       myTree.setModel(buildChangesModel());
+      if (myPostUpdateRunnable != null) {
+        myPostUpdateRunnable.run();
+      }
     }
+    myPostUpdateRunnable = null;
   }
 
   private TreeModel buildChangesModel() {
-    DefaultMutableTreeNode root = new DefaultMutableTreeNode();
-    DefaultTreeModel model = new DefaultTreeModel(root);
+    myRoot = new DefaultMutableTreeNode();
+    DefaultTreeModel model = new DefaultTreeModel(myRoot);
     final List<ShelvedChangeList> changeLists = myShelveChangesManager.getShelvedChangeLists();
     for(ShelvedChangeList changeList: changeLists) {
       DefaultMutableTreeNode node = new DefaultMutableTreeNode(changeList);
-      model.insertNodeInto(node, root, root.getChildCount());
+      model.insertNodeInto(node, myRoot, myRoot.getChildCount());
 
       List<ShelvedChange> changes = changeList.getChanges();
       for(ShelvedChange change: changes) {
@@ -144,6 +159,27 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
     }
     return model;
+  }
+
+  public void activateView(final ShelvedChangeList list) {
+    Runnable runnable = new Runnable() {
+      public void run() {
+        if (list != null) {
+          TreeUtil.selectNode(myTree, TreeUtil.findNodeWithObject(myRoot, list));
+        }
+        myContentManager.setSelectedContent(myContent);
+        ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+        if (!window.isVisible()) {
+          window.activate(null);
+        }
+      }
+    };
+    if (myUpdatePending) {
+      myPostUpdateRunnable = runnable;
+    }
+    else {
+      runnable.run();
+    }
   }
 
   private class ShelfTree extends Tree implements TypeSafeDataProvider {
