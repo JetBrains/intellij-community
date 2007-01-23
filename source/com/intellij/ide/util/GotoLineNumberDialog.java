@@ -1,11 +1,11 @@
 package com.intellij.ide.util;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,9 +23,11 @@ public class GotoLineNumberDialog extends DialogWrapper {
   }
 
   protected void doOKAction(){
-    int lineNumber = getLineNumber();
+    final LogicalPosition currentPosition = myEditor.getCaretModel().getLogicalPosition();
+    int lineNumber = getLineNumber(currentPosition.line + 1);
     if (lineNumber <= 0) return;
-    int columnNumber = getColumnNumber(myEditor.getCaretModel().getLogicalPosition().column);
+
+    int columnNumber = getColumnNumber(currentPosition.column);
     myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber - 1, columnNumber - 1));
     myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     myEditor.getSelectionModel().removeSelection();
@@ -42,11 +44,12 @@ public class GotoLineNumberDialog extends DialogWrapper {
     return defaultValue;
   }
 
-  private int getLineNumber() {
+  private int getLineNumber(int defaultLine) {
     try {
       String text = getText();
       int columnIndex = text.indexOf(':');
       text = columnIndex == -1 ? text : text.substring(0, columnIndex);
+      if (text.trim().length() == 0) return defaultLine;
       return Integer.parseInt(text);
     } catch (NumberFormatException e) {
       return -1;
