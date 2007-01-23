@@ -7,7 +7,9 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -22,34 +24,65 @@ class JavaClassReferenceSet {
   protected static final char SEPARATOR2 = '$';
 
   private PsiReference[] myReferences;
+  private List<JavaClassReferenceSet> myNestedGenericParameterReferences;
+  private JavaClassReferenceSet myContext;
   private PsiElement myElement;
   private final int myStartInElement;
   private final ReferenceType myType;
   private final JavaClassReferenceProvider myProvider;
+  private static final char SEPARATOR3 = '<';
+  private static final char SEPARATOR4 = ',';
 
   JavaClassReferenceSet(String str, PsiElement element, int startInElement, ReferenceType type, final boolean isStatic, JavaClassReferenceProvider provider) {
+    this(str, element, startInElement, type, isStatic, provider, null);
+  }
+
+  JavaClassReferenceSet(String str, PsiElement element, int startInElement, ReferenceType type, final boolean isStatic, JavaClassReferenceProvider provider,
+                        JavaClassReferenceSet context) {
     myType = type;
     myStartInElement = startInElement;
     myProvider = provider;
-    reparse(str, element, isStatic);
+    reparse(str, element, isStatic, context);
   }
 
   public JavaClassReferenceProvider getProvider() {
     return myProvider;
   }
 
-  private void reparse(String str, PsiElement element, final boolean isStaticImport) {
+  private void reparse(String str, PsiElement element, final boolean isStaticImport, JavaClassReferenceSet context) {
     myElement = element;
+    myContext = context;
     final List<JavaClassReference> referencesList = new ArrayList<JavaClassReference>();
     int currentDot = -1;
-    int index = 0;
+    int referenceIndex = 0;
     boolean allowDollarInNames = isAllowDollarInNames(element);
+    boolean allowGenerics = false;
+    boolean allowGenericsCalculated = false;
     boolean parsingClassNames = true;
 
     while (parsingClassNames) {
-      int nextDotOrDollar = str.indexOf(SEPARATOR, currentDot + 1);
-      if (nextDotOrDollar == -1 && allowDollarInNames) {
-        nextDotOrDollar = str.indexOf(SEPARATOR2, currentDot + 1);
+      int nextDotOrDollar = -1;
+      for(int curIndex = currentDot + 1; curIndex < str.length(); ++curIndex) {
+        final char ch = str.charAt(curIndex);
+
+        if (ch == SEPARATOR ||
+            (ch == SEPARATOR2 && allowDollarInNames)
+           ) {
+          nextDotOrDollar = curIndex;
+          break;
+        }
+        
+        if (((ch == SEPARATOR3 || ch == SEPARATOR4))) {
+          if (!allowGenericsCalculated) {
+            allowGenerics = !isStaticImport && PsiUtil.getLanguageLevel(element).hasEnumKeywordAndAutoboxing();
+            allowGenericsCalculated = true;
+          }
+
+          if (allowGenerics) {
+            nextDotOrDollar = curIndex;
+            break;
+          }
+        }
       }
 
       if (nextDotOrDollar == -1) {
@@ -86,16 +119,54 @@ class JavaClassReferenceSet {
         }
       }
 
+      if (nextDotOrDollar != -1 && nextDotOrDollar < str.length()) {
+        final char c = str.charAt(nextDotOrDollar);
+        if (c == SEPARATOR3) {
+          int end = str.lastIndexOf('>');
+          if (end != -1) {
+            if (myNestedGenericParameterReferences == null) myNestedGenericParameterReferences = new ArrayList<JavaClassReferenceSet>(1);
+            myNestedGenericParameterReferences.add(
+              new JavaClassReferenceSet(
+                str.substring(nextDotOrDollar + 1, end),
+                myElement,
+                myStartInElement + nextDotOrDollar + 1,
+                myType,
+                isStaticImport,
+                myProvider,
+                this
+              )
+            );
+            parsingClassNames = false;
+          } else {
+            nextDotOrDollar = -1; // nonsensible characters anyway, don't do resolve
+          }
+        } else if (SEPARATOR4 == c && myContext != null) {
+          if (myContext.myNestedGenericParameterReferences == null) myContext.myNestedGenericParameterReferences = new ArrayList<JavaClassReferenceSet>(1);
+          myContext.myNestedGenericParameterReferences.add(
+            new JavaClassReferenceSet(
+              str.substring(nextDotOrDollar + 1),
+              myElement,
+              myStartInElement + nextDotOrDollar + 1,
+              myType,
+              isStaticImport,
+              myProvider,
+              this
+            )
+          );
+          parsingClassNames = false;
+        }
+      }
+
       final String subreferenceText =
         nextDotOrDollar > 0 ? str.substring(currentDot + 1, nextDotOrDollar) : str.substring(currentDot + 1);
 
       TextRange textRange =
         new TextRange(myStartInElement + currentDot + 1, myStartInElement + (nextDotOrDollar > 0 ? nextDotOrDollar : str.length()));
-      JavaClassReference currentContextRef = new JavaClassReference(this, textRange, index++, subreferenceText, isStaticImport);
+      JavaClassReference currentContextRef = new JavaClassReference(this, textRange, referenceIndex++, subreferenceText, isStaticImport);
       referencesList.add(currentContextRef);
       if ((currentDot = nextDotOrDollar) < 0) {
         break;
-      }
+      } 
     }
 
     myReferences = referencesList.toArray(new JavaClassReference[referencesList.size()]);
@@ -117,7 +188,7 @@ class JavaClassReferenceSet {
     //else {
     //  text = element.getText();
     //}
-    reparse(text, element, false);
+    reparse(text, element, false, myContext);
   }
 
   protected PsiReference getReference(int index) {
@@ -125,7 +196,13 @@ class JavaClassReferenceSet {
   }
 
   protected PsiReference[] getAllReferences() {
-    return myReferences;
+    PsiReference[] result = myReferences;
+    if (myNestedGenericParameterReferences != null) {
+      for(JavaClassReferenceSet set:myNestedGenericParameterReferences) {
+        result = ArrayUtil.mergeArrays(result, set.getAllReferences(),PsiReference.class);
+      }
+    }
+    return result;
   }
 
   ReferenceType getType(int index) {
