@@ -47,6 +47,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
 
   private final Map<String, CvsConnectionSettings> myStringToSettingsMap = new HashMap<String, CvsConnectionSettings>();
   private final UserDirIgnores myUserDirIgnores = new UserDirIgnores();
+  private MyVirtualFileManagerListener myVirtualFileManagerListener = new MyVirtualFileManagerListener();
 
   public static CvsEntriesManager getInstance() {
     return ApplicationManager.getApplication().getComponent(CvsEntriesManager.class);
@@ -54,7 +55,6 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
 
   public CvsEntriesManager() {
     myEntriesListeners = new ArrayList<CvsEntriesListener>();
-    VirtualFileManager.getInstance().addVirtualFileManagerListener(new MyVirtualFileManagerListener());
   }
 
   private class MyVirtualFileManagerListener implements VirtualFileManagerListener {
@@ -80,6 +80,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
   public void registerAsVirtualFileListener() {
     if (myIsActive == 0) {
       VirtualFileManager.getInstance().addVirtualFileListener(this);
+      VirtualFileManager.getInstance().addVirtualFileManagerListener(myVirtualFileManagerListener);
     }
     myIsActive++;
   }
@@ -89,6 +90,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
     myIsActive--;
     if (myIsActive == 0) {
       VirtualFileManager.getInstance().removeVirtualFileListener(this);
+      VirtualFileManager.getInstance().removeVirtualFileManagerListener(myVirtualFileManagerListener);
       myInfoByParentDirectoryPath.clear();
     }
   }

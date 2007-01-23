@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.cvsIntegration;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
 import java.io.File;
@@ -23,7 +23,7 @@ import java.io.IOException;
 
 public abstract class CvsServices {
   public static CvsServices getInstance(){
-    return ApplicationManager.getApplication().getComponent(CvsServices.class);
+    return ServiceManager.getService(CvsServices.class);
   }
 
   public abstract CvsModule[] chooseModules(Project project, boolean allowRootSelection,

@@ -23,10 +23,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.openapi.cvsIntegration.CvsServices</interface-class>
-      <implementation-class>com.intellij.cvsSupport2.impl.CvsServicesImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.cvsSupport2.config.ImportConfiguration</implementation-class>
     </component>
 
@@ -142,5 +138,9 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <checkoutProvider implementation="com.intellij.cvsSupport2.checkout.CvsCheckoutProvider"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.cvsIntegration.CvsServices"
+                        serviceImplementation="com.intellij.cvsSupport2.impl.CvsServicesImpl"/>
+
   </extensions>
 </idea-plugin>
