@@ -1,0 +1,4 @@
+public class X implements <spot>Runnable</spot> {
+  public void run() {
+  }
+}

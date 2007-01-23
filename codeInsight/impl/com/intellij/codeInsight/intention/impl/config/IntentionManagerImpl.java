@@ -3,16 +3,24 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.actions.*;
-import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddRuntimeExceptionToThrowsAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalVarFromInstanceofAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveRedundantElseAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction;
 import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsInSuppressedPlaceIntention;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +29,8 @@ import java.util.List;
  *  @author dsl
  */
 public class IntentionManagerImpl extends IntentionManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl");
+
   private List<IntentionAction> myActions = new ArrayList<IntentionAction>();
   private IntentionManagerSettings mySettings;
 
@@ -58,6 +68,35 @@ public class IntentionManagerImpl extends IntentionManager {
     
     addAction(new EditFoldingOptionsAction());
     addAction(new EditInspectionToolsSettingsInSuppressedPlaceIntention());
+
+    Extensions.getArea(null).getExtensionPoint(EP_INTENTION_ACTIONS).addExtensionPointListener(new ExtensionPointListener<IntentionActionBean>() {
+      public void extensionAdded(final IntentionActionBean extension, @Nullable final PluginDescriptor pluginDescriptor) {
+        ClassLoader classLoader = pluginDescriptor != null ? pluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
+        try {
+          final Class<?> aClass = Class.forName(extension.getClassName(), true, classLoader);
+          final String descriptionDirectoryName = extension.getDescriptionDirectoryName();
+          if (descriptionDirectoryName != null) {
+            registerIntentionAndMetaData((IntentionAction)aClass.newInstance(), extension.getClassName(), descriptionDirectoryName);
+          }
+          else {
+            registerIntentionAndMetaData((IntentionAction)aClass.newInstance(), extension.getCategories());
+          }
+        }
+        catch (ClassNotFoundException e) {
+          LOG.error(e);
+        }
+        catch (IllegalAccessException e) {
+          LOG.error(e);
+        }
+        catch (InstantiationException e) {
+          LOG.error(e);
+        }
+      }
+
+      public void extensionRemoved(final IntentionActionBean extension, @Nullable final PluginDescriptor pluginDescriptor) {
+        throw new UnsupportedOperationException("Method extensionRemoved is not supported in " + getClass());
+      }
+    });
   }
 
   public void registerIntentionAndMetaData(IntentionAction action, String... category) {

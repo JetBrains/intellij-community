@@ -17,6 +17,7 @@ package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 
@@ -28,6 +29,7 @@ import java.util.List;
  * @see IntentionAction
  */
 public abstract class IntentionManager implements ProjectComponent {
+  public static final ExtensionPointName<IntentionActionBean> EP_INTENTION_ACTIONS = new ExtensionPointName<IntentionActionBean>("com.intellij.intentionAction");
 
   /**
    * Returns instance of <code>IntentionManager</code> for given project.
