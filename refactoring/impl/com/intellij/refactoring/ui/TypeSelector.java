@@ -47,7 +47,9 @@ public class TypeSelector {
         }
       }
     }
-    ((JComboBox) myComponent).setSelectedIndex(0);
+    if (types.length > 0) {
+      ((JComboBox) myComponent).setSelectedIndex(0);
+    }
   }
 
 
