@@ -1,3 +1,4 @@
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin version="2">
   <name>Subversion Integration</name>
   <id>Subversion</id>
@@ -90,4 +91,8 @@
       <add-to-group group-id="UpdateActionGroup" anchor="first"/>
     </group>
   </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <checkoutProvider implementation="org.jetbrains.idea.svn.checkout.SvnCheckoutProvider"/>
+  </extensions>
 </idea-plugin>
