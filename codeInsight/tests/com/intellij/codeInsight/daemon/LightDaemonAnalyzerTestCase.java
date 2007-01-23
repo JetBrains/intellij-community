@@ -1,9 +1,6 @@
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
-import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -15,6 +12,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
@@ -53,6 +51,13 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     Document document = getEditor().getDocument();
+    if (doFolding()) {
+      final CodeFoldingPassFactory factory = getProject().getComponent(CodeFoldingPassFactory.class);
+      final TextEditorHighlightingPass highlightingPass = factory.createHighlightingPass(myFile, myEditor);
+      highlightingPass.collectInformation(new MockProgressIndicator());
+      highlightingPass.doApplyInformationToEditor();
+    }
+
     GeneralHighlightingPass action1 = new GeneralHighlightingPass(getProject(), getFile(), document, 0, getFile().getTextLength(), true);
     action1.doCollectInformation(new MockProgressIndicator());
     Collection<HighlightInfo> highlights1 = action1.getHighlights();
@@ -69,5 +74,9 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     result.addAll(highlights2);
     result.addAll(highlights3);
     return result;
+  }
+
+  protected boolean doFolding() {
+    return false;
   }
 }

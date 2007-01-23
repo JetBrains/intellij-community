@@ -17,9 +17,10 @@ import java.util.*;
  * @author Mike
  */
 public class ComplexTypeDescriptor extends TypeDescriptor {
-  private XmlNSDescriptorImpl myDocumentDescriptor;
+  private final XmlNSDescriptorImpl myDocumentDescriptor;
   private XmlTag myTag;
   private volatile XmlElementDescriptor[] myElementDescriptors = null;
+  private volatile XmlAttributeDescriptor[] myAttributeDescriptors = null;
   @NonNls
   public static final String PROHIBITED_ATTR_VALUE = "prohibited";
   @NonNls
@@ -42,7 +43,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   public XmlElementDescriptor[] getElements() {
     if(myElementDescriptors != null) return myElementDescriptors;
 
-    synchronized(this) {
+    synchronized(myDocumentDescriptor) {
       if(myElementDescriptors != null) return myElementDescriptors;
       Map<String,XmlElementDescriptor> map = new LinkedHashMap<String,XmlElementDescriptor>(5);
       collectElements(map, myTag, new HashSet<XmlTag>());
@@ -84,12 +85,17 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
 
   public XmlAttributeDescriptor[] getAttributes() {
-    List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
-    collectAttributes(result, myTag, new ArrayList<XmlTag>());
+    if(myAttributeDescriptors != null) return myAttributeDescriptors;
 
-    if (myDocumentDescriptor.supportsStdAttributes()) addStdAttributes(result);
+    synchronized(myDocumentDescriptor) {
+      if(myAttributeDescriptors != null) return myAttributeDescriptors;
+      List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
+      collectAttributes(result, myTag, new ArrayList<XmlTag>());
 
-    return result.toArray(new XmlAttributeDescriptor[result.size()]);
+      if (myDocumentDescriptor.supportsStdAttributes()) addStdAttributes(result);
+
+      return myAttributeDescriptors = result.toArray(new XmlAttributeDescriptor[result.size()]);
+    }
   }
 
   private static void addStdAttributes(List<XmlAttributeDescriptor> result) {

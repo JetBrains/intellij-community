@@ -2,11 +2,8 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.HashMap;
 
 import java.util.Map;
@@ -14,7 +11,7 @@ import java.util.Map;
 class EditorFoldingInfo {
   private static final Key<EditorFoldingInfo> KEY = Key.create("EditorFoldingInfo.KEY");
 
-  private Map<FoldRegion, SmartPsiElementPointer> myFoldRegionToSmartPointerMap = new HashMap<FoldRegion, SmartPsiElementPointer>();
+  private Map<FoldRegion, PsiElement> myFoldRegionToSmartPointerMap = new HashMap<FoldRegion, PsiElement>();
 
   public static EditorFoldingInfo get(Editor editor) {
     EditorFoldingInfo info = editor.getUserData(KEY);
@@ -26,11 +23,8 @@ class EditorFoldingInfo {
   }
 
   public PsiElement getPsiElement(FoldRegion region) {
-    SmartPsiElementPointer pointer = myFoldRegionToSmartPointerMap.get(region);
-    if (pointer != null) {
-      return pointer.getElement();
-    }
-    return null;
+    final PsiElement element = myFoldRegionToSmartPointerMap.get(region);
+    return element != null && element.isValid() ? element:null;
   }
 
   public boolean isLightRegion(FoldRegion region) {
@@ -38,9 +32,7 @@ class EditorFoldingInfo {
   }
 
   public void addRegion(FoldRegion region, PsiElement element){
-    Project project = element.getProject();
-    SmartPsiElementPointer pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element);
-    myFoldRegionToSmartPointerMap.put(region, pointer);
+    myFoldRegionToSmartPointerMap.put(region, element);
   }
 
   public void removeRegion(FoldRegion region){
