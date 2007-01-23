@@ -3,18 +3,17 @@
  */
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.ide.IdeBundle;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Collection;
-import java.util.Iterator;
-
-import org.jetbrains.annotations.Nullable;
 
 public class MoveModuleToGroup extends ActionGroup {
   private final ModuleGroup myModuleGroup;
@@ -36,19 +35,21 @@ public class MoveModuleToGroup extends ActionGroup {
 
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return AnAction.EMPTY_ARRAY;
-    final DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstantsEx.PROJECT);
+
+    List<ModuleGroup> children = new ArrayList<ModuleGroup>(myModuleGroup.childGroups(e.getDataContext()));
+    Collections.sort ( children, new Comparator<ModuleGroup>() {
+      public int compare(final ModuleGroup moduleGroup1, final ModuleGroup moduleGroup2) {
+        assert moduleGroup1.getGroupPath().length == moduleGroup2.getGroupPath().length;
+        return moduleGroup1.toString().compareToIgnoreCase(moduleGroup2.toString());
+      }
+    });
 
     List<AnAction> result = new ArrayList<AnAction>();
     result.add(new MoveModulesToGroupAction(myModuleGroup, IdeBundle.message("action.move.module.to.this.group")));
     result.add(new MoveModulesToSubGroupAction(myModuleGroup));
-    final Collection<ModuleGroup> children = myModuleGroup.childGroups(project);
-    if (children.size() != 0) {
-      result.add(Separator.getInstance());
-    }
-    for (Iterator iterator = children.iterator(); iterator.hasNext();) {
-      ModuleGroup moduleGroup = (ModuleGroup)iterator.next();
-      result.add(new MoveModuleToGroup(moduleGroup));
+     result.add(Separator.getInstance());
+    for (final ModuleGroup child : children) {
+      result.add(new MoveModuleToGroup(child));
     }
 
     return result.toArray(new AnAction[result.size()]);

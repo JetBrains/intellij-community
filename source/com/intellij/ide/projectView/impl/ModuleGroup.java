@@ -3,7 +3,10 @@
  */
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -56,11 +59,30 @@ public class ModuleGroup {
   }
 
   public Collection<ModuleGroup> childGroups(Project project) {
-    final Module[] allModules = ModuleManager.getInstance(project).getModules();
+    return childGroups(null, project);
+  }
+
+  public Collection<ModuleGroup> childGroups(DataContext dataContext) {
+    return childGroups((ModifiableModuleModel)dataContext.getData(DataConstantsEx.MODIFIABLE_MODULE_MODEL),
+                       (Project)dataContext.getData(DataConstantsEx.PROJECT));
+  }
+
+  public Collection<ModuleGroup> childGroups(ModifiableModuleModel model, Project project) {
+    final Module[] allModules;
+    if ( model != null ) {
+      allModules = model.getModules();
+    } else {
+      allModules = ModuleManager.getInstance(project).getModules();
+    }
 
     Set<ModuleGroup> result = new THashSet<ModuleGroup>();
     for (Module module : allModules) {
-      String[] group = ModuleManager.getInstance(project).getModuleGroupPath(module);
+      String[] group;
+      if ( model != null ) {
+        group = model.getModuleGroupPath(module);
+      } else {
+        group = ModuleManager.getInstance(project).getModuleGroupPath(module);
+      }
       if (group == null) continue;
       final String[] directChild = directChild(myGroupPath, group);
       if (directChild != null) {

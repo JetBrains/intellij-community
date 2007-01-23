@@ -5,13 +5,13 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import org.jetbrains.annotations.Nullable;
 
 public class MoveModuleToGroupTopLevel extends ActionGroup {
   public void update(AnActionEvent e){
@@ -24,17 +24,9 @@ public class MoveModuleToGroupTopLevel extends ActionGroup {
 
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return AnAction.EMPTY_ARRAY;
-    final DataContext dataContext = e.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstantsEx.PROJECT);
+    List<String> topLevelGroupNames = new ArrayList<String> (getTopLevelGroupNames(e.getDataContext()));
+    Collections.sort ( topLevelGroupNames );
 
-    Module[] allModules = ModuleManager.getInstance(project).getModules();
-    Set<String> topLevelGroupNames = new HashSet<String>();
-    for (final Module child : allModules) {
-      String[] group = ModuleManager.getInstance(project).getModuleGroupPath(child);
-      if (group != null) {
-        topLevelGroupNames.add(group[0]);
-      }
-    }
     List<AnAction> result = new ArrayList<AnAction>();
     result.add(new MoveModulesOutsideGroupAction());
     result.add(new MoveModulesToSubGroupAction(null));
@@ -43,5 +35,32 @@ public class MoveModuleToGroupTopLevel extends ActionGroup {
       result.add(new MoveModuleToGroup(new ModuleGroup(new String[]{name})));
     }
     return result.toArray(new AnAction[result.size()]);
+  }
+
+  private static Collection<String> getTopLevelGroupNames(final DataContext dataContext) {
+    final Project project = (Project)dataContext.getData(DataConstantsEx.PROJECT);
+
+    final ModifiableModuleModel model = (ModifiableModuleModel)dataContext.getData(DataConstantsEx.MODIFIABLE_MODULE_MODEL);
+
+    Module[] allModules;
+    if ( model != null ) {
+      allModules = model.getModules();
+    } else {
+      allModules = ModuleManager.getInstance(project).getModules();
+    }
+
+    Set<String> topLevelGroupNames = new HashSet<String>();
+    for (final Module child : allModules) {
+      String[] group;
+      if ( model != null ) {
+        group = model.getModuleGroupPath(child);
+      } else {
+        group = ModuleManager.getInstance(project).getModuleGroupPath(child);
+      }
+      if (group != null) {
+        topLevelGroupNames.add(group[0]);
+      }
+    }
+    return topLevelGroupNames;
   }
 }
