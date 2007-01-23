@@ -529,8 +529,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private void registerStandardFileTypes(FileTypeFactoryImpl factory) {
     try {
       for (final Field field : StdFileTypes.class.getDeclaredFields()) {
-        FileType fileType = (FileType)field.get(null);
-        registerFileTypeWithoutNotification(fileType, parse(factory.getDefaultExtensions(fileType)));
+        if (FileType.class.isAssignableFrom(field.getType())) {
+          FileType fileType = (FileType)field.get(null);
+          registerFileTypeWithoutNotification(fileType, parse(factory.getDefaultExtensions(fileType)));
+        }
       }
     }
     catch (IllegalAccessException e) {
