@@ -351,7 +351,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private static boolean isInjected(final PsiMember member, final UnusedSymbolLocalInspection unusedSymbolInspection) {
-    return SpecialAnnotationsUtil.isSpecialAnnotationPresent(member, unusedSymbolInspection.INJECTION_ANNOS);
+    return SpecialAnnotationsUtil.isSpecialAnnotationPresent(member, UnusedSymbolLocalInspection.STANDARD_INJECTION_ANNOS) ||
+           SpecialAnnotationsUtil.isSpecialAnnotationPresent(member, unusedSymbolInspection.INJECTION_ANNOS);
   }
 
   @Nullable

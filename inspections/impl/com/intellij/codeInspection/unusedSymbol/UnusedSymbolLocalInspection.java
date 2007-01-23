@@ -18,12 +18,19 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * User: anna
  * Date: 17-Feb-2006
  */
 public class UnusedSymbolLocalInspection extends UnfairLocalInspectionTool {
+  public static final Collection<String> STANDARD_INJECTION_ANNOS = Collections.unmodifiableCollection(new HashSet<String>(Arrays.asList(
+    "javax.annotation.Resource", "javax.ejb.EJB", "javax.xml.ws.WebServiceRef", "javax.persistence.PersistenceContext",
+    "javax.persistence.PersistenceUnit", "javax.persistence.GeneratedValue")));
 
   @NonNls public static final String SHORT_NAME = "UNUSED_SYMBOL";
   @NonNls public static final String DISPLAY_NAME = InspectionsBundle.message("unused.symbol");
