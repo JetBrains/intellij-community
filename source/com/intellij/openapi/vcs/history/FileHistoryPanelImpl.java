@@ -168,15 +168,15 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
     HistoryAsTreeProvider treeHistoryProvider = provider.getTreeHistoryProvider();
 
+    @NonNls String storageKey = "FileHistory." + provider.getClass().getName();
     if (treeHistoryProvider != null) {
-
       myDualView = new DualView(new TreeNodeOnVcsRevision(null,
                                                           treeHistoryProvider.createTreeOn(myHistorySession.getRevisionList())),
-                                COLUMNS, "cvs_file_history", project);
+                                COLUMNS, storageKey, project);
     }
     else {
       myDualView = new DualView(new TreeNodeOnVcsRevision(null, wrapWithTreeElements(myHistorySession.getRevisionList())),
-                                COLUMNS, "cvs_file_history", project);
+                                COLUMNS, storageKey, project);
       myDualView.switchToTheFlatMode();
     }
 
@@ -204,7 +204,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private static DualViewColumnInfo[] createColumnList(VcsHistoryProvider provider) {
     ColumnInfo[] additionalColunms = provider.getRevisionColumns();
     ArrayList<DualViewColumnInfo> columns = new ArrayList<DualViewColumnInfo>();
-    columns.addAll(Arrays.asList(new DualViewColumnInfo[]{REVISION, DATE, AUTHOR}));
+    columns.addAll(Arrays.asList(REVISION, DATE, AUTHOR));
     columns.addAll(wrapAdditionalColumns(additionalColunms));
     columns.add(MESSAGE);
     return columns.toArray(new DualViewColumnInfo[columns.size()]);
