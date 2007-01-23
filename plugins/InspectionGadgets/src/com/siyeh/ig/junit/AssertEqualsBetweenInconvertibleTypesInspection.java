@@ -22,7 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class AssertEqualsBetweenInconvertibleTypesInspection
@@ -64,9 +64,9 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
             }
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if (!"assertEquals".equals(methodName) ||
-                    !"assertNotEquals".equals(methodName)) {
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
+            if (!"assertEquals".equals(methodName)) {
                 return;
             }
             final PsiMethod method = expression.resolveMethod();
@@ -75,10 +75,7 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
             }
             final PsiClass containingClass = method.getContainingClass();
             if (!ClassUtils.isSubclass(containingClass, "junit.framework.Assert") &&
-                    !"org.junit.Assert".equals(containingClass.getQualifiedName())) {
-                return;
-            }
-            if(!MethodCallUtils.isEqualsCall(expression)){
+                    !ClassUtils.isSubclass(containingClass, "org.junit.Assert")) {
                 return;
             }
             final PsiExpression expression1 = arguments[arguments.length - 1];
