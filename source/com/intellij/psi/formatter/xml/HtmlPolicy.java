@@ -147,7 +147,9 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   }
 
   private boolean isInlineTag(final XmlTag tag) {
-    return checkName(tag, mySettings.HTML_INLINE_ELEMENTS) || tag.getNamespacePrefix().length() > 0;
+    return checkName(tag, mySettings.HTML_INLINE_ELEMENTS) ||
+           tag.getNamespacePrefix().length() > 0 && !isScriptletObject(tag) ||
+           "jsp:expression".equals(tag.getName());
   }
 
   private boolean shouldBeWrapped(final XmlTag tag) {
@@ -165,8 +167,8 @@ public class HtmlPolicy extends XmlFormattingPolicy {
     return isInlineTag(tag);
   }                               
 
-  public int getTextWrap() {
-    return mySettings.HTML_TEXT_WRAP;
+  public int getTextWrap(final XmlTag tag) {
+    return isScriptletObject(tag) ? CodeStyleSettings.DO_NOT_WRAP : mySettings.HTML_TEXT_WRAP;
   }
 
   public int getAttributesWrap() {

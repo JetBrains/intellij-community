@@ -76,7 +76,7 @@ public abstract class XmlFormattingPolicy {
 
   public abstract boolean isTextElement(XmlTag tag);
 
-  public abstract int getTextWrap();
+  public abstract int getTextWrap(final XmlTag tag);
 
   public abstract int getAttributesWrap();
 

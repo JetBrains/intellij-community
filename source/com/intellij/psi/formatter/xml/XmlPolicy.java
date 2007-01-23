@@ -43,7 +43,7 @@ public class XmlPolicy extends XmlFormattingPolicy{
     return false;
   }
 
-  public int getTextWrap() {
+  public int getTextWrap(final XmlTag tag) {
     return mySettings.XML_TEXT_WRAP;
   }
 

@@ -1,8 +1,8 @@
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.codeFormatting.general.FormatterUtil;
-import com.intellij.lang.ASTNode;
 import com.intellij.formatting.*;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.xml.XmlTag;
@@ -28,7 +28,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     ChameleonTransforming.transformChildren(myNode);
     ASTNode child = myNode.getFirstChildNode();
     final Wrap attrWrap = Wrap.createWrap(getWrapType(myXmlFormattingPolicy.getAttributesWrap()), false);
-    final Wrap textWrap = Wrap.createWrap(getWrapType(myXmlFormattingPolicy.getTextWrap()), true);
+    final Wrap textWrap = Wrap.createWrap(getWrapType(myXmlFormattingPolicy.getTextWrap(getTag())), true);
     final Wrap tagBeginWrap = createTagBeginWrapping(getTag());
     final Alignment attrAlignment = Alignment.createAlignment();
     final Alignment textAlignment = Alignment.createAlignment();
