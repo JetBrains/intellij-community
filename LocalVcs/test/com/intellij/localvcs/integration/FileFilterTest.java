@@ -30,8 +30,11 @@ public class FileFilterTest {
 
     FileFilter f = new FileFilter(fi, tm);
 
-    assertTrue(f.isFileAllowed(f1));
-    assertFalse(f.isFileAllowed(f2));
+    assertTrue(f.isAllowedAndUnderContentRoot(f1));
+    assertFalse(f.isAllowedAndUnderContentRoot(f2));
+
+    assertTrue(f.isAllowed(f1));
+    assertTrue(f.isAllowed(f2));
   }
 
   @Test
@@ -45,32 +48,26 @@ public class FileFilterTest {
 
     FileFilter f = new FileFilter(fi, tm);
 
-    assertTrue(f.isFileAllowed(f1));
-    assertFalse(f.isFileAllowed(f2));
+    assertTrue(f.isAllowedAndUnderContentRoot(f1));
+    assertFalse(f.isAllowedAndUnderContentRoot(f2));
+
+    assertTrue(f.isUnderContentRoot(f1));
+    assertTrue(f.isUnderContentRoot(f2));
   }
 
   @Test
   public void testFilteringDirectories() {
     f1 = new TestVirtualFile(null, null);
-    f2 = new TestVirtualFile(null, null);
-
-    expect(fi.isInContent(f1)).andReturn(true);
-    expect(fi.isInContent(f2)).andReturn(false);
-    replay(fi);
-
-    expect(tm.getFileTypeByFile((VirtualFile)anyObject())).andStubReturn(binary);
-    replay(tm);
 
     FileFilter f = new FileFilter(fi, tm);
 
-    assertTrue(f.isFileAllowed(f1));
-    assertFalse(f.isFileAllowed(f2));
+    assertTrue(f.isAllowed(f1));
   }
 
   @Test
   public void testFilteringBigFiles() {
-    VirtualFile big = new TestVirtualFile(null, null, null, 100L * 1024L);
-    VirtualFile small = new TestVirtualFile(null, null, null, 99L * 1024L);
+    VirtualFile big = new TestVirtualFile(null, null, null, FileFilter.MAX_FILE_SIZE + 1);
+    VirtualFile small = new TestVirtualFile(null, null, null, FileFilter.MAX_FILE_SIZE - 1);
     VirtualFile dir = new TestVirtualFile(null, null);
 
     expect(fi.isInContent((VirtualFile)anyObject())).andStubReturn(true);
@@ -81,9 +78,9 @@ public class FileFilterTest {
 
     FileFilter f = new FileFilter(fi, tm);
 
-    assertFalse(f.isFileAllowed(big));
-    assertTrue(f.isFileAllowed(small));
-    assertTrue(f.isFileAllowed(dir));
+    assertFalse(f.isAllowed(big));
+    assertTrue(f.isAllowed(small));
+    assertTrue(f.isAllowed(dir));
   }
 
   private FileType createFileType(boolean isBinary) {

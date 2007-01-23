@@ -12,6 +12,7 @@ import org.junit.Test;
 import java.util.Collections;
 
 public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
+  // todo move tests to FileListenerTest
   @Test
   public void testDoesNotTrackChangesBeforeStartup() {
     initWithoutStartup(createLocalVcs());
@@ -190,7 +191,7 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
 
     newParent.addChild(f);
     fileFilter.setFilesNotUnderContentRoot(oldParent);
-    fileFilter.setFilesWithUnallowedTypes(f);
+    fileFilter.setNotAllowedFiles(f);
 
     fileManager.fireFileMoved(new VirtualFileMoveEvent(null, f, oldParent, newParent));
 
@@ -239,12 +240,13 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
     EasyMock.replay(vcs);
 
     initAndStartup(vcs);
-    fileFilter.dontAllowAnyFile();
 
     VirtualFile f = new TestVirtualFile(null, null, null);
+    fileFilter.setFilesNotUnderContentRoot(f);
+
     fileManager.fireFileCreated(new VirtualFileEvent(null, f, null, null));
     fileManager.fireContentChanged(new VirtualFileEvent(null, f, null, null));
-    fileManager.fireBeforePropertyChange(new VirtualFilePropertyEvent(null, f, null, null, null));
+    fileManager.fireBeforePropertyChange(new VirtualFilePropertyEvent(null, f, VirtualFile.PROP_NAME, null, null));
     fileManager.fireFileMoved(new VirtualFileMoveEvent(null, f, f, f));
     fileManager.fireBeforeFileDeletion(new VirtualFileEvent(null, f, null, null));
 

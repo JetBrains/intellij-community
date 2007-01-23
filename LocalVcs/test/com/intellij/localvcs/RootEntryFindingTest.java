@@ -108,4 +108,13 @@ public class RootEntryFindingTest extends TestCase {
       assertEquals("entry #42 not found", e.getMessage());
     }
   }
+
+  //@Test
+  //public void testFindingByIdPath() {
+  //  FileEntry e = new FileEntry(1, null, null, null);
+  //  root.addChild(e);
+  //
+  //  assertSame(e, root.findEntry(idp(1)));
+  //  assertNull(root.findEntry(idp(2)));
+  //}
 }

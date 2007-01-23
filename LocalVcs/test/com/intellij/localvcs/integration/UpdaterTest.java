@@ -23,7 +23,7 @@ public class UpdaterTest extends MockedLocalFileSystemTestCase {
 
     root = new TestVirtualFile("root", 1L);
     filter = createMock(FileFilter.class);
-    expect(filter.isFileAllowed((VirtualFile)anyObject())).andStubReturn(true);
+    expect(filter.isAllowed((VirtualFile)anyObject())).andStubReturn(true);
     replay(filter);
   }
 
@@ -105,7 +105,7 @@ public class UpdaterTest extends MockedLocalFileSystemTestCase {
     root.addChild(f);
 
     reset(filter);
-    expect(filter.isFileAllowed(f)).andReturn(false);
+    expect(filter.isAllowed(f)).andReturn(false);
     replay(filter);
 
     update();
@@ -121,8 +121,8 @@ public class UpdaterTest extends MockedLocalFileSystemTestCase {
     root.addChild(f2);
 
     reset(filter);
-    expect(filter.isFileAllowed(f1)).andReturn(false);
-    expect(filter.isFileAllowed(f2)).andReturn(true);
+    expect(filter.isAllowed(f1)).andReturn(false);
+    expect(filter.isAllowed(f2)).andReturn(true);
     replay(filter);
 
     update();
@@ -186,6 +186,39 @@ public class UpdaterTest extends MockedLocalFileSystemTestCase {
   }
 
   @Test
+  public void testUpdatingOutdatedFilesRecursively() {
+    vcs.createDirectory("root/dir", null);
+    vcs.createFile("root/dir/file", b("content"), 111L);
+    vcs.apply();
+
+    TestVirtualFile dir = new TestVirtualFile("dir", null);
+    TestVirtualFile file = new TestVirtualFile("file", "new content", 222L);
+
+    root.addChild(dir);
+    dir.addChild(file);
+
+    update();
+
+    Entry e = vcs.getEntry("root/dir/file");
+
+    assertEquals(c("new content"), e.getContent());
+    assertEquals(222L, e.getTimestamp());
+  }
+
+  @Test
+  public void testUpdatingEvenBigFiles() {
+    vcs.createFile("root/file", b("small"), 111L);
+    vcs.apply();
+
+    root.addChild(new TestVirtualFile("file", "big", 222L, FileFilter.MAX_FILE_SIZE + 1));
+
+    update();
+
+    Entry e = vcs.getEntry("root/file");
+    assertEquals(c("big"), e.getContent());
+  }
+
+  @Test
   public void testTakingPhysicalFileContentOnUpdate() {
     configureLocalFileSystemToReturnPhysicalContent("physical");
 
@@ -218,7 +251,7 @@ public class UpdaterTest extends MockedLocalFileSystemTestCase {
 
   private void update(VirtualFile... roots) {
     try {
-      Updater.update(vcs, filter, roots);
+      Updater.update(vcs, fileSystem, filter, roots);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

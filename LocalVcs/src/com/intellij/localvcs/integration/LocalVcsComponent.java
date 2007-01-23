@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,7 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   private StartupManagerEx myStartupManager;
   private ProjectRootManagerEx myRootManager;
   private VirtualFileManagerEx myFileManager;
+  private LocalFileSystem myFileSystem;
   private FileDocumentManager myDocumentManager;
   private FileTypeManager myTypeManager;
   private Storage myStorage;
@@ -40,17 +42,21 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
     return p.getComponent(ILocalVcsComponent.class);
   }
 
-  public LocalVcsComponent(Project p, StartupManagerEx sm, ProjectRootManagerEx rm, VirtualFileManagerEx fm, FileDocumentManager dm,
+  public LocalVcsComponent(Project p, StartupManagerEx sm, ProjectRootManagerEx rm, VirtualFileManagerEx fm, LocalFileSystem fs,
+                           FileDocumentManager dm,
                            FileTypeManager tm) {
     myProject = p;
     myStartupManager = sm;
     myRootManager = rm;
     myFileManager = fm;
+    myFileSystem = fs;
     myDocumentManager = dm;
     myTypeManager = tm;
   }
 
   public void initComponent() {
+    if (isDefaultProject()) return;
+
     if (!isEnabled()) return;
 
     // todo review startup order
@@ -69,7 +75,7 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
 
   protected void initService() {
     FileFilter f = new FileFilter(myRootManager.getFileIndex(), myTypeManager);
-    myService = new LocalVcsService(myVcs, myStartupManager, myRootManager, myFileManager, myDocumentManager, f);
+    myService = new LocalVcsService(myVcs, myStartupManager, myRootManager, myFileManager, myFileSystem, myDocumentManager, f);
   }
 
   public File getStorageDir() {
@@ -83,11 +89,15 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   }
 
   public void save() {
+    if (isDefaultProject()) return;
+
     if (!isEnabled()) return;
     if (myVcs != null) myVcs.save();
   }
 
   public void disposeComponent() {
+    if (isDefaultProject()) return;
+
     if (!isEnabled()) return;
     closeVcs();
     closeService();
@@ -99,6 +109,10 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
 
   protected void closeService() {
     myService.shutdown();
+  }
+
+  private boolean isDefaultProject() {
+    return myProject.isDefault();
   }
 
   public boolean isEnabled() {

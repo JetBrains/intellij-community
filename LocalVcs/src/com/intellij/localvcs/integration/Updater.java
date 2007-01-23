@@ -1,11 +1,10 @@
 package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.Entry;
-import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.ILocalVcs;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,17 +12,20 @@ import java.util.List;
 
 public class Updater {
   // todo algorithm could be simplified and improved
+  // todo refactor and integrate with CacheUpdater
 
   private ILocalVcs myVcs;
+  private LocalFileSystem myFileSystem;
   private FileFilter myFilter;
   private VirtualFile[] myRoots;
 
-  public static void update(ILocalVcs vcs, FileFilter filter, VirtualFile... roots) throws IOException {
-    new Updater(vcs, filter, roots).update();
+  public static void update(ILocalVcs vcs, LocalFileSystem fs, FileFilter filter, VirtualFile... roots) throws IOException {
+    new Updater(vcs, fs, filter, roots).update();
   }
 
-  public Updater(ILocalVcs vcs, FileFilter filter, VirtualFile... roots) {
+  private Updater(ILocalVcs vcs, LocalFileSystem fs, FileFilter filter, VirtualFile... roots) {
     myVcs = vcs;
+    myFileSystem = fs;
     myFilter = filter;
     myRoots = selectNonNestedRoots(roots);
   }
@@ -45,18 +47,24 @@ public class Updater {
   }
 
   public void update() throws IOException {
-    // todo maybe we should delete before updating for optimization 
-    updateExistingRoots();
+    // todo maybe we should delete before updating for optimization
+    createNewRoots();
+    updateRoots();
     deleteRemovedRoots();
 
     myVcs.apply();
   }
 
-  private void updateExistingRoots() throws IOException {
+  private void createNewRoots() throws IOException {
     for (VirtualFile f : myRoots) {
       if (!myVcs.hasEntry(f.getPath())) {
         myVcs.createDirectory(f.getPath(), f.getTimeStamp());
       }
+    }
+  }
+
+  private void updateRoots() throws IOException {
+    for (VirtualFile f : myRoots) {
       updateDirectory(f);
     }
   }
@@ -76,13 +84,13 @@ public class Updater {
 
   private void updateDirectory(VirtualFile dir) throws IOException {
     Entry e = myVcs.findEntry(dir.getPath());
-    if (e != null) deleteAbsentFiles(e, dir);
+    if (e != null) deleteAbsentEntries(e, dir);
 
-    createNewFiles(dir);
-    updateOutdatedFiles(dir);
+    createNewEntries(dir);
+    updateOutdatedEntries(dir);
   }
 
-  private void deleteAbsentFiles(Entry entry, VirtualFile dir) {
+  private void deleteAbsentEntries(Entry entry, VirtualFile dir) {
     for (Entry e : entry.getChildren()) {
       VirtualFile f = dir.findChild(e.getName());
       if (!areOfTheSameKind(e, f)) {
@@ -90,21 +98,21 @@ public class Updater {
       }
       else {
         if (e.isDirectory()) {
-          deleteAbsentFiles(e, f);
+          deleteAbsentEntries(e, f);
         }
       }
     }
   }
 
-  private void createNewFiles(VirtualFile dir) throws IOException {
+  private void createNewEntries(VirtualFile dir) throws IOException {
     for (VirtualFile f : dir.getChildren()) {
-      if (!myFilter.isFileAllowed(f)) continue;
+      if (!myFilter.isAllowed(f)) continue;
 
       Entry e = myVcs.findEntry(f.getPath());
       if (!areOfTheSameKind(e, f)) {
         if (f.isDirectory()) {
           myVcs.createDirectory(f.getPath(), f.getTimeStamp());
-          createNewFiles(f);
+          createNewEntries(f);
         }
         else {
           myVcs.createFile(f.getPath(), physicalContentOf(f), f.getTimeStamp());
@@ -113,13 +121,14 @@ public class Updater {
     }
   }
 
-  private void updateOutdatedFiles(VirtualFile dir) throws IOException {
+  private void updateOutdatedEntries(VirtualFile dir) throws IOException {
     for (VirtualFile f : dir.getChildren()) {
       Entry e = myVcs.findEntry(f.getPath());
       if (areOfTheSameKind(e, f)) {
-        // todo we should update directory and root timestamps too
-        // todo should we treat external file change as deletion and creation new one?
-        if (!e.isDirectory() && e.isOutdated(f.getTimeStamp())) {
+        if (f.isDirectory()) {
+          updateOutdatedEntries(f);
+        }
+        else if (e.isOutdated(f.getTimeStamp())) {
           myVcs.changeFileContent(f.getPath(), physicalContentOf(f), f.getTimeStamp());
         }
       }
@@ -127,7 +136,7 @@ public class Updater {
   }
 
   private byte[] physicalContentOf(VirtualFile f) throws IOException {
-    return LocalFileSystem.getInstance().physicalContentsToByteArray(f);
+    return myFileSystem.physicalContentsToByteArray(f);
   }
 
   private boolean areOfTheSameKind(Entry e, VirtualFile f) {

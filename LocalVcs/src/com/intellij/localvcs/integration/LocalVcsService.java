@@ -4,16 +4,16 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.localvcs.Entry;
-import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.ILocalVcs;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.ex.FileContentProvider;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -27,18 +27,20 @@ public class LocalVcsService {
   private StartupManager myStartupManager;
   private ProjectRootManagerEx myRootManager;
   private VirtualFileManagerEx myFileManager;
+  private LocalFileSystem myFileSystem;
   private FileDocumentManager myDocumentManager;
   private FileFilter myFileFilter;
   private VirtualFileListener myFileListener;
   private CacheUpdater myCacheUpdater;
   private FileContentProvider myFileContentProvider;
 
-  public LocalVcsService(ILocalVcs vcs, StartupManager sm, ProjectRootManagerEx rm, VirtualFileManagerEx fm, FileDocumentManager dm,
-                         FileFilter f) {
+  public LocalVcsService(ILocalVcs vcs, StartupManager sm, ProjectRootManagerEx rm, VirtualFileManagerEx fm, LocalFileSystem fs,
+                         FileDocumentManager dm, FileFilter f) {
     myVcs = vcs;
     myStartupManager = sm;
     myRootManager = rm;
     myFileManager = fm;
+    myFileSystem = fs;
     myDocumentManager = dm;
     myFileFilter = f;
 
@@ -72,7 +74,7 @@ public class LocalVcsService {
   }
 
   private void registerFileContentProvider() {
-    myFileListener = new FileListener(myVcs, myFileFilter);
+    myFileListener = new FileListener(myVcs, myFileFilter, myFileSystem);
 
     myFileContentProvider = new FileContentProvider() {
       public VirtualFile[] getCoveredDirectories() {
@@ -94,14 +96,14 @@ public class LocalVcsService {
 
   private void updateRoots() {
     try {
-      Updater.update(myVcs, myFileFilter, myRootManager.getContentRoots());
+      Updater.update(myVcs, myFileSystem, myFileFilter, myRootManager.getContentRoots());
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public LocalVcsAction startAction(final String label) {
+  public LocalVcsAction startAction(String label) {
     LocalVcsAction a = new LocalVcsAction(myVcs, myDocumentManager, myFileFilter, label);
     a.start();
     return a;

@@ -19,7 +19,7 @@ public abstract class TestCase extends Assert {
     return objects;
   }
 
-  protected static IdPath idp(Integer... parts) {
+  protected static IdPath idp(int... parts) {
     return new IdPath(parts);
   }
 

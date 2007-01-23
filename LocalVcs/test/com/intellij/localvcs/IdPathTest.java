@@ -30,4 +30,10 @@ public class IdPathTest extends TestCase {
 
     assertFalse(p.contains(3));
   }
+
+  @Test
+  public void testEquality() {
+    assertTrue(new IdPath(1, 2, 3).equals(new IdPath(1, 2, 3)));
+    assertFalse(new IdPath(1, 2, 3).equals(new IdPath(1, 2)));
+  }
 }

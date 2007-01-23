@@ -35,7 +35,8 @@ public class LocalVcsAction implements ILocalVcsAction {
       VirtualFile f = myDocumentManager.getFile(d);
       // todo charset
       // todo move filtering to some kind of decorator or adaptor...
-      if (!myFilter.isFileAllowed(f)) continue;
+
+      if (!myFilter.isAllowedAndUnderContentRoot(f)) continue;
       myVcs.changeFileContent(f.getPath(), d.getText().getBytes(), f.getTimeStamp());
     }
     myVcs.apply();

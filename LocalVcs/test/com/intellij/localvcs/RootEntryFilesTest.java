@@ -44,6 +44,11 @@ public class RootEntryFilesTest extends TestCase {
   }
 
   @Test
+  public void test() {
+
+  }
+
+  @Test
   public void testChangingFileContent() {
     root.createFile(1, "file", c("content"), null);
     root.changeFileContent("file", c("new content"), 77L);

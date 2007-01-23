@@ -166,6 +166,24 @@ public class ChangeListTest extends TestCase {
     assertEquals(3, getChangeSetsFor("d2/d12").size());
   }
 
+  @Test
+  public void testChangeSetForFileMovedIntoCreatedDir() {
+    ChangeSet cs1 = cs(new CreateFileChange(1, "file", null, null));
+    ChangeSet cs2 = cs(new CreateDirectoryChange(2, "dir", null));
+    ChangeSet cs3 = cs(new MoveChange("file", "dir"));
+    cl.applyChangeSetTo(r, cs1);
+    cl.applyChangeSetTo(r, cs2);
+    cl.applyChangeSetTo(r, cs3);
+
+    assertEquals(2, getChangeSetsFor("dir/file").size());
+    assertEquals(cs1, getChangeSetsFor("dir/file").get(0));
+    assertEquals(cs3, getChangeSetsFor("dir/file").get(1));
+
+    assertEquals(2, getChangeSetsFor("dir").size());
+    assertEquals(cs2, getChangeSetsFor("dir").get(0));
+    assertEquals(cs3, getChangeSetsFor("dir").get(1));
+  }
+
   private List<ChangeSet> getChangeSetsFor(String path) {
     return cl.getChangeSetsFor(r.getEntry(path));
   }

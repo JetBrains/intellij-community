@@ -5,9 +5,10 @@ import com.intellij.localvcs.Storage;
 import com.intellij.localvcs.TempDirTestCase;
 import com.intellij.localvcs.integration.stubs.StubStartupManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.ide.startup.StartupManagerEx;
 import org.junit.After;
 import org.junit.Test;
-import org.easymock.EasyMock;
+import static org.easymock.classextension.EasyMock.*;
 
 import java.io.File;
 
@@ -80,11 +81,35 @@ public class LocalVcsComponentTest extends TempDirTestCase {
       throw new RuntimeException(e);
     }
   }
+  
+  @Test
+  public void testDisabledForDefaultProject() {
+    StartupManagerEx sm = createMock(StartupManagerEx.class);
+    replay(sm);
+
+    Project p = createMock(Project.class);
+    expect(p.isDefault()).andStubReturn(true);
+    replay(p);
+
+    LocalVcsComponent c = new LocalVcsComponent(p, sm, null, null, null, null, null) {
+      @Override
+      public boolean isEnabled() {
+        return true;
+      }
+    };
+
+    c.initComponent();
+    c.save();
+    c.disposeComponent();
+
+    verify(sm);
+  }
 
   private Project createProject(String locationHash) {
-    Project p = EasyMock.createMock(Project.class);
-    EasyMock.expect(p.getLocationHash()).andStubReturn(locationHash);
-    EasyMock.replay(p);
+    Project p = createMock(Project.class);
+    expect(p.isDefault()).andStubReturn(false);
+    expect(p.getLocationHash()).andStubReturn(locationHash);
+    replay(p);
     return p;
   }
 
@@ -105,7 +130,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
     private boolean isVcsInitialized;
 
     public MyLocalVcsComponent(String systemPath, Project p, MyStartupManager sm) {
-      super(p, sm, null, null, null, null);
+      super(p, sm, null, null, null, null, null);
       mySystemPath = systemPath;
     }
 

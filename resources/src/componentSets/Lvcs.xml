@@ -19,6 +19,7 @@
     <component>
       <interface-class>com.intellij.localvcs.integration.ILocalVcsComponent</interface-class>
       <implementation-class>com.intellij.localvcs.integration.LocalVcsComponent</implementation-class>
+      <skipForDummyProject/>
     </component>
   </project-components>
 </components>

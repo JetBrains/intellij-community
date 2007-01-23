@@ -11,32 +11,48 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-// todo review LocalVcsServiceTests...
 public class FileListener extends VirtualFileAdapter {
   private FileFilter myFileFilter;
   private ILocalVcs myVcs;
+  private LocalFileSystem myFileSystem;
 
-  public FileListener(ILocalVcs vcs, FileFilter f) {
+  public FileListener(ILocalVcs vcs, FileFilter f, LocalFileSystem fs) {
     myVcs = vcs;
     myFileFilter = f;
+    myFileSystem = fs;
   }
 
   @Override
   public void fileCreated(VirtualFileEvent e) {
-    if (notInteresting(e)) return;
+    if (notAllowedOrNotUnderContentRoot(e)) return;
     create(e.getFile());
   }
 
   @Override
   public void contentsChanged(VirtualFileEvent e) {
-    if (notInteresting(e)) return;
+    if (notAllowedOrNotUnderContentRoot(e)) return;
     changeFileContent(e.getFile());
   }
 
   @Override
   public void beforePropertyChange(VirtualFilePropertyEvent e) {
-    if (notInteresting(e)) return;
     if (!e.getPropertyName().equals(VirtualFile.PROP_NAME)) return;
+
+    if (!myFileFilter.isUnderContentRoot(e.getFile())) return;
+
+    VirtualFile newFile = new RenamedVirtualFile(e.getFile(), (String)e.getNewValue());
+
+    // todo try make it more clear... and refactor
+    if (!myFileFilter.isAllowed(newFile)) {
+      if (myFileFilter.isAllowed(e.getFile())) delete(e.getFile());
+      return;
+    }
+
+    if (!myFileFilter.isAllowed(e.getFile())) {
+      create(newFile);
+      return;
+    }
+
     rename(e.getFile(), (String)e.getNewValue());
   }
 
@@ -46,11 +62,11 @@ public class FileListener extends VirtualFileAdapter {
     if (isMovedFromOutside(e) && isMovedToOutside(e)) return;
 
     if (isMovedFromOutside(e)) {
-      if (notInteresting(e)) return;
+      if (notAllowedOrNotUnderContentRoot(e)) return;
       create(e.getFile());
     }
     else {
-      VirtualFile f = new VirtualFileWithParent(e.getOldParent(), e.getFile());
+      VirtualFile f = new ReparentedVirtualFile(e.getOldParent(), e.getFile());
       if (isMovedToOutside(e)) {
         delete(f);
       }
@@ -62,20 +78,21 @@ public class FileListener extends VirtualFileAdapter {
 
   @Override
   public void beforeFileDeletion(VirtualFileEvent e) {
-    if (notInteresting(e)) return;
+    if (!myFileFilter.isUnderContentRoot(e.getFile())) return;
+    if (!myVcs.hasEntry(e.getFile().getPath())) return;
     delete(e.getFile());
   }
 
-  private boolean notInteresting(VirtualFileEvent e) {
-    return !myFileFilter.isFileAllowed(e.getFile());
+  private boolean notAllowedOrNotUnderContentRoot(VirtualFileEvent e) {
+    return !myFileFilter.isAllowedAndUnderContentRoot(e.getFile());
   }
 
   private boolean isMovedFromOutside(VirtualFileMoveEvent e) {
-    return !myFileFilter.isUnderContentRoots(e.getOldParent());
+    return !myFileFilter.isUnderContentRoot(e.getOldParent());
   }
 
-  private boolean isMovedToOutside(final VirtualFileMoveEvent e) {
-    return !myFileFilter.isUnderContentRoots(e.getNewParent());
+  private boolean isMovedToOutside(VirtualFileMoveEvent e) {
+    return !myFileFilter.isUnderContentRoot(e.getNewParent());
   }
 
   private void create(VirtualFile f) {
@@ -106,7 +123,7 @@ public class FileListener extends VirtualFileAdapter {
   }
 
   private byte[] physicalContentOf(VirtualFile f) throws IOException {
-    return LocalFileSystem.getInstance().physicalContentsToByteArray(f);
+    return myFileSystem.physicalContentsToByteArray(f);
   }
 
   private void rename(VirtualFile f, String newName) {
@@ -124,19 +141,58 @@ public class FileListener extends VirtualFileAdapter {
     myVcs.apply();
   }
 
-  private class VirtualFileWithParent extends VirtualFile {
+  private class ReparentedVirtualFile extends NullVirtualFile {
     private VirtualFile myParent;
     private VirtualFile myChild;
 
-    public VirtualFileWithParent(VirtualFile parent, VirtualFile child) {
+    public ReparentedVirtualFile(VirtualFile newParent, VirtualFile child) {
       myChild = child;
-      myParent = parent;
+      myParent = newParent;
     }
 
     public String getPath() {
       return Paths.appended(myParent.getPath(), myChild.getName());
     }
+  }
 
+  private class RenamedVirtualFile extends NullVirtualFile {
+    private VirtualFile myFile;
+    private String myNewName;
+
+    public RenamedVirtualFile(VirtualFile f, String newName) {
+      myFile = f;
+      myNewName = newName;
+    }
+
+    @Override
+    @NotNull
+    @NonNls
+    public String getName() {
+      return myNewName;
+    }
+
+    public String getPath() {
+      return Paths.renamed(myFile.getPath(), myNewName);
+    }
+
+    public long getTimeStamp() {
+      return myFile.getTimeStamp();
+    }
+
+    public boolean isDirectory() {
+      return myFile.isDirectory();
+    }
+
+    public byte[] contentsToByteArray() throws IOException {
+      return myFile.contentsToByteArray();
+    }
+
+    public long getLength() {
+      return myFile.getLength();
+    }
+  }
+
+  private class NullVirtualFile extends VirtualFile {
     @NotNull
     @NonNls
     public String getName() {
@@ -145,6 +201,10 @@ public class FileListener extends VirtualFileAdapter {
 
     @NotNull
     public VirtualFileSystem getFileSystem() {
+      throw new UnsupportedOperationException();
+    }
+
+    public String getPath() {
       throw new UnsupportedOperationException();
     }
 
@@ -193,5 +253,4 @@ public class FileListener extends VirtualFileAdapter {
       throw new UnsupportedOperationException();
     }
   }
-
 }

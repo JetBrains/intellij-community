@@ -5,6 +5,7 @@ import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.localvcs.*;
 import com.intellij.localvcs.integration.LocalVcsAction;
 import com.intellij.localvcs.integration.LocalVcsComponent;
+import com.intellij.localvcs.integration.FileFilter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -20,10 +21,13 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.testFramework.IdeaTestCase;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 public class LocalVcsComponentTest extends IdeaTestCase {
@@ -39,7 +43,7 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     });
   }
 
-  public void testComponentInitialitation() {
+  public void testComponentInitialisation() {
     assertNotNull(getVcsComponent());
   }
 
@@ -86,7 +90,7 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     assertTrue(result);
   }
 
-  public void testWorkingWithFiles() throws Exception {
+  public void testCreatingFiles() throws Exception {
     VirtualFile f = root.createChildData(null, "file.java");
 
     Entry e = getVcs().findEntry(f.getPath());
@@ -96,6 +100,30 @@ public class LocalVcsComponentTest extends IdeaTestCase {
 
   public void testIgnoringFilteredFiles() throws Exception {
     VirtualFile f = root.createChildData(null, "file.class");
+    assertFalse(getVcs().hasEntry(f.getPath()));
+  }
+
+  public void testRenamingFileContent() throws Exception {
+    VirtualFile f = root.createChildData(null, "file.java");
+    f.rename(null, "file2.java");
+
+    assertFalse(getVcs().hasEntry(Paths.renamed(f.getPath(), "file.java")));
+    assertTrue(getVcs().hasEntry(f.getPath()));
+  }
+
+  public void testDeletingFilteredBigFiles() throws Exception {
+    File tempDir = createTempDirectory();
+    File tempFile = new File(tempDir, "bigFile.java");
+    OutputStream s = new FileOutputStream(tempFile);
+    s.write(new byte[(int)(FileFilter.MAX_FILE_SIZE + 1)]);
+    s.close();
+
+    VirtualFile f = LocalFileSystem.getInstance().findFileByIoFile(tempFile);
+
+    f.move(null, root);
+    assertFalse(getVcs().hasEntry(f.getPath()));
+
+    f.delete(null);
     assertFalse(getVcs().hasEntry(f.getPath()));
   }
 

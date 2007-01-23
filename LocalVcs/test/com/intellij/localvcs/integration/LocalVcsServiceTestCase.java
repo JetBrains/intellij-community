@@ -14,6 +14,7 @@ import org.junit.Before;
 import java.util.List;
 import java.util.ArrayList;
 
+// todo review LocalVcsServiceTests...
 public class LocalVcsServiceTestCase extends MockedLocalFileSystemTestCase {
   // todo 2 test broken storage
   // todo 3 take a look at the old-lvcs tests
@@ -49,7 +50,7 @@ public class LocalVcsServiceTestCase extends MockedLocalFileSystemTestCase {
     fileFilter = new TestFileFilter();
     documentManager = new TestFileDocumentManager();
 
-    service = new LocalVcsService(vcs, startupManager, rootManager, fileManager, documentManager, fileFilter);
+    service = new LocalVcsService(vcs, startupManager, rootManager, fileManager, fileSystem, documentManager, fileFilter);
   }
 
   protected LocalVcs createLocalVcs() {

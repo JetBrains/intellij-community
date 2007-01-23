@@ -5,6 +5,8 @@ import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class FileFilter {
+  public static final long MAX_FILE_SIZE = 100 * 1024;
+
   private FileIndex myFileIndex;
   private FileTypeManager myTypeManager;
 
@@ -13,21 +15,25 @@ public class FileFilter {
     myTypeManager = tm;
   }
 
-  public boolean isFileAllowed(VirtualFile f) {
-    return isUnderContentRoots(f) && isFileTypeAllowed(f) && isFileSizeAllowed(f);
+  public boolean isAllowedAndUnderContentRoot(VirtualFile f) {
+    return isUnderContentRoot(f) && isAllowed(f);
+  }
+
+  public boolean isAllowed(VirtualFile f) {
+    return isFileTypeAllowed(f) && isFileSizeAllowed(f);
+  }
+
+  public boolean isUnderContentRoot(VirtualFile f) {
+    return myFileIndex.isInContent(f);
+  }
+
+  protected boolean isFileTypeAllowed(VirtualFile f) {
+    if (f.isDirectory()) return true;
+    return !myTypeManager.getFileTypeByFile(f).isBinary();
   }
 
   private boolean isFileSizeAllowed(VirtualFile f) {
     if (f.isDirectory()) return true;
-    return f.getLength() < 100 * 1024;
-  }
-
-  public boolean isUnderContentRoots(VirtualFile f) {
-    return myFileIndex.isInContent(f);
-  }
-
-  public boolean isFileTypeAllowed(VirtualFile f) {
-    if (f.isDirectory()) return true;
-    return !myTypeManager.getFileTypeByFile(f).isBinary();
+    return f.getLength() < MAX_FILE_SIZE;
   }
 }

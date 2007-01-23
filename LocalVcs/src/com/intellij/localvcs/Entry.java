@@ -117,6 +117,11 @@ public abstract class Entry {
     return null;
   }
 
+  //public Entry findEntry(IdPath p) {
+  //  if (p.getName().equals(myId))
+  //  return null;
+  //}
+
   public Entry getEntry(Integer id) {
     // todo it's very slow
     // todo get rid of this method
