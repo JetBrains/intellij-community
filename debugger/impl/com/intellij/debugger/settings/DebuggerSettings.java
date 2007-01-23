@@ -35,6 +35,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public int DEBUGGER_TRANSPORT;
   public boolean FORCE_CLASSIC_VM;
   public boolean HIDE_DEBUGGER_ON_PROCESS_TERMINATION;
+  public boolean HOTSWAP_IN_BACKGROUND = true;
   public boolean SKIP_SYNTHETIC_METHODS;
   public boolean SKIP_CONSTRUCTORS;
   public boolean SKIP_GETTERS;
@@ -126,6 +127,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
       DEBUGGER_TRANSPORT == secondSettings.DEBUGGER_TRANSPORT &&
       FORCE_CLASSIC_VM == secondSettings.FORCE_CLASSIC_VM &&
       HIDE_DEBUGGER_ON_PROCESS_TERMINATION == secondSettings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION &&
+      HOTSWAP_IN_BACKGROUND == secondSettings.HOTSWAP_IN_BACKGROUND &&
       SKIP_SYNTHETIC_METHODS == secondSettings.SKIP_SYNTHETIC_METHODS &&
       SKIP_CLASSLOADERS == secondSettings.SKIP_CLASSLOADERS &&
       SKIP_CONSTRUCTORS == secondSettings.SKIP_CONSTRUCTORS &&

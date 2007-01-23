@@ -22,6 +22,7 @@ public class DebuggerGeneralConfigurable implements Configurable{
   private JCheckBox myCbSkipConstructors;
   private JCheckBox myCbSkipClassLoaders;
   private JCheckBox myHideDebuggerCheckBox;
+  private JCheckBox myHotswapInBackground;
   private JCheckBox myCbCompileBeforeHotswap;
   private JRadioButton myRbAlways;
   private JRadioButton myRbNever;
@@ -60,6 +61,7 @@ public class DebuggerGeneralConfigurable implements Configurable{
     myCbSkipClassLoaders.setSelected(settings.SKIP_CLASSLOADERS);
     myValueTooltipDelayField.setText(Integer.toString(settings.VALUE_LOOKUP_DELAY));
     myHideDebuggerCheckBox.setSelected(settings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION);
+    myHotswapInBackground.setSelected(settings.HOTSWAP_IN_BACKGROUND);
     myCbCompileBeforeHotswap.setSelected(settings.COMPILE_BEFORE_HOTSWAP);
     myCbForceClassicVM.setSelected(settings.FORCE_CLASSIC_VM);
 
@@ -101,6 +103,7 @@ public class DebuggerGeneralConfigurable implements Configurable{
     catch (NumberFormatException e) {
     }
     settings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION = myHideDebuggerCheckBox.isSelected();
+    settings.HOTSWAP_IN_BACKGROUND = myHotswapInBackground.isSelected();
     settings.COMPILE_BEFORE_HOTSWAP = myCbCompileBeforeHotswap.isSelected();
     settings.FORCE_CLASSIC_VM = myCbForceClassicVM.isSelectedWhenSelectable();
     settings.TRACING_FILTERS_ENABLED = myCbStepInfoFiltersEnabled.isSelected();
@@ -173,6 +176,7 @@ public class DebuggerGeneralConfigurable implements Configurable{
     }
     panel.add(myHideDebuggerCheckBox, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
+
     final JLabel tooltipLabel = new JLabel(DebuggerBundle.message("label.debugger.general.configurable.tooltips.delay"));
     panel.add(tooltipLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, leftInset, 0, 0), 0, 0));
     myValueTooltipDelayField = new JTextField(10);
@@ -195,6 +199,9 @@ public class DebuggerGeneralConfigurable implements Configurable{
     box.add(myRbNever);
     box.add(myRbAsk);
     panel.add(box, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+
+    myHotswapInBackground = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.hotswap.background"));
+    panel.add(myHotswapInBackground, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
     return panel;
   }

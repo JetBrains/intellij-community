@@ -3,11 +3,13 @@ package com.intellij.debugger.ui;
 import com.intellij.Patches;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapProgress;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.WindowManager;
@@ -34,13 +36,23 @@ public class HotSwapProgressImpl extends HotSwapProgress{
 
   public HotSwapProgressImpl(Project project) {
     super(project);
-    myProgressWindow = new ProgressWindow(true, getProject()) {
+    myProgressWindow = new BackgroundableProcessIndicator(getProject(), myTitle, new PerformInBackgroundOption() {
+      public boolean shouldStartInBackground() {
+        return DebuggerSettings.getInstance().HOTSWAP_IN_BACKGROUND;
+      }
+
+      public void processSentToBackground() {
+      }
+
+      public void processRestoredToForeground() {
+      }
+    }, null, null) {
       public void cancel() {
         HotSwapProgressImpl.this.cancel();
         super.cancel();
       }
     };
-    myProgressIndicator = Patches.MAC_HIDE_QUIT_HACK ? myProgressWindow : (ProgressIndicator)new SmoothProgressAdapter(myProgressWindow, project);
+    myProgressIndicator = myProgressWindow;
   }
 
   public void finished() {
