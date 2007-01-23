@@ -30,10 +30,6 @@
       <implementation-class>com.intellij.cvsSupport2.config.ImportConfiguration</implementation-class>
     </component>
 
-    <component>
-      <implementation-class>com.intellij.cvsSupport2.checkout.CvsCheckoutProvider</implementation-class>
-    </component>
-
   </application-components>
 
   <project-components>
@@ -143,4 +139,8 @@
       <add-to-group group-id="CvsGlobalGroup" anchor="last"/>
     </group>
   </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <checkoutProvider implementation="com.intellij.cvsSupport2.checkout.CvsCheckoutProvider"/>
+  </extensions>
 </idea-plugin>

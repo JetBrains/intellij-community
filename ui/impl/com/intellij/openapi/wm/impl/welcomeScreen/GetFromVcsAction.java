@@ -1,7 +1,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -17,7 +17,7 @@ import java.awt.event.InputEvent;
 public class GetFromVcsAction{
 
   protected void fillActions(Project project, DefaultActionGroup group) {
-    final CheckoutProvider[] providers = ApplicationManager.getApplication().getComponents(CheckoutProvider.class);
+    final CheckoutProvider[] providers = (CheckoutProvider[])Extensions.getExtensions(CheckoutProvider.EXTENSION_POINT_NAME);
     for (CheckoutProvider provider : providers) {
       group.add(new CheckoutAction(provider));
     }

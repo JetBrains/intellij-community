@@ -22,10 +22,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 /**
- * Implement this interface and register it as ApplicationComponent in order to provide checkout
+ * Implement this interface and register it as extension to checkoutProvider extension point in order to provide checkout
  */
 
 public interface CheckoutProvider extends ApplicationComponent {
+  @NonNls String EXTENSION_POINT_NAME = "com.intellij.checkoutProvider";
+
   void doCheckout(@Nullable Listener listener);
   @NonNls String getVcsName();
 
