@@ -111,7 +111,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   }
 
   public boolean keepWhiteSpacesInsideTag(final XmlTag tag) {
-    return checkName(tag, mySettings.HTML_KEEP_WHITESPACES_INSIDE);
+    return checkName(tag, mySettings.HTML_KEEP_WHITESPACES_INSIDE) || "jsp:attribute".equals(tag.getName());
   }
 
   public WrapType getWrappingTypeForTagEnd(final XmlTag xmlTag) {
@@ -147,7 +147,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   }
 
   private boolean isInlineTag(final XmlTag tag) {
-    return checkName(tag, mySettings.HTML_INLINE_ELEMENTS);
+    return checkName(tag, mySettings.HTML_INLINE_ELEMENTS) || tag.getNamespacePrefix().length() > 0;
   }
 
   private boolean shouldBeWrapped(final XmlTag tag) {
@@ -163,7 +163,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
 
   public boolean isTextElement(XmlTag tag) {
     return isInlineTag(tag);
-  }
+  }                               
 
   public int getTextWrap() {
     return mySettings.HTML_TEXT_WRAP;
