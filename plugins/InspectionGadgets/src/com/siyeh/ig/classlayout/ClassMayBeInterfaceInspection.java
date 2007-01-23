@@ -87,8 +87,10 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
                 return;
             }
             final PsiModifierList modifierList = aClass.getModifierList();
-            modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
-            modifierList.setModifierProperty(PsiModifier.FINAL, false);
+            if (modifierList != null) {
+                modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
+                modifierList.setModifierProperty(PsiModifier.FINAL, false);
+            }
             classKeyword.replace(interfaceKeyword);
         }
 
@@ -181,7 +183,6 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
 
         public static boolean mayBeInterface(PsiClass aClass) {
             final PsiReferenceList extendsList = aClass.getExtendsList();
-
             if (extendsList != null) {
                 final PsiJavaCodeReferenceElement[] extendsElements =
                         extendsList.getReferenceElements();
@@ -196,8 +197,10 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
             if (!allMethodsPublicAbstract(aClass)) {
                 return false;
             }
-
-            return allFieldsPublicStaticFinal(aClass);
+            if (!allFieldsPublicStaticFinal(aClass)) {
+                return false;
+            }
+            return allInnerClassesPublic(aClass);
         }
 
         private static boolean allFieldsPublicStaticFinal(PsiClass aClass) {
@@ -218,6 +221,16 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
             for (final PsiMethod method : methods) {
                 if (!(method.hasModifierProperty(PsiModifier.ABSTRACT) &&
                         method.hasModifierProperty(PsiModifier.PUBLIC))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static boolean allInnerClassesPublic(PsiClass aClass) {
+            final PsiClass[] innerClasses = aClass.getInnerClasses();
+            for (PsiClass innerClass : innerClasses) {
+                if (!innerClass.hasModifierProperty(PsiModifier.PUBLIC)) {
                     return false;
                 }
             }
