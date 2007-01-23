@@ -115,9 +115,9 @@ public class AsyncProcessIcon extends JComponent implements Disposable {
       icon = myPassiveIcon;
     }
 
-    final Rectangle clipBounds = g.getClipBounds();
-    int x = (clipBounds.width - icon.getIconWidth()) / 2;
-    int y = (clipBounds.height - icon.getIconHeight()) / 2;
+    final Dimension size = getSize();
+    int x = (size.width - icon.getIconWidth()) / 2;
+    int y = (size.height - icon.getIconHeight()) / 2;
 
     icon.paintIcon(this, g, x, y);
   }

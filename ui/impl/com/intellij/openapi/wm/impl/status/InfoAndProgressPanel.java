@@ -9,6 +9,7 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.idea.ActionsBundle;
@@ -16,6 +17,7 @@ import com.intellij.idea.ActionsBundle;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.CompoundBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -183,7 +185,7 @@ public class InfoAndProgressPanel extends JPanel {
 
   private void buildInInlineIndicator(final InlineProgressIndicator inline) {
     removeAll();
-    setLayout(new GridLayout(1, 2));
+    setLayout(new InlineLayout());
     add(myStatusBar.myInfoPanel);
 
     final JPanel inlinePanel = new JPanel(new BorderLayout());
@@ -199,6 +201,34 @@ public class InfoAndProgressPanel extends JPanel {
     myStatusBar.myInfoPanel.revalidate();
     myStatusBar.myInfoPanel.repaint();
   }
+
+  private static class InlineLayout extends AbstractLayoutManager {
+
+    public Dimension preferredLayoutSize(final Container parent) {
+      Dimension result = new Dimension();
+      for (int i = 0; i < parent.getComponentCount(); i++) {
+        final Dimension prefSize = parent.getComponent(i).getPreferredSize();
+        result.width += prefSize.width;
+        result.height = Math.max(prefSize.height, result.height);
+      }
+      return result;
+    }
+
+    public void layoutContainer(final Container parent) {
+      final Dimension size = parent.getSize();
+      int compWidth = size.width / parent.getComponentCount();
+      int eachX = 0;
+      for (int i = 0; i < parent.getComponentCount(); i++) {
+        final Component each = parent.getComponent(i);
+        if (i == parent.getComponentCount() - 1) {
+          compWidth = size.width - eachX;
+        }
+        each.setBounds(eachX, 0, compWidth, size.height);
+        eachX += compWidth;
+      }
+    }
+  }
+
 
   private InlineProgressIndicator createInlineDelegate(final ProcessInfo info, final ProgressIndicatorEx original, final boolean compact) {
     final Collection<InlineProgressIndicator> inlines = myOriginal2Inlines.get(original);

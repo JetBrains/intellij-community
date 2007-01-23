@@ -35,7 +35,11 @@ public class ProcessPopup  {
     myProgressPanel = progressPanel;
 
     buildActiveContent();
-    myInactiveContentComponent = new JLabel(IdeBundle.message("progress.window.empty.text"), null, JLabel.CENTER);
+    myInactiveContentComponent = new JLabel(IdeBundle.message("progress.window.empty.text"), null, JLabel.CENTER) {
+      public Dimension getPreferredSize() {
+        return getEmptyPreferredSize();
+      }
+    };
     myInactiveContentComponent.setFocusable(true);
 
     switchToPassive();
@@ -132,16 +136,20 @@ public class ProcessPopup  {
         if (myProcessBox.getComponentCount() > 0) {
           return super.getPreferredSize();
         } else {
-          final Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
-          size.width *= 0.3d;
-          size.height *= 0.3d;
-          return size;
+          return getEmptyPreferredSize();
         }
       }
     };
     scrolls.getViewport().setBackground(myActiveFocusedContent.getBackground());
     scrolls.setBorder(null);
     myActiveContentComponent = scrolls;
+  }
+
+  private Dimension getEmptyPreferredSize() {
+    final Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
+    size.width *= 0.3d;
+    size.height *= 0.3d;
+    return size;
   }
 
   public void hide() {
