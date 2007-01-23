@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,23 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class TestMethodIsPublicVoidNoArgInspection extends MethodInspection {
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "test.method.is.public.void.no.arg.display.name");
+    }
 
     public String getID() {
         return "TestMethodWithIncorrectSignature";
@@ -37,8 +43,14 @@ public class TestMethodIsPublicVoidNoArgInspection extends MethodInspection {
 
     @NotNull
     public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "test.method.is.public.void.no.arg.problem.descriptor");
+        final boolean takesArguments = ((Boolean)infos[0]).booleanValue();
+        if (takesArguments) {
+            return InspectionGadgetsBundle.message(
+                    "test.method.is.public.void.no.arg.problem.descriptor1");
+        } else {
+            return InspectionGadgetsBundle.message(
+                    "test.method.is.public.void.no.arg.problem.descriptor2");
+        }
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -52,7 +64,8 @@ public class TestMethodIsPublicVoidNoArgInspection extends MethodInspection {
             //note: no call to super;
             @NonNls final String methodName = method.getName();
             if (!methodName.startsWith("test") &&
-                    !AnnotationUtil.isAnnotated(method, "org.junit.Test", true)) {
+                    !AnnotationUtil.isAnnotated(method,
+                            "org.junit.Test", true)) {
                 return;
             }
             final PsiType returnType = method.getReturnType();
@@ -60,26 +73,26 @@ public class TestMethodIsPublicVoidNoArgInspection extends MethodInspection {
                 return;
             }
             final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList == null) {
-                return;
-            }
             final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters == null) {
-                return;
-            }
-            if (parameters.length == 0 && returnType.equals(PsiType.VOID) &&
-                    method.hasModifierProperty(PsiModifier.PUBLIC)) {
-                return;
+            final boolean takesArguments;
+            if (parameters.length == 0) {
+                takesArguments = false;
+                if (returnType.equals(PsiType.VOID) &&
+                        method.hasModifierProperty(PsiModifier.PUBLIC)) {
+                    return;
+                }
+            } else {
+                takesArguments = true;
             }
             final PsiClass targetClass = method.getContainingClass();
             if (!AnnotationUtil.isAnnotated(method, "org.junit.Test", true)) {
-                if (targetClass == null || !ClassUtils.isSubclass(targetClass,
-                                                                  "junit.framework.TestCase"))
-                {
+                if (targetClass == null ||
+                        !ClassUtils.isSubclass(targetClass,
+                                "junit.framework.TestCase")) {
                     return;
                 }
             }
-            registerMethodError(method);
+            registerMethodError(method, Boolean.valueOf(takesArguments));
         }
     }
 }
