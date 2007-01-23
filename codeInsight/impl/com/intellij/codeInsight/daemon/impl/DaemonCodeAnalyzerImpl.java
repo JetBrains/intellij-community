@@ -10,7 +10,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -58,7 +57,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
   private EditorTracker myEditorTracker;
-  private volatile ProgressIndicator myUpdateProgress = new DaemonProgressIndicator();
+  private volatile DaemonProgressIndicator myUpdateProgress = new DaemonProgressIndicator();
 
   private final Runnable myUpdateRunnable = createUpdateRunnable();
 
@@ -158,26 +157,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   private void createProgressIndicatorForTests(final Object stoppedNotify) {
-    myUpdateProgress = new MyMockProgressIndicator(stoppedNotify);
-  }
-
-  private static class MyMockProgressIndicator extends MockProgressIndicator {
-    private final Object myStoppedNotify;
-
-    public MyMockProgressIndicator(final Object stoppedNotify) {
-      myStoppedNotify = stoppedNotify;
-    }
-
-    public void stop() {
-      super.stop();
-      cancel();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("STOPPED", new Throwable());
-      }
-      synchronized(myStoppedNotify) {
-        myStoppedNotify.notifyAll();
-      }
-    }
+    myUpdateProgress = new MockDaemonProgressIndicator(stoppedNotify);
   }
 
   void repaintErrorStripeRenderer(Editor editor) {
@@ -361,8 +341,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private synchronized void renewUpdateProgress(final boolean start) {
     myUpdateProgress.cancel();
     myPassExecutorService.cancelAll();
-    if (myUpdateProgress instanceof MyMockProgressIndicator) {
-      myUpdateProgress = new MyMockProgressIndicator(((MyMockProgressIndicator)myUpdateProgress).myStoppedNotify);
+    if (myUpdateProgress instanceof MockDaemonProgressIndicator) {
+      myUpdateProgress = new MockDaemonProgressIndicator(((MockDaemonProgressIndicator)myUpdateProgress).myStoppedNotify);
     }
     else {
       DaemonProgressIndicator indicator = new DaemonProgressIndicator();

@@ -61,7 +61,7 @@ public abstract class PassExecutorService {
     mySubmittedPasses.clear();
   }
 
-  public void submitPasses(final FileEditor fileEditor, final HighlightingPass[] passes, final ProgressIndicator updateProgress) {
+  public void submitPasses(final FileEditor fileEditor, final HighlightingPass[] passes, final DaemonProgressIndicator updateProgress) {
     final AtomicInteger myThreadsToStartCountdown = new AtomicInteger(passes.length);
 
     final TextEditorHighlightingPass[] textEditorHighlightingPasses;
@@ -104,7 +104,8 @@ public abstract class PassExecutorService {
                                             final TextEditorHighlightingPass pass,
                                             final TIntObjectHashMap<ScheduledPass> toBeSubmitted,
                                             final TextEditorHighlightingPass[] textEditorHighlightingPasses,
-                                            final List<ScheduledPass> freePasses, final ProgressIndicator updateProgress,
+                                            final List<ScheduledPass> freePasses,
+                                            final DaemonProgressIndicator updateProgress,
                                             final AtomicInteger myThreadsToStartCountdown) {
     int passId = pass.getId();
     ScheduledPass scheduledPass = toBeSubmitted.get(passId);
@@ -193,9 +194,11 @@ public abstract class PassExecutorService {
     private final AtomicInteger myRunningPredecessorsCount;
     private final Collection<ScheduledPass> mySuccessorsOnCompletion = new ArrayList<ScheduledPass>();
     private final Collection<ScheduledPass> mySuccessorsOnSubmit = new ArrayList<ScheduledPass>();
-    private final ProgressIndicator myUpdateProgress;
+    private final DaemonProgressIndicator myUpdateProgress;
 
-    public ScheduledPass(final FileEditor fileEditor, TextEditorHighlightingPass pass, final ProgressIndicator progressIndicator,
+    public ScheduledPass(final FileEditor fileEditor,
+                         TextEditorHighlightingPass pass,
+                         final DaemonProgressIndicator progressIndicator,
                          final AtomicInteger myThreadsToStartCountdown) {
       myFileEditor = fileEditor;
       myPass = pass;
@@ -253,7 +256,7 @@ public abstract class PassExecutorService {
         LOG.assertTrue(toexec >= 0);
         if (toexec == 0) {
           log(myUpdateProgress, "Stopping ", myPass);
-          myUpdateProgress.stop();
+          myUpdateProgress.stopIfRunning();
         }
         else {
           log(myUpdateProgress, "Pass ", myPass ," finished but there are",toexec," passes in the queue");
