@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
@@ -119,6 +120,11 @@ public class IgnoredSettingsDialog extends DialogWrapper {
     }
     ChangeListManager.getInstance(project).setFilesToIgnore(dlg.getItems());
     dlg.dispose();
+  }
+
+  @Override @NonNls
+  protected String getDimensionServiceKey() {
+    return "IgnoredSettingsDialog";
   }
 
   private static class MyCellRenderer extends ColoredListCellRenderer {

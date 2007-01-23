@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.changes.IgnoredFileBean;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -161,5 +162,10 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
       return new IgnoredFileBean[] { result };
     }
     return new IgnoredFileBean[0];
+  }
+
+  @Override @NonNls
+  protected String getDimensionServiceKey() {
+    return "IgnoreUnversionedDialog";
   }
 }
