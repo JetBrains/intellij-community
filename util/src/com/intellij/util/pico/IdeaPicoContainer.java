@@ -1,8 +1,12 @@
-package com.intellij.util;
+package com.intellij.util.pico;
 
 import org.picocontainer.*;
 import org.picocontainer.defaults.*;
 import org.picocontainer.monitors.DefaultComponentMonitor;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class IdeaPicoContainer extends DefaultPicoContainer {
 
@@ -17,17 +21,7 @@ public class IdeaPicoContainer extends DefaultPicoContainer {
   private static class MyComponentAdapterFactory extends MonitoringComponentAdapterFactory {
     private final LifecycleStrategy myLifecycleStrategy;
 
-    public MyComponentAdapterFactory(ComponentMonitor monitor) {
-      super(monitor);
-      myLifecycleStrategy = new DefaultLifecycleStrategy(monitor);
-    }
-
-    public MyComponentAdapterFactory(ComponentMonitor monitor, LifecycleStrategy lifecycleStrategy) {
-      super(monitor);
-      myLifecycleStrategy = lifecycleStrategy;
-    }
-
-    public MyComponentAdapterFactory() {
+    private MyComponentAdapterFactory() {
       myLifecycleStrategy = new DefaultLifecycleStrategy(new DefaultComponentMonitor());
     }
 
@@ -43,5 +37,29 @@ public class IdeaPicoContainer extends DefaultPicoContainer {
         ((ComponentMonitorStrategy)myLifecycleStrategy).changeMonitor(monitor);
       }
     }
+  }
+
+
+  public ComponentAdapter getComponentAdapterOfType(final Class componentType) {
+    return super.getComponentAdapterOfType(componentType);
+  }
+
+  public List getComponentAdaptersOfType(final Class componentType) {
+    if (componentType == null) return Collections.EMPTY_LIST;
+
+    List<ComponentAdapter> result = new ArrayList<ComponentAdapter>();
+    for (final Object o : getComponentAdapters()) {
+      ComponentAdapter componentAdapter = (ComponentAdapter)o;
+
+      if (componentAdapter instanceof AssignableToComponentAdapter) {
+        AssignableToComponentAdapter assignableToComponentAdapter = (AssignableToComponentAdapter)componentAdapter;
+        if (assignableToComponentAdapter.isAssignableTo(componentType)) result.add(assignableToComponentAdapter);
+      }
+      else if (componentType.isAssignableFrom(componentAdapter.getComponentImplementation())) {
+        result.add(componentAdapter);
+      }
+    }
+    
+    return result;
   }
 }

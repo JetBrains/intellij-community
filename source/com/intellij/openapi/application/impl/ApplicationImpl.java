@@ -231,12 +231,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private void loadApplicationComponents() {
     loadComponentsConfiguration(APPLICATION_LAYER, true);
 
-    if (PluginManager.shouldLoadPlugins()) {
-      final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
-      for (IdeaPluginDescriptor plugin : plugins) {
-        if (PluginManager.shouldSkipPlugin(plugin)) continue;
-        loadComponentsConfiguration(plugin.getAppComponents(), plugin, true);
-      }
+    final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
+    for (IdeaPluginDescriptor plugin : plugins) {
+      if (PluginManager.shouldSkipPlugin(plugin)) continue;
+      loadComponentsConfiguration(plugin.getAppComponents(), plugin, true);
     }
   }
 

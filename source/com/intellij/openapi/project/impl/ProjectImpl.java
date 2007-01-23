@@ -223,7 +223,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     boolean realProject = !isDummy();
     loadComponentsConfiguration(PROJECT_LAYER, realProject);
 
-    if (realProject && PluginManager.shouldLoadPlugins()) {
+    if (realProject) {
       final Application app = ApplicationManager.getApplication();
       final IdeaPluginDescriptor[] plugins = app.getPlugins();
       for (IdeaPluginDescriptor plugin : plugins) {

@@ -106,11 +106,6 @@ public class PluginManager {
   private static void initializePlugins() {
     configureExtensions();
     
-    if (!shouldLoadPlugins()) {
-      ourPlugins = new IdeaPluginDescriptorImpl[0];
-      return;
-    }
-
     final IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors();
 
     final Map<PluginId, IdeaPluginDescriptor> idToDescriptorMap = new HashMap<PluginId, IdeaPluginDescriptor>();
@@ -152,7 +147,7 @@ public class PluginManager {
     Extensions.registerAreaClass(AREA_IDEA_MODULE, AREA_IDEA_PROJECT);
   }
 
-  public static boolean shouldLoadPlugins() {
+  private static boolean shouldLoadPlugins() {
     try {
       // no plugins during bootstrap
       Class.forName("com.intellij.openapi.extensions.Extensions");
@@ -166,24 +161,25 @@ public class PluginManager {
   }
 
   public static boolean shouldSkipPlugin(IdeaPluginDescriptor descriptor) {
-    final boolean shouldLoad;
 
     if (descriptor.getPluginId().getIdString().equals(CORE_PLUGIN_ID)) {
-      shouldLoad = true;
+      return false;
+    }
+
+    if (!shouldLoadPlugins()) return true;
+
+    final boolean shouldLoad;
+    //noinspection HardCodedStringLiteral
+    final String loadPluginCategory = System.getProperty("idea.load.plugins.category");
+    if (loadPluginCategory != null) {
+      shouldLoad = loadPluginCategory.equals(descriptor.getCategory());
     }
     else {
       //noinspection HardCodedStringLiteral
-      final String loadPluginCategory = System.getProperty("idea.load.plugins.category");
-      if (loadPluginCategory != null) {
-        shouldLoad = loadPluginCategory.equals(descriptor.getCategory());
-      }
-      else {
-        //noinspection HardCodedStringLiteral
-        final String pluginId = System.getProperty("idea.load.plugins.id");
-        shouldLoad = pluginId == null || (descriptor.getPluginId() != null &&
-                                    descriptor.getPluginId().getIdString() != null &&
-                                    pluginId.equals(descriptor.getPluginId().getIdString()));
-      }
+      final String pluginId = System.getProperty("idea.load.plugins.id");
+      shouldLoad = pluginId == null || (descriptor.getPluginId() != null &&
+                                  descriptor.getPluginId().getIdString() != null &&
+                                  pluginId.equals(descriptor.getPluginId().getIdString()));
     }
 
 
@@ -434,7 +430,7 @@ public class PluginManager {
     }
     for (Iterator<IdeaPluginDescriptorImpl> iterator = result.iterator(); iterator.hasNext();) {
       IdeaPluginDescriptor descriptor = iterator.next();
-      if (!shouldLoadPlugins() || shouldSkipPlugin(descriptor)) {
+      if (shouldSkipPlugin(descriptor)) {
         iterator.remove();
       }
     }

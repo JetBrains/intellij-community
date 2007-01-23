@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.pico.AssignableToComponentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
@@ -46,42 +47,7 @@ public class ServiceManagerImpl implements BaseComponent {
 
     myExtensionPointListener = new ExtensionPointListener<ServiceDescriptor>() {
       public void extensionAdded(final ServiceDescriptor descriptor) {
-        picoContainer.registerComponent(new ComponentAdapter() {
-          private ComponentAdapter myDelegate = null;
-
-          public Object getComponentKey() {
-            return descriptor.getServiceInterface();
-          }
-
-          public Class getComponentImplementation() {
-            try {
-              return Class.forName(descriptor.getServiceImplementation());
-            }
-            catch (ClassNotFoundException e) {
-              throw new RuntimeException(e);
-            }
-          }
-
-          public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
-            return getDelegate().getComponentInstance(container);
-          }
-
-          private synchronized ComponentAdapter getDelegate() {
-            if (myDelegate == null) {
-              myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), getComponentImplementation(), null, true));
-            }
-
-            return myDelegate;
-          }
-
-          public void verify(final PicoContainer container) throws PicoIntrospectionException {
-            getDelegate().verify(container);
-          }
-
-          public void accept(final PicoVisitor visitor) {
-            visitor.visitComponentAdapter(this);
-          }
-        });
+        picoContainer.registerComponent(new MyComponentAdapter(descriptor));
       }
 
       public void extensionRemoved(final ServiceDescriptor extension) {
@@ -104,5 +70,52 @@ public class ServiceManagerImpl implements BaseComponent {
     final ExtensionPoint<ServiceDescriptor> extensionPoint = Extensions.getArea(null).getExtensionPoint(myExtensionPointName);
     assert extensionPoint != null;
     extensionPoint.removeExtensionPointListener(myExtensionPointListener);
+  }
+
+  private static class MyComponentAdapter implements AssignableToComponentAdapter {
+    private ComponentAdapter myDelegate;
+    private final ServiceDescriptor myDescriptor;
+
+    public MyComponentAdapter(final ServiceDescriptor descriptor) {
+      myDescriptor = descriptor;
+      myDelegate = null;
+    }
+
+    public Object getComponentKey() {
+      return myDescriptor.getServiceInterface();
+    }
+
+    public Class getComponentImplementation() {
+      try {
+        return Class.forName(myDescriptor.getServiceImplementation());
+      }
+      catch (ClassNotFoundException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
+      return getDelegate().getComponentInstance(container);
+    }
+
+    private synchronized ComponentAdapter getDelegate() {
+      if (myDelegate == null) {
+        myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), getComponentImplementation(), null, true));
+      }
+
+      return myDelegate;
+    }
+
+    public void verify(final PicoContainer container) throws PicoIntrospectionException {
+      getDelegate().verify(container);
+    }
+
+    public void accept(final PicoVisitor visitor) {
+      visitor.visitComponentAdapter(this);
+    }
+
+    public boolean isAssignableTo(Class aClass) {
+      return aClass.getName().equals(getComponentKey());
+    }
   }
 }

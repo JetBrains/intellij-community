@@ -17,7 +17,7 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.extensions.AreaPicoContainer;
-import com.intellij.util.IdeaPicoContainer;
+import com.intellij.util.pico.IdeaPicoContainer;
 import org.jetbrains.annotations.NonNls;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
