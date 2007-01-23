@@ -118,7 +118,16 @@ public class DomElementsHighlightingUtil {
           addDescriptionsToTagEnds(tag, descritors, creator);
           return descritors;
       }
-      return Arrays.asList(creator.fun(Pair.create(TextRange.from(0, psiElement.getTextRange().getLength()), psiElement)));
+      int start = 0;
+      int length = psiElement.getTextRange().getLength();
+      if (psiElement instanceof XmlAttributeValue) {
+        String value = ((XmlAttributeValue)psiElement).getValue();
+        if (StringUtil.isNotEmpty(value)) {
+          start = psiElement.getText().indexOf(value);
+          length = value.length();
+        }
+      }
+      return Arrays.asList(creator.fun(Pair.create(TextRange.from(start, length), psiElement)));
     }
 
     final XmlTag tag = getParentXmlTag(domElement);
