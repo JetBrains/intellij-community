@@ -11,8 +11,8 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.util.IdeaPicoContainer;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.pico.IdeaPicoContainer;
 import org.picocontainer.MutablePicoContainer;
 
 import java.lang.reflect.Field;
