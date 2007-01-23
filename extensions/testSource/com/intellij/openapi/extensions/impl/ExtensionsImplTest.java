@@ -44,10 +44,10 @@ public class ExtensionsImplTest extends TestCase {
     final boolean removed[] = new boolean[1];
     removed[0] = false;
     extensionsArea.getExtensionPoint(EXTENSION_POINT_NAME_1).addExtensionPointListener(new ExtensionPointListener() {
-      public void extensionAdded(Object extension) {
+      public void extensionAdded(Object extension, final PluginDescriptor pluginDescriptor) {
       }
 
-      public void extensionRemoved(Object extension) {
+      public void extensionRemoved(Object extension, final PluginDescriptor pluginDescriptor) {
         removed[0] = true;
       }
     });

@@ -4,10 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceDescriptor;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.pico.AssignableToComponentAdapter;
@@ -46,11 +43,11 @@ public class ServiceManagerImpl implements BaseComponent {
     final MutablePicoContainer picoContainer = (MutablePicoContainer)componentManager.getPicoContainer();
 
     myExtensionPointListener = new ExtensionPointListener<ServiceDescriptor>() {
-      public void extensionAdded(final ServiceDescriptor descriptor) {
-        picoContainer.registerComponent(new MyComponentAdapter(descriptor));
+      public void extensionAdded(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor) {
+        picoContainer.registerComponent(new MyComponentAdapter(descriptor, pluginDescriptor));
       }
 
-      public void extensionRemoved(final ServiceDescriptor extension) {
+      public void extensionRemoved(final ServiceDescriptor extension, final PluginDescriptor pluginDescriptor) {
         picoContainer.unregisterComponent(extension.getServiceInterface());
       }
     };
@@ -75,9 +72,11 @@ public class ServiceManagerImpl implements BaseComponent {
   private static class MyComponentAdapter implements AssignableToComponentAdapter {
     private ComponentAdapter myDelegate;
     private final ServiceDescriptor myDescriptor;
+    private PluginDescriptor myPluginDescriptor;
 
-    public MyComponentAdapter(final ServiceDescriptor descriptor) {
+    public MyComponentAdapter(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor) {
       myDescriptor = descriptor;
+      myPluginDescriptor = pluginDescriptor;
       myDelegate = null;
     }
 
@@ -87,7 +86,9 @@ public class ServiceManagerImpl implements BaseComponent {
 
     public Class getComponentImplementation() {
       try {
-        return Class.forName(myDescriptor.getServiceImplementation());
+        final ClassLoader classLoader = myPluginDescriptor != null ? myPluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
+        
+        return Class.forName(myDescriptor.getServiceImplementation(), true, classLoader);
       }
       catch (ClassNotFoundException e) {
         throw new RuntimeException(e);

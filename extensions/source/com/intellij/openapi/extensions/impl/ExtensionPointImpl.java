@@ -32,10 +32,10 @@ public class ExtensionPointImpl implements ExtensionPoint {
   private String myName;
   private String myBeanClassName;
   private List myExtensions = new ArrayList();
-  private List myLoadedAdapters = new ArrayList();
-  private Set myExtensionAdapters = new LinkedHashSet();
-  private Set myEPListeners = new LinkedHashSet();
-  private SoftReference myExtensionsCache;
+  private List<ExtensionComponentAdapter> myLoadedAdapters = new ArrayList<ExtensionComponentAdapter>();
+  private Set<ExtensionComponentAdapter> myExtensionAdapters = new LinkedHashSet<ExtensionComponentAdapter>();
+  private Set<ExtensionPointListener> myEPListeners = new LinkedHashSet<ExtensionPointListener>();
+  private SoftReference<Object[]> myExtensionsCache;
   private ExtensionsAreaImpl myOwner;
   private final AreaInstance myArea;
   private Class myExtensionClass;
@@ -79,7 +79,7 @@ public class ExtensionPointImpl implements ExtensionPoint {
     if (LoadingOrder.ANY == order) {
       int index = myLoadedAdapters.size();
       if (myLoadedAdapters.size() > 0) {
-        ExtensionComponentAdapter lastAdapter = (ExtensionComponentAdapter) myLoadedAdapters.get(myLoadedAdapters.size() - 1);
+        ExtensionComponentAdapter lastAdapter = myLoadedAdapters.get(myLoadedAdapters.size() - 1);
         if (lastAdapter.getOrder() == LoadingOrder.LAST) {
           index--;
         }
@@ -111,18 +111,18 @@ public class ExtensionPointImpl implements ExtensionPoint {
           }
         }
 
-        notifyListenersOnAdd(extension);
+        notifyListenersOnAdd(extension, adapter.getPluginDescriptor());
       }
     }
   }
 
-  private void notifyListenersOnAdd(Object extension) {
-    ExtensionPointListener[] listeners = (ExtensionPointListener[]) myEPListeners.toArray(new ExtensionPointListener[myEPListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      ExtensionPointListener listener = listeners[i];
+  private void notifyListenersOnAdd(Object extension, final PluginDescriptor pluginDescriptor) {
+    ExtensionPointListener[] listeners = myEPListeners.toArray(new ExtensionPointListener[myEPListeners.size()]);
+    for (ExtensionPointListener listener : listeners) {
       try {
-        listener.extensionAdded(extension);
-      } catch (Throwable e) {
+        listener.extensionAdded(extension, pluginDescriptor);
+      }
+      catch (Throwable e) {
         myLogger.error(e);
       }
     }
@@ -134,11 +134,11 @@ public class ExtensionPointImpl implements ExtensionPoint {
     processAdapters();
 
     if (myExtensionsCache != null) {
-      result = (Object[]) myExtensionsCache.get();
+      result = myExtensionsCache.get();
     }
     if (result == null) {
       result = myExtensions.toArray((Object[])Array.newInstance(getExtensionClass(), myExtensions.size()));
-      myExtensionsCache = new SoftReference(result);
+      myExtensionsCache = new SoftReference<Object[]>(result);
     }
 
     return result;
@@ -146,13 +146,13 @@ public class ExtensionPointImpl implements ExtensionPoint {
 
   private void processAdapters() {
     if (myExtensionAdapters.size() > 0) {
-      List allAdapters = new ArrayList(myExtensionAdapters.size() + myLoadedAdapters.size());
+      List<ExtensionComponentAdapter> allAdapters = new ArrayList<ExtensionComponentAdapter>(myExtensionAdapters.size() + myLoadedAdapters.size());
       allAdapters.addAll(myExtensionAdapters);
       allAdapters.addAll(myLoadedAdapters);
       myExtensions.clear();
-      List loadedAdapters = myLoadedAdapters;
-      myLoadedAdapters = new ArrayList();
-      ExtensionComponentAdapter[] adapters = (ExtensionComponentAdapter[]) allAdapters.toArray(new ExtensionComponentAdapter[myExtensionAdapters.size()]);
+      List<ExtensionComponentAdapter> loadedAdapters = myLoadedAdapters;
+      myLoadedAdapters = new ArrayList<ExtensionComponentAdapter>();
+      ExtensionComponentAdapter[] adapters = allAdapters.toArray(new ExtensionComponentAdapter[myExtensionAdapters.size()]);
       LoadingOrder.sort(adapters);
       for (int i = 0; i < adapters.length; i++) {
         ExtensionComponentAdapter adapter = adapters[i];
@@ -183,7 +183,7 @@ public class ExtensionPointImpl implements ExtensionPoint {
     }
 
     final int index = myExtensions.indexOf(extension);
-    final ExtensionComponentAdapter adapter = (ExtensionComponentAdapter)myLoadedAdapters.get(index);
+    final ExtensionComponentAdapter adapter = myLoadedAdapters.get(index);
 
     myOwner.getMutablePicoContainer().unregisterComponent(adapter.getComponentKey());
     final MutablePicoContainer[] pluginContainers = myOwner.getPluginContainers();
@@ -194,10 +194,10 @@ public class ExtensionPointImpl implements ExtensionPoint {
 
     processAdapters();
 
-    internalUnregisterExtension(extension);
+    internalUnregisterExtension(extension, null);
   }
 
-  private void internalUnregisterExtension(Object extension) {
+  private void internalUnregisterExtension(Object extension, PluginDescriptor pluginDescriptor) {
     myExtensionsCache = null;
 
     if (!myExtensions.contains(extension)) {
@@ -207,7 +207,7 @@ public class ExtensionPointImpl implements ExtensionPoint {
     myExtensions.remove(index);
     myLoadedAdapters.remove(index);
 
-    notifyListenersOnRemove(extension);
+    notifyListenersOnRemove(extension, pluginDescriptor);
 
     if (extension instanceof Extension) {
       Extension o = (Extension) extension;
@@ -219,11 +219,11 @@ public class ExtensionPointImpl implements ExtensionPoint {
     }
   }
 
-  private void notifyListenersOnRemove(Object extensionObject) {
-    for (Iterator iterator = myEPListeners.iterator(); iterator.hasNext();) {
-      ExtensionPointListener listener = (ExtensionPointListener)iterator.next();
+  private void notifyListenersOnRemove(Object extensionObject, PluginDescriptor pluginDescriptor) {
+    for (Iterator<ExtensionPointListener> iterator = myEPListeners.iterator(); iterator.hasNext();) {
+      ExtensionPointListener listener = iterator.next();
       try {
-        listener.extensionRemoved(extensionObject);
+        listener.extensionRemoved(extensionObject, pluginDescriptor);
       } catch (Throwable e) {
         myLogger.error(e);
       }
@@ -234,9 +234,9 @@ public class ExtensionPointImpl implements ExtensionPoint {
     processAdapters();
 
     if (myEPListeners.add(listener)) {
-      for (Iterator iterator = myExtensions.iterator(); iterator.hasNext();) {
+      for (ExtensionComponentAdapter componentAdapter : myLoadedAdapters) {
         try {
-          listener.extensionAdded(iterator.next());
+          listener.extensionAdded(componentAdapter.getExtension(), componentAdapter.getPluginDescriptor());
         } catch (Throwable e) {
           myLogger.error(e);
         }
@@ -246,9 +246,9 @@ public class ExtensionPointImpl implements ExtensionPoint {
 
   public void removeExtensionPointListener(ExtensionPointListener listener) {
     if (myEPListeners.contains(listener)) {
-      for (Iterator iterator = myExtensions.iterator(); iterator.hasNext();) {
+      for (ExtensionComponentAdapter componentAdapter : myLoadedAdapters) {
         try {
-          listener.extensionRemoved(iterator.next());
+          listener.extensionRemoved(componentAdapter.getExtension(), componentAdapter.getPluginDescriptor());
         } catch (Throwable e) {
           myLogger.error(e);
         }
@@ -307,7 +307,7 @@ public class ExtensionPointImpl implements ExtensionPoint {
         pluginContainer.unregisterComponent(componentKey);
       }
 
-      internalUnregisterExtension(componentAdapter.getExtension());
+      internalUnregisterExtension(componentAdapter.getExtension(), componentAdapter.getPluginDescriptor());
       return true;
     }
     return false;

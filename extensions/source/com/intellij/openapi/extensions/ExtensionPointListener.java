@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.extensions;
 
+import org.jetbrains.annotations.Nullable;
+
 public interface ExtensionPointListener<T> {
-  void extensionAdded(T extension);
-  void extensionRemoved(T extension);
+  void extensionAdded(T extension, @Nullable final PluginDescriptor pluginDescriptor);
+  void extensionRemoved(T extension, @Nullable final PluginDescriptor pluginDescriptor);
 }

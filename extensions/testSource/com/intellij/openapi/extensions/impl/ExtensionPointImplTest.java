@@ -87,11 +87,11 @@ public class ExtensionPointImplTest extends TestCase {
     final boolean added[] = new boolean[1];
     final boolean removed[] = new boolean[1];
     extensionPoint.addExtensionPointListener(new ExtensionPointListener() {
-      public void extensionAdded(Object extension) {
+      public void extensionAdded(Object extension, final PluginDescriptor pluginDescriptor) {
         added[0] = true;
       }
 
-      public void extensionRemoved(Object extension) {
+      public void extensionRemoved(Object extension, final PluginDescriptor pluginDescriptor) {
         removed[0] = true;
       }
     });
@@ -112,11 +112,11 @@ public class ExtensionPointImplTest extends TestCase {
     extensionPoint.registerExtension(new Integer(123));
     assertFalse(added[0]);
     extensionPoint.addExtensionPointListener(new ExtensionPointListener() {
-      public void extensionAdded(Object extension) {
+      public void extensionAdded(Object extension, final PluginDescriptor pluginDescriptor) {
         added[0] = true;
       }
 
-      public void extensionRemoved(Object extension) {
+      public void extensionRemoved(Object extension, final PluginDescriptor pluginDescriptor) {
       }
     });
     assertTrue(added[0]);

@@ -102,4 +102,8 @@ public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdap
   public PluginId getPluginName() {
     return myPluginDescriptor.getPluginId();
   }
+
+  public PluginDescriptor getPluginDescriptor() {
+    return myPluginDescriptor;
+  }
 }
