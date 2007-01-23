@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
@@ -11,9 +12,8 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.peer.PeerFactory;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -29,10 +29,9 @@ import org.tmatesoft.svn.core.wc.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author max
@@ -66,7 +65,7 @@ public class SvnChangeProvider implements ChangeProvider {
           SvnChangedFile deletedFile = iterator.next();
           final SVNStatus deletedStatus = deletedFile.getStatus();
           if (copiedStatus.getCopyFromURL().equals(deletedStatus.getURL().toString())) {
-            builder.processChange(new Change(new SvnUpToDateRevision(deletedFile.getFilePath(), deletedStatus.getRevision()),
+            builder.processChange(new Change(SvnUpToDateRevision.create(deletedFile.getFilePath(), deletedStatus.getRevision()),
                                              CurrentContentRevision.create(copiedFile.getFilePath())));
             iterator.remove();
             foundRename = true;
@@ -87,7 +86,7 @@ public class SvnChangeProvider implements ChangeProvider {
           }
           if (status != null && status.getContentsStatus() == SVNStatusType.STATUS_DELETED) {
             final FilePath filePath = myFactory.createFilePathOnDeleted(wcPath, false);
-            final SvnUpToDateRevision beforeRevision = new SvnUpToDateRevision(filePath, status.getRevision());
+            final SvnUpToDateRevision beforeRevision = SvnUpToDateRevision.create(filePath, status.getRevision());
             final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
             builder.processChange(new Change(beforeRevision, afterRevision));
             foundRename = true;
@@ -206,13 +205,14 @@ public class SvnChangeProvider implements ChangeProvider {
                statusType == SVNStatusType.STATUS_MODIFIED ||
                statusType == SVNStatusType.STATUS_REPLACED ||
                propStatus == SVNStatusType.STATUS_MODIFIED) {
-        builder.processChange(new Change(new SvnUpToDateRevision(filePath, status.getRevision()), new CurrentContentRevision(filePath), fStatus));
+        builder.processChange(new Change(SvnUpToDateRevision.create(filePath, status.getRevision()),
+                                         CurrentContentRevision.create(filePath), fStatus));
       }
       else if (statusType == SVNStatusType.STATUS_ADDED) {
-        builder.processChange(new Change(null, new CurrentContentRevision(filePath), fStatus));
+        builder.processChange(new Change(null, CurrentContentRevision.create(filePath), fStatus));
       }
       else if (statusType == SVNStatusType.STATUS_DELETED) {
-        builder.processChange(new Change(new SvnUpToDateRevision(filePath, status.getRevision()), null, fStatus));
+        builder.processChange(new Change(SvnUpToDateRevision.create(filePath, status.getRevision()), null, fStatus));
       }
       else if (statusType == SVNStatusType.STATUS_MISSING) {
         builder.processLocallyDeletedFile(filePath);
@@ -223,26 +223,10 @@ public class SvnChangeProvider implements ChangeProvider {
       else if (fStatus == FileStatus.NOT_CHANGED && statusType != SVNStatusType.STATUS_NONE) {
         VirtualFile file = filePath.getVirtualFile();
         if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
-          builder.processChange(new Change(new SvnUpToDateRevision(filePath, status.getRevision()), new CurrentContentRevision(filePath), FileStatus.MODIFIED));
+          builder.processChange(new Change(SvnUpToDateRevision.create(filePath, status.getRevision()),
+                                           CurrentContentRevision.create(filePath), FileStatus.MODIFIED));
         }
       }
-    }
-  }
-
-  private static String getLastUpToDateContentFor(final File file, final String charset) throws SVNException, IOException {
-    SVNWCClient wcClient = new SVNWCClient(null, null);
-    try {
-      File lock = new File(file.getParentFile(), SvnUtil.PATH_TO_LOCK_FILE);
-      if (lock.exists()) {
-        return null;
-      }
-      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-      wcClient.doGetFileContents(file, SVNRevision.UNDEFINED, SVNRevision.BASE, true, buffer);
-      buffer.close();
-      return new String(buffer.toByteArray(), charset);
-    }
-    catch (UnsupportedEncodingException e) {
-      return null;
     }
   }
 
@@ -355,22 +339,43 @@ public class SvnChangeProvider implements ChangeProvider {
     private String myContent = null;
     private VcsRevisionNumber myRevNumber;
 
-    public SvnUpToDateRevision(@NotNull final FilePath file, final SVNRevision revision) {
+    protected SvnUpToDateRevision(@NotNull final FilePath file, final SVNRevision revision) {
       myFile = file;
       myRevNumber = new SvnRevisionNumber(revision);
+    }
+
+    public static SvnUpToDateRevision create(@NotNull final FilePath file, final SVNRevision revision) {
+      if (file.getFileType().isBinary()) {
+        return new SvnUpToDateBinaryRevision(file, revision);
+      }
+      return new SvnUpToDateRevision(file, revision);
     }
 
     @Nullable
     public String getContent() throws VcsException {
       if (myContent == null) {
         try {
-          myContent = getLastUpToDateContentFor(myFile.getIOFile(), myFile.getCharset().name());
+          myContent = new String(getUpToDateBinaryContent(), myFile.getCharset().name());
         }
         catch(Exception ex) {
           throw new VcsException(ex);
         }
       }
       return myContent;
+    }
+
+    @Nullable
+    protected byte[] getUpToDateBinaryContent() throws SVNException, IOException {
+      File file = myFile.getIOFile();
+      File lock = new File(file.getParentFile(), SvnUtil.PATH_TO_LOCK_FILE);
+      if (lock.exists()) {
+        return null;
+      }
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      SVNWCClient wcClient = new SVNWCClient(null, null);
+      wcClient.doGetFileContents(file, SVNRevision.UNDEFINED, SVNRevision.BASE, true, buffer);
+      buffer.close();
+      return buffer.toByteArray();
     }
 
     @NotNull
@@ -381,6 +386,22 @@ public class SvnChangeProvider implements ChangeProvider {
     @NotNull
     public VcsRevisionNumber getRevisionNumber() {
       return myRevNumber;
+    }
+  }
+
+  private static class SvnUpToDateBinaryRevision extends SvnUpToDateRevision implements BinaryContentRevision {
+    public SvnUpToDateBinaryRevision(@NotNull final FilePath file, final SVNRevision revision) {
+      super(file, revision);
+    }
+
+    @Nullable
+    public byte[] getBinaryContent() throws VcsException {
+      try {
+        return getUpToDateBinaryContent();
+      }
+      catch(Exception ex) {
+        throw new VcsException(ex);
+      }
     }
   }
 
