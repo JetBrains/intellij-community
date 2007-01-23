@@ -1,8 +1,8 @@
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -218,7 +218,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     if (myReferences.isEmpty()) return false;
     final PsiReference firstReference = myReferences.get(0);
     final PsiElement callElement = firstReference.getElement().getParent();
-    if (!callElement.isValid()) return false;
+    if (callElement == null || !callElement.isValid()) return false;
     if (!(callElement instanceof Navigatable) || !((Navigatable)callElement).canNavigate()) {
       final PsiFile psiFile = callElement.getContainingFile();
       if (psiFile == null) return false;
