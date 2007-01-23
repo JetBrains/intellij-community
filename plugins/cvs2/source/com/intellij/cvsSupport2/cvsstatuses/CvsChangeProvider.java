@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 
@@ -125,35 +124,38 @@ public class CvsChangeProvider implements ChangeProvider {
     final Entry entry = CvsEntriesManager.getInstance().getEntryFor(dir, filePath.getName());
     final FileStatus status = CvsStatusProvider.getStatus(filePath.getVirtualFile(), entry);
     VcsRevisionNumber number = entry != null ? new CvsRevisionNumber(entry.getRevision()) : VcsRevisionNumber.NULL;
-    processStatus(filePath, dir.findChild(filePath.getName()), status, number, builder);
+    processStatus(filePath, dir.findChild(filePath.getName()), status, number, entry != null && entry.isBinary(), builder);
   }
 
   private void processFile(final VirtualFile dir, @Nullable VirtualFile file, Entry entry, final ChangelistBuilder builder) {
     final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir, entry.getFileName());
     final FileStatus status = CvsStatusProvider.getStatus(file, entry);
     final VcsRevisionNumber number = new CvsRevisionNumber(entry.getRevision());
-    processStatus(filePath, file, status, number, builder);
+    processStatus(filePath, file, status, number, entry.isBinary(), builder);
   }
 
   private void processStatus(final FilePath filePath,
                              final VirtualFile file,
                              final FileStatus status,
                              final VcsRevisionNumber number,
+                             final boolean isBinary,
                              final ChangelistBuilder builder) {
     if (status == FileStatus.NOT_CHANGED) {
       if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
-        builder.processChange(new Change(new CvsUpToDateRevision(filePath, number), new CurrentContentRevision(filePath), FileStatus.MODIFIED));
+        builder.processChange(new Change(createCvsRevision(filePath, number, isBinary),
+                                         CurrentContentRevision.create(filePath), FileStatus.MODIFIED));
       }
       return;
     }
     if (status == FileStatus.MODIFIED || status == FileStatus.MERGE || status == FileStatus.MERGED_WITH_CONFLICTS) {
-      builder.processChange(new Change(new CvsUpToDateRevision(filePath, number), new CurrentContentRevision(filePath), status));
+      builder.processChange(new Change(createCvsRevision(filePath, number, isBinary),
+                                       CurrentContentRevision.create(filePath), status));
     }
     else if (status == FileStatus.ADDED) {
-      builder.processChange(new Change(null, new CurrentContentRevision(filePath), status));
+      builder.processChange(new Change(null, CurrentContentRevision.create(filePath), status));
     }
     else if (status == FileStatus.DELETED) {
-      builder.processChange(new Change(new CvsUpToDateRevision(filePath, number), null, status));
+      builder.processChange(new Change(createCvsRevision(filePath, number, isBinary), null, status));
     }
     else if (status == FileStatus.DELETED_FROM_FS) {
       builder.processLocallyDeletedFile(filePath);
@@ -167,44 +169,25 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   @Nullable
-  public String getLastUpToDateContentFor(VirtualFile vFile, boolean quietly) throws VcsException {
+  private byte[] getLastUpToDateContentFor(VirtualFile vFile) throws VcsException {
     if (!myEntriesManager.isActive()) return null;
-    try {
-      LvcsFile file = LocalVcs.getInstance(myVcs.getProject()).findFile(CvsVfsUtil.getPathFor(vFile));
-      if (file != null) {
-        LvcsRevision revision = file.getRevision();
-        long upToDateTime = getUpToDateTimeForFile(vFile);
-        while (revision != null) {
-          if (CvsStatusProvider.timeStampsAreEqual(upToDateTime, revision.getDate())) {
-            LvcsFile lvcsFile = (LvcsFile)revision.getObject();
-            byte[] byteContent = lvcsFile.getByteContent(revision.getImplicitLabel());
-            if (byteContent == null) return null;
-            return new String(byteContent, vFile.getCharset().name());
-          }
-          revision = revision.getPrevRevision();
-        }
+    LvcsFile file = LocalVcs.getInstance(myVcs.getProject()).findFile(CvsVfsUtil.getPathFor(vFile));
+    if (file != null) {
+      LvcsRevision revision = file.getRevision();
+      long upToDateTime = getUpToDateTimeForFile(vFile);
+      while (revision != null) {
+        if (CvsStatusProvider.timeStampsAreEqual(upToDateTime, revision.getDate())) {
+          LvcsFile lvcsFile = (LvcsFile)revision.getObject();
+          return lvcsFile.getByteContent(revision.getImplicitLabel());
 
-        if (quietly) {
-          return null;
-        } else {
-          return loadContentFromCvs(vFile);
         }
+        revision = revision.getPrevRevision();
       }
-      else {
-        if (quietly) {
-          return null;
-        } else {
-          return loadContentFromCvs(vFile);
-        }
-      }
+
+      return null;
     }
-    catch (IOException e) {
-      if (!quietly) {
-        LOG.error(e);
-        return loadContentFromCvs(vFile);
-      } else {
-        return null;
-      }
+    else {
+      return null;
     }
   }
 
@@ -223,20 +206,11 @@ public class CvsChangeProvider implements ChangeProvider {
     return lastModified.getTime();
   }
 
-  @Nullable
-  private String loadContentFromCvs(final VirtualFile vFile) throws VcsException {
-    try {
-      final GetFileContentOperation operation = GetFileContentOperation.createForFile(vFile);
-      CvsVcs2.executeQuietOperation(CvsBundle.message("operation.name.get.file.content"), operation, myVcs.getProject());
-      final byte[] fileBytes = operation.getFileBytes();
-      return fileBytes == null ? null : new String(fileBytes, vFile.getCharset().name());
+  private CvsUpToDateRevision createCvsRevision(FilePath path, VcsRevisionNumber revisionNumber, boolean isBinary) {
+    if (isBinary) {
+      return new CvsUpToDateBinaryRevision(path, revisionNumber);
     }
-    catch (CannotFindCvsRootException e) {
-      throw new VcsException(e);
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new VcsException(e);
-    }
+    return new CvsUpToDateRevision(path, revisionNumber);
   }
 
   private class CvsUpToDateRevision implements ContentRevision {
@@ -244,7 +218,7 @@ public class CvsChangeProvider implements ChangeProvider {
     private VcsRevisionNumber myRevisionNumber;
     private String myContent;
 
-    public CvsUpToDateRevision(final FilePath path, final VcsRevisionNumber revisionNumber) {
+    protected CvsUpToDateRevision(final FilePath path, final VcsRevisionNumber revisionNumber) {
       myRevisionNumber = revisionNumber;
       myPath = path;
     }
@@ -253,23 +227,8 @@ public class CvsChangeProvider implements ChangeProvider {
     public String getContent() throws VcsException {
       if (myContent == null) {
         try {
-          VirtualFile virtualFile = myPath.getVirtualFile();
-          if (virtualFile != null) {
-            myContent = getLastUpToDateContentFor(virtualFile, true);
-          }
-          if (myContent == null) {
-            final GetFileContentOperation operation;
-            if (virtualFile != null) {
-              operation = GetFileContentOperation.createForFile(virtualFile, SimpleRevision.createForTheSameVersionOf(virtualFile));
-            }
-            else {
-              operation = GetFileContentOperation.createForFile(myPath);
-            }
-            if (operation.getRoot().isOffline()) return null;
-            CvsVcs2.executeQuietOperation(CvsBundle.message("operation.name.get.file.content"), operation, myVcs.getProject());
-            final byte[] fileBytes = operation.tryGetFileBytes();
-            myContent = fileBytes == null ? null : new String(fileBytes, myPath.getCharset().name());
-          }
+          byte[] fileBytes = getUpToDateBinaryContent();
+          myContent = fileBytes == null ? null : new String(fileBytes, myPath.getCharset().name());
         }
         catch (CannotFindCvsRootException e) {
           myContent = null;
@@ -281,6 +240,28 @@ public class CvsChangeProvider implements ChangeProvider {
       return myContent;
     }
 
+    @Nullable
+    protected byte[] getUpToDateBinaryContent() throws VcsException, CannotFindCvsRootException {
+      VirtualFile virtualFile = myPath.getVirtualFile();
+      byte[] result = null;
+      if (virtualFile != null) {
+        result = getLastUpToDateContentFor(virtualFile);
+      }
+      if (result == null) {
+        final GetFileContentOperation operation;
+        if (virtualFile != null) {
+          operation = GetFileContentOperation.createForFile(virtualFile, SimpleRevision.createForTheSameVersionOf(virtualFile));
+        }
+        else {
+          operation = GetFileContentOperation.createForFile(myPath);
+        }
+        if (operation.getRoot().isOffline()) return null;
+        CvsVcs2.executeQuietOperation(CvsBundle.message("operation.name.get.file.content"), operation, myVcs.getProject());
+        result = operation.tryGetFileBytes();
+      }
+      return result;
+    }
+
     @NotNull
     public FilePath getFile() {
       return myPath;
@@ -289,6 +270,27 @@ public class CvsChangeProvider implements ChangeProvider {
     @NotNull
     public VcsRevisionNumber getRevisionNumber() {
       return myRevisionNumber;
+    }
+  }
+
+  private class CvsUpToDateBinaryRevision extends CvsUpToDateRevision implements BinaryContentRevision {
+    private byte[] myBinaryContent;
+
+    public CvsUpToDateBinaryRevision(final FilePath path, final VcsRevisionNumber revisionNumber) {
+      super(path, revisionNumber);
+    }
+
+    @Nullable
+    public byte[] getBinaryContent() throws VcsException {
+      if (myBinaryContent == null) {
+        try {
+          myBinaryContent = getUpToDateBinaryContent();
+        }
+        catch (CannotFindCvsRootException e) {
+          throw new VcsException(e);
+        }
+      }
+      return myBinaryContent;
     }
   }
 }
