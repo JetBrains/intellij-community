@@ -194,7 +194,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
       PsiVariable problemVariable = result.get(i);
       final PsiIdentifier nameIdenitier = problemVariable.getNameIdentifier();
       PsiElement problemElement = nameIdenitier != null ? nameIdenitier : problemVariable;
-      if (problemVariable instanceof PsiParameter){
+      if (problemVariable instanceof PsiParameter && ! (((PsiParameter)problemVariable).getDeclarationScope() instanceof PsiForeachStatement )){
         problems[i] = manager.createProblemDescriptor(problemElement,
                                                       InspectionsBundle.message("inspection.can.be.local.parameter.problem.descriptor"),
                                                       myQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
