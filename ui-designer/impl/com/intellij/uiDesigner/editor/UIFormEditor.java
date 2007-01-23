@@ -164,11 +164,13 @@ public final class UIFormEditor extends UserDataHolderBase implements /*Navigata
       myPasses = new HighlightingPass[] { new FormHighlightingPass(editor) };
     }
 
+    @NotNull
     public HighlightingPass[] createPassesForEditor() {
       PsiDocumentManager.getInstance(myEditor.getProject()).commitAllDocuments();
       return myPasses;
     }
 
+    @NotNull
     public HighlightingPass[] createPassesForVisibleArea() {
       return createPassesForEditor();
     }

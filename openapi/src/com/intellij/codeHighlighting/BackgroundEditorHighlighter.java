@@ -15,7 +15,11 @@
  */
 package com.intellij.codeHighlighting;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface BackgroundEditorHighlighter {
+  @NotNull
   HighlightingPass[] createPassesForEditor();
+  @NotNull
   HighlightingPass[] createPassesForVisibleArea();
 }

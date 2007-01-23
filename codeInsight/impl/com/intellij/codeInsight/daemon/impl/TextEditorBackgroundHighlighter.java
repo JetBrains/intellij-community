@@ -122,10 +122,12 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     return createdPasses.toArray(new TextEditorHighlightingPass[createdPasses.size()]);
   }
 
+  @NotNull
   public TextEditorHighlightingPass[] createPassesForVisibleArea() {
     return getPasses(EXCEPT_VISIBLE);
   }
 
+  @NotNull
   public TextEditorHighlightingPass[] createPassesForEditor() {
     return getPasses(ArrayUtil.EMPTY_INT_ARRAY);
   }

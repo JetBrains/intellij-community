@@ -6,7 +6,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.application.ReadActionProcessor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.meta.PsiMetaBaseOwner;
@@ -386,7 +388,11 @@ public class FindUsagesUtil {
 
   private static void addFieldsUsages(final PsiClass aClass, final Processor<UsageInfo> results, final FindUsagesOptions options) {
     if (!options.isIncludeInherited) {
-      PsiField[] fields = aClass.getFields();
+      PsiField[] fields = ApplicationManager.getApplication().runReadAction(new Computable<PsiField[]>() {
+        public PsiField[] compute() {
+          return aClass.getFields();
+        }
+      });
       for (PsiField field : fields) {
         addElementUsages(field, results, options);
       }
@@ -402,7 +408,7 @@ public class FindUsagesUtil {
           if (field.getName().equals(fields[j].getName())) continue FieldsLoop;
         }
         final PsiClass fieldClass = field.getContainingClass();
-        if (fieldClass != null && manager.areElementsEquivalent(fieldClass, aClass)) {
+        if (manager.areElementsEquivalent(fieldClass, aClass)) {
           addElementUsages(fields[i], results, options);
         }
         else {
