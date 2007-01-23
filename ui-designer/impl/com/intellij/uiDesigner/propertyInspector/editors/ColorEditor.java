@@ -69,6 +69,19 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
     SwingUtilities.updateComponentTreeUI(myTextField);
   }
 
+  private static class ColorDescriptorWrapper extends Color {
+    private ColorDescriptor myDescriptor;
+
+    public ColorDescriptorWrapper(ColorDescriptor descriptor) {
+      super(descriptor.getResolvedColor() == null ? 0 : descriptor.getResolvedColor().getRGB());
+      myDescriptor = descriptor;
+    }
+
+    public ColorDescriptor getDescriptor() {
+      return myDescriptor;
+    }
+  }
+
   private class MyColorChooserDialog extends DialogWrapper {
     private JColorChooser myColorChooser;
     private MyDescriptorChooserPanel mySwingChooserPanel;
@@ -162,14 +175,14 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
     }
 
     public void setSelectedValue(final ColorDescriptor value) {
-      myColorChooser.setColor(value);
+      myColorChooser.setColor(new ColorDescriptorWrapper(value));
       selectTabForColor(value);
     }
 
     public ColorDescriptor getSelectedValue() {
       final Color color = myColorChooser.getColor();
-      if (color instanceof ColorDescriptor) {
-        return (ColorDescriptor) color;
+      if (color instanceof ColorDescriptorWrapper) {
+        return ((ColorDescriptorWrapper) color).getDescriptor();
       }
       return new ColorDescriptor(color);
     }
@@ -205,7 +218,7 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
       myDescriptorList.addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
           ColorDescriptor descriptor = (ColorDescriptor) myDescriptorList.getSelectedValue();
-          getColorSelectionModel().setSelectedColor(descriptor);
+          getColorSelectionModel().setSelectedColor(new ColorDescriptorWrapper(descriptor));
         }
       });
       add(new JScrollPane(myDescriptorList), BorderLayout.CENTER);

@@ -74,7 +74,7 @@ public class IntroColorProperty extends IntrospectedProperty<ColorDescriptor> {
       if (component.getParent() != null) {
         Color componentColor = (Color) myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
         Color parentColor = (Color) myReadMethod.invoke(component.getParent(), EMPTY_OBJECT_ARRAY);
-        Color defaultColor = getDefaultValue(component);
+        ColorDescriptor defaultColor = getDefaultValue(component);
         if (componentColor != null && !Comparing.equal(componentColor, parentColor) && !Comparing.equal(componentColor, defaultColor)) {
           setValue(radComponent, new ColorDescriptor(componentColor));
         }

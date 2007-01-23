@@ -22,28 +22,28 @@ import java.lang.reflect.Field;
 /**
  * @author yole
  */
-public class ColorDescriptor extends Color {
+public class ColorDescriptor {
   private Color myColor;
   private String mySwingColor;
   private String mySystemColor;
   private String myAWTColor;
 
   public static ColorDescriptor fromSwingColor(final String swingColor) {
-    ColorDescriptor result = new ColorDescriptor(UIManager.getColor(swingColor));
+    ColorDescriptor result = new ColorDescriptor(null);
     result.myColor = null;
     result.mySwingColor = swingColor;
     return result;
   }
 
   public static ColorDescriptor fromSystemColor(final String systemColor) {
-    ColorDescriptor result = new ColorDescriptor(getColorField(SystemColor.class, systemColor));
+    ColorDescriptor result = new ColorDescriptor(null);
     result.myColor = null;
     result.mySystemColor = systemColor;
     return result;
   }
 
   public static ColorDescriptor fromAWTColor(final String awtColor) {
-    ColorDescriptor result = new ColorDescriptor(getColorField(Color.class, awtColor));
+    ColorDescriptor result = new ColorDescriptor(null);
     result.myColor = null;
     result.myAWTColor = awtColor;
     return result;
@@ -63,12 +63,23 @@ public class ColorDescriptor extends Color {
   }
 
   public ColorDescriptor(final Color color) {
-    super(color != null ? color.getRGB() : 0);
     myColor = color;
   }
 
   public Color getResolvedColor() {
-    return new Color(getRGB());
+    if (myColor != null) {
+      return myColor;
+    }
+    if (mySwingColor != null) {
+      return UIManager.getColor(mySwingColor);
+    }
+    if (mySystemColor != null) {
+      return getColorField(SystemColor.class, mySystemColor);
+    }
+    if (myAWTColor != null) {
+      return getColorField(Color.class, myAWTColor);
+    }
+    return null;
   }
 
   public Color getColor() {
@@ -98,7 +109,7 @@ public class ColorDescriptor extends Color {
       return myAWTColor;
     }
     if (myColor != null) {
-      return "[" + getRed() + "," + getGreen() + "," + getBlue() + "]";
+      return "[" + myColor.getRed() + "," + myColor.getGreen() + "," + myColor.getBlue() + "]";
     }
     return "null";
   }
