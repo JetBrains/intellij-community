@@ -115,10 +115,8 @@ public class DomElementsHighlightingUtil {
     if (psiElement != null && StringUtil.isNotEmpty(psiElement.getText())) {
       if (psiElement instanceof XmlTag) {
         final XmlTag tag = (XmlTag)psiElement;
-        if (tag.getSubTags().length > 0) {
           addDescriptionsToTagEnds(tag, descritors, creator);
           return descritors;
-        }
       }
       return Arrays.asList(creator.fun(Pair.create(TextRange.from(0, psiElement.getTextRange().getLength()), psiElement)));
     }
