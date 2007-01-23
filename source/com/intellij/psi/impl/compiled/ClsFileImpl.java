@@ -274,9 +274,10 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
 
     PsiElement mirrorFile = SourceTreeToPsiMap.treeElementToPsi(myMirror);
     if (mirrorFile instanceof PsiJavaFile) {
-      PsiPackageStatement packageStatement = ((PsiJavaFile)mirrorFile).getPackageStatement();
-      if (packageStatement != null) {
-        ((ClsElementImpl)getPackageStatement()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(packageStatement));
+      PsiPackageStatement packageStatementMirror = ((PsiJavaFile)mirrorFile).getPackageStatement();
+      final PsiPackageStatement packageStatement = getPackageStatement();
+      if (packageStatementMirror != null && packageStatement != null) {
+        ((ClsElementImpl)packageStatement).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(packageStatementMirror));
       }
       PsiClass[] classes = getClasses();
       PsiClass[] mirrorClasses = ((PsiJavaFile)mirrorFile).getClasses();
