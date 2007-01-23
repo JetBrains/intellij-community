@@ -691,6 +691,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void visitMethodCallExpression(PsiMethodCallExpression expression) {
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumSuperConstructorCall(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkSuperQualifierType(expression));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodCall(expression, myResolveHelper));
+
     if (!myHolder.hasErrorResults()) visitExpression(expression);
   }
 
@@ -877,9 +879,11 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         if (!myHolder.hasErrorResults()) myHolder.add(HighlightControlFlowUtil.checkFinalVariableInitalizedInLoop(expression, resolved));
       }
     }
-    else if (expression.getParent() instanceof PsiMethodCallExpression) {
-      myHolder.add(HighlightMethodUtil.checkMethodCall((PsiMethodCallExpression)expression.getParent(), myResolveHelper));
-    }
+    ///
+    //else if (expression.getParent() instanceof PsiMethodCallExpression) {
+    //  myHolder.add(HighlightMethodUtil.checkMethodCall((PsiMethodCallExpression)expression.getParent(), myResolveHelper));
+    //}
+    ///
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkExpressionRequired(expression));
     if (!myHolder.hasErrorResults() && resolved instanceof PsiField) {
       myHolder.add(HighlightUtil.checkIllegalForwardReferenceToField(expression, (PsiField)resolved));
