@@ -50,14 +50,13 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
-import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
+import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.status.SvnStatusEnvironment;
-import org.jetbrains.idea.svn.update.AbstractSvnUpdateIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
+import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -90,17 +89,17 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   private SvnEntriesFileListener myEntriesFileListener;
   private Project myProject;
 
-  private final SvnCheckinEnvironment myCheckinEnvironment;
-  private final AbstractSvnUpdateIntegrateEnvironment mySvnUpdateEnvironment;
-  private final AbstractSvnUpdateIntegrateEnvironment mySvnIntegrateEnvironment;
-  private final SvnHistoryProvider mySvnHistoryProvider;
-  private final SvnStatusEnvironment mySvnStatusEnvironment;
-  private final SvnAnnotationProvider myAnnotationProvider;
-  private final SvnDiffProvider mySvnDiffProvider;
+  private CheckinEnvironment myCheckinEnvironment;
+  private UpdateEnvironment mySvnUpdateEnvironment;
+  private UpdateEnvironment mySvnIntegrateEnvironment;
+  private VcsHistoryProvider mySvnHistoryProvider;
+  private UpdateEnvironment mySvnStatusEnvironment;
+  private AnnotationProvider myAnnotationProvider;
+  private DiffProvider mySvnDiffProvider;
   private VcsShowConfirmationOption myAddConfirmation;
   private VcsShowConfirmationOption myDeleteConfirmation;
-  private SvnEditFileProvider myEditFilesProvider;
-  private SvnCommittedChangesProvider myCommittedChangesProvider;
+  private EditFileProvider myEditFilesProvider;
+  private CommittedChangesProvider myCommittedChangesProvider;
 
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
   public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
@@ -138,18 +137,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     dumpFileStatus(SvnFileStatus.EXTERNAL);
     dumpFileStatus(SvnFileStatus.OBSTRUCTED);
 
-    myCheckinEnvironment = new SvnCheckinEnvironment(this);
-
-    mySvnUpdateEnvironment = new SvnUpdateEnvironment(this);
-    mySvnIntegrateEnvironment = new SvnIntegrateEnvironment(this);
-    mySvnHistoryProvider = new SvnHistoryProvider(this);
-    mySvnStatusEnvironment = new SvnStatusEnvironment(this);
     myEntriesFileListener = new SvnEntriesFileListener(project);
-    myAnnotationProvider = new SvnAnnotationProvider(this);
-    mySvnDiffProvider = new SvnDiffProvider(this);
-    myEditFilesProvider = new SvnEditFileProvider(this);
-    myCommittedChangesProvider = new SvnCommittedChangesProvider(project);
-
   }
 
   @Override
@@ -175,6 +163,9 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   }
 
   public EditFileProvider getEditFileProvider() {
+    if (myEditFilesProvider == null) {
+      myEditFilesProvider = new SvnEditFileProvider(this);
+    }
     return myEditFilesProvider;
   }
 
@@ -232,10 +223,16 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   }
 
   public UpdateEnvironment getIntegrateEnvironment() {
+    if (mySvnIntegrateEnvironment == null) {
+      mySvnIntegrateEnvironment = new SvnIntegrateEnvironment(this);
+    }
     return mySvnIntegrateEnvironment;
   }
 
   public UpdateEnvironment getUpdateEnvironment() {
+    if (mySvnUpdateEnvironment == null) {
+      mySvnUpdateEnvironment = new SvnUpdateEnvironment(this);
+    }
     return mySvnUpdateEnvironment;
   }
 
@@ -290,22 +287,34 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   @NotNull
   public CheckinEnvironment getCheckinEnvironment() {
+    if (myCheckinEnvironment == null) {
+      myCheckinEnvironment = new SvnCheckinEnvironment(this);
+    }
     return myCheckinEnvironment;
   }
 
   public VcsHistoryProvider getVcsHistoryProvider() {
+    if (mySvnHistoryProvider == null) {
+      mySvnHistoryProvider = new SvnHistoryProvider(this);
+    }
     return mySvnHistoryProvider;
   }
 
   public VcsHistoryProvider getVcsBlockHistoryProvider() {
-    return mySvnHistoryProvider;
+    return getVcsHistoryProvider();
   }
 
   public UpdateEnvironment getStatusEnvironment() {
+    if (mySvnStatusEnvironment == null) {
+      mySvnStatusEnvironment = new SvnStatusEnvironment(this);
+    }
     return mySvnStatusEnvironment;
   }
 
   public AnnotationProvider getAnnotationProvider() {
+    if (myAnnotationProvider == null) {
+      myAnnotationProvider = new SvnAnnotationProvider(this);
+    }
     return myAnnotationProvider;
   }
 
@@ -314,6 +323,9 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   }
 
   public DiffProvider getDiffProvider() {
+    if (mySvnDiffProvider == null) {
+      mySvnDiffProvider = new SvnDiffProvider(this);
+    }
     return mySvnDiffProvider;
   }
 
@@ -540,6 +552,9 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   @Override @Nullable
   public CommittedChangesProvider getCommittedChangesProvider() {
+    if (myCommittedChangesProvider == null) {
+      myCommittedChangesProvider = new SvnCommittedChangesProvider(myProject);
+    }
     return myCommittedChangesProvider;
   }
 
