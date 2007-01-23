@@ -261,8 +261,8 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
       LOG.info("timestamp changed");
 
       try {
-        refreshFilesInJar(info, asynchronous, modalityState);
         info.setTimeStamp(info.getFile().lastModified());
+        refreshFilesInJar(info, asynchronous, modalityState);
       }
       catch (IOException e) {
         LOG.info("Could not read jar");
