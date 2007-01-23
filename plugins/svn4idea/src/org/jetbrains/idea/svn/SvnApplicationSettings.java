@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -31,7 +30,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.tmatesoft.svn.core.internal.io.svn.SVNGanymedSession;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,26 +44,36 @@ public class SvnApplicationSettings implements ApplicationComponent, JDOMExterna
 
   private SvnFileSystemListener myVFSHandler;
   private Map myAuthenticationInfo;
+  private int mySvnProjectCount;
 
   public static SvnApplicationSettings getInstance() {
     return ApplicationManager.getApplication().getComponent(SvnApplicationSettings.class);
   }
 
+  @NotNull
   public String getComponentName() {
     return "SvnApplicationSettings";
   }
 
   public void initComponent() {
+  }
+
+  public void disposeComponent() {
+    SVNGanymedSession.shutdown();
+  }
+
+  public void svnActivated() {
     if (myVFSHandler == null) {
       myVFSHandler = new SvnFileSystemListener();
       LocalFileSystem.getInstance().registerAuxiliaryFileOperationsHandler(myVFSHandler);
       CommandProcessor.getInstance().addCommandListener(myVFSHandler);
     }
+    mySvnProjectCount++;
   }
 
-  public void disposeComponent() {
-    SVNGanymedSession.shutdown();
-    if (myVFSHandler != null) {
+  public void svnDeactivated() {
+    mySvnProjectCount--;
+    if (mySvnProjectCount == 0) {
       LocalFileSystem.getInstance().unregisterAuxiliaryFileOperationsHandler(myVFSHandler);
       CommandProcessor.getInstance().removeCommandListener(myVFSHandler);
       myVFSHandler = null;

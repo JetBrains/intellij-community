@@ -152,6 +152,20 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   }
 
+  @Override
+  protected void activate() {
+    super.activate();
+    SvnApplicationSettings.getInstance().svnActivated();
+    VirtualFileManager.getInstance().addVirtualFileListener(myEntriesFileListener);
+  }
+
+  @Override
+  protected void deactivate() {
+    VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
+    SvnApplicationSettings.getInstance().svnDeactivated();
+    super.deactivate();
+  }
+
   public VcsShowConfirmationOption getAddConfirmation() {
     return myAddConfirmation;
   }
@@ -242,7 +256,6 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
 
   public void projectClosed() {
-    VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
     new DefaultSVNRepositoryPool(null, null).shutdownConnections(true);
   }
 
@@ -250,7 +263,6 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(getProject());
     myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
     myDeleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
-    VirtualFileManager.getInstance().addVirtualFileListener(myEntriesFileListener);
   }
 
   public void disposeComponent() {
@@ -259,6 +271,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   public void initComponent() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "Subversion";
   }
