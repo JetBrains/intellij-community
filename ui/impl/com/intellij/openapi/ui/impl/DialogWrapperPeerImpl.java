@@ -356,6 +356,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     private FocusTrackback myFocusTrackback;
     private MyDialog.MyWindowListener myWindowListener;
+    private MyDialog.MyComponentListener myComponentListener;
 
     public MyDialog(Dialog owner, DialogWrapper dialogWrapper) {
       super(owner);
@@ -373,31 +374,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       myWindowListener = new MyWindowListener();
       addWindowListener(myWindowListener);
-      addComponentListener(new ComponentAdapter() {
-        @SuppressWarnings({"RefusedBequest"})
-        public void componentResized(ComponentEvent e) {
-          final JRootPane pane = getRootPane();
-          final Dimension minSize = pane.getMinimumSize();
-          final Dimension size = pane.getSize();
-          final Dimension winSize = getSize();
-          if (minSize.width > size.width) {
-            winSize.width += minSize.width - size.width;
-          }
-          if (minSize.height > size.height) {
-            winSize.height += minSize.height - size.height;
-          }
-
-          if (!winSize.equals(getSize())) {
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                if (isShowing()) {
-                  setSize(winSize);
-                }
-              }
-            });
-          }
-        }
-      });
+      myComponentListener = new MyComponentListener();
+      addComponentListener(myComponentListener);
     }
 
     public FocusTrackback getFocusTrackback() {
@@ -509,6 +487,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         myWindowListener.saveSize();
         removeWindowListener(myWindowListener);
         myWindowListener = null;
+      }
+      if (myComponentListener != null) {
+        removeComponentListener(myComponentListener);
+        myComponentListener = null;
       }
       super.dispose();
 
@@ -626,6 +608,33 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
               exc.printStackTrace();
             }
           }
+        }
+      }
+    }
+
+    private class MyComponentListener extends ComponentAdapter {
+      @SuppressWarnings({"RefusedBequest"})
+        public void componentResized(ComponentEvent e) {
+        final JRootPane pane = getRootPane();
+        if (pane == null) return;
+        final Dimension minSize = pane.getMinimumSize();
+        final Dimension size = pane.getSize();
+        final Dimension winSize = getSize();
+        if (minSize.width > size.width) {
+          winSize.width += minSize.width - size.width;
+        }
+        if (minSize.height > size.height) {
+          winSize.height += minSize.height - size.height;
+        }
+
+        if (!winSize.equals(getSize())) {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              if (isShowing()) {
+                setSize(winSize);
+              }
+            }
+          });
         }
       }
     }
