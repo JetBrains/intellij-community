@@ -89,6 +89,23 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   }
 
   public XmlElementDescriptor[] getRootElementsDescriptors(final XmlDocument document) {
+    // Suggest more appropriate variant if DOCTYPE <element_name> exists
+    final XmlProlog prolog = document != null ? document.getProlog():null;
+
+    if (prolog != null) {
+      final XmlDoctype doctype = prolog.getDoctype();
+
+      if (doctype != null) {
+        final XmlElement element = doctype.getNameElement();
+
+        if (element != null) {
+          final XmlElementDescriptor descriptor = getElementDescriptor(element.getText());
+
+          if (descriptor != null) return new XmlElementDescriptor[] {descriptor};
+        }
+      }
+    }
+
     return getElements();
   }
 
