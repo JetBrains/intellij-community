@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -100,12 +100,12 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection {
             } else {
                 message = null;
             }
-            @NonNls final StringBuffer newExpression =
-                    new StringBuffer();
-            final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(callExpression,
-                                                                           PsiMethod.class);
-            if(containingMethod!=null && AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test", true))
-            {
+            @NonNls final StringBuilder newExpression = new StringBuilder();
+            final PsiMethod containingMethod =
+                    PsiTreeUtil.getParentOfType(callExpression, PsiMethod.class);
+            if (containingMethod != null &&
+                    AnnotationUtil.isAnnotated(containingMethod,
+                            "org.junit.Test", true)) {
                 newExpression.append("org.junit.Assert.");
             }
             newExpression.append("fail(");
@@ -167,8 +167,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection {
                 lhs = rhs;
                 rhs = temp;
             }
-            @NonNls final StringBuffer newExpression =
-                    new StringBuffer();
+            @NonNls final StringBuilder newExpression = new StringBuilder();
             final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(
                     callExpression, PsiMethod.class);
             if (containingMethod != null && AnnotationUtil.isAnnotated(
@@ -236,8 +235,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection {
             final String uppercaseLiteralValue =
                     Character.toUpperCase(literalValue.charAt(0)) +
                             literalValue.substring(1);
-            @NonNls final StringBuffer newExpression =
-                    new StringBuffer();
+            @NonNls final StringBuilder newExpression = new StringBuilder();
             final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(
                     callExpression, PsiMethod.class);
             if (containingMethod != null && AnnotationUtil.isAnnotated(
@@ -494,10 +492,11 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection {
             return false;
         }
         final PsiClass targetClass = method.getContainingClass();
-        return targetClass != null &&
-                (ClassUtils.isSubclass(targetClass,
-                        "junit.framework.Assert") ||
-                        "org.junit.Assert".equals(targetClass.getQualifiedName()));
+        if (targetClass == null) {
+            return false;
+        }
+        return ClassUtils.isSubclass(targetClass, "junit.framework.Assert")
+                || ClassUtils.isSubclass(targetClass, "org.junit.Assert");
     }
 
     private static boolean isAssertFalse(PsiMethodCallExpression expression) {
@@ -512,9 +511,11 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection {
             return false;
         }
         final PsiClass targetClass = method.getContainingClass();
-        return targetClass != null &&
-                (ClassUtils.isSubclass(targetClass, "junit.framework.Assert") ||
-                        "org.junit.Assert".equals(targetClass.getQualifiedName()));
+        if (targetClass == null) {
+            return false;
+        }
+        return ClassUtils.isSubclass(targetClass, "junit.framework.Assert")
+                || ClassUtils.isSubclass(targetClass, "org.junit.Assert");
     }
 
     private static boolean isAssertEquals(PsiMethodCallExpression expression) {
@@ -529,8 +530,10 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection {
             return false;
         }
         final PsiClass targetClass = method.getContainingClass();
-        return targetClass != null &&
-                (ClassUtils.isSubclass(targetClass, "junit.framework.Assert") ||
-                        "org.junit.Assert".equals(targetClass.getQualifiedName()));
+        if (targetClass == null) {
+            return false;
+        }
+        return ClassUtils.isSubclass(targetClass, "junit.framework.Assert")
+                || ClassUtils.isSubclass(targetClass, "org.junit.Assert");
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,14 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiAnnotationParameterList;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNameValuePair;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TestUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collections;
 
 public class TestMethodWithoutAssertionInspection extends ExpressionInspection {
 
@@ -35,10 +33,15 @@ public class TestMethodWithoutAssertionInspection extends ExpressionInspection {
         return "JUnitTestMethodWithNoAssertions";
     }
 
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "test.method.without.assertion.display.name");
+    }
+
     public String getGroupDisplayName() {
         return GroupNames.JUNIT_GROUP_NAME;
     }
-
 
     @NotNull
     protected String buildErrorString(Object... infos) {
@@ -58,8 +61,8 @@ public class TestMethodWithoutAssertionInspection extends ExpressionInspection {
             if (!TestUtils.isJUnitTestMethod(method)) {
                 return;
             }
-            final PsiAnnotation testAnnotation = AnnotationUtil.findAnnotation(
-                    method, Collections.singleton("org.junit.Test"));
+            final PsiAnnotation testAnnotation =
+                    AnnotationUtil.findAnnotation(method, "org.junit.Test");
             if (testAnnotation != null) {
                 final PsiAnnotationParameterList parameterList =
                         testAnnotation.getParameterList();
@@ -72,7 +75,8 @@ public class TestMethodWithoutAssertionInspection extends ExpressionInspection {
                     }
                 }
             }
-            final ContainsAssertionVisitor visitor = new ContainsAssertionVisitor();
+            final ContainsAssertionVisitor visitor =
+                    new ContainsAssertionVisitor();
             method.accept(visitor);
             if (visitor.containsAssertion()) {
                 return;
