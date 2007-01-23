@@ -67,7 +67,7 @@ public class FrameDebuggerTree extends DebuggerTree {
   }
 
   public void restoreNodeState(DebuggerTreeNodeImpl node) {
-    if(myAnyNewLocals) {
+    if (myAnyNewLocals) {
       final NodeDescriptorImpl descriptor = node.getDescriptor();
       final boolean isLocalVar = descriptor instanceof LocalVariableDescriptorImpl;
       descriptor.myIsSelected &= isLocalVar;
@@ -78,8 +78,8 @@ public class FrameDebuggerTree extends DebuggerTree {
       }
     }
     super.restoreNodeState(node);
-    if(myAnyNewLocals && node.getDescriptor().myIsExpanded) {
-      DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl) getMutableModel().getRoot();
+    if (myAnyNewLocals && node.getDescriptor().myIsExpanded) {
+      DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl)getMutableModel().getRoot();
       scrollToVisible(root);
     }
   }
@@ -97,13 +97,15 @@ public class FrameDebuggerTree extends DebuggerTree {
       super(stackNode);
     }
 
-    protected void buildVariables(final StackFrameDescriptorImpl stackDescriptor, final EvaluationContextImpl evaluationContext) throws EvaluateException {
+    protected void buildVariables(final StackFrameDescriptorImpl stackDescriptor, final EvaluationContextImpl evaluationContext)
+      throws EvaluateException {
       final SourcePosition sourcePosition = getDebuggerContext().getSourcePosition();
-      final Pair<Set<String>, Set<TextWithImports>> usedVars = ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
-        public Pair<Set<String>, Set<TextWithImports>> compute() {
-          return findReferencedVars(sourcePosition);
-        }
-      });
+      final Pair<Set<String>, Set<TextWithImports>> usedVars =
+        ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
+          public Pair<Set<String>, Set<TextWithImports>> compute() {
+            return findReferencedVars(sourcePosition);
+          }
+        });
       if (usedVars.first.isEmpty() && usedVars.second.isEmpty()) {
         return;
       }
@@ -143,76 +145,34 @@ public class FrameDebuggerTree extends DebuggerTree {
     final int offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), doc.getLineStartOffset(line), " \t");
     PsiElement element = file.findElementAt(offset);
     if (element != null) {
-      PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(element, PsiStatement.class);
-      if (statement != null) {
-        element = statement;
+      PsiMethod method = PsiTreeUtil.getNonStrictParentOfType(element, PsiMethod.class);
+      if (method != null) {
+        element = method;
       }
       else {
-        PsiExpression expression = PsiTreeUtil.getNonStrictParentOfType(element, PsiExpression.class);
-        if (expression != null) {
-          element = expression;
+        PsiField field = PsiTreeUtil.getNonStrictParentOfType(element, PsiField.class);
+        if (field != null) {
+          element = field;
+        }
+        else {
+          final PsiClassInitializer initializer = PsiTreeUtil.getNonStrictParentOfType(element, PsiClassInitializer.class);
+          if (initializer != null) {
+            element = initializer;
+          }
         }
       }
 
       //noinspection unchecked
       final Set<String> vars = new HashSet<String>();
       final Set<TextWithImports> expressions = new HashSet<TextWithImports>();
-      final PsiRecursiveElementVisitor variablesCollector = new PsiRecursiveElementVisitor() {
-
-        public void visitReferenceExpression(final PsiReferenceExpression reference) {
-          if (lineRange.intersects(reference.getTextRange())) {
-            final PsiElement psiElement = reference.resolve();
-            if (psiElement instanceof PsiVariable) {
-              final PsiVariable var = (PsiVariable)psiElement;
-              if (var instanceof PsiField && !hasMethodCall(reference)) {
-                expressions.add(new TextWithImportsImpl(reference));
-              }
-              else {
-                vars.add(var.getName());
-              }
-            }
-          }
-          super.visitReferenceExpression(reference);
-        }
-
-        public void visitArrayAccessExpression(final PsiArrayAccessExpression expression) {
-          if (!hasMethodCall(expression)) {
-            expressions.add(new TextWithImportsImpl(expression));
-          }
-          super.visitArrayAccessExpression(expression);
-        }
-
-        public void visitLocalVariable(final PsiLocalVariable variable) {
-          if (lineRange.intersects(variable.getTextRange())) {
-            vars.add(variable.getName());
-          }
-          super.visitLocalVariable(variable);
-        }
-
-        public void visitClass(final PsiClass aClass) {
-          // Do not step in to local and anonymous classes...
-        }
-
-        /*
-        public void visitStatement(PsiStatement statement) {
-          if (lineRange.intersects(statement.getTextRange())) {
-            super.visitStatement(statement);
-          }
-        }
-        */
-      };
+      final PsiRecursiveElementVisitor variablesCollector = new VariablesCollector(lineRange, expressions, vars);
       element.accept(variablesCollector);
-      for (PsiElement sibling = element.getNextSibling(); sibling != null; sibling = sibling.getNextSibling()) {
-        if (!lineRange.intersects(sibling.getTextRange())) {
-          break;
-        }
-        sibling.accept(variablesCollector);
-      }
+
       return new Pair<Set<String>, Set<TextWithImports>>(vars, expressions);
     }
     return new Pair<Set<String>, Set<TextWithImports>>(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
   }
-  
+
   private static boolean hasMethodCall(PsiElement element) {
     final AtomicBoolean rv = new AtomicBoolean(false);
     element.accept(new PsiRecursiveElementVisitor() {
@@ -223,7 +183,7 @@ public class FrameDebuggerTree extends DebuggerTree {
     return rv.get();
   }
 
-  
+
   private class RefreshFrameTreeCommand extends RefreshDebuggerTreeCommand {
     public RefreshFrameTreeCommand(DebuggerContextImpl context) {
       super(context);
@@ -234,7 +194,7 @@ public class FrameDebuggerTree extends DebuggerTree {
       DebuggerTreeNodeImpl rootNode;
 
       final ThreadReferenceProxyImpl currentThread = getDebuggerContext().getThreadProxy();
-      if(currentThread == null) {
+      if (currentThread == null) {
         return;
       }
 
@@ -248,9 +208,9 @@ public class FrameDebuggerTree extends DebuggerTree {
         else {
           rootNode = getNodeFactory().getDefaultNode();
           SuspendManager suspendManager = getSuspendContext().getDebugProcess().getSuspendManager();
-          if(suspendManager.isSuspended(currentThread)) {
+          if (suspendManager.isSuspended(currentThread)) {
             try {
-              if(currentThread.frameCount() == 0) {
+              if (currentThread.frameCount() == 0) {
                 rootNode.add(MessageDescriptor.THREAD_IS_EMPTY);
               }
               else {
@@ -284,7 +244,7 @@ public class FrameDebuggerTree extends DebuggerTree {
           model.addTreeModelListener(new TreeModelAdapter() {
             public void treeStructureChanged(TreeModelEvent e) {
               final Object[] path = e.getPath();
-              if(path.length > 0 && path[path.length - 1] == rootNode1) {
+              if (path.length > 0 && path[path.length - 1] == rootNode1) {
                 // wait until rootNode1 (the root just set) becomes the root
                 model.removeTreeModelListener(this);
                 if (ViewsGeneralSettings.getInstance().AUTOSCROLL_TO_NEW_LOCALS) {
@@ -293,10 +253,10 @@ public class FrameDebuggerTree extends DebuggerTree {
                 else {
                   // should clear this flag, otherwise, if AUTOSCROLL_TO_NEW_LOCALS option turned
                   // to true during the debug process, all these variables will be considered 'new'
-                  for (Enumeration children  = rootNode1.rawChildren(); children.hasMoreElements();) {
+                  for (Enumeration children = rootNode1.rawChildren(); children.hasMoreElements();) {
                     final DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)children.nextElement();
                     final NodeDescriptorImpl descriptor = child.getDescriptor();
-                    if(descriptor instanceof LocalVariableDescriptorImpl) {
+                    if (descriptor instanceof LocalVariableDescriptorImpl) {
                       ((LocalVariableDescriptorImpl)descriptor).setNewLocal(false);
                     }
                   }
@@ -305,13 +265,14 @@ public class FrameDebuggerTree extends DebuggerTree {
             }
           });
         }
+
         private void autoscrollToNewLocals(DebuggerTreeNodeImpl frameNode) {
           final DebuggerSession debuggerSession = getDebuggerContext().getDebuggerSession();
           final boolean isSteppingThrough = debuggerSession.isSteppingThrough(getDebuggerContext().getThreadProxy());
-          for (Enumeration e  = frameNode.rawChildren(); e.hasMoreElements();) {
+          for (Enumeration e = frameNode.rawChildren(); e.hasMoreElements();) {
             final DebuggerTreeNodeImpl child = (DebuggerTreeNodeImpl)e.nextElement();
             final NodeDescriptorImpl descriptor = child.getDescriptor();
-            if(!(descriptor instanceof LocalVariableDescriptorImpl)) {
+            if (!(descriptor instanceof LocalVariableDescriptorImpl)) {
               continue;
             }
             final LocalVariableDescriptorImpl localVariableDescriptor = (LocalVariableDescriptorImpl)descriptor;
@@ -332,4 +293,55 @@ public class FrameDebuggerTree extends DebuggerTree {
     }
   }
 
+  private static class VariablesCollector extends PsiRecursiveElementVisitor {
+    private final TextRange myLineRange;
+    private final Set<TextWithImports> myExpressions;
+    private final Set<String> myVars;
+
+    public VariablesCollector(final TextRange lineRange, final Set<TextWithImports> expressions, final Set<String> vars) {
+      myLineRange = lineRange;
+      myExpressions = expressions;
+      myVars = vars;
+    }
+
+    public void visitElement(final PsiElement element) {
+      if (myLineRange.intersects(element.getTextRange())) {
+        super.visitElement(element);
+      }
+    }
+
+    public void visitReferenceExpression(final PsiReferenceExpression reference) {
+      if (myLineRange.intersects(reference.getTextRange())) {
+        final PsiElement psiElement = reference.resolve();
+        if (psiElement instanceof PsiVariable) {
+          final PsiVariable var = (PsiVariable)psiElement;
+          if (var instanceof PsiField && !hasMethodCall(reference)) {
+            myExpressions.add(new TextWithImportsImpl(reference));
+          }
+          else {
+            myVars.add(var.getName());
+          }
+        }
+      }
+      super.visitReferenceExpression(reference);
+    }
+
+    public void visitArrayAccessExpression(final PsiArrayAccessExpression expression) {
+      if (!hasMethodCall(expression)) {
+        myExpressions.add(new TextWithImportsImpl(expression));
+      }
+      super.visitArrayAccessExpression(expression);
+    }
+
+    public void visitLocalVariable(final PsiLocalVariable variable) {
+      if (myLineRange.intersects(variable.getTextRange())) {
+        myVars.add(variable.getName());
+      }
+      super.visitLocalVariable(variable);
+    }
+
+    public void visitClass(final PsiClass aClass) {
+      // Do not step in to local and anonymous classes...
+    }
+  }
 }
