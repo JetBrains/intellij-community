@@ -4,8 +4,8 @@ import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -198,9 +198,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                    @NotNull SearchScope originalScope,
                                    boolean ignoreAccessScope) {
     final Query<PsiReference> query = ReferencesSearch.search(refElement, originalScope, ignoreAccessScope);
-    return query.forEach(new Processor<PsiReference>() {
-      public boolean process(final PsiReference t) {
-        return processor.execute(t);
+    return query.forEach(new ReadActionProcessor<PsiReference>() {
+      public boolean processInReadAction(final PsiReference psiReference) {
+        return processor.execute(psiReference);
       }
     });
   }
@@ -217,9 +217,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                           @NotNull final PsiMethod method,
                                           @NotNull SearchScope searchScope,
                                           final boolean checkDeep) {
-    return OverridingMethodsSearch.search(method, searchScope, checkDeep).forEach(new Processor<PsiMethod>() {
-      public boolean process(final PsiMethod t) {
-        return processor.execute(t);
+    return OverridingMethodsSearch.search(method, searchScope, checkDeep).forEach(new ReadActionProcessor<PsiMethod>() {
+      public boolean processInReadAction(final PsiMethod psiMethod) {
+        return processor.execute(psiMethod);
       }
     });
   }
@@ -243,9 +243,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                       @NotNull final PsiMethod method,
                                                       @NotNull SearchScope searchScope,
                                                       final boolean isStrictSignatureSearch) {
-    return MethodReferencesSearch.search(method, searchScope, isStrictSignatureSearch).forEach(new Processor<PsiReference>() {
-      public boolean process(final PsiReference t) {
-        return processor.execute(t);
+    return MethodReferencesSearch.search(method, searchScope, isStrictSignatureSearch).forEach(new ReadActionProcessor<PsiReference>() {
+      public boolean processInReadAction(final PsiReference psiReference) {
+        return processor.execute(psiReference);
       }
     });
   }
@@ -269,9 +269,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                    @NotNull SearchScope searchScope,
                                    boolean checkDeep,
                                    boolean checkInheritance) {
-    return ClassInheritorsSearch.search(aClass, searchScope, checkDeep, checkInheritance).forEach(new Processor<PsiClass>() {
-      public boolean process(final PsiClass t) {
-        return processor.execute(t);
+    return ClassInheritorsSearch.search(aClass, searchScope, checkDeep, checkInheritance).forEach(new ReadActionProcessor<PsiClass>() {
+      public boolean processInReadAction(final PsiClass psiClass) {
+        return processor.execute(psiClass);
       }
     });
   }
@@ -600,9 +600,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           files[i] = null; // prevent strong ref
           PsiElement[] psiRoots = file.getPsiRoots();
           Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
-          for (PsiElement psiRoot : psiRoots) {
+          for (final PsiElement psiRoot : psiRoots) {
             if (!processed.add(psiRoot)) continue;
-            if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher)) {
+            if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+              public Boolean compute() {
+                return LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher);
+              }
+            })) {
               return false;
             }
           }

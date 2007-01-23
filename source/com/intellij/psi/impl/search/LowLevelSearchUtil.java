@@ -38,6 +38,7 @@ public class LowLevelSearchUtil {
     }
     return Boolean.TRUE;
   }
+  //@RequiresReadAction
   public static boolean processElementsContainingWordInElement(TextOccurenceProcessor processor,
                                                                PsiElement scope,
                                                                StringSearcher searcher) {
