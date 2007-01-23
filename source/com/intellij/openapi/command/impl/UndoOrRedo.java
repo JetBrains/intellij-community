@@ -248,13 +248,13 @@ abstract class UndoOrRedo {
   public static class NothingToUndoException extends Exception {}
 
   private LinkedList<UndoableGroup> getStack() throws NothingToUndoException {
-    if (myEditor == null) {
+    final Document[] documents = myEditor == null? null : TextEditorProvider.getDocuments(myEditor);
+    if (documents == null || documents.length == 0) {
       return getStackHolder().getGlobalStack();
     }
     else {
       long recentDocumentTimeStamp = -1;
       LinkedList<UndoableGroup> result = null;
-      Document[] documents = TextEditorProvider.getDocuments(myEditor);
       for (Document document : documents) {
         LinkedList<UndoableGroup> stack = getStackHolder().getStack(document);
         if (!stack.isEmpty()) {

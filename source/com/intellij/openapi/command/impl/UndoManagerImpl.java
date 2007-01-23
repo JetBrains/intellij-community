@@ -359,17 +359,14 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   public boolean isUndoAvailable(FileEditor editor) {
-    if (editor != null) {
-      if (editor instanceof TextEditor) {
-        Editor activeEditor = ((TextEditor)editor).getEditor();
-        if (activeEditor.isViewer()) {
-          return false;
-        }
+    if (editor instanceof TextEditor) {
+      Editor activeEditor = ((TextEditor)editor).getEditor();
+      if (activeEditor.isViewer()) {
+        return false;
       }
-
-      Document[] documents = TextEditorProvider.getDocuments(editor);
-      if (documents == null || documents.length == 0) return false;
-
+    }
+    final Document[] documents = editor == null? null : TextEditorProvider.getDocuments(editor);
+    if (documents != null && documents.length > 0) {
       for (Document document : documents) {
         if (myLastMerger != null && !myLastMerger.isEmpty(DocumentReferenceByDocument.createDocumentReference(document))) {
           return true;
@@ -391,18 +388,14 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   public boolean isRedoAvailable(FileEditor editor) {
-    if (editor != null) {
-      if (editor instanceof TextEditor) {
-        Editor activeEditor = ((TextEditor)editor).getEditor();
-        if (activeEditor.isViewer()) {
-          return false;
-        }
-      }
-      Document[] documents = TextEditorProvider.getDocuments(editor);
-      if (documents == null || documents.length == 0){
+    if (editor instanceof TextEditor) {
+      Editor activeEditor = ((TextEditor)editor).getEditor();
+      if (activeEditor.isViewer()) {
         return false;
       }
-
+    }
+    final Document[] documents = editor == null? null : TextEditorProvider.getDocuments(editor);
+    if (documents != null && documents.length > 0) {
       for (Document document : documents) {
         LinkedList localStack = getRedoStacksHolder().getStack(document);
         if (!localStack.isEmpty()) {
