@@ -1425,24 +1425,28 @@ public class RefactoringUtil {
 
           final GlobalSearchScope resolveScope1 = element.getResolveScope();
           if (!resolveScope1.isSearchInModuleContent(targetModule)) {
-            final PsiFile file = element.getContainingFile();
+            final PsiFile usageFile = element.getContainingFile();
             PsiElement container;
-            if (file instanceof PsiJavaFile) {
+            if (usageFile instanceof PsiJavaFile) {
               container = ConflictsUtil.getContainer(element);
-              if (container == null) container = file;
+              if (container == null) container = usageFile;
             }
             else {
-              container = file;
+              container = usageFile;
             }
             final String scopeDescription = CommonRefactoringUtil.htmlEmphasize(ConflictsUtil.getDescription(container, true));
-            Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(file.getVirtualFile());
-
-            final String message =
-              RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.module.2", ConflictsUtil.capitalize(
-                CommonRefactoringUtil.htmlEmphasize(ConflictsUtil.getDescription(moveRenameUsageInfo.getReferencedElement(), true))),
-                                   scopeDescription,
-                                   CommonRefactoringUtil.htmlEmphasize(module.getName()));
-            conflicts.add(message);
+            final VirtualFile usageVFile = usageFile.getVirtualFile();
+            if (usageVFile != null) {
+              Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(usageVFile);
+              if (module != null) {
+                final String message =
+                  RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.module.2", ConflictsUtil.capitalize(
+                    CommonRefactoringUtil.htmlEmphasize(ConflictsUtil.getDescription(moveRenameUsageInfo.getReferencedElement(), true))),
+                                       scopeDescription,
+                                       CommonRefactoringUtil.htmlEmphasize(module.getName()));
+                conflicts.add(message);
+              }
+            }
           }
         }
       }
