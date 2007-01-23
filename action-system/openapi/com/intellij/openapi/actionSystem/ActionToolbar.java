@@ -37,7 +37,13 @@ public interface ActionToolbar {
    * wrap components in multiple rows.
    */
   int WRAP_LAYOUT_POLICY = 1;
+  /**
+   * This is experimental layout policy which allow toolbar auto-hide and show buttons that don't fit into actual side
+   */
+  int AUTO_LAYOUT_POLICY = 2;
+
   /** This is default minimum size of the toolbar button */
+
   Dimension DEFAULT_MINIMUM_BUTTON_SIZE = new Dimension(25, 25);
 
   /**

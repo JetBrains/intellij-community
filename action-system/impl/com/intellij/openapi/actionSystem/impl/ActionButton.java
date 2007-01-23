@@ -34,6 +34,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
   private boolean myRollover;
   private static boolean ourGlobalMouseDown = false;
 
+  private ActionToolbarCallback myActionPerformedCallback = new ActionToolbarCallback.Empty();
+
   public ActionButton(
     final AnAction action,
     final Presentation presentation,
@@ -96,7 +98,12 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
         return;
       }
       myAction.actionPerformed(event);
+      myActionPerformedCallback.actionPerformed(this);
     }
+  }
+
+  void setActionPerformedCallback(final ActionToolbarCallback callback) {
+    myActionPerformedCallback = callback != null ? callback : new ActionToolbarCallback.Empty();
   }
 
   public void removeNotify() {
@@ -236,9 +243,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
           if (!myMouseDown && ourGlobalMouseDown) break;
           repaint();
           onMousePresenceChanged(false);
+          myActionPerformedCallback.mouseExited(e);
           break;
         }
     }
+    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
   }
 
   protected int getPopState(boolean isPushed) {

@@ -395,6 +395,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myAutoScrollFromSourceHandler.install();
 
     final ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.PROJECT_VIEW_TOOLBAR, myActionGroup, true);
+    toolBar.setLayoutPolicy(ActionToolbar.AUTO_LAYOUT_POLICY);    
     JComponent toolbarComponent = toolBar.getComponent();
     myActionGroupPanel.setLayout(new BorderLayout());
     myActionGroupPanel.add(toolbarComponent, BorderLayout.NORTH);

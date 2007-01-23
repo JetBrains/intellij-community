@@ -13,7 +13,14 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,8 +28,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
-/** extended by fabrique */
-public class ActionToolbarImpl extends JPanel implements ActionToolbar {
+public class ActionToolbarImpl extends JPanel implements ActionToolbar, ActionToolbarCallback {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionToolbarImpl");
 
   /**
@@ -33,7 +39,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
    */
   private final ArrayList<Rectangle> myComponentBounds;
 
-  /** protected for fabrique */
+  /**
+   * protected for fabrique
+   */
   protected Dimension myMinimumButtonSize;
   /**
    * @see ActionToolbar#getLayoutPolicy()
@@ -42,12 +50,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private int myOrientation;
   private final ActionGroup myActionGroup;
   private final String myPlace;
-  private final boolean myBorderVisible;
   private final MyKeymapManagerListener myKeymapManagerListener;
   private final MyTimerListener myTimerListener;
   private ArrayList<AnAction> myNewVisibleActions;
   private ArrayList<AnAction> myVisibleActions;
-  /** protected for fabrique */
+  /**
+   * protected for fabrique
+   */
   protected final PresentationFactory myPresentationFactory;
   /**
    * @see ActionToolbar#adjustTheSameSize(boolean)
@@ -56,20 +65,30 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   private ActionButtonLook myButtonLook = null;
   private DataManager myDataManager;
-  private ActionManager myActionManager;
+  private ActionManagerEx myActionManager;
+
+  private Rectangle myAutoPopupRec;
+  private Icon myAutoPopupIcon = IconLoader.getIcon("/ide/link.png");
+  private KeymapManagerEx myKeymapManager;
+  private ActionToolbarImpl myPopupToolbar;
+
+
+  private JBPopup myPopup;
+  private boolean myCancellingNow;
 
   public ActionToolbarImpl(final String place,
                            final ActionGroup actionGroup,
                            final boolean horizontal,
                            DataManager dataManager,
-                           ActionManagerEx actionManager, KeymapManagerEx keymapManager) {
+                           ActionManagerEx actionManager,
+                           KeymapManagerEx keymapManager) {
     super(null);
     myActionManager = actionManager;
     myComponentBounds = new ArrayList<Rectangle>();
+    myKeymapManager = keymapManager;
     setMinimumButtonSize(DEFAULT_MINIMUM_BUTTON_SIZE);
     setLayoutPolicy(NOWRAP_LAYOUT_POLICY);
     setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-    myBorderVisible = false;
     myPlace = place;
     myActionGroup = actionGroup;
     myPresentationFactory = new PresentationFactory();
@@ -100,22 +119,19 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   public void setLayoutPolicy(final int layoutPolicy) {
-    if (layoutPolicy != NOWRAP_LAYOUT_POLICY && layoutPolicy != WRAP_LAYOUT_POLICY) {
+    if (layoutPolicy != NOWRAP_LAYOUT_POLICY && layoutPolicy != WRAP_LAYOUT_POLICY && layoutPolicy != AUTO_LAYOUT_POLICY) {
       throw new IllegalArgumentException("wrong layoutPolicy: " + layoutPolicy);
     }
     myLayoutPolicy = layoutPolicy;
   }
 
-  public void paint(final Graphics g) {
-    super.paint(g);
+  protected void paintComponent(final Graphics g) {
+    super.paintComponent(g);
 
-    // TODO[vova,anton] implement painting when tool bar has vertical orientation
-    // BTW it's a bit strange :) Toolbar has 4 sides fo border :)
-    if (myBorderVisible) {
-      g.setColor(UIUtil.getSeparatorHighlight());
-      UIUtil.drawLine(g, 0, 0, getWidth() - 1, 0);
-      g.setColor(UIUtil.getSeparatorShadow());
-      UIUtil.drawLine(g, 0, getHeight() - 1, getWidth() - 1, getHeight() - 1);
+    if (myAutoPopupRec != null) {
+      final int dy = myAutoPopupRec.height / 2 - myAutoPopupIcon.getIconHeight() / 2;
+
+      myAutoPopupIcon.paintIcon(this, g, (int)myAutoPopupRec.getMaxX() - myAutoPopupIcon.getIconWidth() - 1, myAutoPopupRec.y + dy);
     }
   }
 
@@ -131,7 +147,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         add(((CustomComponentAction)action).createCustomComponent(myPresentationFactory.getPresentation(action)));
       }
       else {
-        add(createToolbarButton(action));
+        final ActionButton button = createToolbarButton(action);
+        button.setActionPerformedCallback(this);
+        add(button);
       }
     }
   }
@@ -142,10 +160,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
                                       ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
 
-    final ActionButton actionButton = new ActionButton(action,
-                                                       myPresentationFactory.getPresentation(action),
-                                                       myPlace,
-                                                       myMinimumButtonSize);
+    final ActionButton actionButton = new ActionButton(action, myPresentationFactory.getPresentation(action), myPlace, myMinimumButtonSize);
     actionButton.setLook(myButtonLook);
     return actionButton;
   }
@@ -249,20 +264,59 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
   }
 
-  private void calculateBoundsWrapImpl() {
-    // We have to gracefull handle case when toolbar was not layed out yet.
-    // In this case we calculate bounds as it is a NOWRAP toolbar.
-    if (getWidth() == 0 || getHeight() == 0) {
-      final int oldLayoutPolicy = myLayoutPolicy;
-      myLayoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY;
-      try {
-        calculateBoundsNowrapImpl();
+  private void calculateBoundsAutoImp() {
+    if (calculateByDefaultIfNotLaidOutYet()) return;
+
+
+    final int componentCount = getComponentCount();
+    LOG.assertTrue(componentCount <= myComponentBounds.size());
+
+    myAutoPopupRec = null;
+
+    final int maxWidth = getMaxButtonWidth();
+    final int maxHeight = getMaxButtonHeight();
+
+    final Dimension size = getSize();
+
+    int autoButtonSize = myAutoPopupIcon.getIconWidth();
+    boolean full = false;
+
+    if (myAdjustTheSameSize) {
+
+    } else {
+      if (myOrientation == SwingConstants.HORIZONTAL) {
+        int eachX = 0, eachY = 0;
+        for (int i = 0; i < componentCount; i++) {
+          final Rectangle eachBound = new Rectangle(getComponent(i).getPreferredSize());
+          if (!full) {
+            if (eachX + eachBound.width + autoButtonSize / 2 < size.width) {
+              eachBound.x = eachX;
+              eachBound.y = eachY;
+              eachX += eachBound.width;
+            } else {
+              full = true;
+            }
+          }
+
+          if (full) {
+            if (myAutoPopupRec == null) {
+              myAutoPopupRec = new Rectangle(eachX, 0, size.width - eachX - 1, size.height - 1);
+            }
+            eachBound.x = -1;
+            eachBound.y = -1;
+            eachBound.width = 0;
+            eachBound.height = 0;
+          }
+
+          myComponentBounds.get(i).setBounds(eachBound);
+        }
       }
-      finally {
-        myLayoutPolicy = oldLayoutPolicy;
-      }
-      return;
     }
+  }
+
+  private void calculateBoundsWrapImpl() {
+    if (calculateByDefaultIfNotLaidOutYet()) return;
+
 
     final int componentCount = getComponentCount();
     LOG.assertTrue(componentCount <= myComponentBounds.size());
@@ -371,6 +425,23 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
   }
 
+  private boolean calculateByDefaultIfNotLaidOutYet() {
+    // We have to gracefull handle case when toolbar was not layed out yet.
+    // In this case we calculate bounds as it is a NOWRAP toolbar.
+    if (getWidth() == 0 || getHeight() == 0) {
+      final int oldLayoutPolicy = myLayoutPolicy;
+      myLayoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY;
+      try {
+        calculateBoundsNowrapImpl();
+      }
+      finally {
+        myLayoutPolicy = oldLayoutPolicy;
+      }
+      return true;
+    }
+    return false;
+  }
+
   /**
    * Calculates bounds of all the components in the toolbar
    */
@@ -388,6 +459,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
     else if (myLayoutPolicy == WRAP_LAYOUT_POLICY) {
       calculateBoundsWrapImpl();
+    } else if (myLayoutPolicy == AUTO_LAYOUT_POLICY) {
+      calculateBoundsAutoImp();
     }
     else {
       throw new IllegalStateException("unknonw layoutPolicy: " + myLayoutPolicy);
@@ -417,7 +490,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   public Dimension getMinimumSize() {
-    return getPreferredSize();
+//todo!!!! kirillk
+    return myLayoutPolicy == AUTO_LAYOUT_POLICY ? new Dimension(10, 10) : getPreferredSize();
   }
 
   private final class MySeparator extends JComponent {
@@ -473,7 +547,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
       Window mywindow = SwingUtilities.windowForComponent(ActionToolbarImpl.this);
       if (mywindow != null && !mywindow.isActive() && !mywindow.isFocused()) return;
-
 
       // do not update when a popup menu is shown (if popup menu contains action which is also in the toolbar, it should not be enabled/disabled)
       final MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
@@ -553,5 +626,84 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       }
       repaint();
     }
+  }
+
+  protected void processMouseEvent(final MouseEvent e) {
+    super.processMouseEvent(e);
+    if (getLayoutPolicy() != AUTO_LAYOUT_POLICY) return;
+  }
+
+  protected void processMouseMotionEvent(final MouseEvent e) {
+    super.processMouseMotionEvent(e);
+
+    if (getLayoutPolicy() != AUTO_LAYOUT_POLICY) {
+      return;
+    }
+    if (myAutoPopupRec != null && myAutoPopupRec.contains(e.getPoint())) {
+      showAutoPopup();
+    }
+  }
+
+  private void showAutoPopup() {
+    if (isPopupShowing()) return;
+
+    myPopupToolbar = new ActionToolbarImpl(myPlace, myActionGroup, true, myDataManager, myActionManager, myKeymapManager) {
+      public void actionPerformed(final ActionButton button) {
+        hidePopup();
+      }
+
+      public void mouseExited(final MouseEvent e) {
+        if (isPopupShowing()) {
+          final Point mouse = new RelativePoint(e).getScreenPoint();
+          final Point toolbar = myPopupToolbar.getLocationOnScreen();
+          if (!new Rectangle(toolbar, myPopupToolbar.getSize()).contains(mouse)) {
+            hidePopup();
+          }
+        }
+      }
+    };
+    myPopupToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    final Point location = getLocationOnScreen();
+
+    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myPopupToolbar, null);
+    builder.setResizable(false).setRequestFocus(false).setTitle(null).setCancelOnClickOutside(true).setCancelCallback(new Computable<Boolean>() {
+      public Boolean compute() {
+        try {
+          myCancellingNow = true;
+          hidePopup();
+          return Boolean.TRUE;
+        }
+        finally {
+          myCancellingNow = false;
+        }
+      }
+    });
+
+    myPopup = builder.createPopup();
+    myPopup.showInScreenCoordinates(this, location);
+  }
+
+  private boolean isPopupShowing() {
+    if (myPopup != null) {
+      if (myPopup.getContent() != null && myPopup.getContent().isShowing()) return true;
+    }
+    return false;
+  }
+
+  private void hidePopup() {
+    if (myCancellingNow) return;
+
+    if (myPopup != null) {
+      myPopup.cancel();
+      myPopup = null;
+      updateActionsImmediately();
+    }
+  }
+
+
+  public void actionPerformed(final ActionButton button) {
+  }
+
+  public void mouseExited(final MouseEvent e) {
   }
 }
