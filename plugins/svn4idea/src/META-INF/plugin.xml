@@ -17,9 +17,6 @@
       <implementation-class>org.jetbrains.idea.svn.SvnApplicationSettings</implementation-class>
       <option name="workspace" value="true"/>
     </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.svn.checkout.SvnCheckoutProvider</implementation-class>
-    </component>
   </application-components>
 
   <project-components>
