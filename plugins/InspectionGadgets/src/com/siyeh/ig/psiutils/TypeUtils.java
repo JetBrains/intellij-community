@@ -75,4 +75,30 @@ public class TypeUtils {
         }
         return ClassUtils.isSubclass(aClass, typeName);
     }
+
+    public static boolean expressionHasTypeOrSubtype(
+            @Nullable PsiExpression expression,
+            @NonNls @NotNull String... typeNames) {
+        if (expression == null) {
+            return false;
+        }
+        final PsiType type = expression.getType();
+        if (type == null) {
+            return false;
+        }
+        if (!(type instanceof PsiClassType)) {
+            return false;
+        }
+        final PsiClassType classType = (PsiClassType) type;
+        final PsiClass aClass = classType.resolve();
+        if (aClass == null) {
+            return false;
+        }
+        for (String typeName : typeNames) {
+            if (ClassUtils.isSubclass(aClass, typeName)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
