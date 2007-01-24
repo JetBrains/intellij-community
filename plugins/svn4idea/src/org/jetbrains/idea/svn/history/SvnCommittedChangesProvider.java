@@ -157,6 +157,9 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
   }
 
   public ChangeListColumn[] getColumns() {
-    return new ChangeListColumn[] { ChangeListColumn.NUMBER, ChangeListColumn.NAME, ChangeListColumn.DATE, ChangeListColumn.DESCRIPTION };
+    return new ChangeListColumn[] {
+      new ChangeListColumn.ChangeListNumberColumn(SvnBundle.message("revision.title")),
+      ChangeListColumn.NAME, ChangeListColumn.DATE, ChangeListColumn.DESCRIPTION
+    };
   }
 }

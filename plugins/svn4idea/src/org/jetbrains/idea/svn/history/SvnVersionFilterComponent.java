@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.StandardVersionFilterComponent;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -72,6 +73,11 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent<Ch
     else {
       return null;
     }
+  }
+
+  @Override
+  protected String getChangeNumberTitle() {
+    return SvnBundle.message("revision.title");
   }
 
   public JComponent getComponent() {
