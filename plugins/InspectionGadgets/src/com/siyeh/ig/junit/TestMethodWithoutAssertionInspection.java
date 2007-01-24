@@ -15,16 +15,13 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiAnnotationParameterList;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TestUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class TestMethodWithoutAssertionInspection extends ExpressionInspection {
@@ -61,15 +58,16 @@ public class TestMethodWithoutAssertionInspection extends ExpressionInspection {
             if (!TestUtils.isJUnitTestMethod(method)) {
                 return;
             }
+            final PsiModifierList modifierList = method.getModifierList();
             final PsiAnnotation testAnnotation =
-                    AnnotationUtil.findAnnotation(method, "org.junit.Test");
+                    modifierList.findAnnotation("org.junit.Test");
             if (testAnnotation != null) {
                 final PsiAnnotationParameterList parameterList =
                         testAnnotation.getParameterList();
                 final PsiNameValuePair[] nameValuePairs =
                         parameterList.getAttributes();
                 for (PsiNameValuePair nameValuePair : nameValuePairs) {
-                    final String parameterName = nameValuePair.getName();
+                    @NonNls final String parameterName = nameValuePair.getName();
                     if ("expected".equals(parameterName)) {
                         return;
                     }
