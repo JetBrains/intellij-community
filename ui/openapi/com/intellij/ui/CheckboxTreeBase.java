@@ -70,6 +70,8 @@ public class CheckboxTreeBase extends Tree {
 
     setSelectionRow(0);
     setModel(new DefaultTreeModel(root));
+
+    customize();
   }
 
   protected boolean isToggleEvent(KeyEvent e) {
