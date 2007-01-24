@@ -51,10 +51,14 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
   }
 
   protected void init(final T settings) {
-    myVersionNumberPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("border.changes.filter.change.number.filter")));
+    myVersionNumberPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(getChangeNumberTitle()));
     installCheckBoxesListeners();
     initValues(settings);
     updateAllEnabled(null);
+  }
+
+  protected String getChangeNumberTitle() {
+    return VcsBundle.message("border.changes.filter.change.number.filter");
   }
 
   private void installCheckBoxesListeners() {
@@ -124,7 +128,7 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
         Long.parseLong(myNumAfter.getText());
       }
       catch(NumberFormatException ex) {
-        return "Change From must be a valid number";
+        return getChangeNumberTitle() + " From must be a valid number";
       }
     }
     if (myUseNumBeforeFilter.isSelected()) {
@@ -132,7 +136,7 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
         Long.parseLong(myNumBefore.getText());
       }
       catch(NumberFormatException ex) {
-        return "Change To must be a valid number";
+        return getChangeNumberTitle() + " To must be a valid number";
       }
     }
     return myDateFilterComponent.validateInput();

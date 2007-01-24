@@ -78,23 +78,7 @@ public abstract class ChangeListColumn<T extends ChangeList> {
     }
   };
 
-  public static ChangeListColumn<CommittedChangeList> NUMBER = new ChangeListColumn<CommittedChangeList>() {
-    public String getTitle() {
-      return VcsBundle.message("column.name.revision.list.number");
-    }
-
-    public Object getValue(final CommittedChangeList changeList) {
-      return changeList.getNumber();
-    }
-
-    public Comparator<CommittedChangeList> getComparator() {
-      return new Comparator<CommittedChangeList>() {
-        public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
-          return (int)(o1.getNumber() - o2.getNumber());
-        }
-      };
-    }
-  };
+  public static ChangeListColumn<CommittedChangeList> NUMBER = new ChangeListNumberColumn(VcsBundle.message("column.name.revision.list.number"));
 
   public static ChangeListColumn<CommittedChangeList> DESCRIPTION = new ChangeListColumn<CommittedChangeList>() {
     public String getTitle() {
@@ -113,4 +97,28 @@ public abstract class ChangeListColumn<T extends ChangeList> {
       };
     }
   };
+
+  public static class ChangeListNumberColumn extends ChangeListColumn<CommittedChangeList> {
+    private String myTitle;
+
+    public ChangeListNumberColumn(final String title) {
+      myTitle = title;
+    }
+
+    public String getTitle() {
+      return myTitle;
+    }
+
+    public Object getValue(final CommittedChangeList changeList) {
+      return changeList.getNumber();
+    }
+
+    public Comparator<CommittedChangeList> getComparator() {
+      return new Comparator<CommittedChangeList>() {
+        public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
+          return (int)(o1.getNumber() - o2.getNumber());
+        }
+      };
+    }
+  }
 }

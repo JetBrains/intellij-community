@@ -69,7 +69,8 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
       assert provider != null;
       ChangeListColumn[] providerColumns = provider.getColumns();
       for(ChangeListColumn col: providerColumns) {
-        if (col == ChangeListColumn.DATE || col == ChangeListColumn.DESCRIPTION || col == ChangeListColumn.NAME || col == ChangeListColumn.NUMBER) {
+        if (col == ChangeListColumn.DATE || col == ChangeListColumn.DESCRIPTION || col == ChangeListColumn.NAME ||
+            col instanceof ChangeListColumn.ChangeListNumberColumn) {
           columns.add(col);
         }
       }
