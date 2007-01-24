@@ -211,15 +211,17 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     }
 
+    final String actionName = getCommitActionName();
+    final String borderTitleName = actionName.replace("_", "");
     if (beforeVisible) {
       beforeBox.add(Box.createVerticalGlue());
-      beforeBox.add(SeparatorFactory.createSeparator(VcsBundle.message("border.standard.checkin.options.group"), null), 0);
+      beforeBox.add(SeparatorFactory.createSeparator(VcsBundle.message("border.standard.checkin.options.group", borderTitleName), null), 0);
       optionsBox.add(beforeBox);
     }
 
     if (afterVisible) {
       afterBox.add(Box.createVerticalGlue());
-      afterBox.add(SeparatorFactory.createSeparator(VcsBundle.message("border.standard.after.checkin.options.group"), null), 0);
+      afterBox.add(SeparatorFactory.createSeparator(VcsBundle.message("border.standard.after.checkin.options.group", borderTitleName), null), 0);
       optionsBox.add(afterBox);
     }
 
@@ -228,7 +230,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myAdditionalOptionsPanel.add(optionsBox, BorderLayout.NORTH);
     }
 
-    setOKButtonText(getCommitActionName());
+    setOKButtonText(actionName);
 
     if (myShowVcsCommit) {
       setTitle(myActionName);
@@ -308,7 +310,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
             }
           }
         }
-      });
+      }, commitExecutor);
 
 
     }
@@ -366,7 +368,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, String.valueOf(mySplitter.getProportion()));
   }
 
-  private String getCommitActionName() {
+  public String getCommitActionName() {
     String name = null;
     for (AbstractVcs vcs : getAffectedVcses()) {
       if (name == null && vcs.getCheckinEnvironment() != null) {
@@ -391,13 +393,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  private void runBeforeCommitHandlers(final Runnable okAction) {
+  private void runBeforeCommitHandlers(final Runnable okAction, final CommitExecutor executor) {
     Runnable proceedRunnable = new Runnable() {
       public void run() {
         FileDocumentManager.getInstance().saveAllDocuments();
 
         for (CheckinHandler handler : myHandlers) {
-          final CheckinHandler.ReturnResult result = handler.beforeCheckin();
+          final CheckinHandler.ReturnResult result = handler.beforeCheckin(executor);
           if (result == CheckinHandler.ReturnResult.COMMIT) continue;
           if (result == CheckinHandler.ReturnResult.CANCEL) return;
 
@@ -432,7 +434,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           CommitChangeListDialog.super.doOKAction();
           doCommit();
         }
-      });
+      }, null);
 
     }
     catch (InputException ex) {

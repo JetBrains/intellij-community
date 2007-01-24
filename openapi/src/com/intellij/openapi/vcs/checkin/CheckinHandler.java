@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,19 @@ public abstract class CheckinHandler {
   @Nullable
   public RefreshableOnComponent getAfterCheckinConfigurationPanel() {
     return null;
+  }
+
+  /**
+   * Performs the before check-in processing when a custom commit executor is used. The method can use the
+   * {@link com.intellij.openapi.vcs.CheckinProjectPanel} instance passed to
+   * {@link CheckinHandlerFactory#createHandler(com.intellij.openapi.vcs.CheckinProjectPanel)} to
+   * get information about the files to be checked in.
+   *
+   * @param executor the commit executor, or null if the standard commit operation is executed. 
+   * @return the code indicating whether the check-in operation should be performed or aborted.
+   */
+  public ReturnResult beforeCheckin(@Nullable CommitExecutor executor) {
+    return beforeCheckin();
   }
 
   /**

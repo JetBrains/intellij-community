@@ -118,4 +118,6 @@ public interface CheckinProjectPanel extends Refreshable {
    * @since 5.1
    */
   String getCommitMessage();
+
+  String getCommitActionName();
 }

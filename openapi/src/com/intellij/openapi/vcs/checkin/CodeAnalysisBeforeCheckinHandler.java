@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
@@ -64,14 +65,16 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
     return VcsConfiguration.getInstance(myProject);
   }
 
-  private ReturnResult processFoundCodeSmells(final List<CodeSmellInfo> codeSmells) {
+  private ReturnResult processFoundCodeSmells(final List<CodeSmellInfo> codeSmells, @Nullable CommitExecutor executor) {
     int errorCount = collectErrors(codeSmells);
     int warningCount = codeSmells.size() - errorCount;
+    String commitButtonText = executor != null ? executor.getActionText() : myCheckinPanel.getCommitActionName();
+
 
     final int answer = Messages.showDialog(
       VcsBundle.message("before.commit.files.contain.code.smells.edit.them.confirm.text", errorCount, warningCount),
       VcsBundle.message("code.smells.error.messages.tab.name"), new String[]{VcsBundle.message("code.smells.review.button"),
-      VcsBundle.message("code.smells.commit.button"), CommonBundle.getCancelButtonText()}, 0, UIUtil.getWarningIcon());
+      commitButtonText, CommonBundle.getCancelButtonText()}, 0, UIUtil.getWarningIcon());
     if (answer == 0) {
       AbstractVcsHelper.getInstance(myProject).showCodeSmellErrors(codeSmells);
       return ReturnResult.CLOSE_WINDOW;
@@ -84,7 +87,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
     }
   }
 
-  private int collectErrors(final List<CodeSmellInfo> codeSmells) {
+  private static int collectErrors(final List<CodeSmellInfo> codeSmells) {
     int result = 0;
     for (CodeSmellInfo codeSmellInfo : codeSmells) {
       if (codeSmellInfo.getSeverity() == HighlightSeverity.ERROR) result++;
@@ -92,13 +95,13 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
     return result;
   }
 
-  public ReturnResult beforeCheckin() {
+  public ReturnResult beforeCheckin(CommitExecutor executor) {
     if (getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT) {
       try {
         final List<CodeSmellInfo> codeSmells =
           AbstractVcsHelper.getInstance(myProject).findCodeSmells(new ArrayList<VirtualFile>(myCheckinPanel.getVirtualFiles()));
         if (!codeSmells.isEmpty()) {
-          return processFoundCodeSmells(codeSmells);
+          return processFoundCodeSmells(codeSmells, executor);
         }
         else {
           return ReturnResult.COMMIT;
