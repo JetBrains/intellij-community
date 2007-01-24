@@ -87,6 +87,10 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  public static <T> void assertUnorderedCollection(T[] collection, Consumer<T>... checkers) {
+    assertUnorderedCollection(Arrays.asList(collection), checkers);
+  }
+
   public static <T> void assertUnorderedCollection(Collection<T> collection, Consumer<T>... checkers) {
     assertNotNull(collection);
     if (collection.size() != checkers.length) {

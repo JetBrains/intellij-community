@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
 
 /**
  * @author Dmitry Avdeev
@@ -32,6 +33,10 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     mySoft = soft;
   }
 
+  public void addReferences(Collection<PsiReference> references) {
+    myReferences.addAll(references);
+  }
+  
   public void addReference(PsiReference reference) {
     myReferences.add(reference);
   }

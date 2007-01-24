@@ -28,6 +28,9 @@ public class ExtensionPointName<T> {
     myName = name;
   }
 
+  public static <T> ExtensionPointName<T> create(@NonNls final String name) {
+    return new ExtensionPointName<T>(name);
+  }
 
   public String getName() {
     return myName;
