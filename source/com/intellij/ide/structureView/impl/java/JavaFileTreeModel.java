@@ -29,7 +29,7 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel {
   }
 
   @NotNull
-  public StructureViewTreeElement<PsiJavaFile> getRoot() {
+  public StructureViewTreeElement getRoot() {
     return new JavaFileTreeElement(myFile);
   }
 

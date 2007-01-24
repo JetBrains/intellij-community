@@ -22,7 +22,7 @@ public class TreeModelWrapper implements StructureViewModel {
   }
 
   @NotNull
-  public StructureViewTreeElement<?> getRoot() {
+  public StructureViewTreeElement getRoot() {
     return myModel.getRoot();
   }
 

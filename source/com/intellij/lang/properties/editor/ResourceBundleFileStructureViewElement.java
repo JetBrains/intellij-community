@@ -18,7 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ResourceBundleFileStructureViewElement implements StructureViewTreeElement<ResourceBundle> {
+public class ResourceBundleFileStructureViewElement implements StructureViewTreeElement {
   private final Project myProject;
   private final ResourceBundle myResourceBundle;
 

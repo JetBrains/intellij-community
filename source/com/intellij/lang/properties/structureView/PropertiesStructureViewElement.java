@@ -16,7 +16,7 @@ import javax.swing.*;
  * Time: 3:26:11 PM
  * To change this template use File | Settings | File Templates.
  */
-public class PropertiesStructureViewElement implements StructureViewTreeElement<Property> {
+public class PropertiesStructureViewElement implements StructureViewTreeElement {
   private Property myProperty;
   private String myPresentableName;
 

@@ -17,7 +17,7 @@ import com.intellij.util.Icons;
 import javax.swing.*;
 import java.awt.*;
 
-public class ResourceBundlePropertyStructureViewElement implements StructureViewTreeElement<String> {
+public class ResourceBundlePropertyStructureViewElement implements StructureViewTreeElement {
   private final String myPropertyName;
   private final Project myProject;
   private final ResourceBundle myResourceBundle;

@@ -50,7 +50,7 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
   }
 
   @NotNull
-  public StructureViewTreeElement<XmlFile> getRoot() {
+  public StructureViewTreeElement getRoot() {
     return new XmlFileTreeElement(myFile);
   }
 

@@ -24,7 +24,7 @@ import com.intellij.pom.Navigatable;
  * @see com.intellij.ide.structureView.StructureViewModel#getRoot()
  */
 
-public interface StructureViewTreeElement<V> extends TreeElement, Navigatable{
+public interface StructureViewTreeElement extends TreeElement, Navigatable{
   StructureViewTreeElement[] EMPTY_ARRAY = new StructureViewTreeElement[0];
 
   /**
@@ -33,7 +33,7 @@ public interface StructureViewTreeElement<V> extends TreeElement, Navigatable{
    *
    * @return the data object instance.
    */
-  V getValue();
+  Object getValue();
 
   StructureViewTreeElement[] getChildren();
 }
