@@ -91,8 +91,7 @@ public class ReflectionCache {
   }
 
   public static boolean isAssignable(Class ancestor, Class descendant) {
-    if (ancestor == descendant) return true;
-    return ourAssignables.get(Pair.create(ancestor,descendant));
+    return ancestor == descendant || ourAssignables.get(Pair.create(ancestor, descendant));
   }
 
   public static boolean isInterface(Class aClass) {

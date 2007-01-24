@@ -47,7 +47,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
   private static final Logger LOG = Logger.getInstance("ReferenceProvidersRegistry");
 
   static public class ReferenceProviderType {
-    private String myId;
+    private final String myId;
     public ReferenceProviderType(@NonNls String id) { myId = id; }
     public String toString() { return myId; }
   }
@@ -62,7 +62,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
     return project.getComponent(ReferenceProvidersRegistry.class);
   }
 
-  public void registerTypeWithProvider(@NotNull ReferenceProviderType type, @NotNull PsiReferenceProvider provider) {
+  public synchronized void registerTypeWithProvider(@NotNull ReferenceProviderType type, @NotNull PsiReferenceProvider provider) {
     myReferenceTypeToProviderMap.put(type, provider);
   }
 
@@ -228,7 +228,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
             new NamespaceFilter(MetaRegistry.SCHEMA_URIS),
             new AndFilter(
               new ClassFilter(XmlTag.class),
-              new TextFilter(new String[] {"import","include","redefine"})
+              new TextFilter("import","include","redefine")
             )
           ), 2
         )
@@ -250,7 +250,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
             new ClassFilter(XmlTag.class),
             new AndFilter(
               new NamespaceFilter(XmlUtil.HIBERNATE_URIS),
-              new TextFilter(new String[] { "property","list","map","set", "array", "bag", "idbag", "primitive-array", "many-to-one", "one-to-one"} )
+              new TextFilter("property","list","map","set", "array", "bag", "idbag", "primitive-array", "many-to-one", "one-to-one")
             )
           ), 2
         )
@@ -265,13 +265,14 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
     );
   }
 
-
-
-  public void registerReferenceProvider(@Nullable ElementFilter elementFilter, @NotNull Class scope, @NotNull PsiReferenceProvider provider) {
+  public synchronized void registerReferenceProvider(@Nullable ElementFilter elementFilter,
+                                                     @NotNull Class scope,
+                                                     @NotNull PsiReferenceProvider provider) {
     if (scope == XmlAttributeValue.class) {
       registerXmlAttributeValueReferenceProvider(null, elementFilter, provider);
       return;
-    } else if (scope == XmlTag.class) {
+    }
+    else if (scope == XmlTag.class) {
       registerXmlTagReferenceProvider(null, elementFilter, false, provider);
       return;
     }
@@ -283,11 +284,11 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
     }
 
     final SimpleProviderBinding binding = new SimpleProviderBinding(scope);
-    binding.registerProvider(provider,elementFilter);
-    myBindingsMap.put(scope,binding);
+    binding.registerProvider(provider, elementFilter);
+    myBindingsMap.put(scope, binding);
   }
 
-  public void registerXmlTagReferenceProvider(@NonNls String[] names, @Nullable ElementFilter elementFilter,
+  public synchronized void registerXmlTagReferenceProvider(@NonNls String[] names, @Nullable ElementFilter elementFilter,
                                               boolean caseSensitive, @NotNull PsiReferenceProvider provider) {
     registerNamedReferenceProvider(names, elementFilter, XmlTagProviderBinding.class,XmlTag.class,caseSensitive, provider);
   }
@@ -321,7 +322,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
     );
   }
 
-  public void registerXmlAttributeValueReferenceProvider(@Nullable @NonNls String[] attributeNames,
+  public synchronized void registerXmlAttributeValueReferenceProvider(@Nullable @NonNls String[] attributeNames,
                                                          @Nullable ElementFilter elementFilter,
                                                          boolean caseSensitive,
                                                          @NotNull PsiReferenceProvider provider) {
@@ -335,21 +336,21 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
     );
   }
 
-  public void registerXmlAttributeValueReferenceProvider(@Nullable @NonNls String[] attributeNames,
+  public synchronized void registerXmlAttributeValueReferenceProvider(@Nullable @NonNls String[] attributeNames,
                                                          @Nullable ElementFilter elementFilter,
                                                          @NotNull PsiReferenceProvider provider) {
     registerXmlAttributeValueReferenceProvider(attributeNames, elementFilter, true, provider);
   }
 
-  public @NotNull PsiReferenceProvider getProviderByType(@NotNull ReferenceProviderType type) {
+  public synchronized @NotNull PsiReferenceProvider getProviderByType(@NotNull ReferenceProviderType type) {
     return myReferenceTypeToProviderMap.get(type);
   }
 
-  public void registerReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
+  public synchronized void registerReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
     registerReferenceProvider(null, scope, provider);
   }
 
-  public @NotNull PsiReferenceProvider[] getProvidersByElement(@NotNull PsiElement element, @NotNull Class clazz) {
+  public synchronized @NotNull PsiReferenceProvider[] getProvidersByElement(@NotNull PsiElement element, @NotNull Class clazz) {
     assert clazz.isInstance(element);
 
     List<PsiReferenceProvider> ret = new ArrayList<PsiReferenceProvider>(1);
@@ -364,12 +365,12 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
     }
     while (!isScopeFinal(current.getClass()));
 
-    return ret.size() > 0 ? ret.toArray(new PsiReferenceProvider[ret.size()]) : PsiReferenceProvider.EMPTY_ARRAY;
+    return ret.isEmpty() ? PsiReferenceProvider.EMPTY_ARRAY : ret.toArray(new PsiReferenceProvider[ret.size()]);
   }
 
-  public @Nullable <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull T element) {
+  public synchronized @Nullable <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull T element) {
     for (final Pair<Class<?>,ElementManipulator<?>> pair : myManipulators) {
-      if (pair.getFirst().isAssignableFrom(element.getClass())) {
+      if (ReflectionCache.isAssignable(pair.getFirst(), element.getClass())) {
         return (ElementManipulator<T>)pair.getSecond();
       }
     }
@@ -377,12 +378,11 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
     return null;
   }
 
-  public <T extends PsiElement> void registerManipulator(@NotNull Class<T> elementClass, @NotNull ElementManipulator<T> manipulator) {
+  public synchronized <T extends PsiElement> void registerManipulator(@NotNull Class<T> elementClass, @NotNull ElementManipulator<T> manipulator) {
     myManipulators.add(new Pair<Class<?>, ElementManipulator<?>>(elementClass, manipulator));
   }
 
   private boolean isScopeFinal(Class scopeClass) {
-
     for (final Class aClass : myTempScopes) {
       if (ReflectionCache.isAssignable(aClass, scopeClass)) {
         return false;
