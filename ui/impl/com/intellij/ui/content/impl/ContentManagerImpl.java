@@ -2,6 +2,7 @@ package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -145,7 +146,9 @@ public class ContentManagerImpl implements ContentManager {
 
   private void removeProjectManagerListener() {
     if (myContents.size() == 0) {
-      myUI.getComponent().updateUI(); //cleanup visibleComponent from Alloy...TabbedPaneUI
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        myUI.getComponent().updateUI(); //cleanup visibleComponent from Alloy...TabbedPaneUI
+      }
       if (myListenerAdded) {
         ProjectManager.getInstance().removeProjectManagerListener(myProjectManagerListener);
         myListenerAdded = false;
