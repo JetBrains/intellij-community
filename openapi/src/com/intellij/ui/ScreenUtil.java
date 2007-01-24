@@ -61,7 +61,7 @@ public class ScreenUtil {
     int screenX = aRectangle.x;
     int screenY = aRectangle.y;
     Rectangle screen = getScreenRectangle(screenX, screenY);
-    return aRectangle.getMaxX() > screen.width;
+    return aRectangle.getMaxX() > screen.getMaxX();
   }
 
   public static void moveRectangleToFitTheScreen(Rectangle aRectangle) {
