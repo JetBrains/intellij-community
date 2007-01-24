@@ -596,9 +596,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       else {
         for (int i = 0; i < files.length; i++) {
           ProgressManager.getInstance().checkCanceled();
-          PsiFile file = files[i];
+          final PsiFile file = files[i];
           files[i] = null; // prevent strong ref
-          PsiElement[] psiRoots = file.getPsiRoots();
+          PsiElement[] psiRoots = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement[]>() {
+            public PsiElement[] compute() {
+              return file.getPsiRoots();
+            }
+          });
           Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
           for (final PsiElement psiRoot : psiRoots) {
             if (!processed.add(psiRoot)) continue;
