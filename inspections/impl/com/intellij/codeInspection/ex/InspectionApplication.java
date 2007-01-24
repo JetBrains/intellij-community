@@ -332,12 +332,12 @@ public class InspectionApplication {
       }
       for (String groupName : map.keySet()) {
         xmlWriter.startNode("group");
-        xmlWriter.addAttribute("group_name", groupName);
+        xmlWriter.addAttribute("name", groupName);
         final Set<InspectionProfileEntry> entries = map.get(groupName);
         for (InspectionProfileEntry entry : entries) {
           xmlWriter.startNode("inspection");
-          xmlWriter.addAttribute("short_name", entry.getShortName());
-          xmlWriter.addAttribute("display_name", entry.getDisplayName());
+          xmlWriter.addAttribute("shortName", entry.getShortName());
+          xmlWriter.addAttribute("displayName", entry.getDisplayName());
           final URL descriptionUrl = InspectionToolRegistrar.getDescriptionUrl(entry);
           if (descriptionUrl!=null) {
             final String description = ResourceUtil.loadText(descriptionUrl);
