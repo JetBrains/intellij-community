@@ -18,11 +18,8 @@ import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.ui.Refreshable;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -153,19 +150,6 @@ public abstract class AbstractAction extends AnAction {
     if (refreshablePanel != null) {
       refreshablePanel.refresh();
     }
-
-    refreshFileView(context.getProject());
-  }
-
-  protected static void refreshFileView(Project project) {
-    if (project == null) return;
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-
-    ToolWindow fileViewToolWindow = toolWindowManager
-      .getToolWindow(ProjectLevelVcsManager.FILE_VIEW_TOOL_WINDOW_ID);
-    if (fileViewToolWindow == null) return;
-    if (!fileViewToolWindow.isAvailable()) return;
-    ((Refreshable)fileViewToolWindow.getComponent()).refresh();
   }
 
   protected void endAction() {

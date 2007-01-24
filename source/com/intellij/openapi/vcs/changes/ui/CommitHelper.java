@@ -17,9 +17,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
-import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.impl.FileViewManagerImpl;
+import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vfs.VirtualFileManager;
 
 import java.util.ArrayList;
@@ -231,8 +230,6 @@ public class CommitHelper {
           Messages
             .showErrorDialog(VcsBundle.message("message.text.commit.finished.with.warnings"), VcsBundle.message("message.title.commit"));
         }
-
-        FileViewManagerImpl.getInstance(myProject).refreshFileView();
       }
     }, ModalityState.NON_MODAL);
 
