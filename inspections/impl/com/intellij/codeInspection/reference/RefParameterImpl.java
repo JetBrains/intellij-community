@@ -28,6 +28,10 @@ public class RefParameterImpl extends RefElementImpl implements RefParameter {
 
     myIndex = (short)index;
     myActualValueTemplate = VALUE_UNDEFINED;
+    final RefElementImpl owner = (RefElementImpl)manager.getReference(PsiTreeUtil.getParentOfType(parameter, PsiMethod.class));
+    if (owner != null) {
+      owner.add(this);
+    }
   }
 
   public void parameterReferenced(boolean forWriting) {
