@@ -442,7 +442,10 @@ public class ClasspathPanel extends JPanel {
         //int insertionIndex = myEntryTable.getSelectedRow();
         for (ItemType item : chosen) {
           //myModel.addItemAt(createTableItem(item), insertionIndex++);
-          myModel.addItem(createTableItem(item));
+          final TableItem tableItem = createTableItem(item);
+          if ( tableItem != null ) {
+            myModel.addItem(tableItem);
+          }
         }
         myModel.fireTableDataChanged();
         final ListSelectionModel selectionModel = myEntryTable.getSelectionModel();
@@ -457,6 +460,7 @@ public class ClasspathPanel extends JPanel {
       }
     }
 
+    @Nullable
     protected abstract TableItem createTableItem(final ItemType item);
 
     protected abstract @Nullable ChooserDialog<ItemType> createChooserDialog();
@@ -982,13 +986,20 @@ public class ClasspathPanel extends JPanel {
       myLibraryTableEditable = libraryTable.isLibraryTableEditable();
     }
 
+    @Nullable
     protected TableItem createTableItem(final Library item) {
       // clear invalid order entry corresponding to added library if any
       final OrderEntry[] orderEntries = myRootModel.getOrderEntries();
       for (OrderEntry orderEntry : orderEntries) {
-        if (orderEntry instanceof LibraryOrderEntry && !orderEntry.isValid()) {
+        if (orderEntry instanceof LibraryOrderEntry ) {
           if (item.getName().equals(((LibraryOrderEntry)orderEntry).getLibraryName())) {
-            myRootModel.removeOrderEntry(orderEntry);
+            if ( orderEntry.isValid() ) {
+              Messages.showErrorDialog(ProjectBundle.message("classpath.message.library.already.added",item.getName()),
+                                       ProjectBundle.message("classpath.title.adding.dependency"));
+              return null;
+            } else {
+              myRootModel.removeOrderEntry(orderEntry);
+            }
           }
         }
       }
