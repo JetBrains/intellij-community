@@ -114,13 +114,15 @@ public class IdeaApplication {
     }
 
     public void premain(String[] args) {
-      final Splash splash = new Splash(ApplicationInfoImpl.getShadowInstance().getLogoUrl());
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          splash.show();
-        }
-      });
-      mySplash = splash;
+      if (Main.shouldShowSplash(args)) {
+        final Splash splash = new Splash(ApplicationInfoImpl.getShadowInstance().getLogoUrl());
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            splash.show();
+          }
+        });
+        mySplash = splash;
+      }
       initAlloy();
     }
 
@@ -135,8 +137,10 @@ public class IdeaApplication {
 
       app.invokeLater(new Runnable() {
         public void run() {
-          mySplash.dispose();
-          mySplash = null; // Allow GC collect the splash window
+          if (mySplash!=null) {
+            mySplash.dispose();
+            mySplash = null; // Allow GC collect the splash window
+          }
 
           PluginManager.reportPluginError();
 
