@@ -37,6 +37,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -536,15 +537,21 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         }
         if (!myUpdateByTimerEnabled) return;
         if (myDisposed) return;
-        renewUpdateProgress(true);
         final FileEditor[] activeEditors = myDaemonListeners.getSelectedEditors();
+        if (activeEditors.length == 0) return;
+        Map<FileEditor, HighlightingPass[]> passes = new THashMap<FileEditor, HighlightingPass[]>(activeEditors.length);
         setLastIntentionHint(null);
         for (FileEditor fileEditor : activeEditors) {
           BackgroundEditorHighlighter highlighter = fileEditor.getBackgroundHighlighter();
           if (highlighter != null) {
             HighlightingPass[] highlightingPasses = highlighter.createPassesForEditor();
-            myPassExecutorService.submitPasses(fileEditor, highlightingPasses, myUpdateProgress);
+            passes.put(fileEditor, highlightingPasses);
           }
+        }
+        // cancel all after calling createPasses() since there are perverts {@link com.intellij.util.xml.ui.DomUIFactoryImpl} who are changing PSI there
+        renewUpdateProgress(true);
+        for (Map.Entry<FileEditor, HighlightingPass[]> entry : passes.entrySet()) {
+          myPassExecutorService.submitPasses(entry.getKey(), entry.getValue(), myUpdateProgress);
         }
       }
     };
