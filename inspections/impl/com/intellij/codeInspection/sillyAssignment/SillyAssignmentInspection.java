@@ -31,14 +31,17 @@ import org.jetbrains.annotations.NotNull;
  * Date: 15-Nov-2005
  */
 public class SillyAssignmentInspection extends LocalInspectionTool {
+  @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @NotNull
   public String getDisplayName() {
     return JavaErrorMessages.message("assignment.to.itself");
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return "SillyAssignment";
@@ -49,7 +52,7 @@ public class SillyAssignmentInspection extends LocalInspectionTool {
   }
 
   @NotNull
-  public PsiElementVisitor buildVisitor(final ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
 
       public void visitAssignmentExpression(PsiAssignmentExpression expression) {
@@ -58,6 +61,20 @@ public class SillyAssignmentInspection extends LocalInspectionTool {
 
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitElement(expression);
+      }
+
+      public void visitVariable(final PsiVariable variable) {
+        final PsiExpression initializer = variable.getInitializer();
+        if (initializer instanceof PsiAssignmentExpression) {
+          final PsiExpression lExpr = ((PsiAssignmentExpression)initializer).getLExpression();
+          if (lExpr instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression refExpr = (PsiReferenceExpression)lExpr;
+            if (!refExpr.isQualified() && refExpr.isReferenceTo(variable)) {
+              holder.registerProblem(lExpr, JavaErrorMessages.message("assignment.to.declared.variable", variable.getName()), 
+                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL, (LocalQuickFix[])null);
+            }
+          }
+        }
       }
     };
   }
@@ -69,9 +86,18 @@ public class SillyAssignmentInspection extends LocalInspectionTool {
     if (rExpression == null) return;
     lExpression = PsiUtil.deparenthesizeExpression(lExpression);
     rExpression = PsiUtil.deparenthesizeExpression(rExpression);
-    if (!(lExpression instanceof PsiReferenceExpression) || !(rExpression instanceof PsiReferenceExpression)) return;
+    if (!(lExpression instanceof PsiReferenceExpression)) return;
+    PsiReferenceExpression rRef;
+    if (!(rExpression instanceof PsiReferenceExpression)) {
+      if (!(rExpression instanceof PsiAssignmentExpression)) return;
+      final PsiAssignmentExpression rAssignmentExpression = (PsiAssignmentExpression)rExpression;
+      final PsiExpression assignee = rAssignmentExpression.getLExpression();
+      if (!(assignee instanceof PsiReferenceExpression)) return;
+      rRef = (PsiReferenceExpression)assignee;
+    } else {
+      rRef = (PsiReferenceExpression)rExpression;
+    }
     PsiReferenceExpression lRef = (PsiReferenceExpression)lExpression;
-    PsiReferenceExpression rRef = (PsiReferenceExpression)rExpression;
     PsiManager manager = assignment.getManager();
     if (!sameInstanceReferences(lRef, rRef, manager)) return;
     holder.registerProblem(assignment, JavaErrorMessages.message("assignment.to.itself"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, (LocalQuickFix[])null);
