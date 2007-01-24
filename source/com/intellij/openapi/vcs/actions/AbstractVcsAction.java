@@ -36,35 +36,22 @@ import com.intellij.openapi.actionSystem.AsyncUpdateAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ModuleLevelVcsManager;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public abstract class AbstractVcsAction extends AsyncUpdateAction<VcsContext> {
   public static Collection<AbstractVcs> getActiveVcses(VcsContext dataContext) {
     Collection<AbstractVcs> result = new HashSet<AbstractVcs>();
-    Project project = dataContext.getProject();
-    if (project != null) {
-      Module[] modules = ModuleManager.getInstance(project).getModules();
-      for (Module module : modules) {
-        AbstractVcs activeVcs = ModuleLevelVcsManager.getInstance(module).getActiveVcs();
-        if (activeVcs != null) {
-          result.add(activeVcs);
-        }
-      }
-    }
+    Collections.addAll(result, ProjectLevelVcsManager.getInstance(dataContext.getProject()).getAllActiveVcss());
     return result;
   }
 

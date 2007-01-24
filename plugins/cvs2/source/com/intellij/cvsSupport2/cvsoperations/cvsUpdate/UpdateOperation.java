@@ -1,26 +1,23 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsUpdate;
 
 import com.intellij.cvsSupport2.CvsVcs2;
-import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.cvsSupport2.actions.update.UpdateByBranchUpdateSettings;
 import com.intellij.cvsSupport2.actions.update.UpdateSettings;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.common.*;
-import com.intellij.openapi.module.Module;
+import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vcs.ModuleLevelVcsManager;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.GlobalOptions;
 import org.netbeans.lib.cvsclient.command.update.UpdateCommand;
-import org.netbeans.lib.cvsclient.util.IIgnoreFileFilter;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
+import org.netbeans.lib.cvsclient.util.IIgnoreFileFilter;
 
 import java.io.File;
 
@@ -97,9 +94,7 @@ public class UpdateOperation extends CvsOperationOnFiles {
 
   public boolean fileIsUnderProject(VirtualFile file) {
     if (!super.fileIsUnderProject(file)) return false;
-    Module module = VfsUtil.getModuleForFile(myProject, file);
-    if (module == null) return false;
-    return ModuleLevelVcsManager.getInstance(module).getActiveVcs() == CvsVcs2.getInstance(myProject);
+    return ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file) == CvsVcs2.getInstance(myProject);
   }
 
   protected IIgnoreFileFilter getIgnoreFileFilter() {
@@ -111,9 +106,7 @@ public class UpdateOperation extends CvsOperationOnFiles {
         }
         VirtualFile fileByIoFile = CvsVfsUtil.findFileByIoFile(cvsFileSystem.getLocalFileSystem().getFile(abstractFileObject));
         if (fileByIoFile == null) return false;
-        Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(fileByIoFile);
-        if (module == null) return false;
-        return ModuleLevelVcsManager.getInstance(module).getActiveVcs() != CvsVcs2.getInstance(myProject);
+        return ProjectLevelVcsManager.getInstance(myProject).getVcsFor(fileByIoFile) != CvsVcs2.getInstance(myProject);
       }
     };
   }

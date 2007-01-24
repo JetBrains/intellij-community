@@ -1,6 +1,5 @@
 package com.intellij.cvsSupport2.actions;
 
-import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.cvsSupport2.config.ImportConfiguration;
@@ -11,9 +10,8 @@ import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.cvsSupport2.ui.experts.importToCvs.ImportWizard;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ModuleLevelVcsManager;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.CvsBundle;
 
 public class ImportAction extends ActionOnSelectedElement {
   private ImportDetails myImportDetails;
@@ -28,7 +26,7 @@ public class ImportAction extends ActionOnSelectedElement {
   }
 
   protected String getTitle(VcsContext context) {
-    return com.intellij.CvsBundle.message("operation.name.import");
+    return CvsBundle.message("operation.name.import");
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {
@@ -55,7 +53,7 @@ public class ImportAction extends ActionOnSelectedElement {
   private AbstractAction createCheckoutAction(final boolean makeNewFilesReadOnly) {
     return new AbstractAction(false) {
       protected String getTitle(VcsContext context) {
-        return com.intellij.CvsBundle.message("operation.name.checkout.project");
+        return CvsBundle.message("operation.name.checkout.project");
       }
 
       protected CvsHandler getCvsHandler(CvsContext context) {
