@@ -59,10 +59,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class SvnFileSystemListener implements LocalFileOperationsHandler, CommandListener {
-  public SvnFileSystemListener() {
-    System.out.println("Created SvnFileSystemListener");
-  }
-
   private static class AddedFileInfo {
     private final Project myProject;
     private final VirtualFile myDir;
