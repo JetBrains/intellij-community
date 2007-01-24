@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import java.awt.*;
@@ -48,6 +50,7 @@ public abstract class PanelWithButtons extends JPanel {
 
   }
 
+  @Nullable
   protected abstract String getLabelText();
 
   protected abstract JButton[] createButtons();

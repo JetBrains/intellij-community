@@ -31,18 +31,20 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-public class TableView extends BaseTableView implements ItemsProvider, SelectionProvider {
+import org.jetbrains.annotations.Nullable;
+
+public class TableView<Item> extends BaseTableView implements ItemsProvider, SelectionProvider {
   public TableView() {
-    this(new ListTableModel(ColumnInfo.EMPTY_ARRAY));
+    this(new ListTableModel<Item>(ColumnInfo.EMPTY_ARRAY));
   }
 
-  public TableView(final ListTableModel model) {
+  public TableView(final ListTableModel<Item> model) {
     super(model);
     setModel(model);
     setSizes();
   }
 
-  public void setModel(final ListTableModel model) {
+  public void setModel(final ListTableModel<Item> model) {
     super.setModel(model);
     getTableHeader().setDefaultRenderer(new TableHeaderRenderer(model));
   }
@@ -63,7 +65,7 @@ public class TableView extends BaseTableView implements ItemsProvider, Selection
     super.tableChanged(e);
   }
 
-  private void setSelection(Collection selection) {
+  private void setSelection(Collection<Item> selection) {
     clearSelection();
     for (Iterator iterator = selection.iterator(); iterator.hasNext();) {
       addSelection(iterator.next());
@@ -93,15 +95,20 @@ public class TableView extends BaseTableView implements ItemsProvider, Selection
   }
 
 
-  public Collection getSelection() {
-    ArrayList result = new ArrayList();
+  public Collection<Item> getSelection() {
+    ArrayList<Item> result = new ArrayList<Item>();
     int[] selectedRows = getSelectedRows();
     if (selectedRows == null) return result;
-    for (int i = 0; i < selectedRows.length; i++) {
-      int selectedRow = selectedRows[i];
+    for (int selectedRow : selectedRows) {
       result.add(getItems().get(selectedRow));
     }
     return result;
+  }
+
+  @Nullable
+  public Item getSelectedObject() {
+    final int row = getSelectedRow();
+    return row >= 0 ? getItems().get(row) : null;    
   }
 
   public void addSelection(Object item) {
@@ -122,8 +129,8 @@ public class TableView extends BaseTableView implements ItemsProvider, Selection
     }
   }
 
-  public java.util.List getItems() {
-    return ((ListTableModel)getModel()).getItems();
+  public java.util.List<Item> getItems() {
+    return ((ListTableModel<Item>)getModel()).getItems();
   }
 
   protected void onHeaderClicked(int column) {

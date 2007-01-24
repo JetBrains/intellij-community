@@ -55,6 +55,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vcs.changes.Change;
@@ -487,6 +488,15 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     ContentsUtil.addOrReplaceContent(contentManager, content, true);
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS).activate(null);
     updateInfoTree.expandRootChildren();
+  }
+
+  public void addMappingFromModule(final Module module, final String activeVcsName) {
+    File projectBaseDir = new File(myProject.getBaseDir().getPath());
+    for(VirtualFile file: ModuleRootManager.getInstance(module).getContentRoots()) {
+      File contentRootDir = new File(file.getPath());
+      String path = FileUtil.getRelativePath(projectBaseDir, contentRootDir);
+      VcsConfiguration.getInstance(myProject).addDirectoryMapping(path, activeVcsName);
+    }
   }
 
   private VcsShowOptionsSettingImpl getOrCreateOption(String actionName) {

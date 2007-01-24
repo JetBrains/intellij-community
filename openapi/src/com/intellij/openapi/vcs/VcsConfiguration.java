@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 
 /**
  * author: lesya
@@ -39,6 +40,8 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT = true;
   public boolean PERFORM_UPDATE_IN_BACKGROUND = false;
   public boolean PERFORM_COMMIT_IN_BACKGROUND = false;
+
+  private List<VcsDirectoryMapping> myDirectoryMappings = new ArrayList<VcsDirectoryMapping>();
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),
@@ -99,8 +102,8 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   private final PerformInBackgroundOption myUpdateOption = new UpdateInBackgroundOption();
   private final PerformInBackgroundOption myCommitOption = new CommitInBackgroundOption();
 
-  public static VcsConfiguration createEmptyConfiguration(Project project) {
-    return new VcsConfiguration(project);
+  public static VcsConfiguration createEmptyConfiguration() {
+    return new VcsConfiguration();
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -108,6 +111,9 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
     final List messages = element.getChildren(MESSAGE_ELEMENT_NAME);
     for (final Object message : messages) {
       saveCommitMessage(((Element)message).getAttributeValue(VALUE_ATTR));
+    }
+    if (ACTIVE_VCS_NAME != null && ACTIVE_VCS_NAME.length() > 0) {
+      myDirectoryMappings.add(new VcsDirectoryMapping("", ACTIVE_VCS_NAME));
     }
   }
 
@@ -122,12 +128,6 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
 
   public static VcsConfiguration getInstance(Project project) {
     return project.getComponent(VcsConfiguration.class);
-  }
-
-  private final Project myProject;
-
-  public VcsConfiguration(Project project) {
-    myProject = project;
   }
 
   public void projectOpened() {
@@ -147,17 +147,6 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   }
 
   public void disposeComponent() {
-
-  }
-
-  public String getConfiguredProjectVcs() {
-    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).findVcsByName(ACTIVE_VCS_NAME);
-    if (vcs == null) {
-      return VcsBundle.message("none.vcs.presentation");
-    }
-    else {
-      return vcs.getDisplayName();
-    }
 
   }
 
@@ -225,5 +214,13 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
 
     public void processSentToBackground() {}
     public void processRestoredToForeground() {}
+  }
+
+  public List<VcsDirectoryMapping> getDirectoryMappings() {
+    return Collections.unmodifiableList(myDirectoryMappings);
+  }
+
+  public void addDirectoryMapping(final String path, final String activeVcsName) {
+    myDirectoryMappings.add(new VcsDirectoryMapping(path, activeVcsName));
   }
 }

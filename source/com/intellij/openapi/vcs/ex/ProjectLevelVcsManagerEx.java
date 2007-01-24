@@ -30,4 +30,6 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
   public abstract void notifyModuleVcsChanged(Module module, AbstractVcs newVcs);
 
   public abstract void showUpdateProjectInfo(final UpdatedFiles updatedFiles, final String displayActionName, final ActionInfo actionInfo);
+
+  public abstract void addMappingFromModule(final Module module, final String activeVcsName);
 }
