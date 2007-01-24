@@ -20,7 +20,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,9 +47,11 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
       commit();
     }
   };
+  private final EditorTextFieldControlHighlighter myHighlighter;
 
   protected EditorTextFieldControl(final DomWrapper<String> domWrapper, final boolean commitOnEveryChange) {
     super(domWrapper);
+    myHighlighter = EditorTextFieldControlHighlighter.getEditorTextFieldControlHighlighter(getProject());
     myCommitOnEveryChange = commitOnEveryChange;
   }
 
@@ -98,7 +99,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
     final EditorTextField editorTextField = getEditorTextField(boundedComponent);
     editorTextField.setSupplementary(true);
     final PsiCodeFragment file = getPsiFile(boundedComponent);
-    EditorTextFieldControlHighlighter.getEditorTextFieldControlHighlighter(project).addFile(file, new Factory<DomElement>() {
+    myHighlighter.addFile(file, new Factory<DomElement>() {
       public DomElement create() {
         return isValid() ? getDomElement() : null;
       }
@@ -122,7 +123,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
 
   public void dispose() {
     super.dispose();
-    EditorTextFieldControlHighlighter.getEditorTextFieldControlHighlighter(getProject()).removeFile(getPsiFile(getComponent()));
+    myHighlighter.removeFile(getPsiFile(getComponent()));
   }
 
   protected void setValue(final String value) {
