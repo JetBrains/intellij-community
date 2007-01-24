@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,7 +145,9 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
    *
    * @return the list of classes
    */
-  @NotNull protected abstract Class[] getSuitableClasses();   // TODO: Class<PsiElement>?
+  @NotNull protected Class[] getSuitableClasses() {
+    return ArrayUtil.EMPTY_CLASS_ARRAY;
+  }
 
   protected Editor getEditor() {
     return myEditor;
