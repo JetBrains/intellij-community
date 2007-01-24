@@ -32,11 +32,11 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
 
     myModules = new HashSet<Module>();
     myModules.add(myModule);
-    List<Module> dependent = ModuleManager.getInstance(myModule.getProject()).getModuleDependentModules(myModule);
-    myModules.addAll(dependent);
-    for (Module aDependent : dependent) {
-      addExportedModules(aDependent, myModule);
+    List<Module> dependents = ModuleManager.getInstance(myModule.getProject()).getModuleDependentModules(myModule);
+    for (Module dependent : dependents) {
+      addExportedModules(dependent, myModule);
     }
+    myModules.addAll(dependents); //important to add after the previous loop
   }
 
   private void addExportedModules(Module dependentModule, Module module) {
@@ -52,9 +52,6 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
               addExportedModules(nextLevelModule, dependentModule);
             }
           }
-        }
-        else {
-          break;
         }
       }
     }
