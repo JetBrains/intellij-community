@@ -239,10 +239,9 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         final StackFrame stackFrame = getStackFrame();
         final Map<LocalVariable, Value> values = stackFrame.getValues(stackFrame.visibleVariables());
         myAllValues = new HashMap<LocalVariable, Value>(values.size());
-        for (Iterator<LocalVariable> it = values.keySet().iterator(); it.hasNext();) {
-          final LocalVariable variable = it.next();
+        for (final LocalVariable variable : values.keySet()) {
           final Value value = values.get(variable);
-          myAllValues.put(variable, (value instanceof ObjectReference)? (ObjectReference)value : value);
+          myAllValues.put(variable, value);
         }
       }
       catch (InconsistentDebugInfoException e) {
