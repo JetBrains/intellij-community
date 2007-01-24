@@ -1,6 +1,5 @@
 package com.theoryinpractice.testng.model;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -136,7 +135,8 @@ public class TestData implements Cloneable
     private String getWorkingDirectory(Project project) {
         if (WORKING_DIRECTORY != null && WORKING_DIRECTORY.length() > 0)
             return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
-        return new File(project.getProjectFilePath()).getParent();
+
+        return project.getProjectFile().getParent().getPath();        
     }
 
     public void setProperty(int type, String value, Project project) {
