@@ -11,6 +11,9 @@ public class CheckboxTree extends CheckboxTreeBase {
 
   public CheckboxTree(final CheckboxTreeCellRenderer cellRenderer, CheckedTreeNode root) {
     super(cellRenderer, root);
+
+    TreeToolTipHandler.install(this);
+    installSpeedSearch();
   }
 
   protected void installSpeedSearch() {
@@ -20,10 +23,5 @@ public class CheckboxTree extends CheckboxTreeBase {
 
   protected boolean isToggleEvent(KeyEvent e) {
     return super.isToggleEvent(e) &&  !SpeedSearchBase.hasActiveSpeedSearch(this);
-  }
-
-  protected void customize() {
-    TreeToolTipHandler.install(this);
-    installSpeedSearch();
   }
 }

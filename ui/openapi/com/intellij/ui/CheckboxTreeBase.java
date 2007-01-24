@@ -70,15 +70,10 @@ public class CheckboxTreeBase extends Tree {
 
     setSelectionRow(0);
     setModel(new DefaultTreeModel(root));
-
-    customize();
   }
 
   protected boolean isToggleEvent(KeyEvent e) {
     return e.getKeyCode() == KeyEvent.VK_SPACE;
-  }
-
-  protected void customize() {
   }
 
   protected boolean toggleNode(CheckedTreeNode node) {
