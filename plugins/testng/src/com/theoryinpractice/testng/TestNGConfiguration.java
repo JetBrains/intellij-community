@@ -10,21 +10,23 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import com.intellij.execution.ExecutionUtil;
-import com.intellij.execution.Location;
-import com.intellij.execution.RunJavaConfiguration;
+import com.intellij.execution.*;
+import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.junit.coverage.JUnitCoverageConfigurable;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import org.jdom.Element;
@@ -151,8 +153,10 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
     }
 
     public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-        //return new TestNGConfigurationEditor(getProject());
-        return new TestNGMainConfigurationEditor(getProject());
+        SettingsEditorGroup<TestNGConfiguration> group = new SettingsEditorGroup<TestNGConfiguration>();
+        group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new TestNGConfigurationEditor(getProject()));
+        group.addEditor(ExecutionBundle.message("coverage.tab.title"), new TestNGCoverageConfigurationEditor(getProject()));
+        return group;
     }
 
     @Override
