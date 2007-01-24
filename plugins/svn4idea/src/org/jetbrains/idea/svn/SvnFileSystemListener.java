@@ -408,7 +408,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       if (rootManager != null) {
         Module module = rootManager.getFileIndex().getModuleForFile(file);
         if (module != null) {
-          AbstractVcs vcs = ModuleLevelVcsManager.getInstance(module).getActiveVcs();
+          AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
           if (vcs instanceof SvnVcs) {
             return (SvnVcs)vcs;
           }
