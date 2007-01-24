@@ -342,7 +342,9 @@ public class XmlCompletionData extends CompletionData {
       }
       else if (completionChar == ' ') {
         template.addTextSegment(" ");
-        template.addEndVariable();
+        final MacroCallNode completeAttrExpr = new MacroCallNode(MacroFactory.createMacro("complete"));
+        template.addVariable("attrComplete", completeAttrExpr,completeAttrExpr,true);
+        //template.addEndVariable();
       }
 
       templateManager.startTemplate(editor, template);
