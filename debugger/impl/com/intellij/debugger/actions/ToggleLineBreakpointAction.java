@@ -81,7 +81,9 @@ public class ToggleLineBreakpointAction extends AnAction {
       final Project project = event.getData(DataKeys.PROJECT);
       final Document document = place.getDocument();
       final int offset = place.getOffset();
-      toEnable = LineBreakpoint.canAddLineBreakpoint(project, document, document.getLineNumber(offset));
+      final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
+      toEnable = breakpointManager.findBreakpoint(document, offset, LineBreakpoint.CATEGORY) != null || 
+                 LineBreakpoint.canAddLineBreakpoint(project, document, document.getLineNumber(offset));
     }
 
     final Presentation presentation = event.getPresentation();
