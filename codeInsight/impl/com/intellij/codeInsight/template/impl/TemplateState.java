@@ -375,7 +375,7 @@ public class TemplateState implements Disposable {
 
     PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
 
-    int currentSegmentNumber = getCurrentSegmentNumber();
+    final int currentSegmentNumber = getCurrentSegmentNumber();
     if (currentSegmentNumber < 0) return;
     final int start = mySegments.getSegmentStart(currentSegmentNumber);
     final int end = mySegments.getSegmentEnd(currentSegmentNumber);
@@ -445,7 +445,7 @@ public class TemplateState implements Disposable {
                     PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
                   }
 
-                  updateTypeBindings(item.getObject(), psiFile, start, end);
+                  updateTypeBindings(item.getObject(), psiFile, currentSegmentNumber);
 
                   char c = event.getCompletionChar();
                   if (c == '.') {
@@ -474,10 +474,10 @@ public class TemplateState implements Disposable {
     else {
       Result result = expressionNode.calculateResult(context);
       if (result instanceof PsiElementResult) {
-        updateTypeBindings(((PsiElementResult)result).getElement(), psiFile, start, end);
+        updateTypeBindings(((PsiElementResult)result).getElement(), psiFile, currentSegmentNumber);
       }
       if (result instanceof PsiTypeResult) {
-        updateTypeBindings(((PsiTypeResult)result).getType(), psiFile, start, end);
+        updateTypeBindings(((PsiTypeResult)result).getType(), psiFile, currentSegmentNumber);
       }
       if (result instanceof InvokeActionResult) {
         ((InvokeActionResult)result).getAction().run();
@@ -487,7 +487,7 @@ public class TemplateState implements Disposable {
   }
 
 
-  private void updateTypeBindings(Object item, PsiFile file, int start, int end) {
+  private void updateTypeBindings(Object item, PsiFile file, final int segmentNumber) {
     PsiClass aClass = null;
     if (item instanceof PsiClass) {
       aClass = (PsiClass)item;
@@ -499,7 +499,7 @@ public class TemplateState implements Disposable {
     if (aClass != null) {
       if (aClass instanceof PsiTypeParameter) {
         if (((PsiTypeParameter)aClass).getOwner() instanceof PsiMethod) {
-          PsiElement element = file.findElementAt(start);
+          PsiElement element = file.findElementAt(mySegments.getSegmentStart(segmentNumber));
           PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
           if (method != null) {
             PsiTypeParameterList paramList = method.getTypeParameterList();
@@ -517,7 +517,7 @@ public class TemplateState implements Disposable {
           }
         }
       }  else {
-        addImportForClass(aClass, start, end);
+        addImportForClass(aClass, segmentNumber);
         unblockDocument();
       }
     }
@@ -527,7 +527,7 @@ public class TemplateState implements Disposable {
     PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
   }
 
-  private void addImportForClass(final PsiClass aClass, int startOffset, int endOffset) {
+  private void addImportForClass(final PsiClass aClass, int segmentNumber) {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     if (!aClass.isValid() || aClass.getQualifiedName() == null) return;
 
@@ -537,8 +537,10 @@ public class TemplateState implements Disposable {
     final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
     CharSequence chars = myDocument.getCharsSequence();
 
-    PsiElement element = file.findElementAt(startOffset);
-    String refText = chars.subSequence(startOffset, endOffset).toString();
+    final int start = mySegments.getSegmentStart(segmentNumber);
+    final int end = mySegments.getSegmentEnd(segmentNumber);
+    PsiElement element = file.findElementAt(start);
+    String refText = chars.subSequence(start, end).toString();
     PsiClass refClass = helper.resolveReferencedClass(refText, element);
     if (aClass.equals(refClass)) return;
 
@@ -546,7 +548,7 @@ public class TemplateState implements Disposable {
       PsiElement parent = element.getParent();
       while (parent != null) {
         PsiElement tmp = parent.getParent();
-        if (!(tmp instanceof PsiJavaCodeReferenceElement) || tmp.getTextRange().getEndOffset() > endOffset) break;
+        if (!(tmp instanceof PsiJavaCodeReferenceElement) || tmp.getTextRange().getEndOffset() > end) break;
         parent = tmp;
       }
       if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement) parent).isQualified()) {
@@ -643,7 +645,7 @@ public class TemplateState implements Disposable {
     if (result instanceof PsiTypeResult) {
       shortenReferences();
       PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-      updateTypeBindings(((PsiTypeResult)result).getType(), psiFile, start, end);
+      updateTypeBindings(((PsiTypeResult)result).getType(), psiFile, segmentNumber);
     }
   }
 
