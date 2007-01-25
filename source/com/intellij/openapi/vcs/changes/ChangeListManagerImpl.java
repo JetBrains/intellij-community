@@ -353,7 +353,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                   }
                 }
 
-                public void processModifiedWithoutEditing(VirtualFile file) {
+                public void processModifiedWithoutCheckout(VirtualFile file) {
                   if (file == null || !updateUnversionedFiles) return;
                   if (myDisposed) throw new DisposedException();
                   if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
