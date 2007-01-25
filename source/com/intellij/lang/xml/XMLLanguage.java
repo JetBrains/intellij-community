@@ -16,10 +16,7 @@ import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
@@ -150,6 +147,10 @@ public class XMLLanguage extends CompositeLanguage {
   }
 
   public FileViewProvider createViewProvider(final VirtualFile file, final PsiManager manager, final boolean physical) {
+    if (SingleRootFileViewProvider.isTooLarge(file)) {
+      return new SingleRootFileViewProvider(manager, file, physical);
+    }
+
     return new XmlFileViewProvider(manager, file, physical, this);
   }
 

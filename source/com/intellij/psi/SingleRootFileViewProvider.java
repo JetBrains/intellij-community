@@ -37,7 +37,6 @@ import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.WeakReference;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -75,6 +74,8 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   private static Language calcBaseLanguage(VirtualFile file) {
     final FileType fileType = file.getFileType();
     if (fileType instanceof LanguageFileType) {
+      if (isTooLarge(file)) return StdLanguages.TEXT;
+      
       final LanguageFileType languageFileType = (LanguageFileType)fileType;
       return languageFileType.getLanguage();
     }
@@ -247,7 +248,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return fileType;
   }
 
-  private static boolean isTooLarge(final VirtualFile vFile) {
+  public static boolean isTooLarge(final VirtualFile vFile) {
     return FileManagerImpl.MAX_INTELLISENSE_FILESIZE != -1 && fileSize(vFile) > FileManagerImpl.MAX_INTELLISENSE_FILESIZE;
   }
 
