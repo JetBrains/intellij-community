@@ -9,6 +9,15 @@ import java.awt.event.KeyEvent;
  */
 public class CheckboxTree extends CheckboxTreeBase {
 
+  public static abstract class CheckboxTreeCellRenderer extends CheckboxTreeCellRendererBase { // This is 6.0 compatibility layer 
+    protected CheckboxTreeCellRenderer() {
+    }
+
+    protected CheckboxTreeCellRenderer(final boolean opaque) {
+      super(opaque);
+    }
+  }
+
   public CheckboxTree(final CheckboxTreeCellRenderer cellRenderer, CheckedTreeNode root) {
     super(cellRenderer, root);
 

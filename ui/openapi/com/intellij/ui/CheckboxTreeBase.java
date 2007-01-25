@@ -4,21 +4,21 @@ import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
-import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author Dmitry Avdeev
  */
 public class CheckboxTreeBase extends Tree {
 
-  public CheckboxTreeBase(final CheckboxTreeCellRenderer cellRenderer, CheckedTreeNode root) {
+  public CheckboxTreeBase(final CheckboxTreeCellRendererBase cellRenderer, CheckedTreeNode root) {
 
     setCellRenderer(cellRenderer);
     setRootVisible(false);
@@ -92,11 +92,11 @@ public class CheckboxTreeBase extends Tree {
     repaint();
   }
 
-  public static abstract class CheckboxTreeCellRenderer extends JPanel implements TreeCellRenderer {
+  public static abstract class CheckboxTreeCellRendererBase extends JPanel implements TreeCellRenderer {
     private final ColoredTreeCellRenderer myTextRenderer;
     public final JCheckBox myCheckbox;
 
-    public CheckboxTreeCellRenderer(boolean opaque) {
+    public CheckboxTreeCellRendererBase(boolean opaque) {
       super(new BorderLayout());
       myCheckbox = new JCheckBox();
       myTextRenderer = new ColoredTreeCellRenderer() {
@@ -114,7 +114,7 @@ public class CheckboxTreeBase extends Tree {
       add(myTextRenderer, BorderLayout.CENTER);
     }
 
-    public CheckboxTreeCellRenderer() {
+    public CheckboxTreeCellRendererBase() {
       this(true);
     }
 
