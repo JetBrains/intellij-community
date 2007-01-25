@@ -165,6 +165,8 @@ public class ClassElement extends RepositoryTreeElement {
       }
     }
 
+    super.deleteChildInternal(child);
+
     if (child.getElementType() == FIELD) {
       final ASTNode nextField = TreeUtil.findSibling(child.getTreeNext(), FIELD);
       if (nextField != null) {
@@ -183,8 +185,6 @@ public class ClassElement extends RepositoryTreeElement {
         }
       }
     }
-    
-    super.deleteChildInternal(child);
   }
 
   public boolean isEnum() {
