@@ -8,6 +8,7 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.util.treeView.smartTree.TreeElement;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,13 +63,13 @@ public class MethodUpDownUtil {
     }
   }
 
-  private static void addStructureViewElements(final StructureViewTreeElement parent, final ArrayList<PsiElement> array) {
-    for(StructureViewTreeElement svElement: parent.getChildren()) {
-      Object value = svElement.getValue();
+  private static void addStructureViewElements(final TreeElement parent, final ArrayList<PsiElement> array) {
+    for(TreeElement treeElement: parent.getChildren()) {
+      Object value = ((StructureViewTreeElement)treeElement).getValue();
       if (value instanceof PsiElement) {
         array.add((PsiElement) value);
       }
-      addStructureViewElements(svElement, array);
+      addStructureViewElements(treeElement, array);
     }
   }
 }

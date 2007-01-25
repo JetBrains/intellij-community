@@ -10,6 +10,7 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.PropertiesFilesManager;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
@@ -118,9 +119,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     myTitledPanels = new THashMap<PropertiesFile, JPanel>();
     recreateEditorsPanel();
 
-    StructureViewTreeElement[] children = myStructureViewComponent.getTreeModel().getRoot().getChildren();
+    TreeElement[] children = myStructureViewComponent.getTreeModel().getRoot().getChildren();
     if (children.length != 0) {
-      StructureViewTreeElement child = children[0];
+      TreeElement child = children[0];
       String propName = ((ResourceBundlePropertyStructureViewElement)child).getValue();
       setState(new ResourceBundleEditorState(propName));
     }

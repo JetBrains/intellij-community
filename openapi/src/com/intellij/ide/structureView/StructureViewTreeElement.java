@@ -35,5 +35,5 @@ public interface StructureViewTreeElement extends TreeElement, Navigatable{
    */
   Object getValue();
 
-  StructureViewTreeElement[] getChildren();
+  /*StructureViewTreeElement[] getChildren();*/
 }
