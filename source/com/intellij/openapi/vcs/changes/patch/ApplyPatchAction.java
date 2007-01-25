@@ -26,6 +26,7 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -124,6 +125,15 @@ public class ApplyPatchAction extends AnAction {
         FileType fileType = fileToPatch.getFileType();
         if (fileType == StdFileTypes.UNKNOWN) {
           fileType = FileTypeChooser.associateFileType(fileToPatch.getPresentableName());
+          if (fileType == null) {
+            return false;
+          }
+        }
+      }
+      else if (patch.isNewFile()) {
+        FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(patch.getBeforeFileName());
+        if (fileType == StdFileTypes.UNKNOWN) {
+          fileType = FileTypeChooser.associateFileType(patch.getBeforeFileName());
           if (fileType == null) {
             return false;
           }
