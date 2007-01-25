@@ -17,7 +17,6 @@
 
 package com.intellij.util.xml;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -53,8 +52,7 @@ public class NanoXmlUtil {
         return;
       }
 
-      final Document document =
-        ApplicationManager.getApplication() == null ? null : FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+      final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
 
       if (document != null) {
         parse(new CharSequenceReader(document.getCharsSequence()), builder);
@@ -267,4 +265,36 @@ public class NanoXmlUtil {
 
   public static class ParserStoppedException extends RuntimeException {
   }
+
+  public static class RootTagNameBuilder implements IXMLBuilder {
+    private String myRootTagName;
+
+    public void startBuilding(final String systemID, final int lineNr) throws Exception {
+    }
+
+    public void newProcessingInstruction(final String target, final Reader reader) throws Exception {
+    }
+
+    public void startElement(final String name, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) throws Exception {
+      myRootTagName = name;
+      throw new NanoXmlUtil.ParserStoppedException();
+    }
+
+    public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type) throws Exception {
+    }
+
+    public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) throws Exception {
+    }
+
+    public void endElement(final String name, final String nsPrefix, final String nsURI) throws Exception {
+    }
+
+    public void addPCData(final Reader reader, final String systemID, final int lineNr) throws Exception {
+    }
+
+    public String getResult() {
+      return myRootTagName;
+    }
+  }
+
 }

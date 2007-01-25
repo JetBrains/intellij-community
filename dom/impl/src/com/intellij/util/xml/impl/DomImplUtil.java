@@ -5,21 +5,16 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
-import net.n3.nanoxml.IXMLBuilder;
 import org.apache.xerces.parsers.SAXParser;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Set;
@@ -139,46 +134,11 @@ public class DomImplUtil {
     }) != null;
   }
 
-  @NotNull
-  public static Pair<String, String> getRootTagAndNamespace(final PsiFile file) throws IOException {
-    final Ref<String> localNameRef = new Ref<String>();
-    final Ref<String> nsRef = new Ref<String>("");
-    NanoXmlUtil.parseFile(file, new RootTagParametersGettingBuilder(localNameRef));
-    return Pair.create(localNameRef.get(), nsRef.get());
+  @Nullable
+  public static String getRootTagName(final PsiFile file) throws IOException {
+    final NanoXmlUtil.RootTagNameBuilder builder = new NanoXmlUtil.RootTagNameBuilder();
+    NanoXmlUtil.parseFile(file, builder);
+    return builder.getResult();
   }
 
-  private static class RootTagParametersGettingBuilder implements IXMLBuilder {
-    private final Ref<String> myLocalNameRef;
-
-    public RootTagParametersGettingBuilder(final Ref<String> localNameRef) {
-      myLocalNameRef = localNameRef;
-    }
-
-    public void startBuilding(final String systemID, final int lineNr) throws Exception {
-    }
-
-    public void newProcessingInstruction(final String target, final Reader reader) throws Exception {
-    }
-
-    public void startElement(final String name, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) throws Exception {
-      myLocalNameRef.set(name);
-      throw new NanoXmlUtil.ParserStoppedException();
-    }
-
-    public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type) throws Exception {
-    }
-
-    public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) throws Exception {
-    }
-
-    public void endElement(final String name, final String nsPrefix, final String nsURI) throws Exception {
-    }
-
-    public void addPCData(final Reader reader, final String systemID, final int lineNr) throws Exception {
-    }
-
-    public Object getResult() throws Exception {
-      return null;
-    }
-  }
 }
