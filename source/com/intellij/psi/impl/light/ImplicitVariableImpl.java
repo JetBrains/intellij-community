@@ -2,17 +2,18 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
  */
 public abstract class ImplicitVariableImpl extends LightVariableBase implements ImplicitVariable {
 
-  public ImplicitVariableImpl(PsiManager manager, PsiIdentifier nameIdentifier, PsiType type, boolean writable, PsiElement scope) {
+  public ImplicitVariableImpl(PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {
     super(manager, nameIdentifier, type, writable, scope);
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitImplicitVariable(this);
   }
 
