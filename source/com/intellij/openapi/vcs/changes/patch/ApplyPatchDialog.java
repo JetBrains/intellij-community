@@ -89,6 +89,11 @@ public class ApplyPatchDialog extends DialogWrapper {
     updateOKAction();
   }
 
+  public void setFileName(String fileName) {
+    myFileNameField.setText(fileName);
+    checkLoadPatches();
+  }
+
   private void checkLoadPatches() {
     final String fileName = myFileNameField.getText().replace(File.separatorChar, '/');
     final VirtualFile patchFile = LocalFileSystem.getInstance().findFileByPath(fileName);

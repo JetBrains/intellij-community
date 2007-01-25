@@ -899,6 +899,7 @@
       <reference ref="CutCopyPasteGroup"/>
       <reference ref="EditSource"/>
       <reference ref="OpenInBrowser"/>
+      <reference ref="ChangesView.ApplyPatch"/>
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
