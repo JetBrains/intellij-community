@@ -16,6 +16,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
@@ -54,7 +55,8 @@ public class SelectWordUtil {
     new XmlElementSelectioner(),
     new XmlTokenSelectioner(),
     new ScriptletSelectioner(),
-    new PlainTextLineSelectioner()
+    new PlainTextLineSelectioner(),
+    new ELExpressionHolderSelectioner()
   };
 
   public static void registerSelectioner(Selectioner selectioner) {
@@ -1112,6 +1114,22 @@ public class SelectWordUtil {
         final JspxFileViewProvider viewProvider = psiFile.getViewProvider();
         PsiElement elt = viewProvider.findElementAt(cursorOffset, viewProvider.getTemplateDataLanguage());
         ranges.add(elt.getTextRange());
+      }
+      return ranges;
+    }
+  }
+
+  static class ELExpressionHolderSelectioner extends BasicSelectioner {
+    @Override
+    public boolean canSelect(PsiElement e) {
+      return e instanceof ELExpressionHolder;
+    }
+
+    @Override
+    public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+      List<TextRange> ranges = super.select(e, editorText, cursorOffset, editor);
+      if (true) {
+        ranges.add(e.getTextRange());
       }
       return ranges;
     }
