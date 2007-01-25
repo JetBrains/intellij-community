@@ -379,16 +379,28 @@ public class ExceptionUtil {
   }
 
   public static boolean isUncheckedException(PsiClassType type) {
-    GlobalSearchScope searchScope = type.getResolveScope();
-    PsiClass aClass = type.resolve();
+    final GlobalSearchScope searchScope = type.getResolveScope();
+    final PsiClass aClass = type.resolve();
     if (aClass == null) return false;
-    PsiClass runtimeExceptionClass = aClass.getManager().findClass("java.lang.RuntimeException", searchScope);
+    final PsiClass runtimeExceptionClass = ApplicationManager.getApplication().runReadAction(
+        new Computable<PsiClass>() {
+          public PsiClass compute() {
+            return aClass.getManager().findClass("java.lang.RuntimeException", searchScope);
+          }
+        }
+    );;
     if (runtimeExceptionClass != null &&
         InheritanceUtil.isInheritorOrSelf(aClass, runtimeExceptionClass, true)) {
       return true;
     }
 
-    PsiClass errorClass = aClass.getManager().findClass("java.lang.Error", searchScope);
+    final PsiClass errorClass = ApplicationManager.getApplication().runReadAction(
+        new Computable<PsiClass>() {
+          public PsiClass compute() {
+            return aClass.getManager().findClass("java.lang.Error", searchScope);
+          }
+        }
+    );;
     if (errorClass != null && InheritanceUtil.isInheritorOrSelf(aClass, errorClass, true)) return true;
 
     return false;
