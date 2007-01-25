@@ -5,10 +5,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
@@ -165,6 +165,25 @@ public class ClassElement extends RepositoryTreeElement {
       }
     }
 
+    if (child.getElementType() == FIELD) {
+      final ASTNode nextField = TreeUtil.findSibling(child.getTreeNext(), FIELD);
+      if (nextField != null) {
+        final ASTNode modifierList = child.findChildByType(MODIFIER_LIST);
+        if (modifierList != null) {
+          final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
+          LeafElement whitespace = Factory.createSingleLeafElement(WHITE_SPACE, " ", 0, 1, treeCharTab, getManager());
+          final ASTNode first = nextField.getFirstChildNode();
+          nextField.addChild(whitespace, first);
+          final ASTNode typeElement = child.findChildByType(TYPE);
+          if (typeElement == null) {
+            nextField.addChild(modifierList, whitespace);
+          } else {
+            nextField.addChildren(modifierList, typeElement.getTreeNext(), whitespace);
+          }
+        }
+      }
+    }
+    
     super.deleteChildInternal(child);
   }
 
