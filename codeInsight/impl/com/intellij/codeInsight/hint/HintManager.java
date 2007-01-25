@@ -662,6 +662,10 @@ public class HintManager implements ApplicationComponent {
       hideHints(HIDE_BY_ANY_KEY, false, false);
     }
 
+
+    public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
+    }
+
     public void beforeEditorTyping(char c, DataContext dataContext) {}
   }
 

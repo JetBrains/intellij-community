@@ -286,6 +286,10 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
       requestHideHighlights(dataContext);
     }
 
+
+    public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
+    }
+
     public void beforeEditorTyping(char c, DataContext dataContext) {
       requestHideHighlights(dataContext);
     }

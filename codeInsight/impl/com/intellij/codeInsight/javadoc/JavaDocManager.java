@@ -82,6 +82,10 @@ public class JavaDocManager implements ProjectComponent {
         hint.cancel();
       }
     }
+
+
+    public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
+    }
   };
 
   public static JavaDocManager getInstance(Project project) {

@@ -13,5 +13,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 
 public interface AnActionListener {
   void beforeActionPerformed(AnAction action, DataContext dataContext);
+  void afterActionPerformed(AnAction action, DataContext dataContext);
+  
   void beforeEditorTyping(char c, DataContext dataContext);
 }

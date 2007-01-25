@@ -22,6 +22,10 @@ import java.util.Comparator;
 
 public abstract class ActionManagerEx extends ActionManager{
 
+  private boolean myActionPopupStackEmpty;
+
+
+
   public static ActionManagerEx getInstanceEx(){
 
     return (ActionManagerEx)getInstance();
@@ -42,7 +46,13 @@ public abstract class ActionManagerEx extends ActionManager{
 
   public abstract void removeAnActionListener(AnActionListener listener);
 
+
+
   public abstract void fireBeforeActionPerformed(AnAction action, DataContext dataContext);
+
+  public abstract void fireAfterActionPerformed(AnAction action, DataContext dataContext);
+
+
 
   public abstract void fireBeforeEditorTyping(char c, DataContext dataContext);
 
@@ -127,6 +137,14 @@ public abstract class ActionManagerEx extends ActionManager{
 
 
   public abstract String [] getPluginActions(PluginId pluginId);
+
+
+
+  public abstract void queueActionPerformedEvent(final AnAction action, DataContext context);
+
+
+
+  public abstract boolean isActionPopupStackEmpty();
 
 }
 

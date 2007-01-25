@@ -314,6 +314,10 @@ public class DaemonListeners {
       myEscPressed = action == escapeAction;
     }
 
+
+    public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
+    }
+
     public void beforeEditorTyping(char c, DataContext dataContext) {
       stopDaemon(true);
       myEscPressed = false;

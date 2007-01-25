@@ -34,8 +34,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
   private boolean myRollover;
   private static boolean ourGlobalMouseDown = false;
 
-  private ActionToolbarCallback myActionPerformedCallback = new ActionToolbarCallback.Empty();
-
   public ActionButton(
     final AnAction action,
     final Presentation presentation,
@@ -92,18 +90,16 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
     );
     myAction.beforeActionPerformedUpdate(event);
     if (isButtonEnabled()) {
-      ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(myAction, event.getDataContext());
-      Component component = ((Component)event.getDataContext().getData(DataConstantsEx.CONTEXT_COMPONENT));
+      final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
+      final DataContext dataContext = event.getDataContext();
+      manager.fireBeforeActionPerformed(myAction, dataContext);
+      Component component = ((Component)dataContext.getData(DataConstantsEx.CONTEXT_COMPONENT));
       if (component != null && !component.isShowing()) {
         return;
       }
       myAction.actionPerformed(event);
-      myActionPerformedCallback.actionPerformed(this);
+      manager.queueActionPerformedEvent(myAction, dataContext);
     }
-  }
-
-  void setActionPerformedCallback(final ActionToolbarCallback callback) {
-    myActionPerformedCallback = callback != null ? callback : new ActionToolbarCallback.Empty();
   }
 
   public void removeNotify() {
@@ -243,7 +239,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
           if (!myMouseDown && ourGlobalMouseDown) break;
           repaint();
           onMousePresenceChanged(false);
-          myActionPerformedCallback.mouseExited(e);
           break;
         }
     }

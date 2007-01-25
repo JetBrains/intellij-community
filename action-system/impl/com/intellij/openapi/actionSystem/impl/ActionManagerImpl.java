@@ -92,6 +92,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   @NonNls public static final String ACTIONS_BUNDLE = "messages.ActionsBundle";
   @NonNls public static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
 
+  private List<ActionPopupMenuImpl> myPopups = new ArrayList<ActionPopupMenuImpl>();
+  private Map<AnAction, DataContext> myQueuedNotifications = new LinkedHashMap<AnAction, DataContext>();
+
   ActionManagerImpl(KeymapManager keymapManager, DataManager dataManager) {
     myId2Action = new THashMap<String, Object>();
     myId2Index = new TObjectIntHashMap<String>();
@@ -129,7 +132,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   public ActionPopupMenu createActionPopupMenu(String place, ActionGroup group) {
-    return new ActionPopupMenuImpl(place, group);
+    return new ActionPopupMenuImpl(place, group, this);
   }
 
   public ActionToolbar createActionToolbar(final String place, final ActionGroup group, final boolean horizontal) {
@@ -823,6 +826,39 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  public void addActionPopup(final ActionPopupMenuImpl menu) {
+    myPopups.add(menu);
+  }
+
+  public void removeActionPopup(final ActionPopupMenuImpl menu) {
+    final boolean removed = myPopups.remove(menu);
+    if (removed && myPopups.size() == 0) {
+      flushActionPerformed();
+    }
+  }
+
+  public void queueActionPerformedEvent(final AnAction action, DataContext context) {
+    if (myPopups.size() > 0) {
+      myQueuedNotifications.put(action, context);
+    } else {
+      fireAfterActionPerformed(action, context);
+    }
+  }
+
+
+  public boolean isActionPopupStackEmpty() {
+    return myPopups.size() == 0;
+  }
+
+  private void flushActionPerformed() {
+    final Set<AnAction> actions = myQueuedNotifications.keySet();
+    for (final AnAction eachAction : actions) {
+      final DataContext eachContext = myQueuedNotifications.get(eachAction);
+      fireAfterActionPerformed(eachAction, eachContext);
+    }
+    myQueuedNotifications.clear();
+  }
+
   private AnActionListener[] getActionListeners() {
     if (myCachedActionListeners == null) {
       myCachedActionListeners = myActionListeners.toArray(new AnActionListener[myActionListeners.size()]);
@@ -850,6 +886,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     AnActionListener[] listeners = getActionListeners();
     for (AnActionListener listener : listeners) {
       listener.beforeActionPerformed(action, dataContext);
+    }
+  }
+
+  public void fireAfterActionPerformed(AnAction action, DataContext dataContext) {
+    if (action != null) {
+      myPrevPerformedActionId = myLastPreformedActionId;
+      myLastPreformedActionId = getId(action);
+      IdeaLogger.ourLastActionId = myLastPreformedActionId;
+    }
+    AnActionListener[] listeners = getActionListeners();
+    for (AnActionListener listener : listeners) {
+      listener.afterActionPerformed(action, dataContext);
     }
   }
 
@@ -881,6 +929,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   public Set<String> getActionIds(){
     return myId2Action.keySet();
   }
+
 
   private class MyTimer extends Timer implements ActionListener {
     private final List<TimerListener> myTimerListeners = Collections.synchronizedList(new ArrayList<TimerListener>());

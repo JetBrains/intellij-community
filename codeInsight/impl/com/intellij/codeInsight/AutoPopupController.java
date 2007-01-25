@@ -57,6 +57,10 @@ public class AutoPopupController implements ProjectComponent {
       public void beforeEditorTyping(char c, DataContext dataContext) {
         myAlarm.cancelAllRequests();
       }
+
+
+      public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
+      }
     };
     ActionManagerEx.getInstanceEx().addAnActionListener(myAnActionListener);
 

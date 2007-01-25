@@ -58,6 +58,9 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
           myRecordingMacro.appendKeytyped(c);
         }
       }
+
+      public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
+      }
     });
   }
 
