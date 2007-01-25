@@ -16,10 +16,7 @@
  */
 package org.intellij.images.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
@@ -47,9 +44,8 @@ import java.util.Set;
  */
 public final class EditExternalyAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
-        DataContext dataContext = e.getDataContext();
-        Project project = (Project) dataContext.getData(DataConstants.PROJECT);
-        VirtualFile[] files = (VirtualFile[]) dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
+        Project project = e.getData(DataKeys.PROJECT);
+        VirtualFile[] files = e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
         Options options = OptionsManager.getInstance().getOptions();
         String executablePath = options.getExternalEditorOptions().getExecutablePath();
         if (StringUtil.isEmpty(executablePath)) {
@@ -96,12 +92,17 @@ public final class EditExternalyAction extends AnAction {
     public void update(AnActionEvent e) {
         super.update(e);
 
-        DataContext dataContext = e.getDataContext();
-        VirtualFile[] files = (VirtualFile[]) dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
-        e.getPresentation().setEnabled(isImages(files));
+        VirtualFile[] files = e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
+        final boolean isEnabled = isImages(files);
+        if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {
+            e.getPresentation().setVisible(isEnabled);
+        }
+        else {
+            e.getPresentation().setEnabled(isEnabled);
+        }
     }
 
-    private boolean isImages(VirtualFile[] files) {
+    private static boolean isImages(VirtualFile[] files) {
         boolean isImagesFound = false;
         if (files != null) {
             ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
