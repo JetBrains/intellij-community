@@ -62,7 +62,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public List<ReferenceType> classesByName(String s) {
-    return (List<ReferenceType>)myVirtualMachine.classesByName(s);
+    return myVirtualMachine.classesByName(s);
   }
 
   public List<ReferenceType> nestedTypes(ReferenceType refType) {
@@ -102,12 +102,10 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     if(myAllThreadsDirty) {
       myAllThreadsDirty = false;
 
-      List threads = myVirtualMachine.allThreads();
+      List<ThreadReference> threads = myVirtualMachine.allThreads();
       Map<ThreadReference, ThreadReferenceProxyImpl> result = new HashMap<ThreadReference, ThreadReferenceProxyImpl>();
 
-      for (Iterator iterator = threads.iterator(); iterator.hasNext();) {
-        ThreadReference threadReference = (ThreadReference)iterator.next();
-
+      for (final ThreadReference threadReference : threads) {
         ThreadReferenceProxyImpl threadReferenceProxy = getThreadReferenceProxy(threadReference);
         LOG.assertTrue(threadReferenceProxy != null);
 
