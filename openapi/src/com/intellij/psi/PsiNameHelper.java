@@ -49,6 +49,7 @@ public abstract class PsiNameHelper {
    * with which the name helper is associated to filter out keywords.
    *
    * @param text the text to check.
+   * @param languageLevel to check text against. For instance 'assert' or 'enum' might or might not be identifiers depending on language level
    * @return true if the text is an identifier, false otherwise
    */
   public abstract boolean isIdentifier(String text, LanguageLevel languageLevel);
@@ -129,7 +130,7 @@ public abstract class PsiNameHelper {
       return buffer.toString();
     }
     
-    return referenceName;
+    return referenceName != null ? referenceName : "";
   }
 
   public static String getQualifiedClassName(String referenceText, boolean removeWhitespace) {
