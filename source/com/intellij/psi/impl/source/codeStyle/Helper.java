@@ -7,12 +7,12 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.CharTable;
@@ -30,7 +30,7 @@ public class Helper {
     myFileType = fileType;
   }
 
-  private int getStartOffset(ASTNode root, ASTNode child) {
+  private static int getStartOffset(ASTNode root, ASTNode child) {
     if (child == root) return 0;
     ASTNode parent = child.getTreeParent();
     int offset = 0;
@@ -49,6 +49,14 @@ public class Helper {
   }
 
   public int getIndent(final ASTNode element, boolean includeNonSpace) {
+    return getIndent(element, includeNonSpace, 0);
+  }
+  
+  private static final int TOO_BIG_WALK_THRESHOULD = 1000;
+
+  private int getIndent(final ASTNode element, boolean includeNonSpace, int recursionLevel) {
+    if (recursionLevel > TOO_BIG_WALK_THRESHOULD) return 0;
+
     if (element.getTreePrev() != null) {
       ASTNode prev = element.getTreePrev();
       ASTNode lastCompositePrev;
@@ -56,7 +64,7 @@ public class Helper {
         lastCompositePrev = prev;
         prev = prev.getLastChildNode();
         if (prev == null) { // element.prev is "empty composite"
-          return getIndent(lastCompositePrev, includeNonSpace);
+          return getIndent(lastCompositePrev, includeNonSpace, recursionLevel + 1);
         }
       }
 
@@ -68,7 +76,7 @@ public class Helper {
       }
 
       if (includeNonSpace) {
-        return getIndent(prev, includeNonSpace) + getIndent(text, includeNonSpace);
+        return getIndent(prev, includeNonSpace, recursionLevel + 1) + getIndent(text, includeNonSpace);
       }
 
       if (element.getElementType() == ElementType.CODE_BLOCK) {
@@ -79,12 +87,12 @@ public class Helper {
         if (parent.getElementType() != ElementType.CODE_BLOCK) {
           //Q: use some "anchor" part of parent for some elements?
           // e.g. for method it could be declaration start, not doc-comment
-          return getIndent(parent, includeNonSpace);
+          return getIndent(parent, includeNonSpace, recursionLevel + 1);
         }
       }
       else {
         if (element.getElementType() == ElementType.LBRACE) {
-          return getIndent(element.getTreeParent(), includeNonSpace);
+          return getIndent(element.getTreeParent(), includeNonSpace, recursionLevel + 1);
         }
       }
       //Q: any other cases?
@@ -101,17 +109,17 @@ public class Helper {
       }
       else {
         if (prev.getTreeParent().getElementType() == ElementType.LABELED_STATEMENT) {
-          return getIndent(prev, true) + getIndent(text, true);
+          return getIndent(prev, true, recursionLevel + 1) + getIndent(text, true);
         }
         else
-          return getIndent(prev, includeNonSpace);
+          return getIndent(prev, includeNonSpace, recursionLevel + 1);
       }
     }
     else {
       if (element.getTreeParent() == null) {
         return 0;
       }
-      return getIndent(element.getTreeParent(), includeNonSpace);
+      return getIndent(element.getTreeParent(), includeNonSpace, recursionLevel + 1);
     }
   }
 
