@@ -19,9 +19,7 @@ package com.intellij.util.xml;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.*;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.InstanceMap;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
@@ -68,7 +66,7 @@ public class DomFileDescription<T> {
   /**
    * @param namespaceKey namespace identifier
    * @see @com.intellij.util.xml.Namespace()
-   * @param policy function that takes XML file root tag and returns (maybe empty) list of possible namespace URL. This
+   * @param policy function that takes XML file root tag and returns (maybe empty) list of possible namespace URLs or DTD public ids. This
    * function shouldn't use DOM since it may be not initialized for the file at the moment
    */
   protected final void registerNamespacePolicy(String namespaceKey, NotNullFunction<XmlTag,List<String>> policy) {
@@ -78,7 +76,7 @@ public class DomFileDescription<T> {
   /**
    * @param namespaceKey namespace identifier
    * @see @com.intellij.util.xml.Namespace()
-   * @param namespace XML namespace value for the given namespaceKey
+   * @param namespace XML namespace or DTD public id value for the given namespaceKey
    */
   protected final void registerNamespacePolicy(String namespaceKey, final String namespace) {
     registerNamespacePolicy(namespaceKey, new NotNullFunction<XmlTag, List<String>>() {
@@ -163,7 +161,17 @@ public class DomFileDescription<T> {
       if (document != null) {
         final XmlTag tag = document.getRootTag();
         if (tag != null) {
-          return function.fun(tag).contains(tag.getNamespace());
+          final List<String> list = function.fun(tag);
+          if (list.contains(tag.getNamespace())) return true;
+
+          final XmlProlog prolog = document.getProlog();
+          if (prolog != null) {
+            final XmlDoctype doctype = prolog.getDoctype();
+            if (doctype != null) {
+              final String publicId = doctype.getPublicId();
+              if (publicId != null && list.contains(publicId)) return true;
+            }
+          }
         }
       }
       return false;

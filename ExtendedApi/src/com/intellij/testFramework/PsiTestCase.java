@@ -199,4 +199,9 @@ public abstract class PsiTestCase extends ModuleTestCase {
   public com.intellij.openapi.editor.Document getDocument(PsiFile file) {
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }
+
+  public void commitDocument(com.intellij.openapi.editor.Document document) {
+    PsiDocumentManager.getInstance(getProject()).commitDocument(document);
+  }
+
 }
