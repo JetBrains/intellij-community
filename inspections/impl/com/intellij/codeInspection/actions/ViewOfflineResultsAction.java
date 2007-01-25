@@ -118,7 +118,7 @@ public class ViewOfflineResultsAction extends AnAction {
     }, null, new PerformAnalysisInBackgroundOption(project));
   }
 
-  @SuppressWarnings({"UnusedDeclaration"})
+  @SuppressWarnings({"UnusedDeclaration", "WeakerAccess", "UnusedReturnValue"}) //used in TeamCity
   public static InspectionResultsView showOfflineView(final Project project,
                                                       @Nullable
                                                       final String profileName,
@@ -129,7 +129,7 @@ public class ViewOfflineResultsAction extends AnAction {
     if (profileName != null) {
       profile = InspectionProjectProfileManager.getInstance(project).getProfile(profileName);
       if (profile == null) {
-        profile = InspectionProfileManager.getInstance().getProfile(profileName);
+        profile = InspectionProfileManager.getInstance().getProfiles().get(profileName);
       }
     }
     else {
