@@ -166,25 +166,6 @@ public class ClassElement extends RepositoryTreeElement {
     }
 
     super.deleteChildInternal(child);
-
-    if (child.getElementType() == FIELD) {
-      final ASTNode nextField = TreeUtil.findSibling(child.getTreeNext(), FIELD);
-      if (nextField != null) {
-        final ASTNode modifierList = child.findChildByType(MODIFIER_LIST);
-        if (modifierList != null) {
-          final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
-          LeafElement whitespace = Factory.createSingleLeafElement(WHITE_SPACE, " ", 0, 1, treeCharTab, getManager());
-          final ASTNode first = nextField.getFirstChildNode();
-          nextField.addChild(whitespace, first);
-          final ASTNode typeElement = child.findChildByType(TYPE);
-          if (typeElement == null) {
-            nextField.addChild(modifierList, whitespace);
-          } else {
-            nextField.addChildren(modifierList, typeElement.getTreeNext(), whitespace);
-          }
-        }
-      }
-    }
   }
 
   public boolean isEnum() {
