@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 
 public class ActionToolbarImpl extends JPanel implements ActionToolbar {
@@ -766,7 +766,29 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     Disposer.register(myPopup, myPopupToolbar);
 
     myPopup.showInScreenCoordinates(this, location);
+
+    final Window window = SwingUtilities.getWindowAncestor(this);
+    if (window != null) {
+      window.addComponentListener(new ComponentAdapter() {
+        public void componentResized(final ComponentEvent e) {
+          hidePopup();
+        }
+
+        public void componentMoved(final ComponentEvent e) {
+          hidePopup();
+        }
+
+        public void componentShown(final ComponentEvent e) {
+          hidePopup();
+        }
+
+        public void componentHidden(final ComponentEvent e) {
+          hidePopup();
+        }
+      });
+    }
   }
+
 
   private boolean isPopupShowing() {
     if (myPopup != null) {
@@ -785,6 +807,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   private void processClosed() {
+    if (myPopup == null) return;
+
     Disposer.dispose(myPopup);
     myPopup = null;
     updateActionsImmediately();
