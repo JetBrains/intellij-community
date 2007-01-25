@@ -148,6 +148,7 @@ public class ActionMenuItem extends JMenuItem {
           return;
         }
         myAction.actionPerformed(event);
+        actionManager.queueActionPerformedEvent(myAction, myContext);
       }
     }
   }

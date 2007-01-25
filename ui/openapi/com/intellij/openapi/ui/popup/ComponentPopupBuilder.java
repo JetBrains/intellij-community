@@ -58,6 +58,9 @@ public interface ComponentPopupBuilder {
   @NotNull
   ComponentPopupBuilder addListener(JBPopupListener listener);
 
+  @NotNull
+  ComponentPopupBuilder setCancelOnMouseOutCallback(final Computable<Boolean> shouldCancel);
+
   /**
    * @param updater recreates popup in accordance to selected (in lookup or Ctrl N) psiElement. Current popup will be closed automatically
    * @param project

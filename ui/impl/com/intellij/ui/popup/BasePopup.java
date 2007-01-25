@@ -175,7 +175,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
 
   protected abstract JComponent createContent();
 
-  protected void dispose() {
+  public void dispose() {
     myAutoSelectionTimer.stop();
 
     if (myPopup == null) return;

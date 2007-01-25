@@ -12,9 +12,11 @@ import com.intellij.openapi.keymap.ex.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,6 +71,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private int myFirstOusideIndex = -1;
 
   private JBPopup myPopup;
+  private boolean myCancelRequested;
 
   public ActionToolbarImpl(final String place,
                            final ActionGroup actionGroup,
@@ -707,7 +710,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
 
     myPopupToolbar = new PopupToolbar(myPlace, group, true, myDataManager, myActionManager, myKeymapManager) {
-      protected void onActionPerformed() {
+      protected void onOtherActionPerformed() {
         hidePopup();
       }
     };
@@ -715,13 +718,20 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
 
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myPopupToolbar, null);
-    builder.setResizable(false).setRequestFocus(false).setTitle(null).setCancelOnClickOutside(true).setCancelCallback(new Computable<Boolean>() {
+    builder.setResizable(false).setRequestFocus(false).setTitle(null).setCancelOnClickOutside(true)
+      .setCancelCallback(new Computable<Boolean>() {
+      public Boolean compute() {
+        return myActionManager.isActionPopupStackEmpty();
+      }
+    }).setCancelOnMouseOutCallback(new Computable<Boolean>() {
       public Boolean compute() {
         return myActionManager.isActionPopupStackEmpty();
       }
     });
 
     myPopup = builder.createPopup();
+    Disposer.register(myPopup, myPopupToolbar);
+
     myPopup.showInScreenCoordinates(this, location);
   }
 
@@ -734,14 +744,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   private void hidePopup() {
     if (myPopup != null) {
-      myPopupToolbar.dispose();
       myPopup.cancel();
+      Disposer.dispose(myPopup);
       myPopup = null;
       updateActionsImmediately();
     }
   }
 
-  abstract static class PopupToolbar extends ActionToolbarImpl implements AnActionListener {
+  abstract static class PopupToolbar extends ActionToolbarImpl implements AnActionListener, Disposable {
 
     public PopupToolbar(final String place, final ActionGroup actionGroup, final boolean horizontal, final DataManager dataManager, final ActionManagerEx actionManager,
                  final KeymapManagerEx keymapManager) {
@@ -757,12 +767,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
 
     public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
-      if (myVisibleActions.contains(action)) {
-        //onActionPerformed();
+      if(!myVisibleActions.contains(action)) {
+        onOtherActionPerformed();
       }
     }
 
-    protected abstract void onActionPerformed();
+    protected abstract void onOtherActionPerformed();
 
     public void beforeEditorTyping(final char c, final DataContext dataContext) {
     }

@@ -43,6 +43,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myUseDimSevriceForXYLocation;
 
   private IconButton myCancelButton;
+  private Computable<Boolean> myCancelOnMouseOutCallback;
 
   public ComponentPopupBuilderImpl(final JComponent component,
                                    final JComponent prefferedFocusedComponent) {
@@ -71,6 +72,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @NotNull
   public ComponentPopupBuilder setCancelOnClickOutside(final boolean cancel) {
     myCancelOnClickOutside = cancel;
+    return this;
+  }
+
+  @NotNull
+  public ComponentPopupBuilder setCancelOnMouseOutCallback(final Computable<Boolean> shouldCancel) {
+    myCancelOnMouseOutCallback = shouldCancel;
     return this;
   }
 
@@ -122,7 +129,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   public JBPopup createPopup() {
     final JBPopupImpl popup = new JBPopupImpl(myComponent, myPrefferedFocusedComponent, myRequestFocus, myForceHeavyweight,
                                               myDimensionServiceKey, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null,
-                                              myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton);
+                                              myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton, myCancelOnMouseOutCallback);
     if (myPopupUpdater != null) {
       popup.setPopupUpdater(myPopupUpdater, myProject);
     }

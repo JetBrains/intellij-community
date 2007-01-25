@@ -106,7 +106,7 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
     ListPopupStep step = createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics);
 
     return new ListPopupImpl(step, maxRowCount){
-      protected void dispose() {
+      public void dispose() {
         if (disposeCallback != null) {
           disposeCallback.run();
         }

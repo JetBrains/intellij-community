@@ -4,6 +4,7 @@ package com.intellij.openapi.ui.popup;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.Disposable;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +17,7 @@ import java.awt.*;
  * @see com.intellij.openapi.ui.popup.JBPopupFactory
  * @since 6.0
  */
-public interface JBPopup {
+public interface JBPopup extends Disposable {
   /**
    * Shows the popup at the bottom left corner of the specified component.
    *

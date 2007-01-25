@@ -166,7 +166,7 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
     return (ListPopupStep) myStep;
   }
 
-  protected void dispose() {
+  public void dispose() {
     myList.removeMouseMotionListener(myMouseMotionListener);
     myList.removeMouseListener(myMouseListener);
     super.dispose();

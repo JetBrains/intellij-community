@@ -146,7 +146,7 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
     myWizardTree.addMouseListener(myMouseListener);
   }
 
-  protected void dispose() {
+  public void dispose() {
     mySavedExpanded.clear();
     final Enumeration<TreePath> expanded = myWizardTree.getExpandedDescendants(new TreePath(myWizardTree.getModel().getRoot()));
     if (expanded != null) {
