@@ -7,10 +7,7 @@ package com.intellij.ui.popup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -43,7 +40,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myUseDimSevriceForXYLocation;
 
   private IconButton myCancelButton;
-  private Computable<Boolean> myCancelOnMouseOutCallback;
+  private MouseChecker myCancelOnMouseOutCallback;
+  private boolean myCancelOnWindow;
 
   public ComponentPopupBuilderImpl(final JComponent component,
                                    final JComponent prefferedFocusedComponent) {
@@ -76,7 +74,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   }
 
   @NotNull
-  public ComponentPopupBuilder setCancelOnMouseOutCallback(final Computable<Boolean> shouldCancel) {
+  public ComponentPopupBuilder setCancelOnMouseOutCallback(final MouseChecker shouldCancel) {
     myCancelOnMouseOutCallback = shouldCancel;
     return this;
   }
@@ -119,6 +117,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   }
 
   @NotNull
+  public ComponentPopupBuilder setCancelOnOtherWindowOpen(final boolean cancelOnWindow) {
+    myCancelOnWindow = cancelOnWindow;
+    return this;
+  }
+
+  @NotNull
   public ComponentPopupBuilder setLookupAndSearchUpdater(final Condition<PsiElement> updater, Project project) {
     myPopupUpdater = updater;
     myProject = project;
@@ -129,7 +133,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   public JBPopup createPopup() {
     final JBPopupImpl popup = new JBPopupImpl(myComponent, myPrefferedFocusedComponent, myRequestFocus, myForceHeavyweight,
                                               myDimensionServiceKey, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null,
-                                              myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton, myCancelOnMouseOutCallback);
+                                              myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton, myCancelOnMouseOutCallback, myCancelOnWindow);
     if (myPopupUpdater != null) {
       popup.setPopupUpdater(myPopupUpdater, myProject);
     }

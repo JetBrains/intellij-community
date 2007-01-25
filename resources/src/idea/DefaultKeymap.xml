@@ -659,9 +659,7 @@
     <action id="HideAllWindows">
       <keyboard-shortcut first-keystroke="control shift F12"/>
     </action>
-    <action id="HideSideWindows">
-      <keyboard-shortcut first-keystroke="control alt BACK_SPACE"/>
-    </action>
+    <action id="HideSideWindows"/>
     <action id="ShowPopupMenu">
       <keyboard-shortcut first-keystroke="CONTEXT_MENU"/>
     </action>

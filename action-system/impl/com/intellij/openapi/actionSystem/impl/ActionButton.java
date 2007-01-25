@@ -242,7 +242,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
           break;
         }
     }
-    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
   }
 
   protected int getPopState(boolean isPushed) {
