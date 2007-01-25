@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,16 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
 
 public class MissingOverrideAnnotationInspection extends MethodInspection {
+    
+    /** @noinspection PublicField*/
+    public boolean useJdk6Rules = false;
 
     public String getID() {
         return "override";
@@ -41,6 +48,13 @@ public class MissingOverrideAnnotationInspection extends MethodInspection {
 
     public String getGroupDisplayName() {
         return GroupNames.CLASSLAYOUT_GROUP_NAME;
+    }
+
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "missing.override.annotation.jdk6.option"), this, 
+                "useJdk6Rules");
     }
 
     @NotNull
@@ -87,7 +101,7 @@ public class MissingOverrideAnnotationInspection extends MethodInspection {
         return new MissingOverrideAnnotationVisitor();
     }
 
-    private static class MissingOverrideAnnotationVisitor
+    private class MissingOverrideAnnotationVisitor
             extends BaseInspectionVisitor{
 
         public void visitMethod(@NotNull PsiMethod method){
@@ -106,7 +120,11 @@ public class MissingOverrideAnnotationInspection extends MethodInspection {
             if(languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0){
                 return;
             }
-            if(!isOverride(method)){
+            if(useJdk6Rules){
+                if(!isJdk6Override(method)){
+                    return;
+                }
+            } else if (!isJdk5Override(method)){
                 return;
             }
             if(hasOverrideAnnotation(method)){
@@ -115,7 +133,7 @@ public class MissingOverrideAnnotationInspection extends MethodInspection {
             registerMethodError(method);
         }
 
-        private static boolean hasOverrideAnnotation(
+        private boolean hasOverrideAnnotation(
                 PsiModifierListOwner element){
             final PsiModifierList modifierList = element.getModifierList();
             if(modifierList == null){
@@ -126,19 +144,41 @@ public class MissingOverrideAnnotationInspection extends MethodInspection {
             return annotation != null;
         }
 
-        private static boolean isOverride(PsiMethod method){
+        private boolean isJdk6Override(PsiMethod method){
             final PsiMethod[] superMethods = method.findSuperMethods();
-            for(PsiMethod superMethod : superMethods){
-                final PsiClass superContainingClass =
-                        superMethod.getContainingClass();
-                if(superContainingClass != null) {
-                    final PsiClass containingClass =
-                            method.getContainingClass();
-                    if(!containingClass.isInterface() ||
-                            superContainingClass.isInterface()){
-                        return true;
-                    }
+            if (superMethods.length <= 0) {
+                return false;
+            }
+            // is override except is this is an interface method
+            // overriding a protected method in java.lang.Object
+            // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6501053
+            final PsiClass methodClass = method.getContainingClass();
+            if (!methodClass.isInterface()) {
+                return true;
+            }
+            for (PsiMethod superMethod : superMethods) {
+                if (!superMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
+                    return true;
                 }
+            }
+            return false;
+        }
+
+        private boolean isJdk5Override(PsiMethod method){
+            final PsiMethod[] superMethods = method.findSuperMethods();
+            final PsiClass methodClass = method.getContainingClass();
+            for (PsiMethod superMethod : superMethods) {
+                final PsiClass superClass = superMethod.getContainingClass();
+                if (superClass.isInterface()) {
+                    continue;
+                }
+                if (methodClass.isInterface() &&
+                        superMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
+                    // only true for J2SE java.lang.Object.clone(), but might
+                    // be different on other/newer java platforms
+                    continue;
+                }
+                return true;
             }
             return false;
         }
