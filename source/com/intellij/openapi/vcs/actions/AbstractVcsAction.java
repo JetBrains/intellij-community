@@ -51,7 +51,10 @@ import java.util.*;
 public abstract class AbstractVcsAction extends AsyncUpdateAction<VcsContext> {
   public static Collection<AbstractVcs> getActiveVcses(VcsContext dataContext) {
     Collection<AbstractVcs> result = new HashSet<AbstractVcs>();
-    Collections.addAll(result, ProjectLevelVcsManager.getInstance(dataContext.getProject()).getAllActiveVcss());
+    final Project project = dataContext.getProject();
+    if (project != null) {
+      Collections.addAll(result, ProjectLevelVcsManager.getInstance(project).getAllActiveVcss());
+    }
     return result;
   }
 
