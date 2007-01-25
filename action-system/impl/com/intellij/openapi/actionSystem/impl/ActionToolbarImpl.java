@@ -535,6 +535,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       yBottom = Math.max(yBottom, bounds.y + bounds.height);
     }
     final Dimension dimension = new Dimension(xRight - xLeft, yBottom - yTop);
+
+    if (myLayoutPolicy == AUTO_LAYOUT_POLICY) {
+      dimension.width += myAutoPopupIcon.getIconWidth();
+    }
+
     return dimension;
   }
 
