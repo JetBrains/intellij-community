@@ -121,7 +121,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
 
       String typeText = getRepositoryManager().getFieldView().getTypeText(getRepositoryId());
       try {
-        final PsiType type = myManager.getElementFactory().createTypeFromText(typeText, this);
+        final PsiType type = myManager.getParserFacade().createTypeFromText(typeText, this);
         myCachedType = new PatchedSoftReference<PsiType>(type);
         return type;
       }

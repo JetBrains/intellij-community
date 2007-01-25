@@ -213,7 +213,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
       if (typeText == null) return null;
 
       try{
-        final PsiType type = getManager().getElementFactory().createTypeFromText(typeText, this);
+        final PsiType type = getManager().getParserFacade().createTypeFromText(typeText, this);
         myCachedType = new PatchedSoftReference<PsiType>(type);
         return type;
       }

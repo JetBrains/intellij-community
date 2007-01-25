@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspImplicitVariable;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.RepositoryManager;
@@ -50,6 +49,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.javadoc.JavadocManager;
+import com.intellij.psi.jsp.JspImplicitVariable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -958,6 +958,11 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   @NotNull
   public PsiElementFactory getElementFactory() {
     return myElementFactory;
+  }
+
+  @NotNull
+  public PsiJavaParserFacade getParserFacade() {
+    return getElementFactory(); // TODO: ligter implementation which doesn't mark all the elements as generated.
   }
 
   @NotNull

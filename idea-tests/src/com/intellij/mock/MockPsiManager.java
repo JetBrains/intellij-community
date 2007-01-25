@@ -124,6 +124,11 @@ public class MockPsiManager extends PsiManager {
     return null;
   }
 
+  @NotNull
+  public PsiJavaParserFacade getParserFacade() {
+    return getElementFactory();
+  }
+
   public PsiSearchHelper getSearchHelper() {
     return null;
   }

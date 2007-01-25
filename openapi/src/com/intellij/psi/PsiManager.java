@@ -176,6 +176,14 @@ public abstract class PsiManager extends UserDataHolderBase {
   public abstract @NotNull PsiElementFactory getElementFactory();
 
   /**
+   * Returns the factory for the project, which can be used to create instances of certain java constructs from their textual
+   * presentation. Elements created shall not be used to later interfer (like insert into) a PSI parsed from the user codebase
+   * since no formatting to the user codestyle will be performed in this case. Please use {@link #getElementFactory()} instead, which
+   * provides exactly same methods but ensures created instances will get properly formatted.
+   * @return the parser facade.
+   */
+  public abstract @NotNull PsiJavaParserFacade getParserFacade();
+  /**
    * Returns the search helper for the project, which provides low-level search and
    * find usages functionality. It can be used to perform operations like finding references
    * to an element, finding overriding / inheriting elements, finding to do items and so on.

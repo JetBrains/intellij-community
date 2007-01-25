@@ -5,9 +5,9 @@ import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
@@ -49,7 +49,7 @@ class CatchBodyVisitor extends PsiRecursiveElementVisitor {
     PsiCodeBlock templateCatchBlock;
     final PsiParameter templateParameter;
     try {
-      final PsiElementFactory elementFactory = section.getManager().getElementFactory();
+      final PsiJavaParserFacade elementFactory = section.getManager().getParserFacade();
       PsiCatchSection sectionTemplate = elementFactory.createCatchSection((PsiClassType)type, parameter.getName(), parameter);
       templateCatchBlock = sectionTemplate.getCatchBlock();
 
@@ -101,7 +101,7 @@ class CatchBodyVisitor extends PsiRecursiveElementVisitor {
         if (catchBlock == null) return;
         PsiType type = parameter.getType();
         if (!(type instanceof PsiClassType)) return;
-        final PsiElementFactory elementFactory = section.getManager().getElementFactory();
+        final PsiJavaParserFacade elementFactory = section.getManager().getParserFacade();
         try {
           PsiCatchSection sectionTemplate = elementFactory.createCatchSection((PsiClassType)type, parameter.getName(), parameter);
           section.replace(sectionTemplate);
