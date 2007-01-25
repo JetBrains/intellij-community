@@ -11,17 +11,17 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.ui.SeparatorFactory;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.awt.*;
 
 /**
  * @author max
@@ -45,7 +45,7 @@ public class ChangeListViewerDialog extends DialogWrapper {
     myCommitMessageArea.setText(changeList.getComment());
 
     setTitle(VcsBundle.message("dialog.title.changes.browser"));
-    setCancelButtonText(CommonBundle.getCloseButtonText());
+    setCancelButtonText(CommonBundle.message("close.action.name"));
     setModal(false);
 
     init();
@@ -63,9 +63,11 @@ public class ChangeListViewerDialog extends DialogWrapper {
                                           myChangeList, false, false);
     panel.add(myChangesBrowser, BorderLayout.CENTER);
 
+
     JPanel commitPanel = new JPanel(new BorderLayout());
+    JComponent separator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myCommitMessageArea);
+    commitPanel.add(separator, BorderLayout.NORTH);
     commitPanel.add(new JScrollPane(myCommitMessageArea), BorderLayout.CENTER);
-    commitPanel.setBorder(IdeBorderFactory.createTitledHeaderBorder(VcsBundle.message("label.commit.comment")));
 
     panel.add(commitPanel, BorderLayout.SOUTH);
 
@@ -81,5 +83,10 @@ public class ChangeListViewerDialog extends DialogWrapper {
   @Override
   protected Action[] createActions() {
     return new Action[] { getCancelAction() };
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myChangesBrowser;
   }
 }
