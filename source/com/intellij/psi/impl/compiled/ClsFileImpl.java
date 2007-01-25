@@ -385,13 +385,15 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
 
   public static String decompile(PsiManager manager, VirtualFile file) {
     final FileViewProvider provider = ((PsiManagerImpl)manager).getFileManager().findCachedViewProvider(file);
-    final ClsFileImpl psiFile;
+    ClsFileImpl psiFile = null;
     if (provider != null) {
       psiFile = (ClsFileImpl)provider.getPsi(provider.getBaseLanguage());
     }
-    else {
+
+    if (psiFile == null) {
       psiFile = new ClsFileImpl((PsiManagerImpl)manager, new SingleRootFileViewProvider(manager, file), true);
     }
+
     StringBuffer buffer = new StringBuffer();
     psiFile.appendMirrorText(0, buffer);
     return buffer.toString();
