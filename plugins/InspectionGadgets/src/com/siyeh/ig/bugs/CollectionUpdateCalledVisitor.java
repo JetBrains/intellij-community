@@ -92,10 +92,10 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
                 methodExpression.getQualifierExpression();
         if(qualifier == null || qualifier instanceof PsiThisExpression){
             final PsiElement method = methodExpression.resolve();
-            if(method == null){
+            if(!(method instanceof PsiMethod)){
                 return;
             }
-            final PsiClass aClass = (PsiClass)method.getParent();
+            final PsiClass aClass = ((PsiMethod)method).getContainingClass();
             if (CollectionUtils.isCollectionClassOrInterface(aClass)){
                 updated = true;
             }
