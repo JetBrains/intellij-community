@@ -20,15 +20,15 @@ import java.util.Arrays;
 import java.util.List;
 
 public class OfflineProblemDescriptor {
-  private String myType;
-  private String myFQName;
-  private String myDescription;
-  private List<String> myHints;
-  private int myProblemIndex;
-  private int myLine;
-  private String[] myParentType;
-  private String[] myParentFQName;
-  private String myModuleName;
+  public String myType;
+  public String myFQName;
+  public String myDescription;
+  public List<String> myHints;
+  public int myProblemIndex;
+  public int myLine;
+  public String[] myParentType;
+  public String[] myParentFQName;
+  public String myModuleName;
 
   public String getType() {
     return myType;
