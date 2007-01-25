@@ -26,7 +26,17 @@ public class Paths {
     return parent == null ? newName : appended(parent, newName);
   }
 
-  public static boolean startsWith(String path, String prefix) {
+  public static String withoutRootIfUnder(String path, String root) {
+    if (!startsWith(path, root)) return null;
+
+    path = path.substring(root.length());
+    if (path.length() == 0) return "";
+
+    if (path.charAt(0) != Paths.DELIM) return null;
+    return path.substring(1);
+  }
+
+  private static boolean startsWith(String path, String prefix) {
     return myIsCaseSensitive ? path.startsWith(prefix) : StringUtil.startsWithIgnoreCase(path, prefix);
   }
 

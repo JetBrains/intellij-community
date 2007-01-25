@@ -9,9 +9,7 @@ public class RootEntryFindingTest extends TestCase {
   public void testFindingEntry() {
     FileEntry e = new FileEntry(null, "file", null, null);
     root.addChild(e);
-
     assertSame(e, root.findEntry("file"));
-    assertNull(root.findEntry("unknown file"));
   }
 
   @Test
@@ -91,6 +89,19 @@ public class RootEntryFindingTest extends TestCase {
   }
 
   @Test
+  public void testFindingIsRelativeToFileSystemCaseSensivity() {
+    root.addChild(new FileEntry(null, "file", null, null));
+
+    Paths.setCaseSensitive(true);
+    assertNull(root.findEntry("FiLe"));
+    assertNotNull(root.findEntry("file"));
+
+    Paths.setCaseSensitive(false);
+    assertNotNull(root.findEntry("FiLe"));
+    assertNotNull(root.findEntry("file"));
+  }
+
+  @Test
   public void testGettingUnknownEntryThrowsException() {
     try {
       root.getEntry("unknown entry");
@@ -109,12 +120,88 @@ public class RootEntryFindingTest extends TestCase {
     }
   }
 
-  //@Test
-  //public void testFindingByIdPath() {
-  //  FileEntry e = new FileEntry(1, null, null, null);
-  //  root.addChild(e);
-  //
-  //  assertSame(e, root.findEntry(idp(1)));
-  //  assertNull(root.findEntry(idp(2)));
-  //}
+  @Test
+  public void testFindingByIdPath() {
+    Entry e = new FileEntry(1, null, null, null);
+    root.addChild(e);
+
+    assertSame(e, root.findEntry(idp(1)));
+    assertNull(root.findEntry(idp(2)));
+  }
+
+  @Test
+  public void testFindingByIdPathUnderDirectory() {
+    Entry dir = new DirectoryEntry(1, null, null);
+    Entry file = new FileEntry(2, null, null, null);
+
+    dir.addChild(file);
+    root.addChild(dir);
+
+    assertSame(dir, root.findEntry(idp(1)));
+    assertSame(file, root.findEntry(idp(1, 2)));
+  }
+
+  @Test
+  public void testDoesNotFindByShortIdPathUnderDirectory() {
+    Entry dir = new DirectoryEntry(1, null, null);
+    Entry file = new FileEntry(2, null, null, null);
+
+    dir.addChild(file);
+    root.addChild(dir);
+
+    assertNull(root.findEntry(idp(2)));
+  }
+
+  @Test
+  public void testDoesNotFindByWrongShorterIdPath() {
+    Entry dir1 = new DirectoryEntry(1, null, null);
+    Entry dir2 = new DirectoryEntry(2, null, null);
+    Entry file = new FileEntry(3, null, null, null);
+
+    root.addChild(dir1);
+    dir1.addChild(dir2);
+    dir2.addChild(file);
+
+    assertNull(root.findEntry(idp(1, 3)));
+    assertSame(dir2, root.findEntry(idp(1, 2)));
+  }
+
+  @Test
+  public void testDoesNotFindByWrongLongerIdPath() {
+    Entry dir = new DirectoryEntry(1, null, null);
+    Entry file = new FileEntry(3, null, null, null);
+
+    root.addChild(dir);
+    dir.addChild(file);
+
+    assertNull(root.findEntry(idp(1, 2, 3)));
+  }
+
+  @Test
+  public void testFindingByIdPathUnderSecondDirectory() {
+    Entry dir1 = new DirectoryEntry(1, "1", null);
+    Entry dir2 = new DirectoryEntry(2, "2", null);
+    Entry file = new FileEntry(3, "3", null, null);
+
+    root.addChild(dir1);
+    root.addChild(dir2);
+    dir2.addChild(file);
+
+    assertSame(file, root.findEntry(idp(2, 3)));
+    assertSame(dir1, root.findEntry(idp(1)));
+    assertSame(dir2, root.findEntry(idp(2)));
+
+    assertNull(root.findEntry(idp(1, 3)));
+  }
+
+  @Test
+  public void testTHrowingExceptionOnGettingEntryByWrongIdPath() {
+    try {
+      root.getEntry(idp(1, 2, 3));
+      fail();
+    }
+    catch (RuntimeException e) {
+      assertEquals("entry '1.2.3' not found", e.getMessage());
+    }
+  }
 }

@@ -3,6 +3,7 @@ package com.intellij.localvcs;
 import java.io.IOException;
 
 public class RenameChange extends Change {
+  private String myOldName;
   private String myNewName;
 
   public RenameChange(String path, String newName) {
@@ -12,13 +13,19 @@ public class RenameChange extends Change {
 
   public RenameChange(Stream s) throws IOException {
     super(s);
+    myOldName = s.readString();
     myNewName = s.readString();
   }
 
   @Override
   public void write(Stream s) throws IOException {
     super.write(s);
+    s.writeString(myOldName);
     s.writeString(myNewName);
+  }
+
+  public String getOldName() {
+    return myOldName;
   }
 
   public String getNewName() {
@@ -27,15 +34,16 @@ public class RenameChange extends Change {
 
   @Override
   public void applyTo(RootEntry root) {
-    addAffectedIdPath(root.getEntry(myPath).getIdPath());
-    root.rename(myPath, myNewName);
+    Entry e = root.getEntry(myPath);
+
+    myOldName = e.getName();
+    setAffectedIdPath(e.getIdPath());
+
+    root.rename(getAffectedIdPath(), myNewName);
   }
 
   @Override
   public void revertOn(RootEntry root) {
-    String newPath = Paths.renamed(myPath, myNewName);
-    String oldName = Paths.getNameOf(myPath);
-
-    root.rename(newPath, oldName);
+    root.rename(getAffectedIdPath(), myOldName);
   }
 }

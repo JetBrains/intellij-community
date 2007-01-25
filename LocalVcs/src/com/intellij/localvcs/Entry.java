@@ -1,5 +1,7 @@
 package com.intellij.localvcs;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 import java.io.IOException;
 import static java.lang.String.format;
 import java.util.Collections;
@@ -97,16 +99,12 @@ public abstract class Entry {
   }
 
   public Entry findEntry(String path) {
-    String name = getName();
-    if (!path.startsWith(name)) return null;
+    String withoutMe = Paths.withoutRootIfUnder(path, myName);
+    
+    if (withoutMe == null) return null;
+    if (withoutMe.length() == 0) return this;
 
-    path = path.substring(name.length());
-    if (path.length() == 0) return this;
-
-    if (path.charAt(0) != Paths.DELIM) return null;
-    path = path.substring(1);
-
-    return searchInChildren(path);
+    return searchInChildren(withoutMe);
   }
 
   protected Entry searchInChildren(String path) {
@@ -117,10 +115,28 @@ public abstract class Entry {
     return null;
   }
 
-  //public Entry findEntry(IdPath p) {
-  //  if (p.getName().equals(myId))
-  //  return null;
-  //}
+  // todo generalize findEntry(*) methods
+  public Entry findEntry(IdPath p) {
+    if (!p.rootEquals(myId)) return null;
+    if (p.getName().equals(myId)) return this;
+    return searchInChildren(p.withoutRoot());
+  }
+
+  protected Entry searchInChildren(IdPath p) {
+    for (Entry e : getChildren()) {
+      Entry result = e.findEntry(p);
+      if (result != null) return result;
+    }
+    return null;
+  }
+
+  public Entry getEntry(IdPath p) {
+    Entry result = findEntry(p);
+    if (result == null) {
+      throw new RuntimeException(format("entry '%s' not found", p.toString()));
+    }
+    return result;
+  }
 
   public Entry getEntry(Integer id) {
     // todo it's very slow
@@ -162,6 +178,6 @@ public abstract class Entry {
 
   @Override
   public String toString() {
-    return myName;
+    return String.valueOf(myId) + "-" + myName;
   }
 }

@@ -1,13 +1,10 @@
 package com.intellij.localvcs;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+// todo remove all null-saves and replace with wrapper for tests
 public class Stream {
   private DataInputStream myIs;
   private DataOutputStream myOs;
@@ -35,21 +32,55 @@ public class Stream {
   }
 
   public Entry readEntry() throws IOException {
-    return (Entry)readInstanceOf(myIs.readUTF());
+    switch (myIs.readInt()) {
+      case 0:
+        return new FileEntry(this);
+      case 1:
+        return new DirectoryEntry(this);
+      case 2:
+        return new RootEntry(this);
+    }
+    return null;
   }
 
   public void writeEntry(Entry e) throws IOException {
-    myOs.writeUTF(e.getClass().getName());
+    Integer id = null;
+
+    Class c = e.getClass();
+    if (c.equals(FileEntry.class)) id = 0;
+    if (c.equals(DirectoryEntry.class)) id = 1;
+    if (c.equals(RootEntry.class)) id = 2;
+
+    myOs.writeInt(id);
     e.write(this);
   }
 
   public Change readChange() throws IOException {
-    return (Change)readInstanceOf(myIs.readUTF());
+    // todo use map and reflection
+    switch (myIs.readInt()) {
+      case 0: return new CreateFileChange(this);
+      case 1: return new CreateDirectoryChange(this);
+      case 2: return new ChangeFileContentChange(this);
+      case 3: return new RenameChange(this);
+      case 4: return new MoveChange(this);
+      case 5: return new DeleteChange(this);
+    }
+    return null;
   }
 
-  public void writeChange(Change c) throws IOException {
-    myOs.writeUTF(c.getClass().getName());
-    c.write(this);
+  public void writeChange(Change change) throws IOException {
+    Integer id = null;
+
+    Class c = change.getClass();
+    if (c.equals(CreateFileChange.class)) id = 0;
+    if (c.equals(CreateDirectoryChange.class)) id = 1;
+    if (c.equals(ChangeFileContentChange.class)) id = 2;
+    if (c.equals(RenameChange.class)) id = 3;
+    if (c.equals(MoveChange.class)) id = 4;
+    if (c.equals(DeleteChange.class)) id = 5;
+
+    myOs.writeInt(id);
+    change.write(this);
   }
 
   public ChangeSet readChangeSet() throws IOException {
@@ -116,9 +147,11 @@ public class Stream {
       Class clazz = Class.forName(className);
       Constructor constructor = clazz.getConstructor(getClass());
       return constructor.newInstance(this);
-    } catch (InvocationTargetException e) {
+    }
+    catch (InvocationTargetException e) {
       throw (IOException)e.getCause();
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       throw new RuntimeException(e);
     }
   }

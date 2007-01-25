@@ -46,19 +46,8 @@ public class DirectoryEntry extends Entry {
 
   @Override
   public void addChild(Entry child) {
-    checkDoesNotExist(child);
-
     myChildren.add(child);
     child.setParent(this);
-  }
-
-  private void checkDoesNotExist(Entry child) {
-    for (Entry e : myChildren) {
-      if (e.getName().equals(child.getName())) {
-        String m = "entry '%s' already exists in '%s'";
-        throw new RuntimeException(format(m, child.getName(), getPath()));
-      }
-    }
   }
 
   @Override

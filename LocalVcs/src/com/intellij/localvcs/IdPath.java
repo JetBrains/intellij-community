@@ -1,5 +1,7 @@
 package com.intellij.localvcs;
 
+import com.intellij.util.ArrayUtil;
+
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -31,6 +33,13 @@ public class IdPath {
     return myParts[myParts.length - 1];
   }
 
+  public IdPath getParent() {
+    if (myParts.length == 1) return null;
+    int[] newPath = new int[myParts.length - 1];
+    System.arraycopy(myParts, 0, newPath, 0, newPath.length);
+    return new IdPath(newPath);  
+  }
+
   public IdPath appendedWith(Integer id) {
     // todo use Arrays.copyOf after going to 1.6 
     int[] newPath = new int[myParts.length + 1];
@@ -46,9 +55,23 @@ public class IdPath {
     return false;
   }
 
+  public boolean rootEquals(int id) {
+    return myParts[0] == id;
+  }
+
+  public IdPath withoutRoot() {
+    int[] newPath = new int[myParts.length - 1];
+    System.arraycopy(myParts, 1, newPath, 0, newPath.length);
+    return new IdPath(newPath);
+  }
+
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "(" + myParts + ")";
+    String result = "";
+    for (int part : myParts) {
+      result += part + ".";
+    }
+    return result.substring(0, result.length() - 1);
   }
 
   @Override

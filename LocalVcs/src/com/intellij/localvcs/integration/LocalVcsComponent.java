@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -101,6 +102,12 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
     if (!isEnabled()) return;
     closeVcs();
     closeService();
+
+    cleanupStorageAfterTestCase();
+  }
+
+  protected void cleanupStorageAfterTestCase() {
+    if (isUnitTestMode()) FileUtil.delete(getStorageDir());
   }
 
   protected void closeVcs() {
@@ -111,14 +118,18 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
     myService.shutdown();
   }
 
-  private boolean isDefaultProject() {
+  protected boolean isDefaultProject() {
     return myProject.isDefault();
   }
 
   public boolean isEnabled() {
     if (System.getProperty("localvcs.disabled") != null) return false;
-    if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) return true;
+    if (isUnitTestMode()) return true;
     return ApplicationManagerEx.getApplicationEx().isInternal();
+  }
+
+  protected boolean isUnitTestMode() {
+    return ApplicationManagerEx.getApplicationEx().isUnitTestMode();
   }
 
   public LocalVcsAction startAction(String label) {

@@ -23,19 +23,6 @@ public class DirectoryEntryTest extends TestCase {
   }
 
   @Test
-  public void testAddingEntryWithExistingNameThrowsException() {
-    Entry dir = new DirectoryEntry(null, "dir", null);
-    dir.addChild(new FileEntry(null, "file", null, null));
-
-    try {
-      dir.addChild(new FileEntry(null, "file", null, null));
-      fail();
-    } catch (Exception e) {
-      assertEquals("entry 'file' already exists in 'dir'", e.getMessage());
-    }
-  }
-
-  @Test
   public void testRemovingChildren() {
     Entry dir = new DirectoryEntry(null, null, null);
     Entry file = new FileEntry(null, null, null, null);

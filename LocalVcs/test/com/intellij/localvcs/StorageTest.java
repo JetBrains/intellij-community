@@ -25,6 +25,48 @@ public class StorageTest extends TempDirTestCase {
     assertTrue(entry.getChildren().isEmpty());
     assertEquals(0, counter);
   }
+  
+  @Test
+  public void testCleaningStorageOnVersionChange() {
+    s = new Storage(tempDir) {
+      @Override
+      protected int getVersion() {
+        return 123;
+      }
+    };
+    s.storeCounter(111);
+    s.close();
+
+    s = new Storage(tempDir) {
+      @Override
+      protected int getVersion() {
+        return 666;
+      }
+    };
+
+    assertEquals(0, s.loadCounter());
+  }
+    
+  @Test
+  public void testDoesNotCleanStorageWithProperVersion() {
+    s = new Storage(tempDir) {
+      @Override
+      protected int getVersion() {
+        return 123;
+      }
+    };
+    s.storeCounter(111);
+    s.close();
+
+    s = new Storage(tempDir) {
+      @Override
+      protected int getVersion() {
+        return 123;
+      }
+    };
+
+    assertEquals(111, s.loadCounter());
+  }
 
   @Test
   public void testCreatingAbsentDirs() {

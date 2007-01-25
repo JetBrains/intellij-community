@@ -36,9 +36,19 @@ public class RootEntry extends DirectoryEntry {
     return searchInChildren(path);
   }
 
+  @Override
+  public Entry findEntry(IdPath path) {
+    return searchInChildren(path);
+  }
+
   public void createFile(Integer id, String path, Content content, Long timestamp) {
     FileEntry e = new FileEntry(id, Paths.getNameOf(path), content, timestamp);
     addEntry(Paths.getParentOf(path), e);
+  }
+
+  public void createFile(Integer id, IdPath parentPath, String name, Content content, Long timestamp) {
+    FileEntry e = new FileEntry(id, name, content, timestamp);
+    addEntry(parentPath, e);
   }
 
   public void createDirectory(Integer id, String path, Long timestamp) {
@@ -56,12 +66,29 @@ public class RootEntry extends DirectoryEntry {
     addEntry(parentPath, e);
   }
 
+  public void createDirectory(Integer id, IdPath parentPath, String name, Long timestamp) {
+    DirectoryEntry e = new DirectoryEntry(id, name, timestamp);
+    addEntry(parentPath, e);
+  }
+
   public void changeFileContent(String path, Content newContent, Long newTimestamp) {
     Entry e = getEntry(path);
     e.changeContent(newContent, newTimestamp);
   }
 
+  public void changeFileContent(IdPath path, Content newContent, Long newTimestamp) {
+    Entry e = getEntry(path);
+    e.changeContent(newContent, newTimestamp);
+  }
+
   public void rename(String path, String newName) {
+    // todo one more hack to support roots...
+    // todo i defitilety have to do something with it...
+    Entry e = getEntry(path);
+    e.changeName(Paths.renamed(e.getName(), newName));
+  }
+
+  public void rename(IdPath path, String newName) {
     // todo one more hack to support roots...
     // todo i defitilety have to do something with it...
     Entry e = getEntry(path);
@@ -74,11 +101,27 @@ public class RootEntry extends DirectoryEntry {
     addEntry(newParentPath, e);
   }
 
+  public void move(IdPath path, IdPath newParentPath) {
+    Entry e = getEntry(path);
+    removeEntry(e);
+    addEntry(newParentPath, e);
+  }
+
   public void delete(String path) {
     removeEntry(getEntry(path));
   }
 
+  public void delete(IdPath path) {
+    removeEntry(getEntry(path));
+  }
+
   private void addEntry(String parentPath, Entry entry) {
+    // todo try to remove this conditional logic
+    Entry parent = parentPath == null ? this : getEntry(parentPath);
+    parent.addChild(entry);
+  }
+
+  private void addEntry(IdPath parentPath, Entry entry) {
     // todo try to remove this conditional logic
     Entry parent = parentPath == null ? this : getEntry(parentPath);
     parent.addChild(entry);

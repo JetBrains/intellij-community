@@ -6,6 +6,7 @@ import com.intellij.localvcs.TempDirTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.JUnitCore;
 
 import java.util.Random;
 
@@ -67,6 +68,18 @@ public class PerformanceTest extends TempDirTestCase {
     assertExecutionTime(1000, new Task() {
       public void execute() {
         initVcs();
+      }
+    });
+  }
+
+  @Test
+  public void testCopying() {
+    buildTree();
+    vcs.apply();
+
+    assertExecutionTime(200, new Task() {
+      public void execute() {
+        vcs.getEntry("root").copy();
       }
     });
   }

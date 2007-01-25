@@ -39,7 +39,6 @@ public class ChangeFileContentChange extends Change {
     return myOldContent;
   }
 
-
   public Long getNewTimestamp() {
     return myNewTimestamp;
   }
@@ -54,13 +53,13 @@ public class ChangeFileContentChange extends Change {
 
     myOldContent = affectedEntry.getContent();
     myOldTimestamp = affectedEntry.getTimestamp();
-    addAffectedIdPath(affectedEntry.getIdPath());
+    setAffectedIdPath(affectedEntry.getIdPath());
 
-    root.changeFileContent(myPath, myNewContent, myNewTimestamp);
+    root.changeFileContent(getAffectedIdPath(), myNewContent, myNewTimestamp);
   }
 
   @Override
   public void revertOn(RootEntry root) {
-    root.changeFileContent(myPath, myOldContent, myOldTimestamp);
+    root.changeFileContent(getAffectedIdPath(), myOldContent, myOldTimestamp);
   }
 }

@@ -37,11 +37,11 @@ public class CreateDirectoryChange extends Change {
   @Override
   public void applyTo(RootEntry root) {
     root.createDirectory(myId, myPath, myTimestamp);
-    addAffectedIdPath(root.getEntry(myPath).getIdPath());
+    setAffectedIdPath(root.getEntry(myPath).getIdPath());
   }
 
   @Override
   public void revertOn(RootEntry root) {
-    root.delete(myPath);
+    root.delete(getAffectedIdPath());
   }
 }

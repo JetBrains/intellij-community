@@ -1,5 +1,7 @@
 package com.intellij.localvcs;
 
+import com.intellij.openapi.util.io.FileUtil;
+
 import java.io.*;
 
 public class Storage {
@@ -12,7 +14,8 @@ public class Storage {
   }
 
   protected void init() {
-    myDir.mkdirs();
+    checkVersionAndCreateDir();
+
     try {
       myContentStorage = new ContentStorage(new File(myDir, "contents"));
       myContentStorage = new CachingContentStorage(myContentStorage);
@@ -21,6 +24,27 @@ public class Storage {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private void checkVersionAndCreateDir() {
+    int version = load("version", getVersion() - 1, new Loader<Integer>() {
+      public Integer load(Stream s) throws IOException {
+        return s.readInteger();
+      }
+    });
+
+    if (version != getVersion()) FileUtil.delete(myDir);
+    myDir.mkdirs();
+
+    store("version", new Storer() {
+      public void store(Stream s) throws IOException {
+        s.writeInteger(getVersion());
+      }
+    });
+  }
+
+  protected int getVersion() {
+    return 1;
   }
 
   public void close() {

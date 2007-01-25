@@ -1,14 +1,14 @@
 package com.intellij.localvcs.integration;
 
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Storage;
 import com.intellij.localvcs.TempDirTestCase;
 import com.intellij.localvcs.integration.stubs.StubStartupManagerEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.ide.startup.StartupManagerEx;
+import static org.easymock.classextension.EasyMock.*;
 import org.junit.After;
 import org.junit.Test;
-import static org.easymock.classextension.EasyMock.*;
 
 import java.io.File;
 
@@ -81,7 +81,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
       throw new RuntimeException(e);
     }
   }
-  
+
   @Test
   public void testDisabledForDefaultProject() {
     StartupManagerEx sm = createMock(StartupManagerEx.class);
@@ -103,6 +103,50 @@ public class LocalVcsComponentTest extends TempDirTestCase {
     c.disposeComponent();
 
     verify(sm);
+  }
+
+  @Test
+  public void testCleaningOnDisposeInUnitTestMode() {
+    final boolean[] isUnitTestMode = new boolean[] { true };
+    LocalVcsComponent c = new LocalVcsComponent(null, null, null, null, null, null, null) {
+      @Override
+      public File getStorageDir() {
+        return new File(tempDir, "vcs");
+      }
+
+      @Override
+      protected boolean isUnitTestMode() {
+        return isUnitTestMode[0];
+      }
+
+      @Override
+      protected void closeService() {
+      }
+
+      @Override
+      protected boolean isDefaultProject() {
+        return false;
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return true;
+      }
+    };
+
+    c.initVcs();
+    assertTrue(c.getStorageDir().exists());
+
+    c.disposeComponent();
+    assertFalse(c.getStorageDir().exists());
+
+    isUnitTestMode[0] = false;
+
+    c.initVcs();
+    assertTrue(c.getStorageDir().exists());
+
+    c.disposeComponent();
+    assertTrue(c.getStorageDir().exists());
   }
 
   private Project createProject(String locationHash) {
@@ -147,7 +191,11 @@ public class LocalVcsComponentTest extends TempDirTestCase {
 
     @Override
     protected void closeVcs() {
-      if(isVcsInitialized) super.closeVcs();
+      if (isVcsInitialized) super.closeVcs();
+    }
+
+    @Override
+    protected void cleanupStorageAfterTestCase() {
     }
 
     @Override

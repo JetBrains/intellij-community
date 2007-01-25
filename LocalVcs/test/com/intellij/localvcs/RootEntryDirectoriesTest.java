@@ -53,26 +53,6 @@ public class RootEntryDirectoriesTest extends TestCase {
   }
 
   @Test
-  public void testCreatingDirectoryWithExistedNameThrowsException() {
-    root.createFile(null, "name1", null, null);
-    root.createFile(null, "name2", null, null);
-
-    try {
-      root.createFile(null, "name1", null, null);
-      fail();
-    }
-    catch (RuntimeException e) {
-    }
-
-    try {
-      root.createFile(null, "name2", null, null);
-      fail();
-    }
-    catch (RuntimeException e) {
-    }
-  }
-
-  @Test
   public void testChangingFileContentUnderDirectory() {
     root.createDirectory(1, "dir", null);
     root.createFile(2, "dir/file", c("content"), null);

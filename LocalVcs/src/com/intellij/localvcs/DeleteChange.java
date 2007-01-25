@@ -27,26 +27,26 @@ public class DeleteChange extends Change {
   @Override
   public void applyTo(RootEntry root) {
     myAffectedEntry = root.getEntry(myPath);
-    addAffectedIdPath(myAffectedEntry.getIdPath());
+    setAffectedIdPath(myAffectedEntry.getIdPath());
 
-    root.delete(myPath);
+    root.delete(getAffectedIdPath());
   }
 
   @Override
   public void revertOn(RootEntry root) {
-    // todo maybe we should create several DeleteChanges instead of saving
-    // todo previous entry?
-    restoreEntryRecursively(root, myAffectedEntry, myPath);
+    restoreEntryRecursively(root, myAffectedEntry, getAffectedIdPath().getParent());
   }
 
-  private void restoreEntryRecursively(RootEntry root, Entry e, String path) {
+  private void restoreEntryRecursively(RootEntry root, Entry e, IdPath parentPath) {
     if (e.isDirectory()) {
-      root.createDirectory(e.getId(), path, e.getTimestamp());
+      root.createDirectory(e.getId(), parentPath, e.getName(), e.getTimestamp());
       for (Entry child : e.getChildren()) {
-        restoreEntryRecursively(root, child, Paths.appended(path, child.getName()));
+        parentPath = parentPath == null ? e.getIdPath() : parentPath.appendedWith(e.getId());
+        restoreEntryRecursively(root, child, parentPath);
       }
-    } else {
-      root.createFile(e.getId(), path, e.getContent(), e.getTimestamp());
+    }
+    else {
+      root.createFile(e.getId(), parentPath, e.getName(), e.getContent(), e.getTimestamp());
     }
   }
 }

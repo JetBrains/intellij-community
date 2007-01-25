@@ -22,6 +22,13 @@ public class IdPathTest extends TestCase {
   }
 
   @Test
+  public void testParent() {
+    assertEquals(new IdPath(1, 2), new IdPath(1, 2, 3).getParent());
+    assertEquals(new IdPath(1), new IdPath(1, 2).getParent());
+    assertNull(new IdPath(1).getParent());
+  }
+
+  @Test
   public void testContains() {
     IdPath p = new IdPath(1, 2);
 
@@ -35,5 +42,27 @@ public class IdPathTest extends TestCase {
   public void testEquality() {
     assertTrue(new IdPath(1, 2, 3).equals(new IdPath(1, 2, 3)));
     assertFalse(new IdPath(1, 2, 3).equals(new IdPath(1, 2)));
+
+    assertFalse(new IdPath(1, 2, 3).equals(null));
+    assertFalse(new IdPath(1, 2, 3).equals(new Object()));
+  }
+
+  @Test
+  public void testToString() {
+    assertEquals("1.2.3", new IdPath(1, 2, 3).toString());
+  }
+
+  @Test
+  public void testRootEquals() {
+    assertTrue(new IdPath(1, 2, 3).rootEquals(1));
+    assertTrue(new IdPath(1).rootEquals(1));
+
+    assertFalse(new IdPath(1, 2, 3).rootEquals(2));
+  }
+
+  @Test
+  public void testWithoutRoot() {
+    assertEquals(new IdPath(2, 3), new IdPath(1, 2, 3).withoutRoot());
+    assertEquals(new IdPath(2), new IdPath(1, 2).withoutRoot());
   }
 }

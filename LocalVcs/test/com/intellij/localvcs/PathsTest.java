@@ -30,15 +30,18 @@ public class PathsTest extends TestCase {
     assertEquals("dir/file2", Paths.renamed("dir/file1", "file2"));
     assertEquals("file2", Paths.renamed("file1", "file2"));
   }
-  
+
   @Test
-  public void testStartsWith() {
-    assertTrue(Paths.startsWith("dir/file1", "dir"));
+  public void testRemovingRoot() {
+    assertEquals("file", Paths.withoutRootIfUnder("dir/file", "dir"));
+
+    assertNull(Paths.withoutRootIfUnder("dir/file", "abc"));
+    assertNull(Paths.withoutRootIfUnder("dir/file", "di"));
 
     Paths.setCaseSensitive(true);
-    assertFalse(Paths.startsWith("dir/file1", "DiR"));
+    assertNull(Paths.withoutRootIfUnder("dir/file", "DiR"));
 
     Paths.setCaseSensitive(false);
-    assertTrue(Paths.startsWith("dir/file1", "DiR"));
+    assertEquals("file", Paths.withoutRootIfUnder("dir/file", "DiR"));
   }
 }

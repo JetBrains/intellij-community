@@ -31,24 +31,6 @@ public class RootEntryFilesTest extends TestCase {
   }
 
   @Test
-  public void testCreatingFileWithExistingNameThrowsException() {
-    root.createFile(null, "file", null, null);
-
-    try {
-      root.createFile(null, "file", null, null);
-      fail();
-    }
-    catch (Exception e) {
-      assertEquals("entry 'file' already exists in 'null'", e.getMessage());
-    }
-  }
-
-  @Test
-  public void test() {
-
-  }
-
-  @Test
   public void testChangingFileContent() {
     root.createFile(1, "file", c("content"), null);
     root.changeFileContent("file", c("new content"), 77L);

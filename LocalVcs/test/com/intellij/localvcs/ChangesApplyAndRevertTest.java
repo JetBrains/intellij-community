@@ -160,6 +160,23 @@ public class ChangesApplyAndRevertTest extends TestCase {
   }
 
   @Test
+  public void testDeletingDirectory() {
+    root.createDirectory(1, "dir", 111L);
+
+    Change c = new DeleteChange("dir");
+    c.applyTo(root);
+
+    assertFalse(root.hasEntry("dir"));
+
+    c.revertOn(root);
+
+    Entry e = root.findEntry("dir");
+
+    assertNotNull(e);
+    assertEquals(111L, e.getTimestamp());
+  }
+
+  @Test
   public void testDeletingDirectoryWithContent() {
     // todo i dont trust to deletion reverting yet... i need some more tests
     root.createDirectory(1, "dir1", null);
@@ -170,6 +187,7 @@ public class ChangesApplyAndRevertTest extends TestCase {
     c.applyTo(root);
 
     assertFalse(root.hasEntry("dir1"));
+
     c.revertOn(root);
 
     assertTrue(root.hasEntry("dir1"));
@@ -177,6 +195,24 @@ public class ChangesApplyAndRevertTest extends TestCase {
     assertTrue(root.hasEntry("dir1/dir2/file"));
 
     assertEquals(c("content"), root.getEntry("dir1/dir2/file").getContent());
+  }
+
+  @Test
+  public void testDeletionOfRoots() {
+    root.createDirectory(1, "root/dir", null);
+    root.createFile(2, "root/dir/file", null, null);
+
+    Change c = new DeleteChange("root/dir");
+    c.applyTo(root);
+
+    assertFalse(root.hasEntry("root/dir"));
+
+    c.revertOn(root);
+
+    assertFalse(root.hasEntry("root"));
+
+    assertTrue(root.hasEntry("root/dir"));
+    assertTrue(root.hasEntry("root/dir/file"));
   }
 
   @Test
