@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -87,7 +88,7 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
         public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             final PsiModifierList modifierList = variable.getModifierList();
-            if (m_ignoreAnnotatedVariables) {
+            if (m_ignoreAnnotatedVariables && modifierList != null) {
                 final PsiAnnotation[] annotations =
                         modifierList.getAnnotations();
                 if (annotations.length > 0) {
@@ -266,6 +267,11 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
             }
             final PsiAssignmentExpression assignmentExpression =
                     (PsiAssignmentExpression)expression;
+            final IElementType tokenType =
+                    assignmentExpression.getOperationTokenType();
+            if (tokenType != JavaTokenType.EQ) {
+                return false;
+            }
             final PsiExpression rhs = assignmentExpression.getRExpression();
             if (rhs == null) {
                 return false;
