@@ -11,6 +11,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
@@ -89,13 +90,18 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
   }
 
   private void addUpdateRequest() {
-    myAlarm.addRequest(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+
       public void run() {
-        if (myProject.isOpen()) {
-          updatePanel();
-        }
+        myAlarm.addRequest(new Runnable() {
+          public void run() {
+            if (myProject.isOpen()) {
+              updatePanel();
+            }
+          }
+        }, ALARM_PERIOD);
       }
-    }, ALARM_PERIOD);
+    });
   }
 
   protected void paintComponent(Graphics g) {
