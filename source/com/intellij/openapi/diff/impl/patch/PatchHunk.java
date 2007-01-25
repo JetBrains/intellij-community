@@ -76,7 +76,7 @@ public class PatchHunk {
           break;
 
         case REMOVE:
-          if (!line.getText().equals(lines.get(curLine))) {
+          if (curLine >= lines.size() || !line.getText().equals(lines.get(curLine))) {
             // we'll get a context mismatch exception later if it's actually a conflict and not an already applied line
             result = ApplyPatchStatus.and(result, ApplyPatchStatus.ALREADY_APPLIED);
           }
