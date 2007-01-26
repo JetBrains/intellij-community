@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.extensions;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author AKireyev
  */
@@ -27,7 +30,10 @@ public interface ExtensionPoint<T> {
   void registerExtension(T extension);
   void registerExtension(T extension, LoadingOrder order);
 
+  @NotNull
   T[] getExtensions();
+
+  @Nullable
   T getExtension();
   boolean hasExtension(T extension);
 

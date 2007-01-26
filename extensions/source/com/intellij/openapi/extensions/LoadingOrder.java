@@ -16,6 +16,7 @@
 package com.intellij.openapi.extensions;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -248,6 +249,7 @@ public abstract class LoadingOrder {
   }
 
   public interface Orderable {
+    @Nullable
     String getOrderId();
     LoadingOrder getOrder();
     Element getDescribingElement();

@@ -17,29 +17,41 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author AKireyev
  */
-public class ExtensionPointImpl implements ExtensionPoint {
+public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private final LogProvider myLogger;
 
-  private String myName;
-  private String myBeanClassName;
-  private List myExtensions = new ArrayList();
-  private List<ExtensionComponentAdapter> myLoadedAdapters = new ArrayList<ExtensionComponentAdapter>();
-  private Set<ExtensionComponentAdapter> myExtensionAdapters = new LinkedHashSet<ExtensionComponentAdapter>();
-  private Set<ExtensionPointListener> myEPListeners = new LinkedHashSet<ExtensionPointListener>();
-  private SoftReference<Object[]> myExtensionsCache;
-  private ExtensionsAreaImpl myOwner;
   private final AreaInstance myArea;
+  private final String myName;
+  private final String myBeanClassName;
+  private final List<T> myExtensions = new ArrayList<T>();
+  private final ExtensionsAreaImpl myOwner;
+  private final PluginDescriptor myDescriptor;
+  private final Set<ExtensionComponentAdapter> myExtensionAdapters = new LinkedHashSet<ExtensionComponentAdapter>();
+
+  private final Set<ExtensionPointListener<T>> myEPListeners = new LinkedHashSet<ExtensionPointListener<T>>();
+
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private List<ExtensionComponentAdapter> myLoadedAdapters = new CopyOnWriteArrayList<ExtensionComponentAdapter>();
+
+  private SoftReference<T[]> myExtensionsCache;
+
   private Class myExtensionClass;
-  private PluginDescriptor myDescriptor;
 
   public ExtensionPointImpl(String name,
                             String beanClassName,
@@ -67,11 +79,11 @@ public class ExtensionPointImpl implements ExtensionPoint {
     return myBeanClassName;
   }
 
-  public void registerExtension(Object extension) {
+  public void registerExtension(T extension) {
     registerExtension(extension, LoadingOrder.ANY);
   }
 
-  public void registerExtension(Object extension, LoadingOrder order) {
+  public synchronized void registerExtension(T extension, LoadingOrder order) {
     assert (extension != null) : "Extension cannot be null";
 
     assert myExtensions.size() == myLoadedAdapters.size();
@@ -92,7 +104,7 @@ public class ExtensionPointImpl implements ExtensionPoint {
     }
   }
 
-  private void internalRegisterExtension(Object extension, ExtensionComponentAdapter adapter, int index, boolean runNotifications) {
+  private void internalRegisterExtension(T extension, ExtensionComponentAdapter adapter, int index, boolean runNotifications) {
     myExtensionsCache = null;
 
     if (myExtensions.contains(extension)) {
@@ -116,9 +128,10 @@ public class ExtensionPointImpl implements ExtensionPoint {
     }
   }
 
-  private void notifyListenersOnAdd(Object extension, final PluginDescriptor pluginDescriptor) {
-    ExtensionPointListener[] listeners = myEPListeners.toArray(new ExtensionPointListener[myEPListeners.size()]);
-    for (ExtensionPointListener listener : listeners) {
+  private void notifyListenersOnAdd(T extension, final PluginDescriptor pluginDescriptor) {
+    //noinspection unchecked
+    ExtensionPointListener<T>[] listeners = (ExtensionPointListener<T>[])myEPListeners.toArray(new ExtensionPointListener[myEPListeners.size()]);
+    for (ExtensionPointListener<T> listener : listeners) {
       try {
         listener.extensionAdded(extension, pluginDescriptor);
       }
@@ -128,23 +141,28 @@ public class ExtensionPointImpl implements ExtensionPoint {
     }
   }
 
-  public Object[] getExtensions() {
-    Object[] result = null;
+  @NotNull
+  public T[] getExtensions() {
+    T[] result = null;
 
     processAdapters();
 
-    if (myExtensionsCache != null) {
-      result = myExtensionsCache.get();
-    }
-    if (result == null) {
-      result = myExtensions.toArray((Object[])Array.newInstance(getExtensionClass(), myExtensions.size()));
-      myExtensionsCache = new SoftReference<Object[]>(result);
+    //noinspection SynchronizeOnThis
+    synchronized (this) {
+      if (myExtensionsCache != null) {
+        result = myExtensionsCache.get();
+      }
+      if (result == null) {
+        //noinspection unchecked
+        result = myExtensions.toArray((T[])Array.newInstance(getExtensionClass(), myExtensions.size()));
+        myExtensionsCache = new SoftReference<T[]>(result);
+      }
     }
 
     return result;
   }
 
-  private void processAdapters() {
+  private synchronized void processAdapters() {
     if (myExtensionAdapters.size() > 0) {
       List<ExtensionComponentAdapter> allAdapters = new ArrayList<ExtensionComponentAdapter>(myExtensionAdapters.size() + myLoadedAdapters.size());
       allAdapters.addAll(myExtensionAdapters);
@@ -156,39 +174,37 @@ public class ExtensionPointImpl implements ExtensionPoint {
       LoadingOrder.sort(adapters);
       for (int i = 0; i < adapters.length; i++) {
         ExtensionComponentAdapter adapter = adapters[i];
-        Object extension = adapter.getExtension();
+
+        //noinspection unchecked
+        T extension = (T)adapter.getExtension();
         internalRegisterExtension(extension, adapter, i, !loadedAdapters.contains(adapter));
       }
       myExtensionAdapters.clear();
     }
   }
 
-  public Object getExtension() {
-    Object[] extensions = getExtensions();
+  @Nullable
+  public T getExtension() {
+    T[] extensions = getExtensions();
     if (extensions.length == 0) return null;
 
     return extensions[0];
   }
 
-  public boolean hasExtension(Object extension) {
+  public synchronized boolean hasExtension(T extension) {
     processAdapters();
 
     return myExtensions.contains(extension);
   }
 
-  public void unregisterExtension(final Object extension) {
+  public synchronized void unregisterExtension(final T extension) {
     assert (extension != null) : "Extension cannot be null";
-    if (!myExtensions.contains(extension)) {
-      throw new IllegalArgumentException("Extension to be removed not found: " + extension);
-    }
-
-    final int index = myExtensions.indexOf(extension);
+    final int index = getExtensionIndex(extension);
     final ExtensionComponentAdapter adapter = myLoadedAdapters.get(index);
 
     myOwner.getMutablePicoContainer().unregisterComponent(adapter.getComponentKey());
     final MutablePicoContainer[] pluginContainers = myOwner.getPluginContainers();
-    for (int i = 0; i < pluginContainers.length; i++) {
-      MutablePicoContainer pluginContainer = pluginContainers[i];
+    for (MutablePicoContainer pluginContainer : pluginContainers) {
       pluginContainer.unregisterComponent(adapter.getComponentKey());
     }
 
@@ -197,13 +213,18 @@ public class ExtensionPointImpl implements ExtensionPoint {
     internalUnregisterExtension(extension, null);
   }
 
-  private void internalUnregisterExtension(Object extension, PluginDescriptor pluginDescriptor) {
-    myExtensionsCache = null;
-
+  private int getExtensionIndex(final T extension) {
     if (!myExtensions.contains(extension)) {
       throw new IllegalArgumentException("Extension to be removed not found: " + extension);
     }
-    int index = myExtensions.indexOf(extension);
+
+    return myExtensions.indexOf(extension);
+  }
+
+  private synchronized void internalUnregisterExtension(T extension, PluginDescriptor pluginDescriptor) {
+    myExtensionsCache = null;
+
+    int index = getExtensionIndex(extension);
     myExtensions.remove(index);
     myLoadedAdapters.remove(index);
 
@@ -219,24 +240,25 @@ public class ExtensionPointImpl implements ExtensionPoint {
     }
   }
 
-  private void notifyListenersOnRemove(Object extensionObject, PluginDescriptor pluginDescriptor) {
-    for (Iterator<ExtensionPointListener> iterator = myEPListeners.iterator(); iterator.hasNext();) {
-      ExtensionPointListener listener = iterator.next();
+  private void notifyListenersOnRemove(T extensionObject, PluginDescriptor pluginDescriptor) {
+    for (ExtensionPointListener<T> listener : myEPListeners) {
       try {
         listener.extensionRemoved(extensionObject, pluginDescriptor);
-      } catch (Throwable e) {
+      }
+      catch (Throwable e) {
         myLogger.error(e);
       }
     }
   }
 
-  public void addExtensionPointListener(ExtensionPointListener listener) {
+  public void addExtensionPointListener(ExtensionPointListener<T> listener) {
     processAdapters();
 
     if (myEPListeners.add(listener)) {
       for (ExtensionComponentAdapter componentAdapter : myLoadedAdapters) {
         try {
-          listener.extensionAdded(componentAdapter.getExtension(), componentAdapter.getPluginDescriptor());
+          //noinspection unchecked
+          listener.extensionAdded((T)componentAdapter.getExtension(), componentAdapter.getPluginDescriptor());
         } catch (Throwable e) {
           myLogger.error(e);
         }
@@ -244,11 +266,12 @@ public class ExtensionPointImpl implements ExtensionPoint {
     }
   }
 
-  public void removeExtensionPointListener(ExtensionPointListener listener) {
+  public void removeExtensionPointListener(ExtensionPointListener<T> listener) {
     if (myEPListeners.contains(listener)) {
       for (ExtensionComponentAdapter componentAdapter : myLoadedAdapters) {
         try {
-          listener.extensionRemoved(componentAdapter.getExtension(), componentAdapter.getPluginDescriptor());
+          //noinspection unchecked
+          listener.extensionRemoved((T)componentAdapter.getExtension(), componentAdapter.getPluginDescriptor());
         } catch (Throwable e) {
           myLogger.error(e);
         }
@@ -258,12 +281,10 @@ public class ExtensionPointImpl implements ExtensionPoint {
     }
   }
 
-  public void reset() {
+  public synchronized void reset() {
     myOwner.removeAllComponents(myExtensionAdapters);
     myExtensionAdapters.clear();
-    Object[] extensions = getExtensions();
-    for (int i = 0; i < extensions.length; i++) {
-      Object extension = extensions[i];
+    for (T extension : getExtensions()) {
       unregisterExtension(extension);
     }
   }
@@ -289,11 +310,11 @@ public class ExtensionPointImpl implements ExtensionPoint {
     return getName();
   }
 
-  void registerExtensionAdapter(ExtensionComponentAdapter adapter) {
+  synchronized void registerExtensionAdapter(ExtensionComponentAdapter adapter) {
     myExtensionAdapters.add(adapter);
   }
 
-  public boolean unregisterComponentAdapter(final ExtensionComponentAdapter componentAdapter) {
+  public synchronized boolean unregisterComponentAdapter(final ExtensionComponentAdapter componentAdapter) {
     if (myExtensionAdapters.contains(componentAdapter)) {
       myExtensionAdapters.remove(componentAdapter);
       return true;
@@ -302,12 +323,12 @@ public class ExtensionPointImpl implements ExtensionPoint {
       final Object componentKey = componentAdapter.getComponentKey();
       myOwner.getMutablePicoContainer().unregisterComponent(componentKey);
       final MutablePicoContainer[] pluginContainers = myOwner.getPluginContainers();
-      for (int i = 0; i < pluginContainers.length; i++) {
-        MutablePicoContainer pluginContainer = pluginContainers[i];
+      for (MutablePicoContainer pluginContainer : pluginContainers) {
         pluginContainer.unregisterComponent(componentKey);
       }
 
-      internalUnregisterExtension(componentAdapter.getExtension(), componentAdapter.getPluginDescriptor());
+      //noinspection unchecked
+      internalUnregisterExtension((T)componentAdapter.getExtension(), componentAdapter.getPluginDescriptor());
       return true;
     }
     return false;
@@ -331,10 +352,12 @@ public class ExtensionPointImpl implements ExtensionPoint {
       return myLoadingOrder;
     }
 
+    @Nullable
     public String getOrderId() {
       return null;
     }
 
+    @NonNls
     public Element getDescribingElement() {
       return new Element("RuntimeExtension: " + myExtension);
     }

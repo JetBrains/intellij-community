@@ -16,12 +16,14 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
+import com.intellij.util.containers.ConcurrentHashMap;
 import org.apache.commons.collections.MultiHashMap;
 import org.apache.commons.collections.MultiMap;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
@@ -32,6 +34,7 @@ import java.io.StringWriter;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
+@SuppressWarnings({"HardCodedStringLiteral"})
 public class ExtensionsAreaImpl implements ExtensionsArea {
   private final LogProvider myLogger;
   private static final String ATTRIBUTE_AREA = "area";
@@ -46,7 +49,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   private AreaPicoContainerImpl myPicoContainer;
   private Throwable myCreationTrace = null;
-  private Map<String,ExtensionPointImpl> myExtensionPoints = new HashMap<String, ExtensionPointImpl>();
+  private Map<String,ExtensionPointImpl> myExtensionPoints = new ConcurrentHashMap<String, ExtensionPointImpl>();
   private Map<String,Throwable> myEPTraces = new HashMap<String, Throwable>();
   private MultiMap myAvailabilityListeners = new MultiHashMap();
   private List<Runnable> mySuspendedListenerActions = new ArrayList<Runnable>();
@@ -143,11 +146,11 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
       adapter = new ExtensionComponentAdapter(extensionPoint.getExtensionClass(), extensionElement, getPluginContainer(pluginId.getIdString()), pluginDescriptor);
     }
     myExtensionElement2extension.put(extensionElement, adapter);
-    internalGetPluginContainer(pluginId.getIdString()).registerComponent(adapter);
+    internalGetPluginContainer().registerComponent(adapter);
     getExtensionPointImpl(epName).registerExtensionAdapter(adapter);
   }
 
-  private String extractEPName(final Element extensionElement) {
+  private static String extractEPName(final Element extensionElement) {
     String epName = extensionElement.getAttributeValue("point");
 
     if (epName == null) {
@@ -165,20 +168,11 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   public PicoContainer getPluginContainer(String pluginName) {
-    return internalGetPluginContainer(pluginName);
+    return internalGetPluginContainer();
   }
 
-  private MutablePicoContainer internalGetPluginContainer(String pluginName) {
+  private MutablePicoContainer internalGetPluginContainer() {
     return myPicoContainer;
-    /*
-    DefaultPicoContainer pluginContainer = myPluginName2picoContainer.get(pluginName);
-    if (pluginContainer == null) {
-      pluginContainer = new DefaultPicoContainer(myPicoContainer);
-      myPicoContainer.addChildContainer(pluginContainer);
-      myPluginName2picoContainer.put(pluginName, pluginContainer);
-    }
-    return pluginContainer;
-    */
   }
 
   private void disposePluginContainer(String pluginName) {
@@ -213,7 +207,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     ExtensionComponentAdapter adapter = myExtensionElement2extension.remove(extensionElement);
     if (adapter == null) return;
     if (getExtensionPointImpl(epName).unregisterComponentAdapter(adapter)) {
-      MutablePicoContainer pluginContainer = internalGetPluginContainer(pluginName);
+      MutablePicoContainer pluginContainer = internalGetPluginContainer();
       pluginContainer.unregisterComponent(adapter.getComponentKey());
       if (pluginContainer.getComponentAdapters().size() == 0) {
         disposePluginContainer(pluginName);
@@ -221,12 +215,14 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
+  @SuppressWarnings({"unchecked"})
   private void initialize() {
     for (String epName : ourDefaultEPs.keySet()) {
       registerExtensionPoint(epName, ourDefaultEPs.get(epName));
     }
 
     getExtensionPoint(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME).addExtensionPointListener(new ExtensionPointListener() {
+      @SuppressWarnings({"unchecked"})
       public void extensionRemoved(Object extension, final PluginDescriptor pluginDescriptor) {
         EPAvailabilityListenerExtension epListenerExtension = (EPAvailabilityListenerExtension) extension;
         List<Object> listeners = (List<Object>) myAvailabilityListeners.get(epListenerExtension.getExtensionPointName());
@@ -255,13 +251,14 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     });
   }
 
-  public Object instantiate(Class clazz) {
+  private Object instantiate(Class clazz) {
     ConstructorInjectionComponentAdapter adapter =
       new ConstructorInjectionComponentAdapter(Integer.toString(System.identityHashCode(new Object())), clazz);
 
     return adapter.getComponentInstance(getPicoContainer());
   }
 
+  @SuppressWarnings({"UnusedDeclaration"})
   public Throwable getCreationTrace() {
     return myCreationTrace;
   }
@@ -326,6 +323,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
+  @SuppressWarnings({"unchecked"})
   private void notifyEPRegistered(final ExtensionPoint extensionPoint) {
     List<ExtensionPointAvailabilityListener> listeners = (List<ExtensionPointAvailabilityListener>) myAvailabilityListeners.get(extensionPoint.getName());
     if (listeners != null) {
@@ -341,6 +339,10 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
         listener.extensionPointRegistered(extensionPoint);
       }
     };
+    queueNotificationAction(action);
+  }
+
+  private void queueNotificationAction(final Runnable action) {
     if (myAvailabilityNotificationsActive) {
       action.run();
     }
@@ -359,12 +361,14 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     return (ExtensionPoint<T>)getExtensionPoint(extensionPointName.getName());
   }
 
+  @NotNull
   private ExtensionPointImpl getExtensionPointImpl(String extensionPointName) {
-    if (!hasExtensionPoint(extensionPointName)) {
+    final ExtensionPointImpl extensionPoint = myExtensionPoints.get(extensionPointName);
+    if (extensionPoint == null) {
       throw new IllegalArgumentException("Missing extension point: " + extensionPointName +
                                          " in area " + myAreaInstance );
     }
-    return myExtensionPoints.get(extensionPointName);
+    return extensionPoint;
   }
 
   public ExtensionPoint[] getExtensionPoints() {
@@ -380,6 +384,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
+  @SuppressWarnings({"unchecked"})
   private void notifyEPRemoved(final ExtensionPoint extensionPoint) {
     List<ExtensionPointAvailabilityListener> listeners = (List<ExtensionPointAvailabilityListener>) myAvailabilityListeners.get(extensionPoint.getName());
     if (listeners != null) {
@@ -389,12 +394,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
             listener.extensionPointRemoved(extensionPoint);
           }
         };
-        if (myAvailabilityNotificationsActive) {
-          action.run();
-        }
-        else {
-          mySuspendedListenerActions.add(action);
-        }
+        queueNotificationAction(action);
       }
     }
   }
@@ -432,11 +432,10 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     return myPluginName2picoContainer.values().toArray(new MutablePicoContainer[myPluginName2picoContainer.values().size()]);
   }
 
-  public void removeAllComponents(final Set extensionAdapters) {
+  public void removeAllComponents(final Set<ExtensionComponentAdapter> extensionAdapters) {
     for (final Object extensionAdapter : extensionAdapters) {
       ExtensionComponentAdapter componentAdapter = (ExtensionComponentAdapter)extensionAdapter;
-      final String pluginId = componentAdapter.getPluginName().getIdString();
-      internalGetPluginContainer(pluginId).unregisterComponent(componentAdapter.getComponentKey());
+      internalGetPluginContainer().unregisterComponent(componentAdapter.getComponentKey());
     }
   }
 

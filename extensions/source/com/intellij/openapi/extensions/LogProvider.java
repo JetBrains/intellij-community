@@ -15,15 +15,17 @@
  */
 package com.intellij.openapi.extensions;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Alexander Kireyev
  */
 public interface LogProvider {
-  void error(String message);
-  void error(String message, Throwable t);
+  void error(@NonNls String message);
+  void error(@NonNls String message, Throwable t);
   void error(Throwable t);
 
-  void warn(String message);
-  void warn(String message, Throwable t);
+  void warn(@NonNls String message);
+  void warn(@NonNls String message, Throwable t);
   void warn(Throwable t);
 }
