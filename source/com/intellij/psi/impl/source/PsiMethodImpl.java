@@ -162,7 +162,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
     return PsiSuperMethodImplUtil.getHierarchicalMethodSignature(this);
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException{
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException{
     SharedPsiElementImplUtil.setName(getNameIdentifier(), name);
     return this;
   }
@@ -201,7 +201,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
       PsiTypeElement typeElement = getReturnTypeElement();
       if (typeElement == null) return null;
       PsiParameterList parameterList = getParameterList();
-      return SharedImplUtil.getType(typeElement, parameterList, parameterList);
+      return SharedImplUtil.getType(typeElement, parameterList, this);
     }
     else{
       if (myCachedType != null) {
@@ -213,7 +213,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
       if (typeText == null) return null;
 
       try{
-        final PsiType type = getManager().getParserFacade().createTypeFromText(typeText, this);
+        final PsiType type = getManager().getElementFactory().createTypeFromText(typeText, this);
         myCachedType = new PatchedSoftReference<PsiType>(type);
         return type;
       }
@@ -237,7 +237,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
     }
   }
 
-  public boolean hasModifierProperty(String name) {
+  public boolean hasModifierProperty(@NotNull String name) {
     return getModifierList().hasModifierProperty(name);
   }
 
@@ -258,7 +258,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   public PsiReferenceList getThrowsList() {
     if (getRepositoryId() >= 0){
       if (myRepositoryThrowsList == null){
-        myRepositoryThrowsList = new PsiReferenceListImpl(myManager, this, ElementType.THROWS_LIST);
+        myRepositoryThrowsList = new PsiReferenceListImpl(myManager, this, JavaElementType.THROWS_LIST);
       }
       return myRepositoryThrowsList;
     }
@@ -329,7 +329,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
     return isVarArgs.booleanValue();
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitMethod(this);
   }
 
