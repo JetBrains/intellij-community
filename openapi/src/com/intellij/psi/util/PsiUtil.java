@@ -280,11 +280,6 @@ public final class PsiUtil {
       public Icon getIcon(int flags) {
         return null;
       }
-
-
-    public boolean isGenerated() {
-      return true;
-    }
   };
 
   private PsiUtil() {}

@@ -153,28 +153,27 @@ public class PsiImplUtil {
     if (classClass == null){
       return new PsiClassReferenceType(new LightClassReference(manager, "Class", "java.lang.Class", resolveScope));
     }
-    else {
-      if (PsiUtil.getLanguageLevel(classAccessExpression).compareTo(LanguageLevel.JDK_1_5) < 0) {
-        //Raw java.lang.Class
-        return manager.getElementFactory().createType(classClass);
-      }
-
-      PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-      PsiType operandType = classAccessExpression.getOperand().getType();
-      if (operandType instanceof PsiPrimitiveType && !PsiType.NULL.equals(operandType)) {
-        if (PsiType.VOID.equals(operandType)) {
-          operandType = manager.getElementFactory().createTypeByFQClassName("java.lang.Void", classAccessExpression.getResolveScope());
-        } else {
-          operandType = ((PsiPrimitiveType)operandType).getBoxedType(classAccessExpression);
-        }
-      }
-      final PsiTypeParameter[] typeParameters = classClass.getTypeParameters();
-      if (typeParameters.length == 1) {
-        substitutor = substitutor.put(typeParameters[0], operandType);
-      }
-
-      return new PsiImmediateClassType(classClass, substitutor);
+    if (PsiUtil.getLanguageLevel(classAccessExpression).compareTo(LanguageLevel.JDK_1_5) < 0) {
+      //Raw java.lang.Class
+      return manager.getElementFactory().createType(classClass);
     }
+
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    PsiType operandType = classAccessExpression.getOperand().getType();
+    if (operandType instanceof PsiPrimitiveType && !PsiType.NULL.equals(operandType)) {
+      if (PsiType.VOID.equals(operandType)) {
+        operandType = manager.getElementFactory().createTypeByFQClassName("java.lang.Void", classAccessExpression.getResolveScope());
+      }
+      else {
+        operandType = ((PsiPrimitiveType)operandType).getBoxedType(classAccessExpression);
+      }
+    }
+    final PsiTypeParameter[] typeParameters = classClass.getTypeParameters();
+    if (typeParameters.length == 1) {
+      substitutor = substitutor.put(typeParameters[0], operandType);
+    }
+
+    return new PsiImmediateClassType(classClass, substitutor);
   }
 
   public static PsiAnnotation findAnnotation(PsiModifierList modifierList, @NotNull String qualifiedName) {

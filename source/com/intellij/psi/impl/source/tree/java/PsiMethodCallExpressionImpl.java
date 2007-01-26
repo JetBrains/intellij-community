@@ -21,7 +21,7 @@ import java.util.Map;
 
 public class PsiMethodCallExpressionImpl extends CompositePsiElement implements PsiMethodCallExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl");
-  @NonNls protected static final String GET_CLASS_METHOD = "getClass";
+  @NonNls private static final String GET_CLASS_METHOD = "getClass";
 
   public PsiMethodCallExpressionImpl() {
     super(METHOD_CALL_EXPRESSION);

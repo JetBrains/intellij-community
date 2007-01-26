@@ -197,8 +197,8 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
         if (lastPathComponent instanceof DefaultMutableTreeNode) {
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
           Object userObject = node.getUserObject();
-          if (userObject instanceof AbstractTreeNode) {
-            navigatables.add((AbstractTreeNode)userObject);
+          if (userObject instanceof Navigatable) {
+            navigatables.add((Navigatable)userObject);
           }
         }
       }
