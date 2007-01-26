@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.application;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,14 +9,12 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.ModuleLevelVcsManager;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.*;
-import com.intellij.CvsBundle;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +31,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
   private int myCommandLevel = 0;
 
   private boolean myAnotherProjectCommand = false;
-  private static final Key<Module> FILE_MODULE = new Key<Module>("File Module");
+  private static final Key<AbstractVcs> FILE_VCS = new Key<AbstractVcs>("File VCS");
 
   public void commandStarted(CommandEvent event) {
     myCommandLevel++;
@@ -81,7 +80,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
 
   public void beforeFileDeletion(VirtualFileEvent event) {
     VirtualFile file = event.getFile();
-    file.putUserData(FILE_MODULE, VfsUtil.getModuleForFile(myProject, file));
+    file.putUserData(FILE_VCS, ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file));
     if (!CvsUtil.fileIsUnderCvs(file)) return;
     if (!shouldProcessEvent(event, false)) return;
     LOG.info("Preserving CVS info from " + file);
@@ -110,7 +109,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
       execute();
     }
     finally {
-      event.getFile().putUserData(FILE_MODULE, null);
+      event.getFile().putUserData(FILE_VCS, null);
     }
   }
 
@@ -148,24 +147,18 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
     return myDeleteHandler != null;
   }
 
-  private Module getFileModule(VirtualFile file) {
-    Module storedData = file.getUserData(FILE_MODULE);
+  private AbstractVcs getFileVcs(VirtualFile file) {
+    AbstractVcs storedData = file.getUserData(FILE_VCS);
     if (storedData != null) {
       return storedData;
     }
     else {
-      return VfsUtil.getModuleForFile(myProject, file);
+      return ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
     }
   }
 
   private boolean isUnderCvsManagedModuleRoot(VirtualFile file) {
-    Module fileModule = getFileModule(file);
-    if (fileModule == null) {
-      return false;
-    }
-    else {
-      return ModuleLevelVcsManager.getInstance(fileModule).getActiveVcs() == CvsVcs2.getInstance(myProject);
-    }
+    return getFileVcs(file) == CvsVcs2.getInstance(myProject);
   }
 
   public void purge() {
