@@ -4,11 +4,14 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -19,8 +22,14 @@ public class EqualsAndHashcode extends LocalInspectionTool {
   private PsiMethod myEquals;
 
   public void projectOpened(Project project) {
-    PsiManager psiManager = PsiManager.getInstance(project);
-    PsiClass psiObjectClass = psiManager.findClass("java.lang.Object");
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    final PsiClass psiObjectClass = ApplicationManager.getApplication().runReadAction(
+      new Computable<PsiClass>() {
+        @Nullable
+        public PsiClass compute() {
+          return psiManager.findClass("java.lang.Object");
+        }
+      });
     if (psiObjectClass != null) {
       PsiMethod[] methods = psiObjectClass.getMethods();
       for (PsiMethod method : methods) {
@@ -76,14 +85,17 @@ public class EqualsAndHashcode extends LocalInspectionTool {
     }
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.equals.hashcode.display.name");
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @NotNull
   public String getShortName() {
     return "EqualsAndHashcode";
   }
