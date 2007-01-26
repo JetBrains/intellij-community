@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
 import org.jdom.Element;
@@ -37,8 +38,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     initTypeToName();
     initImports();
 
-    final CodeStyleSettingsProvider[] codeStyleSettingsProviders =
-      ApplicationManager.getApplication().getComponents(CodeStyleSettingsProvider.class);
+    final CodeStyleSettingsProvider[] codeStyleSettingsProviders = Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME);
     for (final CodeStyleSettingsProvider provider : codeStyleSettingsProviders) {
       addCustomSettings(provider.createCustomSettings(this));
     }

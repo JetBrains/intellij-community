@@ -1,27 +1,18 @@
 package com.intellij.j2ee.openapi.impl;
 
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.javaee.LibrariesManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.text.StringTokenizer;
-import com.intellij.javaee.LibrariesManager;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
  */
-public class LibrariesManagerImpl extends LibrariesManager implements ApplicationComponent {
-  public String getComponentName() {
-    return "LabraryManager";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
+public class LibrariesManagerImpl extends LibrariesManager {
 
   public boolean isClassAvailableInLibrary(Library library, String fqn) {
     final String[] urls = library.getUrls(OrderRootType.CLASSES);

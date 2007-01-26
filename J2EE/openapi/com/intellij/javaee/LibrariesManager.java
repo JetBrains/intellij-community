@@ -15,7 +15,7 @@
  */
 package com.intellij.javaee;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.NonNls;
 
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NonNls;
  */
 public abstract class LibrariesManager {
   public static LibrariesManager getInstance(){
-    return ApplicationManager.getApplication().getComponent(LibrariesManager.class);
+    return ServiceManager.getService(LibrariesManager.class);
   }
 
   public abstract boolean isClassAvailableInLibrary(final Library library, @NonNls final String fqn);

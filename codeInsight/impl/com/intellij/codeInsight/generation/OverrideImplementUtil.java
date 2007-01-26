@@ -19,6 +19,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -163,7 +164,7 @@ public class OverrideImplementUtil {
   }
 
   private static MethodImplementor[] getImplementors() {
-    return ApplicationManager.getApplication().getComponents(MethodImplementor.class);
+    return Extensions.getExtensions(MethodImplementor.EXTENSION_POINT_NAME);
   }
 
   /**

@@ -7,6 +7,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.InstanceMap;
 import com.intellij.util.xml.*;
+import com.intellij.util.xml.converters.PathReferenceConverter;
+import com.intellij.openapi.paths.PathReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +30,7 @@ class ConverterManagerImpl implements ConverterManager {
     mySimpleConverters.put(String.class, Converter.EMPTY_CONVERTER);
     mySimpleConverters.put(PsiClass.class, Converter.PSI_CLASS_CONVERTER);
     mySimpleConverters.put(PsiType.class, new CanonicalPsiTypeConverterImpl());
+    mySimpleConverters.put(PathReference.class, PathReferenceConverter.INSTANCE);
     registerConverterImplementation(JvmPsiTypeConverter.class, new JvmPsiTypeConverterImpl());
     registerConverterImplementation(CanonicalPsiTypeConverter.class, new CanonicalPsiTypeConverterImpl());
   }
