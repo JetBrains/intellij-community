@@ -106,11 +106,12 @@ class HeavyIdeaTestFixtureImpl implements IdeaProjectTestFixture {
   }
 
   public Project getProject() {
+    assert myProject != null : "setUp() should be called first";
     return myProject;
   }
 
   public Module getModule() {
-    return ModuleManager.getInstance(myProject).getModules()[0];
+    return ModuleManager.getInstance(getProject()).getModules()[0];
   }
 
   private static void doPostponedFormatting(final Project project) {
