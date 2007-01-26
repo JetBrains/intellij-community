@@ -262,9 +262,14 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
     for (int i = 0; i < myWildcardCompiledPatterns.size(); i++) {
       Pattern pattern = myWildcardCompiledPatterns.get(i);
       final String wildcard = myWildcardPatterns.get(i);
-      final boolean matches = myPatternMatcher.matches(name, pattern);
-      if (isPatternNegated(wildcard) ? !matches : matches) {
-        return true;
+      try {
+        final boolean matches = myPatternMatcher.matches(name, pattern);
+        if (isPatternNegated(wildcard) ? !matches : matches) {
+          return true;
+        }
+      }
+      catch (Exception e) {
+        LOG.error("Exception matching file name \"" + name + "\" against the pattern \"" + pattern.getPattern() + "\"", e);
       }
     }
     return false;
