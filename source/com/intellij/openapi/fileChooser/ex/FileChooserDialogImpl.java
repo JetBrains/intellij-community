@@ -20,6 +20,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -34,6 +35,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
 
 public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog{
   private final FileChooserDescriptor myChooserDescriptor;
@@ -43,7 +45,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private Project myProject;
   private VirtualFile[] myChosenFiles = VirtualFile.EMPTY_ARRAY;
 
-  private final java.util.List<Disposable> myDisposables = new ArrayList<Disposable>();
+  private final List<Disposable> myDisposables = new ArrayList<Disposable>();
 
   public FileChooserDialogImpl(FileChooserDescriptor chooserDescriptor, Project project) {
     super(project, true);
@@ -58,6 +60,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     setTitle(UIBundle.message("file.chooser.default.title"));
   }
 
+  @NotNull
   public VirtualFile[] choose(VirtualFile toSelect, Project project) {
     init();
 
