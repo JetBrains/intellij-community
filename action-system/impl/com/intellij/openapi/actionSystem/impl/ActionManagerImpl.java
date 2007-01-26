@@ -897,7 +897,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
     AnActionListener[] listeners = getActionListeners();
     for (AnActionListener listener : listeners) {
-      listener.afterActionPerformed(action, dataContext);
+      try {
+        listener.afterActionPerformed(action, dataContext);
+      }
+      catch(AbstractMethodError e) {
+        // ignore
+      }
     }
   }
 
