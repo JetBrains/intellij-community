@@ -12,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
@@ -193,13 +194,26 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
 
     final String stringValue = child.getStringValue();
     assert stringValue != null;
-    if (required.nonEmpty() && stringValue.trim().length() == 0) {
+    if (required.nonEmpty() && isEmpty(child, stringValue)) {
       return annotator.createProblem(child, IdeBundle.message("value.must.not.be.empty"));
     }
     if (required.identifier() && !PsiManager.getInstance(child.getManager().getProject()).getNameHelper().isIdentifier(stringValue)) {
       return annotator.createProblem(child, IdeBundle.message("value.must.be.identifier"));
     }
     return null;
+  }
+
+  private static boolean isEmpty(final GenericDomValue child, final String stringValue) {
+    if (stringValue.trim().length() != 0) {
+      return false;
+    }
+    if (child instanceof GenericAttributeValue) {
+      final XmlAttributeValue value = ((GenericAttributeValue)child).getXmlAttributeValue();
+      if (value != null && value.getTextRange().isEmpty()) {
+        return false;
+      }
+    }
+    return true;
   }
 
 
