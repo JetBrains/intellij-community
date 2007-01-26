@@ -14,7 +14,6 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
  * Time: 8:59:30 PM
  */
 public class ToggleFieldBreakpointAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.ToggleFieldBreakpointAction");
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(DataKeys.PROJECT);
@@ -51,20 +49,21 @@ public class ToggleFieldBreakpointAction extends AnAction {
         DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(project);
         BreakpointManager manager = debuggerManager.getBreakpointManager();
         final int offset = place.getOffset();
-        final Breakpoint breakpoint = offset >= 0? (FieldBreakpoint)manager.findBreakpoint(document, offset, FieldBreakpoint.CATEGORY) : null;
+        final Breakpoint breakpoint = offset >= 0? manager.findBreakpoint(document, offset, FieldBreakpoint.CATEGORY) : null;
 
         if(breakpoint == null) {
           FieldBreakpoint fieldBreakpoint = manager.addFieldBreakpoint(document, offset);
           if (fieldBreakpoint != null) {
             if(DebuggerAction.isContextView(e)) {
-              DebuggerTreeNodeImpl selectedNode = DebuggerAction.getSelectedNode(e.getDataContext());
-              LOG.assertTrue(selectedNode != null);
-              ObjectReference object = ((FieldDescriptorImpl)selectedNode.getDescriptor()).getObject();
-              if(object != null) {
-                long id = object.uniqueID();
-                InstanceFilter[] instanceFilters = new InstanceFilter[] { InstanceFilter.create(Long.toString(id))};
-                fieldBreakpoint.setInstanceFilters(instanceFilters);
-                fieldBreakpoint.INSTANCE_FILTERS_ENABLED = true;
+              final DebuggerTreeNodeImpl selectedNode = DebuggerAction.getSelectedNode(e.getDataContext());
+              if (selectedNode != null) {
+                ObjectReference object = ((FieldDescriptorImpl)selectedNode.getDescriptor()).getObject();
+                if(object != null) {
+                  long id = object.uniqueID();
+                  InstanceFilter[] instanceFilters = new InstanceFilter[] { InstanceFilter.create(Long.toString(id))};
+                  fieldBreakpoint.setInstanceFilters(instanceFilters);
+                  fieldBreakpoint.INSTANCE_FILTERS_ENABLED = true;
+                }
               }
             }
 
