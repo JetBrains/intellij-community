@@ -31,8 +31,8 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
     myCompact = compact;
 
     myCancelButton = new InplaceButton(new IconButton(processInfo.getCancelTooltip(),
-                                                      IconLoader.getIcon("/actions/cleanLight.png"),
-                                                      IconLoader.getIcon("/actions/clean.png")) {
+                                                      IconLoader.getIcon("/process/stop.png"),
+                                                      IconLoader.getIcon("/process/stopHovered.png")) {
     }, new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         cancelRequest();
