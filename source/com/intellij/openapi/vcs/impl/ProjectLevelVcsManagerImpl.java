@@ -388,17 +388,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return new VirtualAndPsiFileDataProvider(myProject, virtualFileArray, selectedFile);
   }
 
-  public Module[] getAllModulesUnder(AbstractVcs vcs) {
-    ArrayList<Module> result = new ArrayList<Module>();
-    Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    for (Module module : modules) {
-      if (ModuleLevelVcsManager.getInstance(module).getActiveVcs() == vcs) {
-        result.add(module);
-      }
-    }
-    return result.toArray(new Module[result.size()]);
-  }
-
   public AbstractVcs[] getAllActiveVcss() {
     ArrayList<AbstractVcs> result = new ArrayList<AbstractVcs>();
     Module[] modules = ModuleManager.getInstance(myProject).getModules();

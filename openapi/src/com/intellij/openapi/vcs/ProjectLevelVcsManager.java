@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -95,14 +94,6 @@ public abstract class ProjectLevelVcsManager {
   public abstract String getPresentableRelativePathFor(VirtualFile file);
 
   public abstract DataProvider createVirtualAndPsiFileDataProvider(VirtualFile[] virtualFileArray, VirtualFile selectedFile);
-
-  /**
-   * Returns the list of all modules in the project which are managed by the specified VCS.
-   *
-   * @param vcs the CVS to check.
-   * @return the list of modules under the VCS.
-   */
-  public abstract Module[] getAllModulesUnder(AbstractVcs vcs);
 
   /**
    * Returns the list of VCSes used by at least one module in the project.
