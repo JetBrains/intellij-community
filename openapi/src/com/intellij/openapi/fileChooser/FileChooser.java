@@ -17,25 +17,30 @@ package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 public class FileChooser {
   private FileChooser() {}
 
+  @NotNull
   public static VirtualFile[] chooseFiles(Project project, FileChooserDescriptor descriptor) {
     return chooseFiles(project, descriptor, null);
   }
 
+  @NotNull
   public static VirtualFile[] chooseFiles(Component parent, FileChooserDescriptor descriptor) {
     return chooseFiles(parent, descriptor, null);
   }
 
+  @NotNull
   public static VirtualFile[] chooseFiles(Project project, FileChooserDescriptor descriptor, VirtualFile toSelect) {
     FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
     return chooser.choose(toSelect, project);
   }
 
+  @NotNull
   public static VirtualFile[] chooseFiles(Component parent, FileChooserDescriptor descriptor, VirtualFile toSelect) {
     FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, parent);
     return chooser.choose(toSelect, null);
