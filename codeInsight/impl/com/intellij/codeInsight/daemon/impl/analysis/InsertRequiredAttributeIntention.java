@@ -143,7 +143,7 @@ public class InsertRequiredAttributeIntention implements IntentionAction {
               int textOffset = anchor1.getTextOffset();
               if (!anchorIsEmptyTag && indirectSyntax1) ++textOffset;
               editor.getCaretModel().moveToOffset(textOffset);
-              if (anchorIsEmptyTag) {
+              if (anchorIsEmptyTag && indirectSyntax1) {
                 editor.getDocument().deleteString(textOffset,textOffset + 2);
               }
               TemplateManager.getInstance(project).startTemplate(editor, template, null);
