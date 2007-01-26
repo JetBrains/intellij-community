@@ -424,8 +424,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     final RefManager refManager = getRefManager();
     final AnalysisScope scope = refManager.getScope();
 
-    final ProgressIndicator progress =
-      myProgressIndicator == null ? null : new ProgressWrapper(myProgressIndicator);
+    final ProgressIndicator progress = myProgressIndicator == null ? null : new ProgressWrapper(myProgressIndicator);
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
         final SearchScope searchScope = new GlobalSearchScope() {
@@ -445,7 +444,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             return false;
           }
         };
-        final Application application = ApplicationManager.getApplication();
+
         if (myDerivedClassesRequests != null) {
           List<PsiElement> sortedIDs = getSortedIDs(myDerivedClassesRequests);
           for (PsiElement sortedID : sortedIDs) {
@@ -453,22 +452,18 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             incrementJobDoneAmount(FIND_EXTERNAL_USAGES, psiClass.getQualifiedName());
 
             final List<DerivedClassesProcessor> processors = myDerivedClassesRequests.get(psiClass);
-            application.runReadAction(new Runnable() {
-              public void run() {
-                helper.processInheritors(new PsiElementProcessor<PsiClass>() {
-                  public boolean execute(PsiClass inheritor) {
-                    if (scope.contains(inheritor)) return true;
-                    DerivedClassesProcessor[] processorsArrayed = processors.toArray(new DerivedClassesProcessor[processors.size()]);
-                    for (DerivedClassesProcessor processor : processorsArrayed) {
-                      if (!processor.process(inheritor)) {
-                        processors.remove(processor);
-                      }
-                    }
-                    return !processors.isEmpty();
+            helper.processInheritors(new PsiElementProcessor<PsiClass>() {
+              public boolean execute(PsiClass inheritor) {
+                if (scope.contains(inheritor)) return true;
+                DerivedClassesProcessor[] processorsArrayed = processors.toArray(new DerivedClassesProcessor[processors.size()]);
+                for (DerivedClassesProcessor processor : processorsArrayed) {
+                  if (!processor.process(inheritor)) {
+                    processors.remove(processor);
                   }
-                }, psiClass, searchScope, false);
+                }
+                return !processors.isEmpty();
               }
-            });
+            }, psiClass, searchScope, false);
           }
 
           myDerivedClassesRequests = null;
@@ -483,23 +478,19 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getInstance().getQualifiedName(refMethod));
 
             final List<DerivedMethodsProcessor> processors = myDerivedMethodsRequests.get(psiMethod);
-            application.runReadAction(new Runnable() {
-              public void run() {
-                helper.processOverridingMethods(new PsiElementProcessor<PsiMethod>() {
-                  public boolean execute(PsiMethod derivedMethod) {
-                    if (scope.contains(derivedMethod)) return true;
-                    DerivedMethodsProcessor[] processorsArrayed = processors.toArray(new DerivedMethodsProcessor[processors.size()]);
-                    for (DerivedMethodsProcessor processor : processorsArrayed) {
-                      if (!processor.process(derivedMethod)) {
-                        processors.remove(processor);
-                      }
-                    }
-
-                    return !processors.isEmpty();
+            helper.processOverridingMethods(new PsiElementProcessor<PsiMethod>() {
+              public boolean execute(PsiMethod derivedMethod) {
+                if (scope.contains(derivedMethod)) return true;
+                DerivedMethodsProcessor[] processorsArrayed = processors.toArray(new DerivedMethodsProcessor[processors.size()]);
+                for (DerivedMethodsProcessor processor : processorsArrayed) {
+                  if (!processor.process(derivedMethod)) {
+                    processors.remove(processor);
                   }
-                }, psiMethod, searchScope, true);
+                }
+
+                return !processors.isEmpty();
               }
-            });
+            }, psiMethod, searchScope, true);
           }
 
           myDerivedMethodsRequests = null;
@@ -514,11 +505,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             incrementJobDoneAmount(FIND_EXTERNAL_USAGES,
                                    RefUtil.getInstance().getQualifiedName(refManager.getReference(psiField)));
 
-            application.runReadAction(new Runnable() {
-              public void run() {
-                helper.processReferences(createReferenceProcessor(processors), psiField, searchScope, false);
-              }
-            });
+            helper.processReferences(createReferenceProcessor(processors), psiField, searchScope, false);
           }
 
           myFieldUsagesRequests = null;
@@ -532,11 +519,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
             incrementJobDoneAmount(FIND_EXTERNAL_USAGES, psiClass.getQualifiedName());
 
-            application.runReadAction(new Runnable() {
-              public void run() {
-                helper.processReferences(createReferenceProcessor(processors), psiClass, searchScope, false);
-              }
-            });
+            helper.processReferences(createReferenceProcessor(processors), psiClass, searchScope, false);
           }
 
           myClassUsagesRequests = null;
@@ -551,11 +534,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             incrementJobDoneAmount(FIND_EXTERNAL_USAGES,
                                    RefUtil.getInstance().getQualifiedName(refManager.getReference(psiMethod)));
 
-            application.runReadAction(new Runnable() {
-              public void run() {
-                helper.processReferencesIncludingOverriding(createReferenceProcessor(processors), psiMethod, searchScope);
-              }
-            });
+            helper.processReferencesIncludingOverriding(createReferenceProcessor(processors), psiMethod, searchScope);
           }
 
           myMethodUsagesRequests = null;

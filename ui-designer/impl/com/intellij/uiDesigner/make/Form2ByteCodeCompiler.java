@@ -4,26 +4,27 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ProjectRootsTraversing;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.compiler.AlienFormFileException;
-import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
-import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.compiler.FormErrorInfo;
-import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
+import com.intellij.uiDesigner.compiler.AlienFormFileException;
+import com.intellij.uiDesigner.compiler.FormErrorInfo;
+import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -239,76 +240,80 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
                                                          final FileProcessingCompiler.ProcessingItem[] items) {
     final ArrayList<FileProcessingCompiler.ProcessingItem> compiledItems = new ArrayList<FileProcessingCompiler.ProcessingItem>();
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        context.getProgressIndicator().setText(UIDesignerBundle.message("progress.compiling.ui.forms"));
+    context.getProgressIndicator().setText(UIDesignerBundle.message("progress.compiling.ui.forms"));
 
-        final HashMap<Module, ArrayList<MyInstrumentationItem>> module2itemsList = sortByModules(items);
+    final HashMap<Module, ArrayList<MyInstrumentationItem>> module2itemsList = sortByModules(items);
 
-        int formsProcessed = 0;
+    int formsProcessed = 0;
 
-        for (final Module module : module2itemsList.keySet()) {
-          final String classPath =
-            ProjectRootsTraversing.collectRoots(module, ProjectRootsTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString();
-          final ClassLoader loader = createClassLoader(classPath);
+    for (final Module module : module2itemsList.keySet()) {
+      final String classPath =
+        ProjectRootsTraversing.collectRoots(module, ProjectRootsTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString();
+      final ClassLoader loader = createClassLoader(classPath);
 
-          if (GuiDesignerConfiguration.getInstance(myProject).COPY_FORMS_RUNTIME_TO_OUTPUT) {
-            final String moduleOutputPath = CompilerPaths.getModuleOutputPath(module, false);
-            try {
-              if (moduleOutputPath != null) {
-                CopyResourcesUtil.copyFormsRuntime(moduleOutputPath, false);
-              }
-              final String testsOutputPath = CompilerPaths.getModuleOutputPath(module, true);
-              if (testsOutputPath != null && !testsOutputPath.equals(moduleOutputPath)) {
-                CopyResourcesUtil.copyFormsRuntime(testsOutputPath, false);
-              }
-            }
-            catch (IOException e) {
-              addMessage(
-                context,
-                UIDesignerBundle.message("error.cannot.copy.gui.designer.form.runtime", module.getName(), e.toString()),
-                null, CompilerMessageCategory.ERROR);
-            }
+      if (GuiDesignerConfiguration.getInstance(myProject).COPY_FORMS_RUNTIME_TO_OUTPUT) {
+        final String moduleOutputPath = CompilerPaths.getModuleOutputPath(module, false);
+        try {
+          if (moduleOutputPath != null) {
+            CopyResourcesUtil.copyFormsRuntime(moduleOutputPath, false);
           }
-
-          final ArrayList<MyInstrumentationItem> list = module2itemsList.get(module);
-
-          for (final MyInstrumentationItem item : list) {
-            context.getProgressIndicator().setFraction((double)(++formsProcessed) / ((double)items.length));
-
-            final VirtualFile formFile = item.getFormFile();
-
-            final Document doc = FileDocumentManager.getInstance().getDocument(formFile);
-            final LwRootContainer rootContainer;
-            try {
-              rootContainer = Utils.getRootContainer(doc.getText(), new CompiledClassPropertiesProvider(loader));
-            }
-            catch (Exception e) {
-              addMessage(context, UIDesignerBundle.message("error.cannot.process.form.file", e), formFile, CompilerMessageCategory.ERROR);
-              continue;
-            }
-
-            final File classFile = VfsUtil.virtualToIoFile(item.getFile());
-            LOG.assertTrue(classFile.exists(), classFile.getPath());
-
-            final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader,
-                                                                        new PsiNestedFormLoader(module), false);
-            codeGenerator.patchFile(classFile);
-            final FormErrorInfo[] errors = codeGenerator.getErrors();
-            final FormErrorInfo[] warnings = codeGenerator.getWarnings();
-            for (FormErrorInfo warning : warnings) {
-              addMessage(context, warning, formFile, CompilerMessageCategory.WARNING);
-            }
-            for (FormErrorInfo error : errors) {
-              addMessage(context, error, formFile, CompilerMessageCategory.ERROR);
-            }
-            if (errors.length == 0) {
-              compiledItems.add(item);
-            }
+          final String testsOutputPath = CompilerPaths.getModuleOutputPath(module, true);
+          if (testsOutputPath != null && !testsOutputPath.equals(moduleOutputPath)) {
+            CopyResourcesUtil.copyFormsRuntime(testsOutputPath, false);
           }
         }
+        catch (IOException e) {
+          addMessage(
+            context,
+            UIDesignerBundle.message("error.cannot.copy.gui.designer.form.runtime", module.getName(), e.toString()),
+            null, CompilerMessageCategory.ERROR);
+        }
       }
-    });
+
+      final ArrayList<MyInstrumentationItem> list = module2itemsList.get(module);
+
+      for (final MyInstrumentationItem item : list) {
+        context.getProgressIndicator().setFraction((double)(++formsProcessed) / ((double)items.length));
+
+        final VirtualFile formFile = item.getFormFile();
+
+        final Document doc = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
+          public Document compute() {
+            return FileDocumentManager.getInstance().getDocument(formFile);
+          }
+        });
+        final LwRootContainer rootContainer;
+        try {
+          rootContainer = Utils.getRootContainer(doc.getText(), new CompiledClassPropertiesProvider(loader));
+        }
+        catch (Exception e) {
+          addMessage(context, UIDesignerBundle.message("error.cannot.process.form.file", e), formFile, CompilerMessageCategory.ERROR);
+          continue;
+        }
+
+        final File classFile = VfsUtil.virtualToIoFile(item.getFile());
+        LOG.assertTrue(classFile.exists(), classFile.getPath());
+
+        final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader,
+                                                                    new PsiNestedFormLoader(module), false);
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            codeGenerator.patchFile(classFile);
+          }
+        });
+        final FormErrorInfo[] errors = codeGenerator.getErrors();
+        final FormErrorInfo[] warnings = codeGenerator.getWarnings();
+        for (FormErrorInfo warning : warnings) {
+          addMessage(context, warning, formFile, CompilerMessageCategory.WARNING);
+        }
+        for (FormErrorInfo error : errors) {
+          addMessage(context, error, formFile, CompilerMessageCategory.ERROR);
+        }
+        if (errors.length == 0) {
+          compiledItems.add(item);
+        }
+      }
+    }
 
     return compiledItems.toArray(new FileProcessingCompiler.ProcessingItem[compiledItems.size()]);
   }
