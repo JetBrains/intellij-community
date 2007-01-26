@@ -1,7 +1,7 @@
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,6 +11,8 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
@@ -28,6 +30,7 @@ public class HotSwapManager implements ProjectComponent{
 
   private final Project myProject;
   private Map<DebuggerSession, Long> myTimeStamps = new com.intellij.util.containers.HashMap<DebuggerSession, Long>();
+  private final String CLASS_EXTENSION = ".class";
 
   public HotSwapManager(Project project, DebuggerManagerEx manager) {
     myProject = project;
@@ -96,10 +99,10 @@ public class HotSwapManager implements ProjectComponent{
           protected void acceptFile(VirtualFile file, String fileRoot, String filePath) {
             if (file.getTimeStamp() > timeStamp && StdFileTypes.CLASS.equals(fileTypeManager.getFileTypeByFile(file))) {
               //noinspection HardCodedStringLiteral
-              if (filePath.endsWith(".class")) {
+              if (SystemInfo.isFileSystemCaseSensitive? filePath.endsWith(CLASS_EXTENSION) : StringUtil.endsWithIgnoreCase(filePath, CLASS_EXTENSION)) {
                 progress.setText(DebuggerBundle.message("progress.hotswap.scanning.path", filePath));
                 //noinspection HardCodedStringLiteral
-                final String qualifiedName = filePath.substring(fileRoot.length() + 1, filePath.length() - ".class".length()).replace('/', '.');
+                final String qualifiedName = filePath.substring(fileRoot.length() + 1, filePath.length() - CLASS_EXTENSION.length()).replace('/', '.');
                 modifiedClasses.put(qualifiedName, new HotSwapFile(file));
               }
             }
@@ -116,7 +119,7 @@ public class HotSwapManager implements ProjectComponent{
   }
 
   private void reloadClasses(DebuggerSession session, HashMap<String, HotSwapFile> classesToReload, HotSwapProgress progress) {
-    long newSwapTime = System.currentTimeMillis();
+    final long newSwapTime = System.currentTimeMillis();
     new ReloadClassesWorker(session, progress).reloadClasses(classesToReload);
     setTimeStamp(session, newSwapTime);
   }

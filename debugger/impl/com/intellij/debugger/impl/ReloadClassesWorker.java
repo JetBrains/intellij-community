@@ -100,7 +100,7 @@ class ReloadClassesWorker {
     }
 
     virtualMachineProxy.suspend();
-
+           
     final Project project = getDebugProcess().getProject();
     try {
       final Map<ReferenceType, byte[]> redefineMap = new java.util.HashMap<ReferenceType,byte[]>();
@@ -172,19 +172,19 @@ class ReloadClassesWorker {
         getDebugProcess().getManagerThread().invokeLater(new DebuggerCommandImpl() {
           protected void action() throws Exception {
             try {
-              getDebugProcess().getVirtualMachineProxy().resume();
+              virtualMachineProxy.resume();
             }
             catch (Exception e) {
               processException(e);
             }
-          }
+          }        
         });
       }
     });
   }
 
   private void reportProblem(final String qualifiedName, @Nullable Exception ex) {
-    String reason = null;
+    String reason = null;     
     if (ex != null)  {
       reason = ex.getLocalizedMessage();
     }

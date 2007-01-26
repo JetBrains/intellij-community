@@ -372,21 +372,16 @@ public class DebuggerSession {
     }
   }
 
-  private DebuggerSessionState getSessionState() {
-    return myState;
-  }
-
   public int getState() {
-    return getSessionState().myState;
+    return myState.myState;
   }
 
   public String getStateDescription() {
-    DebuggerSessionState state = getSessionState();
-    if (state.myDescription != null) {
-      return state.myDescription;
+    if (myState.myDescription != null) {
+      return myState.myDescription;
     }
 
-    switch (state.myState) {
+    switch (myState.myState) {
       case STATE_STOPPED:
         return DebuggerBundle.message("status.debug.stopped");
       case STATE_RUNNING:
@@ -403,7 +398,7 @@ public class DebuggerSession {
       case STATE_DISPOSED:
         return DebuggerBundle.message("status.debug.stopped");
     }
-    return state.myDescription;
+    return myState.myDescription;
   }
 
   /* Stepping */
@@ -472,7 +467,7 @@ public class DebuggerSession {
     if (getState() == DebuggerSession.STATE_PAUSED) {
       DebuggerContextImpl context = myContextManager.getContext();
       DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(this, context.getSuspendContext(), context.getThreadProxy(), context.getFrameProxy());
-      myContextManager.setState(newContext, DebuggerSession.STATE_PAUSED, refreshViewsOnly? EVENT_REFRESH_VIEWS_ONLY : EVENT_REFRESH, null);
+      myContextManager.setState(newContext, STATE_PAUSED, refreshViewsOnly? EVENT_REFRESH_VIEWS_ONLY : EVENT_REFRESH, null);
     }
   }
 

@@ -25,8 +25,8 @@ public class StepOverAction extends AnAction {
     Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
-      return;
-    }
+      return;                                         
+    }                              
     final DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(project)).getContext();
     DebuggerSession debuggerSession = context.getDebuggerSession();
 
