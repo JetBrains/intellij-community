@@ -2,6 +2,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.*;
 import com.intellij.openapi.application.ModalityState;
@@ -10,20 +11,20 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.Disposable;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.JBPopupImpl;
+import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
 public class ActionToolbarImpl extends JPanel implements ActionToolbar {
@@ -35,7 +36,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
    * Rectangle objects that are used in calculation of preferred sizes and
    * layouting of components.
    */
-  private final ArrayList<Rectangle> myComponentBounds;
+  private final ArrayList<Rectangle> myComponentBounds = new ArrayList<Rectangle>();
 
   /**
    * protected for fabrique
@@ -72,7 +73,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private int myFirstOusideIndex = -1;
 
   private JBPopup myPopup;
-  private boolean myCancelRequested;
 
   public ActionToolbarImpl(final String place,
                            final ActionGroup actionGroup,
@@ -82,7 +82,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
                            KeymapManagerEx keymapManager) {
     super(null);
     myActionManager = actionManager;
-    myComponentBounds = new ArrayList<Rectangle>();
     myKeymapManager = keymapManager;
     setMinimumButtonSize(DEFAULT_MINIMUM_BUTTON_SIZE);
     setLayoutPolicy(AUTO_LAYOUT_POLICY);
@@ -169,7 +168,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   public void doLayout() {
     if (!isValid()) {
-      calculateBounds();
+      calculateBounds(getSize(), myComponentBounds);
     }
     final int componentCount = getComponentCount();
     LOG.assertTrue(componentCount <= myComponentBounds.size());
@@ -181,7 +180,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   public void validate() {
     if (!isValid()) {
-      calculateBounds();
+      calculateBounds(getSize(), myComponentBounds);
       super.validate();
     }
   }
@@ -210,9 +209,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     return height;
   }
 
-  private void calculateBoundsNowrapImpl() {
+  private void calculateBoundsNowrapImpl(ArrayList<Rectangle> bounds) {
     final int componentCount = getComponentCount();
-    LOG.assertTrue(componentCount <= myComponentBounds.size());
+    LOG.assertTrue(componentCount <= bounds.size());
 
     final int width = getWidth();
     final int height = getHeight();
@@ -224,7 +223,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       if (myOrientation == SwingConstants.HORIZONTAL) {
         int xOffset = 0;
         for (int i = 0; i < componentCount; i++) {
-          final Rectangle r = myComponentBounds.get(i);
+          final Rectangle r = bounds.get(i);
           r.setBounds(xOffset, (height - maxHeight) / 2, maxWidth, maxHeight);
           xOffset += maxWidth;
         }
@@ -232,7 +231,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       else {
         int yOffset = 0;
         for (int i = 0; i < componentCount; i++) {
-          final Rectangle r = myComponentBounds.get(i);
+          final Rectangle r = bounds.get(i);
           r.setBounds((width - maxWidth) / 2, yOffset, maxWidth, maxHeight);
           yOffset += maxHeight;
         }
@@ -246,7 +245,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         for (int i = 0; i < componentCount; i++) {
           final Component component = getComponent(i);
           final Dimension d = component.getPreferredSize();
-          final Rectangle r = myComponentBounds.get(i);
+          final Rectangle r = bounds.get(i);
           r.setBounds(xOffset, yOffset + (maxHeight - d.height) / 2, d.width, d.height);
           xOffset += d.width;
         }
@@ -258,7 +257,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         for (int i = 0; i < componentCount; i++) {
           final Component component = getComponent(i);
           final Dimension d = component.getPreferredSize();
-          final Rectangle r = myComponentBounds.get(i);
+          final Rectangle r = bounds.get(i);
           r.setBounds(xOffset + (maxWidth - d.width) / 2, yOffset, d.width, d.height);
           yOffset += d.height;
         }
@@ -266,107 +265,110 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
   }
 
-  private void calculateBoundsAutoImp() {
-    if (calculateByDefaultIfNotLaidOutYet()) return;
-
-
+  private void calculateBoundsAutoImp(Dimension sizeToFit, ArrayList<Rectangle> bounds) {
     final int componentCount = getComponentCount();
-    LOG.assertTrue(componentCount <= myComponentBounds.size());
+    LOG.assertTrue(componentCount <= bounds.size());
 
-    myAutoPopupRec = null;
+    final boolean actualLayout = bounds == myComponentBounds;
 
-    final int maxWidth = getMaxButtonWidth();
-    final int maxHeight = getMaxButtonHeight();
-
-    final Dimension size = getSize();
+    if (actualLayout) {
+      myAutoPopupRec = null;
+    }
 
     int autoButtonSize = myAutoPopupIcon.getIconWidth();
     boolean full = false;
 
-    if (myAdjustTheSameSize) {
+    if (myOrientation == SwingConstants.HORIZONTAL) {
+      int eachX = 0;
+      int eachY = 0;
+      for (int i = 0; i < componentCount; i++) {
+        final Rectangle eachBound = new Rectangle(getComponent(i).getPreferredSize());
+        if (!full) {
+          boolean outside;
+          if (i < componentCount - 1) {
+            outside = eachX + eachBound.width + autoButtonSize < sizeToFit.width;
+          }
+          else {
+            outside = eachX + eachBound.width < sizeToFit.width;
+          }
 
+          if (outside) {
+            eachBound.x = eachX;
+            eachBound.y = eachY;
+            eachX += eachBound.width;
+          }
+          else {
+            full = true;
+          }
+        }
+
+        if (full) {
+          if (myAutoPopupRec == null) {
+            myAutoPopupRec = new Rectangle(eachX, eachY, sizeToFit.width - eachX - 1, sizeToFit.height - 1);
+            myFirstOusideIndex = i;
+          }
+          eachBound.x = Integer.MAX_VALUE;
+          eachBound.y = Integer.MAX_VALUE;
+        }
+
+        bounds.get(i).setBounds(eachBound);
+      }
     }
     else {
-      if (myOrientation == SwingConstants.HORIZONTAL) {
-        int eachX = 0;
-        int eachY = 0;
-        for (int i = 0; i < componentCount; i++) {
-          final Rectangle eachBound = new Rectangle(getComponent(i).getPreferredSize());
-          if (!full) {
-            boolean outside;
-            if (i < componentCount - 1) {
-              outside = eachX + eachBound.width + autoButtonSize < size.width;
-            }
-            else {
-              outside = eachX + eachBound.width < size.width;
-            }
-
-            if (outside) {
-              eachBound.x = eachX;
-              eachBound.y = eachY;
-              eachX += eachBound.width;
-            }
-            else {
-              full = true;
-            }
+      int eachX = 0;
+      int eachY = 0;
+      for (int i = 0; i < componentCount; i++) {
+        final Rectangle eachBound = new Rectangle(getComponent(i).getPreferredSize());
+        if (!full) {
+          boolean outside;
+          if (i < componentCount - 1) {
+            outside = eachY + eachBound.height + autoButtonSize < sizeToFit.height;
           }
-
-          if (full) {
-            if (myAutoPopupRec == null) {
-              myAutoPopupRec = new Rectangle(eachX, eachY, size.width - eachX - 1, size.height - 1);
-              myFirstOusideIndex = i;
-            }
-            eachBound.x = Integer.MAX_VALUE;
-            eachBound.y = Integer.MAX_VALUE;
+          else {
+            outside = eachY + eachBound.height < sizeToFit.height;
           }
-
-          myComponentBounds.get(i).setBounds(eachBound);
+          if (outside) {
+            eachBound.x = eachX;
+            eachBound.y = eachY;
+            eachY += eachBound.height;
+          }
+          else {
+            full = true;
+          }
         }
-      }
-      else {
-        int eachX = 0;
-        int eachY = 0;
-        for (int i = 0; i < componentCount; i++) {
-          final Rectangle eachBound = new Rectangle(getComponent(i).getPreferredSize());
-          if (!full) {
-            boolean outside;
-            if (i < componentCount - 1) {
-              outside = eachY + eachBound.height + autoButtonSize < size.height;
-            }
-            else {
-              outside = eachY + eachBound.height < size.height;
-            }
-            if (outside) {
-              eachBound.x = eachX;
-              eachBound.y = eachY;
-              eachY += eachBound.height;
-            }
-            else {
-              full = true;
-            }
-          }
 
-          if (full) {
-            if (myAutoPopupRec == null) {
-              myAutoPopupRec = new Rectangle(eachX, eachY, size.width - 1, size.height - eachY - 1);
-              myFirstOusideIndex = i;
-            }
-            eachBound.x = Integer.MAX_VALUE;
-            eachBound.y = Integer.MAX_VALUE;
+        if (full) {
+          if (myAutoPopupRec == null) {
+            myAutoPopupRec = new Rectangle(eachX, eachY, sizeToFit.width - 1, sizeToFit.height - eachY - 1);
+            myFirstOusideIndex = i;
           }
-
-          myComponentBounds.get(i).setBounds(eachBound);
+          eachBound.x = Integer.MAX_VALUE;
+          eachBound.y = Integer.MAX_VALUE;
         }
+
+        bounds.get(i).setBounds(eachBound);
       }
     }
+
   }
 
-  private void calculateBoundsWrapImpl() {
-    if (calculateByDefaultIfNotLaidOutYet()) return;
+  private void calculateBoundsWrapImpl(Dimension sizeToFit, ArrayList<Rectangle> bounds) {
+   // We have to gracefull handle case when toolbar was not layed out yet.
+    // In this case we calculate bounds as it is a NOWRAP toolbar.
+    if (getWidth() == 0 || getHeight() == 0) {
+      try {
+        setLayoutPolicy(NOWRAP_LAYOUT_POLICY);
+        calculateBoundsNowrapImpl(bounds);
+      }
+      finally {
+        setLayoutPolicy(WRAP_LAYOUT_POLICY);
+      }
+      return;
+    }
 
 
     final int componentCount = getComponentCount();
-    LOG.assertTrue(componentCount <= myComponentBounds.size());
+    LOG.assertTrue(componentCount <= bounds.size());
 
     if (myAdjustTheSameSize) {
       if (myOrientation == SwingConstants.HORIZONTAL) {
@@ -377,15 +379,15 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         int xOffset = 0;
         int yOffset = 0;
         // Calculate max size of a row. It's not possible to make more then 3 row toolbar
-        final int maxRowWidth = Math.max(getWidth(), componentCount * maxWidth / 3);
+        final int maxRowWidth = Math.max(sizeToFit.width, componentCount * maxWidth / 3);
         for (int i = 0; i < componentCount; i++) {
           if (xOffset + maxWidth > maxRowWidth) { // place component at new row
             xOffset = 0;
             yOffset += maxHeight;
           }
 
-          final Rectangle bounds = myComponentBounds.get(i);
-          bounds.setBounds(xOffset, maxWidth, yOffset, maxHeight);
+          final Rectangle each = bounds.get(i);
+          each.setBounds(xOffset, maxWidth, yOffset, maxHeight);
 
           xOffset += maxWidth;
         }
@@ -398,15 +400,15 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         int xOffset = 0;
         int yOffset = 0;
         // Calculate max size of a row. It's not possible to make more then 3 column toolbar
-        final int maxRowHeight = Math.max(getHeight(), componentCount * myMinimumButtonSize.height / 3);
+        final int maxRowHeight = Math.max(sizeToFit.height, componentCount * myMinimumButtonSize.height / 3);
         for (int i = 0; i < componentCount; i++) {
           if (yOffset + maxHeight > maxRowHeight) { // place component at new row
             yOffset = 0;
             xOffset += maxWidth;
           }
 
-          final Rectangle bounds = myComponentBounds.get(i);
-          bounds.setBounds(xOffset, maxWidth, yOffset, maxHeight);
+          final Rectangle each = bounds.get(i);
+          each.setBounds(xOffset, maxWidth, yOffset, maxHeight);
 
           yOffset += maxHeight;
         }
@@ -435,8 +437,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
             yOffset += rowHeight;
           }
 
-          final Rectangle bounds = myComponentBounds.get(i);
-          bounds.setBounds(xOffset, yOffset + (rowHeight - d.height) / 2, d.width, d.height);
+          final Rectangle each = bounds.get(i);
+          each.setBounds(xOffset, yOffset + (rowHeight - d.height) / 2, d.width, d.height);
 
           xOffset += d.width;
         }
@@ -463,8 +465,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
             xOffset += rowWidth;
           }
 
-          final Rectangle bounds = myComponentBounds.get(i);
-          bounds.setBounds(xOffset + (rowWidth - d.width) / 2, yOffset, d.width, d.height);
+          final Rectangle each = bounds.get(i);
+          each.setBounds(xOffset + (rowWidth - d.width) / 2, yOffset, d.width, d.height);
 
           yOffset += d.height;
         }
@@ -472,43 +474,23 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
   }
 
-  private boolean calculateByDefaultIfNotLaidOutYet() {
-    // We have to gracefull handle case when toolbar was not layed out yet.
-    // In this case we calculate bounds as it is a NOWRAP toolbar.
-    if (getWidth() == 0 || getHeight() == 0) {
-      final int oldLayoutPolicy = myLayoutPolicy;
-      myLayoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY;
-      try {
-        calculateBoundsNowrapImpl();
-      }
-      finally {
-        myLayoutPolicy = oldLayoutPolicy;
-      }
-      return true;
-    }
-    return false;
-  }
-
   /**
    * Calculates bounds of all the components in the toolbar
    */
-  private void calculateBounds() {
-    // Ensure that myComponentBounds has enoungh elements
-    final int componentCount = getComponentCount();
-    if (componentCount > myComponentBounds.size()) {
-      for (int i = componentCount - myComponentBounds.size() - 1; i >= 0; i--) {
-        myComponentBounds.add(new Rectangle());
-      }
+  private void calculateBounds(Dimension size2Fit, ArrayList<Rectangle> bounds) {
+    bounds.clear();
+    for (int i = 0; i < getComponentCount(); i++) {
+      bounds.add(new Rectangle());
     }
 
     if (myLayoutPolicy == NOWRAP_LAYOUT_POLICY) {
-      calculateBoundsNowrapImpl();
+      calculateBoundsNowrapImpl(bounds);
     }
     else if (myLayoutPolicy == WRAP_LAYOUT_POLICY) {
-      calculateBoundsWrapImpl();
+      calculateBoundsWrapImpl(size2Fit, bounds);
     }
     else if (myLayoutPolicy == AUTO_LAYOUT_POLICY) {
-      calculateBoundsAutoImp();
+      calculateBoundsAutoImp(size2Fit, bounds);
     }
     else {
       throw new IllegalStateException("unknonw layoutPolicy: " + myLayoutPolicy);
@@ -516,28 +498,33 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   public Dimension getPreferredSize() {
-    calculateBounds();
-    final int componentCount = getComponentCount();
-    LOG.assertTrue(componentCount <= myComponentBounds.size());
-    if (componentCount == 0) {
-      return new Dimension(0, 0);
+    final ArrayList<Rectangle> bounds = new ArrayList<Rectangle>();
+    for (int i = 0; i < getComponentCount(); i++) {
+      bounds.add(new Rectangle());
     }
+    calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);
 
     int xLeft = Integer.MAX_VALUE;
     int yTop = Integer.MAX_VALUE;
     int xRight = Integer.MIN_VALUE;
     int yBottom = Integer.MIN_VALUE;
-    for (int i = componentCount - 1; i >= 0; i--) {
-      final Rectangle bounds = myComponentBounds.get(i);
-      xLeft = Math.min(xLeft, bounds.x);
-      yTop = Math.min(yTop, bounds.y);
-      xRight = Math.max(xRight, bounds.x + bounds.width);
-      yBottom = Math.max(yBottom, bounds.y + bounds.height);
+    for (int i = bounds.size() - 1; i >= 0; i--) {
+      final Rectangle each = bounds.get(i);
+      if (each.x == Integer.MAX_VALUE) continue;
+      xLeft = Math.min(xLeft, each.x);
+      yTop = Math.min(yTop, each.y);
+      xRight = Math.max(xRight, each.x + each.width);
+      yBottom = Math.max(yBottom, each.y + each.height);
     }
     final Dimension dimension = new Dimension(xRight - xLeft, yBottom - yTop);
 
     if (myLayoutPolicy == AUTO_LAYOUT_POLICY) {
-      dimension.width += myAutoPopupIcon.getIconWidth();
+      if (myOrientation == SwingUtilities.HORIZONTAL) {
+        dimension.width += myAutoPopupIcon.getIconWidth();
+      }
+      else {
+        dimension.height += myAutoPopupIcon.getIconHeight();
+      }
     }
 
     return dimension;
@@ -735,9 +722,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     Point location;
     if (myOrientation == SwingConstants.HORIZONTAL) {
       location = getLocationOnScreen();
-    } else {
+    }
+    else {
       location = getLocationOnScreen();
-      location.y = location.y + getHeight() - myPopupToolbar.getPreferredSize().height; 
+      location.y = location.y + getHeight() - myPopupToolbar.getPreferredSize().height;
     }
 
 
