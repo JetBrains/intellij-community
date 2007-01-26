@@ -251,7 +251,7 @@ public class UpdaterTest extends MockedLocalFileSystemTestCase {
 
   private void update(VirtualFile... roots) {
     try {
-      Updater.update(vcs, fileSystem, filter, roots);
+      Updater.update(vcs, fileSystem, filter, true, roots);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

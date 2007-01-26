@@ -1,8 +1,6 @@
 package com.intellij.localvcs;
 
 import java.io.*;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 
 // todo remove all null-saves and replace with wrapper for tests
 public class Stream {
@@ -58,12 +56,18 @@ public class Stream {
   public Change readChange() throws IOException {
     // todo use map and reflection
     switch (myIs.readInt()) {
-      case 0: return new CreateFileChange(this);
-      case 1: return new CreateDirectoryChange(this);
-      case 2: return new ChangeFileContentChange(this);
-      case 3: return new RenameChange(this);
-      case 4: return new MoveChange(this);
-      case 5: return new DeleteChange(this);
+      case 0:
+        return new CreateFileChange(this);
+      case 1:
+        return new CreateDirectoryChange(this);
+      case 2:
+        return new ChangeFileContentChange(this);
+      case 3:
+        return new RenameChange(this);
+      case 4:
+        return new MoveChange(this);
+      case 5:
+        return new DeleteChange(this);
     }
     return null;
   }
@@ -140,19 +144,5 @@ public class Stream {
   public void writeContent(Content c) throws IOException {
     myOs.writeBoolean(c != null);
     if (c != null) c.write(this);
-  }
-
-  private Object readInstanceOf(String className) throws IOException {
-    try {
-      Class clazz = Class.forName(className);
-      Constructor constructor = clazz.getConstructor(getClass());
-      return constructor.newInstance(this);
-    }
-    catch (InvocationTargetException e) {
-      throw (IOException)e.getCause();
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 }

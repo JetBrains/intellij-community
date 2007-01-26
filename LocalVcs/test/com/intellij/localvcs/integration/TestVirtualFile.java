@@ -59,7 +59,7 @@ public class TestVirtualFile extends VirtualFile {
 
   public long getLength() {
     if (isDirectory()) throw new RuntimeException("getting length from directory!");
-    return myLength == null ? 0: myLength; 
+    return myLength == null ? 0 : myLength;
   }
 
   public VirtualFile[] getChildren() {
@@ -112,6 +112,6 @@ public class TestVirtualFile extends VirtualFile {
 
   @Override
   public String toString() {
-    return "testFile";
+    return getPath();
   }
 }

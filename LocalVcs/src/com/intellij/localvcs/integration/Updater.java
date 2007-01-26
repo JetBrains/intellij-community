@@ -13,29 +13,33 @@ import java.util.List;
 public class Updater {
   // todo algorithm could be simplified and improved
   // todo refactor and integrate with CacheUpdater
+  // todo write some test for case-sensivity
 
   private ILocalVcs myVcs;
   private LocalFileSystem myFileSystem;
   private FileFilter myFilter;
-  private VirtualFile[] myRoots;
+  private boolean myPerformFullUpdate;
+  private List<VirtualFile> myRoots;
 
-  public static void update(ILocalVcs vcs, LocalFileSystem fs, FileFilter filter, VirtualFile... roots) throws IOException {
-    new Updater(vcs, fs, filter, roots).update();
+  public static void update(ILocalVcs vcs, LocalFileSystem fs, FileFilter filter, boolean performFullUpdate, VirtualFile... roots)
+    throws IOException {
+    new Updater(vcs, fs, filter, performFullUpdate, roots).update();
   }
 
-  private Updater(ILocalVcs vcs, LocalFileSystem fs, FileFilter filter, VirtualFile... roots) {
+  private Updater(ILocalVcs vcs, LocalFileSystem fs, FileFilter filter, boolean performFullUpdate, VirtualFile... roots) {
     myVcs = vcs;
     myFileSystem = fs;
     myFilter = filter;
+    myPerformFullUpdate = performFullUpdate;
     myRoots = selectNonNestedRoots(roots);
   }
 
-  private VirtualFile[] selectNonNestedRoots(VirtualFile... roots) {
+  private List<VirtualFile> selectNonNestedRoots(VirtualFile... roots) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (VirtualFile left : roots) {
       if (!isNested(left, roots)) result.add(left);
     }
-    return result.toArray(new VirtualFile[0]);
+    return result;
   }
 
   private boolean isNested(VirtualFile f, VirtualFile... roots) {
@@ -48,23 +52,29 @@ public class Updater {
 
   public void update() throws IOException {
     // todo maybe we should delete before updating for optimization
-    createNewRoots();
-    updateRoots();
+
+    List<VirtualFile> newRoots = createNewRoots();
+    updateRoots(myPerformFullUpdate ? myRoots : newRoots);
     deleteRemovedRoots();
 
     myVcs.apply();
   }
 
-  private void createNewRoots() throws IOException {
+  private List<VirtualFile> createNewRoots() throws IOException {
+    List<VirtualFile> result = new ArrayList<VirtualFile>();
+
     for (VirtualFile f : myRoots) {
       if (!myVcs.hasEntry(f.getPath())) {
+        result.add(f);
         myVcs.createDirectory(f.getPath(), f.getTimeStamp());
       }
     }
+
+    return result;
   }
 
-  private void updateRoots() throws IOException {
-    for (VirtualFile f : myRoots) {
+  private void updateRoots(List<VirtualFile> roots) throws IOException {
+    for (VirtualFile f : roots) {
       updateDirectory(f);
     }
   }

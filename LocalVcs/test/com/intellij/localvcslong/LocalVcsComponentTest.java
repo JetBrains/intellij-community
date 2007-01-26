@@ -1,32 +1,22 @@
 package com.intellij.localvcslong;
 
 
-import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.localvcs.*;
+import com.intellij.localvcs.integration.FileFilter;
 import com.intellij.localvcs.integration.LocalVcsAction;
 import com.intellij.localvcs.integration.LocalVcsComponent;
-import com.intellij.localvcs.integration.FileFilter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 
@@ -58,36 +48,38 @@ public class LocalVcsComponentTest extends IdeaTestCase {
   public void testUpdatingFilesOnRootsChanges() throws Exception {
     VirtualFile root = addContentRootWithFile("file.java", myModule);
 
-    assertNotNull(getVcs().findEntry(root.getPath() + "/file.java"));
+    assertTrue(getVcs().hasEntry(root.getPath() + "/file.java"));
   }
 
-  public void ignoreTestUpdatingOnStartup() throws Exception {
+  public void testRemovingContentRoot() throws Exception {
+    VirtualFile newRoot = addContentRootWithFile("file.java", myModule);
+    newRoot.delete(null);
+
+    assertTrue(vcsHasEntryFor(root));
+    assertFalse(vcsHasEntryFor(newRoot));
+  }
+
+  public void testRemovingSourceRootWithFileDoesNotCauseException() throws Exception {
+    VirtualFile src = root.createChildDirectory(null, "src");
+    VirtualFile f = src.createChildData(null, "file.java");
+
+    PsiTestUtil.addSourceRoot(myModule, src);
+
+    assertTrue(vcsHasEntryFor(f));
+
+    src.delete(null);
+
+    assertFalse(vcsHasEntryFor(f));
+  }
+
+  public void testUpdatingOnStartup() throws Exception {
     // todo cant make idea do that i want...
-    File dir = createTempDirectory();
-    File projectFile = new File(dir, "project.ipr");
-    Project p = ProjectManagerEx.getInstanceEx().newProject(projectFile.getPath(), false, false);
-    ((StartupManagerImpl)StartupManager.getInstance(p)).runStartupActivities();
 
-    ModifiableModuleModel model = ModuleManager.getInstance(p).getModifiableModel();
-    Module m = model.newModule(new File(dir, "module.iml").getPath(), ModuleType.JAVA);
-    model.commit();
-
-    VirtualFile root = addContentRoot(m);
-
-    p.save();
-    Disposer.dispose(p);
-
-    VirtualFile f = root.createChildData(null, "file.java");
-
-    p = ProjectManagerEx.getInstanceEx().loadAndOpenProject(projectFile.getPath());
-    ((StartupManagerImpl)StartupManager.getInstance(p)).runStartupActivities();
-
-    ILocalVcs vcs = LocalVcsComponent.getLocalVcsFor(p);
-    boolean result = vcs.hasEntry(f.getPath());
-
-    Disposer.dispose(p);
-
-    assertTrue(result);
+    // create project with some files
+    // close project
+    // modify some files
+    // open project
+    // verify that files were updated
   }
 
   public void testCreatingFiles() throws Exception {
@@ -100,7 +92,7 @@ public class LocalVcsComponentTest extends IdeaTestCase {
 
   public void testIgnoringFilteredFiles() throws Exception {
     VirtualFile f = root.createChildData(null, "file.class");
-    assertFalse(getVcs().hasEntry(f.getPath()));
+    assertFalse(vcsHasEntryFor(f));
   }
 
   public void testRenamingFileContent() throws Exception {
@@ -108,7 +100,7 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     f.rename(null, "file2.java");
 
     assertFalse(getVcs().hasEntry(Paths.renamed(f.getPath(), "file.java")));
-    assertTrue(getVcs().hasEntry(f.getPath()));
+    assertTrue(vcsHasEntryFor(f));
   }
 
   public void testDeletingFilteredBigFiles() throws Exception {
@@ -121,10 +113,10 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     VirtualFile f = LocalFileSystem.getInstance().findFileByIoFile(tempFile);
 
     f.move(null, root);
-    assertFalse(getVcs().hasEntry(f.getPath()));
+    assertFalse(vcsHasEntryFor(f));
 
     f.delete(null);
-    assertFalse(getVcs().hasEntry(f.getPath()));
+    assertFalse(vcsHasEntryFor(f));
   }
 
   public void testSaving() throws Exception {
@@ -152,7 +144,7 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     VirtualFile f = root.createChildData(null, "file.exe");
     f.setBinaryContent(new byte[]{1});
 
-    assertFalse(getVcs().hasEntry(f.getPath()));
+    assertFalse(vcsHasEntryFor(f));
     assertEquals(1, f.contentsToByteArray()[0]);
   }
 
@@ -187,6 +179,10 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     return getVcs().getEntry(f.getPath()).getContent().getBytes();
   }
 
+  private boolean vcsHasEntryFor(VirtualFile f) {
+    return getVcs().hasEntry(f.getPath());
+  }
+
   private ILocalVcs getVcs() {
     return LocalVcsComponent.getLocalVcsFor(getProject());
   }
@@ -214,12 +210,7 @@ public class LocalVcsComponentTest extends IdeaTestCase {
       }
 
       VirtualFile root = fs.findFileByIoFile(dir);
-
-      ModuleRootManager rm = ModuleRootManager.getInstance(module);
-      ModifiableRootModel m = rm.getModifiableModel();
-      m.addContentEntry(root);
-      m.commit();
-
+      PsiTestUtil.addContentRoot(module, root);
       return root;
     }
     catch (IOException e) {

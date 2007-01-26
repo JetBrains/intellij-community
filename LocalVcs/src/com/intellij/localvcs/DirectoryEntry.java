@@ -3,10 +3,10 @@ package com.intellij.localvcs;
 import static com.intellij.localvcs.Difference.Kind.*;
 
 import java.io.IOException;
-import static java.lang.String.format;
 import java.util.ArrayList;
 import java.util.List;
 
+// todo get rid of timestamp for this entry
 public class DirectoryEntry extends Entry {
   private List<Entry> myChildren = new ArrayList<Entry>();
 

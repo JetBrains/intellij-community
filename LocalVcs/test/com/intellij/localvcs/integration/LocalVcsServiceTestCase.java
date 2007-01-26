@@ -1,18 +1,18 @@
 package com.intellij.localvcs.integration;
 
-import com.intellij.localvcs.integration.stubs.StubStartupManagerEx;
-import com.intellij.localvcs.integration.stubs.StubProjectRootManagerEx;
-import com.intellij.localvcs.integration.stubs.StubVirtualFileManagerEx;
-import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.TestStorage;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
+import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.TestStorage;
+import com.intellij.localvcs.integration.stubs.StubProjectRootManagerEx;
+import com.intellij.localvcs.integration.stubs.StubStartupManagerEx;
+import com.intellij.localvcs.integration.stubs.StubVirtualFileManagerEx;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.FileContentProvider;
 import org.junit.Before;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 // todo review LocalVcsServiceTests...
 public class LocalVcsServiceTestCase extends MockedLocalFileSystemTestCase {
@@ -29,7 +29,7 @@ public class LocalVcsServiceTestCase extends MockedLocalFileSystemTestCase {
   protected TestFileDocumentManager documentManager;
 
   @Before
-  public void setUp() {
+  public void initAndStartup() {
     initAndStartup(createLocalVcs());
   }
 

@@ -3,10 +3,10 @@ package com.intellij.localvcsperf;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Storage;
 import com.intellij.localvcs.TempDirTestCase;
+import com.intellij.localvcs.integration.TestVirtualFile;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.JUnitCore;
 
 import java.util.Random;
 
@@ -98,6 +98,15 @@ public class PerformanceTest extends TempDirTestCase {
     });
   }
 
+  @Test
+  public void testUpdating() {
+    assertExecutionTime(1, new Task() {
+      public void execute() {
+        buildVFSTree();
+      }
+    });
+  }
+
   private int rand(int max) {
     return random.nextInt(max);
   }
@@ -117,6 +126,23 @@ public class PerformanceTest extends TempDirTestCase {
       String dirPath = parent + "/dir" + i;
       vcs.createDirectory(dirPath, null);
       createChildren(dirPath, countdown - 1);
+    }
+  }
+
+  private void buildVFSTree() {
+    TestVirtualFile root = new TestVirtualFile("root", null);
+    createVFSChildren(root, 5);
+  }
+
+  private void createVFSChildren(TestVirtualFile parent, Integer countdown) {
+    if (countdown == 0) return;
+
+    for (Integer i = 0; i < 10; i++) {
+      parent.addChild(new TestVirtualFile("/file" + i, null, null));
+
+      TestVirtualFile dir = new TestVirtualFile("/dir" + i, null);
+      parent.addChild(dir);
+      createVFSChildren(dir, countdown - 1);
     }
   }
 

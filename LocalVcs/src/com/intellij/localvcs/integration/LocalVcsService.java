@@ -34,8 +34,13 @@ public class LocalVcsService {
   private CacheUpdater myCacheUpdater;
   private FileContentProvider myFileContentProvider;
 
-  public LocalVcsService(ILocalVcs vcs, StartupManager sm, ProjectRootManagerEx rm, VirtualFileManagerEx fm, LocalFileSystem fs,
-                         FileDocumentManager dm, FileFilter f) {
+  public LocalVcsService(ILocalVcs vcs,
+                         StartupManager sm,
+                         ProjectRootManagerEx rm,
+                         VirtualFileManagerEx fm,
+                         LocalFileSystem fs,
+                         FileDocumentManager dm,
+                         FileFilter f) {
     myVcs = vcs;
     myStartupManager = sm;
     myRootManager = rm;
@@ -57,17 +62,26 @@ public class LocalVcsService {
     FileSystemSynchronizer fs = myStartupManager.getFileSystemSynchronizer();
     fs.registerCacheUpdater(new CacheUpdaterAdaptor() {
       public void updatingDone() {
-        updateRoots();
+        updateRoots(true);
         subscribeForRootChanges();
         registerFileContentProvider();
       }
     });
   }
 
+  private void updateRoots(boolean performFullUpdate) {
+    try {
+      Updater.update(myVcs, myFileSystem, myFileFilter, performFullUpdate, myRootManager.getContentRoots());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private void subscribeForRootChanges() {
     myCacheUpdater = new CacheUpdaterAdaptor() {
       public void updatingDone() {
-        updateRoots();
+        updateRoots(false);
       }
     };
     myRootManager.registerChangeUpdater(myCacheUpdater);
@@ -92,15 +106,6 @@ public class LocalVcsService {
       }
     };
     myFileManager.registerFileContentProvider(myFileContentProvider);
-  }
-
-  private void updateRoots() {
-    try {
-      Updater.update(myVcs, myFileSystem, myFileFilter, myRootManager.getContentRoots());
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public LocalVcsAction startAction(String label) {
