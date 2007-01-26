@@ -29,7 +29,7 @@ public class InfoAndProgressPanel extends JPanel {
   StatusBarImpl myStatusBar;
   private ProcessPopup myPopup;
 
-  private ArrayList<ProgressIndicatorEx> myOriginals = new ArrayList<ProgressIndicatorEx>();
+  private final ArrayList<ProgressIndicatorEx> myOriginals = new ArrayList<ProgressIndicatorEx>();
   private ArrayList<ProcessInfo> myInfos = new ArrayList<ProcessInfo>();
   private Map<InlineProgressIndicator, ProgressIndicatorEx> myInline2Original = new HashMap<InlineProgressIndicator, ProgressIndicatorEx>();
   private MultiValuesMap<ProgressIndicatorEx, InlineProgressIndicator> myOriginal2Inlines =
@@ -68,55 +68,60 @@ public class InfoAndProgressPanel extends JPanel {
   }
 
   public void addProgress(final ProgressIndicatorEx original, ProcessInfo info) {
-    final boolean veryFirst = myOriginals.size() == 0;
+    synchronized (myOriginals) {
+      final boolean veryFirst = myOriginals.size() == 0;
 
-    myOriginals.add(original);
-    myInfos.add(info);
+      myOriginals.add(original);
+      myInfos.add(info);
 
-    final InlineProgressIndicator expanded = createInlineDelegate(info, original, false);
-    final InlineProgressIndicator compact = createInlineDelegate(info, original, true);
+      final InlineProgressIndicator expanded = createInlineDelegate(info, original, false);
+      final InlineProgressIndicator compact = createInlineDelegate(info, original, true);
 
-    myPopup.addIndicator(expanded);
-    myProgressIcon.resume();
+      myPopup.addIndicator(expanded);
+      myProgressIcon.resume();
 
-    if (veryFirst && !myPopup.isShowing()) {
-      buildInInlineIndicator(compact);
-    }
-    else {
-      buildInProcessCount();
+      if (veryFirst && !myPopup.isShowing()) {
+        buildInInlineIndicator(compact);
+      }
+      else {
+        buildInProcessCount();
+      }
     }
   }
 
   public void removeProgress(InlineProgressIndicator progress) {
-    if (!myInline2Original.containsKey(progress)) return;
+    synchronized (myOriginals) {
+      if (!myInline2Original.containsKey(progress)) return;
 
-    final boolean last = myOriginals.size() == 1;
-    final boolean beforeLast = myOriginals.size() == 2;
+      final boolean last = myOriginals.size() == 1;
+      final boolean beforeLast = myOriginals.size() == 2;
 
-    removeFromMaps(progress);
+      myPopup.removeIndicator(progress);
 
-    myPopup.removeIndicator(progress);
+      final ProgressIndicatorEx original = removeFromMaps(progress);
+      if (myOriginals.contains(original)) return;
 
-    if (last) {
-      restoreEmptyStatus();
-      if (myShouldClosePopupAndOnProcessFinish) {
-        hideProcessPopup();
-      } 
-    }
-    else {
-      if (myPopup.isShowing() || myOriginals.size() > 1) {
-        buildInProcessCount();
-      }
-      else if (beforeLast) {
-        buildInInlineIndicator(createInlineDelegate(myInfos.get(0), myOriginals.get(0), true));
+      if (last) {
+        restoreEmptyStatus();
+        if (myShouldClosePopupAndOnProcessFinish) {
+          hideProcessPopup();
+        }
       }
       else {
-        restoreEmptyStatus();
+        if (myPopup.isShowing() || myOriginals.size() > 1) {
+          buildInProcessCount();
+        }
+        else if (beforeLast) {
+          buildInInlineIndicator(createInlineDelegate(myInfos.get(0), myOriginals.get(0), true));
+        }
+        else {
+          restoreEmptyStatus();
+        }
       }
     }
   }
 
-  private void removeFromMaps(final InlineProgressIndicator progress) {
+  private ProgressIndicatorEx removeFromMaps(final InlineProgressIndicator progress) {
     final ProgressIndicatorEx original = myInline2Original.get(progress);
 
     myInline2Original.remove(progress);
@@ -127,34 +132,40 @@ public class InfoAndProgressPanel extends JPanel {
       myOriginals.remove(originalIndex);
       myInfos.remove(originalIndex);
     }
+
+    return original;
   }
 
   private void openProcessPopup() {
-    if (myPopup.isShowing()) return;
-    if (myOriginals.size() > 0) {
-      myShouldClosePopupAndOnProcessFinish = true;
-      buildInProcessCount();
-    } else {
-      myShouldClosePopupAndOnProcessFinish = false;
-      restoreEmptyStatus();
+    synchronized(myOriginals) {
+      if (myPopup.isShowing()) return;
+      if (myOriginals.size() > 0) {
+        myShouldClosePopupAndOnProcessFinish = true;
+        buildInProcessCount();
+      } else {
+        myShouldClosePopupAndOnProcessFinish = false;
+        restoreEmptyStatus();
+      }
+      myPopup.show();
     }
-    myPopup.show();
   }
 
   void hideProcessPopup() {
-    if (!myPopup.isShowing()) return;
+    synchronized(myOriginals) {
+      if (!myPopup.isShowing()) return;
 
-    if (myOriginals.size() == 1) {
-      buildInInlineIndicator(createInlineDelegate(myInfos.get(0), myOriginals.get(0), true));
-    }
-    else if (myOriginals.size() == 0) {
-      restoreEmptyStatus();
-    }
-    else {
-      buildInProcessCount();
-    }
+      if (myOriginals.size() == 1) {
+        buildInInlineIndicator(createInlineDelegate(myInfos.get(0), myOriginals.get(0), true));
+      }
+      else if (myOriginals.size() == 0) {
+        restoreEmptyStatus();
+      }
+      else {
+        buildInProcessCount();
+      }
 
-    myPopup.hide();
+      myPopup.hide();
+    }
   }
 
   private void buildInProcessCount() {
