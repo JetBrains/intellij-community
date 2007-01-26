@@ -3847,13 +3847,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void beforeChange(DocumentEvent e) {
       if (myDocument.isInBulkUpdate()) {
         myMaxWidth = mySize != null ? mySize.width : -1;
+
       }
-      myOldEndLine = offsetToVisualPosition(e.getOffset() + e.getOldLength()).line;
+
+      myOldEndLine = getVisualPositionLine(e.getOffset() + e.getOldLength());
+    }
+
+    private int getVisualPositionLine(int offset) {
+      // Do round up of offset to the nearest line start (valid since we need only line)
+      // This is needed for preventing access to lexer editor highlighter regions [that are reset] during bulk mode operation
+      final int startLineOffset = myDocument.getLineStartOffset(calcLogicalLineNumber(offset));
+      return offsetToVisualPosition(startLineOffset).line;
     }
 
     public void changedUpdate(DocumentEvent e) {
-      int startLine = e.getOldLength() == 0 ? myOldEndLine:offsetToVisualPosition(e.getOffset()).line;
-      int newEndLine = e.getNewLength() == 0 ? startLine:offsetToVisualPosition(e.getOffset() + e.getNewLength()).line;
+      int startLine = e.getOldLength() == 0 ? myOldEndLine:getVisualPositionLine(e.getOffset());
+      int newEndLine = e.getNewLength() == 0 ? startLine:getVisualPositionLine(e.getOffset() + e.getNewLength());
       int oldEndLine = myOldEndLine;
 
       if (myLineWidths.size() == 0) {
