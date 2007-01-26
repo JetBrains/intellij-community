@@ -27,7 +27,7 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
 
   public abstract List<VcsShowConfirmationOptionImpl> getAllConfirmations();
 
-  public abstract void notifyModuleVcsChanged(Module module, AbstractVcs newVcs);
+  public abstract void notifyDirectoryMappingChanged();
 
   public abstract void showUpdateProjectInfo(final UpdatedFiles updatedFiles, final String displayActionName, final ActionInfo actionInfo);
 

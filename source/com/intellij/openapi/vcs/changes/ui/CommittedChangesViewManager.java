@@ -16,15 +16,13 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
-import com.intellij.openapi.module.Module;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class CommittedChangesViewManager implements ProjectComponent {
   private ProjectLevelVcsManager myVcsManager;
@@ -99,7 +97,7 @@ public class CommittedChangesViewManager implements ProjectComponent {
   }
 
   private class MyVcsListener implements VcsListener {
-    public void moduleVcsChanged(Module module, @Nullable AbstractVcs newVcs) {
+    public void directoryMappingChanged() {
       updateChangesContent();
     }
   }

@@ -192,4 +192,6 @@ public abstract class ProjectLevelVcsManager {
   public abstract boolean isBackgroundVcsOperationRunning();
 
   public abstract VirtualFile[] getRootsUnderVcs(AbstractVcs vcs);
+
+  public abstract void updateActiveVcss();
 }

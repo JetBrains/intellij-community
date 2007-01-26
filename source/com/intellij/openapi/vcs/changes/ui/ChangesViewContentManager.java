@@ -111,7 +111,7 @@ public class ChangesViewContentManager implements ProjectComponent {
   }
 
   private class MyVcsListener implements VcsListener {
-    public void moduleVcsChanged(Module module, @Nullable AbstractVcs newVcs) {
+    public void directoryMappingChanged() {
       myVcsChangeAlarm.cancelAllRequests();
       myVcsChangeAlarm.addRequest(new Runnable() {
         public void run() {

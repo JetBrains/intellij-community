@@ -642,8 +642,16 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return result.toArray(new VirtualFile[result.size()]);
   }
 
-  public void notifyModuleVcsChanged(Module module, AbstractVcs newVcs) {
-    myEventDispatcher.getMulticaster().moduleVcsChanged(module, newVcs);
+  public void updateActiveVcss() {
+    Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    for (Module module : modules) {
+      ModuleLevelVcsManager.getInstance(module).updateActiveVcs();
+    }
+    notifyDirectoryMappingChanged();
+  }
+
+  public void notifyDirectoryMappingChanged() {
+    myEventDispatcher.getMulticaster().directoryMappingChanged();
   }
 
   boolean hasEmptyContentRevisions() {

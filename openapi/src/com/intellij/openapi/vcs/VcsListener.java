@@ -23,9 +23,6 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.module.Module;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.EventListener;
 
 /**
@@ -36,10 +33,7 @@ import java.util.EventListener;
  */
 public interface VcsListener extends EventListener {
   /**
-   * Notifies that the active VCS for the specified module has changed.
-   *
-   * @param module the module for which the change occurred
-   * @param newVcs the new VCS for the module
+   * Notifies that the per-directory VCS mapping has changed.
    */
-  void moduleVcsChanged(Module module, @Nullable AbstractVcs newVcs);
+  void directoryMappingChanged();
 }

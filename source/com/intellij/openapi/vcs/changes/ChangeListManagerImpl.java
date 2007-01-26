@@ -97,7 +97,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public static final Key<Object> DOCUMENT_BEING_COMMITTED_KEY = new Key<Object>("DOCUMENT_BEING_COMMITTED");
 
   private VcsListener myVcsListener = new VcsListener() {
-    public void moduleVcsChanged(Module module, @Nullable AbstractVcs newVcs) {
+    public void directoryMappingChanged() {
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
       scheduleUpdate();
     }
