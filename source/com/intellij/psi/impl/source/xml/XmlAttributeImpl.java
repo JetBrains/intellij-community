@@ -23,6 +23,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.jsp.impl.TldAttributeDescriptor;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -334,6 +335,12 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
         outer:
         for (XmlAttributeDescriptor descriptor : descriptors) {
+          if (descriptor instanceof TldAttributeDescriptor &&
+              ((TldAttributeDescriptor)descriptor).isIndirectSyntax()
+             ) {
+            continue;
+          }
+          
           for (final XmlAttribute attribute : attributes) {
             if (attribute == context) continue;
             final String name = attribute.getName();

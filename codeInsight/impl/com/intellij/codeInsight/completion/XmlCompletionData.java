@@ -41,6 +41,7 @@ import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.jsp.impl.TldAttributeDescriptor;
 
 import java.util.*;
 
@@ -310,16 +311,22 @@ public class XmlCompletionData extends CompletionData {
       template.setToReformat(toReformat);
 
       XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors();
+      StringBuilder indirectRequiredAttrs = null;
 
       for (XmlAttributeDescriptor attributeDecl : attributes) {
         String attributeName = attributeDecl.getName(tag);
 
         if (attributeDecl.isRequired()) {
           if (!notRequiredAttributes.contains(attributeName)) {
-            template.addTextSegment(" " + attributeName + "=\"");
-            Expression expression = new MacroCallNode(MacroFactory.createMacro("complete"));
-            template.addVariable(attributeName, expression, expression, true);
-            template.addTextSegment("\"");
+            if (!(attributeDecl instanceof TldAttributeDescriptor) || !((TldAttributeDescriptor)attributeDecl).isIndirectSyntax()) {
+              template.addTextSegment(" " + attributeName + "=\"");
+              Expression expression = new MacroCallNode(MacroFactory.createMacro("complete"));
+              template.addVariable(attributeName, expression, expression, true);
+              template.addTextSegment("\"");
+            } else {
+              if (indirectRequiredAttrs == null) indirectRequiredAttrs = new StringBuilder();
+              indirectRequiredAttrs.append("\n<jsp:attribute name=\"").append(attributeName).append("\"></jsp:attribute>\n");
+            }
           }
         }
         else if (attributeDecl.isFixed() && attributeDecl.getDefaultValue() != null && !htmlCode) {
@@ -327,8 +334,9 @@ public class XmlCompletionData extends CompletionData {
         }
       }
 
-      if (completionChar == '>') {
+      if (completionChar == '>' || (completionChar == '/' && indirectRequiredAttrs != null)) {
         template.addTextSegment(">");
+        if (indirectRequiredAttrs != null) template.addTextSegment(indirectRequiredAttrs.toString());
         template.addEndVariable();
 
         if (!(tag instanceof HtmlTag) || !HtmlUtil.isSingleHtmlTag(tag.getName())) {

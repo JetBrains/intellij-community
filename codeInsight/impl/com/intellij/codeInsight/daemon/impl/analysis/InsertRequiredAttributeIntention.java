@@ -31,6 +31,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.jsp.impl.JspElementDescriptor;
+import com.intellij.jsp.impl.TldAttributeDescriptor;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -65,9 +69,21 @@ public class InsertRequiredAttributeIntention implements IntentionAction {
   public void invoke(final Project project, final Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(myTag);
+    boolean indirectSyntax = false;
+
+    final XmlElementDescriptor descriptor = myTag.getDescriptor();
+    if (descriptor instanceof JspElementDescriptor) {
+      final XmlAttributeDescriptor attrDescriptor = descriptor.getAttributeDescriptor(myAttrName);
+      if (attrDescriptor instanceof TldAttributeDescriptor && ((TldAttributeDescriptor)attrDescriptor).isIndirectSyntax()) {
+        indirectSyntax = true;
+      }
+    }
+
     PsiElement anchor = SourceTreeToPsiMap.treeElementToPsi(
       XmlChildRole.EMPTY_TAG_END_FINDER.findChild(treeElement)
     );
+
+    final boolean anchorIsEmptyTag = anchor != null;
 
     if (anchor == null) {
       anchor = SourceTreeToPsiMap.treeElementToPsi(
@@ -78,7 +94,12 @@ public class InsertRequiredAttributeIntention implements IntentionAction {
     if (anchor == null) return;
 
     final Template template = TemplateManager.getInstance(project).createTemplate("", "");
-    template.addTextSegment(" " + myAttrName + "=\"");
+    if (indirectSyntax) {
+      if (anchorIsEmptyTag) template.addTextSegment(">");
+      template.addTextSegment("<jsp:attribute name=\"" + myAttrName + "\">");
+    } else {
+      template.addTextSegment(" " + myAttrName + "=\"");
+    }
 
     Expression expression = new Expression() {
       TextResult result = new TextResult("");
@@ -103,17 +124,28 @@ public class InsertRequiredAttributeIntention implements IntentionAction {
       }
     };
     template.addVariable(NAME_TEMPLATE_VARIABLE, expression, expression, true);
-    template.addTextSegment("\"");
+    if (indirectSyntax) {
+      template.addTextSegment("</jsp:attribute>");
+      template.addEndVariable();
+      if (anchorIsEmptyTag) template.addTextSegment("</" + myTag.getName() + ">");
+    } else {
+      template.addTextSegment("\"");
+    }
 
     final PsiElement anchor1 = anchor;
 
+    final boolean indirectSyntax1 = indirectSyntax;
     final Runnable runnable = new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
             public void run() {
               int textOffset = anchor1.getTextOffset();
+              if (!anchorIsEmptyTag && indirectSyntax1) ++textOffset;
               editor.getCaretModel().moveToOffset(textOffset);
+              if (anchorIsEmptyTag) {
+                editor.getDocument().deleteString(textOffset,textOffset + 2);
+              }
               TemplateManager.getInstance(project).startTemplate(editor, template, null);
             }
           }
