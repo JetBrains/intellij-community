@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Collections;
 
 /**
  * author: lesya
@@ -35,13 +34,12 @@ import java.util.Collections;
 
 public final class VcsConfiguration implements JDOMExternalizable, ProjectComponent {
   @NonNls private static final String VALUE_ATTR = "value";
+  private Project myProject;
 
   public boolean OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = true;
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT = true;
   public boolean PERFORM_UPDATE_IN_BACKGROUND = false;
   public boolean PERFORM_COMMIT_IN_BACKGROUND = false;
-
-  private List<VcsDirectoryMapping> myDirectoryMappings = new ArrayList<VcsDirectoryMapping>();
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),
@@ -106,6 +104,13 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
     return new VcsConfiguration();
   }
 
+  private VcsConfiguration() {
+  }
+
+  public VcsConfiguration(final Project project) {
+    myProject = project;
+  }
+
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     final List messages = element.getChildren(MESSAGE_ELEMENT_NAME);
@@ -113,7 +118,7 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
       saveCommitMessage(((Element)message).getAttributeValue(VALUE_ATTR));
     }
     if (ACTIVE_VCS_NAME != null && ACTIVE_VCS_NAME.length() > 0) {
-      myDirectoryMappings.add(new VcsDirectoryMapping("", ACTIVE_VCS_NAME));
+      ProjectLevelVcsManager.getInstance(myProject).setDirectoryMapping("", ACTIVE_VCS_NAME);
     }
   }
 
@@ -214,13 +219,5 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
 
     public void processSentToBackground() {}
     public void processRestoredToForeground() {}
-  }
-
-  public List<VcsDirectoryMapping> getDirectoryMappings() {
-    return Collections.unmodifiableList(myDirectoryMappings);
-  }
-
-  public void addDirectoryMapping(final String path, final String activeVcsName) {
-    myDirectoryMappings.add(new VcsDirectoryMapping(path, activeVcsName));
   }
 }

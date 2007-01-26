@@ -92,7 +92,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons {
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     List<VcsDirectoryMapping> mappings = new ArrayList<VcsDirectoryMapping>();
-    for(VcsDirectoryMapping mapping: VcsConfiguration.getInstance(project).getDirectoryMappings()) {
+    for(VcsDirectoryMapping mapping: ProjectLevelVcsManager.getInstance(project).getDirectoryMappings()) {
       mappings.add(new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs()));
     }
     myModel = new ListTableModel<VcsDirectoryMapping>(new ColumnInfo[]{DIRECTORY, VCS_SETTING}, mappings, 0);

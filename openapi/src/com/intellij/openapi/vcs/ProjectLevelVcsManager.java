@@ -194,4 +194,8 @@ public abstract class ProjectLevelVcsManager {
   public abstract VirtualFile[] getRootsUnderVcs(AbstractVcs vcs);
 
   public abstract void updateActiveVcss();
+
+  public abstract List<VcsDirectoryMapping> getDirectoryMappings();
+
+  public abstract void setDirectoryMapping(final String path, final String activeVcsName);
 }

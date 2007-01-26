@@ -112,6 +112,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final List<CheckinHandlerFactory> myRegisteredBeforeCheckinHandlers = new ArrayList<CheckinHandlerFactory>();
   private boolean myHaveEmptyContentRevisions = true;
   private EventDispatcher<VcsListener> myEventDispatcher = EventDispatcher.create(VcsListener.class);
+  private List<VcsDirectoryMapping> myDirectoryMappings = new ArrayList<VcsDirectoryMapping>();
 
   private volatile int myBackgroundOperationCounter = 0;
 
@@ -122,6 +123,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public ProjectLevelVcsManagerImpl(Project project, AbstractVcs[] vcses) {
     myProject = project;
     myVcss = new ArrayList<AbstractVcs>(Arrays.asList(vcses));
+    setDirectoryMapping("", "");
   }
 
   private final Map<String, VcsShowOptionsSettingImpl> myOptions = new LinkedHashMap<String, VcsShowOptionsSettingImpl>();
@@ -262,7 +264,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public boolean checkAllFilesAreUnder(AbstractVcs abstractVcs, VirtualFile[] files) {
     if (files == null) return false;
     for (VirtualFile file : files) {
-      if (ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file) != abstractVcs) {
+      if (getVcsFor(file) != abstractVcs) {
         return false;
       }
     }
@@ -273,6 +275,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public AbstractVcs getVcsFor(VirtualFile file) {
     if (file == null) return null;
     if (myProject.isDisposed()) return null;
+    
+
     Module module = VfsUtil.getModuleForFile(myProject, file);
     if (module == null) return null;
     return ModuleLevelVcsManager.getInstance(module).getActiveVcs();
@@ -307,10 +311,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }
     myVcss.remove(vcs);
     myCachedVCSs = null;
-  }
-
-  private Project getProject() {
-    return myProject;
   }
 
   public ContentManager getContentManager() {
@@ -495,8 +495,29 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     for(VirtualFile file: ModuleRootManager.getInstance(module).getContentRoots()) {
       File contentRootDir = new File(file.getPath());
       String path = FileUtil.getRelativePath(projectBaseDir, contentRootDir);
-      VcsConfiguration.getInstance(myProject).addDirectoryMapping(path, activeVcsName);
+      setDirectoryMapping(path, activeVcsName);
     }
+  }
+
+  public List<VcsDirectoryMapping> getDirectoryMappings() {
+    return Collections.unmodifiableList(myDirectoryMappings);
+  }
+
+  public void setDirectoryMapping(final String path, final String activeVcsName) {
+    for(VcsDirectoryMapping mapping: myDirectoryMappings) {
+      if (mapping.getDirectory().equals(path)) {
+        mapping.setVcs(activeVcsName);
+        return;
+      }
+    }
+
+    VcsDirectoryMapping mapping = new VcsDirectoryMapping(path, activeVcsName);
+    myDirectoryMappings.add(mapping);
+    Collections.sort(myDirectoryMappings, new Comparator<VcsDirectoryMapping>() {
+      public int compare(final VcsDirectoryMapping m1, final VcsDirectoryMapping m2) {
+        return m1.getDirectory().compareTo(m2.getDirectory());
+      }
+    });
   }
 
   private VcsShowOptionsSettingImpl getOrCreateOption(String actionName) {
