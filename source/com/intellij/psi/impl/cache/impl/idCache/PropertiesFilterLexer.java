@@ -18,14 +18,14 @@ public class PropertiesFilterLexer extends BaseFilterLexer {
     final IElementType tokenType = myOriginalLexer.getTokenType();
 
     if (tokenType == PropertiesTokenTypes.KEY_CHARACTERS) {
-      scanWordsInToken(UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_PLAIN_TEXT, false);
+      scanWordsInToken(UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_PLAIN_TEXT, false, false);
     }
     else if (PropertiesTokenTypes.COMMENTS.contains(tokenType)) {
-      scanWordsInToken(UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_PLAIN_TEXT, false);
+      scanWordsInToken(UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_PLAIN_TEXT, false, false);
       advanceTodoItemCountsInToken();
     }
     else {
-      scanWordsInToken(UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_PLAIN_TEXT, false);
+      scanWordsInToken(UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_PLAIN_TEXT, false, false);
     }
 
     myOriginalLexer.advance();

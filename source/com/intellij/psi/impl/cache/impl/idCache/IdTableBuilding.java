@@ -31,7 +31,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.Processor;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -376,25 +375,29 @@ public class IdTableBuilding {
   };
 
   public static void scanWords(final ScanWordProcessor processor, final CharSequence chars, final int startOffset, final int endOffset) {
-    scanWords(processor, chars, CharArrayUtil.fromSequenceWithoutCopying(chars), startOffset, endOffset);
+    scanWords(processor, chars, CharArrayUtil.fromSequenceWithoutCopying(chars), startOffset, endOffset, false);
   }
 
-  public static void scanWords(final ScanWordProcessor processor, final CharSequence chars, final @Nullable char[] charArray, final int startOffset, final int endOffset) {
+  public static void scanWords(final ScanWordProcessor processor, final CharSequence chars, final @Nullable char[] charArray, final int startOffset,
+                               final int endOffset,
+                               final boolean mayHaveEscapes) {
     int index = startOffset;
     final boolean hasArray = charArray != null;
 
     ScanWordsLoop:
       while(true){
         while(true){
-          if (index == endOffset) break ScanWordsLoop;
+          if (index >= endOffset) break ScanWordsLoop;
           final char c = hasArray ? charArray[index]:chars.charAt(index);
+
           if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || (Character.isJavaIdentifierStart(c) && c != '$')) break;
           index++;
+          if (mayHaveEscapes && c == '\\') index++; //the next symbol is for escaping
         }
         int index1 = index;
         while(true){
           index++;
-          if (index == endOffset) break;
+          if (index >= endOffset) break;
           final char c = hasArray ? charArray[index]:chars.charAt(index);
           if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) continue;
           if (!Character.isJavaIdentifierPart(c) || c == '$') break;

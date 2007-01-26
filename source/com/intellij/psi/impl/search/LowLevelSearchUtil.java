@@ -1,23 +1,23 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.TextOccurenceProcessor;
-import com.intellij.util.text.StringSearcher;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.StringSearcher;
 
 import java.util.List;
 
@@ -146,7 +146,9 @@ public class LowLevelSearchUtil {
       if (index > startOffset) {
         char c = text.charAt(index - 1);
         if (Character.isJavaIdentifierPart(c) && c != '$') {
-          continue;
+          if (index < 2 || text.charAt(index - 2) != '\\') { //escape sequence
+            continue;
+          }
         }
       }
 

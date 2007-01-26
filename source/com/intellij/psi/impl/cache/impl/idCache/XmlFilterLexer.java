@@ -16,16 +16,16 @@ public class XmlFilterLexer extends BaseFilterLexer {
     final IElementType tokenType = myOriginalLexer.getTokenType();
 
     if (tokenType == ElementType.XML_COMMENT_CHARACTERS) {
-      scanWordsInToken(UsageSearchContext.IN_COMMENTS, false);
+      scanWordsInToken(UsageSearchContext.IN_COMMENTS, false, false);
       advanceTodoItemCountsInToken();
     }
 
     if (tokenType == ElementType.XML_ATTRIBUTE_VALUE_TOKEN) {
-      scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
+      scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES, true, false);
     } else if (tokenType == ElementType.XML_NAME || tokenType == ElementType.XML_DATA_CHARACTERS) {
-      scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES, false);
+      scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES, false, false);
     } else {
-      scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT, false);
+      scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT, false, false);
     }
 
     myOriginalLexer.advance();

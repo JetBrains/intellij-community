@@ -300,7 +300,7 @@ public class RefactoringUtil {
       if (index > 0) {
         char c = elementText.charAt(index - 1);
         if (Character.isJavaIdentifierPart(c) && c != '$') {
-          continue;
+          if (index < 2 || elementText.charAt(index - 2) != '\\') continue;  //escape sequence
         }
       }
 

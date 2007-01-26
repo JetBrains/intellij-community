@@ -24,11 +24,11 @@ public class JavaFilterLexer extends BaseFilterLexer {
       addOccurrenceInToken(UsageSearchContext.IN_CODE);
     }
     else if (tokenType == JavaTokenType.STRING_LITERAL) {
-      scanWordsInToken(UsageSearchContext.IN_STRINGS | UsageSearchContext.IN_FOREIGN_LANGUAGES, false);
+      scanWordsInToken(UsageSearchContext.IN_STRINGS | UsageSearchContext.IN_FOREIGN_LANGUAGES, false, true);
     }
     else if (tokenType == JavaTokenType.END_OF_LINE_COMMENT || tokenType == JavaTokenType.C_STYLE_COMMENT ||
              tokenType == JavaTokenType.DOC_COMMENT) {
-      scanWordsInToken(UsageSearchContext.IN_COMMENTS, false);
+      scanWordsInToken(UsageSearchContext.IN_COMMENTS, false, false);
       advanceTodoItemCountsInToken();
     }
     else if (JavaTokenType.KEYWORD_BIT_SET.contains(tokenType)) {

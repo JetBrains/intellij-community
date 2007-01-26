@@ -1,9 +1,9 @@
 package com.intellij.refactoring;
 
-import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.psi.PsiElement;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.testFramework.LightCodeInsightTestCase;
 
 /**
  * @author ven
@@ -13,6 +13,10 @@ public class RenameLocalTest extends LightCodeInsightTestCase {
 
   public void testIDEADEV3320() throws Exception {
     doTest("f");
+  }
+
+  public void testIDEADEV13849() throws Exception {
+    doTest("aaaaa");
   }
 
   private void doTest(final String newName) throws Exception {

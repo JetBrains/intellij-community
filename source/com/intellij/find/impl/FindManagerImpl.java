@@ -203,7 +203,9 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
   }
 
   private static boolean isWholeWord(CharSequence text, int startOffset, int endOffset) {
-    boolean isWordStart = startOffset == 0  || !Character.isJavaIdentifierPart(text.charAt(startOffset - 1));
+    boolean isWordStart = startOffset == 0  || !Character.isJavaIdentifierPart(text.charAt(startOffset - 1)) ||
+      (startOffset > 1 &&  text.charAt(startOffset - 2) == '\\');
+    
     boolean isWordEnd   = endOffset == text.length() || !Character.isJavaIdentifierPart(text.charAt(endOffset)) ||
                           (endOffset > 0 && !Character.isJavaIdentifierPart(text.charAt(endOffset - 1)));
 

@@ -3,10 +3,9 @@ package com.intellij.psi.impl.cache.impl.idCache;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
 import com.intellij.psi.search.IndexPattern;
-import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.CharSequenceSubSequence;
 import gnu.trove.TIntIntHashMap;
 
 import java.util.regex.Matcher;
@@ -18,7 +17,7 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
   protected final int[] myTodoCounts;
 
   private int myTodoScannedBound = 0;
-  private int myOccurenceMask;
+  protected int myOccurenceMask;
   protected CharSequence myBuffer;
   protected char[] myBufferArray;
 
@@ -119,11 +118,11 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
     }
   }
 
-  protected final void scanWordsInToken(final int occurrenceMask, boolean mayHaveFileRefs) {
+  protected final void scanWordsInToken(final int occurrenceMask, boolean mayHaveFileRefs, final boolean mayHaveEscapes) {
     myOccurenceMask = occurrenceMask;
     final int start = getTokenStart();
     final int end = getTokenEnd();
-    IdTableBuilding.scanWords(this, myBuffer, myBufferArray, start, end);
+    IdTableBuilding.scanWords(this, myBuffer, myBufferArray, start, end, mayHaveEscapes);
 
     if (mayHaveFileRefs) {
       IdTableBuilding.processPossibleComplexFileName(myBuffer, myBufferArray, start, end, myTable);
