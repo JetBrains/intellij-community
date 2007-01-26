@@ -143,33 +143,35 @@ public class FrameDebuggerTree extends DebuggerTree {
     final int endOffset = doc.getLineEndOffset(endLine);
 
     final TextRange lineRange = new TextRange(startOffset, endOffset);
-    final int offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), doc.getLineStartOffset(line), " \t");
-    PsiElement element = file.findElementAt(offset);
-    if (element != null) {
-      PsiMethod method = PsiTreeUtil.getNonStrictParentOfType(element, PsiMethod.class);
-      if (method != null) {
-        element = method;
-      }
-      else {
-        PsiField field = PsiTreeUtil.getNonStrictParentOfType(element, PsiField.class);
-        if (field != null) {
-          element = field;
+    if (!lineRange.isEmpty()) {
+      final int offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), doc.getLineStartOffset(line), " \t");
+      PsiElement element = file.findElementAt(offset);
+      if (element != null) {
+        PsiMethod method = PsiTreeUtil.getNonStrictParentOfType(element, PsiMethod.class);
+        if (method != null) {
+          element = method;
         }
         else {
-          final PsiClassInitializer initializer = PsiTreeUtil.getNonStrictParentOfType(element, PsiClassInitializer.class);
-          if (initializer != null) {
-            element = initializer;
+          PsiField field = PsiTreeUtil.getNonStrictParentOfType(element, PsiField.class);
+          if (field != null) {
+            element = field;
+          }
+          else {
+            final PsiClassInitializer initializer = PsiTreeUtil.getNonStrictParentOfType(element, PsiClassInitializer.class);
+            if (initializer != null) {
+              element = initializer;
+            }
           }
         }
+
+        //noinspection unchecked
+        final Set<String> vars = new HashSet<String>();
+        final Set<TextWithImports> expressions = new HashSet<TextWithImports>();
+        final PsiRecursiveElementVisitor variablesCollector = new VariablesCollector(lineRange, expressions, vars);
+        element.accept(variablesCollector);
+
+        return new Pair<Set<String>, Set<TextWithImports>>(vars, expressions);
       }
-
-      //noinspection unchecked
-      final Set<String> vars = new HashSet<String>();
-      final Set<TextWithImports> expressions = new HashSet<TextWithImports>();
-      final PsiRecursiveElementVisitor variablesCollector = new VariablesCollector(lineRange, expressions, vars);
-      element.accept(variablesCollector);
-
-      return new Pair<Set<String>, Set<TextWithImports>>(vars, expressions);
     }
     return new Pair<Set<String>, Set<TextWithImports>>(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
   }
