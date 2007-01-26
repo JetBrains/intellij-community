@@ -225,11 +225,11 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     loadFromXml(root, file.getPath());
   }
 
-  synchronized boolean isSavePathsRelative() {
+   boolean isSavePathsRelative() {
     return mySavePathsRelative;
   }
 
-  public synchronized void setSavePathsRelative(boolean b) {
+  public void setSavePathsRelative(boolean b) {
     mySavePathsRelative = b;
   }
 

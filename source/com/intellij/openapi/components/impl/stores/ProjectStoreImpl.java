@@ -397,7 +397,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
 
-  public synchronized boolean isSavePathsRelative() {
+  public boolean isSavePathsRelative() {
     return super.isSavePathsRelative();
   }
 

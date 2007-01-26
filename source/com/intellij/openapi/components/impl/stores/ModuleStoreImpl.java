@@ -133,7 +133,7 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
   }
 
 
-  public synchronized boolean isSavePathsRelative() {
+  public boolean isSavePathsRelative() {
     return super.isSavePathsRelative();
   }
 
@@ -153,7 +153,7 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
 
   // since this option is stored in 2 different places (a field in the base class and myOptions map in this class),
   // we have to update both storages whenever the value of the option changes
-  public synchronized void setSavePathsRelative(boolean value) {
+  public void setSavePathsRelative(boolean value) {
     super.setSavePathsRelative(value);
     myModule.setOption(RELATIVE_PATHS_OPTION, String.valueOf(value));
   }
