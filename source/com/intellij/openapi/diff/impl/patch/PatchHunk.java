@@ -11,8 +11,8 @@
 package com.intellij.openapi.diff.impl.patch;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 public class PatchHunk {
   private int myStartLineBefore;
@@ -56,27 +56,31 @@ public class PatchHunk {
     ApplyPatchStatus result = null;
     int curLine = findStartLine(lines);
     for(PatchLine line: myLines) {
+      final String patchLineText = line.getText();
       switch (line.getType()) {
         case CONTEXT:
-          if (!line.getText().equals(lines.get(curLine))) {
-            throw new ApplyPatchException("Context mismatch");
+          if (curLine >= lines.size()) {
+            throw new ApplyPatchException("Unexpected end of document. Expected line:\n" + patchLineText);
+          }
+          if (!patchLineText.equals(lines.get(curLine))) {
+            throw new ApplyPatchException("Context mismatch. Expected line:\n" + patchLineText + "\nFound line:\n" + lines.get(curLine));
           }
           curLine++;
           break;
 
         case ADD:
-          if (curLine < lines.size() && lines.get(curLine).equals(line.getText())) {
+          if (curLine < lines.size() && lines.get(curLine).equals(patchLineText)) {
             result = ApplyPatchStatus.and(result, ApplyPatchStatus.ALREADY_APPLIED);
           }
           else {
-            lines.add(curLine, line.getText());
+            lines.add(curLine, patchLineText);
             result = ApplyPatchStatus.and(result, ApplyPatchStatus.SUCCESS);
           }
           curLine++;
           break;
 
         case REMOVE:
-          if (curLine >= lines.size() || !line.getText().equals(lines.get(curLine))) {
+          if (curLine >= lines.size() || !patchLineText.equals(lines.get(curLine))) {
             // we'll get a context mismatch exception later if it's actually a conflict and not an already applied line
             result = ApplyPatchStatus.and(result, ApplyPatchStatus.ALREADY_APPLIED);
           }
