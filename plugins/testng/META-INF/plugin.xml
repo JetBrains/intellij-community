@@ -35,7 +35,9 @@
 
     </project-components>
     <change-notes>
-        <![CDATA[<li>Configuration editor uses SettingsGroup instead of the original hacky approach.</li>
+        <![CDATA[
+        <li>Updated to TestNG 5.5</li>
+        <li>Configuration editor uses SettingsGroup instead of the original hacky approach.</li>
         ]]>
     </change-notes>
 </idea-plugin>
