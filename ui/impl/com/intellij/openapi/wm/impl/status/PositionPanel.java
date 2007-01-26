@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.StatusBarInformer;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -21,9 +22,9 @@ public class PositionPanel extends TextPanel {
     addMouseListener(new MouseAdapter() {
       public void mouseClicked(final MouseEvent e) {
         if (e.getClickCount() == 2) {
-          final Project project = (Project)DataManager.getInstance().getDataContext(PositionPanel.this).getData(DataConstants.PROJECT);
+          final Project project = getProject();
           if (project == null) return;
-          final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+          final Editor editor = getEditor(project);
           if (editor == null) return;
           final CommandProcessor processor = CommandProcessor.getInstance();
           processor.executeCommand(
@@ -40,5 +41,26 @@ public class PositionPanel extends TextPanel {
         }
       }
     });
+
+    new StatusBarInformer(this, null) {
+      protected String getText() {
+        final Editor editor = getEditor();
+        return editor == null ? null : UIBundle.message("go.to.line.command.double.click"); 
+      }
+    };
+  }
+
+  private Editor getEditor() {
+    final Project project = getProject();
+    if (project == null) return null;
+    return getEditor(project);
+  }
+
+  private Editor getEditor(final Project project) {
+    return FileEditorManager.getInstance(project).getSelectedTextEditor();
+  }
+
+  private Project getProject() {
+    return (Project)DataManager.getInstance().getDataContext(PositionPanel.this).getData(DataConstants.PROJECT);
   }
 }

@@ -24,7 +24,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -925,7 +925,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   private static boolean haveActiveFrames() {
     final WindowManagerEx wmanager = WindowManagerEx.getInstanceEx();
     if (wmanager == null) return false;
-    for (IdeFrame frame : wmanager.getAllFrames()) {
+    for (IdeFrameImpl frame : wmanager.getAllFrames()) {
       if (frame != null && frame.getState() != JFrame.ICONIFIED) return true;
     }
     return false;

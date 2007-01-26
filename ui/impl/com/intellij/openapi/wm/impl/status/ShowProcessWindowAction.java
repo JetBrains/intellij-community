@@ -3,7 +3,7 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 
 import java.awt.*;
 
@@ -17,7 +17,7 @@ public class ShowProcessWindowAction extends ToggleAction {
 
 
   public boolean isSelected(final AnActionEvent e) {
-    final IdeFrame frame = getFrame();
+    final IdeFrameImpl frame = getFrame();
     if (frame == null) return false;
     return frame.getStatusBar().isProcessWindowOpen();
   }
@@ -28,10 +28,10 @@ public class ShowProcessWindowAction extends ToggleAction {
   }
 
   @Nullable
-  private IdeFrame getFrame() {
+  private IdeFrameImpl getFrame() {
     Container window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
     while (window != null) {
-      if (window instanceof IdeFrame) return (IdeFrame)window;
+      if (window instanceof IdeFrameImpl) return (IdeFrameImpl)window;
       window = window.getParent();
     }
 
@@ -39,7 +39,7 @@ public class ShowProcessWindowAction extends ToggleAction {
   }
 
   public void setSelected(final AnActionEvent e, final boolean state) {
-    final IdeFrame frame = getFrame();
+    final IdeFrameImpl frame = getFrame();
     if (frame == null) return;
     frame.getStatusBar().setProcessWindowOpen(state);
   }

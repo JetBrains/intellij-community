@@ -4,7 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.CommandProcessor;
 import com.intellij.openapi.wm.impl.DesktopLayout;
-import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,13 +21,13 @@ public abstract class WindowManagerEx extends WindowManager {
   }
 
 
-  public abstract IdeFrame getFrame(Project project);
+  public abstract IdeFrameImpl getFrame(Project project);
 
-  public abstract IdeFrame allocateFrame(Project project);
+  public abstract IdeFrameImpl allocateFrame(Project project);
 
-  public abstract void releaseFrame(IdeFrame frame);
+  public abstract void releaseFrame(IdeFrameImpl frame);
 
-  public abstract IdeFrame[] getAllFrames();
+  public abstract IdeFrameImpl[] getAllFrames();
 
   /**
    * @return focus owner of the specified window.

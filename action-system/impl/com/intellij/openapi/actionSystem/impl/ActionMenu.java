@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.util.ui.UIUtil;
 
@@ -136,7 +136,7 @@ public final class ActionMenu extends JMenu {
 
   public void menuSelectionChanged(boolean isIncluded) {
     super.menuSelectionChanged(isIncluded);
-    IdeFrame frame = (IdeFrame)SwingUtilities.getAncestorOfClass(IdeFrame.class, this);
+    IdeFrameImpl frame = (IdeFrameImpl)SwingUtilities.getAncestorOfClass(IdeFrameImpl.class, this);
     if (frame != null) {
       StatusBar statusBar = frame.getStatusBar();
       if (isIncluded) {

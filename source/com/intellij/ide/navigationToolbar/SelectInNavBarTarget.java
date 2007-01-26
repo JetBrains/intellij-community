@@ -22,7 +22,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -59,7 +59,7 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper {
   }
 
   protected void select(final Object selector, VirtualFile virtualFile, final boolean requestFocus) {
-    final IdeFrame frame = WindowManagerEx.getInstanceEx().getFrame(myProject);
+    final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(myProject);
     ((IdeRootPane)frame.getRootPane()).getNavigationBar().select();
   }
 
@@ -68,7 +68,7 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper {
   }
 
   protected void select(PsiElement element, boolean requestFocus) {
-    final IdeFrame frame = WindowManagerEx.getInstanceEx().getFrame(myProject);
+    final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(myProject);
     ((IdeRootPane)frame.getRootPane()).getNavigationBar().select();
   }
 

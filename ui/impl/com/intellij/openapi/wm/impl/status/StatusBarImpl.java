@@ -21,7 +21,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
 
   protected final TextPanel myInfoPanel = new TextPanel(new String[]{"#"},true);
   protected final PositionPanel myPositionPanel = new PositionPanel();
-  protected final ToggleReadOnlyAttributePanel myToggleReadOnlyAttributePanel = new ToggleReadOnlyAttributePanel();
+  protected final ToggleReadOnlyAttributePanel myToggleReadOnlyAttributePanel = new ToggleReadOnlyAttributePanel(this);
   protected final MemoryUsagePanel myMemoryUsagePanel = new MemoryUsagePanel();
   protected final TextPanel myStatusPanel = new TextPanel(new String[]{UIBundle.message("status.bar.insert.status.text"),
     UIBundle.message("status.bar.overwrite.status.text")},false);

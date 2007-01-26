@@ -20,6 +20,7 @@ import com.intellij.profile.ui.ErrorOptionsConfigurable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.StatusBarInformer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
@@ -82,6 +83,24 @@ public class TogglePopupHintsPanel extends JPanel {
         new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     add(myInspectionProfileLabel,
         new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 3, 0, 3), 0, 0));
+
+    new StatusBarInformer(myHectorLabel, null) {
+      protected String getText() {
+        updateStatus(false);
+        final String text = myHectorLabel.getToolTipText();
+        setCursor(Cursor.getPredefinedCursor(text == null ? Cursor.DEFAULT_CURSOR : Cursor.HAND_CURSOR));
+        return text;
+      }
+    };
+
+    new StatusBarInformer(myInspectionProfileLabel, null) {
+      protected String getText() {
+        updateStatus(false);
+        final String text = myInspectionProfileLabel.getToolTipText();
+        setCursor(Cursor.getPredefinedCursor(text == null ? Cursor.DEFAULT_CURSOR : Cursor.HAND_CURSOR));
+        return text;
+      }
+    };
   }
 
   void updateStatus(boolean isClear) {
@@ -115,6 +134,7 @@ public class TogglePopupHintsPanel extends JPanel {
         myInspectionProfileLabel.setText("");
       }
       myHectorLabel.setToolTipText(UIBundle.message("popup.hints.panel.click.to.configure.highlighting.tooltip.text"));
+      myInspectionProfileLabel.setToolTipText(UIBundle.message("popup.hints.panel.click.to.configure.profile.text"));
     }
     else {
       myHectorLabel.setIcon(EMPTY_ICON);

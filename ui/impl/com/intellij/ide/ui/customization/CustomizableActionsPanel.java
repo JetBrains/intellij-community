@@ -17,7 +17,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.*;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.Convertor;
@@ -456,7 +456,7 @@ public class CustomizableActionsPanel {
   private static void setCustomizationSchemaForCurrentProjects() {
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : openProjects) {
-      final IdeFrame frame = WindowManagerEx.getInstanceEx().getFrame(project);
+      final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
       frame.updateToolbar();
       frame.updateMenuBar();
 
@@ -466,7 +466,7 @@ public class CustomizableActionsPanel {
       //  favoritesView.getFavoritesTreeViewPanel(favoritesList).updateTreePopupHandler();
       //}
     }
-    final IdeFrame frame = WindowManagerEx.getInstanceEx().getFrame(null);
+    final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(null);
     if (frame != null) {
       frame.updateToolbar();
       frame.updateMenuBar();

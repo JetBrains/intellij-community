@@ -75,11 +75,11 @@ final class WindowWatcher implements PropertyChangeListener{
       }
       myFocusedWindows.add(myFocusedWindow);
       // Set new root frame
-      final IdeFrame frame;
-      if(window instanceof IdeFrame){
-        frame=(IdeFrame)window;
+      final IdeFrameImpl frame;
+      if(window instanceof IdeFrameImpl){
+        frame=(IdeFrameImpl)window;
       }else{
-        frame=(IdeFrame)SwingUtilities.getAncestorOfClass(IdeFrame.class,window);
+        frame=(IdeFrameImpl)SwingUtilities.getAncestorOfClass(IdeFrameImpl.class,window);
       }
       if(frame!=null){
         JOptionPane.setRootFrame(frame);

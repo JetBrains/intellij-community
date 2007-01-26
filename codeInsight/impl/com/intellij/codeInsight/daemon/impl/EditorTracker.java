@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.EventDispatcher;
@@ -46,7 +46,7 @@ public class EditorTracker implements ProjectComponent {
   private MyEditorFactoryListener myEditorFactoryListener;
   private EventDispatcher<EditorTrackerListener> myDispatcher = EventDispatcher.create(EditorTrackerListener.class);
 
-  private IdeFrame myIdeFrame;
+  private IdeFrameImpl myIdeFrame;
   private Window myActiveWindow = null;
   private final WindowFocusListener myIdeFrameFocusListener = new WindowFocusListener() {
     public void windowGainedFocus(WindowEvent e) {
@@ -145,7 +145,7 @@ public class EditorTracker implements ProjectComponent {
       list = new ArrayList<Editor>();
       myWindowToEditorsMap.put(window, list);
 
-      if (!(window instanceof IdeFrame)) {
+      if (!(window instanceof IdeFrameImpl)) {
         WindowFocusListener listener =  new WindowFocusListener() {
           public void windowGainedFocus(WindowEvent e) {
             if (LOG.isDebugEnabled()) {
@@ -192,7 +192,7 @@ public class EditorTracker implements ProjectComponent {
 
   private Window windowByEditor(Editor editor) {
     Window window = SwingUtilities.windowForComponent(editor.getComponent());
-    if (window instanceof IdeFrame) {
+    if (window instanceof IdeFrameImpl) {
       if (window != myIdeFrame) return null;
     }
     return window;

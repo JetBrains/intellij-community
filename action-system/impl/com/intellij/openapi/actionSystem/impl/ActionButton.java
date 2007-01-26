@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +73,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
   }
 
   protected void onMousePresenceChanged(boolean setInfo) {
-    IdeFrame frame = (IdeFrame)SwingUtilities.getAncestorOfClass(IdeFrame.class, this);
+    IdeFrameImpl frame = (IdeFrameImpl)SwingUtilities.getAncestorOfClass(IdeFrameImpl.class, this);
     if (frame != null) {
       frame.getStatusBar().setInfo(setInfo ? myPresentation.getDescription() : null);
     }

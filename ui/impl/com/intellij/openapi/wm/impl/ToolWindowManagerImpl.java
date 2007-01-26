@@ -64,7 +64,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final SideStack mySideStack;
 
   private ToolWindowsPane myToolWindowsPane;
-  private IdeFrame myFrame;
+  private IdeFrameImpl myFrame;
   private DesktopLayout myLayoutToRestoreLater = null;
   @NonNls protected static final String EDITOR_ELEMENT = "editor";
   @NonNls protected static final String ACTIVE_ATTR_VALUE = "active";

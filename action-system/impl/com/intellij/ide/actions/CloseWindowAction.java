@@ -2,7 +2,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 
 import java.awt.*;
 import java.awt.event.WindowEvent;
@@ -27,7 +27,7 @@ public class CloseWindowAction extends AnAction{
       }else{
         return null;
       }
-    }else if(!(focusedWindow instanceof IdeFrame)){
+    }else if(!(focusedWindow instanceof IdeFrameImpl)){
       Frame frame=(Frame)focusedWindow;
       if(!frame.isUndecorated()){
         return focusedWindow;

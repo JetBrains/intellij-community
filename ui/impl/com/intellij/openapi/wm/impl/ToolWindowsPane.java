@@ -26,7 +26,7 @@ import java.util.Comparator;
 final class ToolWindowsPane extends JPanel{
   private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowsPane");
 
-  private final IdeFrame myFrame;
+  private final IdeFrameImpl myFrame;
 
   private final HashMap<String,StripeButton> myId2Button;
   private final HashMap<String,InternalDecorator> myId2Decorator;
@@ -53,7 +53,7 @@ final class ToolWindowsPane extends JPanel{
 
   private final MyUISettingsListenerImpl myUISettingsListener;
 
-  ToolWindowsPane(final IdeFrame frame){
+  ToolWindowsPane(final IdeFrameImpl frame){
     super(new BorderLayout());
 
     setOpaque(false);

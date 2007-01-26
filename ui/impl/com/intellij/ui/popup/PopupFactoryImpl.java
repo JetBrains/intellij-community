@@ -17,7 +17,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -198,7 +198,7 @@ public class PopupFactoryImpl extends JBPopupFactory implements ApplicationCompo
 
     if (focusOwner == null) {
       Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-      IdeFrame frame = project == null ? null : ((WindowManagerEx)WindowManager.getInstance()).getFrame(project);
+      IdeFrameImpl frame = project == null ? null : ((WindowManagerEx)WindowManager.getInstance()).getFrame(project);
       focusOwner = frame == null ? null : frame.getRootPane();
       if (focusOwner == null) {
         throw new IllegalArgumentException("focusOwner cannot be null");

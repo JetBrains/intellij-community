@@ -33,7 +33,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -181,7 +181,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
       public void run() {
         final WindowManagerEx windowManagerEx = WindowManagerEx.getInstanceEx();
-        final IdeFrame frame = windowManagerEx.getFrame(myProject);
+        final IdeFrameImpl frame = windowManagerEx.getFrame(myProject);
         LOG.assertTrue(frame != null);
         mySplitters.updateFileName(file);
         frame.setFileTitle(file);

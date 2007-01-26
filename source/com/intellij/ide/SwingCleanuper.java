@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.Alarm;
 
 import javax.swing.FocusManager;
@@ -48,12 +48,12 @@ public final class SwingCleanuper implements ApplicationComponent{
             new Runnable() {
               public void run() {
                 // request focus into some focusable somponent inside IdeFrame
-                final IdeFrame frame;
+                final IdeFrameImpl frame;
                 final Window window=KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-                if(window instanceof IdeFrame){
-                  frame=(IdeFrame)window;
+                if(window instanceof IdeFrameImpl){
+                  frame=(IdeFrameImpl)window;
                 }else{
-                  frame=(IdeFrame)SwingUtilities.getAncestorOfClass(IdeFrame.class,window);
+                  frame=(IdeFrameImpl)SwingUtilities.getAncestorOfClass(IdeFrameImpl.class,window);
                 }
                 if(frame!=null){
                   ((JComponent)frame.getStatusBar()).requestFocus();

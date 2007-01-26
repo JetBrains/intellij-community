@@ -8,7 +8,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.util.SystemInfo;
 
 import javax.swing.*;
@@ -23,14 +23,14 @@ public final class ToggleFullScreenModeAction extends ToggleAction{
   @NonNls
   private static final String PROP_BOUNDS_BEFORE_FULL_SCREEN="boundsBeforeFullScreen";
 
-  private static IdeFrame getFrame(AnActionEvent e){
+  private static IdeFrameImpl getFrame(AnActionEvent e){
     WindowManagerEx windowManagerEx=WindowManagerEx.getInstanceEx();
     Project project=(Project)e.getDataContext().getData(DataConstants.PROJECT);
     return windowManagerEx.getFrame(project);
   }
 
   public boolean isSelected(AnActionEvent e){
-    IdeFrame frame=getFrame(e);
+    IdeFrameImpl frame=getFrame(e);
     return frame != null && frame.getGraphicsConfiguration().getDevice().getFullScreenWindow()==frame;
   }
 
@@ -48,7 +48,7 @@ public final class ToggleFullScreenModeAction extends ToggleAction{
       }
     }
     // Toggle full screen mode.
-    IdeFrame frame=getFrame(e);
+    IdeFrameImpl frame=getFrame(e);
     final Component focusedComponent=WindowManagerEx.getInstanceEx().getFocusedComponent(frame);
     GraphicsConfiguration graphicsConfiguration=frame.getGraphicsConfiguration();
     Rectangle bounds=graphicsConfiguration.getBounds();
@@ -92,7 +92,7 @@ public final class ToggleFullScreenModeAction extends ToggleAction{
 
   public void update(AnActionEvent e){
     super.update(e);
-    IdeFrame frame=getFrame(e);
+    IdeFrameImpl frame=getFrame(e);
     final boolean operational = !SystemInfo.isMac && // Disabled full screen mode for Mac since it doesn't work anyway
                                 frame != null &&
                                 frame.getGraphicsConfiguration().getDevice().isFullScreenSupported();

@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.StatusBarImpl;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -35,7 +36,7 @@ import java.awt.event.WindowEvent;
  */
 
 // Made non-final for Fabrique
-public class IdeFrame extends JFrame implements DataProvider {
+public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   private String myTitle;
   private String myFileTitle;
   private Project myProject;
@@ -43,7 +44,7 @@ public class IdeFrame extends JFrame implements DataProvider {
 
   private IdeRootPane myRootPane;
 
-  public IdeFrame(ApplicationInfoEx applicationInfoEx,
+  public IdeFrameImpl(ApplicationInfoEx applicationInfoEx,
                   ActionManager actionManager,
                   UISettings uiSettings,
                   DataManager dataManager,

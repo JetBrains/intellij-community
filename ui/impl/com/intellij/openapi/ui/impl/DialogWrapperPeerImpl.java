@@ -17,7 +17,7 @@ import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SpeedSearchBase;
@@ -70,7 +70,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       window = myWindowManager.suggestParentWindow(project);
       if (window == null) {
         Window focusedWindow = myWindowManager.getMostRecentFocusedWindow();
-        if (focusedWindow instanceof IdeFrame) {
+        if (focusedWindow instanceof IdeFrameImpl) {
           window = focusedWindow;
         }
       }

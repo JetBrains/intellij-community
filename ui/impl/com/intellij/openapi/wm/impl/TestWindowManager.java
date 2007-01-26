@@ -70,19 +70,19 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     }
   }
 
-  public IdeFrame[] getAllFrames() {
-    return new IdeFrame[0];
+  public IdeFrameImpl[] getAllFrames() {
+    return new IdeFrameImpl[0];
   }
 
-  public final IdeFrame getFrame(final Project project) {
+  public final IdeFrameImpl getFrame(final Project project) {
     return null;
   }
 
-  public final IdeFrame allocateFrame(final Project project) {
+  public final IdeFrameImpl allocateFrame(final Project project) {
     throw new UnsupportedOperationException();
   }
 
-  public final void releaseFrame(final IdeFrame frame) {
+  public final void releaseFrame(final IdeFrameImpl frame) {
     throw new UnsupportedOperationException();
   }
 

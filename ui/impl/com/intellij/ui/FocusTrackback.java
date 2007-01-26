@@ -4,7 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,8 +124,8 @@ public class FocusTrackback {
       root = nextWindow;
     }
 
-    if(((ApplicationEx)ApplicationManager.getApplication()).isInternal() && !(root instanceof IdeFrame)) {
-      LOG.assertTrue(false, "Expected to be child for " + IdeFrame.class.getName() + " but was child of: " + (root == null ? "null" : root.getClass().getName()));
+    if(((ApplicationEx)ApplicationManager.getApplication()).isInternal() && !(root instanceof IdeFrameImpl)) {
+      LOG.assertTrue(false, "Expected to be child for " + IdeFrameImpl.class.getName() + " but was child of: " + (root == null ? "null" : root.getClass().getName()));
     }
 
 

@@ -82,7 +82,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
    */
   private DesktopLayout myLayout;
 
-  private final HashMap<Project, IdeFrame> myProject2Frame;
+  private final HashMap<Project, IdeFrameImpl> myProject2Frame;
 
   private final HashMap<Project, Set<JDialog>> myDialogsToDispose;
 
@@ -129,7 +129,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       keyboardFocusManager.addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, new SUN_BUG_ID_4218084_Patch());
     }
     myLayout = new DesktopLayout();
-    myProject2Frame = new HashMap<Project, IdeFrame>();
+    myProject2Frame = new HashMap<Project, IdeFrameImpl>();
     myDialogsToDispose = new HashMap<Project, Set<JDialog>>();
     myFrameExtendedState = Frame.NORMAL;
 
@@ -147,8 +147,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     myActivationListener = new WindowAdapter() {
       public void windowActivated(WindowEvent e) {
         Window activeWindow = e.getWindow();
-        if (activeWindow instanceof IdeFrame) { // must be
-          proceedDialogDisposalQueue(((IdeFrame)activeWindow).getProject());
+        if (activeWindow instanceof IdeFrameImpl) { // must be
+          proceedDialogDisposalQueue(((IdeFrameImpl)activeWindow).getProject());
         }
       }
     };
@@ -156,7 +156,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   public void showFrame() {
     IdeEventQueue.getInstance().setWindowManager(this);
-    final IdeFrame frame = new IdeFrame(myApplicationInfoEx, myActionManager, myUiSettings, myDataManager, myKeymapManager);
+    final IdeFrameImpl frame = new IdeFrameImpl(myApplicationInfoEx, myActionManager, myUiSettings, myDataManager, myKeymapManager);
     myProject2Frame.put(null, frame);
     if (myFrameBounds != null) {
       frame.setBounds(myFrameBounds);
@@ -165,9 +165,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     frame.setExtendedState(myFrameExtendedState);
   }
 
-  public IdeFrame[] getAllFrames() {
-    final Collection<IdeFrame> ideFrames = myProject2Frame.values();
-    return ideFrames.toArray(new IdeFrame[ideFrames.size()]);
+  public IdeFrameImpl[] getAllFrames() {
+    final Collection<IdeFrameImpl> ideFrames = myProject2Frame.values();
+    return ideFrames.toArray(new IdeFrameImpl[ideFrames.size()]);
   }
 
   public final Rectangle getScreenBounds() {
@@ -233,7 +233,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       dialog.dispose();
     }
     else {
-      IdeFrame frame = getFrame(project);
+      IdeFrameImpl frame = getFrame(project);
       if (frame.isActive()) {
         dialog.dispose();
       }
@@ -267,21 +267,21 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     if (!myProject2Frame.containsKey(project)) {
       return null;
     }
-    final IdeFrame frame = getFrame(project);
+    final IdeFrameImpl frame = getFrame(project);
     LOG.assertTrue(frame != null);
     return frame.getStatusBar();
   }
 
-  public final IdeFrame getFrame(final Project project) {
+  public final IdeFrameImpl getFrame(final Project project) {
     // no assert! otherwise WindowWatcher.suggestParentWindow fails for default project
     //LOG.assertTrue(myProject2Frame.containsKey(project));
     return myProject2Frame.get(project);
   }
 
-  public final IdeFrame allocateFrame(final Project project) {
+  public final IdeFrameImpl allocateFrame(final Project project) {
     LOG.assertTrue(!myProject2Frame.containsKey(project));
 
-    final IdeFrame frame;
+    final IdeFrameImpl frame;
     if (myProject2Frame.containsKey(null)) {
       frame = myProject2Frame.get(null);
       myProject2Frame.remove(null);
@@ -289,7 +289,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       frame.setProject(project);
     }
     else {
-      frame = new IdeFrame((ApplicationInfoEx)ApplicationInfo.getInstance(), ActionManager.getInstance(), UISettings.getInstance(), DataManager.getInstance(), KeymapManagerEx.getInstance());
+      frame = new IdeFrameImpl((ApplicationInfoEx)ApplicationInfo.getInstance(), ActionManager.getInstance(), UISettings.getInstance(), DataManager.getInstance(), KeymapManagerEx.getInstance());
       if (myFrameBounds != null) {
         frame.setBounds(myFrameBounds);
       }
@@ -321,7 +321,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     dialogs.add(dialog);
   }
 
-  public final void releaseFrame(final IdeFrame frame) {
+  public final void releaseFrame(final IdeFrameImpl frame) {
     final Project project = frame.getProject();
     LOG.assertTrue(project != null);
 
@@ -433,7 +433,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       project = null;
     }
 
-    final IdeFrame frame = getFrame(project);
+    final IdeFrameImpl frame = getFrame(project);
     if (frame != null) {
       final Rectangle rectangle = frame.getBounds();
       frameElement.setAttribute(X_ATTR, Integer.toString(rectangle.x));

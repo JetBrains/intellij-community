@@ -7,6 +7,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.StatusBarInformer;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -17,7 +18,6 @@ import com.intellij.idea.ActionsBundle;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.CompoundBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,6 +58,8 @@ public class InfoAndProgressPanel extends JPanel {
       }
     };
     myProgressIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+    new StatusBarInformer(myProgressIcon, ActionsBundle.message("action.ShowProcessWindow.double.click"), myStatusBar);
 
     myUpdateQueue = new MergingUpdateQueue("Progress indicator", 250, true, null);
     myPopup = new ProcessPopup(this);

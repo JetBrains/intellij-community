@@ -21,7 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
-import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -174,7 +174,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
     }
 
-    boolean isMainFrame = window instanceof IdeFrame;
+    boolean isMainFrame = window instanceof IdeFrameImpl;
     boolean isFloatingDecorator = window instanceof FloatingDecorator;
     return !isMainFrame && !isFloatingDecorator;
   }

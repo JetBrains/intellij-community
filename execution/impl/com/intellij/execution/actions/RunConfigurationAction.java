@@ -12,7 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,17 +24,17 @@ public class RunConfigurationAction extends ComboBoxAction {
   private static final Key<ComboBoxAction.ComboBoxButton> BUTTON_KEY = Key.create("COMBOBOX_BUTTON");
 
   public void actionPerformed(final AnActionEvent e) {
-    final IdeFrame ideFrame = findFrame(e.getDataContext());
+    final IdeFrameImpl ideFrame = findFrame(e.getDataContext());
     final ComboBoxAction.ComboBoxButton button = (ComboBoxAction.ComboBoxButton)ideFrame.getRootPane().getClientProperty(BUTTON_KEY);
     if (button == null || !button.isShowing()) return;
     button.showPopup();
   }
 
-  private static IdeFrame findFrame(final Component component) {
-    return IJSwingUtilities.findParentOfType(component, IdeFrame.class);
+  private static IdeFrameImpl findFrame(final Component component) {
+    return IJSwingUtilities.findParentOfType(component, IdeFrameImpl.class);
   }
 
-  private static IdeFrame findFrame(final DataContext dataContext) {
+  private static IdeFrameImpl findFrame(final DataContext dataContext) {
     return findFrame((Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT));
   }
 
@@ -94,7 +94,7 @@ public class RunConfigurationAction extends ComboBoxAction {
 
       public void addNotify() {
         super.addNotify();    //To change body of overriden methods use Options | File Templates.;
-        final IdeFrame frame = findFrame(this);
+        final IdeFrameImpl frame = findFrame(this);
         LOG.assertTrue(frame != null);
         frame.getRootPane().putClientProperty(BUTTON_KEY, this);
       }
