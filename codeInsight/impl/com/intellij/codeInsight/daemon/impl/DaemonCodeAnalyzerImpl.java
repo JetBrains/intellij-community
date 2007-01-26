@@ -219,14 +219,15 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
-    TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
+    final TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
     BackgroundEditorHighlighter highlighter = textEditor.getBackgroundHighlighter();
     if (highlighter == null) return;
-    HighlightingPass[] highlightingPasses = highlighter.createPassesForVisibleArea();
+    final HighlightingPass[] highlightingPasses = highlighter.createPassesForVisibleArea();
     setLastIntentionHint(null);
 
     renewUpdateProgress(true);
-    myPassExecutorService.submitPasses(textEditor, highlightingPasses,myUpdateProgress);
+
+    myPassExecutorService.submitPasses(new THashMap<FileEditor, HighlightingPass[]>(){{put(textEditor, highlightingPasses);}}, myUpdateProgress);
   }
 
   public void setUpdateByTimerEnabled(boolean value) {
@@ -550,9 +551,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         }
         // cancel all after calling createPasses() since there are perverts {@link com.intellij.util.xml.ui.DomUIFactoryImpl} who are changing PSI there
         renewUpdateProgress(true);
-        for (Map.Entry<FileEditor, HighlightingPass[]> entry : passes.entrySet()) {
-          myPassExecutorService.submitPasses(entry.getKey(), entry.getValue(), myUpdateProgress);
-        }
+        myPassExecutorService.submitPasses(passes, myUpdateProgress);
       }
     };
   }

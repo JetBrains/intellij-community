@@ -30,7 +30,7 @@ public abstract class PassExecutorService {
   public static int PROCESSORS = /*10;//*/Runtime.getRuntime().availableProcessors();
   private final ThreadPoolExecutor myExecutorService = new ThreadPoolExecutor(PROCESSORS, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
     public Thread newThread(Runnable r) {
-      Thread t = new Thread(r,"Highlighting thread");
+      Thread t = new Thread(r, "Highlighting thread");
       t.setPriority(Thread.MIN_PRIORITY);
       return t;
     }
@@ -61,39 +61,42 @@ public abstract class PassExecutorService {
     mySubmittedPasses.clear();
   }
 
-  public void submitPasses(final FileEditor fileEditor, final HighlightingPass[] passes, final DaemonProgressIndicator updateProgress) {
-    final AtomicInteger myThreadsToStartCountdown = new AtomicInteger(passes.length);
+  public void submitPasses(final Map<FileEditor, HighlightingPass[]> passesMap, final DaemonProgressIndicator updateProgress) {
+    final AtomicInteger threadsToStartCountdown = new AtomicInteger(0);
 
-    final TextEditorHighlightingPass[] textEditorHighlightingPasses;
-    if (passes instanceof TextEditorHighlightingPass[]) {
-      textEditorHighlightingPasses = (TextEditorHighlightingPass[])passes;
-    }
-    else {
-      // run all passes in sequence
-      textEditorHighlightingPasses = new TextEditorHighlightingPass[passes.length];
-      for (int i = 0; i < passes.length; i++) {
-        final HighlightingPass pass = passes[i];
-        TextEditorHighlightingPass textEditorHighlightingPass = new TextEditorHighlightingPass(myProject, null) {
-          public void doCollectInformation(ProgressIndicator progress) {
-            pass.collectInformation(updateProgress);
-          }
-
-          public void doApplyInformationToEditor() {
-            pass.applyInformationToEditor();
-          }
-        };
-        textEditorHighlightingPass.setId(i);
-        if (i > 0) {
-          textEditorHighlightingPass.setCompletionPredecessorIds(new int[]{i - 1});
-        }
-        textEditorHighlightingPasses[i] = textEditorHighlightingPass;
-      }
-    }
-
-    TIntObjectHashMap<ScheduledPass> toBeSubmitted = new TIntObjectHashMap<ScheduledPass>();
     List<ScheduledPass> freePasses = new ArrayList<ScheduledPass>();
-    for (final TextEditorHighlightingPass pass : textEditorHighlightingPasses) {
-      createScheduledPass(fileEditor, pass, toBeSubmitted, textEditorHighlightingPasses, freePasses, updateProgress, myThreadsToStartCountdown);
+    TIntObjectHashMap<ScheduledPass> toBeSubmitted = new TIntObjectHashMap<ScheduledPass>();
+    for (FileEditor fileEditor : passesMap.keySet()) {
+      HighlightingPass[] passes = passesMap.get(fileEditor);
+      TextEditorHighlightingPass[] passesToAdd;
+      if (passes instanceof TextEditorHighlightingPass[]) {
+        passesToAdd = (TextEditorHighlightingPass[])passes;
+      }
+      else {
+        // run all passes in sequence
+        passesToAdd = new TextEditorHighlightingPass[passes.length];
+        for (int i = 0; i < passes.length; i++) {
+          final HighlightingPass pass = passes[i];
+          TextEditorHighlightingPass textEditorHighlightingPass = new TextEditorHighlightingPass(myProject, null) {
+            public void doCollectInformation(ProgressIndicator progress) {
+              pass.collectInformation(updateProgress);
+            }
+
+            public void doApplyInformationToEditor() {
+              pass.applyInformationToEditor();
+            }
+          };
+          textEditorHighlightingPass.setId(i);
+          if (i > 0) {
+            textEditorHighlightingPass.setCompletionPredecessorIds(new int[]{i - 1});
+          }
+          passesToAdd[i] = textEditorHighlightingPass;
+        }
+      }
+      threadsToStartCountdown.addAndGet(passesToAdd.length);
+      for (final TextEditorHighlightingPass pass : passesToAdd) {
+        createScheduledPass(fileEditor, pass, toBeSubmitted, passesToAdd, freePasses, updateProgress, threadsToStartCountdown);
+      }
     }
     for (ScheduledPass freePass : freePasses) {
       submit(freePass);
