@@ -2,6 +2,7 @@ package ${PACKAGE_NAME};
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 #parse("File Header.java")
 public class ${NAME} implements ProjectComponent {
@@ -16,6 +17,7 @@ public class ${NAME} implements ProjectComponent {
         // TODO: insert component disposal logic here
     }
 
+    @NotNull
     public String getComponentName() {
         return "${NAME}";
     }
