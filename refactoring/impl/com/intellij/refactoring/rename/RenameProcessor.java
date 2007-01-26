@@ -22,10 +22,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.refactoring.rename.naming.AutomaticRenamer;
-import com.intellij.refactoring.rename.naming.AutomaticVariableRenamer;
-import com.intellij.refactoring.rename.naming.FormsRenamer;
-import com.intellij.refactoring.rename.naming.InheritorRenamer;
+import com.intellij.refactoring.rename.naming.*;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
@@ -413,6 +410,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
       if (element instanceof PsiMethod) {
         addOverriders((PsiMethod)element, newName);
+      }
+
+      if (element instanceof PsiField) {
+        myRenamers.add(new ConstructorParameterOnFieldRenameRenamer((PsiField)element, newName));
       }
     }
     UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
