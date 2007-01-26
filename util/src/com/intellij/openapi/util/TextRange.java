@@ -100,4 +100,8 @@ public class TextRange {
     if (!intersects(range)) return null;
     return new TextRange(Math.max(myStartOffset, range.getStartOffset()), Math.min(myEndOffset, range.getEndOffset()));
   }
+
+  public boolean isEmpty() {
+    return myStartOffset >= myEndOffset;
+  }
 }
