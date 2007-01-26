@@ -408,7 +408,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
    */
   public void checkCreateClassOrInterface(String name) throws IncorrectOperationException {
     CheckUtil.checkIsIdentifier(myManager, name);
-    CheckUtil.checkIsIdentifier(myManager, name);
 
     String fileName = name + "." + StdFileTypes.JAVA.getDefaultExtension();
     checkCreateFile(fileName);
