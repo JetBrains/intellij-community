@@ -13,6 +13,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.IdeaBlueMetalTheme;
 import com.intellij.ui.SideBorder2;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.plaf.beg.*;
 import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
 import org.jdom.Element;
@@ -29,9 +30,14 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.ComponentEvent;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.lang.reflect.Field;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeEvent;
 
 /**
  * @author Eugene Belyaev
@@ -267,16 +273,46 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
           int x,
           int y
         ) throws IllegalArgumentException{
-          return new Popup(owner,contents,x,y){};
+          final Point point = fixPopupLocation(contents, x, y);
+          return new Popup(owner,contents,point.x,point.y){};
         }
       };
     }else if(MEDIUM_WEIGHT_POPUP.equals(popupWeight)){
-      popupFactory=new PopupFactory();
+      popupFactory=new PopupFactory() {
+
+        public Popup getPopup(final Component owner, final Component contents, final int x, final int y) throws IllegalArgumentException {
+          return createPopup(owner, contents, x, y);
+        }
+
+        private Popup createPopup(final Component owner, final Component contents, final int x, final int y) {
+          final Point point = fixPopupLocation(contents, x, y);
+          final Popup popup = super.getPopup(owner, contents, point.x, point.y);
+          return popup;
+        }
+      };
     }else{
       throw new IllegalStateException("unknown value of property -Didea.popup.weight: "+popupWeight);
     }
     PopupFactory.setSharedInstance(popupFactory);
   }
+
+  private Point fixPopupLocation(final Component contents, final int x, final int y) {
+    if (!(contents instanceof JToolTip)) return new Point(x, y);
+
+    final Point mouse = MouseInfo.getPointerInfo().getLocation();
+    int deltaY = mouse.y - y;
+
+    final Dimension size = contents.getPreferredSize();
+    final Rectangle rec = new Rectangle(new Point(x, y), size);
+    ScreenUtil.moveRectangleToFitTheScreen(rec);
+
+    if (rec.y < y) {
+      rec.y += deltaY;
+    }
+
+    return rec.getLocation();
+  }
+
 
   /**
    * Updates LAF of all windows. The method also updates font of components
