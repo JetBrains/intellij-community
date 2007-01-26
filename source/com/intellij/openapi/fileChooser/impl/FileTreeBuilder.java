@@ -87,6 +87,11 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
 
   protected final void expandNodeChildren(DefaultMutableTreeNode node) {
     final NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
+    if (descriptor == null) {
+      super.expandNodeChildren(node);
+      return;
+    }
+
     Object element = descriptor.getElement();
     if (element instanceof FileElement){
       final VirtualFile file = ((FileElement)element).getFile();
