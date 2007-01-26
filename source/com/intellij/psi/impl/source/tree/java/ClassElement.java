@@ -165,6 +165,31 @@ public class ClassElement extends RepositoryTreeElement {
       }
     }
 
+    if (child.getElementType() == FIELD) {
+      final ASTNode nextField = TreeUtil.findSibling(child.getTreeNext(), FIELD);
+      if (nextField != null && ((PsiField)nextField.getPsi()).getTypeElement().equals(((PsiField)child.getPsi()).getTypeElement())) {
+        final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
+        final ASTNode modifierList = child.findChildByType(MODIFIER_LIST);
+        if (modifierList != null) {
+          LeafElement whitespace = Factory.createSingleLeafElement(WHITE_SPACE, " ", 0, 1, treeCharTab, getManager());
+          final ASTNode first = nextField.getFirstChildNode();
+          nextField.addChild(whitespace, first);
+          final ASTNode typeElement = child.findChildByType(TYPE);
+          if (typeElement == null) {
+            final TreeElement modifierListCopy = ChangeUtil.copyElement((TreeElement)modifierList, treeCharTab);
+            nextField.addChild(modifierListCopy, whitespace);
+          } else {
+            ASTNode run = modifierList;
+            do {
+              final TreeElement copy = ChangeUtil.copyElement((TreeElement)run, treeCharTab);
+              nextField.addChild(copy, whitespace);
+              if (run == typeElement) break; else run = run.getTreeNext();
+            } while(true);
+          }
+        }
+      }
+    }
+    
     super.deleteChildInternal(child);
   }
 
