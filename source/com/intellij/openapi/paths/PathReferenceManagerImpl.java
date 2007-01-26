@@ -179,11 +179,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
   }
 
   private static boolean intersect(final TextRange range1, final TextRange range2) {
-    return range2.intersectsStrict(range1) || range2.intersects(range1) && (isEmpty(range1) || isEmpty(range2));
-  }
-
-  private static boolean isEmpty(final TextRange range) {
-    return range.getStartOffset() == range.getEndOffset();
+    return range2.intersectsStrict(range1) || range2.intersects(range1) && (range1.isEmpty() || range2.isEmpty());
   }
 
   private static TextRange getFirstIntersectingReferences(List<PsiReference> set, List<PsiReference> toAdd) {
