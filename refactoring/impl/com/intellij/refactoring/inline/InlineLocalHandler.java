@@ -192,7 +192,7 @@ class InlineLocalHandler {
         def = refExpr;
       } else {
         final PsiElement[] defs = DefUseUtil.getDefs(block, local, refExpr);
-        if (defs.length == 1) {
+        if (defs != null && defs.length == 1) {
           def = defs[0];
         }
         else return null;
