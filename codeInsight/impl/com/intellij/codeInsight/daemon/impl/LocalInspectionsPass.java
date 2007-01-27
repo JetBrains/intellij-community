@@ -327,7 +327,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final QuickFix[] fixes = descriptor.getFixes();
     if (fixes != null && fixes.length > 0) {
       for (int k = 0; k < fixes.length; k++) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), options, tool.getDisplayName());
+        if (fixes[k] != null) { // prevent null fixes from var args
+          QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), options, tool.getDisplayName());
+        }
       }
     }
     else if (emptyActionRegistered.add(new TextRange(highlightInfo.fixStartOffset, highlightInfo.fixEndOffset))) {
