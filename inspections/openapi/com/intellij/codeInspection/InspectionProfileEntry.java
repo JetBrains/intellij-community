@@ -96,7 +96,7 @@ public abstract class InspectionProfileEntry {
   }
 
   /**
-   * Cleanup inspection settings conserning with project. Is called on project closed for all profiles as well as on profile deletion
+   * Cleanup inspection settings corresponding to the project. Is called on project closed for all profiles as well as on profile deletion
    * @param project to be disassociated from this entry
    */
   public void projectClosed(Project project) {
