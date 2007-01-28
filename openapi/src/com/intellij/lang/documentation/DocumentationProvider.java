@@ -26,11 +26,15 @@ public interface DocumentationProvider {
   @Nullable
   String getQuickNavigateInfo(PsiElement element);
 
+  @Nullable
   String getUrlFor(PsiElement element, PsiElement originalElement);
 
+  @Nullable
   String generateDoc(PsiElement element, PsiElement originalElement);
 
+  @Nullable
   PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element);
 
+  @Nullable
   PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context);
 }

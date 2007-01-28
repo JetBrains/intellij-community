@@ -133,7 +133,7 @@ public class JavaLanguage extends Language {
     return new JavaImportOptimizer();
   }
 
-  public DocumentationProvider getDocumentationProvider() {
+  protected DocumentationProvider createDocumentationProvider() {
     return new JavaDocumentationProvider();
   }
 }

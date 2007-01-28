@@ -76,6 +76,7 @@ public abstract class Language {
   private ExternalAnnotator myLastExternalAnnotator;
   private List<ExternalAnnotator> myCachedExternalAnnotators;
   private final List<CustomFormattingModelBuilder> myCustomFormatters = new ArrayList<CustomFormattingModelBuilder>();
+  private DocumentationProvider myDocumentationProvider;
 
   private FileType myFileType;
 
@@ -504,7 +505,34 @@ public abstract class Language {
     return null;
   }
 
-  public DocumentationProvider getDocumentationProvider() {
+  @Nullable
+  protected DocumentationProvider createDocumentationProvider() {
     return null;
+  }
+
+  /**
+   * Calls {@link Language#createDocumentationProvider} lazily and returns {@link com.intellij.lang.documentation.DocumentationProvider }
+   * @return instance of DocumentationProvider associated with this language
+   */
+  @Nullable
+  public DocumentationProvider getDocumentationProvider() {
+    if ( myDocumentationProvider == null ) {
+      myDocumentationProvider = createDocumentationProvider();
+    }
+    return myDocumentationProvider;
+  }
+
+  /**
+   * Replaces the documentation provider.<br>
+   * One interesting use of this method is passing an instance of
+   * {@link com.intellij.lang.documentation.CompositeDocumentationProvider}.<br>
+   * Here is how to set up some sort of Chain of Responsibility:
+   * <blockquote>
+   * language.setDocumentationProvider ( new CompositeDocumentationProvider ( new InjectedProvider (), language.getDocumentationProvider () ));
+   * </blockquote>
+   * @param documentationProvider new documentation provider
+   */
+  public void setDocumentationProvider(DocumentationProvider documentationProvider) {
+    myDocumentationProvider = documentationProvider;
   }
 }

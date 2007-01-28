@@ -66,7 +66,7 @@ public class HTMLLanguage extends XMLLanguage {
     return myFormattingModelBuilder;
   }
 
-  public DocumentationProvider getDocumentationProvider() {
+  protected DocumentationProvider createDocumentationProvider() {
     return new HtmlDocumentationProvider();
   }
 }

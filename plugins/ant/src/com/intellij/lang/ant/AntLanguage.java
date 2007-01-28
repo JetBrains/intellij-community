@@ -94,7 +94,7 @@ public class AntLanguage extends Language {
     return null;
   }
 
-  public DocumentationProvider getDocumentationProvider() {
+  protected DocumentationProvider createDocumentationProvider() {
     return new AntDocumentationProvider();
   }
 }

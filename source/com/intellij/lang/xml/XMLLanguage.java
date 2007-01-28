@@ -154,7 +154,7 @@ public class XMLLanguage extends CompositeLanguage {
     return new XmlFileViewProvider(manager, file, physical, this);
   }
 
-  public DocumentationProvider getDocumentationProvider() {
+  protected DocumentationProvider createDocumentationProvider() {
     return new XmlDocumentationProvider();
   }
 }

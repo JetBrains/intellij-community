@@ -112,7 +112,7 @@ public class PropertiesLanguage extends Language {
     };
   }
 
-  public DocumentationProvider getDocumentationProvider() {
+  protected DocumentationProvider createDocumentationProvider() {
     return myDocumentationProvider;
   }
 }
