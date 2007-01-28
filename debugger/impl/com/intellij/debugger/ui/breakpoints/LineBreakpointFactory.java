@@ -53,8 +53,4 @@ public class LineBreakpointFactory extends BreakpointFactory{
   public Key<LineBreakpoint> getBreakpointCategory() {
     return LineBreakpoint.CATEGORY;
   }
-
-  public String getComponentName() {
-    return "LineBreakpointFactory";
-  }
 }

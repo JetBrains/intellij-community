@@ -15,6 +15,7 @@ import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.IApplicationStore;
 import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -866,5 +867,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public boolean isDoNotSave() {
     return myDoNotSave;
+  }
+
+  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+    return Extensions.getRootArea().getExtensionPoint(extensionPointName).getExtensions();
   }
 }

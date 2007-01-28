@@ -25,6 +25,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -361,7 +362,7 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
   }
 
   public static DebuggerUtils getInstance() {
-    return ApplicationManager.getApplication().getComponent(DebuggerUtils.class);
+    return ServiceManager.getService(DebuggerUtils.class);
   }
 
   public abstract PsiExpression substituteThis(PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue, StackFrameContext context) throws EvaluateException;

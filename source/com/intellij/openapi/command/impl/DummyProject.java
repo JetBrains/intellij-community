@@ -2,6 +2,7 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -139,5 +140,9 @@ public class DummyProject extends UserDataHolderBase implements Project {
   }
 
   public void dispose() {
+  }
+
+  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+    throw new UnsupportedOperationException("getExtensions()");
   }
 }

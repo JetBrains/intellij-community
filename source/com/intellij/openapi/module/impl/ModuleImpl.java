@@ -12,6 +12,7 @@ import com.intellij.openapi.components.impl.stores.IModuleStore;
 import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
@@ -352,6 +353,10 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     else {
       return fileName;
     }
+  }
+
+  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+    return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
   }
 
   private class MyVirtualFileListener extends VirtualFileAdapter {

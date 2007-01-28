@@ -5,7 +5,6 @@
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiCodeFragment;
@@ -18,9 +17,12 @@ import com.intellij.psi.PsiManager;
  *         Date: Jun 7, 2005
  */
 public class DefaultCodeFragmentFactory implements CodeFragmentFactory {
+  private static final class SingletonHolder {
+    public static final DefaultCodeFragmentFactory ourInstance = new DefaultCodeFragmentFactory();
+  }
 
   public static DefaultCodeFragmentFactory getInstance() {
-    return ApplicationManager.getApplication().getComponent(DefaultCodeFragmentFactory.class);
+    return SingletonHolder.ourInstance;
   }
 
   public String getDisplayName() {
@@ -58,15 +60,5 @@ public class DefaultCodeFragmentFactory implements CodeFragmentFactory {
 
   public boolean isContextAccepted(PsiElement contextElement) {
     return true; // default factory works everywhere debugger can stop
-  }
-
-  public String getComponentName() {
-    return "DefaultCodeFragmentFactory";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

@@ -56,11 +56,7 @@ public class MethodBreakpointFactory extends BreakpointFactory{
     return MethodBreakpoint.CATEGORY;
   }
 
-  public String getComponentName() {
-    return "MethodBreakpointFactory";
-  }
-
-  private class AddWildcardBreakpointAction extends AddAction {
+  private static class AddWildcardBreakpointAction extends AddAction {
     private final Project myProject;
 
     public AddWildcardBreakpointAction(Project project) {

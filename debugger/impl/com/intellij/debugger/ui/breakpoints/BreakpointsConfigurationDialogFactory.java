@@ -89,7 +89,7 @@ public class BreakpointsConfigurationDialogFactory {
       myTabbedPane = new TabbedPaneWrapper();
       myPanel = new JPanel(new BorderLayout());
 
-      final BreakpointFactory[] allFactories = ApplicationManager.getApplication().getComponents(BreakpointFactory.class);
+      final BreakpointFactory[] allFactories = ApplicationManager.getApplication().getExtensions(BreakpointFactory.EXTENSION_POINT_NAME);
       for (final BreakpointFactory breakpointFactory : allFactories) {
         final BreakpointPanel breakpointPanel = breakpointFactory.createBreakpointPanel(myProject, this);
         if (breakpointPanel != null) {

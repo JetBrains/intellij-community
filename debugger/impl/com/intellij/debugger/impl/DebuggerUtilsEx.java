@@ -37,8 +37,7 @@ import java.util.regex.PatternSyntaxException;
 public abstract class DebuggerUtilsEx extends DebuggerUtils {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerUtilsEx");
 
-  public static final int MAX_LABEL_SIZE = 255;
-  public static Runnable DO_NOTHING = EmptyRunnable.getInstance();
+  private static final int MAX_LABEL_SIZE = 255;
 
   /**
    * @param context
@@ -46,7 +45,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
    */
   public static List<CodeFragmentFactory> getCodeFragmentFactories(PsiElement context) {
     final DefaultCodeFragmentFactory defaultFactry = DefaultCodeFragmentFactory.getInstance();
-    final CodeFragmentFactory[] providers = ApplicationManager.getApplication().getComponents(CodeFragmentFactory.class);
+    final CodeFragmentFactory[] providers = ApplicationManager.getApplication().getExtensions(CodeFragmentFactory.EXTENSION_POINT_NAME);
     final List<CodeFragmentFactory> suitableFactories = new ArrayList<CodeFragmentFactory>(providers.length);
     if (providers.length > 0) {
       for (CodeFragmentFactory factory : providers) {

@@ -60,7 +60,7 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
     return panel;
   }
 
-  private BreakpointPanelAction[] createActions(final Project project) {
+  private static BreakpointPanelAction[] createActions(final Project project) {
     return new BreakpointPanelAction[]{
       new SwitchViewAction(),
       new AddExceptionBreakpointAction(project),
@@ -69,8 +69,7 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
           super.update();
           if (getButton().isEnabled()) {
             Breakpoint[] selectedBreakpoints = getPanel().getSelectedBreakpoints();
-            for (int i = 0; i < selectedBreakpoints.length; i++) {
-              Breakpoint bp = selectedBreakpoints[i];
+            for (Breakpoint bp : selectedBreakpoints) {
               if (bp instanceof AnyExceptionBreakpoint) {
                 getButton().setEnabled(false);
               }
@@ -87,11 +86,7 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
     return ExceptionBreakpoint.CATEGORY;
   }
 
-  public String getComponentName() {
-    return "ExceptionBreakpointFactory";
-  }
-
-  private class AddExceptionBreakpointAction extends AddAction {
+  private static class AddExceptionBreakpointAction extends AddAction {
     private final Project myProject;
 
     public AddExceptionBreakpointAction(Project project) {

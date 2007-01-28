@@ -4,6 +4,7 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -146,5 +147,9 @@ public class MockProject extends UserDataHolderBase implements ProjectEx {
 
   public GlobalSearchScope getProjectScope() {
     return null;
+  }
+
+  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+    throw new UnsupportedOperationException("getExtensions()");
   }
 }

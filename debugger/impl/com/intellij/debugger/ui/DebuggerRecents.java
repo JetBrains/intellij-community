@@ -1,7 +1,7 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.HashMap;
 
@@ -11,25 +11,11 @@ import java.util.Map;
 /**
  * @author Lex
  */
-public class DebuggerRecents implements ProjectComponent {
+public class DebuggerRecents {  
   private Map<Object, LinkedList<TextWithImports>> myRecentExpressions = new HashMap<Object, LinkedList<TextWithImports>>();
 
-  DebuggerRecents() {
-  }
-
   public static DebuggerRecents getInstance(Project project) {
-    return project.getComponent(DebuggerRecents.class);
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
-
-  public void projectClosed() {
-  }
-
-  public void projectOpened() {
+    return ServiceManager.getService(project, DebuggerRecents.class);
   }
 
   public LinkedList<TextWithImports> getRecents(Object id) {
@@ -48,9 +34,5 @@ public class DebuggerRecents implements ProjectComponent {
     }
     recents.remove(recent);
     recents.addFirst(recent);
-  }
-
-  public String getComponentName() {
-    return "DebuggerRecents";
   }
 }

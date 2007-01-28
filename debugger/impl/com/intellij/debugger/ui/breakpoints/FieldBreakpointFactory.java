@@ -61,11 +61,7 @@ public class FieldBreakpointFactory extends BreakpointFactory{
     return FieldBreakpoint.CATEGORY;
   }
 
-  public String getComponentName() {
-    return "FieldBreakpointFactory";
-  }
-
-  private class AddFieldBreakpointAction extends AddAction {
+  private static class AddFieldBreakpointAction extends AddAction {
     private final Project myProject;
 
     public AddFieldBreakpointAction(Project project) {

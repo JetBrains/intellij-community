@@ -246,7 +246,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
       GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), true) {
         protected HighlightInfoHolder createInfoHolder() {
-          final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getComponents(HighlightInfoFilter.class);
+          final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getExtensions(HighlightInfoFilter.EXTENSION_POINT_NAME);
           return new HighlightInfoHolder(psiFile, filters) {
             public boolean add(HighlightInfo info) {
               if (info != null && info.getSeverity() == HighlightSeverity.ERROR) {

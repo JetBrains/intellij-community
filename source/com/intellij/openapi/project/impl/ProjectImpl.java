@@ -15,6 +15,7 @@ import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -356,6 +357,10 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
         LOG.error(e);
       }
     }
+  }
+
+  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+    return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
   }
 
   private class MyProjectManagerListener implements ProjectManagerListener {

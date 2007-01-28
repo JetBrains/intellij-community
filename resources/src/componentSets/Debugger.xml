@@ -1,10 +1,6 @@
 <components>
   <application-components>
     <component>
-      <interface-class>com.intellij.debugger.engine.DebuggerUtils</interface-class>
-      <implementation-class>com.intellij.debugger.impl.DebuggerUtilsImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.debugger.settings.NodeRendererSettings</implementation-class>
     </component>
     <component>
@@ -15,25 +11,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.debugger.settings.DebuggerSettings</implementation-class>
-    </component>
-    <!--standard breakpoint factories -->
-    <component>
-      <implementation-class>com.intellij.debugger.ui.breakpoints.LineBreakpointFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.debugger.ui.breakpoints.ExceptionBreakpointFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.debugger.ui.breakpoints.AnyExceptionBreakpointFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.debugger.ui.breakpoints.FieldBreakpointFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.debugger.ui.breakpoints.MethodBreakpointFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory</implementation-class>
     </component>
   </application-components>
 
@@ -58,11 +35,6 @@
       <interface-class>com.intellij.debugger.DebuggerManager</interface-class>
       <implementation-class>com.intellij.debugger.impl.DebuggerManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.debugger.ui.DebuggerRecents</interface-class>
-      <implementation-class>com.intellij.debugger.ui.DebuggerRecents</implementation-class>
       <skipForDummyProject/>
     </component>
     <component>

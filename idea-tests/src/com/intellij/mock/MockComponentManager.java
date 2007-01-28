@@ -3,6 +3,7 @@ package com.intellij.mock;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBus;
@@ -74,5 +75,9 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   public void dispose() {
+  }
+
+  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+    throw new UnsupportedOperationException("getExtensions()");
   }
 }

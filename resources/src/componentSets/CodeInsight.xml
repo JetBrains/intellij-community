@@ -30,13 +30,6 @@
       <implementation-class>com.intellij.codeInsight.hint.HintManager</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.debugger.engine.evaluation.DebuggerHighlightFilter</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings</implementation-class>
     </component>
     <component>

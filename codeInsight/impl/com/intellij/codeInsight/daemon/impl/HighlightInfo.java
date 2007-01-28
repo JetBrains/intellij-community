@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
@@ -15,7 +14,6 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -32,7 +30,6 @@ public class HighlightInfo {
   public static final HighlightInfo[] EMPTY_ARRAY = new HighlightInfo[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.HighlightInfo");
   private Boolean myNeedsUpdateOnTyping = null;
-  private static final Key<HighlightInfoFilter[]> FILTERS = new Key<HighlightInfoFilter[]>("HighlightInfoFilter[]");
   public JComponent fileLevelComponent;
   public final TextAttributes forcedTextAttributes;
 
@@ -107,13 +104,7 @@ public class HighlightInfo {
   }
 
   @NotNull private static HighlightInfoFilter[] getFilters() {
-    final Application app = ApplicationManager.getApplication();
-    HighlightInfoFilter[] filters = app.getUserData(FILTERS);
-    if (filters == null) {
-      filters = app.getComponents(HighlightInfoFilter.class);
-      app.putUserData(FILTERS, filters);
-    }
-    return filters;
+    return ApplicationManager.getApplication().getExtensions(HighlightInfoFilter.EXTENSION_POINT_NAME);
   }
 
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, int start, int end, String description) {

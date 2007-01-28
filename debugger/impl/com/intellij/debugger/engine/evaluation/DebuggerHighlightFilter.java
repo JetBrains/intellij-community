@@ -31,24 +31,16 @@
  */
 package com.intellij.debugger.engine.evaluation;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.psi.PsiFile;
 
-public class DebuggerHighlightFilter implements HighlightInfoFilter, ApplicationComponent {
+public class DebuggerHighlightFilter implements HighlightInfoFilter {
   public boolean accept(HighlightInfo highlightInfo, PsiFile file) {
-    return highlightInfo.type != HighlightInfoType.UNHANDLED_EXCEPTION || file == null || file.getUserData(DebuggerExpressionComboBox.KEY) == null;
-  }
-
-  public String getComponentName() {
-    return "DebuggerHighlightsFilter";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
+    return highlightInfo.type != HighlightInfoType.UNHANDLED_EXCEPTION ||
+           file == null ||
+           file.getUserData(DebuggerExpressionComboBox.KEY) == null;
   }
 }

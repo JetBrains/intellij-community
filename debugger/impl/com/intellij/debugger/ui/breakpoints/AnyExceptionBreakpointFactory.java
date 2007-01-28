@@ -36,8 +36,4 @@ public class AnyExceptionBreakpointFactory extends BreakpointFactory{
   public Key<AnyExceptionBreakpoint> getBreakpointCategory() {
     return AnyExceptionBreakpoint.ANY_EXCEPTION_BREAKPOINT;
   }
-
-  public String getComponentName() {
-    return "AnyExceptionBreakpointFactory";
-  }
 }

@@ -16,6 +16,7 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -94,4 +95,6 @@ public interface ComponentManager extends UserDataHolder, Disposable {
 
   @Nullable
   Object getComponent(final ComponentConfig componentConfig);
+
+  <T> T[] getExtensions(ExtensionPointName<T> extensionPointName);
 }
