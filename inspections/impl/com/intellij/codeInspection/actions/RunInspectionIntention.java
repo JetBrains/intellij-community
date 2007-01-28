@@ -7,13 +7,13 @@ package com.intellij.codeInspection.actions;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.BaseAnalysisActionDialog;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.UIOptions;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -28,10 +28,17 @@ import org.jetbrains.annotations.NotNull;
  * Date: 21-Feb-2006
  */
 public class RunInspectionIntention implements IntentionAction {
-  private LocalInspectionTool myTool;
+  private String myShortName;
+  private String myDisplayName;
 
   public RunInspectionIntention(final LocalInspectionTool tool) {
-    myTool = tool;
+    myShortName = tool.getShortName();
+    myDisplayName = tool.getDisplayName();
+  }
+
+  public RunInspectionIntention(final HighlightDisplayKey key) {
+    myShortName = key.toString();
+    myDisplayName = HighlightDisplayKey.getDisplayNameByKey(key);
   }
 
   @NotNull
@@ -54,12 +61,12 @@ public class RunInspectionIntention implements IntentionAction {
     final InspectionProfileImpl profile = new InspectionProfileImpl(profileManager.getProfileName(file));
     final ModifiableModel model = profile.getModifiableModel();
     final InspectionProfileEntry[] profileEntries = model.getInspectionTools();
-    model.patchTool(profileManager.getInspectionProfile(file).getInspectionTool(myTool.getShortName()));
+    model.patchTool(profileManager.getInspectionProfile(file).getInspectionTool(myShortName));
     for (InspectionProfileEntry entry : profileEntries) {
       model.disableTool(entry.getShortName());
     }
-    model.enableTool(myTool.getShortName());
-    model.setEditable(myTool.getDisplayName());
+    model.enableTool(myShortName);
+    model.setEditable(myDisplayName);
     final Module module = ModuleUtil.findModuleForPsiElement(file);
     final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
                                                                       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
@@ -76,11 +83,6 @@ public class RunInspectionIntention implements IntentionAction {
     inspectionContext.setExternalProfile((InspectionProfile)model);
     inspectionContext.RUN_WITH_EDITOR_PROFILE = false;
     inspectionContext.doInspections(scope, managerEx);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        inspectionContext.setExternalProfile(null);
-      }
-    });
   }
 
   public boolean startInWriteAction() {

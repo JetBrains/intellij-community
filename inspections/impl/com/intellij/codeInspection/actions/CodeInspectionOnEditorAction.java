@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -38,12 +37,7 @@ public class CodeInspectionOnEditorAction extends AnAction {
     final InspectionProfile inspectionProfile =
       InspectionProjectProfileManager.getInstance(project).getInspectionProfile(psiFile);
     inspectionContext.setExternalProfile(inspectionProfile);
-    inspectionContext.doInspections(scope, inspectionManagerEx);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        inspectionContext.setExternalProfile(null);
-      }
-    });
+    inspectionContext.doInspections(scope, inspectionManagerEx);    
   }
 
   public void update(AnActionEvent e) {

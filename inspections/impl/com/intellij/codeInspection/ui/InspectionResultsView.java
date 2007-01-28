@@ -692,7 +692,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   public boolean isRerun() {
-    return myRerun;
+    boolean rerun = myRerun;
+    myRerun = false;
+    return rerun;
   }
 
   private InspectionProfile guessProfileToSelect(final InspectionProjectProfileManager profileManager) {
@@ -813,15 +815,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     private void rerun() {
       myRerun = true;
       if (myScope.isValid()) {
-        final InspectionProfile profile = myInspectionProfile;
-        myGlobalInspectionContext.setExternalProfile(profile);
         myGlobalInspectionContext.doInspections(myScope, InspectionManager.getInstance(myProject));
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            myGlobalInspectionContext.setExternalProfile(null);
-            myRerun = false;
-          }
-        });
       }
     }
   }
