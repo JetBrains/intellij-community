@@ -96,13 +96,31 @@ class DOMWriter {
 
         }
         else {
-          myOut.println('>');
+          myOut.print('>');
+
+          boolean firstChild = true;
+          boolean indentNeeded = false;
           while (child != null) {
+            if (child instanceof Element) {
+              if (firstChild) {
+                myOut.println();
+                indentNeeded = true;
+              }
+
+              firstChild = false;
+            }
+            else if (child.getNodeValue().trim().length() > 0){
+              firstChild = false;
+            }
+
             _write(child, indent + INDENT);
             child = child.getNextSibling();
           }
 
-          indent(indent);
+          if (indentNeeded) {
+            indent(indent);
+          }
+          
           myOut.print("</");
           myOut.print(node.getNodeName());
           myOut.println('>');
@@ -142,7 +160,7 @@ class DOMWriter {
       case Node.TEXT_NODE: {
         final String nodeValue = node.getNodeValue();
         if (nodeValue.trim().length() > 0) {
-          normalizeAndPrint(nodeValue);
+          normalizeAndPrint(nodeValue.trim());
         }
         break;
       }

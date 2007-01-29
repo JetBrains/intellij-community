@@ -26,7 +26,7 @@ class StateStorageManager {
   }
 
   @Nullable
-  public synchronized StateStorage getStateStorage(@NotNull final String file) {
+  public StateStorage getStateStorage(@NotNull final String file) {
     if (myStorages.get(file) == null) {
       final StateStorage stateStorage = createStateStorage(file);
       if (stateStorage == null) return null;
@@ -56,7 +56,7 @@ class StateStorageManager {
     return storage;
   }
 
-  public synchronized void save() throws StateStorage.StateStorageException, IOException {
+  public void save() throws StateStorage.StateStorageException, IOException {
     for (StateStorage storage : myStorages.values()) {
       storage.save();
     }
