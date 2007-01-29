@@ -4,8 +4,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
@@ -95,7 +95,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
 
 
   public Icon getNodeIcon() {
-    Class clazz = DomReflectionUtil.getRawType(myChildDescription.getType());
+    Class clazz = ReflectionUtil.getRawType(myChildDescription.getType());
 //        Class arrayClass = Array.newInstance(clazz, 0).getClass();
     return ElementPresentationManager.getIconForClass(clazz);
   }

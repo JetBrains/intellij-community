@@ -15,8 +15,8 @@ import java.util.*;
  *         Date: Dec 6, 2004
  */
 public class ReplacePathToMacroMap extends PathMacroMap {
-  final Set<String> myUsedMacros = new HashSet<String>();
-  List<String> myPathsIndex = null;
+  private List<String> myPathsIndex = null;
+
   private static final Comparator<String> PATHS_COMPARATOR = new Comparator<String>() {
     public int compare(final String o1, final String o2) {
       return o2.length() - o1.length();
@@ -27,15 +27,15 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     put(quotePath(path), "$" + macroName + "$");
   }
 
-  public String substitute(String text, boolean caseSensitive) {
+  public String substitute(String text, boolean caseSensitive, final Set<String> usedMacros) {
     for (final String path : getPathIndex()) {
       final String macro = get(path);
-      text = replacePathMacro(text, path, macro, caseSensitive);
+      text = replacePathMacro(text, path, macro, caseSensitive, usedMacros);
     }
     return text;
   }
 
-  private String replacePathMacro(String text, String path, final String macro, boolean caseSensitive) {
+  private static String replacePathMacro(String text, String path, final String macro, boolean caseSensitive, final Set<String> usedMacros) {
     if (text.length() < path.length()) {
       return text;
     }
@@ -65,7 +65,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
         else {
           newText.append(text.substring(i, occurrenceOfPath));
           newText.append(macro);
-          logUsage(macro);
+          logUsage(macro, usedMacros);
           i = occurrenceOfPath + path.length();
         }
       }
@@ -76,18 +76,14 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     }
   }
 
-  private void logUsage(String macroReplacement) {
+  private static void logUsage(String macroReplacement, final Set<String> usedMacros) {
+    if (usedMacros == null) return;
+
     if (macroReplacement.length() >= 2 && macroReplacement.startsWith("$") && macroReplacement.endsWith("$")) {
       macroReplacement = macroReplacement.substring(1, macroReplacement.length() - 1);
     }
-    myUsedMacros.add(macroReplacement);
-  }
 
-  public Set<String> getUsedMacroNames() {
-    final Set<String> userMacroNames = PathMacrosImpl.getInstanceEx().getUserMacroNames();
-    final Set<String> used = new HashSet<String>(myUsedMacros);
-    used.retainAll(userMacroNames);
-    return used;
+    usedMacros.add(macroReplacement);
   }
 
   private List<String> getPathIndex() {

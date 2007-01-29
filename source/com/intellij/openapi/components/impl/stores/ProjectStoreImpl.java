@@ -1,12 +1,11 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.CommonBundle;
+import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
@@ -22,10 +21,9 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
@@ -50,15 +47,15 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   private ProjectImpl myProject;
   private ProjectManagerImpl myProjectManager;
-  private static boolean ourSaveSettingsInProgress = false;
 
-  @Nullable
-  private ConfigurationFile myProjectFile;
-  @Nullable
-  private ConfigurationFile myWorkspaceFile;
+  @NonNls private static final String PROJECT_FILE_MACRO = "PROJECT_FILE";
+  @NonNls private static final String WS_FILE_MACRO = "WORKSPACE_FILE";
 
-  private String myFilePath;
+  static final String PROJECT_FILE_STORAGE = "$" + PROJECT_FILE_MACRO + "$";
+  static final String WS_FILE_STORAGE = "$" + WS_FILE_MACRO + "$";
+  static final String DEFAULT_STATE_STORAGE = PROJECT_FILE_STORAGE;
 
+  @SuppressWarnings({"UnusedDeclaration"})
   public ProjectStoreImpl(final ComponentManagerImpl componentManager, final ProjectImpl project, final ProjectManagerImpl projectManager) {
     super(componentManager);
     myProject = project;
@@ -66,11 +63,11 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   private static String[] readUsedMacros(Element root) {
-    Element child = root.getChild(ConfigurationFile.USED_MACROS_ELEMENT_NAME);
+    Element child = root.getChild(ProjectStateStorageManager.USED_MACROS_ELEMENT_NAME);
     if (child == null) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
-    final List children = child.getChildren(ConfigurationFile.ELEMENT_MACRO);
+    final List children = child.getChildren(ProjectStateStorageManager.ELEMENT_MACRO);
     final List<String> macroNames = new ArrayList<String>(children.size());
     for (final Object aChildren : children) {
       final Element macro = (Element)aChildren;
@@ -80,33 +77,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       }
     }
     return macroNames.toArray(new String[macroNames.size()]);
-  }
-
-  @Nullable
-  protected Element getDefaults(final Object component) throws JDOMException, IOException, InvalidDataException {
-
-    //[max | mike] speed optimization. If you need default initialization in tests
-    //use field initializers instead.
-
-    if (myProject.myOptimiseTestLoadSpeed) return null;
-
-    InputStream stream = DecodeDefaultsUtil.getDefaultsInputStream(component);
-    if (stream != null) {
-      Document document = JDOMUtil.loadDocument(stream);
-      stream.close();
-
-      if (document == null) {
-        throw new InvalidDataException();
-      }
-      Element root = document.getRootElement();
-      if (root == null || !BaseFileConfigurableStoreImpl.ELEMENT_COMPONENT.equals(root.getName())) {
-        throw new InvalidDataException();
-      }
-
-      PathMacroManager.getInstance(myProject).expandPaths(root);
-      return root;
-    }
-    return null;
   }
 
   public boolean checkVersion() {
@@ -181,85 +151,46 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   private ReadonlyStatusHandler.OperationStatus ensureConfigFilesWritable() {
-    final List<VirtualFile> readonlyFiles = new ArrayList<VirtualFile>();
-    collectFileNeedsToBeWritten(getConfigurationFiles(), readonlyFiles);
-    return ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readonlyFiles.toArray(new VirtualFile[readonlyFiles.size()]));
-  }
+    return ApplicationManager.getApplication().runWriteAction(new Computable<ReadonlyStatusHandler.OperationStatus>() {
+      public ReadonlyStatusHandler.OperationStatus compute() {
+        final List<VirtualFile> filesToSave = getAllStorageFilesToSave(true);
 
-  public void saveProject() {
-    try {
-      if (!ourSaveSettingsInProgress) {
-        try {
-          ourSaveSettingsInProgress = true;
-          PathMacroManager.startLoggingUsedMacros();
-
-          myProject.saveSettingsSavingComponents();
-
-          final Module[] modules = ModuleManager.getInstance(myProject).getModules();
-          final ReadonlyStatusHandler.OperationStatus operationStatus = ensureConfigFilesWritable();
-          if (operationStatus.hasReadonlyFiles()) {
-            MessagesEx.error(myProject, ProjectBundle.message("project.save.error", operationStatus.getReadonlyFilesMessage())).showLater();
-            return;
-          }
-
-          final Exception[] exception = new Exception[]{null};
-          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-            public void run() {
-              for (Module module : modules) {
-                try {
-                  ((ModuleImpl)module).getStateStore().save();
-                }
-                catch (Exception e) {
-                  exception[0] = e;
-                  return;
-                }
-              }
-              try {
-                // important! must save project after modules are saved, otherwise not all used macros will be saved to the ipr file
-                save();
-              }
-              catch (Exception e) {
-                exception[0] = e;
-              }
-            }
-          }, ProjectBundle.message("project.save.settings.command"), null);
-
-          if (exception[0] != null) {
-            LOG.info(exception[0]);
-            MessagesEx.error(myProject, ProjectBundle.message("project.save.error", exception[0].getMessage())).showLater();
-          }
+        List<VirtualFile> readonlyFiles = new ArrayList<VirtualFile>();
+        for (VirtualFile file : filesToSave) {
+          if (!file.isWritable()) readonlyFiles.add(file);
         }
-        finally {
-          PathMacroManager.endLoggingUsedMacros();
-          ourSaveSettingsInProgress = false;
-        }
+
+        return ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readonlyFiles.toArray(new VirtualFile[readonlyFiles.size()]));
       }
-    }
-    finally {
-      ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());
-    }
+    });
   }
 
-  void initJdomExternalizable(final Class componentClass, final BaseComponent component) {
+
+  @Override
+  protected void saveStorageManager() throws IOException {
+    final ReadonlyStatusHandler.OperationStatus operationStatus = ensureConfigFilesWritable();
+    if (operationStatus.hasReadonlyFiles()) {
+      MessagesEx.error(myProject, ProjectBundle.message("project.save.error", operationStatus.getReadonlyFilesMessage())).showLater();
+      throw new SaveCancelledException();
+    }
+
+    super.saveStorageManager();
+  }
+
+  @Override
+  public void initComponent(final Object component) {
     if (myProject.myOptimiseTestLoadSpeed) return; //test load speed optimization
-    super.initJdomExternalizable(component);
+    super.initComponent(component);
   }
 
   public void setProjectFilePath(final String filePath) {
-    myFilePath = filePath;
     if (filePath != null) {
-      myProjectFile = new ConfigurationFile(filePath);
+      getStateStorageManager().addMacro(PROJECT_FILE_MACRO, filePath);
+
       if (filePath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
         String workspacePath = filePath.substring(0, filePath.length() - ProjectFileType.DOT_DEFAULT_EXTENSION.length()) + WORKSPACE_EXTENSION;
-        myWorkspaceFile = new ConfigurationFile(workspacePath);
+        getStateStorageManager().addMacro(WS_FILE_MACRO, workspacePath);
       }
-      else {
-        myWorkspaceFile = null;
-      }
-    }
-    else {
-      myProjectFile = null;
-      myWorkspaceFile = null;
     }
   }
 
@@ -271,23 +202,12 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
 
   public void loadProject() throws IOException, JDOMException, InvalidDataException {
-    // http://www.jetbrains.net/jira/browse/IDEA-1556. Enforce refresh. Project files may potentially reside in non-yet valid vfs paths.
-    final ConfigurationFile[] files = getConfigurationFiles();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (ConfigurationFile file : files) {
-          LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getFilePath().replace(File.separatorChar, '/'));
-        }
-      }
-    });
-
-    final boolean macrosOk = checkMacros(myProjectManager, getDefinedMacros(myProjectManager));
+    final boolean macrosOk = checkMacros(myProjectManager, getDefinedMacros());
     if (!macrosOk) {
       throw new IOException(ProjectBundle.message("project.load.undefined.path.variables.error"));
     }
 
-    myProject.getStateStore().loadSavedConfiguration();
-
+    load();
     myProject.init();
   }
 
@@ -307,7 +227,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       if (value != null) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            projectManager.myPathMacros.setMacro(macro, value);
+            PathMacrosImpl.getInstanceEx().setMacro(macro, value);
           }
         });
         it.remove();
@@ -322,9 +242,11 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return ProjectManagerImpl.showMacrosConfigurationDialog(myProject, usedMacros);
   }
 
-  private static Set<String> getDefinedMacros(ProjectManagerImpl projectManager) {
-    Set<String> definedMacros = new HashSet<String>(projectManager.myPathMacros.getUserMacroNames());
-    definedMacros.addAll(projectManager.myPathMacros.getSystemMacroNames());
+  private static Set<String> getDefinedMacros() {
+    final PathMacros pathMacros = PathMacros.getInstance();
+
+    Set<String> definedMacros = new HashSet<String>(pathMacros.getUserMacroNames());
+    definedMacros.addAll(pathMacros.getSystemMacroNames());
     definedMacros = Collections.unmodifiableSet(definedMacros);
     return definedMacros;
   }
@@ -332,51 +254,42 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @Nullable
   public VirtualFile getProjectFile() {
-    return myProjectFile != null ? myProjectFile.getVirtualFile() : null;
+    try {
+      return ((FileBasedStorage)getStateStorageManager().getStateStorage(PROJECT_FILE_STORAGE)).getVirtualFile();
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   @Nullable
   public VirtualFile getWorkspaceFile() {
-    return myWorkspaceFile != null ? myWorkspaceFile.getVirtualFile() : null;
+    try {
+      return ((FileBasedStorage)getStateStorageManager().getStateStorage(WS_FILE_STORAGE)).getVirtualFile();
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   public void loadProjectFromTemplate(final Project project) {
-    try {
-      assert myProjectFile != null;
-      myProjectFile.createFile();
-
-      ProjectImpl defaultProject = (ProjectImpl)project;
-      Element element = defaultProject.getStateStore().saveToXml(defaultProject.getStateStore().getProjectFile());
-
-      loadFromXml(element, myFilePath);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
   }
 
   @NotNull
   public String getProjectFileName() {
-    return myProjectFile == null ? "" : myProjectFile.getFileName();
+    return ((FileBasedStorage)getStateStorageManager().getStateStorage(PROJECT_FILE_STORAGE)).getFileName();
   }
 
   @NotNull
   public String getProjectFilePath() {
-    return myProjectFile == null ? "" : myProjectFile.getFilePath();
+    return ((FileBasedStorage)getStateStorageManager().getStateStorage(PROJECT_FILE_STORAGE)).getFilePath();
   }
 
 
-  protected ConfigurationFile[] getConfigurationFiles() {
-    final List<ConfigurationFile> files = new ArrayList<ConfigurationFile>(2);
-
-    if (myProjectFile != null) {
-      files.add(myProjectFile);
-    }
-
-    if (myWorkspaceFile != null) {
-      files.add(myWorkspaceFile);
-    }
-    return files.toArray(new ConfigurationFile[files.size()]);
+  protected XmlElementStorage getMainStorage() {
+    return (XmlElementStorage)getStateStorageManager().getStateStorage(DEFAULT_STATE_STORAGE);
   }
 
   protected VirtualFile getComponentConfigurationFile(ComponentConfig componentConfig) {
@@ -401,23 +314,12 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return super.isSavePathsRelative();
   }
 
-  synchronized String getLineSeparator(final VirtualFile file) {
+  String getLineSeparator(final VirtualFile file) {
     return FileDocumentManager.getInstance().getLineSeparator(file, myProject);
   }
 
-  public synchronized void initStore() {
+  public void initStore() {
   }
-
-
-  void collectFileNeedsToBeWritten(final ConfigurationFile[] files, final List<VirtualFile> readonlyFiles) {
-    super.collectFileNeedsToBeWritten(files, readonlyFiles);
-
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      final ModuleStoreImpl moduleStore = (ModuleStoreImpl)((ModuleImpl)module).getStateStore();
-      moduleStore.collectFileNeedsToBeWritten(moduleStore.getConfigurationFiles(), readonlyFiles);
-    }
-  }
-
 
   public List<VirtualFile> getAllStorageFiles(final boolean includingSubStructures) {
     final List<VirtualFile> result = super.getAllStorageFiles(includingSubStructures);
@@ -426,11 +328,43 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       ModuleManager moduleManager = ModuleManager.getInstance(myProject);
       final Module[] modules = moduleManager.getModules();
       for (Module module : modules) {
-        result.addAll(((ModuleImpl)module).getStateStore().getAllStorageFiles(true));
+        result.addAll(((ModuleImpl)module).getStateStore().getAllStorageFiles(includingSubStructures));
       }
     }
 
     return result;
+  }
+
+
+  public List<VirtualFile> getAllStorageFilesToSave(final boolean includingSubStructures) {
+    final List<VirtualFile> result = super.getAllStorageFilesToSave(includingSubStructures);
+
+    if (includingSubStructures) {
+      ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+      final Module[] modules = moduleManager.getModules();
+      for (Module module : modules) {
+        result.addAll(((ModuleImpl)module).getStateStore().getAllStorageFilesToSave(includingSubStructures));
+      }
+    }
+
+    return result;
+  }
+
+  @Override
+  protected StateStorage getOldStorage(final Object component) {
+    final ComponentConfig config = getComponentManager().getConfig(component.getClass());
+    assert config != null;
+
+    String macro = PROJECT_FILE_MACRO;
+
+    if (isWorkspace(config.options)) {
+      macro = WS_FILE_MACRO;
+    }
+    return getStateStorageManager().getStateStorage("$" + macro + "$");
+  }
+
+  protected StateStorageManager createStateStorageManager() {
+    return new ProjectStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myProject);
   }
 }
 

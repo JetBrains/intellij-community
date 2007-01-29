@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.IApplicationStore;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -41,7 +42,6 @@ import org.picocontainer.MutablePicoContainer;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -113,7 +113,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   protected void boostrapPicoContainer() {
     super.boostrapPicoContainer();
-    getPicoContainer().registerComponentImplementation(StoresFactory.getApplicationStoreClass());
+    getPicoContainer().registerComponentImplementation(IComponentStore.class, StoresFactory.getApplicationStoreClass());
   }
 
   @NotNull
@@ -287,7 +287,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
 
   public void load(String path) throws IOException, InvalidDataException {
-    getStateStore().loadApplication(path);
+    getStateStore().setConfigPath(path);
+    getStateStore().load();
   }
 
 
@@ -811,38 +812,20 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public void saveSettings() {
     if (myDoNotSave) return;
 
-    ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
-
     try {
-      if (!ourSaveSettingsInProgress) {
-        ourSaveSettingsInProgress = true;
-        final String optionsPath = PathManager.getOptionsPath();
-        File file = new File(optionsPath);
-        if (!file.exists()) {
-          file.mkdirs();
+      getStateStore().save();
+    }
+    catch (final Throwable ex) {
+      LOG.info("Saving application settings failed", ex);
+      invokeLater(new Runnable() {
+        public void run() {
+          Messages.showMessageDialog(ApplicationBundle.message("application.save.settings.error", ex.getLocalizedMessage()),
+                                     CommonBundle.getErrorTitle(), Messages.getErrorIcon());
         }
-
-        try {
-          getStateStore().saveApplication(optionsPath);
-        }
-        catch (final Throwable ex) {
-          LOG.info("Saving application settings failed", ex);
-          invokeLater(new Runnable() {
-            public void run() {
-              Messages.showMessageDialog(ApplicationBundle.message("application.save.settings.error", ex.getLocalizedMessage()),
-                                         CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-            }
-          });
-        }
-        finally {
-          ourSaveSettingsInProgress = false;
-        }
-      }
-
-      saveSettingsSavingComponents();
+      });
     }
     finally {
-      ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread());
+      ourSaveSettingsInProgress = false;
     }
   }
 

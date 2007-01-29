@@ -12,8 +12,12 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.Function;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.Required;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +69,7 @@ public abstract class DomUIFactory {
   @NotNull
   private static BaseControl createGenericValueControl(final Type type, final GenericDomValue<?> element, boolean commitOnEveryChange) {
     final DomStringWrapper stringWrapper = new DomStringWrapper(element);
-    final Class rawType = DomReflectionUtil.getRawType(type);
+    final Class rawType = ReflectionUtil.getRawType(type);
     if (PsiClass.class.isAssignableFrom(rawType)) {
       return getDomUIFactory().createPsiClassControl(stringWrapper, commitOnEveryChange);
     }

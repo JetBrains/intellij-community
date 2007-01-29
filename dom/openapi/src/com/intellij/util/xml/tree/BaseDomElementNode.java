@@ -6,6 +6,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
@@ -192,7 +193,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     }
     final List<Class> classes = getDomElement().getRoot().getFile().getUserData(key);
     if (classes != null) {
-      Class clazz = DomReflectionUtil.getRawType(type);
+      Class clazz = ReflectionUtil.getRawType(type);
       return classes.contains(clazz);
     }
     return false;

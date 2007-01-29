@@ -5,10 +5,10 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomNameStrategy;
-import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +66,7 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
   }
 
   public DomNameStrategy getDomNameStrategy(DomElement parent) {
-    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(DomReflectionUtil.getRawType(myType), false);
+    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ReflectionUtil.getRawType(myType), false);
     return strategy == null ? parent.getNameStrategy() : strategy;
   }
 

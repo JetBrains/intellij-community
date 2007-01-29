@@ -2,7 +2,6 @@ package com.intellij.openapi.module.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
-import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -577,7 +576,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
       ModuleImpl module = getModuleByFilePath(filePath);
       if (module == null) {
-        module = new ModuleImpl(filePath, myProject, myPomModel, PathMacrosImpl.getInstanceEx());
+        module = new ModuleImpl(filePath, myProject, myPomModel);
         module.setModuleType(moduleType);
         module.loadModuleComponents();
         initModule(module, false);
@@ -634,8 +633,8 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
       ModuleImpl module = getModuleByFilePath(filePath);
       if (module == null) {
-        module = new ModuleImpl(filePath, myProject, myPomModel, PathMacrosImpl.getInstanceEx());
-        module.getStateStore().loadSavedConfiguration();
+        module = new ModuleImpl(filePath, myProject, myPomModel);
+        module.getStateStore().load();
         module.loadModuleComponents();
         initModule(module, true);
       }

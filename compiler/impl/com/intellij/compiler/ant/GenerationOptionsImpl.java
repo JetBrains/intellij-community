@@ -43,7 +43,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
     if (myMacroReplacementMap.size() == 0) {
       return path; // optimization
     }
-    return myMacroReplacementMap.substitute(path, SystemInfo.isFileSystemCaseSensitive);
+    return myMacroReplacementMap.substitute(path, SystemInfo.isFileSystemCaseSensitive, null);
   }
 
   public String getPropertyRefForUrl(String url) {

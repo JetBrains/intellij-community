@@ -6,9 +6,9 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
@@ -20,6 +20,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.CollectionElementAddedEvent;
@@ -47,9 +48,9 @@ import java.util.*;
 public abstract class DomInvocationHandler implements InvocationHandler, DomElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
   private static final EvaluatedXmlName ATTRIBUTES = new EvaluatedXmlName(new XmlName("@"), null);
-  public static final Method ACCEPT_METHOD = DomReflectionUtil.getMethod(DomElement.class, "accept", DomElementVisitor.class);
-  public static final Method ACCEPT_CHILDREN_METHOD = DomReflectionUtil.getMethod(DomElement.class, "acceptChildren", DomElementVisitor.class);
-  protected static final Method CREATE_STABLE_COPY_METHOD = DomReflectionUtil.getMethod(DomElement.class, "createStableCopy");
+  public static final Method ACCEPT_METHOD = ReflectionUtil.getMethod(DomElement.class, "accept", DomElementVisitor.class);
+  public static final Method ACCEPT_CHILDREN_METHOD = ReflectionUtil.getMethod(DomElement.class, "acceptChildren", DomElementVisitor.class);
+  protected static final Method CREATE_STABLE_COPY_METHOD = ReflectionUtil.getMethod(DomElement.class, "createStableCopy");
 
   private final Type myAbstractType;
   private final Type myType;
@@ -79,7 +80,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
     protected Converter create(final JavaMethod method) {
       final Type returnType = method.getGenericReturnType();
       final Type type = returnType == void.class ? method.getGenericParameterTypes()[0] : returnType;
-      final Class parameter = DomReflectionUtil.substituteGenericType(type, myType);
+      final Class parameter = ReflectionUtil.substituteGenericType(type, myType);
       LOG.assertTrue(parameter != null, type + " " + myType);
       final Converter converter = getConverter(method, parameter, type instanceof TypeVariable ? myGenericConverterFactory : Factory.NULL_FACTORY);
       LOG.assertTrue(converter != null, "No converter specified: String<->" + parameter.getName());
@@ -652,7 +653,7 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
   }
 
   private Class<?> getRawType() {
-    return DomReflectionUtil.getRawType(myType);
+    return ReflectionUtil.getRawType(myType);
   }
 
   protected final Class getFixedChildrenClass(final EvaluatedXmlName tagName) {

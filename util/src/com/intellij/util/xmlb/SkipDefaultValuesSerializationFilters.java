@@ -21,6 +21,7 @@ public class SkipDefaultValuesSerializationFilters implements SerializationFilte
     if (o == null) {
       try {
         o = c.newInstance();
+        configure(o);
       }
       catch (InstantiationException e) {
         throw new XmlSerializationException(e);
@@ -33,5 +34,9 @@ public class SkipDefaultValuesSerializationFilters implements SerializationFilte
     }
 
     return o;
+  }
+
+  protected void configure(final Object o) {
+    //todo put your own default object configuration herei
   }
 }

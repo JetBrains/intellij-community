@@ -215,7 +215,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   public void readExternal(Element element) throws InvalidDataException {
     final ExpandMacroToPathMap macroExpands = new ExpandMacroToPathMap();
     myPathMacros.addMacroExpands(macroExpands);
-    macroExpands.substitute(element, SystemInfo.isFileSystemCaseSensitive);
+    macroExpands.substitute(element, SystemInfo.isFileSystemCaseSensitive, null);
 
     myModificationCount++;
     for (final Object o1 : element.getChildren(RESOURCE_ELEMENT)) {
@@ -251,7 +251,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
     final ReplacePathToMacroMap macroReplacements = new ReplacePathToMacroMap();
     PathMacrosImpl.getInstanceEx().addMacroReplacements(macroReplacements);
-    macroReplacements.substitute(element, SystemInfo.isFileSystemCaseSensitive);
+    macroReplacements.substitute(element, SystemInfo.isFileSystemCaseSensitive, null);
   }
 
   @NotNull

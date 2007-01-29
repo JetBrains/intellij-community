@@ -21,14 +21,14 @@ import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.Function;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ClassMap;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
 import com.intellij.util.xml.highlighting.DomElementsErrorPanel;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -116,7 +116,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
 
   @Nullable
   public BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
-    final Function<DomWrapper<String>, BaseControl> factory = myCustomControlCreators.get(DomReflectionUtil.getRawType(type));
+    final Function<DomWrapper<String>, BaseControl> factory = myCustomControlCreators.get(ReflectionUtil.getRawType(type));
     return factory == null ? null : factory.fun(wrapper);
   }
 

@@ -3,10 +3,10 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -14,9 +14,9 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.highlighting.DomCollectionProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
@@ -27,11 +27,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.*;
 
 /**
  * @author peter
@@ -146,7 +146,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
 
 
   public boolean canNavigate(DomElement element) {
-    final Class<DomElement> aClass = (Class<DomElement>)DomReflectionUtil.getRawType(myChildDescription.getType());
+    final Class<DomElement> aClass = (Class<DomElement>)ReflectionUtil.getRawType(myChildDescription.getType());
 
     final DomElement domElement = element.getParentOfType(aClass, false);
 
@@ -154,7 +154,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
   }
 
   public void navigate(DomElement element) {
-    final Class<DomElement> aClass = (Class<DomElement>)DomReflectionUtil.getRawType(myChildDescription.getType());
+    final Class<DomElement> aClass = (Class<DomElement>)ReflectionUtil.getRawType(myChildDescription.getType());
     final DomElement domElement = element.getParentOfType(aClass, false);
 
     int index = myCollectionElements.indexOf(domElement);
@@ -323,7 +323,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl {
   }
 
   protected final Class<? extends T> getCollectionElementClass() {
-    return (Class<? extends T>)DomReflectionUtil.getRawType(myChildDescription.getType());
+    return (Class<? extends T>)ReflectionUtil.getRawType(myChildDescription.getType());
   }
 
 

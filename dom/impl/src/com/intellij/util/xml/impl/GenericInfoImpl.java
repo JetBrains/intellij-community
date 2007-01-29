@@ -10,12 +10,13 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
-import gnu.trove.THashSet;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,7 +132,7 @@ public class GenericInfoImpl implements DomGenericInfo {
 
   @NotNull
   private DomNameStrategy getNameStrategy(boolean isAttribute) {
-    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(DomReflectionUtil.getRawType(myClass), isAttribute);
+    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ReflectionUtil.getRawType(myClass), isAttribute);
     return strategy != null ? strategy : DomNameStrategy.HYPHEN_STRATEGY;
   }
 
@@ -216,7 +217,7 @@ public class GenericInfoImpl implements DomGenericInfo {
     if (tagName == null) return false;
 
     final Type childrenClass = getCollectionChildrenType(tagName);
-    if (childrenClass == null || !DomReflectionUtil.getRawType(childrenClass).isAssignableFrom(method.getReturnType())) return false;
+    if (childrenClass == null || !ReflectionUtil.getRawType(childrenClass).isAssignableFrom(method.getReturnType())) return false;
 
     return ADDER_PARAMETER_TYPES.containsAll(Arrays.asList(method.getParameterTypes()));
   }
@@ -592,7 +593,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   }
 
   private static boolean isDomElement(final Type type) {
-    return type != null && DomElement.class.isAssignableFrom(DomReflectionUtil.getRawType(type));
+    return type != null && DomElement.class.isAssignableFrom(ReflectionUtil.getRawType(type));
   }
 
   public final Set<String> getReferenceTagNames() {
@@ -626,7 +627,7 @@ public class GenericInfoImpl implements DomGenericInfo {
                                             (ReflectionCache.isAssignable(ResolvingConverter.class, annotation.value()) ||
                                              ReflectionCache.isAssignable(CustomReferenceConverter.class, annotation.value()));
         final Type type = description.getType();
-        if (condition.value(DomReflectionUtil.getRawType(type))) {
+        if (condition.value(ReflectionUtil.getRawType(type))) {
           if (hasResolveConverter ||
               !String.class.equals(DomUtil.getGenericValueParameter(type)) ||
               description.getAnnotation(NameValue.class) != null ||

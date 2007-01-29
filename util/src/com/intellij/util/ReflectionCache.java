@@ -15,14 +15,14 @@
  */
 package com.intellij.util;
 
-import com.intellij.util.containers.WeakFactoryMap;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.WeakFactoryMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.Type;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -73,6 +73,9 @@ public class ReflectionCache {
       return key.getActualTypeArguments();
     }
   };
+
+  private ReflectionCache() {
+  }
 
   public static Class getSuperClass(Class aClass) {
     Class superClass = ourSuperClasses.get(aClass);

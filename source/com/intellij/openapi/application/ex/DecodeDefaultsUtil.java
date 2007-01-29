@@ -1,12 +1,10 @@
 package com.intellij.openapi.application.ex;
 
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -15,16 +13,6 @@ public class DecodeDefaultsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.ex.DecodeDefaultsUtil");
 
   @NonNls private static final String XML_EXTENSION = ".xml";
-
-  @Nullable
-  public static InputStream getDefaultsInputStream(Object component) {
-    InputStream stream = getDefaultsInputStream(component, ((BaseComponent)component).getComponentName());
-    if (stream != null) {
-      return new BufferedInputStream(stream);
-    }
-
-    return null;
-  }
 
   public static URL getDefaults(Object requestor, final String componentResourcePath) {
     boolean isPathAbsoulte = StringUtil.startsWithChar(componentResourcePath, '/');

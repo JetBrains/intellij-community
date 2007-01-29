@@ -6,13 +6,14 @@ package com.intellij.util.xml;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
-import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -122,7 +123,7 @@ public class DomUtil {
   }
 
   public static Class getGenericValueParameter(Type type) {
-    return DomReflectionUtil.substituteGenericType(GENERIC_VALUE_TYPE_VARIABLE, type);
+    return ReflectionUtil.substituteGenericType(GENERIC_VALUE_TYPE_VARIABLE, type);
   }
 
   @Nullable

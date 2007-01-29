@@ -71,4 +71,20 @@ public class XmlSerializer {
       throw new XmlSerializationException(e);
     }
   }
+
+  public static void deserializeInto(final Object bean, final Element element) {
+    try {
+      XmlSerializerImpl serializer = new XmlSerializerImpl(element.getOwnerDocument(), TRUE_FILTER);
+      final Binding binding = serializer.getBinding(bean.getClass());
+      assert binding instanceof BeanBinding;
+
+      ((BeanBinding)binding).deserializeInto(bean, element);
+    }
+    catch (XmlSerializationException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new XmlSerializationException(e);
+    }
+  }
 }

@@ -16,11 +16,15 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 class BeanBinding implements Binding {
   private String myTagName;
   private Map<Binding, Accessor> myPropertyBindings = new HashMap<Binding, Accessor>();
+  private List<Binding> myPropertyBindingsList = new ArrayList<Binding>();
   private Class<?> myBeanClass;
   private SerializationFilter filter;
   private XmlSerializerImpl serializer;
@@ -44,7 +48,9 @@ class BeanBinding implements Binding {
     Accessor[] accessors = getAccessors(beanClass);
 
     for (Accessor accessor : accessors) {
-      myPropertyBindings.put(createBindingByAccessor(serializer, accessor), accessor);
+      final Binding binding = createBindingByAccessor(serializer, accessor);
+      myPropertyBindingsList.add(binding);
+      myPropertyBindings.put(binding, accessor);
     }
   }
 
@@ -53,17 +59,7 @@ class BeanBinding implements Binding {
     assert ownerDocument != null;
     Element element = ownerDocument.createElement(myTagName);
 
-    ArrayList<Binding> bindings = new ArrayList<Binding>(myPropertyBindings.keySet());
-
-    Collections.sort(bindings, new Comparator<Binding>() {
-      public int compare(Binding b1, Binding b2) {
-        Accessor a1 = myPropertyBindings.get(b1);
-        Accessor a2 = myPropertyBindings.get(b2);
-        return a1.getName().compareTo(a2.getName());
-      }
-    });
-
-    for (Binding binding : bindings) {
+    for (Binding binding : myPropertyBindingsList) {
       Accessor accessor = myPropertyBindings.get(binding);
       if (!filter.accepts(accessor, o)) continue;
 
@@ -96,9 +92,16 @@ class BeanBinding implements Binding {
     return element;
   }
 
-  public Object deserialize(Object o, Node... nodes) {
-    Object result = instantiateBean();
 
+  public void deserializeInto(final Object bean, final Element element) {
+    _deserialize(bean, element);
+  }
+
+  public Object deserialize(Object o, Node... nodes) {
+    return _deserialize(instantiateBean(), nodes);
+  }
+
+  private Object _deserialize(final Object result, final Node... nodes) {
     assert nodes.length == 1;
     assert nodes[0] instanceof Element : "Wrong node: " + nodes;
     Element e = (Element)nodes[0];
@@ -247,4 +250,5 @@ class BeanBinding implements Binding {
 
     return new OptionTagBinding(accessor, xmlSerializer);
   }
+
 }

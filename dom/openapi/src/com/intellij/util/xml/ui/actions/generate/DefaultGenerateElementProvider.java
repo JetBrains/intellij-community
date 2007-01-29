@@ -3,8 +3,8 @@ package com.intellij.util.xml.ui.actions.generate;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 
 import java.util.List;
@@ -32,7 +32,7 @@ public abstract class DefaultGenerateElementProvider extends GenerateDomElementP
     final List<? extends DomCollectionChildDescription> list = parent.getGenericInfo().getCollectionChildrenDescriptions();
 
     for (DomCollectionChildDescription childDescription : list) {
-      if (DomReflectionUtil.getRawType(childDescription.getType()).isAssignableFrom(myChildElementClass)) {
+      if (ReflectionUtil.getRawType(childDescription.getType()).isAssignableFrom(myChildElementClass)) {
         return childDescription.addValue(parent, myChildElementClass);
       }
     }

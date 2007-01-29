@@ -5,6 +5,7 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.FactoryMap;
@@ -71,7 +72,7 @@ public class ModelMergerImpl implements ModelMerger {
 
         final Type type = DomReflectionUtil.extractCollectionElementType(method.getGenericReturnType());
         assert type != null : "No generic return type in method " + method;
-        return getMergedImplementations(method.getMethod(), args, DomReflectionUtil.getRawType(type), implementations);
+        return getMergedImplementations(method.getMethod(), args, ReflectionUtil.getRawType(type), implementations);
       }
     });
 

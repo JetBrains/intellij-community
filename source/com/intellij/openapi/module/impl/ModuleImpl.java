@@ -1,13 +1,12 @@
 package com.intellij.openapi.module.impl;
 
-import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IModuleStore;
 import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Logger;
@@ -73,10 +72,8 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   private ModuleRuntimeClasspathScope myModuleRuntimeClasspathScope;
   public static final Object MODULE_RENAMING_REQUESTOR = new Object();
 
-  public ModuleImpl(String filePath, Project project, PomModel pomModel, PathMacrosImpl pathMacros) {
+  public ModuleImpl(String filePath, Project project, PomModel pomModel) {
     super(project);
-
-    PathMacroManager.getInstance(this).setPathMacros(pathMacros);
 
     myProject = project;
     myPomModel =  pomModel;
@@ -86,7 +83,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   protected void boostrapPicoContainer() {
     Extensions.instantiateArea(PluginManager.AREA_IDEA_MODULE, this, (AreaInstance)getParentComponentManager());
     super.boostrapPicoContainer();
-    getPicoContainer().registerComponentImplementation(StoresFactory.getModuleStoreClass());
+    getPicoContainer().registerComponentImplementation(IComponentStore.class, StoresFactory.getModuleStoreClass());
     getPicoContainer().registerComponentImplementation(ModulePathMacroManager.class);
   }
 

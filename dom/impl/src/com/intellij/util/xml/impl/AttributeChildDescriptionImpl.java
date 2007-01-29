@@ -3,11 +3,15 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.util.xml.*;
-import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomNameStrategy;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.JavaMethod;
+import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
@@ -25,7 +29,7 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
   }
 
   public DomNameStrategy getDomNameStrategy(DomElement parent) {
-    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(DomReflectionUtil.getRawType(getType()), true);
+    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ReflectionUtil.getRawType(getType()), true);
     return strategy == null ? parent.getNameStrategy() : strategy;
   }
 

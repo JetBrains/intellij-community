@@ -4,8 +4,8 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.Function;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomReflectionUtil;
 
 import java.lang.reflect.Type;
 
@@ -34,7 +34,7 @@ public class AddChildInvocation implements Invocation{
     final DomManagerImpl manager = handler.getManager();
     final boolean b = manager.setChanging(true);
     try {
-      manager.getTypeChooserManager().getTypeChooser(myType).distinguishTag(domElement.getXmlTag(), DomReflectionUtil.getRawType(type));
+      manager.getTypeChooserManager().getTypeChooser(myType).distinguishTag(domElement.getXmlTag(), ReflectionUtil.getRawType(type));
     }
     finally {
       handler.getManager().setChanging(b);

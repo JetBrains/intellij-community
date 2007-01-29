@@ -1,6 +1,5 @@
 package com.intellij.openapi.project.impl;
 
-import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -8,10 +7,10 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,11 +20,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomModel;
 import com.intellij.psi.PsiBundle;
@@ -33,9 +33,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.*;
+import org.picocontainer.defaults.CachingComponentAdapter;
+import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -65,15 +68,11 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   @NonNls private static final String DUMMY_PROJECT_NAME = "Dummy (Mock) Project";
   private boolean myDefault;
 
-  protected ProjectImpl(ProjectManagerImpl manager,
-                        String filePath,
-                        boolean isDefault,
-                        boolean isOptimiseTestLoadSpeed,
-                        PathMacrosImpl pathMacros) {
+  protected ProjectImpl(ProjectManagerImpl manager, String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed) {
     super(ApplicationManager.getApplication());
 
     myDefault = isDefault;
-    PathMacroManager.getInstance(this).setPathMacros(pathMacros);
+
     getStateStore().setProjectFilePath(filePath);
 
     myOptimiseTestLoadSpeed = isOptimiseTestLoadSpeed;
@@ -84,8 +83,46 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   protected void boostrapPicoContainer() {
     Extensions.instantiateArea(PluginManager.AREA_IDEA_PROJECT, this, null);
     super.boostrapPicoContainer();
-    getPicoContainer().registerComponentImplementation(StoresFactory.getProjectStoreClass());
-    getPicoContainer().registerComponentImplementation(ProjectPathMacroManager.class);
+    final MutablePicoContainer picoContainer = getPicoContainer();
+
+    picoContainer.registerComponentImplementation(ProjectPathMacroManager.class);
+    picoContainer.registerComponent(new ComponentAdapter() {
+      ComponentAdapter myDelegate;
+
+
+      public ComponentAdapter getDelegate() {
+        if (myDelegate == null) {
+          Class storeClass = StoresFactory.getProjectStoreClass(myDefault);
+
+          myDelegate = new CachingComponentAdapter(
+            new ConstructorInjectionComponentAdapter(storeClass, storeClass, null, true));
+        }
+
+        return myDelegate;
+      }
+
+      public Object getComponentKey() {
+        return IComponentStore.class;
+      }
+
+      public Class getComponentImplementation() {
+        return getDelegate().getComponentImplementation();
+      }
+
+      public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
+        return getDelegate().getComponentInstance(container);
+      }
+
+      public void verify(final PicoContainer container) throws PicoIntrospectionException {
+        getDelegate().verify(container);
+      }
+
+      public void accept(final PicoVisitor visitor) {
+        visitor.visitComponentAdapter(this);
+        getDelegate().accept(visitor);
+      }
+    });
+
   }
 
   public IProjectStore getStateStore() {
@@ -314,9 +351,14 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public void save() {
     if (ApplicationManagerEx.getApplicationEx().isDoNotSave()) return; //no need to save
-    ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
 
-    getStateStore().saveProject();
+    try {
+      getStateStore().save();
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      MessagesEx.error(this, ProjectBundle.message("project.save.error", e.getMessage())).showLater();
+    }
   }
 
   public synchronized void dispose() {

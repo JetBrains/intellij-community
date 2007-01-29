@@ -3,8 +3,8 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,8 +24,8 @@ public class DomCollectionWrapper<T> extends DomWrapper<T>{
   public DomCollectionWrapper(final DomElement domElement,
                               final DomCollectionChildDescription childDescription) {
     this(domElement, childDescription, 
-         DomUIFactory.findMethod(DomReflectionUtil.getRawType(childDescription.getType()), "setValue"),
-         DomUIFactory.findMethod(DomReflectionUtil.getRawType(childDescription.getType()), "getValue"));
+         DomUIFactory.findMethod(ReflectionUtil.getRawType(childDescription.getType()), "setValue"),
+         DomUIFactory.findMethod(ReflectionUtil.getRawType(childDescription.getType()), "getValue"));
   }
 
   public DomCollectionWrapper(final DomElement domElement,

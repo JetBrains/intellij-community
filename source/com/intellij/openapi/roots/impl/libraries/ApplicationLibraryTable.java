@@ -69,7 +69,7 @@ public class ApplicationLibraryTable extends LibraryTableBase implements NamedJD
   public void readExternal(Element element) throws InvalidDataException {
     final ExpandMacroToPathMap macroExpands = new ExpandMacroToPathMap();
     myPathMacros.addMacroExpands(macroExpands);
-    macroExpands.substitute(element, SystemInfo.isFileSystemCaseSensitive);
+    macroExpands.substitute(element, SystemInfo.isFileSystemCaseSensitive, null);
     super.readExternal(element);
   }
 
@@ -77,6 +77,6 @@ public class ApplicationLibraryTable extends LibraryTableBase implements NamedJD
     super.writeExternal(element);
     final ReplacePathToMacroMap macroReplacements = new ReplacePathToMacroMap();
     PathMacrosImpl.getInstanceEx().addMacroReplacements(macroReplacements);
-    macroReplacements.substitute(element, SystemInfo.isFileSystemCaseSensitive);
+    macroReplacements.substitute(element, SystemInfo.isFileSystemCaseSensitive, null);
   }
 }

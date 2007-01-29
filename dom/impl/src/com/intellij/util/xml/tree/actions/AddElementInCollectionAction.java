@@ -9,8 +9,8 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.tree.BaseDomElementNode;
@@ -21,9 +21,9 @@ import com.intellij.util.xml.ui.actions.DefaultAddAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.lang.reflect.Type;
 import java.util.List;
-import javax.swing.*;
 
 /**
  * User: Sergey.Vasiliev
@@ -114,7 +114,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
       final DomElementsGroupNode selectedNode = getDomElementsGroupNode(getTreeView(e));
       if (selectedNode != null) {
         final Type type = selectedNode.getChildDescription().getType();
-        text += " " + ElementPresentationManager.getTypeName(DomReflectionUtil.getRawType(type));
+        text += " " + ElementPresentationManager.getTypeName(ReflectionUtil.getRawType(type));
       }
     }
     return text;

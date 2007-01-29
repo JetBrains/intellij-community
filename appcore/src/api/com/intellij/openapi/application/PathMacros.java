@@ -30,4 +30,8 @@ public abstract class PathMacros {
   public abstract void setMacro(String name, String value);
 
   public abstract void removeMacro(String name);
+
+  public abstract Set<String> getUserMacroNames();
+
+  public abstract Set<String> getSystemMacroNames();
 }

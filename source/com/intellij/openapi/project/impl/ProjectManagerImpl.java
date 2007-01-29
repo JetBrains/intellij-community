@@ -77,7 +77,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return array.toArray(new ProjectManagerListener[array.size()]);
   }
 
-  public ProjectManagerImpl(VirtualFileManagerEx virtualFileManagerEx, PathMacrosImpl pathMacros) {
+  public ProjectManagerImpl(VirtualFileManagerEx virtualFileManagerEx) {
     addProjectManagerListener(
       new ProjectManagerListener() {
 
@@ -115,7 +115,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     );
 
     registerExternalProjectFileListener(virtualFileManagerEx);
-    myPathMacros = pathMacros;
   }
 
   public void disposeComponent() {
@@ -151,8 +150,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       throw new UnsupportedOperationException("Dummy project is deprecated and shall not be used anymore.");
     }
     else {
-      project = new ProjectImpl(this, filePath, isDefault, isOptimiseTestLoadSpeed, myPathMacros);
+      project = new ProjectImpl(this, filePath, isDefault, isOptimiseTestLoadSpeed);
     }
+
+    try {
+      project.getStateStore().load();
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      Messages.showErrorDialog(e.getMessage(), ProjectBundle.message("project.load.default.error"));
+    }
+
     project.loadProjectComponents();
     return project;
   }
@@ -202,21 +210,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public synchronized Project getDefaultProject() {
     if (myDefaultProject == null) {
       myDefaultProject = createProject(null, true, false, ApplicationManager.getApplication().isUnitTestMode());
-      if (myDefaultProjectRootElement != null) {
-        try {
-          myDefaultProject.getStateStore().loadFromXml(myDefaultProjectRootElement, null);
-        }
-        catch (InvalidDataException e) {
-          LOG.info(e);
-          Messages.showErrorDialog(e.getMessage(), ProjectBundle.message("project.load.default.error"));
-        }
-        finally {
-          myDefaultProjectRootElement = null;
-        }
-      }
+
+      myDefaultProjectRootElement = null;
+
       myDefaultProject.init();
     }
     return myDefaultProject;
+  }
+
+
+  public Element getDefaultProjectRootElement() {
+    return myDefaultProjectRootElement;
   }
 
   public Project[] getOpenProjects() {
@@ -225,14 +229,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   public boolean isProjectOpened(Project project) {
     return myOpenProjects.contains(project);
-  }
-
-  public void openProjectDontNotifyComponents(Project project) {
-    myOpenProjects.add(project);
-  }
-
-  public void closeProjectDontNotifyComponents(Project project) {
-    myOpenProjects.remove(project);
   }
 
   public boolean openProject(final Project project) {
@@ -574,14 +570,22 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
     if (myDefaultProject != null) {
-      final Element e = myDefaultProject.getStateStore().saveToXml(myDefaultProject.getStateStore().getProjectFile());
-      e.setName(ELEMENT_DEFAULT_PROJECT);
-      parentNode.addContent(e);
+      myDefaultProject.save();
+      assert myDefaultProjectRootElement != null;
+
+      myDefaultProjectRootElement.setName(ELEMENT_DEFAULT_PROJECT);
+      parentNode.addContent(myDefaultProjectRootElement.detach());
+      myDefaultProjectRootElement = null;
     }
     else if (myDefaultProjectRootElement != null) {
       parentNode.addContent((Element)myDefaultProjectRootElement.clone());
     }
 
+  }
+
+
+  public void setDefaultProjectRootElement(final Element defaultProjectRootElement) {
+    myDefaultProjectRootElement = defaultProjectRootElement;
   }
 
   public void readExternal(Element parentNode) throws InvalidDataException {

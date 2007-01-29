@@ -6,10 +6,8 @@ package com.intellij.util.xml;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ReflectionCache;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
@@ -25,14 +23,57 @@ public class DomReflectionUtil {
   private DomReflectionUtil() {
   }
 
+  public static <T extends Annotation> T findAnnotationDFS(final Class<?> rawType, final Class<T> annotationType) {
+    T annotation = rawType.getAnnotation(annotationType);
+    if (annotation != null) return annotation;
+
+    for (Class aClass : rawType.getInterfaces()) {
+      annotation = findAnnotationDFS(aClass, annotationType);
+      if (annotation != null) {
+        return annotation;
+      }
+    }
+    return null;
+  }
+
+  public static <T extends Annotation> T findAnnotationDFS(final Method method, final Class<T> annotationClass) {
+    return JavaMethodSignature.getSignature(method).findAnnotation(annotationClass, method.getDeclaringClass());
+  }
+
+  public static boolean canHaveIsPropertyGetterPrefix(final Type type) {
+    return boolean.class.equals(type) || Boolean.class.equals(type)
+           || Boolean.class.equals(DomUtil.getGenericValueParameter(type));
+  }
+
+  public static JavaMethod[] getGetterMethods(final String[] path, final Class<? extends DomElement> startClass) {
+    final JavaMethod[] methods = new JavaMethod[path.length];
+    Class aClass = startClass;
+    for (int i = 0; i < path.length; i++) {
+      final JavaMethod getter = findGetter(aClass, path[i]);
+      assert getter != null : "Couldn't find getter for property " + path[i] + " in class " + aClass;
+      methods[i] = getter;
+      aClass = getter.getReturnType();
+      if (List.class.isAssignableFrom(aClass)) {
+        aClass = ReflectionUtil.getRawType(extractCollectionElementType(getter.getGenericReturnType()));
+      }
+    }
+    return methods;
+  }
+
   @Nullable
-  public static Method getMethod(Class aClass, @NonNls String name, Class... paramTypes) {
+  public static JavaMethod findGetter(Class aClass, String propertyName) {
+    final String capitalized = StringUtil.capitalize(propertyName);
     try {
-      return aClass.getMethod(name, paramTypes);
+      return JavaMethod.getMethod(aClass, aClass.getMethod("get" + capitalized));
     }
     catch (NoSuchMethodException e) {
-      LOG.error(e);
-      return null;
+      try {
+        final JavaMethod javaMethod = JavaMethod.getMethod(aClass, aClass.getMethod("is" + capitalized));
+        return canHaveIsPropertyGetterPrefix(javaMethod.getGenericReturnType()) ? javaMethod : null;
+      }
+      catch (NoSuchMethodException e1) {
+        return null;
+      }
     }
   }
 
@@ -74,101 +115,6 @@ public class DomReflectionUtil {
     }
   }
 
-  public static Type resolveVariable(TypeVariable variable, final Class classType) {
-    final Class aClass = getRawType(classType);
-    int index = ContainerUtil.findByEquals(ReflectionCache.getTypeParameters(aClass), variable);
-    if (index >= 0) {
-      return variable;
-    }
-
-    final Class[] classes = ReflectionCache.getInterfaces(aClass);
-    final Type[] genericInterfaces = ReflectionCache.getGenericInterfaces(aClass);
-    for (int i = 0; i < classes.length; i++) {
-      Class anInterface = classes[i];
-      final Type resolved = resolveVariable(variable, anInterface);
-      if (resolved instanceof Class || resolved instanceof ParameterizedType) {
-        return resolved;
-      }
-      if (resolved instanceof TypeVariable) {
-        final TypeVariable typeVariable = (TypeVariable)resolved;
-        index = ContainerUtil.findByEquals(ReflectionCache.getTypeParameters(anInterface), typeVariable);
-        if (index < 0) {
-          LOG.assertTrue(false, "Cannot resolve type variable:\n" +
-                              "typeVariable = " + typeVariable + "\n" +
-                              "genericDeclaration = " + declarationToString(typeVariable.getGenericDeclaration()) + "\n" +
-                              "searching in " + declarationToString(anInterface));
-        }
-        final Type type = genericInterfaces[i];
-        if (type instanceof Class) {
-          return Object.class;
-        }
-        if (type instanceof ParameterizedType) {
-          return getActualTypeArguments(((ParameterizedType)type))[index];
-        }
-        throw new AssertionError("Invalid type: " + type);
-      }
-    }
-    return null;
-  }
-
-  private static String declarationToString(final GenericDeclaration anInterface) {
-    return anInterface.toString() + Arrays.asList(anInterface.getTypeParameters()) + " loaded by " + ((Class)anInterface).getClassLoader();
-  }
-
-  public static Class<?> substituteGenericType(final Type genericType, final Type classType) {
-    if (genericType instanceof TypeVariable) {
-      final Class<?> aClass = getRawType(classType);
-      final Type type = resolveVariable((TypeVariable)genericType, aClass);
-      if (type instanceof Class) {
-        return (Class)type;
-      }
-      if (type instanceof ParameterizedType) {
-        return (Class<?>)((ParameterizedType)type).getRawType();
-      }
-      if (type instanceof TypeVariable && classType instanceof ParameterizedType) {
-        final int index = ContainerUtil.findByEquals(ReflectionCache.getTypeParameters(aClass), type);
-        if (index >= 0) {
-          return getRawType(getActualTypeArguments(((ParameterizedType)classType))[index]);
-        }
-      }
-    } else {
-      return getRawType(genericType);
-    }
-    return null;
-  }
-
-  public static Class<?> getRawType(Type type) {
-    if (type instanceof Class) {
-      return (Class)type;
-    }
-    if (type instanceof ParameterizedType) {
-      return getRawType(((ParameterizedType)type).getRawType());
-    }
-    if (type instanceof GenericArrayType) {
-      //todo[peter] don't create new instance each time
-      return Array.newInstance(getRawType(((GenericArrayType)type).getGenericComponentType()), 0).getClass();
-    }
-    assert false : type;
-    return null;
-  }
-
-  public static <T extends Annotation> T findAnnotationDFS(final Class<?> rawType, final Class<T> annotationType) {
-    T annotation = rawType.getAnnotation(annotationType);
-    if (annotation != null) return annotation;
-
-    for (Class aClass : rawType.getInterfaces()) {
-      annotation = findAnnotationDFS(aClass, annotationType);
-      if (annotation != null) {
-        return annotation;
-      }
-    }
-    return null;
-  }
-
-  public static <T extends Annotation> T findAnnotationDFS(final Method method, final Class<T> annotationClass) {
-    return JavaMethodSignature.getSignature(method).findAnnotation(annotationClass, method.getDeclaringClass());
-  }
-
   @Nullable
   public static Type extractCollectionElementType(Type returnType) {
     if (returnType instanceof ParameterizedType) {
@@ -177,7 +123,7 @@ public class DomReflectionUtil {
       if (rawType instanceof Class) {
         final Class<?> rawClass = (Class<?>)rawType;
         if (List.class.equals(rawClass) || Collection.class.equals(rawClass)) {
-          final Type[] arguments = getActualTypeArguments(parameterizedType);
+          final Type[] arguments = ReflectionUtil.getActualTypeArguments(parameterizedType);
           if (arguments.length == 1) {
             final Type argument = arguments[0];
             if (argument instanceof WildcardType) {
@@ -199,46 +145,5 @@ public class DomReflectionUtil {
       }
     }
     return null;
-  }
-
-  private static Type[] getActualTypeArguments(final ParameterizedType parameterizedType) {
-    return ReflectionCache.getActualTypeArguments(parameterizedType);
-  }
-
-  public static boolean canHaveIsPropertyGetterPrefix(final Type type) {
-    return boolean.class.equals(type) || Boolean.class.equals(type)
-           || Boolean.class.equals(DomUtil.getGenericValueParameter(type));
-  }
-
-  public static JavaMethod[] getGetterMethods(final String[] path, final Class<? extends DomElement> startClass) {
-    final JavaMethod[] methods = new JavaMethod[path.length];
-    Class aClass = startClass;
-    for (int i = 0; i < path.length; i++) {
-      final JavaMethod getter = findGetter(aClass, path[i]);
-      assert getter != null : "Couldn't find getter for property " + path[i] + " in class " + aClass;
-      methods[i] = getter;
-      aClass = getter.getReturnType();
-      if (List.class.isAssignableFrom(aClass)) {
-        aClass = getRawType(extractCollectionElementType(getter.getGenericReturnType()));
-      }
-    }
-    return methods;
-  }
-
-  @Nullable
-  public static JavaMethod findGetter(Class aClass, String propertyName) {
-    final String capitalized = StringUtil.capitalize(propertyName);
-    try {
-      return JavaMethod.getMethod(aClass, aClass.getMethod("get" + capitalized));
-    }
-    catch (NoSuchMethodException e) {
-      try {
-        final JavaMethod javaMethod = JavaMethod.getMethod(aClass, aClass.getMethod("is" + capitalized));
-        return canHaveIsPropertyGetterPrefix(javaMethod.getGenericReturnType()) ? javaMethod : null;
-      }
-      catch (NoSuchMethodException e1) {
-        return null;
-      }
-    }
   }
 }

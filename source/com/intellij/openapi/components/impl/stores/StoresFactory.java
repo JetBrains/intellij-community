@@ -8,8 +8,8 @@ public class StoresFactory {
     return ModuleStoreImpl.class;
   }
 
-  public static Class getProjectStoreClass() {
-    return ProjectStoreImpl.class;
+  public static Class getProjectStoreClass(final boolean aDefault) {
+    return aDefault ? DefaultProjectStoreImpl.class : ProjectStoreImpl.class;
   }
 
   public static Class getApplicationStoreClass() {

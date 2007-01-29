@@ -8,13 +8,13 @@ import com.intellij.util.xmlb.XmlSerializer;
  *
  * todo: describe registration procedures
  */
-public interface PersistentStateComponent {
+public interface PersistentStateComponent<T> {
   /**
    * @return a component state. All properties and public fields are serialized. Only values, which differ
    * from default (i.e. the value of newly instantiated class) are serialized.
    * @see XmlSerializer
    */
-  Object getState();
+  T getState();
 
   /**
    * This method is called when new component state is loaded. A component should expect this method
@@ -22,5 +22,5 @@ public interface PersistentStateComponent {
    * config files were externally changed while IDEA running.
    * @param object loaded component state
    */
-  void loadState(Object object);
+  void loadState(T object);
 }

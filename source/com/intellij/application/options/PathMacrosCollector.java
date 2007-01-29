@@ -26,11 +26,11 @@ public class PathMacrosCollector extends PathMacroMap {
 
   public static Set<String> getMacroNames(Element root) {
     final PathMacrosCollector collector = new PathMacrosCollector();
-    collector.substitute(root, true);
+    collector.substitute(root, true, null);
     return new HashSet<String>(collector.myMacroMap.keySet());
   }
 
-  public String substitute(String text, boolean caseSensitive) {
+  public String substitute(String text, boolean caseSensitive, final Set<String> usedMacros) {
     myMatcher.reset(text);
     while (myMatcher.find()) {
       final String macroName = myMatcher.group(1);

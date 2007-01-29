@@ -32,10 +32,12 @@
       <interface-class>com.intellij.openapi.util.DimensionService</interface-class>
       <implementation-class>com.intellij.openapi.util.DimensionService</implementation-class>
     </component>
+
     <component>
       <interface-class>com.intellij.ide.ui.UISettings</interface-class>
       <implementation-class>com.intellij.ide.ui.UISettings</implementation-class>
     </component>
+
     <component>
       <interface-class>com.intellij.ide.SaveAndSyncHandler</interface-class>
       <implementation-class>com.intellij.ide.SaveAndSyncHandler</implementation-class>

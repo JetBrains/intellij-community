@@ -347,6 +347,14 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return findFileByPath(path);
   }
 
+  @Nullable
+  public VirtualFile findFileByIoFile(final IFile file) {
+    String path = file.getCanonicalPath();
+    if (path == null) return null;
+    path = path.replace(File.separatorChar, '/');
+    return findFileByPath(path);
+  }
+
   public VirtualFile refreshAndFindFileByIoFile(File file) {
     String path = getCanonicalPath(file);
     if (path == null) return null;

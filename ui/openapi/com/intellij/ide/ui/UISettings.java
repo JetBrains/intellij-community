@@ -1,21 +1,30 @@
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.util.Map;
 
-public class UISettings implements NamedJDOMExternalizable, ApplicationComponent {
+@State(
+  name = "UISettings",
+  storages = {
+    @Storage(
+      id ="uilnf",
+      file = "$APP_CONFIG$/ui.lnf.xml"
+    )}
+)
+public class UISettings implements PersistentStateComponent<UISettings> {
   private EventListenerList myListenerList;
 
   @Property(filter = FontFilter.class)
@@ -67,10 +76,6 @@ public class UISettings implements NamedJDOMExternalizable, ApplicationComponent
     setSystemFontFaceAndSize();
   }
 
-  public void initComponent() { }
-
-  public void disposeComponent() {}
-
   public void addUISettingsListener(UISettingsListener listener){
     myListenerList.add(UISettingsListener.class,listener);
   }
@@ -79,18 +84,14 @@ public class UISettings implements NamedJDOMExternalizable, ApplicationComponent
    * Notifies all registered listeners that UI settings has been changed.
    */
   public void fireUISettingsChanged(){
-    UISettingsListener[] listeners=(UISettingsListener[])myListenerList.getListeners(UISettingsListener.class);
-    for(int i=0;i<listeners.length;i++){
-      listeners[i].uiSettingsChanged(this);
+    UISettingsListener[] listeners= myListenerList.getListeners(UISettingsListener.class);
+    for (UISettingsListener listener : listeners) {
+      listener.uiSettingsChanged(this);
     }
   }
 
   public static UISettings getInstance() {
     return ApplicationManager.getApplication().getComponent(UISettings.class);
-  }
-
-  public String getExternalFileName() {
-    return "ui.lnf";
   }
 
   public void removeUISettingsListener(UISettingsListener listener){
@@ -100,58 +101,6 @@ public class UISettings implements NamedJDOMExternalizable, ApplicationComponent
   private void setDefaultFontSettings(){
     FONT_FACE = "dialog";
     FONT_SIZE = 12;
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-    // Check tab placement in editor
-    if(
-      EDITOR_TAB_PLACEMENT != TABS_NONE &&
-      EDITOR_TAB_PLACEMENT != SwingConstants.TOP&&
-      EDITOR_TAB_PLACEMENT != SwingConstants.LEFT&&
-      EDITOR_TAB_PLACEMENT != SwingConstants.BOTTOM&&
-      EDITOR_TAB_PLACEMENT != SwingConstants.RIGHT
-    ){
-      EDITOR_TAB_PLACEMENT=SwingConstants.TOP;
-    }
-    // Check that alpha ration in in valid range
-    if(ALPHA_MODE_DELAY<0){
-      ALPHA_MODE_DELAY=1500;
-    }
-    if(ALPHA_MODE_RATIO<.0f||ALPHA_MODE_RATIO>1.0f){
-      ALPHA_MODE_RATIO=0.5f;
-    }
-
-    setSystemFontFaceAndSize();
-    // 1. Sometimes system font cannot display standard ASCI symbols. If so we have
-    // find any other suitable font withing "preferred" fonts first.
-    boolean fontIsValid = isValidFont(new Font(FONT_FACE, Font.PLAIN, FONT_SIZE));
-    if(!fontIsValid){
-      @NonNls final String[] preferredFonts = new String[]{"dialog", "Arial", "Tahoma"};
-      for(int i = 0; i < preferredFonts.length; i++){
-        if(isValidFont(new Font(preferredFonts[i], Font.PLAIN, FONT_SIZE))){
-          FONT_FACE = preferredFonts[i];
-          fontIsValid = true;
-          break;
-        }
-      }
-
-      // 2. If all preferred fonts are not valid in current environment
-      // we have to find first valid font (if any)
-      if(!fontIsValid){
-        Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
-        for(int i = 0; i < fonts.length; i++){
-          if(isValidFont(fonts[i])){
-            FONT_FACE = fonts[i].getName();
-            break;
-          }
-        }
-      }
-    }
-
-    if (MAX_CLIPBOARD_CONTENTS <= 0) {
-      MAX_CLIPBOARD_CONTENTS = 5;
-    }
   }
 
   private static boolean isValidFont(final Font font){
@@ -190,25 +139,6 @@ public class UISettings implements NamedJDOMExternalizable, ApplicationComponent
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    final boolean defaultFonts = hasDefaultFontSetting(this);
-    // Don't save face and size of font if it they don't differ from system settings
-    if(defaultFonts){
-      String oldFontFace=FONT_FACE;
-      int oldFontSize=FONT_SIZE;
-      FONT_FACE=null;
-      FONT_SIZE=-1;
-      try{
-        DefaultJDOMExternalizer.writeExternal(this, element);
-      }finally{
-        FONT_FACE=oldFontFace;
-        FONT_SIZE=oldFontSize;
-      }
-    }else{
-      DefaultJDOMExternalizer.writeExternal(this, element);
-    }
-  }
-
   private static boolean hasDefaultFontSetting(final UISettings settings) {
     Font font=(Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
     if(SystemInfo.isWindows && font!=null && settings.FONT_FACE.equals(font.getName()) && settings.FONT_SIZE==font.getSize()){
@@ -216,6 +146,66 @@ public class UISettings implements NamedJDOMExternalizable, ApplicationComponent
     }
 
     return false;
+  }
+
+  public UISettings getState() {
+    return this;
+  }
+
+  public void loadState(UISettings object) {
+    XmlSerializerUtil.copyBean(object, this);
+
+    // Check tab placement in editor
+    if(
+      EDITOR_TAB_PLACEMENT != TABS_NONE &&
+      EDITOR_TAB_PLACEMENT != SwingConstants.TOP&&
+      EDITOR_TAB_PLACEMENT != SwingConstants.LEFT&&
+      EDITOR_TAB_PLACEMENT != SwingConstants.BOTTOM&&
+      EDITOR_TAB_PLACEMENT != SwingConstants.RIGHT
+    ){
+      EDITOR_TAB_PLACEMENT=SwingConstants.TOP;
+    }
+    // Check that alpha ration in in valid range
+    if(ALPHA_MODE_DELAY<0){
+      ALPHA_MODE_DELAY=1500;
+    }
+    if(ALPHA_MODE_RATIO<.0f||ALPHA_MODE_RATIO>1.0f){
+      ALPHA_MODE_RATIO=0.5f;
+    }
+
+    setSystemFontFaceAndSize();
+    // 1. Sometimes system font cannot display standard ASCI symbols. If so we have
+    // find any other suitable font withing "preferred" fonts first.
+    boolean fontIsValid = isValidFont(new Font(FONT_FACE, Font.PLAIN, FONT_SIZE));
+    if(!fontIsValid){
+      @NonNls final String[] preferredFonts = new String[]{"dialog", "Arial", "Tahoma"};
+      for (String preferredFont : preferredFonts) {
+        if (isValidFont(new Font(preferredFont, Font.PLAIN, FONT_SIZE))) {
+          FONT_FACE = preferredFont;
+          fontIsValid = true;
+          break;
+        }
+      }
+
+      // 2. If all preferred fonts are not valid in current environment
+      // we have to find first valid font (if any)
+      if(!fontIsValid){
+        Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
+        for (Font font : fonts) {
+          if (isValidFont(font)) {
+            FONT_FACE = font.getName();
+            break;
+          }
+        }
+      }
+    }
+
+    if (MAX_CLIPBOARD_CONTENTS <= 0) {
+      MAX_CLIPBOARD_CONTENTS = 5;
+    }
+
+
+    fireUISettingsChanged();
   }
 
   public static class FontFilter implements SerializationFilter {
@@ -226,11 +216,6 @@ public class UISettings implements NamedJDOMExternalizable, ApplicationComponent
       return true;
     }
 
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "UISettings";
   }
 
   public static void setupAntialiasing(final Graphics g) {

@@ -1,31 +1,23 @@
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
-import com.intellij.openapi.project.impl.convertors.Convertor01;
-import com.intellij.openapi.project.impl.convertors.Convertor12;
-import com.intellij.openapi.project.impl.convertors.Convertor23;
-import com.intellij.openapi.project.impl.convertors.Convertor34;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.text.CharArrayUtil;
-import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.BaseFileConfigurableStoreImpl");
@@ -40,82 +32,45 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   @NonNls private static final String ATTRIBUTE_CLASS = "class";
   private ComponentManagerImpl myComponentManager;
   private static ArrayList<String> ourConversionProblemsStorage = new ArrayList<String>();
+  private DefaultsStateStorage myDefaultsStateStorage;
+  private StateStorageManager myStateStorageManager;
 
   @Nullable
   protected abstract VirtualFile getComponentConfigurationFile(ComponentConfig componentInterface);
   protected abstract String getRootNodeName();
-  protected abstract ConfigurationFile[] getConfigurationFiles();
 
 
   protected BaseFileConfigurableStoreImpl(final ComponentManagerImpl componentManager) {
     myComponentManager = componentManager;
+    myDefaultsStateStorage = new DefaultsStateStorage(PathMacroManager.getInstance(myComponentManager));
   }
 
   public synchronized ComponentManagerImpl getComponentManager() {
     return myComponentManager;
   }
 
-  public synchronized Element saveToXml(VirtualFile configFile) {
-    String filePath = configFile != null ? configFile.getPath() : null;
-    Element root = new Element(getRootNodeName());
+  @Override
+  protected void beforeSave() throws StateStorage.StateStorageException, SaveCancelledException {
+    final XmlElementStorage mainStorage = getMainStorage();
 
-    root.setAttribute(VERSION_OPTION, Integer.toString(ProjectManagerImpl.CURRENT_FORMAT_VERSION));
-    root.setAttribute(RELATIVE_PATHS_OPTION, Boolean.toString(isSavePathsRelative()));
+    final org.w3c.dom.Element rootElement = mainStorage.getRootElement();
+    if (rootElement == null) return;
 
-    List<Element> newContents = new ArrayList<Element>();
+    writeRootElement(rootElement);
 
-    //save configuration without components
-    final Set<String> result;
-    result = getConfigurationNames();
-    final Set<String> names = result;
-    for (String name : names) {
-      if (Comparing.equal(myConfigurationNameToFileName.get(name), filePath)) {
-        final Element e = getConfiguration(name);
-        if (e != null) {
-          newContents.add((Element)e.clone());
-        }
-      }
-    }
-
-    final ComponentConfig[] componentConfigs = myComponentManager.getComponentConfigurations();
-    for (ComponentConfig componentConfig : componentConfigs) {
-      VirtualFile componentFile = getComponentConfigurationFile(componentConfig);
-
-      if (configFile == componentFile) {
-        final Object component = myComponentManager.getComponent(componentConfig);
-
-        try {
-          final Element node = serializeComponent(component);
-          if (node != null) {
-            newContents.add(node);
-          }
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-      }
-    }
-
-    Collections.sort(newContents, new Comparator<Element>() {
-      public int compare(Element e1, Element e2) {
-        String name1 = e1.getAttributeValue(ATTRIBUTE_NAME);
-        String name2 = e2.getAttributeValue(ATTRIBUTE_NAME);
-        if (name2 == null && name1 == null) return e1.getName().compareTo(e2.getName());
-        if (name1 == null) return 1;
-        if (name2 == null) return -1;
-        return name1.compareTo(name2);
-      }
-    });
-
-    for (final Element newContent : newContents) {
-      root.addContent(newContent);
-    }
-
-    return root;
+    super.beforeSave();
   }
 
+  protected void writeRootElement(final org.w3c.dom.Element rootElement) {
+    rootElement.setAttribute(VERSION_OPTION, Integer.toString(ProjectManagerImpl.CURRENT_FORMAT_VERSION));
+    rootElement.setAttribute(RELATIVE_PATHS_OPTION, Boolean.toString(isSavePathsRelative()));
+  }
+
+  protected abstract XmlElementStorage getMainStorage();
 
   public synchronized void loadFromXml(Element root, String filePath) throws InvalidDataException {
+    throw new UnsupportedOperationException("");
+    /*
     PathMacroManager.getInstance(myComponentManager).expandPaths(root);
 
     int originalVersion = 0;
@@ -162,6 +117,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
       addConfiguration(name, element);
       myConfigurationNameToFileName.put(name, filePath);
     }
+    */
 
   }
 
@@ -174,58 +130,32 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return myOriginalVersion;
   }
 
-  synchronized void save() throws IOException {
-    for (ConfigurationFile file : getConfigurationFiles()) {
-      final VirtualFile vFile = file.getVirtualFile();
-      file.save(saveToXml(vFile), PathMacroManager.getInstance(myComponentManager).getReplacePathMap(), getLineSeparator(vFile));
+
+  @Override
+  protected void doSave() throws IOException {
+    super.doSave();
+
+    saveStorageManager();
+  }
+
+  protected void saveStorageManager() throws IOException {
+    try {
+      getStateStorageManager().save();
+    }
+    catch (StateStorage.StateStorageException e) {
+      LOG.info(e);
+      throw new IOException(e.getMessage());
     }
   }
 
-  void collectFileNeedsToBeWritten(final ConfigurationFile[] files, final List<VirtualFile> readonlyFiles) {
-    if (files != null) {
-      final ReplacePathToMacroMap replacements = PathMacroManager.getInstance(myComponentManager).getReplacePathMap();
-      for (ConfigurationFile file : files) {
-        final VirtualFile vFile = file.getVirtualFile();
-        if (vFile != null && !vFile.isWritable() && configFileNeedsToBeWritten(file, replacements)) {
-          readonlyFiles.add(vFile);
-        }
-      }
-    }
+  public void load() throws IOException {
   }
 
-  private boolean configFileNeedsToBeWritten(ConfigurationFile file, final ReplacePathToMacroMap replacements) {
-    final VirtualFile vFile = file.getVirtualFile();
-    return !ProjectManagerEx.getInstanceEx().isFileSavedToBeReloaded(vFile) &&
-           file.needsSave(saveToXml(vFile), replacements, getLineSeparator(vFile));
-  }
-
-  synchronized String getLineSeparator(final VirtualFile file) {
+  String getLineSeparator(final VirtualFile file) {
     return FileDocumentManager.getInstance().getLineSeparator(file, null);
   }
 
-  public synchronized void loadSavedConfiguration() throws JDOMException, IOException, InvalidDataException {
-    clearDomMap();
-
-    ConfigurationFile[] configurationFiles = getConfigurationFiles();
-    for (ConfigurationFile configurationFile : configurationFiles) {
-      VirtualFile vFile = configurationFile.getVirtualFile();
-      if (vFile != null) {
-        loadFromFile(vFile);
-      }
-    }
-  }
-
-  private void loadFromFile(VirtualFile file) throws JDOMException, InvalidDataException, IOException {
-    final CharSequence text = FileDocumentManager.getInstance().getDocument(file).getCharsSequence();
-    Document document = JDOMUtil.loadDocument(CharArrayUtil.fromSequence(text), text.length());
-    Element root = document.getRootElement();
-    if (root == null) {
-      throw new InvalidDataException();
-    }
-    loadFromXml(root, file.getPath());
-  }
-
-   boolean isSavePathsRelative() {
+  boolean isSavePathsRelative() {
     return mySavePathsRelative;
   }
 
@@ -234,16 +164,38 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   }
 
   public List<VirtualFile> getAllStorageFiles(final boolean includingSubStructures) {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    return getStateStorageManager().getAllStorageFiles();
+  }
 
-    final ConfigurationFile[] configurationFiles = getConfigurationFiles();
-    for (ConfigurationFile configurationFile : configurationFiles) {
-      final VirtualFile vFile = configurationFile.getVirtualFile();
-      if (vFile != null) {
-        result.add(vFile);
-      }
+
+  public List<VirtualFile> getAllStorageFilesToSave(final boolean includingSubStructures) {
+    try {
+      return getStateStorageManager().getAllStorageFilesToSave();
     }
+    catch (StateStorage.StateStorageException e) {
+      LOG.error(e);
+      return Collections.emptyList();
+    }
+  }
 
-    return result;
+  @Override
+  protected StateStorage getDefaultsStorage() {
+    return myDefaultsStateStorage;
+  }
+
+  @Override
+  protected StateStorage getStateStorage(final Storage storageSpec) {
+    return getStateStorageManager().getStateStorage(storageSpec.file());
+  }
+
+  public StateStorageManager getStateStorageManager() {
+    if (myStateStorageManager == null) {
+      myStateStorageManager = createStateStorageManager();
+    }
+    return myStateStorageManager;
+  }
+
+  protected StateStorageManager createStateStorageManager() {
+    return new StateStorageManager(PathMacroManager.getInstance(getComponentManager()));
   }
 }

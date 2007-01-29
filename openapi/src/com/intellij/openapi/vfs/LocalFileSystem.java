@@ -39,6 +39,9 @@ public abstract class LocalFileSystem extends VirtualFileSystem {
   public abstract VirtualFile findFileByIoFile(File file);
 
   @Nullable
+  public abstract VirtualFile findFileByIoFile(IFile file);
+
+  @Nullable
   public abstract VirtualFile refreshAndFindFileByIoFile(File file);
 
   @Nullable

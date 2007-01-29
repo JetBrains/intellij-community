@@ -10,9 +10,17 @@ import org.jdom.Attribute;
 import org.jdom.Comment;
 import org.jdom.Element;
 import org.jdom.Text;
+import org.jetbrains.annotations.Nullable;
+import org.w3c.dom.Attr;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import java.io.File;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -38,33 +46,62 @@ public abstract class PathMacroMap {
     myMacroMap.put(fromText, toText);
   }
 
-  public abstract String substitute(String text, boolean caseSensitive);
+  public abstract String substitute(String text, boolean caseSensitive, @Nullable final Set<String> usedMacros);
 
-  public final void substitute(Element e, boolean caseSensitive) {
+  public final void substitute(Element e, boolean caseSensitive, @Nullable final Set<String> usedMacros) {
     List content = e.getContent();
-    for (int i = 0; i < content.size(); i++) {
-      Object o = content.get(i);
-      if (o instanceof Element) {
-        Element element = (Element)o;
-        substitute(element, caseSensitive);
+    for (Object child : content) {
+      if (child instanceof Element) {
+        Element element = (Element)child;
+        substitute(element, caseSensitive, usedMacros);
       }
-      else if (o instanceof Text) {
-        Text t = (Text)o;
-        t.setText(substitute(t.getText(), caseSensitive));
+      else if (child instanceof Text) {
+        Text t = (Text)child;
+        t.setText(substitute(t.getText(), caseSensitive, usedMacros));
       }
-      else if (o instanceof Comment)  {
-        Comment c = (Comment)o;
-        c.setText(substitute(c.getText(), caseSensitive));
+      else if (child instanceof Comment) {
+        Comment c = (Comment)child;
+        c.setText(substitute(c.getText(), caseSensitive, usedMacros));
       }
       else {
-        LOG.error("Wrong content: " + o.getClass());
+        LOG.error("Wrong content: " + child.getClass());
       }
     }
 
     List attributes = e.getAttributes();
-    for (Iterator i = attributes.iterator(); i.hasNext();) {
-      Attribute attribute = (Attribute)i.next();
-      attribute.setValue(substitute(attribute.getValue(), caseSensitive));
+    for (final Object attribute1 : attributes) {
+      Attribute attribute = (Attribute)attribute1;
+      attribute.setValue(substitute(attribute.getValue(), caseSensitive, usedMacros));
+    }
+  }
+
+  public final void substitute(org.w3c.dom.Element e, boolean caseSensitive,@Nullable final Set<String> usedMacros) {
+    final NodeList childNodes = e.getChildNodes();
+    for (int i = 0; i < childNodes.getLength(); i++) {
+      final Node child = childNodes.item(i);
+
+      if (child instanceof org.w3c.dom.Element) {
+        org.w3c.dom.Element element = (org.w3c.dom.Element)child;
+        substitute(element, caseSensitive, usedMacros);
+      }
+      else if (child instanceof org.w3c.dom.Text) {
+        org.w3c.dom.Text t = (org.w3c.dom.Text)child;
+        t.setTextContent(substitute(t.getTextContent(), caseSensitive, usedMacros));
+      }
+      else if (child instanceof org.w3c.dom.Comment) {
+        org.w3c.dom.Comment c = (org.w3c.dom.Comment)child;
+        c.setText(substitute(c.getText(), caseSensitive, usedMacros));
+      }
+      else {
+        LOG.error("Wrong content: " + child.getClass());
+      }
+    }
+
+    final NamedNodeMap attributes = e.getAttributes();
+    for (int i = 0; i < attributes.getLength(); i++) {
+      final Node node = attributes.item(i);
+      Attr attr = (Attr)node;
+      e.setAttribute(attr.getName(), substitute(attr.getValue(), caseSensitive, usedMacros));
     }
   }
 
@@ -72,11 +109,11 @@ public abstract class PathMacroMap {
     return myMacroMap.size();
   }
 
-  public Set<Map.Entry<String, String>> entries() {
+  protected Set<Map.Entry<String, String>> entries() {
     return myMacroMap.entrySet();
   }
 
-  public Set<String> keySet() {
+  protected Set<String> keySet() {
     return myMacroMap.keySet();
   }
 

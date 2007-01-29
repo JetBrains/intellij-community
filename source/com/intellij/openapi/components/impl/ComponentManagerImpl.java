@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -56,11 +55,18 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     boostrapPicoContainer();
   }
 
+  //todo[mike] there are several init* methods. Make it just 1
+  public void init() {
+    getStateStore().initStore();
+    initComponents();
+  }
+
+
   @NotNull
   public synchronized IComponentStore getStateStore() {
     if (myComponentStore == null) {
       assert myPicoContainer != null;
-      myComponentStore = (IComponentStore)myPicoContainer.getComponentInstanceOfType(IComponentStore.class);
+      myComponentStore = (IComponentStore)myPicoContainer.getComponentInstance(IComponentStore.class);
     }
     return myComponentStore;
   }
@@ -267,18 +273,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return options != null && options.containsKey(option) && Boolean.valueOf(options.get(option)).booleanValue();
   }
 
-  public void saveSettingsSavingComponents() {
-    Object[] components = getComponents(SettingsSavingComponent.class);
-    for (Object component : components) {
-      if (component instanceof SettingsSavingComponent) {
-        ((SettingsSavingComponent)component).save();
-      }
-    }
-  }
-
   public synchronized void dispose() {
-    final IComponentStore store = getStateStore();
-
     myDisposeCompleted = true;
 
     if (myMessageBus != null) {
@@ -288,19 +283,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     myInitializedComponents = null;
     myPicoContainer = null;
-
-    store.dispose();
   }
 
   public boolean isDisposed() {
     return myDisposed;
   }
 
-  //todo[mike] there are several init* methods. Make it just 1
-  public void init() {
-    getStateStore().initStore();
-    initComponents();
-  }
 
   public void initComponents() {
     createComponents();
@@ -311,7 +299,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myConfigurator.loadComponentsConfiguration(components, descriptor, loadDummies);
   }
 
-  public void loadComponentsConfiguration(final String layer, final boolean loadDummies) {
+  protected void loadComponentsConfiguration(final String layer, final boolean loadDummies) {
     myConfigurator.loadComponentsConfiguration(layer, loadDummies);
   }
 
@@ -325,7 +313,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
 
-  public ComponentManager getParentComponentManager() {
+  protected ComponentManager getParentComponentManager() {
     return myParentComponentManager;
   }
 
@@ -352,6 +340,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return getPicoContainer().getComponentInstance(componentConfig.interfaceClass);
   }
 
+  public ComponentConfig getConfig(Class componentImplementation) {
+    return myComponentsRegistry.getConfig(componentImplementation);
+  }
+
   private class ComponentsRegistry {
     private Map<Class, Object> myInterfaceToLockMap = new HashMap<Class, Object>();
     private Map<Class, Class> myInterfaceToClassMap = new HashMap<Class, Class>();
@@ -359,6 +351,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     private Map<String, BaseComponent> myNameToComponent = new HashMap<String, BaseComponent>();
     private List<ComponentConfig> myComponentConfigs = new ArrayList<ComponentConfig>();
     private List<Object> myImplementations = new ArrayList<Object>();
+    private Map<Class, ComponentConfig> myComponentClassToConfig = new java.util.HashMap<Class, ComponentConfig>();
     private boolean myClassesLoaded = false;
 
     private void loadClasses() {
@@ -384,6 +377,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
         getPicoContainer().registerComponent(new ComponentConfigComponentAdapter(config));
         myInterfaceToClassMap.put(interfaceClass, implementationClass);
+        myComponentClassToConfig.put(implementationClass, config);
         myComponentInterfaces.add(interfaceClass);
       }
       catch (Exception e) {
@@ -472,6 +466,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     public ComponentConfig[] getComponentConfigurations() {
         return myComponentConfigs.toArray(new ComponentConfig[myComponentConfigs.size()]);
+    }
+
+    public ComponentConfig getConfig(final Class componentImplementation) {
+      return myComponentClassToConfig.get(componentImplementation);
     }
   }
 

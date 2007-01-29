@@ -25,13 +25,15 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.xml.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
-import com.intellij.util.xml.highlighting.*;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
+import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -73,7 +75,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   private final ConcurrentFactoryMap<Type, GenericInfoImpl> myMethodsMaps = new ConcurrentFactoryMap<Type, GenericInfoImpl>() {
     @NotNull
     protected GenericInfoImpl create(final Type type) {
-      final Class<?> rawType = DomReflectionUtil.getRawType(type);
+      final Class<?> rawType = ReflectionUtil.getRawType(type);
       assert rawType != null : "Type not supported: " + type;
       return new GenericInfoImpl(rawType, DomManagerImpl.this);
     }
