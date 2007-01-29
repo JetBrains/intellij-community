@@ -141,14 +141,14 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   }
 
   @Override
-  protected void activate() {
+  public void activate() {
     super.activate();
     SvnApplicationSettings.getInstance().svnActivated();
     VirtualFileManager.getInstance().addVirtualFileListener(myEntriesFileListener);
   }
 
   @Override
-  protected void deactivate() {
+  public void deactivate() {
     VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
     SvnApplicationSettings.getInstance().svnDeactivated();
     super.deactivate();
