@@ -21,7 +21,7 @@ public class GetCollectionChildInvocation implements Invocation {
   }
 
   public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
-    assert handler.isValid();
+    assert handler.isValid() : "dom element is not valid";
     XmlTag tag = handler.getXmlTag();
     if (tag == null) return Collections.emptyList();
 
