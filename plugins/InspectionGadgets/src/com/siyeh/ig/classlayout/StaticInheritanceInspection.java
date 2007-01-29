@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 public class StaticInheritanceInspection extends ClassInspection {
 
@@ -76,16 +78,16 @@ public class StaticInheritanceInspection extends ClassInspection {
             for (final PsiField field : allFields) {
                 final Query<PsiReference> search =
                         ReferencesSearch.search(field, searchScope, false);
-                for (PsiReference reference1 : search) {
-                    if (!(reference1 instanceof PsiReferenceExpression)) {
+                for (PsiReference reference : search) {
+                    if (!(reference instanceof PsiReferenceExpression)) {
                         continue;
                     }
-                    final PsiReferenceExpression reference =
-                            (PsiReferenceExpression)reference1;
-                    if(isQuickFixOnReadOnlyFile(reference)){
+                    final PsiReferenceExpression referenceExpression =
+                            (PsiReferenceExpression)reference;
+                    if(isQuickFixOnReadOnlyFile(referenceExpression)){
                         continue;
                     }
-                    refsToRebind.put(reference, field);
+                    refsToRebind.put(referenceExpression, field);
                 }
             }
             deleteElement(referenceElement);
@@ -102,7 +104,8 @@ public class StaticInheritanceInspection extends ClassInspection {
                         (PsiReferenceExpression)
                                 newReference.getQualifierExpression();
                 if (referenceExpression != null) {
-                    referenceExpression.bindToElement(field.getContainingClass());
+                    final PsiClass containingClass = field.getContainingClass();
+                    referenceExpression.bindToElement(containingClass);
                 }
             }
         }
@@ -121,19 +124,23 @@ public class StaticInheritanceInspection extends ClassInspection {
             if (implementsList == null) {
                 return;
             }
-            final PsiJavaCodeReferenceElement[] refs =
+            final PsiJavaCodeReferenceElement[] references =
                     implementsList.getReferenceElements();
-            for (final PsiJavaCodeReferenceElement ref : refs) {
-                final PsiClass iface = (PsiClass)ref.resolve();
+            for (final PsiJavaCodeReferenceElement reference : references) {
+                final PsiClass iface = (PsiClass)reference.resolve();
                 if (iface != null) {
-                    if (interfaceContainsOnlyConstants(iface)) {
-                        registerError(ref);
+                    if (interfaceContainsOnlyConstants(iface, new HashSet())) {
+                        registerError(reference);
                     }
                 }
             }
         }
 
-        private static boolean interfaceContainsOnlyConstants(PsiClass iface) {
+        private static boolean interfaceContainsOnlyConstants(
+                PsiClass iface, Set visitedIntefaces) {
+            if (!visitedIntefaces.add(iface)) {
+                return true;
+            }
             if (iface.getAllFields().length == 0) {
                 // ignore it, it's either a true interface or just a marker
                 return false;
@@ -143,7 +150,8 @@ public class StaticInheritanceInspection extends ClassInspection {
             }
             final PsiClass[] parentInterfaces = iface.getInterfaces();
             for (final PsiClass parentInterface : parentInterfaces) {
-                if (!interfaceContainsOnlyConstants(parentInterface)) {
+                if (!interfaceContainsOnlyConstants(parentInterface,
+                        visitedIntefaces)) {
                     return false;
                 }
             }
