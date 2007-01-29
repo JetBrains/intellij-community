@@ -68,7 +68,13 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
       final NamedNodeMap attributes = element.getAttributes();
       for (int i = 0; i < attributes.getLength(); i++) {
         Attr attr = (Attr)attributes.item(i);
-        myModule.setOption(attr.getName(), attr.getValue());
+        final String optionName = attr.getName();
+        final String optionValue = attr.getValue();
+        myModule.setOption(optionName, optionValue);
+
+        if (optionName.equals(RELATIVE_PATHS_OPTION) && optionValue.equals("true")) {
+          setSavePathsRelative(true);
+        }
       }
 
       final String moduleTypeId = myModule.getOptionValue(ModuleImpl.ELEMENT_TYPE);
@@ -118,10 +124,6 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
   public void initComponent(final Object component) {
     if (((ProjectImpl)myModule.getProject()).isOptimiseTestLoadSpeed()) return; //test load speed optimization
     super.initComponent(component);
-  }
-
-  public boolean isSavePathsRelative() {
-    return super.isSavePathsRelative();
   }
 
   @Nullable

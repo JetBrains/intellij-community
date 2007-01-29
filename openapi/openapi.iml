@@ -2,9 +2,9 @@
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="ModuleRootManager" />
   <component inherit-compiler-output="true" name="NewModuleRootManager">
-    <output url="file:///Users/mike/Depot/IDEA/out/classes/production/openapi" />
+    <output url="file://$MODULE_DIR$/../out/classes/production/openapi" />
     <exclude-output />
-    <output-test url="file:///Users/mike/Depot/IDEA/out/classes/test/openapi" />
+    <output-test url="file://$MODULE_DIR$/../out/classes/test/openapi" />
     <content url="file://$MODULE_DIR$">
       <sourceFolder isTestSource="false" url="file://$MODULE_DIR$/src" />
     </content>
@@ -22,7 +22,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar:///Users/mike/Depot/IDEA/lib/picocontainer.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/picocontainer.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

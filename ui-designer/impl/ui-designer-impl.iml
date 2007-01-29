@@ -2,7 +2,7 @@
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="ModuleRootManager" />
   <component inherit-compiler-output="true" name="NewModuleRootManager">
-    <output url="file:///Users/mike/Depot/IDEA/ui-designer/classes/impl" />
+    <output url="file://$MODULE_DIR$/../classes/impl" />
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder isTestSource="false" url="file://$MODULE_DIR$" />

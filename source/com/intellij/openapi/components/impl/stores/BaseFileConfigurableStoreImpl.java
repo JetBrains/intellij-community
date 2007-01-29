@@ -155,7 +155,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return FileDocumentManager.getInstance().getLineSeparator(file, null);
   }
 
-  boolean isSavePathsRelative() {
+  public boolean isSavePathsRelative() {
     return mySavePathsRelative;
   }
 
