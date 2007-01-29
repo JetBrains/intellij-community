@@ -15,14 +15,14 @@
  */
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
 import java.awt.*;
 
 public abstract class ShowSettingsUtil {
   public static ShowSettingsUtil getInstance() {
-    return ApplicationManager.getApplication().getComponent(ShowSettingsUtil.class);
+    return ServiceManager.getService(ShowSettingsUtil.class);
   }
 
   public abstract void showSettingsDialog(Project project, ConfigurableGroup[] group);

@@ -3,7 +3,6 @@ package com.intellij.ide.actions;
 import com.intellij.application.options.CodeStyleSchemesConfigurable;
 import com.intellij.application.options.ProjectCodeStyleConfigurable;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -20,7 +19,7 @@ import java.awt.*;
 /**
  * @author max
  */
-public class ShowSettingsUtilImpl extends ShowSettingsUtil implements ApplicationComponent {
+public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   @NonNls
   private static final String PREFER_CLASSIC_OPTIONS_EDITOR = "PREFER_CLASSIC_OPTIONS_EDITOR";
 
@@ -119,10 +118,4 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil implements Applicatio
     return !savedSettings.equals(settingsManager.getCurrentSettings());
   }
 
-  public String getComponentName() {
-    return "ShowSettingsUtil";
-  }
-
-  public void initComponent() {}
-  public void disposeComponent() {}
 }

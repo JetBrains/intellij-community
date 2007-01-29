@@ -1,16 +1,6 @@
 <components>
   <application-components>
     <component>
-      <interface-class>com.intellij.openapi.options.ShowSettingsUtil</interface-class>
-      <implementation-class>com.intellij.ide.actions.ShowSettingsUtilImpl</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.openapi.options.colors.ColorSettingsPages</interface-class>
-      <implementation-class>com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.ide.plugins.PluginManagerConfigurable</interface-class>
       <implementation-class>com.intellij.ide.plugins.PluginManagerConfigurable</implementation-class>
     </component>

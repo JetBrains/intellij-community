@@ -31,25 +31,18 @@
  */
 package com.intellij.openapi.options.colors.pages;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.options.colors.ColorSettingsPages;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ColorSettingsPagesImpl extends ColorSettingsPages implements ApplicationComponent {
+public class ColorSettingsPagesImpl extends ColorSettingsPages {
   private List<ColorSettingsPage> myPages = new ArrayList<ColorSettingsPage>();
 
   public ColorSettingsPagesImpl() {
     registerStandardPages();
   }
-
-  public String getComponentName() {
-    return "ColorSettingsPages";
-  }
-
-  public void initComponent() { }
 
   private void registerStandardPages() {
     registerPage(new GeneralColorsPage());
@@ -58,9 +51,6 @@ public class ColorSettingsPagesImpl extends ColorSettingsPages implements Applic
     registerPage(new XMLColorsPage());
     registerPage(new CustomColorsPage());
     registerPage(new PropertiesColorsPage());
-  }
-
-  public void disposeComponent() {
   }
 
   public void registerPage(ColorSettingsPage page) {

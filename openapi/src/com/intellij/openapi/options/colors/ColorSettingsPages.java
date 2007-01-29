@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.options.colors;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 
 /**
  * Registry for custom pages shown in the "Colors and Fonts" settings dialog.
@@ -27,7 +27,7 @@ public abstract class ColorSettingsPages {
    * @return the registry instance.
    */
   public static ColorSettingsPages getInstance() {
-    return ApplicationManager.getApplication().getComponent(ColorSettingsPages.class);
+    return ServiceManager.getService(ColorSettingsPages.class);
   }
 
   /**
