@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.util.io.FileUtil;
 
 import javax.swing.*;
@@ -56,7 +57,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
 
   private class ConfigureVcsAction extends AbstractAction {
     public ConfigureVcsAction() {
-      super("Configure...");
+      super(VcsBundle.message("button.configure"));
     }
 
     public void actionPerformed(ActionEvent e) {

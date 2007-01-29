@@ -22,9 +22,8 @@ import javax.swing.table.TableCellEditor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Collection;
 import java.io.File;
 
 /**
@@ -35,6 +34,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons {
   private ProjectLevelVcsManager myVcsManager;
   private TableView<VcsDirectoryMapping> myDirectoryMappingTable;
   private ComboboxWithBrowseButton myVcsComboBox = new ComboboxWithBrowseButton();
+  final List<ModuleVcsListener> myListeners = new ArrayList<ModuleVcsListener>();
 
   private final ColumnInfo<VcsDirectoryMapping, String> DIRECTORY = new ColumnInfo<VcsDirectoryMapping, String>(VcsBundle.message("column.info.configure.vcses.directory")) {
     public String valueOf(final VcsDirectoryMapping mapping) {
@@ -57,7 +57,9 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons {
     }
 
     public void setValue(final VcsDirectoryMapping o, final String aValue) {
+      Collection<AbstractVcs> activeVcses = getActiveVcses();
       o.setVcs(aValue);
+      checkNotifyListeners(activeVcses);
     }
 
     public TableCellRenderer getRenderer(final VcsDirectoryMapping p0) {
@@ -169,11 +171,18 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons {
         removeMapping();
       }
     });
-    return new JButton[] {myAddButton, myEditButton, myRemoveButton};
+    JButton configureButton = new JButton(VcsBundle.message("button.configure"));
+    configureButton.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        showConfigureDialog();
+      }
+    });
+    return new JButton[] {myAddButton, myEditButton, myRemoveButton, configureButton};
   }
 
   private void addMapping() {
-    VcsMappingConfigurationDialog dlg = new VcsMappingConfigurationDialog(myProject, "Add VCS Directory Mapping");
+    Collection<AbstractVcs> activeVcses = getActiveVcses();
+    VcsMappingConfigurationDialog dlg = new VcsMappingConfigurationDialog(myProject, VcsBundle.message("directory.mapping.add.title"));
     dlg.show();
     if (dlg.isOK()) {
       VcsDirectoryMapping mapping = new VcsDirectoryMapping();
@@ -181,21 +190,25 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons {
       List<VcsDirectoryMapping> items = new ArrayList<VcsDirectoryMapping>(myModel.getItems());
       items.add(mapping);
       myModel.setItems(items);
+      checkNotifyListeners(activeVcses);
     }
   }
 
   private void editMapping() {
-    VcsMappingConfigurationDialog dlg = new VcsMappingConfigurationDialog(myProject, "Edit VCS Directory Mapping");
+    Collection<AbstractVcs> activeVcses = getActiveVcses();
+    VcsMappingConfigurationDialog dlg = new VcsMappingConfigurationDialog(myProject, VcsBundle.message("directory.mapping.remove.title"));
     final VcsDirectoryMapping mapping = myDirectoryMappingTable.getSelectedObject();
     dlg.setMapping(mapping);
     dlg.show();
     if (dlg.isOK()) {
       dlg.saveToMapping(mapping);
       myModel.fireTableDataChanged();
+      checkNotifyListeners(activeVcses);
     }
   }
 
   private void removeMapping() {
+    Collection<AbstractVcs> activeVcses = getActiveVcses();
     ArrayList<VcsDirectoryMapping> mappings = new ArrayList<VcsDirectoryMapping>(myModel.getItems());
     int index = myDirectoryMappingTable.getSelectionModel().getMinSelectionIndex();
     Collection<VcsDirectoryMapping> selection = myDirectoryMappingTable.getSelection();
@@ -207,6 +220,16 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons {
       }
       myDirectoryMappingTable.getSelectionModel().setSelectionInterval(index, index);
     }
+    checkNotifyListeners(activeVcses);
+  }
+
+  private void showConfigureDialog() {
+    AbstractVcs defaultVcs = null;
+    final VcsDirectoryMapping mapping = myDirectoryMappingTable.getSelectedObject();
+    if (mapping != null && mapping.getVcs().length() != 0) {
+      defaultVcs = myVcsManager.findVcsByName(mapping.getVcs());
+    }
+    new VcsConfigurationsDialog(myProject, null, defaultVcs).show();
   }
 
   protected JComponent createMainComponent() {
@@ -223,5 +246,32 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons {
 
   public boolean isModified() {
     return !myModel.getItems().equals(myVcsManager.getDirectoryMappings());
+  }
+
+  public void addVcsListener(final ModuleVcsListener moduleVcsListener) {
+    myListeners.add(moduleVcsListener);
+  }
+
+  public void removeVcsListener(final ModuleVcsListener moduleVcsListener) {
+    myListeners.remove(moduleVcsListener);
+  }
+
+  private void checkNotifyListeners(Collection<AbstractVcs> oldVcses) {
+    Collection<AbstractVcs> vcses = getActiveVcses();
+    if (!vcses.equals(oldVcses)) {
+      for(ModuleVcsListener listener: myListeners) {
+        listener.activeVcsSetChanged(vcses);
+      }
+    }
+  }
+
+  public Collection<AbstractVcs> getActiveVcses() {
+    Set<AbstractVcs> vcses = new HashSet<AbstractVcs>();
+    for(VcsDirectoryMapping mapping: myModel.getItems()) {
+      if (mapping.getVcs().length() > 0) {
+        vcses.add(myVcsManager.findVcsByName(mapping.getVcs()));
+      }
+    }
+    return vcses;
   }
 }

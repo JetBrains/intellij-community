@@ -178,9 +178,9 @@ public class VcsConfigurationsDialog extends DialogWrapper{
       final ComboBoxModel model = vcsesToUpdate.getModel();
       for(int i = 0; i < model.getSize(); i++){
         final Object vcsWrapper = model.getElementAt(i);
-        if (vcsWrapper instanceof DefaultVcsWrapper){
-          final DefaultVcsWrapper defaultVcsWrapper = (DefaultVcsWrapper)vcsWrapper;
-          if (new VcsWrapper(defaultVcsWrapper.getDefaultVcs()).equals(wrapper)){
+        if (vcsWrapper instanceof VcsWrapper){
+          final VcsWrapper defaultVcsWrapper = (VcsWrapper)vcsWrapper;
+          if (defaultVcsWrapper.equals(wrapper)){
             vcsesToUpdate.setSelectedIndex(i);
             break;
           }
