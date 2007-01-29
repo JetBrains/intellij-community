@@ -12,17 +12,20 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiVariable;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 public class DfaVariableState implements Cloneable {
-  private HashSet<DfaTypeValue> myInstanceofValues;
-  private HashSet<DfaTypeValue> myNotInstanceofValues;
+  private final Set<DfaTypeValue> myInstanceofValues;
+  private final Set<DfaTypeValue> myNotInstanceofValues;
   private boolean myNullable = false;
   private final boolean myVariableIsDeclaredNotNull;
-  private PsiVariable myVar;
+  private final PsiVariable myVar;
 
   public DfaVariableState(@Nullable PsiVariable var) {
     myVar = var;
@@ -30,6 +33,14 @@ public class DfaVariableState implements Cloneable {
     myNotInstanceofValues = new HashSet<DfaTypeValue>();
     myNullable = var != null && AnnotationUtil.isNullable(var);
     myVariableIsDeclaredNotNull = var != null && AnnotationUtil.isNotNull(var);
+  }
+
+  private DfaVariableState(final DfaVariableState toClone) {
+    myVar = toClone.myVar;
+    myInstanceofValues = new THashSet<DfaTypeValue>(toClone.myInstanceofValues);
+    myNotInstanceofValues = new THashSet<DfaTypeValue>(toClone.myNotInstanceofValues);
+    myNullable = myVar != null && AnnotationUtil.isNullable(myVar);
+    myVariableIsDeclaredNotNull = myVar != null && AnnotationUtil.isNotNull(myVar);
   }
 
   public boolean isNullable() {
@@ -88,18 +99,11 @@ public class DfaVariableState implements Cloneable {
   }
 
   protected Object clone() throws CloneNotSupportedException {
-    DfaVariableState newState = new DfaVariableState(myVar);
-
-    newState.myInstanceofValues = (HashSet<DfaTypeValue>) myInstanceofValues.clone();
-    newState.myNotInstanceofValues = (HashSet<DfaTypeValue>) myNotInstanceofValues.clone();
-    newState.myNullable = myNullable;
-
-    return newState;
+    return new DfaVariableState(this);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    StringBuffer buf = new StringBuffer();
+    @NonNls StringBuilder buf = new StringBuilder();
 
     buf.append("instanceof {");
     for (Iterator<DfaTypeValue> iterator = myInstanceofValues.iterator(); iterator.hasNext();) {
@@ -116,7 +120,7 @@ public class DfaVariableState implements Cloneable {
       if (iterator.hasNext()) buf.append(", ");
     }
     buf.append("}");
-    buf.append(", nullable=" + myNullable);
+    buf.append(", nullable=").append(myNullable);
     return buf.toString();
   }
 

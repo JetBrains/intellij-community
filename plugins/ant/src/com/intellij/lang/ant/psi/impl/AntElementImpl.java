@@ -68,7 +68,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append("AntElement[");
-      builder.append((this == ourNull) ? "null" : getSourceElement().toString());
+      builder.append(this == ourNull ? "null" : getSourceElement().toString());
       builder.append("]");
       return builder.toString();
     }
@@ -87,7 +87,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   }
 
   public AntProject getAntProject() {
-    return (AntProject)((this instanceof AntProject) ? this : PsiTreeUtil.getParentOfType(this, AntProject.class));
+    return (AntProject)(this instanceof AntProject ? this : PsiTreeUtil.getParentOfType(this, AntProject.class));
   }
 
   public AntFile getAntFile() {
@@ -109,13 +109,13 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   @Nullable
   public AntElement getFirstChild() {
     final AntElement[] children = getChildren();
-    return (children.length == 0) ? null : children[0];
+    return children.length == 0 ? null : children[0];
   }
 
   @Nullable
   public PsiElement getLastChild() {
     final PsiElement[] children = getChildren();
-    return (children.length == 0) ? null : children[children.length - 1];
+    return children.length == 0 ? null : children[children.length - 1];
   }
 
   @Nullable
@@ -174,7 +174,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
 
   @Nullable
   public AntProperty getProperty(final String name) {
-    return (myProperties == null) ? null : myProperties.get(name);
+    return myProperties == null ? null : myProperties.get(name);
   }
 
   public void setProperty(final String name, final AntProperty element) {
@@ -219,7 +219,9 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     for (final AntElement element : getChildren()) {
       final TextRange textRange = element.getTextRange();
       if (textRange.contains(offsetInFile)) {
-        return element.findElementAt(offsetInFile - textRange.getStartOffset());
+        PsiElement elementAt = element.findElementAt(offsetInFile - textRange.getStartOffset());
+        assert elementAt == null || elementAt.isValid();
+        return elementAt;
       }
     }
     return getTextRange().contains(offsetInFile) ? this : null;
@@ -371,7 +373,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
             if (prefix != null && !prefix.endsWith(".")) {
               prefix += '.';
             }
-            final String key = (prefix == null) ? propName : prefix + propName;
+            final String key = prefix == null ? propName : prefix + propName;
             final Property property = propFile.findPropertyByKey(key);
             if (property != null) {
               result = property;

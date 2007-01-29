@@ -12,6 +12,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
@@ -21,39 +22,38 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
 
   public boolean isAvailable(Project project, Editor editor, @Nullable PsiElement element) {
     if (element == null) return false;
-    int offset = editor.getCaretModel().getOffset();
 
     if (!element.getManager().isInProject(element)) return false;
 
-    if (element instanceof PsiJavaToken) {
-      PsiJavaToken token = (PsiJavaToken)element;
-      if (!(token.getParent() instanceof PsiBinaryExpression)) return false;
+    if (!(element instanceof PsiJavaToken)) {
+      return false;
+    }
+    PsiJavaToken token = (PsiJavaToken)element;
+    if (!(token.getParent() instanceof PsiBinaryExpression)) return false;
 
-      PsiBinaryExpression expression = (PsiBinaryExpression)token.getParent();
-      boolean isAndExpression = expression.getOperationSign().getTokenType() == JavaTokenType.ANDAND;
-      boolean isOrExpression = expression.getOperationSign().getTokenType() == JavaTokenType.OROR;
-      if (!isAndExpression && !isOrExpression) return false;
+    PsiBinaryExpression expression = (PsiBinaryExpression)token.getParent();
+    boolean isAndExpression = expression.getOperationSign().getTokenType() == JavaTokenType.ANDAND;
+    boolean isOrExpression = expression.getOperationSign().getTokenType() == JavaTokenType.OROR;
+    if (!isAndExpression && !isOrExpression) return false;
 
-      while (expression.getParent() instanceof PsiBinaryExpression) {
-        if (isAndExpression && expression.getOperationSign().getTokenType() != JavaTokenType.ANDAND) return false;
-        if (isOrExpression && expression.getOperationSign().getTokenType() != JavaTokenType.OROR) return false;
-        expression = (PsiBinaryExpression)expression.getParent();
-      }
-
-      if (!(expression.getParent() instanceof PsiIfStatement)) return false;
-      PsiIfStatement ifStatement = (PsiIfStatement)expression.getParent();
-
-      if (!PsiTreeUtil.isAncestor(ifStatement.getCondition(), expression, false)) return false;
-      if (ifStatement.getThenBranch() == null) return false;
-
-      setText(CodeInsightBundle.message("intention.split.if.text"));
-
-      return true;
+    while (expression.getParent() instanceof PsiBinaryExpression) {
+      if (isAndExpression && expression.getOperationSign().getTokenType() != JavaTokenType.ANDAND) return false;
+      if (isOrExpression && expression.getOperationSign().getTokenType() != JavaTokenType.OROR) return false;
+      expression = (PsiBinaryExpression)expression.getParent();
     }
 
-    return false;
+    if (!(expression.getParent() instanceof PsiIfStatement)) return false;
+    PsiIfStatement ifStatement = (PsiIfStatement)expression.getParent();
+
+    if (!PsiTreeUtil.isAncestor(ifStatement.getCondition(), expression, false)) return false;
+    if (ifStatement.getThenBranch() == null) return false;
+
+    setText(CodeInsightBundle.message("intention.split.if.text"));
+
+    return true;
   }
 
+  @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.split.if.family");
   }
@@ -85,8 +85,8 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
     }
   }
 
-  private void doAndSplit(PsiIfStatement ifStatement, PsiBinaryExpression expression, Editor editor) throws IncorrectOperationException {
-    PsiExpression lOperand = getLOperand(expression);
+  private static void doAndSplit(PsiIfStatement ifStatement, PsiBinaryExpression expression, Editor editor) throws IncorrectOperationException {
+    PsiExpression lOperand = expression.getLOperand();
     PsiExpression rOperand = getROperand(expression);
 
 
@@ -113,11 +113,7 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
     editor.getSelectionModel().removeSelection();
   }
 
-  private PsiExpression getLOperand(PsiBinaryExpression expression) {
-    return expression.getLOperand();
-  }
-
-  private PsiExpression getROperand(PsiBinaryExpression expression) throws IncorrectOperationException {
+  private static PsiExpression getROperand(PsiBinaryExpression expression) throws IncorrectOperationException {
     PsiElement e = expression;
     while (!(e.getParent() instanceof PsiIfStatement)) e = e.getParent();
 
@@ -125,8 +121,8 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
         e.getText().substring(expression.getROperand().getTextRange().getStartOffset() - e.getTextRange().getStartOffset()), e.getParent());
   }
 
-  private void doOrSplit(PsiIfStatement ifStatement, PsiBinaryExpression expression, Editor editor) throws IncorrectOperationException {
-    PsiExpression lOperand = getLOperand(expression);
+  private static void doOrSplit(PsiIfStatement ifStatement, PsiBinaryExpression expression, Editor editor) throws IncorrectOperationException {
+    PsiExpression lOperand = expression.getLOperand();
     PsiExpression rOperand = getROperand(expression);
 
     PsiIfStatement secondIf = (PsiIfStatement)ifStatement.copy();

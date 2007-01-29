@@ -136,15 +136,16 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
 
   public PsiElement findElementAt(int offset) {
     synchronized (PsiLock.LOCK) {
-      if (offset == myLastFoundElementOffset) {
-        return myLastFoundElement;
-      }
-      final PsiElement foundElement = super.findElementAt(offset);
-      if (foundElement != null) {
+      if (offset != myLastFoundElementOffset) {
+        final PsiElement foundElement = super.findElementAt(offset);
+        if (foundElement == null) {
+          return null;
+        }
         myLastFoundElement = (AntElement)foundElement;
         myLastFoundElementOffset = offset;
       }
-      return foundElement;
+      assert myLastFoundElement == null || myLastFoundElement.isValid() : myLastFoundElement + ": " + offset;
+      return myLastFoundElement;
     }
   }
 
@@ -198,7 +199,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
     String dir = baseDir;
     if (dir == null) {
       final AntProject project = antFile.getAntProject();
-      dir = (project == null) ? null : project.getBaseDir();
+      dir = project == null ? null : project.getBaseDir();
     }
     if (dir != null && dir.length() > 0) {
       projectPath = new File(projectPath, dir).getAbsolutePath();
@@ -303,7 +304,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
             }
           }
           final int count = children.size();
-          return (count > 0) ? children.toArray(new AntElement[count]) : AntElement.EMPTY_ARRAY;
+          return count > 0 ? children.toArray(new AntElement[count]) : AntElement.EMPTY_ARRAY;
         }
         finally {
           myInGettingChildren = false;
