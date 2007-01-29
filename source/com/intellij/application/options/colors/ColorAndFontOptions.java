@@ -2,7 +2,6 @@ package com.intellij.application.options.colors;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diff.impl.settings.DiffColorsForm;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -35,7 +34,6 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,18 +42,13 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
-public class ColorAndFontOptions extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
+public class ColorAndFontOptions extends BaseConfigurable implements SearchableConfigurable {
   private ColorAndFontPanel myPanel;
   private HashMap<String,MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
   public static final String DIFF_GROUP = ApplicationBundle.message("title.diff");
   public static final String FILE_STATUS_GROUP = ApplicationBundle.message("title.file.status");
   public static final String SCOPES_GROUP = ApplicationBundle.message("title.scope.based");
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
 
   public boolean isModified() {
     if (!mySelectedScheme.getName().equals(EditorColorsManager.getInstance().getGlobalScheme().getName())) return true;
@@ -513,11 +506,6 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
 
   public String getHelpTopic() {
     return "preferences.colorsFonts";
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "ColorAndFontOptions";
   }
 
   private static class MyColorScheme extends EditorColorsSchemeImpl {

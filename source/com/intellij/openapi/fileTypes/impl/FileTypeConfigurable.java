@@ -3,7 +3,6 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -11,8 +10,8 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ListUtil;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +30,7 @@ import java.util.List;
 /**
  * @author Eugene Belyaev
  */
-public class FileTypeConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
+public class FileTypeConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private RecognizedFileTypes myRecognizedFileType;
   private PatternsPanel myPatterns;
   private FileTypePanel myFileTypePanel;
@@ -42,12 +41,6 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
   public FileTypeConfigurable(FileTypeManager fileTypeManager) {
     myManager = (FileTypeManagerImpl)fileTypeManager;
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
   }
 
   public String getDisplayName() {
@@ -250,10 +243,6 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
   public String getHelpTopic() {
     return "preferences.fileTypes";
-  }
-
-  public String getComponentName() {
-    return "FileTypeConfigurable";
   }
 
   public static class RecognizedFileTypes extends JPanel {

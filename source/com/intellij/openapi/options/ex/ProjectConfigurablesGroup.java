@@ -6,6 +6,11 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+
 /**
  * @author max
  */
@@ -31,14 +36,24 @@ public class ProjectConfigurablesGroup implements ConfigurableGroup {
   }
 
   public Configurable[] getConfigurables() {
+    final Configurable[] extensions = myProject.getExtensions(Configurable.PROJECT_CONFIGURABLES);
     Configurable[] components = myProject.getComponents(Configurable.class);
-    Configurable[] configurables = new Configurable[components.length - (isDefault() ? 1 : 0)];
-    int j = 0;
-    for (Configurable component : components) {
-      if (component instanceof ScopeChooserConfigurable && isDefault()) continue; //can't configgure scopes without project
-      configurables[j++] = component;
+
+    List<Configurable> result = new ArrayList<Configurable>();
+    result.addAll(Arrays.asList(extensions));
+    result.addAll(Arrays.asList(components));
+
+    if (isDefault()) {
+      final Iterator<Configurable> iterator = result.iterator();
+      while (iterator.hasNext()) {
+        Configurable configurable = iterator.next();
+        if (configurable instanceof ScopeChooserConfigurable) {
+          iterator.remove();
+        }
+      }
     }
-    return configurables;
+
+    return result.toArray(new Configurable[result.size()]);
   }
 
   public int hashCode() {

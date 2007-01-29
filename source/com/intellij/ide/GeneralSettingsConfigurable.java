@@ -1,7 +1,6 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diff.impl.external.DiffOptionsForm;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -14,8 +13,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.CharsetSettings;
 import com.intellij.util.net.HTTPProxySettingsPanel;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -27,19 +26,9 @@ import java.nio.charset.Charset;
 import java.util.SortedMap;
 import java.util.Vector;
 
-public class GeneralSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
+public class GeneralSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private DiffOptionsForm myDiffOptions;
   private MyComponent myComponent;
-
-  public static GeneralSettingsConfigurable getInstance() {
-    return ApplicationManager.getApplication().getComponent(GeneralSettingsConfigurable.class);
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
 
   public void apply() {
     GeneralSettings settings = GeneralSettings.getInstance();
@@ -233,11 +222,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
   @NotNull
   public String getHelpTopic() {
     return "preferences.general";
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "GeneralSettingsConfigurable";
   }
 
   private static class MyComponent {

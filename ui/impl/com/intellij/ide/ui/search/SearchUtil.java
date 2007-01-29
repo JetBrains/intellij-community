@@ -4,9 +4,11 @@
 
 package com.intellij.ide.ui.search;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.GlassPanel;
+import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
+import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -40,22 +42,24 @@ public class SearchUtil {
   }
 
   public static void processProjectConfigurables(Project project, HashMap<SearchableConfigurable, TreeSet<OptionDescription>> options) {
-    processConfigurables(project.getComponents(SearchableConfigurable.class), options);
+    processConfigurables(new ProjectConfigurablesGroup(project).getConfigurables(), options);
     processApplicationConfigurables(options);
   }
 
   private static void processApplicationConfigurables(HashMap<SearchableConfigurable, TreeSet<OptionDescription>> options) {
-    processConfigurables(ApplicationManager.getApplication().getComponents(SearchableConfigurable.class), options);
+    processConfigurables(new IdeConfigurablesGroup().getConfigurables(), options);
   }
 
-  public static void processConfigurables(final SearchableConfigurable[] configurables,
+  private static void processConfigurables(final Configurable[] configurables,
                                           final HashMap<SearchableConfigurable, TreeSet<OptionDescription>> options) {
-    for (SearchableConfigurable configurable : configurables) {
-      TreeSet<OptionDescription> configurableOptions = new TreeSet<OptionDescription>();
-      options.put(configurable, configurableOptions);
-      final JComponent component = configurable.createComponent();
-      processUILabel(configurable.getDisplayName(), configurableOptions, null);
-      processComponent(component, configurableOptions, null);
+    for (Configurable configurable : configurables) {
+      if (configurable instanceof SearchableConfigurable) {
+        TreeSet<OptionDescription> configurableOptions = new TreeSet<OptionDescription>();
+        options.put((SearchableConfigurable)configurable, configurableOptions);
+        final JComponent component = configurable.createComponent();
+        processUILabel(configurable.getDisplayName(), configurableOptions, null);
+        processComponent(component, configurableOptions, null);
+      }
     }
   }
 

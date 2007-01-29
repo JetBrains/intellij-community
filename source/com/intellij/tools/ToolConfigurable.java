@@ -1,6 +1,5 @@
 package com.intellij.tools;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
@@ -9,19 +8,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.IOException;
 
-public class ToolConfigurable implements SearchableConfigurable, ApplicationComponent {
+public class ToolConfigurable implements SearchableConfigurable {
   private static final Icon ourIcon = IconLoader.getIcon("/general/externalTools.png");
   private ToolsPanel myPanel;
-
-  public String getComponentName() {
-    return "ExternalToolsConfigurable";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
 
   public String getDisplayName() {
     return ToolsBundle.message("tools.settings.title");

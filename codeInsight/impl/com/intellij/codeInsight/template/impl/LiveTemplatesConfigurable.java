@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
@@ -9,21 +8,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class LiveTemplatesConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
+public class LiveTemplatesConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private TemplateListPanel myPanel;
-
-  public String getComponentName() {
-    return "LiveTemplatesConfigurable";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
-  public LiveTemplatesConfigurable() {
-  }
 
   public boolean isModified() {
     return myPanel.isModified();

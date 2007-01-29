@@ -1,6 +1,5 @@
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -10,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class VcsManagerConfigurable implements SearchableConfigurable, ProjectComponent {
+public class VcsManagerConfigurable implements SearchableConfigurable {
   private VcsManagerConfigurablePanel myPanel;
   public static final Icon ICON = IconLoader.getIcon("/general/configurableVcs.png");
   private final Project myProject;
@@ -23,18 +22,6 @@ public class VcsManagerConfigurable implements SearchableConfigurable, ProjectCo
 
   }
 
-  public void projectClosed() {
-  }
-
-  public void projectOpened() {
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
-  }
-
   public String getDisplayName() {
     return VcsBundle.message("version.control.main.configurable.name");
   }
@@ -45,10 +32,6 @@ public class VcsManagerConfigurable implements SearchableConfigurable, ProjectCo
 
   public Icon getIcon() {
     return ICON;
-  }
-
-  public String getComponentName() {
-    return "VcsManagerConfigurable";
   }
 
   public JComponent createComponent() {

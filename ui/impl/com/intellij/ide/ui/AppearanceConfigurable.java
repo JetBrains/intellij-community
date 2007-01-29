@@ -1,7 +1,6 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Comparing;
@@ -22,17 +21,8 @@ import java.util.Hashtable;
 /**
  * @author Eugene Belyaev
  */
-public class AppearanceConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
+public class AppearanceConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private MyComponent myComponent;
-
-  public AppearanceConfigurable() {
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
-  }
 
   public String getDisplayName() {
     return IdeBundle.message("title.appearance");
@@ -275,10 +265,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
   public String getHelpTopic() {
     return "preferences.lookFeel";
-  }
-
-  public String getComponentName() {
-    return "UISettingsConfigurable";
   }
 
   private static final class MyLafComboBoxRenderer extends DefaultListCellRenderer {

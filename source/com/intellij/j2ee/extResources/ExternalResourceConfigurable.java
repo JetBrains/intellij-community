@@ -1,13 +1,11 @@
 package com.intellij.j2ee.extResources;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
-import com.intellij.javaee.J2EEBundle;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.ide.IdeBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -17,21 +15,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ExternalResourceConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
+public class ExternalResourceConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private JPanel myPanel;
   private List<EditLocationDialog.Pair> myPairs;
   private List<String> myIgnoredUrls;
   private AddEditRemovePanel<EditLocationDialog.Pair> myExtPanel;
   private AddEditRemovePanel<String> myIgnorePanel;
-
-  public ExternalResourceConfigurable() {
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
-  }
 
   public String getDisplayName() {
     return IdeBundle.message("display.name.edit.external.resource");
@@ -204,10 +193,6 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
 
   public void editUri() {
     myExtPanel.doEdit();
-  }
-
-  public String getComponentName() {
-    return "ExternalResourceConfigurable";
   }
 
   public void selectResource(final String uri) {

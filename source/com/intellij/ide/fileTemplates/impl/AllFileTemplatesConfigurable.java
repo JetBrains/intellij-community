@@ -5,7 +5,6 @@ import com.intellij.ide.fileTemplates.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -19,7 +18,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -35,7 +33,7 @@ import java.util.*;
  * Time: 12:44:56 PM
  */
 
-public class AllFileTemplatesConfigurable implements SearchableConfigurable, ApplicationComponent {
+public class AllFileTemplatesConfigurable implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable");
   private JPanel myMainPanel;
   private FileTemplateTab myCurrentTab;
@@ -62,19 +60,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, App
   @NonNls private static final String CURRENT_TAB = "FileTemplates.CurrentTab";
   @NonNls private static final String SELECTED_TEMPLATE = "FileTemplates.SelectedTemplate";
 
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
-  }
-
   public Icon getIcon() {
     return ourIcon;
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "FileTemplateOptions";
   }
 
   private void onRemove() {

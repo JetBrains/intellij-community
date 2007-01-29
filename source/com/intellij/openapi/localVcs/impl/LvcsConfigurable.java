@@ -1,6 +1,5 @@
 package com.intellij.openapi.localVcs.impl;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.localVcs.LocalVcsBundle;
 import com.intellij.openapi.localVcs.LvcsConfiguration;
 import com.intellij.openapi.options.BaseConfigurable;
@@ -21,7 +20,7 @@ import java.awt.*;
 /**
  * author: lesya
  */
-public class LvcsConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
+public class LvcsConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private JCheckBox myCbEnabled;
   private JTextField myFieldHistoryLength;
   private JCheckBox myCbProjectOpen;
@@ -34,9 +33,6 @@ public class LvcsConfigurable extends BaseConfigurable implements SearchableConf
   private JLabel myHistoryLengthLabel;
   private JPanel myPanel;
   private static final int MILLIS_IN_DAY = 1000 * 60 * 60 * 24;
-
-  public LvcsConfigurable() {
-  }
 
   public String getDisplayName() {
     return LocalVcsBundle.message("lvcs.configurable.display.name");
@@ -192,16 +188,6 @@ public class LvcsConfigurable extends BaseConfigurable implements SearchableConf
 
   public void disposeUIResources() {
     myPanel = null;
-  }
-
-  public String getComponentName() {
-    return "LvcsConfigurable";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   private void updateEnabled() {

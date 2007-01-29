@@ -1,20 +1,14 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class EditorOptions implements SearchableConfigurable, ApplicationComponent {
+public class EditorOptions implements SearchableConfigurable {
   private EditorOptionsPanel myPanel;
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
 
   public boolean isModified() {
     return myPanel.isModified();
@@ -47,10 +41,6 @@ public class EditorOptions implements SearchableConfigurable, ApplicationCompone
 
   public String getHelpTopic() {
     return "preferences.editor";
-  }
-
-  public String getComponentName() {
-    return "EditorOptions";
   }
 
   public String getId() {

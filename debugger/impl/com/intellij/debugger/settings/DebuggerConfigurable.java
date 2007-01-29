@@ -3,7 +3,6 @@ package com.intellij.debugger.settings;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -20,15 +19,10 @@ import java.util.List;
 /**
  * @author Eugene Belyaev & Eugene Zhuravlev
  */
-public class DebuggerConfigurable extends CompositeConfigurable implements ApplicationComponent, SearchableConfigurable {
+public class DebuggerConfigurable extends CompositeConfigurable implements SearchableConfigurable {
   public DebuggerConfigurable() {
     super();
   }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
 
   public Icon getIcon() {
     return IconLoader.getIcon("/general/configurableDebugger.png");
@@ -40,10 +34,6 @@ public class DebuggerConfigurable extends CompositeConfigurable implements Appli
 
   public String getHelpTopic() {
     return "project.propDebugger";
-  }
-
-  public String getComponentName() {
-    return "DebuggerConfigurable";
   }
 
   protected List<Configurable> createConfigurables() {

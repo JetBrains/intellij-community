@@ -8,9 +8,6 @@
       <interface-class>com.intellij.usages.UsageViewSettings</interface-class>
       <implementation-class>com.intellij.usages.UsageViewSettings</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.ide.ui.customization.CustomizationConfigurable</implementation-class>
-    </component>
 
   </application-components>
   <project-components>

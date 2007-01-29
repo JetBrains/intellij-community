@@ -4,67 +4,12 @@
       <interface-class>com.intellij.openapi.options.ShowSettingsUtil</interface-class>
       <implementation-class>com.intellij.ide.actions.ShowSettingsUtilImpl</implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.ide.GeneralSettingsConfigurable</interface-class>
-      <implementation-class>com.intellij.ide.GeneralSettingsConfigurable</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.ide.ui.AppearanceConfigurable</interface-class>
-      <implementation-class>com.intellij.ide.ui.AppearanceConfigurable</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.application.options.EditorOptions</interface-class>
-      <implementation-class>com.intellij.application.options.EditorOptions</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.application.options.CodeCompletionOptions</interface-class>
-      <implementation-class>com.intellij.application.options.CodeCompletionOptions</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.application.options.colors.ColorAndFontOptions</interface-class>
-      <implementation-class>com.intellij.application.options.colors.ColorAndFontOptions</implementation-class>
-    </component>
+
     <component>
       <interface-class>com.intellij.openapi.options.colors.ColorSettingsPages</interface-class>
       <implementation-class>com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl</implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.application.options.CodeStyleSchemesConfigurable</interface-class>
-      <implementation-class>com.intellij.application.options.CodeStyleSchemesConfigurable</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.debugger.settings.DebuggerConfigurable</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.j2ee.extResources.ExternalResourceConfigurable</interface-class>
-      <implementation-class>com.intellij.j2ee.extResources.ExternalResourceConfigurable</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.fileTypes.impl.FileTypeConfigurable</interface-class>
-      <implementation-class>com.intellij.openapi.fileTypes.impl.FileTypeConfigurable</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.localVcs.impl.LvcsConfigurable</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.keymap.impl.ui.KeymapConfigurable</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.tools.ToolConfigurable</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.application.options.pathMacros.PathMacroConfigurable</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.ide.todo.configurable.TodoConfigurable</interface-class>
-      <implementation-class>com.intellij.ide.todo.configurable.TodoConfigurable</implementation-class>
-    </component>
+
     <component>
       <interface-class>com.intellij.ide.plugins.PluginManagerConfigurable</interface-class>
       <implementation-class>com.intellij.ide.plugins.PluginManagerConfigurable</implementation-class>
@@ -72,9 +17,6 @@
     <component>
       <interface-class>com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory</interface-class>
       <implementation-class>com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactoryImpl</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable</implementation-class>
@@ -92,24 +34,13 @@
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
-    <component>
-      <implementation-class>com.intellij.compiler.options.CompilerConfigurable</implementation-class>
-      <skipForDummyProject/>
-    </component>
+
     <!--
     <component>
       <implementation-class>com.intellij.openapi.roots.ui.configuration.ProjectLibrariesConfigurable</implementation-class>
     </component>
     -->
-    <component>
-      <interface-class>com.intellij.application.options.ProjectCodeStyleConfigurable</interface-class>
-      <implementation-class>com.intellij.application.options.ProjectCodeStyleConfigurable</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.configurable.VcsManagerConfigurable</implementation-class>
-      <skipForDummyProject/>
-    </component>
+
     <component>
       <implementation-class>com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable</implementation-class>
       <option name="workspace" value="true"/>

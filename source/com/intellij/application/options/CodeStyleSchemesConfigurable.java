@@ -5,8 +5,6 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -32,7 +30,7 @@ import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
-public class CodeStyleSchemesConfigurable implements SearchableConfigurable, ApplicationComponent {
+public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
   @NonNls
   private static final String WAIT_CARD = "CodeStyleSchemesConfigurable.$$$.Wait.placeholder.$$$";
   private JPanel myPanel;
@@ -42,9 +40,7 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable, App
   private SettingsStack mySettingsStack;
   private JPanel myRootPanel;
   private GlassPanel myGlassPanel;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleSchemesConfigurable");
   private String myOption = null;
-
 
   private static class SettingsStack extends JPanel {
     private CardLayout myLayout;
@@ -180,12 +176,6 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable, App
     public CodeStyleSettingsPanel getSettingsPanel(CodeStyleScheme defaultScheme) {
       return mySchemes.get(defaultScheme.getName());
     }
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
   }
 
   public boolean isModified() {
@@ -377,10 +367,6 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable, App
 
   public String getHelpTopic() {
     return mySettingsStack.getHelpTopic();
-  }
-
-  public String getComponentName() {
-    return "CodeStyleOptions";
   }
 
   private void onDelete() {

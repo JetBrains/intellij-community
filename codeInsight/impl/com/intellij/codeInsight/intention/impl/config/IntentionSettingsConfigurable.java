@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
@@ -9,11 +8,8 @@ import com.intellij.openapi.util.IconLoader;
 import javax.swing.*;
 import java.awt.*;
 
-public class IntentionSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
+public class IntentionSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private IntentionSettingsPanel myPanel;
-
-  public IntentionSettingsConfigurable() {
-  }
 
   public JComponent createComponent() {
     myPanel = new IntentionSettingsPanel();
@@ -24,14 +20,6 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
 
   public JComponent getPreferredFocusedComponent() {
     return myPanel.getIntentionTree();
-  }
-
-  public void projectOpened() {
-
-  }
-
-  public void projectClosed() {
-
   }
 
   public boolean isModified() {
@@ -62,16 +50,6 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
 
   public String getHelpTopic() {
     return "preferences.intentionPowerPack";
-  }
-
-  public void disposeComponent() {
-  }
-
-  public String getComponentName() {
-    return "IntentionSettingsOptions";
-  }
-
-  public void initComponent() {
   }
 
   public Runnable enableSearch(String option) {

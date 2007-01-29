@@ -2,7 +2,6 @@ package com.intellij.uiDesigner;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.progress.ProgressManager;
@@ -10,19 +9,19 @@ import com.intellij.openapi.progress.util.DispatchThreadProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.make.FormSourceCodeGenerator;
 import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -31,7 +30,7 @@ import java.util.ArrayList;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class GuiDesignerConfigurable implements SearchableConfigurable, ProjectComponent {
+public final class GuiDesignerConfigurable implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.GuiDesignerConfigurable");
   private final Project myProject;
   private MyGeneralUI myGeneralUI;
@@ -41,23 +40,6 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Pr
    */
   public GuiDesignerConfigurable(final Project project) {
     myProject = project;
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "uidesigner-configurable";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public String getDisplayName() {

@@ -1,7 +1,6 @@
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -11,20 +10,10 @@ import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
-public class KeymapConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
+public class KeymapConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private static final Icon icon = IconLoader.getIcon("/general/keymap.png");
   private KeymapPanel myPanel;
   private GlassPanel myGlassPanel;
-
-  public String getComponentName() {
-    return "KeymapConfigurable";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
 
   public String getDisplayName() {
     return KeyMapBundle.message("keymap.display.name");

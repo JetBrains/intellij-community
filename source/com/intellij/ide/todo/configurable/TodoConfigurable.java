@@ -4,7 +4,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoFilter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -36,7 +35,7 @@ import java.util.List;
 /**
  * @author Vladimir Kondratyev
  */
-public class TodoConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
+public class TodoConfigurable extends BaseConfigurable implements SearchableConfigurable {
   /*
    * UI resources
    */
@@ -57,7 +56,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
   /**
    * Invoked by reflection
    */
-  private TodoConfigurable() {
+  public TodoConfigurable() {
     myPatterns = new ArrayList<TodoPattern>();
     myFilters = new ArrayList<TodoFilter>();
     myFiltersModel = new FiltersTableModel(myFilters);
@@ -111,16 +110,6 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
       TodoFilter[] filters = myFilters.toArray(new TodoFilter[myFilters.size()]);
       TodoConfiguration.getInstance().setTodoFilters(filters);
     }
-  }
-
-  public void disposeComponent() {
-  }
-
-  public String getComponentName() {
-    return "TodoConfigurable";
-  }
-
-  public void initComponent() {
   }
 
   public void disposeUIResources() {

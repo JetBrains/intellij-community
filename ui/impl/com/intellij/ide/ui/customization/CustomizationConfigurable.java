@@ -1,7 +1,6 @@
 package com.intellij.ide.ui.customization;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -14,12 +13,8 @@ import javax.swing.*;
  * User: anna
  * Date: Mar 17, 2005
  */
-public class CustomizationConfigurable extends BaseConfigurable implements SearchableConfigurable, ApplicationComponent {
+public class CustomizationConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private CustomizableActionsPanel myPanel;
-
-  public CustomizationConfigurable() {
-
-  }
 
   public JComponent createComponent() {
     myPanel = new CustomizableActionsPanel();
@@ -51,16 +46,6 @@ public class CustomizationConfigurable extends BaseConfigurable implements Searc
   }
 
   public void disposeUIResources() {
-  }
-
-  public String getComponentName() {
-    return "com.intellij.ide.ui.customization.CustomizationConfigurable";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public String getId() {

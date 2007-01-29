@@ -15,9 +15,10 @@
  */
 package com.intellij.openapi.options;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -30,6 +31,9 @@ import javax.swing.*;
  * this interface are shown in the "Project Settings" group of that dialog.
  */
 public interface Configurable extends UnnamedConfigurable {
+  ExtensionPointName<Configurable> PROJECT_CONFIGURABLES = ExtensionPointName.create("com.intellij.projectConfigurable");
+  ExtensionPointName<Configurable> APPLICATION_CONFIGURABLES = ExtensionPointName.create("com.intellij.applicationConfigurable");
+
   /**
    * Returns the user-visible name of the settings component.
    *
