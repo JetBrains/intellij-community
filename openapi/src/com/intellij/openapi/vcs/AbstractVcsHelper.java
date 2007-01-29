@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,7 @@ import java.util.List;
  */
 public abstract class AbstractVcsHelper {
   public static AbstractVcsHelper getInstance(Project project) {
-    return project.getComponent(AbstractVcsHelper.class);
+    return ServiceManager.getService(project, AbstractVcsHelper.class);
   }
 
   public abstract void showErrors(List<VcsException> abstractVcsExceptions, String tabDisplayName);

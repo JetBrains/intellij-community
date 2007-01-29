@@ -63,7 +63,7 @@ import java.io.IOException;
 import java.util.*;
 import java.text.MessageFormat;
 
-public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectComponent {
+public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl");
 
   private Project myProject;
@@ -329,23 +329,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     if (lvcsFile == null) return null;
     LvcsRevision lastUpToDateRevision = StatusUtil.findLastUpToDateRevision(lvcsFile);
     return lastUpToDateRevision.getAbsolutePath().replace('/', File.separatorChar);
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "AbstractVcsHelper";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public void optimizeImportsAndReformatCode(final Collection<VirtualFile> files,

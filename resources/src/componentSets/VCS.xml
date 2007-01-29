@@ -26,11 +26,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <interface-class>com.intellij.openapi.vcs.AbstractVcsHelper</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.vcs.ProjectLevelVcsManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
@@ -48,10 +43,6 @@
     <component>
       <implementation-class>com.intellij.openapi.vcs.update.RestoreUpdateTree</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.VcsManager</implementation-class>
       <skipForDummyProject/>
     </component>
     <component>
