@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.RepositoryManager;
@@ -258,6 +259,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   public void dropResolveCaches() {
     myResolveCache.clearCache();
+    ControlFlowFactory.getInstance(myProject).clearCache();
   }
 
   public boolean isInPackage(@NotNull PsiElement element, @NotNull PsiPackage aPackage) {
@@ -567,7 +569,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     }
 
     if (element1 instanceof XmlElementDecl && element2 instanceof XmlElementDecl) {
-      if (!element1.isPhysical()) element1 = element1.getOriginalElement();  
+      if (!element1.isPhysical()) element1 = element1.getOriginalElement();
       if (!element2.isPhysical()) element2 = element2.getOriginalElement();
       return element1 == element2;
     }
@@ -597,7 +599,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   public PsiFile findFile(@NotNull VirtualFile file) {
     return myFileManager.findFile(file);
-    }
+  }
 
   @Nullable
   public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
@@ -620,6 +622,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
         if (psiFile == null) return null;
         psiFile = CacheUtil.createFileCopy(content, psiFile);
       }
+      //psiFile = content.putUserDataIfAbsent(CACHED_PSI_FILE_COPY_IN_FILECONTENT, psiFile);
       content.putUserData(CACHED_PSI_FILE_COPY_IN_FILECONTENT, psiFile);
     }
 
@@ -829,12 +832,12 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   private void fireEvent(PsiTreeChangeEventImpl event) {
     boolean isRealTreeChange = event.getCode() != PROPERTY_CHANGED && event.getCode() != BEFORE_PROPERTY_CHANGE;
 
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    PsiFile file = event.getFile();
+    if (file == null || file.isPhysical()) {
+      ApplicationManager.getApplication().assertWriteAccessAllowed();
+    }
     if (isRealTreeChange) {
       LOG.assertTrue(!myTreeChangeEventIsFiring, "Changes to PSI are not allowed inside event processing");
-    }
-
-    if (isRealTreeChange) {
       myTreeChangeEventIsFiring = true;
     }
     try {

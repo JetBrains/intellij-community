@@ -20,6 +20,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,26 +29,28 @@ import java.util.List;
 
 public class CreateFieldFromParameterAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.CreateFieldFromParameterAction");
-  private PsiParameter myParameter;
+  private String myName = "";
 
-  private  PsiType getType() {
-    if (myParameter == null) return null;
-    PsiType type = myParameter.getType();
+  private static PsiType getType(final PsiParameter parameter) {
+    if (parameter == null) return null;
+    PsiType type = parameter.getType();
     if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
     return type;
   }
 
+  @NotNull
   public String getText() {
-    return CodeInsightBundle.message("intention.create.field.from.parameter.text", myParameter.getName());
+    return CodeInsightBundle.message("intention.create.field.from.parameter.text", myName);
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    myParameter = findParameterAtCursor(file, editor);
-    final PsiType type = getType();
-    PsiClass targetClass = myParameter == null ? null : PsiTreeUtil.getParentOfType(myParameter, PsiClass.class);
+    PsiParameter myParameter = findParameterAtCursor(file, editor);
+    if (myParameter == null) return false;
+    myName = myParameter.getName();
+    final PsiType type = getType(myParameter);
+    PsiClass targetClass = PsiTreeUtil.getParentOfType(myParameter, PsiClass.class);
     return
-      myParameter != null
-      && myParameter.isValid()
+      myParameter.isValid()
       && myParameter.getDeclarationScope() instanceof PsiMethod
       && ((PsiMethod)myParameter.getDeclarationScope()).getBody() != null
       && myParameter.getManager().isInProject(myParameter)
@@ -89,6 +92,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     return null;
   }
 
+  @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.create.field.from.parameter.family");
   }
@@ -97,12 +101,12 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     invoke(project, editor, file, !ApplicationManager.getApplication().isUnitTestMode());
   }
 
-  private void invoke(final Project project, Editor editor, PsiFile file, boolean isInteractive) {
-    myParameter = findParameterAtCursor(file, editor);
+  private static void invoke(final Project project, Editor editor, PsiFile file, boolean isInteractive) {
+    final PsiParameter myParameter = findParameterAtCursor(file, editor);
     if (!CodeInsightUtil.prepareFileForWrite(myParameter.getContainingFile())) return;
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-    final PsiType type = getType();
+    final PsiType type = getType(myParameter);
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
     final String parameterName = myParameter.getName();
     String propertyName = styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER);
