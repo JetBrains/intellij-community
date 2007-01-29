@@ -54,9 +54,6 @@
     <component>
       <implementation-class>com.intellij.uiDesigner.projectView.FormRenameHandler</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.binding.FormUsageConverter</implementation-class>
-    </component>
   </application-components>
 
   <project-components>
