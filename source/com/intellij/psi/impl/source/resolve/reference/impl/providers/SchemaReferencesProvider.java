@@ -352,11 +352,10 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       final String canonicalText = getCanonicalText();
       final String newElementName = canonicalText.substring(0,canonicalText.indexOf(':') + 1) + _newElementName;
 
-      return ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement).handleContentChange(
-        myElement,
-        getRangeInElement(),
-        newElementName
-      );
+      final PsiElement element = ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement)
+        .handleContentChange(myElement, getRangeInElement(), newElementName);
+      myRange = new TextRange(myRange.getStartOffset(),myRange.getEndOffset() - (canonicalText.length() - newElementName.length()));
+      return element;
     }
 
     public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
