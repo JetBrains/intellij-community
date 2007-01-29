@@ -90,7 +90,7 @@ public abstract class PathMacroMap {
       }
       else if (child instanceof org.w3c.dom.Comment) {
         org.w3c.dom.Comment c = (org.w3c.dom.Comment)child;
-        c.setText(substitute(c.getText(), caseSensitive, usedMacros));
+        c.setTextContent(substitute(c.getTextContent(), caseSensitive, usedMacros));
       }
       else {
         LOG.error("Wrong content: " + child.getClass());
