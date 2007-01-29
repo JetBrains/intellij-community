@@ -3,13 +3,13 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.util.Factory;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.StableElement;
-import com.intellij.openapi.util.Factory;
 import net.sf.cglib.proxy.InvocationHandler;
 
-import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Set;
 
 /**
@@ -79,7 +79,10 @@ class StableInvocationHandler<T extends DomElement> implements InvocationHandler
   }
 
   private void doInvalidate() {
-    DomManagerImpl.getDomInvocationHandler(myCachedValue).detach(true);
+    final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(myCachedValue);
+    if (handler != null) {
+      handler.detach(true);
+    }
   }
 
   public final void invalidate() {
