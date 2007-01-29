@@ -5,10 +5,6 @@
       <implementation-class>com.intellij.ide.plugins.PluginManagerConfigurable</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory</interface-class>
-      <implementation-class>com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactoryImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable</implementation-class>
     </component>
   </application-components>

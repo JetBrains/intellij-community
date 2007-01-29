@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 
 public abstract class DefaultModuleConfigurationEditorFactory implements ApplicationComponent {
@@ -38,7 +38,7 @@ public abstract class DefaultModuleConfigurationEditorFactory implements Applica
   @Deprecated public abstract ModuleConfigurationEditor createCompilerOutputEditor(ModuleConfigurationState state);  
 
   public static DefaultModuleConfigurationEditorFactory getInstance() {
-    return ApplicationManager.getApplication().getComponent(DefaultModuleConfigurationEditorFactory.class);
+    return ServiceManager.getService(DefaultModuleConfigurationEditorFactory.class);
   }
 
 }
