@@ -157,8 +157,14 @@ public class AbstractBlockWrapper {
       return childIndent.add(myParent.getChildOffset(this, options, tokenBlockStartOffset));
     } else {
       if (myParent == null) return  childIndent.add(getWhiteSpace());
-      if (myParent.myParent == null) return  childIndent.add(getWhiteSpace());
-      if (getIndent().isAbsolute()) return childIndent.add(myParent.myParent.getChildOffset(myParent, options, tokenBlockStartOffset));
+      if (getIndent().isAbsolute()) {
+        if (myParent.myParent != null) {
+          return childIndent.add(myParent.myParent.getChildOffset(myParent, options, tokenBlockStartOffset));
+        }
+        else {
+          return  childIndent.add(getWhiteSpace());
+        }
+      }
       if ((myFlags & CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT) != 0) {
         return childIndent.add(getWhiteSpace());
       }
