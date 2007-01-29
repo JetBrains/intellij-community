@@ -73,11 +73,24 @@ public class AssignableFromFilter implements ElementFilter{
         }
       }
     }
-    final PsiType typeByElement = FilterUtil.getTypeByElement((PsiElement)element, context);
+    PsiType typeByElement = FilterUtil.getTypeByElement((PsiElement)element, context);
     if (typeByElement == null) {
       return false;
     }
-    if(substitutor != null) return type.isAssignableFrom(substitutor.substitute(typeByElement));
+
+    boolean allowBoxing = true;
+    if (context.getParent().getParent() instanceof PsiSynchronizedStatement) {
+      final PsiSynchronizedStatement statement = (PsiSynchronizedStatement)context.getParent().getParent();
+      if (context.getParent().equals(statement.getLockExpression())) {
+        allowBoxing = false;
+      }
+    }
+    if(substitutor != null) {
+      typeByElement = substitutor.substitute(typeByElement);
+    }
+
+    if (!allowBoxing && (type instanceof PsiPrimitiveType != typeByElement instanceof PsiPrimitiveType)) return false;
+
     return type.isAssignableFrom(typeByElement);
   }
 
