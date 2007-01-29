@@ -31,11 +31,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.vcs.fileView.FileViewConfiguration</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.vcs.ProjectLevelVcsManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
