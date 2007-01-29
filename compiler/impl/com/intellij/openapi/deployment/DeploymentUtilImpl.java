@@ -3,36 +3,17 @@ package com.intellij.openapi.deployment;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.impl.ProjectCompileScope;
-import com.intellij.compiler.impl.make.BuildInstructionBase;
-import com.intellij.compiler.impl.make.BuildRecipeImpl;
-import com.intellij.compiler.impl.make.JarAndCopyBuildInstructionImpl;
-import com.intellij.compiler.impl.make.JavaeeModuleBuildInstructionImpl;
-import com.intellij.compiler.impl.make.ModuleBuilder;
+import com.intellij.compiler.impl.make.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.compiler.DummyCompileContext;
-import com.intellij.openapi.compiler.make.BuildInstruction;
-import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
-import com.intellij.openapi.compiler.make.BuildParticipant;
-import com.intellij.openapi.compiler.make.BuildRecipe;
-import com.intellij.openapi.compiler.make.FileCopyInstruction;
-import com.intellij.openapi.compiler.make.ManifestBuilder;
-import com.intellij.openapi.compiler.make.ModuleBuildProperties;
+import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.make.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
@@ -43,8 +24,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.descriptors.ConfigFile;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,13 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -289,11 +268,12 @@ public class DeploymentUtilImpl extends DeploymentUtil implements ApplicationCom
     return moduleItemsMap;
   }
 
-  public void reportDeploymentDescriptorDoesNotExists(DeploymentItem descriptor, CompileContext context, Module module) {
-    final String description = module.getModuleType().getName() + " '"+module.getName()+'\'';
+  public void reportDeploymentDescriptorDoesNotExists(ConfigFile descriptor, CompileContext context, Module module) {
+    final String description = module.getModuleType().getName() + " '" + module.getName() + '\'';
     String descriptorPath = VfsUtil.urlToPath(descriptor.getUrl());
-    context.addMessage(CompilerMessageCategory.ERROR, CompilerBundle.message(
-      "message.text.compiling.item.deployment.descriptor.could.not.be.found", description, descriptorPath), null, -1, -1);
+    final String message =
+      CompilerBundle.message("message.text.compiling.item.deployment.descriptor.could.not.be.found", description, descriptorPath);
+    context.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
   }
 
   public void addJ2EEModuleOutput(@NotNull BuildRecipe buildRecipe,
@@ -329,6 +309,21 @@ public class DeploymentUtilImpl extends DeploymentUtil implements ApplicationCom
       }
     }, false);
     return ref.get();
+  }
+
+  public void checkConfigFile(final ConfigFile descriptor, final CompileContext compileContext, final Module module) {
+    if (new File(VfsUtil.urlToPath(descriptor.getUrl())).exists()) {
+      String message = getConfigFileErrorMessage(descriptor);
+      if (message != null) {
+        final String moduleDescription = module.getModuleType().getName() + " '" + module.getName() + '\'';
+        compileContext.addMessage(CompilerMessageCategory.ERROR,
+                                CompilerBundle.message("message.text.compiling.module.message", moduleDescription, message),
+                                  descriptor.getUrl(), -1, -1);
+      }
+    }
+    else {
+      DeploymentUtil.getInstance().reportDeploymentDescriptorDoesNotExists(descriptor, compileContext, module);
+    }
   }
 
   public @Nullable Manifest createManifest(@NotNull BuildRecipe buildRecipe) {
@@ -546,6 +541,26 @@ public class DeploymentUtilImpl extends DeploymentUtil implements ApplicationCom
         if (OrderEntryUtil.equals(library, link.getLibrary())) {
           return link;
         }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public String getConfigFileErrorMessage(final ConfigFile configFile) {
+    if (configFile.getVirtualFile() == null) {
+      String path = FileUtil.toSystemDependentName(VfsUtil.urlToPath(configFile.getUrl()));
+      return CompilerBundle.message("mesage.text.deployment.descriptor.file.not.exist", path);
+    }
+    PsiFile psiFile = configFile.getPsiFile();
+    if (psiFile == null || !psiFile.isValid()) {
+      return CompilerBundle.message("message.text.deployment.description.invalid.file");
+    }
+
+    if (psiFile instanceof XmlFile) {
+      XmlDocument document = ((XmlFile)psiFile).getDocument();
+      if (document == null || document.getRootTag() == null) {
+        return CompilerBundle.message("message.text.xml.file.invalid", FileUtil.toSystemDependentName(VfsUtil.urlToPath(configFile.getUrl())));
       }
     }
     return null;

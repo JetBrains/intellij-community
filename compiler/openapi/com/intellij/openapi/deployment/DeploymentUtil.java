@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.descriptors.ConfigFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,7 +96,7 @@ public abstract class DeploymentUtil {
 
   public abstract Map<Module, BuildRecipe> computeModuleBuildInstructionMap(@NotNull Module[] affectedModules, @NotNull CompileContext context);
 
-  public abstract void reportDeploymentDescriptorDoesNotExists(DeploymentItem descriptor, CompileContext context, Module module);
+  public abstract void reportDeploymentDescriptorDoesNotExists(ConfigFile descriptor, CompileContext context, Module module);
 
   public abstract void addJ2EEModuleOutput(@NotNull BuildRecipe buildRecipe,
                                            @NotNull ModuleBuildProperties moduleBuildProperties,
@@ -166,6 +167,9 @@ public abstract class DeploymentUtil {
   public @Nullable abstract ContainerElement findElementByOrderEntry(ModuleContainer container, OrderEntry entry);
 
   @Nullable
+  public abstract String getConfigFileErrorMessage(ConfigFile configFile);
+
+  @Nullable
   public static String getRelativePath(File baseDir, File file) {
     if (baseDir == null || file == null) return null;
 
@@ -202,4 +206,5 @@ public abstract class DeploymentUtil {
 
   public abstract @Nullable File findUserSuppliedManifestFile(@NotNull BuildRecipe buildRecipe);
 
+  public abstract void checkConfigFile(final ConfigFile descriptor, final CompileContext compileContext, final Module module);
 }

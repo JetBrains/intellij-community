@@ -1,0 +1,125 @@
+/*
+ * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
+ */
+
+package com.intellij.util.descriptors.impl;
+
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.vfs.*;
+import com.intellij.util.EventDispatcher;
+import com.intellij.util.descriptors.*;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * @author nik
+ */
+public class ConfigFileContainerImpl implements ConfigFileContainer {
+  private Project myProject;
+  private EventDispatcher<ConfigFileListener> myDispatcher = EventDispatcher.create(ConfigFileListener.class);
+  private MultiValuesMap<ConfigFileMetaData, ConfigFile> myConfigFiles = new MultiValuesMap<ConfigFileMetaData, ConfigFile>();
+  private ConfigFile[] myCachedConfigFiles;
+  private ConfigFileMetaDataProvider myMetaDataProvider;
+  private ConfigFileInfoSetImpl myConfiguration;
+
+  public ConfigFileContainerImpl(final Project project, final ConfigFileMetaDataProvider descriptorMetaDataProvider,
+                                       final ConfigFileInfoSetImpl configuration) {
+    myConfiguration = configuration;
+    myMetaDataProvider = descriptorMetaDataProvider;
+    myProject = project;
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+      public void propertyChanged(final VirtualFilePropertyEvent event) {
+        fileChanged(event.getFile());
+      }
+
+      public void fileMoved(final VirtualFileMoveEvent event) {
+        fileChanged(event.getFile());
+      }
+    }, this);
+    myConfiguration.setContainer(this);
+  }
+
+  private void fileChanged(final VirtualFile file) {
+    for (ConfigFile descriptor : myConfigFiles.values()) {
+      final VirtualFile virtualFile = descriptor.getVirtualFile();
+      if (virtualFile != null && virtualFile.equals(file)) {
+        fireDescriptorChanged(descriptor);
+      }
+    }
+  }
+
+  @Nullable
+  public ConfigFile getConfigFile(ConfigFileMetaData metaData) {
+    final Collection<ConfigFile> descriptors = myConfigFiles.get(metaData);
+    if (descriptors == null || descriptors.isEmpty()) {
+      return null;
+    }
+    return descriptors.iterator().next();
+  }
+
+  public ConfigFile[] getConfigFiles() {
+    if (myCachedConfigFiles == null) {
+      final Collection<ConfigFile> descriptors = myConfigFiles.values();
+      myCachedConfigFiles = descriptors.toArray(new ConfigFile[descriptors.size()]);
+    }
+    return myCachedConfigFiles;
+  }
+
+  public Project getProject() {
+    return myProject;
+  }
+
+  public void fireDescriptorChanged(final ConfigFile descriptor) {
+    myDispatcher.getMulticaster().configFileChanged(descriptor);
+  }
+
+
+  public ConfigFileInfoSet getConfiguration() {
+    return myConfiguration;
+  }
+
+  public void dispose() {
+  }
+
+  public void addListener(final ConfigFileListener listener) {
+    myDispatcher.addListener(listener);
+  }
+
+  public void removeListener(final ConfigFileListener listener) {
+    myDispatcher.removeListener(listener);
+  }
+
+  public ConfigFileMetaDataProvider getMetaDataProvider() {
+    return myMetaDataProvider;
+  }
+
+  public void updateDescriptors(final MultiValuesMap<ConfigFileMetaData, ConfigFileInfo> descriptorsMap) {
+    Set<ConfigFile> toDelete = new HashSet<ConfigFile>(myConfigFiles.values());
+    for (Map.Entry<ConfigFileMetaData, Collection<ConfigFileInfo>> entry : descriptorsMap.entrySet()) {
+      ConfigFileMetaData metaData = entry.getKey();
+      Set<ConfigFileInfo> newDescriptors = new HashSet<ConfigFileInfo>(entry.getValue());
+      final Collection<ConfigFile> oldDescriptors = myConfigFiles.get(metaData);
+      if (oldDescriptors != null) {
+        for (ConfigFile descriptor : oldDescriptors) {
+          if (newDescriptors.contains(descriptor.getInfo())) {
+            newDescriptors.remove(descriptor.getInfo());
+            toDelete.remove(descriptor);
+          }
+        }
+      }
+      for (ConfigFileInfo configuration : newDescriptors) {
+        myConfigFiles.put(metaData, new ConfigFileImpl(this, configuration));
+      }
+    }
+
+    for (ConfigFile descriptor : toDelete) {
+      myConfigFiles.remove(descriptor.getMetaData(), descriptor);
+    }
+    myCachedConfigFiles = null;
+  }
+}

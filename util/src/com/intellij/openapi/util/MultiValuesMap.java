@@ -80,4 +80,8 @@ public class MultiValuesMap<Key, Value>{
   public Set<Map.Entry<Key, Collection<Value>>> entrySet() {
     return myBaseMap.entrySet();
   }
+
+  public boolean isEmpty() {
+    return myBaseMap.isEmpty();
+  }
 }

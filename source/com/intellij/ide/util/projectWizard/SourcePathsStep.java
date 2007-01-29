@@ -331,22 +331,26 @@ public class SourcePathsStep extends ModuleWizardStep {
 
         public void finished() {
           myProgressIndicator = null;
-          final List<Pair<String,String>> foundPaths = (List<Pair<String,String>>)get();
-          if (foundPaths.size() > 0) {
-            myCurrentMode = CHOOSE_SOURCE_PANEL;
-            mySourcePathsChooser.setElements(foundPaths, true);
-          }
-          else {
-            myCurrentMode = CREATE_SOURCE_PANEL;
-            updateFullPathField();
-          }
-          updateStepUI(progress.isCanceled()? null : myBuilder.getContentEntryPath());
-          if (CHOOSE_SOURCE_PANEL.equals(myCurrentMode)) {
-            mySourcePathsChooser.selectElements(foundPaths.subList(0, 1));
-          }
-          else if (CREATE_SOURCE_PANEL.equals(myCurrentMode)) {
-            myTfSourceDirectoryName.selectAll();
-          }
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              final List<Pair<String,String>> foundPaths = (List<Pair<String,String>>)get();
+              if (foundPaths.size() > 0) {
+                myCurrentMode = CHOOSE_SOURCE_PANEL;
+                mySourcePathsChooser.setElements(foundPaths, true);
+              }
+              else {
+                myCurrentMode = CREATE_SOURCE_PANEL;
+                updateFullPathField();
+              }
+              updateStepUI(progress.isCanceled()? null : myBuilder.getContentEntryPath());
+              if (CHOOSE_SOURCE_PANEL.equals(myCurrentMode)) {
+                mySourcePathsChooser.selectElements(foundPaths.subList(0, 1));
+              }
+              else if (CREATE_SOURCE_PANEL.equals(myCurrentMode)) {
+                myTfSourceDirectoryName.selectAll();
+              }
+            }
+          });
         }
       }.start();
     }

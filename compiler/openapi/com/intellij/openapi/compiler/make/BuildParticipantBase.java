@@ -17,14 +17,13 @@ package com.intellij.openapi.compiler.make;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.deployment.DeploymentItem;
 import com.intellij.openapi.deployment.DeploymentUtil;
-import com.intellij.openapi.deployment.VerificationException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.descriptors.ConfigFile;
+import com.intellij.util.descriptors.CustomConfigFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -42,46 +41,41 @@ public abstract class BuildParticipantBase implements BuildParticipant {
   }
 
   public void registerBuildInstructions(final BuildRecipe instructions, final CompileContext context) {
-    final DeploymentItem[] deploymentDescriptors = getDeploymentDescriptors();
+    final ConfigFile[] deploymentDescriptors = getDeploymentDescriptors();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        for (DeploymentItem deploymentDescriptor : deploymentDescriptors) {
-          if (deploymentDescriptor.isDescriptorOptional()) {
-            continue;
+        for (ConfigFile descriptor : deploymentDescriptors) {
+          DeploymentUtil.getInstance().checkConfigFile(descriptor, context, myModule);
+
+          VirtualFile virtualFile = descriptor.getVirtualFile();
+          if (virtualFile != null) {
+            final File file = VfsUtil.virtualToIoFile(virtualFile);
+            instructions.addFileCopyInstruction(file,
+                                                false,
+                                                myModule,
+                                                descriptor.getMetaData().getDirectoryPath() + "/" + virtualFile.getName(),
+                                                null);
           }
 
-          try {
-            deploymentDescriptor.checkIsValid();
-            VirtualFile virtualFile = deploymentDescriptor.getVirtualFile();
-            // still can be null for optional DDs
-            if (virtualFile != null) {
-              final File file = VfsUtil.virtualToIoFile(virtualFile);
-              instructions.addFileCopyInstruction(file,
-                                                  false,
-                                                  myModule,
-                                                  deploymentDescriptor.getOutputRelativePath(),
-                                                  null);
-            }
+        }
 
-          }
-          catch (VerificationException e) {
-            String message = e.getMessage();
-            if (message == null || message.length() == 0) {
-              message = "";
-            }
-            final String moduleDescription = myModule.getModuleType().getName() + " '" + myModule.getName() + '\'';
-            if (!deploymentDescriptor.isDescriptorOptional() && new File(VfsUtil.urlToPath(deploymentDescriptor.getUrl())).exists()) {
-              context.addMessage(CompilerMessageCategory.ERROR,
-                                 CompilerBundle.message("message.text.compiling.module.message", moduleDescription, message), deploymentDescriptor.getUrl(), -1, -1);
-            }
-            else {
-              DeploymentUtil.getInstance().reportDeploymentDescriptorDoesNotExists(deploymentDescriptor, context, myModule);
-            }
+
+        final CustomConfigFile[] customDescriptors = getCustomDescriptors();
+        for (CustomConfigFile descriptor : customDescriptors) {
+          final String url = descriptor.getUrl();
+          final VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(url);
+          if (virtualFile != null) {
+            File file = VfsUtil.virtualToIoFile(virtualFile);
+            instructions.addFileCopyInstruction(file, false, myModule, descriptor.getOutputDirectoryPath() + "/" + virtualFile.getName(), null);
           }
         }
       }
     });
   }
 
-  protected abstract DeploymentItem[] getDeploymentDescriptors();
+  protected CustomConfigFile[] getCustomDescriptors() {
+    return CustomConfigFile.EMPTY_ARRAY;
+  }
+
+  protected abstract ConfigFile[] getDeploymentDescriptors();
 }

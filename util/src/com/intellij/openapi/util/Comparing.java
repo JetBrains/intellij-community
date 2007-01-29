@@ -16,6 +16,8 @@
 package com.intellij.openapi.util;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Comparing {
   private Comparing() { }
@@ -93,6 +95,24 @@ public class Comparing {
 
   public static boolean strEqual(String arg1, String arg2, boolean caseSensitive){
     return equal(arg1 == null ? "" : arg1, arg2 == null ? "" : arg2, caseSensitive);
+  }
+
+  public static <T> boolean haveEqualElements(T[] a, T[] b) {
+    if (a == null || b == null) {
+      return a == b;
+    }
+
+    if (a.length != b.length) {
+      return false;
+    }
+
+    Set<T> aSet = new HashSet<T>(Arrays.asList(a));
+    for (T t : b) {
+      if (!aSet.contains(t)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public static int hashcode(Object obj) { return obj == null ? 0 : obj.hashCode(); }

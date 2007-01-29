@@ -1,0 +1,91 @@
+/*
+ * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
+ */
+
+package com.intellij.util.descriptors.impl;
+
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.deployment.DeploymentItemUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.util.descriptors.*;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplate;
+
+import java.io.File;
+import java.io.IOException;
+
+/**
+ * @author nik
+ */
+public class ConfigFileFactoryImpl extends ConfigFileFactory {
+
+  public ConfigFileMetaDataProvider createMetaDataProvider(final ConfigFileMetaData... metaDatas) {
+    return new ConfigFileMetaDataRegistryImpl(metaDatas);
+  }
+
+  public ConfigFileMetaDataRegistry createMetaDataRegistry() {
+    return new ConfigFileMetaDataRegistryImpl();
+  }
+
+  public ConfigFileInfoSet createConfigFileInfoSet(final ConfigFileMetaDataProvider metaDataProvider) {
+    return new ConfigFileInfoSetImpl(metaDataProvider);
+  }
+
+  public ConfigFileContainer createConfigFileContainer(final Project project, final ConfigFileMetaDataProvider metaDataProvider,
+                                                              final ConfigFileInfoSet configuration) {
+    return new ConfigFileContainerImpl(project, metaDataProvider, (ConfigFileInfoSetImpl)configuration);
+  }
+
+  public CustomConfigFileSet createCustomConfigFileSet() {
+    return new CustomConfigFileSetImpl();
+  }
+
+  private static String getText(final String templateName) throws IOException {
+    final FileTemplateManager templateManager = FileTemplateManager.getInstance();
+    final FileTemplate template = templateManager.getJ2eeTemplate(templateName);
+    if (template == null) {
+      return "";
+    }
+    return template.getText(templateManager.getDefaultProperties());
+  }
+
+  public void createFile(Project project, String url, ConfigFileVersion version) {
+    createFileFromTemplate(project, url, version.getTemplateName());
+  }
+
+  private void createFileFromTemplate(final Project project, String url, final String templateName) {
+    final File file = new File(VfsUtil.urlToPath(url));
+    if (file.exists()) {
+      return;
+    }
+    try {
+      String text = getText(templateName);
+      final VirtualFile virtualFile;
+      if (!FileUtil.createParentDirs(file) ||
+          (virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.getParentFile())) == null) {
+        throw new IOException(CompilerBundle.message("error.message.unable.to.create.file", file.getPath()));
+      }
+      final VirtualFile childData = virtualFile.createChildData(this, file.getName());
+      DeploymentItemUtil.setFileText(project, childData, text);
+    }
+    catch (final IOException e) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          Messages.showErrorDialog(CompilerBundle.message("message.text.error.creating.deployment.descriptor", e.getLocalizedMessage()),
+                                   CompilerBundle.message("message.text.creating.deployment.descriptor"));
+        }
+      });
+    }
+  }
+
+  public ConfigFileContainer createSingleFileContainer(Project project, ConfigFileMetaData metaData) {
+    final ConfigFileMetaDataProvider metaDataProvider = createMetaDataProvider(metaData);
+    return createConfigFileContainer(project, metaDataProvider, createConfigFileInfoSet(metaDataProvider));
+  }
+}
