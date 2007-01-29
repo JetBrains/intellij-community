@@ -1,5 +1,6 @@
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
@@ -20,11 +21,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
+import com.intellij.psi.filters.AndFilter;
+import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportList;
+import com.intellij.psi.scope.processor.FilterElementProcessor;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -427,5 +433,105 @@ public class CodeInsightUtil {
       }
     }
     return false;
+  }
+
+  public static Set<PsiType> addSubtypes(PsiType psiType, 
+                                         final PsiElement context,
+                                         final boolean getRawSubtypes) {
+    int arrayDim = psiType.getArrayDimensions();
+
+    psiType = psiType.getDeepComponentType();
+    if (psiType instanceof PsiClassType) {
+      Set<PsiType> result = new HashSet<PsiType>();
+      getSubtypes(context, (PsiClassType)psiType, arrayDim, getRawSubtypes, result);
+      return result;
+    }
+
+    return Collections.emptySet();
+  }
+
+  private static void getSubtypes(PsiElement context, PsiClassType baseType, int arrayDim,
+                                  final boolean getRawSubtypes, Set<PsiType> result){
+    final PsiClassType.ClassResolveResult baseResult = baseType.resolveGenerics();
+    final PsiClass baseClass = baseResult.getElement();
+    final PsiSubstitutor baseSubstitutor = baseResult.getSubstitutor();
+    if(baseClass == null) return;
+
+    final FilterElementProcessor processor = new FilterElementProcessor(
+      new AndFilter(
+          new ClassFilter(PsiAnonymousClass.class, false),
+          new ClassFilter(PsiTypeParameter.class, false),
+          new ClassFilter(PsiClass.class)));
+    final PsiManager manager = context.getManager();
+    final PsiSearchHelper helper = manager.getSearchHelper();
+
+    helper.processInheritors(processor, baseClass, context.getResolveScope(), true, false);
+    final Iterator<PsiElement> iter = processor.getResults().iterator();
+    final PsiResolveHelper resolveHelper = manager.getResolveHelper();
+
+    inheritors:
+    while(iter.hasNext()){
+      PsiClass inheritor = (PsiClass) iter.next();
+      if(!manager.getResolveHelper().isAccessible(inheritor, context, null)) continue;
+
+      if(inheritor.getUserData(CompletionUtil.COPY_KEY) != null){
+        final PsiClass newClass = (PsiClass) inheritor.getUserData(CompletionUtil.COPY_KEY);
+        if(newClass.isValid())
+          inheritor = newClass;
+      }
+
+      if(inheritor.getQualifiedName() == null && !manager.areElementsEquivalent(inheritor.getContainingFile(), context.getContainingFile())){
+        continue;
+      }
+
+      PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, inheritor, PsiSubstitutor.EMPTY);
+      if(superSubstitutor == null) continue;
+      if(getRawSubtypes){
+        result.add(createType(inheritor, manager.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
+        continue;
+      }
+
+      PsiSubstitutor inheritorSubstitutor = PsiSubstitutor.EMPTY;
+      final Iterator<PsiTypeParameter> inheritorParamIter = PsiUtil.typeParametersIterator(inheritor);
+      while (inheritorParamIter.hasNext()) {
+        PsiTypeParameter inheritorParameter = inheritorParamIter.next();
+
+        final Iterator<PsiTypeParameter> baseParamIter = PsiUtil.typeParametersIterator(baseClass);
+        while (baseParamIter.hasNext()) {
+          PsiTypeParameter baseParameter = baseParamIter.next();
+          final PsiType substituted = superSubstitutor.substitute(baseParameter);
+          PsiType arg = baseSubstitutor.substitute(baseParameter);
+          if (arg instanceof PsiWildcardType) arg = ((PsiWildcardType)arg).getBound();
+          PsiType substitution = resolveHelper.getSubstitutionForTypeParameter(inheritorParameter,
+                                                                               substituted,
+                                                                               arg,
+                                                                               true,
+                                                                               PsiUtil.getLanguageLevel(context));
+          if (substitution == PsiType.NULL || substitution instanceof PsiWildcardType) continue;
+          if (substitution == null) {
+            result.add(createType(inheritor, manager.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
+            continue inheritors;
+          }
+          inheritorSubstitutor = inheritorSubstitutor.put(inheritorParameter, substitution);
+          break;
+        }
+      }
+
+      PsiType toAdd = createType(inheritor, inheritorSubstitutor, arrayDim);
+      if (baseType.isAssignableFrom(toAdd)) {
+        result.add(toAdd);
+      }
+    }
+  }
+
+  public static PsiType createType(PsiClass cls,
+                             PsiSubstitutor currentSubstitutor,
+                             int arrayDim) {
+    final PsiElementFactory elementFactory = cls.getManager().getElementFactory();
+    PsiType newType = elementFactory.createType(cls, currentSubstitutor);
+    for(int i = 0; i < arrayDim; i++){
+      newType = newType.createArrayType();
+    }
+    return newType;
   }
 }

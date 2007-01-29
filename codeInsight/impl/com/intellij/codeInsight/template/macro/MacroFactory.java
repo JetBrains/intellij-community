@@ -58,6 +58,8 @@ public class MacroFactory {
     register(new IterableVariableMacro());
     register(new IterableComponentTypeMacro());
     register(new DescendantClassesEnumMacro());
+    register(new SubtypesMacro());
+    register(new TypeOfVariableMacro());
   }
 
   public static void register(Macro macro) {

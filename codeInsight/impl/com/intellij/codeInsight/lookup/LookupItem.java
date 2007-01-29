@@ -43,6 +43,7 @@ public final class LookupItem implements Comparable{
   private Object myObject;
   private String myLookupString;
   private Map<Object,Object> myAttributes = null;
+  public static final LookupItem[] EMPTY_ARRAY = new LookupItem[0];
 
   public LookupItem(Object o, @NotNull String lookupString){
     setObject(o);
