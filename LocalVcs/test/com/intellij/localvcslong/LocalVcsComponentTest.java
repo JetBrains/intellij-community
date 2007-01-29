@@ -1,6 +1,7 @@
 package com.intellij.localvcslong;
 
 
+import com.intellij.idea.Bombed;
 import com.intellij.localvcs.*;
 import com.intellij.localvcs.integration.FileFilter;
 import com.intellij.localvcs.integration.LocalVcsAction;
@@ -18,6 +19,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Calendar;
 import java.util.List;
 
 public class LocalVcsComponentTest extends IdeaTestCase {
@@ -119,6 +121,14 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     assertFalse(vcsHasEntryFor(f));
   }
 
+  @Bombed(
+    year = 2007,
+    month = Calendar.FEBRUARY,
+    day = 15,
+    time = 15,
+    user = "mike",
+    description = "State refactoring"
+  )
   public void testSaving() throws Exception {
     VirtualFile f = root.createChildData(null, "file.java");
     myProject.save();
