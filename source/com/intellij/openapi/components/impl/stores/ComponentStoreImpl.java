@@ -90,10 +90,15 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   protected void doSave() throws IOException {
+    commit();
+  }
+
+
+  public void commit() {
     for (SettingsSavingComponent settingsSavingComponent : mySettingsSavingComponents) {
       settingsSavingComponent.save();
     }
-    
+
     for (String name : myComponents.keySet()) {
       Object component = myComponents.get(name);
       if (component instanceof JDOMExternalizable) {

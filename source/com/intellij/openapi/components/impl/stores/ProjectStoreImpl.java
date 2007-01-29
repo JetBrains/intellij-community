@@ -366,5 +366,17 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   protected StateStorageManager createStateStorageManager() {
     return new ProjectStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myProject);
   }
+
+
+  @Override
+  public void commit() {
+    ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+    final Module[] modules = moduleManager.getModules();
+    for (Module module : modules) {
+      ((ModuleImpl)module).getStateStore().commit();
+    }
+
+    super.commit();
+  }
 }
 

@@ -9,6 +9,7 @@ public interface IComponentStore {
   void initStore();
   void initComponent(Object component);
 
+  void commit();
   void save() throws IOException;
   void load() throws IOException;
 
