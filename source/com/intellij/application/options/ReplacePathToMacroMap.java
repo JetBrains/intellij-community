@@ -40,6 +40,8 @@ public class ReplacePathToMacroMap extends PathMacroMap {
       return text;
     }
 
+    if (path.length() == 0) return text;
+
     final StringBuilder newText = StringBuilderSpinAllocator.alloc();
     try {
       final boolean isWindowsRoot = path.endsWith(":/");
@@ -61,9 +63,6 @@ public class ReplacePathToMacroMap extends PathMacroMap {
           break;
         }
         else {
-          if (macro == null) {
-            return null;
-          }
           newText.append(text.substring(i, occurrenceOfPath));
           newText.append(macro);
           logUsage(macro);
