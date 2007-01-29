@@ -7,6 +7,8 @@ import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +46,7 @@ public class ServiceManagerImpl implements BaseComponent {
 
     myExtensionPointListener = new ExtensionPointListener<ServiceDescriptor>() {
       public void extensionAdded(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor) {
-        picoContainer.registerComponent(new MyComponentAdapter(descriptor, pluginDescriptor));
+        picoContainer.registerComponent(new MyComponentAdapter(descriptor, pluginDescriptor, componentManager));
       }
 
       public void extensionRemoved(final ServiceDescriptor extension, final PluginDescriptor pluginDescriptor) {
@@ -73,10 +75,13 @@ public class ServiceManagerImpl implements BaseComponent {
     private ComponentAdapter myDelegate;
     private final ServiceDescriptor myDescriptor;
     private PluginDescriptor myPluginDescriptor;
+    private final ComponentManager myComponentManager;
+    private boolean myRegisteredInDisposer = false;
 
-    public MyComponentAdapter(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor) {
+    public MyComponentAdapter(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor, ComponentManager componentManager) {
       myDescriptor = descriptor;
       myPluginDescriptor = pluginDescriptor;
+      myComponentManager = componentManager;
       myDelegate = null;
     }
 
@@ -100,7 +105,16 @@ public class ServiceManagerImpl implements BaseComponent {
     }
 
     public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
-      return getDelegate().getComponentInstance(container);
+      final Object componentInstance = getDelegate().getComponentInstance(container);
+
+      if (!myRegisteredInDisposer) {
+        if (componentInstance instanceof Disposable) {
+          Disposer.register(myComponentManager, (Disposable)componentInstance);
+        }
+        myRegisteredInDisposer = true;
+      }
+
+      return componentInstance;
     }
 
     private synchronized ComponentAdapter getDelegate() {
