@@ -189,4 +189,6 @@ public abstract class ProjectLevelVcsManager {
   public abstract List<VcsDirectoryMapping> getDirectoryMappings();
 
   public abstract void setDirectoryMapping(final String path, final String activeVcsName);
+
+  public abstract void setDirectoryMappings(final List<VcsDirectoryMapping> items);
 }

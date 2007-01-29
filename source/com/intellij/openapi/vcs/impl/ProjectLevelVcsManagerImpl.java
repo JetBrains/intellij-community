@@ -55,7 +55,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vcs.changes.Change;
@@ -70,6 +69,7 @@ import com.intellij.openapi.vcs.fileView.impl.VirtualAndPsiFileDataProvider;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -109,10 +109,17 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NonNls private static final String CONFIRMATIONS_SETTING = "ConfirmationsSetting";
   @NonNls private static final String VALUE_ATTTIBUTE = "value";
   @NonNls private static final String ID_ATTRIBUTE = "id";
+
+  @NonNls private static final String ELEMENT_MAPPING = "mapping";
+  @NonNls private static final String ATTRIBUTE_DIRECTORY = "directory";
+  @NonNls private static final String ATTRIBUTE_VCS = "vcs";
+
   private final List<CheckinHandlerFactory> myRegisteredBeforeCheckinHandlers = new ArrayList<CheckinHandlerFactory>();
   private boolean myHaveEmptyContentRevisions = true;
   private EventDispatcher<VcsListener> myEventDispatcher = EventDispatcher.create(VcsListener.class);
   private List<VcsDirectoryMapping> myDirectoryMappings = new ArrayList<VcsDirectoryMapping>();
+  private Set<AbstractVcs> myActiveVcss = new HashSet<AbstractVcs>();
+  private boolean myMappingsLoaded = false;
 
   private volatile int myBackgroundOperationCounter = 0;
 
@@ -231,7 +238,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     initialize();
 
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+    final StartupManager manager = StartupManager.getInstance(myProject);
+    manager.registerStartupActivity(new Runnable() {
+      public void run() {
+        updateActiveVcss();
+      }
+    });
+    manager.registerPostStartupActivity(new Runnable() {
       public void run() {
         myIsBeforeProjectStarted = false;
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
@@ -275,15 +288,30 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public AbstractVcs getVcsFor(VirtualFile file) {
     if (file == null) return null;
     if (myProject.isDisposed()) return null;
-    
 
-    Module module = VfsUtil.getModuleForFile(myProject, file);
-    if (module == null) return null;
-    return ModuleLevelVcsManager.getInstance(module).getActiveVcs();
+    if (!(file.getFileSystem() instanceof LocalFileSystem)) {
+      return null;
+    }
+    // scan from bottom-most mapping to topmost
+    for(int i = myDirectoryMappings.size()-1; i >= 0; i--) {
+      final VcsDirectoryMapping mapping = myDirectoryMappings.get(i);
+      if (mapping.getDirectory().length() == 0 || file.getPath().startsWith(mapping.getDirectory())) {
+        final String vcs = mapping.getVcs();
+        if (vcs.length() == 0) {
+          return null;
+        }
+        return findVcsByName(vcs);
+      }
+    }
+    return null;
   }
 
   private void dispose() {
     if (myIsDisposed) return;
+    for(AbstractVcs vcs: myActiveVcss) {
+      vcs.deactivate();
+    }
+    myActiveVcss.clear();
     AbstractVcs[] allVcss = getAllVcss();
     for (AbstractVcs allVcs : allVcss) {
       unregisterVcs(allVcs);
@@ -352,9 +380,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public boolean checkVcsIsActive(AbstractVcs vcs) {
-    Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    for (Module module : modules) {
-      if (ModuleLevelVcsManager.getInstance(module).getActiveVcs() == vcs) return true;
+    for(VcsDirectoryMapping mapping: myDirectoryMappings) {
+      if (mapping.getVcs().equals(vcs.getName())) {
+        return true;
+      }
     }
     return false;
   }
@@ -389,15 +418,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public AbstractVcs[] getAllActiveVcss() {
-    ArrayList<AbstractVcs> result = new ArrayList<AbstractVcs>();
-    Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    for (Module module : modules) {
-      AbstractVcs activeVcs = ModuleLevelVcsManager.getInstance(module).getActiveVcs();
-      if (activeVcs != null && !result.contains(activeVcs)) {
-        result.add(activeVcs);
-      }
-    }
-    return result.toArray(new AbstractVcs[result.size()]);
+    return myActiveVcss.toArray(new AbstractVcs[myActiveVcss.size()]);
 
   }
 
@@ -480,11 +501,24 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void addMappingFromModule(final Module module, final String activeVcsName) {
-    File projectBaseDir = new File(myProject.getBaseDir().getPath());
+    if (myMappingsLoaded) return;            // ignore per-module VCS settings if the mapping table was loaded from .ipr
     for(VirtualFile file: ModuleRootManager.getInstance(module).getContentRoots()) {
-      File contentRootDir = new File(file.getPath());
-      String path = FileUtil.getRelativePath(projectBaseDir, contentRootDir);
-      setDirectoryMapping(path, activeVcsName);
+      setDirectoryMapping(file.getPath(), activeVcsName);
+    }
+    sortDirectoryMappings();
+    removeRedundantMappings();
+  }
+
+  private void removeRedundantMappings() {
+    int i=1;
+    while(i < myDirectoryMappings.size()) {
+      if (myDirectoryMappings.get(i).getDirectory().startsWith(myDirectoryMappings.get(i-1).getDirectory()) &&
+          myDirectoryMappings.get(i).getVcs().equals(myDirectoryMappings.get(i-1).getVcs())) {
+        myDirectoryMappings.remove(i);
+      }
+      else {
+        i++;
+      }
     }
   }
 
@@ -502,11 +536,21 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     VcsDirectoryMapping mapping = new VcsDirectoryMapping(path, activeVcsName);
     myDirectoryMappings.add(mapping);
+    sortDirectoryMappings();
+  }
+
+  private void sortDirectoryMappings() {
     Collections.sort(myDirectoryMappings, new Comparator<VcsDirectoryMapping>() {
       public int compare(final VcsDirectoryMapping m1, final VcsDirectoryMapping m2) {
         return m1.getDirectory().compareTo(m2.getDirectory());
       }
     });
+  }
+
+  public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {
+    myDirectoryMappings.clear();
+    myDirectoryMappings.addAll(items);
+    sortDirectoryMappings();
   }
 
   private VcsShowOptionsSettingImpl getOrCreateOption(String actionName) {
@@ -627,14 +671,20 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public VirtualFile[] getRootsUnderVcs(AbstractVcs vcs) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
-    final Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    for(Module module: modules) {
-      if (ModuleLevelVcsManager.getInstance(module).getActiveVcs() == vcs) {
-        for(VirtualFile contentRoot: ModuleRootManager.getInstance(module).getContentRoots()) {
-          result.add(contentRoot);
+    for(VcsDirectoryMapping mapping: myDirectoryMappings) {
+      if (mapping.getVcs().equals(vcs.getName())) {
+        if (mapping.getDirectory().length() == 0) {
+          addDefaultVcsRoots(vcs, result);
+        }
+        else {
+          VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
+          if (file != null) {
+            result.add(file);
+          }
         }
       }
     }
+
     Collections.sort(result, new Comparator<VirtualFile>() {
       public int compare(final VirtualFile o1, final VirtualFile o2) {
         return o1.getPath().compareTo(o2.getPath());
@@ -652,11 +702,44 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return result.toArray(new VirtualFile[result.size()]);
   }
 
-  public void updateActiveVcss() {
-    Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    for (Module module : modules) {
-      ModuleLevelVcsManager.getInstance(module).updateActiveVcs();
+  private void addDefaultVcsRoots(final AbstractVcs vcs, final List<VirtualFile> result) {
+    final VirtualFile baseDir = myProject.getBaseDir();
+    if (getVcsFor(baseDir) == vcs) {
+      result.add(baseDir);
     }
+    final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    for(Module module: modules) {
+      final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
+      for(VirtualFile file: files) {
+        if (getVcsFor(file) == vcs) {
+          result.add(file);
+        }
+      }
+    }
+  }
+
+  public void updateActiveVcss() {
+    HashSet<AbstractVcs> oldActiveVcss = new HashSet<AbstractVcs>(myActiveVcss);
+    myActiveVcss.clear();
+    for(VcsDirectoryMapping mapping: myDirectoryMappings) {
+      if (mapping.getVcs().length() > 0) {
+        AbstractVcs vcs = findVcsByName(mapping.getVcs());
+        LOG.assertTrue(vcs != null);
+        if (!myActiveVcss.contains(vcs)) {
+          myActiveVcss.add(vcs);
+          if (!oldActiveVcss.contains(vcs)) {
+            vcs.activate();
+          }
+        }
+      }
+    }
+
+    for(AbstractVcs vcs: oldActiveVcss) {
+      if (!myActiveVcss.contains(vcs)) {
+        vcs.deactivate();
+      }
+    }
+
     notifyDirectoryMappingChanged();
   }
 
@@ -670,5 +753,26 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   void resetHaveEmptyContentRevisions() {
     myHaveEmptyContentRevisions = false;
+  }
+
+  public void readDirectoryMappings(final Element element) {
+    myDirectoryMappings.clear();
+    final List list = element.getChildren(ELEMENT_MAPPING);
+    for(Object childObj: list) {
+      Element child = (Element) childObj;
+      VcsDirectoryMapping mapping = new VcsDirectoryMapping(child.getAttributeValue(ATTRIBUTE_DIRECTORY),
+                                                            child.getAttributeValue(ATTRIBUTE_VCS));
+      myDirectoryMappings.add(mapping);
+    }
+    myMappingsLoaded = true;
+  }
+
+  public void writeDirectoryMappings(final Element element) {
+    for(VcsDirectoryMapping mapping: myDirectoryMappings) {
+      Element child = new Element(ELEMENT_MAPPING);
+      child.setAttribute(ATTRIBUTE_DIRECTORY, mapping.getDirectory());
+      child.setAttribute(ATTRIBUTE_VCS, mapping.getVcs());
+      element.addContent(child);
+    }
   }
 }

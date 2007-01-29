@@ -263,7 +263,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     return myChangeProvider;
   }
 
-  protected void activate() {
+  public void activate() {
     super.activate();
     myStorageComponent.init(getProject(), false);
     CvsEntriesManager.getInstance().addCvsEntriesListener(this);
@@ -271,7 +271,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     FileStatusManager.getInstance(getProject()).fileStatusesChanged();
   }
 
-  protected void deactivate() {
+  public void deactivate() {
     super.deactivate();
     myStorageComponent.dispose();
     CvsEntriesManager.getInstance().removeCvsEntriesListener(this);

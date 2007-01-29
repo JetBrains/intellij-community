@@ -47,4 +47,23 @@ public class VcsDirectoryMapping {
   public void setDirectory(final String directory) {
     myDirectory = directory;
   }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final VcsDirectoryMapping mapping = (VcsDirectoryMapping)o;
+
+    if (myDirectory != null ? !myDirectory.equals(mapping.myDirectory) : mapping.myDirectory != null) return false;
+    if (myVcs != null ? !myVcs.equals(mapping.myVcs) : mapping.myVcs != null) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = (myDirectory != null ? myDirectory.hashCode() : 0);
+    result = 31 * result + (myVcs != null ? myVcs.hashCode() : 0);
+    return result;
+  }
 }

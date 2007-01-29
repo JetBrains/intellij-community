@@ -50,7 +50,7 @@ public class DefaultPatchBaseVersionProvider {
 
     VcsRevisionNumber revision = null;
     final Matcher matcher = ourRevisionPattern.matcher(versionId);
-    if (matcher.matches()) {
+    if (matcher.find()) {
       revision = vcs.parseRevisionNumber(matcher.group(1));
     }
 

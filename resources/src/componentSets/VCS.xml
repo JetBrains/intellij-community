@@ -42,6 +42,10 @@
       <skipForDummyProject/>
     </component>
     <component>
+      <implementation-class>com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage</implementation-class>
+      <skipForDummyProject/>
+    </component>
+    <component>
       <implementation-class>com.intellij.openapi.vcs.impl.LineStatusTrackerManager</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
@@ -110,10 +114,6 @@
       <interface-class>com.intellij.openapi.vcs.impl.VcsManagerPerModuleConfiguration</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.VcsManagerPerModuleConfiguration</implementation-class>
       <option name="workspace" value="true"/>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.vcs.ModuleLevelVcsManager</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.impl.ModuleLevelVcsManagerImpl</implementation-class>
     </component>
   </module-components>
 

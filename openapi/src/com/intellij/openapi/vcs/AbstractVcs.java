@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
  * The base class for a version control system integrated with IDEA.
  *
  * @see ProjectLevelVcsManager
- * @see ModuleLevelVcsManager
  */
 public abstract class AbstractVcs {
   
@@ -48,9 +47,6 @@ public abstract class AbstractVcs {
   private boolean myIsStarted = false;
   private VcsShowSettingOption myUpdateOption;
   private VcsShowSettingOption myStatusOption;
-
-  private int myActiveModulesCount = 0;
-
 
   public AbstractVcs(Project project) {
     myProject = project;
@@ -98,29 +94,17 @@ public abstract class AbstractVcs {
   }
 
   public void doActivateActions(Module module) {
+    // TODO[yole]: change as appropriate for per-directory mapping
   }
 
-  protected void activate() {
-
+  public void activate() {
   }
 
-  public void attachModule(final Module module) {
-    myActiveModulesCount++;
-    if (myActiveModulesCount == 1) {
-      activate();
-    }
+  public void deactivate() {
   }
 
-  public void detachModule(final Module module) {
-    myActiveModulesCount--;
-    if (myActiveModulesCount == 0) {
-      deactivate();
-    }
+  public void directoryMappingChanged() {
   }
-
-  protected void deactivate() {
-  }
-
 
   public boolean markExternalChangesAsUpToDate() {
     return false;

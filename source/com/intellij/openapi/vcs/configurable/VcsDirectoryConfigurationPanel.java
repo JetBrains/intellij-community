@@ -7,6 +7,7 @@ package com.intellij.openapi.vcs.configurable;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
@@ -23,6 +24,8 @@ import java.awt.event.ActionListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
+import java.io.File;
 
 /**
  * @author yole
@@ -39,7 +42,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons {
       if (directory.length() == 0) {
         return "<Project Root>";
       }
-      return directory;
+      return FileUtil.getRelativePath(new File(myProject.getBaseDir().getPath()), new File(directory));
     }
   };
 
@@ -91,13 +94,11 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons {
   public VcsDirectoryConfigurationPanel(final Project project) {
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    List<VcsDirectoryMapping> mappings = new ArrayList<VcsDirectoryMapping>();
-    for(VcsDirectoryMapping mapping: ProjectLevelVcsManager.getInstance(project).getDirectoryMappings()) {
-      mappings.add(new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs()));
-    }
-    myModel = new ListTableModel<VcsDirectoryMapping>(new ColumnInfo[]{DIRECTORY, VCS_SETTING}, mappings, 0);
 
-    myVcsComboBox.getComboBox().setModel(buildVcsWrappersModel(project));
+    myDirectoryMappingTable = new TableView<VcsDirectoryMapping>();
+    initializeModel();
+
+    myVcsComboBox.getComboBox().setModel(buildVcsWrappersModel(myProject));
     myVcsComboBox.getComboBox().setRenderer(new EditorComboBoxRenderer(myVcsComboBox.getComboBox().getEditor()));
     myVcsComboBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -110,7 +111,6 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons {
       }
     });
 
-    myDirectoryMappingTable = new TableView<VcsDirectoryMapping>(myModel);
     myDirectoryMappingTable.setRowHeight(myVcsComboBox.getPreferredSize().height);
     myDirectoryMappingTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
@@ -119,6 +119,15 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons {
     });
     initPanel();
     updateButtons();
+  }
+
+  private void initializeModel() {
+    List<VcsDirectoryMapping> mappings = new ArrayList<VcsDirectoryMapping>();
+    for(VcsDirectoryMapping mapping: ProjectLevelVcsManager.getInstance(myProject).getDirectoryMappings()) {
+      mappings.add(new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs()));
+    }
+    myModel = new ListTableModel<VcsDirectoryMapping>(new ColumnInfo[]{DIRECTORY, VCS_SETTING}, mappings, 0);
+    myDirectoryMappingTable.setModel(myModel);
   }
 
   private void updateButtons() {
@@ -188,11 +197,31 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons {
 
   private void removeMapping() {
     ArrayList<VcsDirectoryMapping> mappings = new ArrayList<VcsDirectoryMapping>(myModel.getItems());
-    mappings.remove(myDirectoryMappingTable.getSelectedObject());
+    int index = myDirectoryMappingTable.getSelectionModel().getMinSelectionIndex();
+    Collection<VcsDirectoryMapping> selection = myDirectoryMappingTable.getSelection();
+    mappings.removeAll(selection);
     myModel.setItems(mappings);
+    if (mappings.size() > 0) {
+      if (index >= mappings.size()) {
+        index = mappings.size()-1;
+      }
+      myDirectoryMappingTable.getSelectionModel().setSelectionInterval(index, index);
+    }
   }
 
   protected JComponent createMainComponent() {
     return new JScrollPane(myDirectoryMappingTable);
+  }
+
+  public void reset() {
+    initializeModel();
+  }
+
+  public void apply() {
+    myVcsManager.setDirectoryMappings(myModel.getItems());
+  }
+
+  public boolean isModified() {
+    return !myModel.getItems().equals(myVcsManager.getDirectoryMappings());
   }
 }

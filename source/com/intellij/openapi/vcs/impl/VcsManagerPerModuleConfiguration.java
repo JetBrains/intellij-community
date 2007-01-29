@@ -6,6 +6,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import org.jdom.Element;
 
 /**
@@ -45,8 +46,9 @@ public class VcsManagerPerModuleConfiguration implements JDOMExternalizable, Mod
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
+    final ProjectLevelVcsManagerEx vcsManager = ProjectLevelVcsManagerImpl.getInstanceEx(myModule.getProject());
     if (!USE_PROJECT_VCS) {
-      ProjectLevelVcsManagerImpl.getInstanceEx(myModule.getProject()).addMappingFromModule(myModule, ACTIVE_VCS_NAME);
+      vcsManager.addMappingFromModule(myModule, ACTIVE_VCS_NAME);
     }
   }
 

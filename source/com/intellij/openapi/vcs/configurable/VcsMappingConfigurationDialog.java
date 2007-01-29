@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.util.io.FileUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -38,13 +39,13 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
 
   public void setMapping(VcsDirectoryMapping mapping) {
     myVCSComboBox.setSelectedItem(VcsWrapper.fromName(myProject, mapping.getVcs()));
-    myDirectoryTextField.setText(mapping.getDirectory());
+    myDirectoryTextField.setText(FileUtil.toSystemDependentName(mapping.getDirectory()));
   }
 
   public void saveToMapping(VcsDirectoryMapping mapping) {
     VcsWrapper wrapper = (VcsWrapper) myVCSComboBox.getSelectedItem();
     mapping.setVcs(wrapper.getOriginal() == null ? "" : wrapper.getOriginal().getName());
-    mapping.setDirectory(myDirectoryTextField.getText());
+    mapping.setDirectory(FileUtil.toSystemIndependentName(myDirectoryTextField.getText()));
   }
 
 
