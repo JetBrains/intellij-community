@@ -724,8 +724,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     for(VcsDirectoryMapping mapping: myDirectoryMappings) {
       if (mapping.getVcs().length() > 0) {
         AbstractVcs vcs = findVcsByName(mapping.getVcs());
-        LOG.assertTrue(vcs != null);
-        if (!myActiveVcss.contains(vcs)) {
+        if (vcs != null && !myActiveVcss.contains(vcs)) {
           myActiveVcss.add(vcs);
           if (!oldActiveVcss.contains(vcs)) {
             vcs.activate();
