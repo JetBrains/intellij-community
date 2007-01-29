@@ -5,8 +5,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,8 +17,7 @@ import java.util.List;
  */
 public class SimpleProviderBinding implements ProviderBinding {
   private final Class myScope;
-  private List<Pair<PsiReferenceProvider,ElementFilter>> myProviderPairs =
-    new ArrayList<Pair<PsiReferenceProvider,ElementFilter>>(1);
+  private List<Pair<PsiReferenceProvider,ElementFilter>> myProviderPairs = new CopyOnWriteArrayList<Pair<PsiReferenceProvider, ElementFilter>>();
 
   public SimpleProviderBinding(Class scope){
     myScope = scope;

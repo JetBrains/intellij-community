@@ -20,6 +20,9 @@ import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.xml.util.HtmlReferenceProvider;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -30,6 +33,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Created by IntelliJ IDEA.
@@ -40,9 +45,9 @@ import java.util.Map;
  */
 public class ReferenceProvidersRegistry implements ProjectComponent, ElementManipulatorsRegistry {
   private final List<Class> myTempScopes = new ArrayList<Class>();
-  private final Map<Class,ProviderBinding> myBindingsMap = new HashMap<Class,ProviderBinding>();
-  private final List<Pair<Class<?>, ElementManipulator<?>>> myManipulators = new ArrayList<Pair<Class<?>, ElementManipulator<?>>>();
-  private final Map<ReferenceProviderType,PsiReferenceProvider> myReferenceTypeToProviderMap = new HashMap<ReferenceProviderType, PsiReferenceProvider>(5);
+  private final ConcurrentMap<Class,ProviderBinding> myBindingsMap = new ConcurrentWeakHashMap<Class, ProviderBinding>();
+  private final List<Pair<Class<?>, ElementManipulator<?>>> myManipulators = new CopyOnWriteArrayList<Pair<Class<?>, ElementManipulator<?>>>();
+  private final Map<ReferenceProviderType,PsiReferenceProvider> myReferenceTypeToProviderMap = new ConcurrentHashMap<ReferenceProviderType, PsiReferenceProvider>(5);
 
   private static final Logger LOG = Logger.getInstance("ReferenceProvidersRegistry");
 
@@ -62,7 +67,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
     return project.getComponent(ReferenceProvidersRegistry.class);
   }
 
-  public synchronized void registerTypeWithProvider(@NotNull ReferenceProviderType type, @NotNull PsiReferenceProvider provider) {
+  public void registerTypeWithProvider(@NotNull ReferenceProviderType type, @NotNull PsiReferenceProvider provider) {
     myReferenceTypeToProviderMap.put(type, provider);
   }
 
@@ -265,7 +270,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
     );
   }
 
-  public synchronized void registerReferenceProvider(@Nullable ElementFilter elementFilter,
+  public void registerReferenceProvider(@Nullable ElementFilter elementFilter,
                                                      @NotNull Class scope,
                                                      @NotNull PsiReferenceProvider provider) {
     if (scope == XmlAttributeValue.class) {
@@ -277,18 +282,20 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
       return;
     }
 
-    final ProviderBinding providerBinding = myBindingsMap.get(scope);
-    if (providerBinding != null) {
-      ((SimpleProviderBinding)providerBinding).registerProvider(provider, elementFilter);
-      return;
-    }
+    for (;;) {
+      final ProviderBinding providerBinding = myBindingsMap.get(scope);
+      if (providerBinding != null) {
+        ((SimpleProviderBinding)providerBinding).registerProvider(provider, elementFilter);
+        return;
+      }
 
-    final SimpleProviderBinding binding = new SimpleProviderBinding(scope);
-    binding.registerProvider(provider, elementFilter);
-    myBindingsMap.put(scope, binding);
+      final SimpleProviderBinding binding = new SimpleProviderBinding(scope);
+      binding.registerProvider(provider, elementFilter);
+      if (myBindingsMap.putIfAbsent(scope, binding) == null) break;
+    }
   }
 
-  public synchronized void registerXmlTagReferenceProvider(@NonNls String[] names, @Nullable ElementFilter elementFilter,
+  public void registerXmlTagReferenceProvider(@NonNls String[] names, @Nullable ElementFilter elementFilter,
                                               boolean caseSensitive, @NotNull PsiReferenceProvider provider) {
     registerNamedReferenceProvider(names, elementFilter, XmlTagProviderBinding.class,XmlTag.class,caseSensitive, provider);
   }
@@ -305,8 +312,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
 
     if (providerBinding == null) {
       try {
-        providerBinding = bindingClass.newInstance();
-        myBindingsMap.put(scopeClass, providerBinding);
+        providerBinding = (NamedObjectProviderBinding)ConcurrencyUtil.cacheOrGet(myBindingsMap, scopeClass, bindingClass.newInstance());
       }
       catch (Exception e) {
         LOG.error(e);
@@ -322,7 +328,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
     );
   }
 
-  public synchronized void registerXmlAttributeValueReferenceProvider(@Nullable @NonNls String[] attributeNames,
+  public void registerXmlAttributeValueReferenceProvider(@Nullable @NonNls String[] attributeNames,
                                                          @Nullable ElementFilter elementFilter,
                                                          boolean caseSensitive,
                                                          @NotNull PsiReferenceProvider provider) {
@@ -336,21 +342,21 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
     );
   }
 
-  public synchronized void registerXmlAttributeValueReferenceProvider(@Nullable @NonNls String[] attributeNames,
+  public void registerXmlAttributeValueReferenceProvider(@Nullable @NonNls String[] attributeNames,
                                                          @Nullable ElementFilter elementFilter,
                                                          @NotNull PsiReferenceProvider provider) {
     registerXmlAttributeValueReferenceProvider(attributeNames, elementFilter, true, provider);
   }
 
-  public synchronized @NotNull PsiReferenceProvider getProviderByType(@NotNull ReferenceProviderType type) {
+  public @NotNull PsiReferenceProvider getProviderByType(@NotNull ReferenceProviderType type) {
     return myReferenceTypeToProviderMap.get(type);
   }
 
-  public synchronized void registerReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
+  public void registerReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
     registerReferenceProvider(null, scope, provider);
   }
 
-  public synchronized @NotNull PsiReferenceProvider[] getProvidersByElement(@NotNull PsiElement element, @NotNull Class clazz) {
+  public @NotNull PsiReferenceProvider[] getProvidersByElement(@NotNull PsiElement element, @NotNull Class clazz) {
     assert clazz.isInstance(element);
 
     List<PsiReferenceProvider> ret = new ArrayList<PsiReferenceProvider>(1);
@@ -368,7 +374,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
     return ret.isEmpty() ? PsiReferenceProvider.EMPTY_ARRAY : ret.toArray(new PsiReferenceProvider[ret.size()]);
   }
 
-  public synchronized @Nullable <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull T element) {
+  public @Nullable <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull T element) {
     for (final Pair<Class<?>,ElementManipulator<?>> pair : myManipulators) {
       if (ReflectionCache.isAssignable(pair.getFirst(), element.getClass())) {
         return (ElementManipulator<T>)pair.getSecond();
@@ -378,7 +384,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
     return null;
   }
 
-  public synchronized <T extends PsiElement> void registerManipulator(@NotNull Class<T> elementClass, @NotNull ElementManipulator<T> manipulator) {
+  public <T extends PsiElement> void registerManipulator(@NotNull Class<T> elementClass, @NotNull ElementManipulator<T> manipulator) {
     myManipulators.add(new Pair<Class<?>, ElementManipulator<?>>(elementClass, manipulator));
   }
 

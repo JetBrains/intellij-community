@@ -3,13 +3,14 @@ package com.intellij.psi.impl.source.resolve.reference;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author maxim
@@ -21,24 +22,22 @@ abstract class NamedObjectProviderBinding implements ProviderBinding {
     myClass = _class;
   }
 
-  private final Map<String, List<Pair<PsiReferenceProvider, ElementFilter>>> myNamesToProvidersMap = new HashMap<String, List<Pair<PsiReferenceProvider, ElementFilter>>>(5);
-  private final Map<String, List<Pair<PsiReferenceProvider, ElementFilter>>> myNamesToProvidersMapInsensitive = new HashMap<String, List<Pair<PsiReferenceProvider, ElementFilter>>>(5);
-  private final List<Pair<PsiReferenceProvider, ElementFilter>> myProvidersWithoutNames = new ArrayList<Pair<PsiReferenceProvider, ElementFilter>>(5);
+  private final ConcurrentMap<String, CopyOnWriteArrayList<Pair<PsiReferenceProvider, ElementFilter>>> myNamesToProvidersMap = new ConcurrentHashMap<String, CopyOnWriteArrayList<Pair<PsiReferenceProvider, ElementFilter>>>(5);
+  private final ConcurrentMap<String, CopyOnWriteArrayList<Pair<PsiReferenceProvider, ElementFilter>>> myNamesToProvidersMapInsensitive = new ConcurrentHashMap<String, CopyOnWriteArrayList<Pair<PsiReferenceProvider, ElementFilter>>>(5);
+  private final List<Pair<PsiReferenceProvider, ElementFilter>> myProvidersWithoutNames = new CopyOnWriteArrayList<Pair<PsiReferenceProvider, ElementFilter>>();
 
   public void registerProvider(@NonNls String[] names, ElementFilter filter, boolean caseSensitive, PsiReferenceProvider provider) {
     if (names == null || names.length == 0) {
       myProvidersWithoutNames.add(new Pair<PsiReferenceProvider, ElementFilter>(provider, filter));
     }
     else {
-      final Map<String, List<Pair<PsiReferenceProvider, ElementFilter>>> map =
-        caseSensitive ? myNamesToProvidersMap : myNamesToProvidersMapInsensitive;
+      final ConcurrentMap<String, CopyOnWriteArrayList<Pair<PsiReferenceProvider, ElementFilter>>> map = caseSensitive ? myNamesToProvidersMap : myNamesToProvidersMapInsensitive;
 
       for (final String attributeName : names) {
-        List<Pair<PsiReferenceProvider, ElementFilter>> psiReferenceProviders = map.get(attributeName);
+        CopyOnWriteArrayList<Pair<PsiReferenceProvider, ElementFilter>> psiReferenceProviders = map.get(attributeName);
 
         if (psiReferenceProviders == null) {
-          psiReferenceProviders = new ArrayList<Pair<PsiReferenceProvider, ElementFilter>>(1);
-          map.put(caseSensitive ? attributeName : attributeName.toLowerCase(), psiReferenceProviders);
+          psiReferenceProviders = ConcurrencyUtil.cacheOrGet(map, caseSensitive ? attributeName : attributeName.toLowerCase(), new CopyOnWriteArrayList<Pair<PsiReferenceProvider, ElementFilter>>());
         }
 
         psiReferenceProviders.add(new Pair<PsiReferenceProvider, ElementFilter>(provider, filter));
