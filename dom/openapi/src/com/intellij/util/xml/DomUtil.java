@@ -167,4 +167,15 @@ public class DomUtil {
     return parent != null && isAncestor(ancestor, parent, false);
   }
 
+  public static void acceptAvailableChildren(final DomElement element, final DomElementVisitor visitor) {
+    final XmlTag tag = element.getXmlTag();
+    if (tag != null) {
+      for (XmlTag xmlTag : tag.getSubTags()) {
+        final DomElement childElement = element.getManager().getDomElement(xmlTag);
+        if (childElement != null) {
+          childElement.accept(visitor);
+        }
+      }
+    }
+  }
 }
