@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.descriptors.ConfigFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
@@ -36,6 +37,7 @@ class PluginBuildParticipant extends BuildParticipantBase {
   LibraryLink[] myLibraryLinks;
   @NonNls private static final String CLASSES = "/classes";
   @NonNls private static final String LIB = "/lib/";
+  @NonNls private static final String LIB_DIRECTORY = "lib";
 
   public PluginBuildParticipant(Module module) {
     super(module);
@@ -138,8 +140,7 @@ class PluginBuildParticipant extends BuildParticipantBase {
     }
 
     // libraries
-    final @NonNls String lib = "lib";
-    final VirtualFile libDir = VfsUtil.findRelativeFile(lib, jdk.getHomeDirectory());
+    final VirtualFile libDir = VfsUtil.findRelativeFile(LIB_DIRECTORY, jdk.getHomeDirectory());
     for (i = 0; i < myLibraryLinks.length; i++) {
       LibraryLink libraryLink = myLibraryLinks[i];
       VirtualFile[] files = libraryLink.getLibrary().getFiles(OrderRootType.CLASSES);
@@ -155,8 +156,12 @@ class PluginBuildParticipant extends BuildParticipantBase {
     }
   }
 
-  protected DeploymentItem[] getDeploymentDescriptors() {
-    return new DeploymentItem[]{((PluginModuleBuildProperties)PluginModuleBuildProperties.getInstance(getModule())).getPluginXML()};
+  protected ConfigFile[] getDeploymentDescriptors() {
+    final PluginModuleBuildProperties moduleBuildProperties = (PluginModuleBuildProperties)PluginModuleBuildProperties.getInstance(getModule());
+    if (moduleBuildProperties == null) {
+      return ConfigFile.EMPTY_ARRAY;
+    }
+    return new ConfigFile[]{moduleBuildProperties.getPluginXML()};
   }
 
   public void afterJarCreated(File jarFile, CompileContext context) throws Exception {

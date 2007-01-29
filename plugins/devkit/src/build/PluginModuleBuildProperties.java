@@ -19,14 +19,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.make.BuildParticipant;
 import com.intellij.openapi.compiler.make.ModuleBuildProperties;
-import com.intellij.openapi.deployment.DeploymentDescriptorFactory;
-import com.intellij.openapi.deployment.DeploymentItem;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -36,19 +35,23 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.descriptors.ConfigFile;
+import com.intellij.util.descriptors.ConfigFileInfo;
+import com.intellij.util.descriptors.ConfigFileContainer;
+import com.intellij.util.descriptors.ConfigFileFactory;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.module.PluginDescriptorMetaData;
+import org.jetbrains.idea.devkit.module.PluginDescriptorConstants;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 
 import java.io.File;
 
 public class PluginModuleBuildProperties extends ModuleBuildProperties implements JDOMExternalizable {
   private Module myModule;
-  private DeploymentItem myPluginXML;
+  private ConfigFileContainer myPluginXmlContainer;
   private VirtualFilePointer myPluginXMLPointer;
   private VirtualFilePointer myManifestFilePointer;
   private boolean myUseUserManifest = false;
@@ -59,6 +62,8 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
 
   public PluginModuleBuildProperties(Module module) {
     myModule = module;
+    myPluginXmlContainer = ConfigFileFactory.getInstance().createSingleFileContainer(myModule.getProject(), PluginDescriptorConstants.META_DATA);
+    Disposer.register(module, myPluginXmlContainer);
   }
 
   public String getArchiveExtension() {
@@ -130,13 +135,6 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   public void initComponent() {}
 
   public void disposeComponent() {
-    disposePluginXml();
-  }
-
-  private void disposePluginXml() {
-    if (myPluginXML != null) {
-      myPluginXML.dispose();
-    }
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -157,13 +155,19 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
     }
   }
 
-  public DeploymentItem getPluginXML() {
-    if (myPluginXML == null) {
-      myPluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(myModule, new PluginDescriptorMetaData());
-      myPluginXML.setUrl(getPluginXMLPointer().getUrl());
-      myPluginXML.createIfNotExists();
+  public ConfigFile getPluginXML() {
+    final ConfigFile descriptor = myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
+    if (descriptor == null) {
+      return createDescriptor(getPluginXMLPointer().getUrl());
     }
-    return myPluginXML;
+    return descriptor;
+  }
+
+  private ConfigFile createDescriptor(final String url) {
+    final ConfigFileInfo descriptor = new ConfigFileInfo(PluginDescriptorConstants.META_DATA, url);
+    myPluginXmlContainer.getConfiguration().addConfigFile(descriptor);
+    ConfigFileFactory.getInstance().createFile(myModule.getProject(), descriptor.getUrl(), PluginDescriptorConstants.META_DATA.getDefaultVersion());
+    return myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
   }
 
   public VirtualFilePointer getPluginXMLPointer() {
@@ -185,13 +189,11 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   }
 
   public void setPluginXMLUrl(final String pluginXMLUrl) {
-    disposePluginXml();
-    myPluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(myModule, new PluginDescriptorMetaData());
     final String url = VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(pluginXMLUrl));
-    myPluginXML.setUrl(url);
-    myPluginXML.createIfNotExists();
+    myPluginXmlContainer.getConfiguration().removeConfigFiles(PluginDescriptorConstants.META_DATA);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
+        createDescriptor(pluginXMLUrl);
         myPluginXMLPointer = VirtualFilePointerManager.getInstance().create(url, null);
       }
     });
