@@ -103,7 +103,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     final BaseComponent[] components = getComponents(BaseComponent.class);
     myDisposed = true;
 
-    for (BaseComponent component : components) {
+    for (int i = components.length - 1; i >= 0; i--) {
+      BaseComponent component = components[i];
       try {
         component.disposeComponent();
       }

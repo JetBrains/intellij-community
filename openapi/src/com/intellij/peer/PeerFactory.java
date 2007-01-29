@@ -21,7 +21,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.fileChooser.FileSystemTreeFactory;
 import com.intellij.openapi.project.Project;
@@ -39,7 +39,7 @@ import java.net.InetAddress;
 
 public abstract class PeerFactory {
   public static PeerFactory getInstance() {
-    return ApplicationManager.getApplication().getComponent(PeerFactory.class);
+    return ServiceManager.getService(PeerFactory.class);
   }
 
   public abstract FileStatusFactory getFileStatusFactory();

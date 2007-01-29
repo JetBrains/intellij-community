@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.help;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class HelpManager {
   public static HelpManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(HelpManager.class);
+    return ServiceManager.getService(HelpManager.class);
   }
 
   public abstract void invokeHelp(@NonNls String id);

@@ -16,20 +16,4 @@ public class ChooseByNameFactoryImpl extends ChooseByNameFactory {
   public ChooseByNamePopup createChooseByNamePopupComponent(final ChooseByNameModel model) {
     return ChooseByNamePopup.createPopup(myProject, model);  
   }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  public String getComponentName() {
-    return "ChooseByNameFactoryImpl";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
 }

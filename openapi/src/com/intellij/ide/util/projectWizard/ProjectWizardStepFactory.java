@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -31,7 +31,7 @@ import javax.swing.*;
 public abstract class ProjectWizardStepFactory {
 
   public static ProjectWizardStepFactory getInstance() {
-    return ApplicationManager.getApplication().getComponent(ProjectWizardStepFactory.class);
+    return ServiceManager.getService(ProjectWizardStepFactory.class);
   }
 
   public abstract ModuleWizardStep createNameAndLocationStep(WizardContext wizardContext, JavaModuleBuilder builder, ModulesProvider modulesProvider, Icon icon, @NonNls String helpId);

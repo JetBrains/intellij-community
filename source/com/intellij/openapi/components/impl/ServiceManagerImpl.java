@@ -85,10 +85,14 @@ public class ServiceManagerImpl implements BaseComponent {
     }
 
     public Class getComponentImplementation() {
+      return loadClass(myDescriptor.getServiceInterface());
+    }
+
+    private Class loadClass(final String className) {
       try {
         final ClassLoader classLoader = myPluginDescriptor != null ? myPluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
-        
-        return Class.forName(myDescriptor.getServiceImplementation(), true, classLoader);
+
+        return Class.forName(className, true, classLoader);
       }
       catch (ClassNotFoundException e) {
         throw new RuntimeException(e);
@@ -101,7 +105,7 @@ public class ServiceManagerImpl implements BaseComponent {
 
     private synchronized ComponentAdapter getDelegate() {
       if (myDelegate == null) {
-        myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), getComponentImplementation(), null, true));
+        myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), loadClass(myDescriptor.getServiceImplementation()), null, true));
       }
 
       return myDelegate;

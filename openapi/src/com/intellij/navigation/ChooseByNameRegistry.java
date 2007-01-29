@@ -15,8 +15,7 @@
  */
 package com.intellij.navigation;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +24,7 @@ import java.util.List;
  * Registry of components which contribute items to "Goto Class" and "Goto Symbol" lists.
  */
 
-public class ChooseByNameRegistry implements ApplicationComponent {
+public class ChooseByNameRegistry {
   private List<ChooseByNameContributor> myGotoClassContributors = new ArrayList<ChooseByNameContributor>();
   private List<ChooseByNameContributor> myGotoSymbolContributors = new ArrayList<ChooseByNameContributor>();
 
@@ -35,7 +34,7 @@ public class ChooseByNameRegistry implements ApplicationComponent {
    * @return the registry instance.
    */
   public static ChooseByNameRegistry getInstance() {
-    return ApplicationManager.getApplication().getComponent(ChooseByNameRegistry.class);
+    return ServiceManager.getService(ChooseByNameRegistry.class);
   }
 
   /**
@@ -86,10 +85,4 @@ public class ChooseByNameRegistry implements ApplicationComponent {
     return myGotoSymbolContributors.toArray(new ChooseByNameContributor[myGotoSymbolContributors.size()]);
   }
 
-  public String getComponentName() {
-    return "ChooseByNameRegistry";
-  }
-
-  public void initComponent() {}
-  public void disposeComponent() {}
 }

@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NonNls;
@@ -18,15 +17,10 @@ import javax.help.HelpSetException;
 import java.awt.*;
 import java.net.URL;
 
-public class HelpManagerImpl extends HelpManager implements ApplicationComponent {
+public class HelpManagerImpl extends HelpManager {
   private HelpSet myHelpSet = null;
   private IdeaHelpBroker myBroker = null;
   @NonNls private static final String HELP_HS = "Help.hs";
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
 
   public void invokeHelp(String id) {
     if (myHelpSet == null) {
@@ -61,10 +55,6 @@ public class HelpManagerImpl extends HelpManager implements ApplicationComponent
       }
     }
     myBroker.setDisplayed(true);
-  }
-
-  public String getComponentName() {
-    return "HelpManager";
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

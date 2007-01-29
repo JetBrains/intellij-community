@@ -1,6 +1,10 @@
 <components>
   <application-components>
     <component>
+      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
+    </component>
+
+    <component>
       <interface-class>com.intellij.facet.FacetTypeRegistry</interface-class>
       <implementation-class>com.intellij.facet.impl.FacetTypeRegistryImpl</implementation-class>
     </component>
@@ -46,10 +50,6 @@
     <component>
       <interface-class>com.intellij.openapi.module.ModuleTypeManager</interface-class>
       <implementation-class>com.intellij.openapi.module.impl.ModuleTypeManagerImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.peer.PeerFactory</interface-class>
-      <implementation-class>com.intellij.peer.impl.PeerFactoryImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.openapi.vfs.VirtualFileManager</interface-class>
@@ -180,14 +180,14 @@
     <component>
       <implementation-class>com.intellij.ide.Exe4jListener</implementation-class>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
-    </component>
   </application-components>
 
 
   <project-components>
+    <component>
+      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
+    </component>
+
     <component>
       <interface-class>com.intellij.util.xml.DomManager</interface-class>
       <implementation-class>com.intellij.util.xml.impl.DomManagerImpl</implementation-class>
@@ -349,14 +349,14 @@
       <interface-class>com.intellij.facet.FacetExistenceListenersRegistry</interface-class>
       <implementation-class>com.intellij.facet.impl.FacetExistenceListenersRegistryImpl</implementation-class>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
-    </component>
   </project-components>
 
 
   <module-components>
+    <component>
+      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
+    </component>
+
     <component>
       <interface-class>com.intellij.facet.FacetManager</interface-class>
       <implementation-class>com.intellij.facet.impl.FacetManagerImpl</implementation-class>
@@ -369,8 +369,5 @@
       <implementation-class>com.intellij.jar.BuildJarSettings</implementation-class>
     </component>
 
-    <component>
-      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
-    </component>
   </module-components>
 </components>

@@ -18,7 +18,6 @@ import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.impl.mergeTool.DiffRequestFactoryImpl;
 import com.intellij.openapi.editor.Document;
@@ -69,7 +68,7 @@ import java.awt.*;
 import java.io.File;
 import java.net.InetAddress;
 
-public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent {
+public class PeerFactoryImpl extends PeerFactory {
   private ProcessProxyFactory myProxyFactory = null;
   private PackageSetFactory myPackageSetFactory;
   private final UIHelper myUIHelper = new MyUIHelper();
@@ -82,15 +81,6 @@ public class PeerFactoryImpl extends PeerFactory implements ApplicationComponent
   public PeerFactoryImpl() {
     myFileStatusFactory = new FileStatusFactoryImpl();
   }
-
-  @NotNull
-  public String getComponentName() {
-    return "PeerFactory";
-  }
-
-  public void initComponent() {}
-
-  public void disposeComponent() {}
 
   public FileStatusFactory getFileStatusFactory() {
     return myFileStatusFactory;

@@ -4,7 +4,6 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -21,8 +20,7 @@ import java.util.Arrays;
  * @author Eugene Zhuravlev
  *         Date: Oct 6, 2004
  */
-public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory implements ApplicationComponent{
-
+public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   private final MultiMap<ModuleType, AddSupportStepsProvider> myStepsProviders = new MultiMap<ModuleType, AddSupportStepsProvider>();
 
   public ModuleWizardStep createNameAndLocationStep(WizardContext wizardContext, JavaModuleBuilder builder, ModulesProvider modulesProvider, Icon icon, String helpId) {
@@ -110,13 +108,4 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory imple
     return result.toArray(ModuleWizardStep.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "ProjectWizardStepFactory";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
 }

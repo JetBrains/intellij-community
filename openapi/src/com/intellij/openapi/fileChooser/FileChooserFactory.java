@@ -15,14 +15,14 @@
  */
 package com.intellij.openapi.fileChooser;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
 import java.awt.*;
 
 public abstract class FileChooserFactory {
   public static FileChooserFactory getInstance() {
-    return ApplicationManager.getApplication().getComponent(FileChooserFactory.class);
+    return ServiceManager.getService(FileChooserFactory.class);
   }
 
   public abstract FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, Project project);

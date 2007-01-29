@@ -5,6 +5,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -146,7 +147,10 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
   private synchronized void buildInspectionIndex(final InspectionTool[] tools) {
     if (myWords2InspectionToolNameMap == null) {
       myWords2InspectionToolNameMap = new HashMap<String, ArrayList<String>>();
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable(){
+      final Application app = ApplicationManager.getApplication();
+      if (app.isUnitTestMode()) return;
+
+      app.executeOnPooledThread(new Runnable(){
         public void run() {
           try {
             for (InspectionTool tool : tools) {
