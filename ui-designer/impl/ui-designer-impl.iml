@@ -1,43 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module version="4" relativePaths="true" type="JAVA_MODULE">
+<module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="ModuleRootManager" />
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
-    <output url="file://$MODULE_DIR$/../classes/impl" />
+  <component inherit-compiler-output="true" name="NewModuleRootManager">
+    <output url="file:///Users/mike/Depot/IDEA/ui-designer/classes/impl" />
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$" isTestSource="false" />
+      <sourceFolder isTestSource="false" url="file://$MODULE_DIR$" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="Annotations" />
-    <orderEntry type="module" module-name="idea" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="UIDesignerCore" />
-    <orderEntry type="module" module-name="codeInsight-openapi" />
-    <orderEntry type="module" module-name="codeInsight-impl" />
-    <orderEntry type="module" module-name="forms_rt" />
-    <orderEntry type="library" name="Trove4j" level="project" />
-    <orderEntry type="module" module-name="compiler-openapi" />
-    <orderEntry type="module" module-name="ui-openapi" />
-    <orderEntry type="module" module-name="action-system-openapi" />
-    <orderEntry type="module" module-name="action-system-impl" />
-    <orderEntry type="module" module-name="appcore-api" />
-    <orderEntry type="module" module-name="ui-impl" />
-    <orderEntry type="module" module-name="inspections-openapi" />
-    <orderEntry type="module" module-name="inspections-impl" />
-    <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="module" module-name="compiler-impl" />
-    <orderEntry type="module" module-name="refactoring-impl" />
-    <orderEntry type="module" module-name="refactoring-openapi" />
-    <orderEntry type="module" module-name="plugins-management" />
-    <orderEntry type="module" module-name="ExtendedApi" />
-    <orderEntry type="module" module-name="icons" />
-    <orderEntry type="module" module-name="resources_eng" />
-    <orderEntry type="library" name="jgoodies-forms" level="project" />
-    <orderEntry type="library" name="asm" level="project" />
-    <orderEntry type="module" module-name="UsageView" />
+    <orderEntry forTests="false" type="sourceFolder" />
+    <orderEntry module-name="Annotations" type="module" />
+    <orderEntry module-name="idea" type="module" />
+    <orderEntry module-name="openapi" type="module" />
+    <orderEntry module-name="util" type="module" />
+    <orderEntry module-name="UIDesignerCore" type="module" />
+    <orderEntry module-name="codeInsight-openapi" type="module" />
+    <orderEntry module-name="codeInsight-impl" type="module" />
+    <orderEntry module-name="forms_rt" type="module" />
+    <orderEntry level="project" name="Trove4j" type="library" />
+    <orderEntry module-name="compiler-openapi" type="module" />
+    <orderEntry module-name="ui-openapi" type="module" />
+    <orderEntry module-name="action-system-openapi" type="module" />
+    <orderEntry module-name="action-system-impl" type="module" />
+    <orderEntry module-name="appcore-api" type="module" />
+    <orderEntry module-name="ui-impl" type="module" />
+    <orderEntry module-name="inspections-openapi" type="module" />
+    <orderEntry module-name="inspections-impl" type="module" />
+    <orderEntry module-name="execution-impl" type="module" />
+    <orderEntry module-name="execution-openapi" type="module" />
+    <orderEntry module-name="compiler-impl" type="module" />
+    <orderEntry module-name="refactoring-impl" type="module" />
+    <orderEntry module-name="refactoring-openapi" type="module" />
+    <orderEntry module-name="plugins-management" type="module" />
+    <orderEntry module-name="ExtendedApi" type="module" />
+    <orderEntry module-name="icons" type="module" />
+    <orderEntry module-name="resources_eng" type="module" />
+    <orderEntry level="project" name="jgoodies-forms" type="library" />
+    <orderEntry level="project" name="asm" type="library" />
+    <orderEntry module-name="UsageView" type="module" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

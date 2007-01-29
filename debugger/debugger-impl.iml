@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module version="4" relativePaths="true" type="JAVA_MODULE">
+<module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="ModuleRootManager" />
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
+  <component inherit-compiler-output="true" name="NewModuleRootManager">
     <output url="file://$MODULE_DIR$/classes/impl" />
     <exclude-output />
     <content url="file://$MODULE_DIR$/impl">
-      <sourceFolder url="file://$MODULE_DIR$/impl" isTestSource="false" />
+      <sourceFolder isTestSource="false" url="file://$MODULE_DIR$/impl" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="Annotations" />
-    <orderEntry type="module" module-name="idea" />
-    <orderEntry type="module" module-name="debugger-openapi" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="module" module-name="action-system-openapi" />
-    <orderEntry type="module" module-name="ui-openapi" />
-    <orderEntry type="module" module-name="ui-impl" />
-    <orderEntry type="module" module-name="action-system-impl" />
-    <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="module" module-name="codeInsight-impl" />
-    <orderEntry type="module" module-name="codeInsight-openapi" />
-    <orderEntry type="module" module-name="resources" />
-    <orderEntry type="module" module-name="resources_eng" />
+    <orderEntry forTests="false" type="sourceFolder" />
+    <orderEntry module-name="Annotations" type="module" />
+    <orderEntry module-name="idea" type="module" />
+    <orderEntry module-name="debugger-openapi" type="module" />
+    <orderEntry module-name="openapi" type="module" />
+    <orderEntry module-name="execution-openapi" type="module" />
+    <orderEntry module-name="action-system-openapi" type="module" />
+    <orderEntry module-name="ui-openapi" type="module" />
+    <orderEntry module-name="ui-impl" type="module" />
+    <orderEntry module-name="action-system-impl" type="module" />
+    <orderEntry module-name="execution-impl" type="module" />
+    <orderEntry module-name="codeInsight-impl" type="module" />
+    <orderEntry module-name="codeInsight-openapi" type="module" />
+    <orderEntry module-name="resources" type="module" />
+    <orderEntry module-name="resources_eng" type="module" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

@@ -1,34 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module version="4" relativePaths="true" type="JAVA_MODULE">
+<module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="ModuleRootManager" />
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
+  <component inherit-compiler-output="true" name="NewModuleRootManager">
     <output url="file://$MODULE_DIR$/classes/impl" />
     <exclude-output />
     <content url="file://$MODULE_DIR$/impl">
-      <sourceFolder url="file://$MODULE_DIR$/impl" isTestSource="false" />
+      <sourceFolder isTestSource="false" url="file://$MODULE_DIR$/impl" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="compiler-openapi" />
-    <orderEntry type="module" module-name="idea" />
-    <orderEntry type="library" name="OroMatcher" level="project" />
-    <orderEntry type="module" module-name="Annotations" />
-    <orderEntry type="library" name="JDOM" level="project" />
-    <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="library" name="Trove4j" level="project" />
-    <orderEntry type="module" module-name="action-system-openapi" />
-    <orderEntry type="module" module-name="ui-openapi" />
-    <orderEntry type="module" module-name="idea_rt" />
-    <orderEntry type="module" module-name="action-system-impl" />
-    <orderEntry type="module" module-name="resources_eng" />
-    <orderEntry type="module" module-name="NotNull" />
-    <orderEntry type="module" module-name="ui-impl" />
-    <orderEntry type="library" name="asm" level="project" />
-    <orderEntry type="module" module-name="plugins-management" />
-    <orderEntry type="library" name="Eclipse" level="project" />
-    <orderEntry type="module" module-name="j2ee-openapi" />
-    <orderEntry type="module" module-name="boot" />
+    <orderEntry forTests="false" type="sourceFolder" />
+    <orderEntry module-name="compiler-openapi" type="module" />
+    <orderEntry module-name="idea" type="module" />
+    <orderEntry level="project" name="OroMatcher" type="library" />
+    <orderEntry module-name="Annotations" type="module" />
+    <orderEntry level="project" name="JDOM" type="library" />
+    <orderEntry module-name="util" type="module" />
+    <orderEntry module-name="openapi" type="module" />
+    <orderEntry level="project" name="Trove4j" type="library" />
+    <orderEntry module-name="action-system-openapi" type="module" />
+    <orderEntry module-name="ui-openapi" type="module" />
+    <orderEntry module-name="idea_rt" type="module" />
+    <orderEntry module-name="action-system-impl" type="module" />
+    <orderEntry module-name="resources_eng" type="module" />
+    <orderEntry module-name="NotNull" type="module" />
+    <orderEntry module-name="ui-impl" type="module" />
+    <orderEntry level="project" name="asm" type="library" />
+    <orderEntry module-name="plugins-management" type="module" />
+    <orderEntry level="project" name="Eclipse" type="library" />
+    <orderEntry module-name="j2ee-openapi" type="module" />
+    <orderEntry module-name="boot" type="module" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
