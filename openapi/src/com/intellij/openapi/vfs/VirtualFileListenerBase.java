@@ -1,5 +1,6 @@
 package com.intellij.openapi.vfs;
 
+@Deprecated
 public class VirtualFileListenerBase implements VirtualFileListener{
   public void propertyChanged(VirtualFilePropertyEvent event) {}
   public void contentsChanged(VirtualFileEvent event) {}
@@ -9,7 +10,9 @@ public class VirtualFileListenerBase implements VirtualFileListener{
   public void beforePropertyChange(VirtualFilePropertyEvent event) {}
   public void beforeContentsChange(VirtualFileEvent event) {}
   public void beforeFileDeletion(VirtualFileEvent event) {}
-  public void fileCopied(final VirtualFileCopyEvent event) {}
+  public void fileCopied(final VirtualFileCopyEvent event) {
+    fileCreated(event);
+  }
 
   public void beforeFileMovement(VirtualFileMoveEvent event) {}
 }
