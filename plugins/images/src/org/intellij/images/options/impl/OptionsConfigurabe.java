@@ -17,7 +17,6 @@ package org.intellij.images.options.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.BaseConfigurableWithChangeSupport;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -28,7 +27,6 @@ import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
@@ -39,8 +37,7 @@ import java.beans.PropertyChangeListener;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-public final class OptionsConfigurabe extends BaseConfigurableWithChangeSupport implements SearchableConfigurable, ApplicationComponent, PropertyChangeListener {
-    @NonNls private static final String NAME = "Images.OptionsConfigurable";
+public final class OptionsConfigurabe extends BaseConfigurableWithChangeSupport implements SearchableConfigurable, PropertyChangeListener {
     private static final String DISPLAY_NAME = ImagesBundle.message("settings.page.name");
     private OptionsUIForm uiForm;
 
@@ -100,18 +97,7 @@ public final class OptionsConfigurabe extends BaseConfigurableWithChangeSupport 
         setModified(!options.equals(uiOptions));
     }
 
-    @NotNull
-    public String getComponentName() {
-        return NAME;
-    }
-
-    public void initComponent() {
-    }
-
-    public void disposeComponent() {
-    }
-
-    public static void show(Project project) {
+  public static void show(Project project) {
         Application application = ApplicationManager.getApplication();
         OptionsConfigurabe component = application.getComponent(OptionsConfigurabe.class);
         ShowSettingsUtil.getInstance().editConfigurable(project, component);

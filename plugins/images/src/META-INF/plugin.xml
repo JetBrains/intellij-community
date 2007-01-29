@@ -11,15 +11,13 @@
 
     <extensions xmlns="com.intellij">
         <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+        <applicationConfigurable implementation="org.intellij.images.options.impl.OptionsConfigurabe"/>
     </extensions>
 
     <application-components>
         <component>
             <interface-class>org.intellij.images.options.OptionsManager</interface-class>
             <implementation-class>org.intellij.images.options.impl.OptionsManagerImpl</implementation-class>
-        </component>
-        <component>
-            <implementation-class>org.intellij.images.options.impl.OptionsConfigurabe</implementation-class>
         </component>
         <component>
             <interface-class>org.intellij.images.fileTypes.ImageFileTypeManager</interface-class>
