@@ -216,7 +216,7 @@ public class MatchingVisitor extends PsiElementVisitor {
               for(PsiAnnotationMemberValue v:((PsiArrayInitializerMemberValue)value).getInitializers()) {
                 final String name = StringUtil.stripQuotesAroundValue(v.getText());
                 if (MatchOptions.INSTANCE_MODIFIER_NAME.equals(name)) {
-                  if (list2.hasModifierProperty("static")) {
+                  if (isNotInstanceModifier(list2)) {
                     result = false;
                     return;
                   } else {
@@ -235,7 +235,7 @@ public class MatchingVisitor extends PsiElementVisitor {
             } else {
               final String name = StringUtil.stripQuotesAroundValue(value.getText());
               if (MatchOptions.INSTANCE_MODIFIER_NAME.equals(name)) {
-                if (list2.hasModifierProperty("static")) {
+                if (isNotInstanceModifier(list2)) {
                   result = false;
                   return;
                 }
@@ -254,6 +254,11 @@ public class MatchingVisitor extends PsiElementVisitor {
     } else {
       result = true;
     }
+  }
+
+  private static boolean isNotInstanceModifier(final PsiModifierList list2) {
+    return list2.hasModifierProperty("static") ||
+        list2.hasModifierProperty("abstract");
   }
 
   private final boolean matchSonsOptionally(final PsiElement element,final PsiElement element2) {

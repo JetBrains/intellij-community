@@ -2354,6 +2354,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String s4_2 = "@Modifier({\"static\",\"Instance\"}) '_Type '_Variable = '_Value?;";
     assertEquals("Finding instance fields",1,findMatchesCount(s3,s4));
     assertEquals("Finding all fields",3,findMatchesCount(s3,s4_2));
+
+    String s5 = "class A {}\n" +
+                "abstract class B {}\n" +
+                "final class C {}\n" +
+                "class D {}";
+    String s6 = "@Modifier(\"Instance\") class 'Type {}";
+    String s6_2 = "@Modifier({\"abstract\",\"final\",\"Instance\"}) class 'Type {}";
+    assertEquals("Finding instance classes",3,findMatchesCount(s5,s6));
+    assertEquals("Finding all classes",4,findMatchesCount(s5,s6_2));
   }
 
   public void test() {
