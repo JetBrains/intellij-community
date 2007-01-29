@@ -55,8 +55,8 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
 
   private boolean doCopy() {
     final ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(myEditor);
-    final MyData data = new MyData(serializeForCopy(myEditor, selectedComponents));
-    final SimpleTransferable transferable = new SimpleTransferable<MyData>(data, MyData.class, ourDataFlavor);
+    final SerializedComponentData data = new SerializedComponentData(serializeForCopy(myEditor, selectedComponents));
+    final SimpleTransferable transferable = new SimpleTransferable<SerializedComponentData>(data, SerializedComponentData.class, ourDataFlavor);
     try {
       final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
       clipboard.setContents(transferable, new MyClipboardOwner());
@@ -179,18 +179,6 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     return true;
   }
 
-  private static final class MyData {
-    private final String mySerializedComponents;
-
-    public MyData(final String components) {
-      mySerializedComponents = components;
-    }
-
-    public String getSerializedComponents() {
-      return mySerializedComponents;
-    }
-  }
-
   @Nullable
   private String getSerializedComponents() {
     try {
@@ -208,10 +196,10 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
         return null;
       }
 
-      if (!(transferData instanceof MyData)) {
+      if (!(transferData instanceof SerializedComponentData)) {
         return null;
       }
-      final MyData dataProxy = (MyData) transferData;
+      final SerializedComponentData dataProxy = (SerializedComponentData) transferData;
       return dataProxy.getSerializedComponents();
     } catch (Exception e) {
       return null;
@@ -222,7 +210,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   static {
     try {
       //noinspection HardCodedStringLiteral
-      ourDataFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + MyData.class.getName());
+      ourDataFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=com.intellij.uiDesigner.SerializedComponentData");
     }
     catch (ClassNotFoundException e) {
       throw new RuntimeException(e);

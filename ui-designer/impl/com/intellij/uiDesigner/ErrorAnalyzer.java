@@ -1,6 +1,5 @@
 package com.intellij.uiDesigner;
 
-import com.intellij.ExtensionPoints;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -9,10 +8,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.lw.IButtonGroup;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;
 import com.intellij.uiDesigner.lw.IRootContainer;
-import com.intellij.uiDesigner.lw.IButtonGroup;
 import com.intellij.uiDesigner.quickFixes.*;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
@@ -180,8 +179,8 @@ public final class ErrorAnalyzer {
       final PsiFile formPsiFile = PsiManager.getInstance(module.getProject()).findFile(formFile);
       if (formPsiFile != null && rootContainer instanceof RadRootContainer) {
         final List<FormInspectionTool> formInspectionTools = new ArrayList<FormInspectionTool>();
-        for(Object object: Extensions.getRootArea().getExtensionPoint(ExtensionPoints.FORM_INSPECTION_TOOL).getExtensions()) {
-          final FormInspectionTool formInspectionTool = (FormInspectionTool)object;
+        final FormInspectionTool[] registeredFormInspections = Extensions.getExtensions(FormInspectionTool.EP_NAME);
+        for(FormInspectionTool formInspectionTool: registeredFormInspections) {
           if (formInspectionTool.isActive(formPsiFile) && !rootContainer.isInspectionSuppressed(formInspectionTool.getShortName(), null)) {
             formInspectionTools.add(formInspectionTool);
           }

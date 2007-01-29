@@ -24,7 +24,6 @@
   <xi:include href="Help.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="ErrorReport.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Http.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="GuiDesigner.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Util.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="StructuralSearch.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Css.xml" xpointer="xpointer(/components/*)"/>
