@@ -178,9 +178,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Override
-  public void initComponent(final Object component) {
-    if (myProject.myOptimiseTestLoadSpeed) return; //test load speed optimization
-    super.initComponent(component);
+  protected boolean optimizeTestLoading() {
+    return myProject.myOptimiseTestLoadSpeed;
   }
 
   public void setProjectFilePath(final String filePath) {

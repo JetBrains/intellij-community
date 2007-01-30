@@ -121,9 +121,8 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
   }
 
   @Override
-  public void initComponent(final Object component) {
-    if (((ProjectImpl)myModule.getProject()).isOptimiseTestLoadSpeed()) return; //test load speed optimization
-    super.initComponent(component);
+  protected boolean optimizeTestLoading() {
+    return ((ProjectImpl)myModule.getProject()).isOptimiseTestLoadSpeed();
   }
 
   @Nullable

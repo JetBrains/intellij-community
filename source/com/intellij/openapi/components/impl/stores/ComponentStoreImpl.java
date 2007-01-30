@@ -150,6 +150,8 @@ abstract class ComponentStoreImpl implements IComponentStore {
     final String componentName = ((BaseComponent)component).getComponentName();
     myComponents.put(componentName, component);
 
+    if (optimizeTestLoading()) return;
+
     loadJdomDefaults(component, componentName);
     StateStorage stateStorage = getOldStorage(component);
 
@@ -204,6 +206,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     final String name = getComponentName(component);
 
     myComponents.put(name, component);
+    if (optimizeTestLoading()) return;
 
     Object state = null;
     //todo: defaults merging
@@ -282,5 +285,9 @@ abstract class ComponentStoreImpl implements IComponentStore {
     final Storage[] storages = stateSpec.storages();
     assert storages.length <= 1 : "Multiple storage specs not supported: " + persistentStateComponent.getClass();
     return storages.length > 0 ? storages[0] : null;
+  }
+
+  protected boolean optimizeTestLoading() {
+    return false;
   }
 }
