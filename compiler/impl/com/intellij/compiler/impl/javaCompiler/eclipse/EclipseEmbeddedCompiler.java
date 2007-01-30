@@ -5,6 +5,7 @@ import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.options.Configurable;
@@ -31,8 +32,8 @@ public class EclipseEmbeddedCompiler implements BackendCompiler {
     createCompileDriver();
   }
 
-  public boolean checkCompiler() {
-    return myEclipseCompilerDriver != null && myEclipseExternalCompiler.checkCompiler();
+  public boolean checkCompiler(final CompileScope scope) {
+    return myEclipseCompilerDriver != null && myEclipseExternalCompiler.checkCompiler(scope);
   }
 
   @NotNull

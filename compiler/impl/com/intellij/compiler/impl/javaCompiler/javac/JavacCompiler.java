@@ -8,12 +8,13 @@ import com.intellij.compiler.impl.javaCompiler.ExternalCompiler;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.projectRoots.impl.MockJdkWrapper;
@@ -40,8 +41,8 @@ public class JavacCompiler extends ExternalCompiler {
     myProject = project;
   }
 
-  public boolean checkCompiler() {
-    final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+  public boolean checkCompiler(final CompileScope scope) {
+    final Module[] modules = scope.getAffectedModules();
     final Set<ProjectJdk> checkedJdks = new HashSet<ProjectJdk>();
     for (final Module module : modules) {
       final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
@@ -64,12 +65,14 @@ public class JavacCompiler extends ExternalCompiler {
                                    CompilerBundle.message("compiler.javac.name"), Messages.getErrorIcon());
         return false;
       }
-      final String toolsJarPath = jdk.getToolsPath();
-      if (toolsJarPath == null) {
-        Messages.showMessageDialog(myProject,
-                                   CompilerBundle.message("javac.error.tools.jar.missing", jdk.getName()), CompilerBundle.message("compiler.javac.name"),
-                                   Messages.getErrorIcon());
-        return false;
+      if (jdk instanceof JavaSdk) {
+        final String toolsJarPath = jdk.getToolsPath();
+        if (toolsJarPath == null) {
+          Messages.showMessageDialog(myProject,
+                                     CompilerBundle.message("javac.error.tools.jar.missing", jdk.getName()), CompilerBundle.message("compiler.javac.name"),
+                                     Messages.getErrorIcon());
+          return false;
+        }
       }
       final String versionString = jdk.getVersionString();
       if (versionString == null) {
@@ -77,9 +80,11 @@ public class JavacCompiler extends ExternalCompiler {
                                    CompilerBundle.message("compiler.javac.name"), Messages.getErrorIcon());
         return false;
       }
-      if (CompilerUtil.isOfVersion(versionString, "1.0")) {
-        Messages.showMessageDialog(myProject, CompilerBundle.message("javac.error.1_0_compilation.not.supported"), CompilerBundle.message("compiler.javac.name"), Messages.getErrorIcon());
-        return false;
+      if (jdk instanceof JavaSdk) {
+        if (CompilerUtil.isOfVersion(versionString, "1.0")) {
+          Messages.showMessageDialog(myProject, CompilerBundle.message("javac.error.1_0_compilation.not.supported"), CompilerBundle.message("compiler.javac.name"), Messages.getErrorIcon());
+          return false;
+        }
       }
       checkedJdks.add(jdk);
     }
@@ -152,6 +157,14 @@ public class JavacCompiler extends ExternalCompiler {
     if (versionString == null || "".equals(versionString)) {
       throw new IllegalArgumentException(CompilerBundle.message("javac.error.unknown.jdk.version", jdk.getName()));
     }
+    
+    if (!(jdk instanceof JavaSdk)) {
+      final String toolsJarPath = jdk.getToolsPath();
+      if (toolsJarPath == null) {
+        throw new IllegalArgumentException(CompilerBundle.message("javac.error.tools.jar.missing", jdk.getName()));
+      }
+    }
+    
     final boolean isVersion1_0 = CompilerUtil.isOfVersion(versionString, "1.0");
     final boolean isVersion1_1 = CompilerUtil.isOfVersion(versionString, "1.1");
     final boolean isVersion1_2 = CompilerUtil.isOfVersion(versionString, "1.2");

@@ -7,6 +7,7 @@ import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
 import com.intellij.compiler.options.CompilerConfigurable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
@@ -36,7 +37,7 @@ public class JikesCompiler extends ExternalCompiler {
     myProject = project;
   }
 
-  public boolean checkCompiler() {
+  public boolean checkCompiler(final CompileScope scope) {
     String compilerPath = getCompilerPath();
     if (compilerPath == null) {
       Messages.showMessageDialog(

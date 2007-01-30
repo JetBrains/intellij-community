@@ -56,7 +56,7 @@ public class JavaCompiler implements TranslatingCompiler {
   }
 
   public boolean validateConfiguration(CompileScope scope) {
-    return getBackEndCompiler().checkCompiler();
+    return getBackEndCompiler().checkCompiler(scope);
   }
 
   private BackendCompiler getBackEndCompiler() {

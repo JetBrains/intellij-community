@@ -7,6 +7,7 @@ import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
@@ -41,7 +42,7 @@ public class EclipseCompiler extends ExternalCompiler {
     return file.exists();
   }
 
-  public boolean checkCompiler() {
+  public boolean checkCompiler(final CompileScope scope) {
     if (!isInitialized()) {
       Messages.showMessageDialog(
         myProject,
