@@ -20,6 +20,8 @@ import com.intellij.psi.util.PsiElementFilter;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public interface PsiElementProcessor<T extends PsiElement> {
   boolean execute(T element);
@@ -28,11 +30,11 @@ public interface PsiElementProcessor<T extends PsiElement> {
     private final Collection<T> myCollection;
 
     public CollectElements(Collection<T> collection) {
-      myCollection = collection;
+      myCollection = Collections.synchronizedCollection(collection);
     }
 
     public CollectElements() {
-      myCollection = new ArrayList<T>();
+      this(new ArrayList<T>());
     }
 
     public PsiElement[] toArray() {
@@ -72,8 +74,8 @@ public interface PsiElementProcessor<T extends PsiElement> {
   }
 
   class CollectElementsWithLimit<T extends PsiElement> extends CollectElements<T>{
-    private int myCount = 0;
-    private boolean myOverflow = false;
+    private final AtomicInteger myCount = new AtomicInteger(0);
+    private volatile boolean myOverflow = false;
 
     private final int myLimit;
 
@@ -82,11 +84,11 @@ public interface PsiElementProcessor<T extends PsiElement> {
     }
 
     public boolean execute(T element) {
-      if (myCount == myLimit){
+      if (myCount.get() == myLimit){
         myOverflow = true;
         return false;
       }
-      myCount++;
+      myCount.incrementAndGet();
       return super.execute(element);
     }
 
@@ -96,7 +98,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
   }
 
   class FindElement<T extends PsiElement> implements PsiElementProcessor<T> {
-    private T myFoundElement = null;
+    private volatile T myFoundElement = null;
 
     public boolean isFound() {
       return myFoundElement != null;
@@ -113,7 +115,6 @@ public interface PsiElementProcessor<T extends PsiElement> {
   }
 
   class FindFilteredElement<T extends PsiElement> extends FindElement<T> {
-
     private final PsiElementFilter myFilter;
 
     public FindFilteredElement(PsiElementFilter filter) {
