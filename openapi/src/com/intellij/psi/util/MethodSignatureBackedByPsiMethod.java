@@ -84,7 +84,8 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
         parameterTypes[i] = TypeConversionUtil.erasure(parameterTypes[i]);
       }
       isInGenericContext = false;
-    } else {
+    }
+    else {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass != null) {
         final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(containingClass);

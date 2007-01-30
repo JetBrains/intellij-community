@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -124,7 +123,7 @@ public class MethodSignatureUtil {
     if (superSubstitutor == null) return false;
     final MethodSignature superSignature = superMethodCandidate.getSignature(superSubstitutor);
     final MethodSignature derivedSignature = derivedMethod.getSignature(PsiSubstitutor.EMPTY);
-    return MethodSignatureUtil.isSubsignature(superSignature, derivedSignature);
+    return isSubsignature(superSignature, derivedSignature);
   }
 
   @Nullable
@@ -158,26 +157,6 @@ public class MethodSignatureUtil {
     }
 
     return null;
-  }
-
-  public static class MethodSignatureToMethods {
-    private Map<MethodSignature, List<MethodSignatureBackedByPsiMethod>> myMap;
-
-    public MethodSignatureToMethods() {
-      myMap = new THashMap<MethodSignature, List<MethodSignatureBackedByPsiMethod>>(METHOD_PARAMETERS_ERASURE_EQUALITY);
-    }
-
-    public List<MethodSignatureBackedByPsiMethod> get(MethodSignature sig) {
-      return myMap.get(sig);
-    }
-
-    public Collection<List<MethodSignatureBackedByPsiMethod>> values() {
-      return myMap.values();
-    }
-
-    public void put(MethodSignature methodSignature, List<MethodSignatureBackedByPsiMethod> overrideEquivalentsList) {
-      myMap.put(methodSignature, overrideEquivalentsList);
-    }
   }
 
   public static PsiMethod findMethodBySignature(final PsiClass aClass, PsiMethod pattenMethod, boolean checkBases) {

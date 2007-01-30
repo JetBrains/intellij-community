@@ -17,6 +17,7 @@ import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
@@ -297,14 +298,12 @@ public class FindUsagesUtil {
 
     ArrayList<PsiClass> classes = new ArrayList<PsiClass>();
     addClassesInPackage(aPackage, options.isIncludeSubpackages, classes);
-    for(int i = 0; i < classes.size(); i++){
-      PsiClass aClass = classes.get(i);
-      if (progress != null){
+    for (PsiClass aClass : classes) {
+      if (progress != null) {
         progress.setText(FindBundle.message("find.searching.for.references.to.class.progress", aClass.getName()));
       }
-      for(int j = 0; j < files.size(); j++){
+      for (PsiFile file : files) {
         ProgressManager.getInstance().checkCanceled();
-        PsiFile file = files.get(j);
         refs = helper.findReferences(aClass, new LocalSearchScope(file), false);
         addResults(results, refs, options, aClass);
       }
@@ -331,20 +330,24 @@ public class FindUsagesUtil {
     }
   }
 
-  private static void addClassesInDirectory(PsiDirectory dir, boolean includeSubdirs, ArrayList<PsiClass> array) {
-    PsiClass[] classes = dir.getClasses();
-    for (PsiClass aClass : classes) {
-      array.add(aClass);
-    }
-    if (includeSubdirs){
-      PsiDirectory[] dirs = dir.getSubdirectories();
-      for (PsiDirectory directory : dirs) {
-        addClassesInDirectory(directory, includeSubdirs, array);
+  private static void addClassesInDirectory(final PsiDirectory dir, final boolean includeSubdirs, final ArrayList<PsiClass> array) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        PsiClass[] classes = dir.getClasses();
+        for (PsiClass aClass : classes) {
+          array.add(aClass);
+        }
+        if (includeSubdirs) {
+          PsiDirectory[] dirs = dir.getSubdirectories();
+          for (PsiDirectory directory : dirs) {
+            addClassesInDirectory(directory, includeSubdirs, array);
+          }
+        }
       }
-    }
+    });
   }
 
-  public static void addMethodsUsages(final PsiClass aClass, final Processor<UsageInfo> results, final FindUsagesOptions options) {
+  private static void addMethodsUsages(final PsiClass aClass, final Processor<UsageInfo> results, final FindUsagesOptions options) {
     if (!options.isIncludeInherited){
       PsiMethod[] methods = aClass.getMethods();
       for (PsiMethod method : methods) {
@@ -359,8 +362,9 @@ public class FindUsagesUtil {
         for(int i = 0; i < methods.length; i++){
           final PsiMethod method = methods[i];
           // filter overriden methods
+          MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
           for(int j = 0; j < i; j++){
-            if (MethodSignatureUtil.areSignaturesEqual(method, methods[j])) continue MethodsLoop;
+            if (methodSignature.equals(methods[j].getSignature(PsiSubstitutor.EMPTY))) continue MethodsLoop;
           }
           final PsiClass methodClass = method.getContainingClass();
           if (methodClass != null && manager.areElementsEquivalent(methodClass, aClass)){
