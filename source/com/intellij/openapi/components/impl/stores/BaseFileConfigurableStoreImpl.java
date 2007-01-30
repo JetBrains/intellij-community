@@ -195,7 +195,5 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return myStateStorageManager;
   }
 
-  protected StateStorageManager createStateStorageManager() {
-    return new StateStorageManager(PathMacroManager.getInstance(getComponentManager()));
-  }
+  protected abstract StateStorageManager createStateStorageManager();
 }

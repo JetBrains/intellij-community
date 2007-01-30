@@ -16,8 +16,10 @@ class StateStorageManager {
   private Map<String, String> myMacros = new HashMap<String, String>();
   private Map<String, StateStorage> myStorages = new HashMap<String, StateStorage>();
   private PathMacroSubstitutor myPathMacroManager;
+  private String myRootTagName;
 
-  public StateStorageManager(@Nullable final PathMacroSubstitutor pathMacroManager) {
+  public StateStorageManager(@Nullable final PathMacroSubstitutor pathMacroManager, final String rootTagName) {
+    myRootTagName = rootTagName;
     myPathMacroManager = pathMacroManager;
   }
 
@@ -51,7 +53,7 @@ class StateStorageManager {
 
     assert actualFile.indexOf("$") < 0 : "Can't expand all macroses in: " + file;
 
-    final FileBasedStorage storage = new FileBasedStorage(myPathMacroManager, actualFile);
+    final FileBasedStorage storage = new FileBasedStorage(myPathMacroManager, actualFile, myRootTagName);
     myStorages.put(file, storage);
     return storage;
   }

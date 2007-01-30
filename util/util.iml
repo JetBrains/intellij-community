@@ -12,8 +12,8 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry forTests="false" type="sourceFolder" />
     <orderEntry level="project" name="JDOM" type="library" />
-    <orderEntry level="project" name="JUnit4" type="library" />
     <orderEntry level="project" name="Log4J" type="library" />
+    <orderEntry level="project" name="JUnit4" type="library" />
     <orderEntry exported="" level="project" name="Trove4j" type="library" />
     <orderEntry type="module-library">
       <library>

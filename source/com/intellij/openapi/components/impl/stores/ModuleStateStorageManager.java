@@ -6,6 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 class ModuleStateStorageManager extends StateStorageManager {
   public ModuleStateStorageManager(@Nullable final PathMacroSubstitutor pathMacroManager, final ModuleImpl module) {
-    super(pathMacroManager);
+    super(pathMacroManager, "module");
   }
 }

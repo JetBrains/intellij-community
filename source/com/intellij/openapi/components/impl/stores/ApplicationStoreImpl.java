@@ -27,7 +27,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   @SuppressWarnings({"UnusedDeclaration"}) //picocontainer
   public ApplicationStoreImpl(final ApplicationImpl application) {
     myApplication = application;
-    myStateStorageManager = new StateStorageManager(null);
+    myStateStorageManager = new StateStorageManager(null, "application");
     myDefaultsStateStorage = new DefaultsStateStorage(null);
   }
 

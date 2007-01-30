@@ -23,7 +23,7 @@ class ProjectStateStorageManager extends StateStorageManager {
   @NonNls public static final String ELEMENT_MACRO = "macro";
 
   public ProjectStateStorageManager(final TrackingPathMacroSubstitutor macroSubstitutor, Project project) {
-    super(macroSubstitutor);
+    super(macroSubstitutor, "project");
     myMacroSubstitutor = macroSubstitutor;
     myProject = project;
   }

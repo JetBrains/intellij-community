@@ -50,7 +50,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
     };
 
-    return new StateStorageManager(pathMacroManager) {
+    return new StateStorageManager(pathMacroManager, "project") {
       @Override
       public synchronized StateStorage getStateStorage(final String file) {
         return storage;
