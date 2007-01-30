@@ -40,6 +40,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -97,7 +98,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     myStyleManager = (CodeStyleManagerEx)CodeStyleManager.getInstance(myProject);
     myCurentEntryIndex = -1;
 
-    myImplicitUsageProviders = ApplicationManager.getApplication().getComponents(ImplicitUsageProvider.class);
+    myImplicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
   }
 
   public PostHighlightingPass(Project project, PsiFile file, @NotNull Editor editor, int startOffset, int endOffset) {

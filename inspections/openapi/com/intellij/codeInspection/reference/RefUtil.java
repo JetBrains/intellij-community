@@ -17,7 +17,6 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
@@ -81,7 +80,7 @@ public abstract class RefUtil {
       }
     }
     final PsiElement element = refElement.getElement();
-    final ImplicitUsageProvider[] implicitUsageProviders = ApplicationManager.getApplication().getComponents(ImplicitUsageProvider.class);
+    final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
     for (ImplicitUsageProvider provider : implicitUsageProviders) {
       if (provider.isImplicitUsage(element)) return true;
     }

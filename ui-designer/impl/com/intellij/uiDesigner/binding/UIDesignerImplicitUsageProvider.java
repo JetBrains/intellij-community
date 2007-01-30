@@ -5,19 +5,16 @@
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class UIDesignerImplicitUsageProvider implements ApplicationComponent, ImplicitUsageProvider {
+public class UIDesignerImplicitUsageProvider implements ImplicitUsageProvider {
   public boolean isImplicitUsage(PsiElement element) {
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
@@ -36,16 +33,5 @@ public class UIDesignerImplicitUsageProvider implements ApplicationComponent, Im
 
   public boolean isImplicitWrite(PsiVariable element) {
     return element instanceof PsiField && FormReferenceProvider.getFormFile((PsiField)element) != null;
-  }
-
-  @NotNull @NonNls
-  public String getComponentName() {
-    return "UIDesignerImplicitUsageProvider";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

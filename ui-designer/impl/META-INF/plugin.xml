@@ -33,6 +33,7 @@
 
     <favoriteNodeProvider implementation="com.intellij.uiDesigner.projectView.UIDesignerFavoriteNodeProvider"/>
     <renameHandler implementation="com.intellij.uiDesigner.projectView.FormRenameHandler"/>
+    <implicitUsageProvider implementation="com.intellij.uiDesigner.binding.UIDesignerImplicitUsageProvider"/>
   </extensions>
 
   <application-components>
@@ -47,9 +48,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.uiDesigner.inspections.FormInspectionProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.binding.UIDesignerImplicitUsageProvider</implementation-class>
     </component>
   </application-components>
 
