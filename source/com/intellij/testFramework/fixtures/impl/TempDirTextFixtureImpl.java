@@ -4,12 +4,14 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import junit.framework.TestCase;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,20 +28,58 @@ public class TempDirTextFixtureImpl implements TempDirTestFixture {
   public VirtualFile copyFile(VirtualFile file) {
     try {
       createTempDirectory();
-      VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(myTempDir.getCanonicalPath().replace(File.separatorChar, '/'));
-      return VfsUtil.copyFile(this, file, vDir);
+      VirtualFile tempDir =
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(myTempDir.getCanonicalPath().replace(File.separatorChar, '/'));
+      return VfsUtil.copyFile(this, file, tempDir);
     }
     catch (IOException e) {
       throw new RuntimeException("Cannot copy " + file, e);
     }
   }
 
+  public void copyAll(final String dataDir) {
+    createTempDirectory();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        try {
+          VirtualFile tempDir =
+            LocalFileSystem.getInstance().refreshAndFindFileByPath(myTempDir.getCanonicalPath().replace(File.separatorChar, '/'));
+          final VirtualFile from = LocalFileSystem.getInstance().refreshAndFindFileByPath(dataDir);
+          assert from != null : dataDir + " not found";
+          VfsUtil.copyDirectory(null, from, tempDir, null);
+        }
+        catch (IOException e) {
+          assert false : "Cannot copy " + dataDir + ": " + e;
+        }
+      }
+    });
+  }
+
   public String getTempDirPath() {
     return createTempDirectory().getAbsolutePath();
   }
 
-  public void setUp() throws Exception {
+  @Nullable
+  public VirtualFile getFile(final String path) {
 
+    final Ref<VirtualFile> result = new Ref<VirtualFile>(null);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        try {
+          final VirtualFile file = LocalFileSystem.getInstance()
+            .refreshAndFindFileByPath(myTempDir.getCanonicalPath().replace(File.separatorChar, '/') + "/" + path);
+          result.set(file);
+        }
+        catch (IOException e) {
+          assert false : "Cannot find " + path + ": " + e;
+        }
+      }
+    });
+    return result.get();
+  }
+
+  public void setUp() throws Exception {
+    createTempDirectory();
   }
 
   public void tearDown() throws Exception {
@@ -71,7 +111,7 @@ public class TempDirTextFixtureImpl implements TempDirTestFixture {
 
     boolean b = file.delete();
     if (!b && file.exists()) {
-      TestCase.fail("Can't delete " + file.getAbsolutePath());
+      assert false : "Can't delete " + file.getAbsolutePath();
     }
   }
 
