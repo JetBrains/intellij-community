@@ -7,7 +7,7 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
-import com.intellij.codeInspection.ui.actions.SuppressInspectionToolbarAction;
+import com.intellij.codeInspection.ui.actions.SuppressActionsProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -203,7 +203,13 @@ public class Browser extends JPanel {
                   invokeLocalFix(actionNumber);
                 }
               } else if (ref.startsWith("suppress:")){
-                SuppressInspectionToolbarAction.getSuppressAction((RefElement)myCurrentEntity, getTool(), myCurrentDescriptor, myView).actionPerformed(null);
+                final AnAction[] actions = new SuppressActionsProvider(myView).getSuppressActions();
+                if (actions != null) {
+                  int actionNumber = Integer.parseInt(ref.substring("suppress:".length()));
+                  if (actionNumber > -1 && actions.length > actionNumber) {
+                    actions[actionNumber].actionPerformed(null);
+                  }
+                }
               }
               else {
                 int offset = Integer.parseInt(ref);
@@ -256,7 +262,7 @@ public class Browser extends JPanel {
     uppercaseFirstLetter(buf);
 
     if (refEntity instanceof RefElement){
-      appendSuppressSection((RefElement)refEntity, buf, null);
+      appendSuppressSection(buf);
     }
 
     insertHeaderFooter(buf);
@@ -283,7 +289,7 @@ public class Browser extends JPanel {
     uppercaseFirstLetter(buf);
 
     if (refEntity instanceof RefElement) {
-      appendSuppressSection((RefElement)refEntity, buf, descriptor);
+      appendSuppressSection(buf);
     }
 
     insertHeaderFooter(buf);
@@ -302,22 +308,26 @@ public class Browser extends JPanel {
     return tool;
   }
 
-  private void appendSuppressSection(final RefElement refElement, final StringBuffer buf, final CommonProblemDescriptor descriptor) {
+  private void appendSuppressSection(final StringBuffer buf) {
     final InspectionTool tool = getTool();
     if (tool != null) {
       final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
       if (key != null){//dummy entry points
-        final AnAction suppressAction = SuppressInspectionToolbarAction.getSuppressAction(refElement, tool, descriptor, myView);
-        if (suppressAction != null){
+        final AnAction[] suppressActions = new SuppressActionsProvider(myView).getSuppressActions();
+        if (suppressActions != null) {
+          int idx = 0;
           @NonNls String font = "<font style=\"font-family:verdana;\" size = \"3\">";
           buf.append(font);
           @NonNls final String br = "<br>";
           buf.append(br).append(br);
           HTMLComposerImpl.appendHeading(buf, InspectionsBundle.message("inspection.export.results.suppress"));
-          buf.append(br);
-          HTMLComposer.appendAfterHeaderIndention(buf);
-          @NonNls final String href = "<a HREF=\"file://bred.txt#suppress:\">" + suppressAction.getTemplatePresentation().getText() + "</a>";
-          buf.append(href);
+          for (AnAction suppressAction : suppressActions) {
+            buf.append(br);
+            HTMLComposer.appendAfterHeaderIndention(buf);
+            @NonNls final String href = "<a HREF=\"file://bred.txt#suppress:" + idx + "\">" + suppressAction.getTemplatePresentation().getText() + "</a>";
+            buf.append(href);
+            idx++;
+          }
           @NonNls String closeFont = "</font>";
           buf.append(closeFont);
         }

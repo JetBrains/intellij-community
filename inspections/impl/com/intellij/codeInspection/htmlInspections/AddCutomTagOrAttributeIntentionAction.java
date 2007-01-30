@@ -64,6 +64,6 @@ public class AddCutomTagOrAttributeIntentionAction implements LocalQuickFix {
     final HtmlUnknownTagInspection inspection = (HtmlUnknownTagInspection)wrapper.getTool();
     inspection.addCustomPropertyName(myName);
     model.isProperSetting(HighlightDisplayKey.find(myInspectionName));
-    model.commit(profileManager);
+    model.commit();
   }
 }

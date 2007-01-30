@@ -12,9 +12,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class DisableInspectionToolAction implements IntentionAction {
   private final String myToolId;
+  public static final String NAME = InspectionsBundle.message("disable.inspection.action.name");
 
   public DisableInspectionToolAction(LocalInspectionTool tool) {
     myToolId = tool.getShortName();
@@ -24,12 +26,14 @@ public class DisableInspectionToolAction implements IntentionAction {
     myToolId = key.toString();
   }
 
+  @NotNull
   public String getText() {
-    return InspectionsBundle.message("disable.inspection.action.name");
+    return NAME;
   }
 
+  @NotNull
   public String getFamilyName() {
-    return getText();
+    return NAME;
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
@@ -44,7 +48,7 @@ public class DisableInspectionToolAction implements IntentionAction {
     InspectionProfile inspectionProfile = profileManager.getInspectionProfile(file);
     ModifiableModel model = inspectionProfile.getModifiableModel();
     model.disableTool(myToolId);
-    model.commit(profileManager);    
+    model.commit();
     DaemonCodeAnalyzer.getInstance(project).restart();
   }
 

@@ -15,7 +15,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.testFramework.fixtures.IdeaTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import junit.framework.TestCase;
@@ -45,7 +44,7 @@ public class InspectionProfileTest extends TestCase {
     final InspectionProfileImpl profile = new InspectionProfileImpl("Default");
     profile.readExternal(element);
     final ModifiableModel model = profile.getModifiableModel();
-    model.commit(InspectionProfileManager.getInstance());
+    model.commit();
     final Element copy = new Element("inspections");
     profile.writeExternal(copy);
     StringWriter writer = new StringWriter();

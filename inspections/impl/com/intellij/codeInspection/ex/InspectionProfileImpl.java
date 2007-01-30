@@ -89,20 +89,24 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myFile = inspectionProfile.myFile;
     mySource = inspectionProfile;
     copyFrom(inspectionProfile);
+    setProfileManager(inspectionProfile.getProfileManager());
   }
 
   public InspectionProfileImpl(final String inspectionProfile, 
                                final File file,
-                               final InspectionToolRegistrar registrar) {
+                               final InspectionToolRegistrar registrar,
+                               final ProfileManager profileManager) {
     super(inspectionProfile, file);
     myRegistrar = registrar;
     myBaseProfile = getDefaultProfile();
+    setProfileManager(profileManager);
   }
 
   public InspectionProfileImpl(@NonNls String name) {
     super(name);
     myInitialized = true;
     myRegistrar = InspectionToolRegistrar.getInstance();
+    setProfileManager(InspectionProfileManager.getInstance());
   }
 
   public InspectionProfile getParentProfile() {
@@ -537,10 +541,10 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   //invoke when isChanged() == true
-  public void commit(final ProfileManager profileManager) {
+  public void commit() {
     LOG.assertTrue(mySource != null);
     mySource.commit(this);
-    profileManager.updateProfile(mySource);
+    getProfileManager().updateProfile(mySource);
     mySource = null;
   }
 

@@ -13,7 +13,6 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +69,7 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
     final XmlEntitiesInspection xmlEntitiesInspection = (XmlEntitiesInspection)wrapper.getTool();
     xmlEntitiesInspection.setAdditionalEntries(myType, appendName(xmlEntitiesInspection.getAdditionalEntries(myType)));
     model.isProperSetting(HighlightDisplayKey.find(myInspectionName));//update map with non-default settings
-    model.commit(profileManager);
+    model.commit();
   }
 
   public boolean startInWriteAction() {

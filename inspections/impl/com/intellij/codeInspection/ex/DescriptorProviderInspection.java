@@ -121,6 +121,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     if (refEntity == null) return;
     ignoreProblemElement(refEntity);
     getQuickFixActions().remove(refEntity);
+    super.ignoreElement(refEntity);
   }
 
   public void ignoreProblem(RefEntity refEntity, CommonProblemDescriptor problem, int idx) {

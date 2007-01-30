@@ -7,7 +7,6 @@ package com.intellij.codeInspection;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.profile.Profile;
-import com.intellij.profile.ProfileManager;
 
 /**
  * User: anna
@@ -33,7 +32,7 @@ public interface ModifiableModel extends Profile {
 
   boolean isToolEnabled(HighlightDisplayKey key);
 
-  void commit(final ProfileManager profileManager);
+  void commit();
 
   boolean isChanged();
 

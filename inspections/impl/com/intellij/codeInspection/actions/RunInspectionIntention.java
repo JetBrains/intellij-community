@@ -58,15 +58,6 @@ public class RunInspectionIntention implements IntentionAction {
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfileImpl profile = new InspectionProfileImpl(profileManager.getProfileName(file));
-    final ModifiableModel model = profile.getModifiableModel();
-    final InspectionProfileEntry[] profileEntries = model.getInspectionTools();
-    model.patchTool(profileManager.getInspectionProfile(file).getInspectionTool(myShortName));
-    for (InspectionProfileEntry entry : profileEntries) {
-      model.disableTool(entry.getShortName());
-    }
-    model.enableTool(myShortName);
-    model.setEditable(myDisplayName);
     final Module module = ModuleUtil.findModuleForPsiElement(file);
     final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
                                                                       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
@@ -79,6 +70,18 @@ public class RunInspectionIntention implements IntentionAction {
     if (!dlg.isOK()) return;
     final UIOptions uiOptions = ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).getUIOptions();
     scope = dlg.getScope(uiOptions, scope, project, module);
+    rerunInspection(managerEx, scope);
+  }
+
+  public void rerunInspection(final InspectionManagerEx managerEx, final AnalysisScope scope) {
+    final InspectionProfileImpl profile = new InspectionProfileImpl(myDisplayName);
+    final ModifiableModel model = profile.getModifiableModel();
+    final InspectionProfileEntry[] profileEntries = model.getInspectionTools();
+    for (InspectionProfileEntry entry : profileEntries) {
+      model.disableTool(entry.getShortName());
+    }
+    model.enableTool(myShortName);
+    model.setEditable(myDisplayName);
     final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
     inspectionContext.setExternalProfile((InspectionProfile)model);
     inspectionContext.RUN_WITH_EDITOR_PROFILE = false;

@@ -77,7 +77,7 @@ public class ProfilesComboBox extends JComboBox {
               if (newName != null && newName.length() > 0 && selectedItem instanceof Profile) {
                 if (ArrayUtil.find(profileManager.getAvailableProfileNames(), newName) == -1 &&
                     ArrayUtil.find(InspectionProfileManager.getInstance().getAvailableProfileNames(), newName) == -1) {
-                  saveNewProjectProfile(newName, (Profile)selectedItem);
+                  saveNewProjectProfile(newName, (Profile)selectedItem, profileManager);
                   return;
                 }
                 else {
@@ -96,8 +96,8 @@ public class ProfilesComboBox extends JComboBox {
     });
   }
 
-  private void saveNewProjectProfile(final String newName, final Profile profile) {
-    InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(newName, null, InspectionToolRegistrar.getInstance());
+  private void saveNewProjectProfile(final String newName, final Profile profile, ProfileManager profileManager) {
+    InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(newName, null, InspectionToolRegistrar.getInstance(), profileManager);
     final ModifiableModel profileModifiableModel = inspectionProfile.getModifiableModel();
     profileModifiableModel.copyFrom(profile);
     profileModifiableModel.setLocal(false);

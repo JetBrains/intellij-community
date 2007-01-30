@@ -110,7 +110,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
 
     for (File file : files) {
       try {
-        InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file), file, myRegistrar);
+        InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file), file, myRegistrar, this);
         profile.load();
         addProfile(profile);
       }
@@ -131,7 +131,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
   public Profile loadProfile(String path) throws IOException, JDOMException {
     final File file = new File(path);
     if (file.exists()){
-      InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file), file, myRegistrar);
+      InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file), file, myRegistrar, this);
       profile.load();
       return profile;
     }

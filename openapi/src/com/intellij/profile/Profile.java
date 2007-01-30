@@ -39,4 +39,7 @@ public interface Profile extends JDOMExternalizable, Comparable {
   boolean isLocal();
 
   void setName(String name);
+
+  void setProfileManager(ProfileManager profileManager);
+  ProfileManager getProfileManager();
 }

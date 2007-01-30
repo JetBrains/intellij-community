@@ -22,10 +22,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class InspectionRVContentProviderImpl extends InspectionRVContentProvider {
 
@@ -42,9 +39,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
   public QuickFixAction[] getQuickFixes(final InspectionTool tool, final InspectionTree tree) {
     final TreePath[] treePaths = tree.getSelectionPaths();
     final List<RefEntity> selectedElements = new ArrayList<RefEntity>();
-    for (TreePath selectionPath : treePaths) {
-      selectedElements.addAll(InspectionTree.getElementsToSuppressInSubTree((InspectionTreeNode)selectionPath.getLastPathComponent()));
-    }
+    selectedElements.addAll(Arrays.asList(tree.getSelectedElements()));
     return selectedElements.isEmpty() ? null : tool.getQuickFixes(selectedElements.toArray(new RefEntity[selectedElements.size()]));
   }
 

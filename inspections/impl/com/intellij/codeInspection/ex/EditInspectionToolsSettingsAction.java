@@ -8,7 +8,6 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.ui.ErrorOptionsConfigurable;
@@ -58,8 +57,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
     editToolSettings(project,
                      inspectionProfile,
                      canChooseDifferentProfiles,
-                     myShortName,
-                     canChooseDifferentProfiles ? profileManager : InspectionProjectProfileManager.getInstance(project));
+                     myShortName);
   }
 
   public boolean editToolSettings(final Project project,
@@ -68,20 +66,18 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
     return editToolSettings(project,
                             inspectionProfile,
                             canChooseDifferentProfiles,
-                            myShortName,
-                            InspectionProjectProfileManager.getInstance(project));
+                            myShortName);
   }
 
   public static boolean editToolSettings(final Project project,
                                          final InspectionProfile inspectionProfile,
                                          final boolean canChooseDifferentProfile,
-                                         final String selectedToolShortName,
-                                         final ProfileManager manager) {
+                                         final String selectedToolShortName) {
     final ShowSettingsUtil settingsUtil = ShowSettingsUtil.getInstance();
     if (!canChooseDifferentProfile) {
       final @NonNls String dimensionServiceKey = "#Errors";
       return settingsUtil.editConfigurable(project, dimensionServiceKey,
-                                           new InspectionToolsConfigurable(project, manager, inspectionProfile, selectedToolShortName));
+                                           new InspectionToolsConfigurable(project, inspectionProfile, selectedToolShortName));
     }
     else {
       final ErrorOptionsConfigurable errorsConfigurable = ErrorOptionsConfigurable.getInstance(project);

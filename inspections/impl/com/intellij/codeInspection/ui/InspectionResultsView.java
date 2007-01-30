@@ -15,14 +15,13 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
+import com.intellij.codeInspection.ui.actions.InspectionsOptionsToolbarAction;
 import com.intellij.codeInspection.ui.actions.InvokeQuickFixAction;
-import com.intellij.codeInspection.ui.actions.SuppressInspectionToolbarAction;
 import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -32,21 +31,18 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.profile.Profile;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SmartExpander;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -59,10 +55,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
@@ -72,7 +65,6 @@ import java.util.List;
  * @author max
  */
 public class InspectionResultsView extends JPanel implements Disposable, OccurenceNavigator, DataProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ui.InspectionResultsView");
 
   public static final RefElement[] EMPTY_ELEMENTS_ARRAY = new RefElement[0];
   public static final ProblemDescriptor[] EMPTY_DESCRIPTORS = new ProblemDescriptor[0];
@@ -244,15 +236,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createShowOutdatedProblemsAction(this));
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createShowDiffOnlyAction(this));
     specialGroup.add(new EditSettingsAction());
-    specialGroup.add(new DisableInspectionAction());
-    final InvokeQuickFixAction invokeQuickFixAction = new InvokeQuickFixAction(this);
-    specialGroup.add(invokeQuickFixAction);
-    specialGroup.add(new SuppressInspectionToolbarAction(this));
-    final JComponent toolbarComponent = ActionManager.getInstance()
-      .createActionToolbar(ActionPlaces.CODE_INSPECTION, specialGroup, false).getComponent();
-    final Component actionButton = toolbarComponent.getComponent(ArrayUtil.find(specialGroup.getChildren(null), invokeQuickFixAction));
-    invokeQuickFixAction.setupPopupCoordinates(new RelativePoint(actionButton, new Point(0, actionButton.getHeight())));
-    return toolbarComponent;
+    specialGroup.add(new InvokeQuickFixAction(this));
+    specialGroup.add(new InspectionsOptionsToolbarAction(this));
+    return createToolbar(specialGroup);
   }
 
   private JComponent createLeftActionsToolbar() {
@@ -282,16 +268,15 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     group.add(actionsManager.createPrevOccurenceAction(getOccurenceNavigator()));
     group.add(actionsManager.createNextOccurenceAction(getOccurenceNavigator()));
     group.add(myGlobalInspectionContext.createToggleAutoscrollAction());
-    final ExportHTMLAction exportAction = new ExportHTMLAction(this);
-    group.add(exportAction);
+    group.add(new ExportHTMLAction(this));
     group.add(new HelpAction());
 
-    final JComponent toolbarComponent =
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.CODE_INSPECTION, group, false).getComponent();
-    final Component actionButton = toolbarComponent.getComponent(ArrayUtil.find(group.getChildren(null), exportAction) + 1);
-    exportAction.setPoint(new RelativePoint(actionButton, new Point(0, actionButton.getHeight())));
+    return createToolbar(group);
+  }
 
-    return toolbarComponent;
+  private static JComponent createToolbar(final DefaultActionGroup specialGroup) {
+    return ActionManager.getInstance()
+      .createActionToolbar(ActionPlaces.CODE_INSPECTION, specialGroup, false).getComponent();
   }
 
   public void dispose(){
@@ -415,6 +400,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   @Nullable
   public String getCurrentProfileName() {
     return myInspectionProfile != null ? myInspectionProfile.getDisplayName() : null;
+  }
+
+  public InspectionProfile getCurrentProfile() {
+    return myInspectionProfile;
   }
 
   public boolean update(){
@@ -651,20 +640,16 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
     final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
     if (key == null) return; //e.g. DummyEntryPointsTool
-    actions.add(new AnAction(InspectionsBundle.message("inspection.edit.tool.settings")) {
-      public void actionPerformed(AnActionEvent e) {
-        if (new EditInspectionToolsSettingsAction(key).editToolSettings(myProject, (InspectionProfileImpl) myInspectionProfile, false)){
-          //InspectionResultsView.this.update();
-        }
-      }
 
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(myInspectionProfile != null && myInspectionProfile.isEditable());
-      }
-
-    });
-
-    actions.add(new SuppressInspectionToolbarAction(this));
+    //options
+    actions.addSeparator();
+    actions.add(new EditSettingsAction());
+    final List<AnAction> options = new InspectionsOptionsToolbarAction(this).createActions();
+    for (AnAction action : options) {
+      actions.add(action);
+    }
+    
+    actions.addSeparator();
     actions.add(actionManager.getAction(IdeActions.GROUP_VERSION_CONTROLS));
 
     final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.CODE_INSPECTION, actions);
@@ -717,8 +702,21 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
   }
 
-  private static boolean isProfileDefined(final InspectionProfile inspectionProfile) {
-    return inspectionProfile != null && inspectionProfile.isEditable();
+  public boolean isProfileDefined() {
+    return myInspectionProfile != null && myInspectionProfile.isEditable();
+  }
+
+  public static void showPopup(AnActionEvent e, JBPopup popup) {
+    final InputEvent event = e.getInputEvent();
+    if (event instanceof MouseEvent) {
+      popup.showUnderneathOf(event.getComponent());
+    } else {
+      popup.showInBestPositionFor(e.getDataContext());
+    }
+  }
+
+  public AnalysisScope getScope() {
+    return myScope;
   }
 
   private class CloseAction extends AnAction {
@@ -740,53 +738,30 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
       final InspectionTool tool = myTree.getSelectedTool();
       InspectionProfile inspectionProfile = myInspectionProfile;
-      final boolean profileNotDefined = !isProfileDefined(inspectionProfile);
-      if (profileNotDefined) {
+      final boolean profileIsDefined = isProfileDefined();
+      if (!profileIsDefined) {
         inspectionProfile = guessProfileToSelect(profileManager);
       }
 
       if (tool != null) {
         final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName()); //do not search for dead code entry point tool
         if (key != null){
-          if (new EditInspectionToolsSettingsAction(key).editToolSettings(myProject, (InspectionProfileImpl)inspectionProfile, profileNotDefined)
-              && profileNotDefined){
-            updateCurrentProfile(myInspectionProfile);
+          if (new EditInspectionToolsSettingsAction(key).editToolSettings(myProject, (InspectionProfileImpl)inspectionProfile, profileIsDefined)
+              && profileIsDefined){
+            updateCurrentProfile();
           }
           return;
         }
       }
-      if (EditInspectionToolsSettingsAction.editToolSettings(myProject, inspectionProfile, profileNotDefined, null, profileManager) && profileNotDefined) {
-        updateCurrentProfile(myInspectionProfile);
+      if (EditInspectionToolsSettingsAction.editToolSettings(myProject, inspectionProfile, profileIsDefined, null) && profileIsDefined) {
+        updateCurrentProfile();
       }
-    }
-
-    private void updateCurrentProfile(@NotNull final InspectionProfile inspectionProfile) {
-      final Map<String, Profile> projectProfiles = InspectionProjectProfileManager.getInstance(myProject).getProfiles();
-      final String name = inspectionProfile.getName();
-      myInspectionProfile = (InspectionProfile)(projectProfiles.containsKey(name) ? projectProfiles.get(name) : InspectionProfileManager.getInstance().getProfile(name));
     }
  }
 
-
-
-  private class DisableInspectionAction extends AnAction {
-    private DisableInspectionAction() {
-      super(InspectionsBundle.message("disable.inspection.action.name"), InspectionsBundle.message("disable.inspection.action.name"), IconLoader.getIcon("/actions/exclude.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      InspectionProfile inspectionProfile = myInspectionProfile;
-      LOG.assertTrue(inspectionProfile != null);
-      ModifiableModel model = inspectionProfile.getModifiableModel();
-      final InspectionTool tool = myTree.getSelectedTool();
-      LOG.assertTrue(tool != null);
-      model.disableTool(tool.getShortName());
-      model.commit(InspectionProjectProfileManager.getInstance(myProject));
-    }
-
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myInspectionProfile != null && myInspectionProfile.isEditable() && myTree.getSelectedTool() != null);
-    }
+  public void updateCurrentProfile() {
+    final String name = myInspectionProfile.getName();
+    myInspectionProfile = (InspectionProfile)myInspectionProfile.getProfileManager().getProfile(name);
   }
 
   private static class HelpAction extends AnAction {

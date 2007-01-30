@@ -34,6 +34,7 @@ public class ProfileEx implements Profile {
   public File myFile;
   private static final Logger LOG = Logger.getInstance("com.intellij.profile.ProfileEx");
   public boolean myLocal = true;
+  protected ProfileManager myProfileMananger;
 
   public ProfileEx(String name) {
     myName = name;
@@ -77,6 +78,14 @@ public class ProfileEx implements Profile {
 
   public void setName(String name) {
     myName = name;
+  }
+
+  public void setProfileManager(ProfileManager profileManager) {
+    myProfileMananger = profileManager;
+  }
+
+  public ProfileManager getProfileManager() {    
+    return myProfileMananger;
   }
 
   public void readExternal(Element element) throws InvalidDataException {

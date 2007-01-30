@@ -120,6 +120,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
         if (myApplicationProfileManager.getProfile(name) != null) { //override ide profile
           myApplicationProfileManager.deleteProfile(name);
         }
+        profile.setProfileManager(this);
         myProfiles.put(name, profile);
       }
     }

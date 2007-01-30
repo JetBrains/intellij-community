@@ -29,10 +29,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
-import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
-import com.intellij.profile.ProjectProfileManager;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -85,25 +82,16 @@ public class SingleInspectionProfilePanel extends JPanel {
   private TreeExpander myTreeExpander;
   protected String myInitialProfile;
   @NonNls protected static final String EMPTY_HTML = "<html><body></body></html>";
-  protected final ProfileManager myProfileManager;
-  protected ProfileManager myIDEProfileManager;
 
-  public SingleInspectionProfilePanel(String inspectionProfileName, Project project, ProfileManager manager) {
-    this(inspectionProfileName, null, project, manager);
+  public SingleInspectionProfilePanel(String inspectionProfileName, Project project) {
+    this(inspectionProfileName, null, project);
   }
 
-  public SingleInspectionProfilePanel(final String inspectionProfileName,
-                                      final ModifiableModel profile,
-                                      final Project project,
-                                      final ProfileManager manager) {
+  public SingleInspectionProfilePanel(final String inspectionProfileName, final ModifiableModel profile, final Project project) {
     super(new BorderLayout());
     myProject = project;
     mySelectedProfile = profile;
     myInitialProfile = inspectionProfileName;
-    myProfileManager = manager;
-    if (myProfileManager instanceof ProjectProfileManager){
-      myIDEProfileManager = InspectionProfileManager.getInstance();
-    }
     add(createInspectionProfileSettingsPanel(), BorderLayout.CENTER);
     myUserActivityWatcher.addUserActivityListener(new UserActivityListener() {
       public void stateChanged() {
@@ -190,12 +178,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (mySelectedProfile == null) return;
     myDescriptors.clear();
     InspectionProfileEntry[] tools = mySelectedProfile.getInspectionTools();
-    final Map<String, Profile> profiles = new HashMap<String, Profile>();
-    profiles.putAll(myProfileManager.getProfiles());
-    if (myIDEProfileManager != null) {
-      profiles.putAll(myIDEProfileManager.getProfiles());
-    }
-    InspectionProfile profile = (InspectionProfile)profiles.get(mySelectedProfile.getName());
+    final InspectionProfile profile = getSavedProfile();
     for (InspectionProfileEntry tool : tools) {
       myDescriptors.add(new Descriptor(tool, profile != null
                                              ? profile
@@ -239,7 +222,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
     try {
       InspectionProfileImpl inspectionProfile =
-        new InspectionProfileImpl(profileName, profileManager.createUniqueProfileFile(profileName), InspectionToolRegistrar.getInstance());
+        new InspectionProfileImpl(profileName, profileManager.createUniqueProfileFile(profileName), InspectionToolRegistrar.getInstance(), profileManager);
       final ModifiableModel profileModifiableModel = inspectionProfile.getModifiableModel();
       if (selectedProfile != null) { //can be null for default or empty profile
         profileModifiableModel.copyFrom(selectedProfile);
@@ -779,15 +762,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     return modified;
   }
 
-  protected Set<String> getAvailableNames() {
-    Set<String> result = new HashSet<String>();
-    result.addAll(myProfileManager.getProfiles().keySet());
-    if (myIDEProfileManager != null) {
-      result.addAll(myIDEProfileManager.getProfiles().keySet());
-    }
-    return result;
-  }
-
   public ModifiableModel getSelectedProfile() {
     return mySelectedProfile;
   }
@@ -824,15 +798,19 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public void disposeUI() {
-    if (mySelectedProfile != null && getAvailableNames().contains(mySelectedProfile.getName())) {
+    if (mySelectedProfile != null && getSavedProfile() != null) {
       ModifiableModel profile = mySelectedProfile.getParentProfile().getModifiableModel();
       ((InspectionProfileImpl)profile).getExpandedNodes().saveVisibleState(myTree);
       profile.save();
-      myProfileManager.updateProfile(profile);
+      ((InspectionProfileImpl)profile).getProfileManager().updateProfile(profile);
     }
     myAlarm.cancelAllRequests();
     myProfileFilter.dispose();
     mySelectedProfile = null;
+  }
+
+  private InspectionProfile getSavedProfile() {
+    return (InspectionProfile)mySelectedProfile.getProfileManager().getProfile(mySelectedProfile.getName());
   }
 
   protected JPanel createInspectionProfileSettingsPanel() {
@@ -905,7 +883,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   public void apply() throws ConfigurationException {
     final ModifiableModel selectedProfile = getSelectedProfile();
     final InspectionProfile parentProfile = selectedProfile.getParentProfile();
-    selectedProfile.commit(myProfileManager);
+    selectedProfile.commit();
     setSelectedProfile(parentProfile.getModifiableModel());
     setSelectedProfileModified(false);
     myModified = false;

@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,12 +24,10 @@ import java.util.List;
  */
 public class InvokeQuickFixAction extends AnAction {
   private InspectionResultsView myView;
-  private RelativePoint myPoint;
 
   public InvokeQuickFixAction(final InspectionResultsView view) {
     super(InspectionsBundle.message("inspection.action.apply.quickfix"), InspectionsBundle.message("inspection.action.apply.quickfix.description"), IconLoader.getIcon("/actions/createFromUsage.png"));
     myView = view;
-
     registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS).getShortcutSet(),
                               myView.getTree());
   }
@@ -49,7 +46,11 @@ public class InvokeQuickFixAction extends AnAction {
       return;
     }
 
-    ActionGroup fixes = new ActionGroup() {
+    e.getPresentation().setEnabled(!ActionGroupUtil.isGroupEmpty(getFixes(quickFixes), e));
+  }
+
+  private static ActionGroup getFixes(final QuickFixAction[] quickFixes) {
+    return new ActionGroup() {
       public AnAction[] getChildren(@Nullable AnActionEvent e) {
         List<QuickFixAction> children = new ArrayList<QuickFixAction>();
         for (QuickFixAction fix : quickFixes) {
@@ -60,26 +61,12 @@ public class InvokeQuickFixAction extends AnAction {
         return children.toArray(new AnAction[children.size()]);
       }
     };
-
-    e.getPresentation().setEnabled(!ActionGroupUtil.isGroupEmpty(fixes, e));
   }
 
   public void actionPerformed(AnActionEvent e) {
     final InspectionTool tool = myView.getTree().getSelectedTool();
     assert tool != null;
-    final QuickFixAction[] quickFixes = myView.getProvider().getQuickFixes(tool, myView.getTree());
-    ActionGroup fixes = new ActionGroup() {
-      public AnAction[] getChildren(@Nullable AnActionEvent e) {
-        List<QuickFixAction> children = new ArrayList<QuickFixAction>();
-        for (QuickFixAction fix : quickFixes) {
-          if (fix != null) {
-            children.add(fix);
-          }
-        }
-        return children.toArray(new AnAction[children.size()]);
-      }
-    };
-
+    ActionGroup fixes = getFixes(myView.getProvider().getQuickFixes(tool, myView.getTree()));
     DataContext dataContext = e.getDataContext();
     final ListPopup popup = JBPopupFactory.getInstance()
       .createActionGroupPopup(InspectionsBundle.message("inspection.tree.popup.title"),
@@ -87,11 +74,6 @@ public class InvokeQuickFixAction extends AnAction {
                               dataContext,
                               JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                               false);
-
-    popup.show(myPoint);
-  }
-
-  public void setupPopupCoordinates(RelativePoint point) {
-    myPoint = point;
+    InspectionResultsView.showPopup(e, popup);
   }
 }

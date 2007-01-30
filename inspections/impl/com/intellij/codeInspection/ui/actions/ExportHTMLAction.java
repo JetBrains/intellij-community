@@ -40,7 +40,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.ui.awt.RelativePoint;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -57,7 +56,6 @@ import java.util.*;
 public class ExportHTMLAction extends AnAction {
   private InspectionResultsView myView;
   @NonNls private static final String PROBLEMS = "problems";
-  private RelativePoint myPoint;
   @NonNls private static final String HTML = "HTML";
   @NonNls private static final String XML = "XML";
 
@@ -74,11 +72,7 @@ public class ExportHTMLAction extends AnAction {
           return PopupStep.FINAL_CHOICE;
         }
       });
-    popup.show(myPoint);
-  }
-
-  public void setPoint(final RelativePoint point) {
-    myPoint = point;
+    InspectionResultsView.showPopup(e, popup);
   }
 
   private void exportHTML(final boolean exportToHTML) {
@@ -259,26 +253,24 @@ public class ExportHTMLAction extends AnAction {
     for (InspectionTool tool : tools) {
       modules.addAll(tool.getModuleProblems());
     }
-    if (modules != null) {
-      final List<RefModule> sortedModules = new ArrayList<RefModule>(modules);
-      Collections.sort(sortedModules, RefEntityAlphabeticalComparator.getInstance());
-      for (RefModule module : sortedModules) {
-        appendPackageReference(packageIndex, module.getName());
-        StringBuffer contentIndex = new StringBuffer();
-        contentIndex.append("<html><body>");
 
-        contentIndex.append("<a HREF=\"");
-        contentIndex.append(exporter.getURL(module));
-        contentIndex.append("\" target=\"elementFrame\">");
-        contentIndex.append(module.getName());
-        contentIndex.append("</a><br>");
-        exporter.createPage(module);
+    final List<RefModule> sortedModules = new ArrayList<RefModule>(modules);
+    Collections.sort(sortedModules, RefEntityAlphabeticalComparator.getInstance());
+    for (RefModule module : sortedModules) {
+      appendPackageReference(packageIndex, module.getName());
+      StringBuffer contentIndex = new StringBuffer();
+      contentIndex.append("<html><body>");
 
-        contentIndex.append("</body></html>");
-        HTMLExporter.writeFile(exporter.getRootFolder(), module.getName() + "-index.html", contentIndex, myView.getProject());
-      }
+      contentIndex.append("<a HREF=\"");
+      contentIndex.append(exporter.getURL(module));
+      contentIndex.append("\" target=\"elementFrame\">");
+      contentIndex.append(module.getName());
+      contentIndex.append("</a><br>");
+      exporter.createPage(module);
+
+      contentIndex.append("</body></html>");
+      HTMLExporter.writeFile(exporter.getRootFolder(), module.getName() + "-index.html", contentIndex, myView.getProject());
     }
-
 
     packageIndex.append("</body></html>");
 

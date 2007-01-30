@@ -78,6 +78,7 @@ public abstract class FilteringInspectionTool extends InspectionTool {
 
   public void ignoreElement(RefEntity refEntity) {
     myIgnoreElements.add((RefElement)refEntity);
+    super.ignoreElement(refEntity);
   }
 
   public void cleanup() {

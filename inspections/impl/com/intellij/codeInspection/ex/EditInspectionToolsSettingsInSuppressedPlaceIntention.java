@@ -70,7 +70,7 @@ public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements In
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
     final InspectionProfile inspectionProfile = projectProfileManager.getInspectionProfile(file);
-    EditInspectionToolsSettingsAction.editToolSettings(project, inspectionProfile, false, myId, projectProfileManager);
+    EditInspectionToolsSettingsAction.editToolSettings(project, inspectionProfile, false, myId);
   }
 
   public boolean startInWriteAction() {
