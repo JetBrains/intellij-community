@@ -16,7 +16,7 @@ import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -52,7 +52,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
                                   final String name) {
     super(project, tree, treeModel, treeStructure, null);
     myListName = name;
-    final FavoriteNodeProvider[] nodeProviders = ApplicationManager.getApplication().getComponents(FavoriteNodeProvider.class);
+    final FavoriteNodeProvider[] nodeProviders = Extensions.getExtensions(FavoriteNodeProvider.EP_NAME);
     setNodeDescriptorComparator(new Comparator<NodeDescriptor>(){
       private int getWeight(NodeDescriptor descriptor) {
         FavoritesTreeNodeDescriptor favoritesTreeNodeDescriptor = (FavoritesTreeNodeDescriptor)descriptor;

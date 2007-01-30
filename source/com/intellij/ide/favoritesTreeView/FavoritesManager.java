@@ -8,8 +8,8 @@ import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -219,7 +219,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     final String urlValue = element.getAttributeValue(ATTRIBUTE_URL);
     final String moduleName = element.getAttributeValue(ATTRIBUTE_MODULE);
 
-    for(FavoriteNodeProvider nodeProvider: ApplicationManager.getApplication().getComponents(FavoriteNodeProvider.class)) {
+    for(FavoriteNodeProvider nodeProvider: Extensions.getExtensions(FavoriteNodeProvider.EP_NAME)) {
       if (nodeProvider.getFavoriteTypeId().equals(type)) {
         return new AbstractUrlFavoriteAdapter(urlValue, moduleName, nodeProvider);
       }
@@ -246,7 +246,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   private static @Nullable AbstractUrl createUrlByElement(Object element) {
     if (element instanceof SmartPsiElementPointer) element = ((SmartPsiElementPointer)element).getElement();
                                                                                                                                                
-    for(FavoriteNodeProvider nodeProvider: ApplicationManager.getApplication().getComponents(FavoriteNodeProvider.class)) {
+    for(FavoriteNodeProvider nodeProvider: Extensions.getExtensions(FavoriteNodeProvider.EP_NAME)) {
       String url = nodeProvider.getElementUrl(element);
       if (url != null) {
         return new AbstractUrlFavoriteAdapter(url, nodeProvider.getElementModuleName(element), nodeProvider);
@@ -283,7 +283,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
       }
     };
 
-    FavoriteNodeProvider[] providers = ApplicationManager.getApplication().getComponents(FavoriteNodeProvider.class);
+    FavoriteNodeProvider[] providers = Extensions.getExtensions(FavoriteNodeProvider.EP_NAME);
 
     List<Pair<AbstractUrl, String>> urls = getFavoritesListRootUrls(name);
     for (Pair<AbstractUrl, String> pair : urls) {

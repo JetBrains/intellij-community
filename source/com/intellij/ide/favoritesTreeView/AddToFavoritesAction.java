@@ -15,8 +15,8 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.projectView.ResourceBundleNode;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,20 +48,20 @@ public class AddToFavoritesAction extends AnAction {
     Collection<AbstractTreeNode> nodesToAdd = getNodesToAdd(dataContext, true);
 
     if (nodesToAdd != null && !nodesToAdd.isEmpty()) {
-      Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+      Project project = e.getData(DataKeys.PROJECT);
       FavoritesManager.getInstance(project).addRoots(myFavoritesListName, nodesToAdd);
     }
   }
 
   public static Collection<AbstractTreeNode> getNodesToAdd(final DataContext dataContext, final boolean inProjectView) {
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(dataContext);
 
     if (project == null) return null;
 
-    Module moduleContext = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
+    Module moduleContext = DataKeys.MODULE_CONTEXT.getData(dataContext);
 
     Collection<AbstractTreeNode> nodesToAdd = null;
-    FavoriteNodeProvider[] providers = ApplicationManager.getApplication().getComponents(FavoriteNodeProvider.class);
+    FavoriteNodeProvider[] providers = Extensions.getExtensions(FavoriteNodeProvider.EP_NAME); 
     for(FavoriteNodeProvider provider: providers) {
       nodesToAdd = provider.getFavoriteNodes(dataContext, ViewSettings.DEFAULT);
       if (nodesToAdd != null) {
@@ -80,7 +80,7 @@ public class AddToFavoritesAction extends AnAction {
 
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    Project project = (Project)e.getData(DataKeys.PROJECT);
     if (project == null) {
       e.getPresentation().setEnabled(false);
     }
@@ -102,14 +102,14 @@ public class AddToFavoritesAction extends AnAction {
 
   private static Object collectSelectedElements(final DataContext dataContext) {
     Object elements = retrieveData(null, dataContext.getData(DataConstantsEx.RESOURCE_BUNDLE_ARRAY));
-    elements = retrieveData(elements, dataContext.getData(DataConstantsEx.PSI_ELEMENT_ARRAY));
-    elements = retrieveData(elements, dataContext.getData(DataConstants.PSI_ELEMENT));
-    elements = retrieveData(elements, dataContext.getData(DataConstants.PSI_FILE));
-    elements = retrieveData(elements, dataContext.getData(DataConstantsEx.VIRTUAL_FILE_ARRAY));
-    elements = retrieveData(elements, dataContext.getData(DataConstantsEx.VIRTUAL_FILE));
+    elements = retrieveData(elements, DataKeys.PSI_ELEMENT_ARRAY.getData(dataContext));
+    elements = retrieveData(elements, DataKeys.PSI_ELEMENT.getData(dataContext));
+    elements = retrieveData(elements, DataKeys.PSI_FILE.getData(dataContext));
+    elements = retrieveData(elements, DataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+    elements = retrieveData(elements, DataKeys.VIRTUAL_FILE.getData(dataContext));
     elements = retrieveData(elements, dataContext.getData(DataConstantsEx.MODULE_GROUP_ARRAY));
-    elements = retrieveData(elements, dataContext.getData(DataConstantsEx.MODULE_CONTEXT_ARRAY));
-    elements = retrieveData(elements, dataContext.getData(DataConstantsEx.MODULE));
+    elements = retrieveData(elements, DataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext));
+    elements = retrieveData(elements, DataKeys.MODULE.getData(dataContext));
     elements = retrieveData(elements, dataContext.getData(DataConstantsEx.LIBRARY_GROUP_ARRAY));
     elements = retrieveData(elements, dataContext.getData(DataConstantsEx.NAMED_LIBRARY_ARRAY));
     return elements;

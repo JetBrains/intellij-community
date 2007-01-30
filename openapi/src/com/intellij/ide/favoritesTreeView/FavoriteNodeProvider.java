@@ -25,16 +25,20 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.extensions.ExtensionPointName;
 
 import java.util.Collection;
 
 /**
  * Returns the nodes which should be added to the Favorites for the given data context.
- * Implementations of this class must be registered as application components.
+ * Implementations of this class must be registered as extensions for
+ * <code>com.intellij.favoriteNodeProvider</code> extension point.
  *
  * @author yole
  */
 public interface FavoriteNodeProvider {
+  ExtensionPointName<FavoriteNodeProvider> EP_NAME = new ExtensionPointName<FavoriteNodeProvider>("com.intellij.favoriteNodeProvider");
+
   @Nullable
   Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, final ViewSettings viewSettings);
 

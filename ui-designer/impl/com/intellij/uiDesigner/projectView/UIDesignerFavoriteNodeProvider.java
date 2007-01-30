@@ -7,10 +7,9 @@ package com.intellij.uiDesigner.projectView;
 import com.intellij.ide.favoritesTreeView.FavoriteNodeProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -32,10 +31,10 @@ import java.util.*;
 /**
  * @author yole
  */
-public class UIDesignerFavoriteNodeProvider implements ApplicationComponent, FavoriteNodeProvider {
+public class UIDesignerFavoriteNodeProvider implements FavoriteNodeProvider {
   @Nullable
   public Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, final ViewSettings viewSettings) {
-    Project project = (Project) context.getData(DataConstants.PROJECT);
+    Project project = DataKeys.PROJECT.getData(context);
     if (project == null) return null;
     Form[] forms = (Form[]) context.getData(DataConstantsEx.GUI_DESIGNER_FORM_ARRAY);
     if (forms != null) {
@@ -46,7 +45,7 @@ public class UIDesignerFavoriteNodeProvider implements ApplicationComponent, Fav
         if (classToBind != null) {
           if (bindClasses.contains(classToBind)) continue;
           bindClasses.add(classToBind);
-          result.add(FormNode.constructFormNode(classToBind, (Project) context.getData(DataConstants.PROJECT), viewSettings));
+          result.add(FormNode.constructFormNode(classToBind, project, viewSettings));
         }
       }
       if (!result.isEmpty()) {
@@ -54,7 +53,7 @@ public class UIDesignerFavoriteNodeProvider implements ApplicationComponent, Fav
       }
     }
 
-    VirtualFile vFile = (VirtualFile) context.getData(DataConstants.VIRTUAL_FILE);
+    VirtualFile vFile = DataKeys.VIRTUAL_FILE.getData(context);
     if (vFile != null) {
       final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(vFile);
       if (fileType.equals(StdFileTypes.GUI_DESIGNER_FORM)) {
@@ -144,16 +143,5 @@ public class UIDesignerFavoriteNodeProvider implements ApplicationComponent, Fav
     final PsiClass classToBind = psiManager.findClass(url, GlobalSearchScope.allScope(project));
     if (classToBind == null) return null;
     return new Object[] { new Form(classToBind) };
-  }
-
-  @NonNls @NotNull
-  public String getComponentName() {
-    return "UIDesignerFavoriteNodeProvider";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

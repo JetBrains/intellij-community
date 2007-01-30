@@ -14,6 +14,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ArrayUtil;
@@ -94,7 +95,7 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
         }
 
         boolean isInvalid = false;
-        for(FavoriteNodeProvider nodeProvider: ApplicationManager.getApplication().getComponents(FavoriteNodeProvider.class)) {
+        for(FavoriteNodeProvider nodeProvider: Extensions.getExtensions(FavoriteNodeProvider.EP_NAME)) {
           if (nodeProvider.isInvalidElement(val)) {
             isInvalid = true;
             break;

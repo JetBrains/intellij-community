@@ -30,6 +30,8 @@
     <java15InspectionTool implementation="com.intellij.uiDesigner.inspections.Java15FormInspection"/>
 
     <projectConfigurable implementation="com.intellij.uiDesigner.GuiDesignerConfigurable"/> <!-- GUI Designer -->
+
+    <favoriteNodeProvider implementation="com.intellij.uiDesigner.projectView.UIDesignerFavoriteNodeProvider"/>
   </extensions>
 
   <application-components>
@@ -47,9 +49,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.uiDesigner.binding.UIDesignerImplicitUsageProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.projectView.UIDesignerFavoriteNodeProvider</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.uiDesigner.projectView.FormRenameHandler</implementation-class>
