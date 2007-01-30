@@ -11,6 +11,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.RepositoryElementsManager;
+import com.intellij.psi.impl.RepositoryPsiElement;
 import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -63,10 +64,11 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       for (final long candidateId : candidateIds) {
         PsiClass candidate = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
           public PsiClass compute() {
-            return (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(candidateId);
+            final RepositoryPsiElement candidate = repositoryElementsManager.findOrCreatePsiElementById(candidateId);
+            LOG.assertTrue(candidate.isValid());
+            return (PsiClass)candidate;
           }
         });
-        LOG.assertTrue(candidate.isValid());
         if (!consumer.process(candidate)) {
           return false;
         }
