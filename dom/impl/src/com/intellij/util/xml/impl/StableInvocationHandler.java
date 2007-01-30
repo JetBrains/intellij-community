@@ -73,21 +73,13 @@ class StableInvocationHandler<T extends DomElement> implements InvocationHandler
   public final void revalidate() {
     final T t = myProvider.create();
     if (!isNotValid(t) && !t.equals(myCachedValue)) {
-      doInvalidate();
       myCachedValue = t;
-    }
-  }
-
-  private void doInvalidate() {
-    final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(myCachedValue);
-    if (handler != null) {
-      handler.detach(true);
     }
   }
 
   public final void invalidate() {
     if (!isNotValid(myCachedValue)) {
-      doInvalidate();
+      myCachedValue = null;
     }
   }
 

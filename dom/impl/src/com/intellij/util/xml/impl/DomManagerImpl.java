@@ -538,6 +538,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     final Set<Class> classes = new HashSet<Class>();
     classes.addAll(Arrays.asList(initial.getClass().getInterfaces()));
     ContainerUtil.addIfNotNull(superClass, classes);
+    classes.remove(MergedObject.class);
     handler.setClasses(classes);
     return proxy;
   }
