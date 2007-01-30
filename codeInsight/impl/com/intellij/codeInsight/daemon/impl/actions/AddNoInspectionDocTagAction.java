@@ -59,10 +59,9 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
       return null;
     }
     PsiElement container = myContext;
-    do {
-      container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class, false);
+    while (!(container instanceof PsiDocCommentOwner) || container instanceof PsiTypeParameter) {
+      container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class);
     }
-    while (container instanceof PsiTypeParameter);
     return (PsiDocCommentOwner)container;
   }
 
