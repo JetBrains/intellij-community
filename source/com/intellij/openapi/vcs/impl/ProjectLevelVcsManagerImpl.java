@@ -295,7 +295,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     // scan from bottom-most mapping to topmost
     for(int i = myDirectoryMappings.size()-1; i >= 0; i--) {
       final VcsDirectoryMapping mapping = myDirectoryMappings.get(i);
-      if (mapping.getDirectory().length() == 0 || file.getPath().startsWith(mapping.getDirectory())) {
+      if (fileMatchesMapping(file, mapping)) {
         final String vcs = mapping.getVcs();
         if (vcs.length() == 0) {
           return null;
@@ -304,6 +304,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       }
     }
     return null;
+  }
+
+  private boolean fileMatchesMapping(final VirtualFile file, final VcsDirectoryMapping mapping) {
+    if (mapping.getDirectory().length() == 0) {
+      return VfsUtil.getModuleForFile(myProject, file) != null;
+    }
+    return file.getPath().startsWith(mapping.getDirectory());
   }
 
   private void dispose() {
