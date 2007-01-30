@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -40,7 +41,7 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.properties.CustomCreateProperty");
 
   public static CustomCreateProperty getInstance(Project project) {
-    return project.getComponent(CustomCreateProperty.class);
+    return ServiceManager.getService(project, CustomCreateProperty.class);
   }
 
   private BooleanRenderer myRenderer = new BooleanRenderer();

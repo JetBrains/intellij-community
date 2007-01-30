@@ -7,6 +7,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.uiDesigner.clientProperties.ClientPropertiesManager;
 import com.intellij.uiDesigner.clientProperties.ConfigureClientPropertiesDialog;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -30,7 +31,7 @@ public class ClientPropertiesProperty extends ReadOnlyProperty {
   private Project myProject;
 
   public static ClientPropertiesProperty getInstance(Project project) {
-    return project.getComponent(ClientPropertiesProperty.class);
+    return ServiceManager.getService(project, ClientPropertiesProperty.class);
   }
 
   private PropertyRenderer myRenderer = new LabelPropertyRenderer(UIDesignerBundle.message("client.properties.configure"));

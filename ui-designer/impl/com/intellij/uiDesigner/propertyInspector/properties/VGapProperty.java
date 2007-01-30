@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.ServiceManager;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
@@ -15,7 +16,7 @@ import java.awt.CardLayout;
  */
 public final class VGapProperty extends AbstractIntProperty<RadContainer> {
   public static VGapProperty getInstance(Project project) {
-    return project.getComponent(VGapProperty.class);
+    return ServiceManager.getService(project, VGapProperty.class);
   }
 
   public VGapProperty(){

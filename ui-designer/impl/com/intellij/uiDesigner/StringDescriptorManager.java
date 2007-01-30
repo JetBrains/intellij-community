@@ -7,14 +7,13 @@ package com.intellij.uiDesigner;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.reference.SoftReference;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +24,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-public class StringDescriptorManager implements ModuleComponent {
+public class StringDescriptorManager {
   private Module myModule;
   private Map<Pair<Locale, String>, SoftReference<PropertiesFile>> myPropertiesFileCache = new HashMap<Pair<Locale, String>, SoftReference<PropertiesFile>>();
 
@@ -34,29 +33,8 @@ public class StringDescriptorManager implements ModuleComponent {
   }
 
   public static StringDescriptorManager getInstance(Module module) {
-    return module.getComponent(StringDescriptorManager.class);
+    return ServiceManager.getService(module, StringDescriptorManager.class);
   }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  public void moduleAdded() {
-  }
-
-  @NonNls @NotNull
-  public String getComponentName() {
-    return "StringDescriptorManager";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
 
   @Nullable public String resolve(@NotNull RadComponent component, @Nullable StringDescriptor descriptor) {
     RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);

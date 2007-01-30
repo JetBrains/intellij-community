@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.ServiceManager;
 
 import java.awt.*;
 
@@ -12,7 +13,7 @@ import java.awt.*;
  */
 public final class PreferredSizeProperty extends AbstractDimensionProperty<RadComponent> {
   public static PreferredSizeProperty getInstance(Project project) {
-    return project.getComponent(PreferredSizeProperty.class);
+    return ServiceManager.getService(project, PreferredSizeProperty.class);
   }
 
   public PreferredSizeProperty(){

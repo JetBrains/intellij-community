@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.ServiceManager;
 
 import java.awt.*;
 
@@ -13,7 +14,7 @@ import java.awt.*;
  */
 public final class HGapProperty extends AbstractIntProperty<RadContainer> {
   public static HGapProperty getInstance(Project project) {
-    return project.getComponent(HGapProperty.class);
+    return ServiceManager.getService(project, HGapProperty.class);
   }
 
   public HGapProperty(){

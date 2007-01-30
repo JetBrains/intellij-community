@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.ServiceManager;
 
 import java.awt.*;
 
@@ -12,7 +13,7 @@ import java.awt.*;
  */
 public final class MaximumSizeProperty extends AbstractDimensionProperty<RadComponent> {
   public static MaximumSizeProperty getInstance(Project project) {
-    return project.getComponent(MaximumSizeProperty.class);
+    return ServiceManager.getService(project, MaximumSizeProperty.class);
   }
 
   public MaximumSizeProperty(){

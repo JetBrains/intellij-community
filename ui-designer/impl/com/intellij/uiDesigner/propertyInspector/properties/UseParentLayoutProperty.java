@@ -5,6 +5,7 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
@@ -14,7 +15,7 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
  */
 public class UseParentLayoutProperty extends AbstractBooleanProperty<RadComponent> {
   public static UseParentLayoutProperty getInstance(Project project) {
-    return project.getComponent(UseParentLayoutProperty.class);
+    return ServiceManager.getService(project, UseParentLayoutProperty.class);
   }
 
   public UseParentLayoutProperty() {

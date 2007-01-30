@@ -34,6 +34,42 @@
     <favoriteNodeProvider implementation="com.intellij.uiDesigner.projectView.UIDesignerFavoriteNodeProvider"/>
     <renameHandler implementation="com.intellij.uiDesigner.projectView.FormRenameHandler"/>
     <implicitUsageProvider implementation="com.intellij.uiDesigner.binding.UIDesignerImplicitUsageProvider"/>
+
+    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty"
+                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty"/>
+    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty"
+                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty"/>
+    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.VSizePolicyProperty"
+                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.VSizePolicyProperty"/>
+    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.HSizePolicyProperty"
+                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HSizePolicyProperty"/>
+    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.MarginProperty"
+                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.MarginProperty"/>
+    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.HGapProperty"
+                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HGapProperty"/>
+    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.VGapProperty"
+                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.VGapProperty"/>
+    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.SameSizeHorizontallyProperty"
+                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.SameSizeHorizontallyProperty"/>
+    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.SameSizeVerticallyProperty"
+                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.SameSizeVerticallyProperty"/>
+    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.IndentProperty"
+                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.IndentProperty"/>
+    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.UseParentLayoutProperty"
+                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.UseParentLayoutProperty"/>
+    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.MinimumSizeProperty"
+                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.MinimumSizeProperty"/>
+    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty"
+                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty"/>
+    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.MaximumSizeProperty"
+                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.MaximumSizeProperty"/>
+    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.CustomCreateProperty"
+                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.CustomCreateProperty"/>
+    <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.ClientPropertiesProperty"
+                    serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.ClientPropertiesProperty"/>
+
+    <moduleService serviceInterface="com.intellij.uiDesigner.StringDescriptorManager"
+                   serviceImplementation="com.intellij.uiDesigner.StringDescriptorManager"/>
   </extensions>
 
   <application-components>
@@ -91,83 +127,11 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.propertyInspector.properties.VSizePolicyProperty</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.propertyInspector.properties.HSizePolicyProperty</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.propertyInspector.properties.MarginProperty</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.propertyInspector.properties.HGapProperty</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.propertyInspector.properties.VGapProperty</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.propertyInspector.properties.SameSizeHorizontallyProperty</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.propertyInspector.properties.SameSizeVerticallyProperty</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.propertyInspector.properties.IndentProperty</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.propertyInspector.properties.UseParentLayoutProperty</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.propertyInspector.properties.MinimumSizeProperty</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.propertyInspector.properties.MaximumSizeProperty</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.propertyInspector.properties.CustomCreateProperty</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.propertyInspector.properties.ClientPropertiesProperty</implementation-class>
-      <skipForDummyProject/>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.uiDesigner.projectView.FormMergerTreeStructureProvider</implementation-class>
       <headless-implementation-class></headless-implementation-class>
       <skipForDummyProject/>
     </component>
   </project-components>
-
-  <module-components>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.StringDescriptorManager</implementation-class>
-      <skipForDummyProject/>
-    </component>
-  </module-components>
 
   <actions>
     <group id="GuiDesigner.MainToolbarActions">
