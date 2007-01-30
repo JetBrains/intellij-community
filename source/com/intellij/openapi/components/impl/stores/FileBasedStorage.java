@@ -18,6 +18,7 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -29,6 +30,7 @@ public class FileBasedStorage extends XmlElementStorage {
   private String myRootElementName;
   private Document myDocument;
   private File myFile;
+  private static final String UTF_8 = "utf-8";
 
   public FileBasedStorage(@Nullable PathMacroSubstitutor pathMacroManager, final String filePath, String rootElementName) {
     super(pathMacroManager);
@@ -48,7 +50,7 @@ public class FileBasedStorage extends XmlElementStorage {
     try {
       final Ref<IOException> refIOException = Ref.create(null);
       try {
-        final byte[] text = DOMUtil.print(getDocument()).getBytes();
+        final byte[] text = printDocument();
 
         final IFile ioFile = FILE_SYSTEM.createFile(myFilePath);
 
@@ -96,7 +98,7 @@ public class FileBasedStorage extends XmlElementStorage {
       final IFile ioFile = FILE_SYSTEM.createFile(myFilePath);
       if (!ioFile.exists()) return true;
 
-      final byte[] text = DOMUtil.print(getDocument()).getBytes();
+      final byte[] text = printDocument();
 
       if (Arrays.equals(ioFile.loadBytes(), text)) return false;
 
@@ -105,6 +107,16 @@ public class FileBasedStorage extends XmlElementStorage {
     catch (IOException e) {
       LOG.debug(e);
       return true;
+    }
+  }
+
+  private byte[] printDocument() throws StateStorageException {
+    try {
+      return DOMUtil.print(getDocument()).getBytes(UTF_8);
+    }
+    catch (UnsupportedEncodingException e) {
+      LOG.error(e);
+      throw new StateStorageException(e);
     }
   }
 
@@ -132,7 +144,7 @@ public class FileBasedStorage extends XmlElementStorage {
     VirtualFile vFile = getVirtualFile(ioFile);
 
     if (vFile == null) {
-      vFile =  LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+      vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
     }
 
     if (vFile == null) {
