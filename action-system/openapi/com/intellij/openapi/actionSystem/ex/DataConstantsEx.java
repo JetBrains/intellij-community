@@ -60,11 +60,6 @@ public interface DataConstantsEx extends DataConstants {
   @NonNls String MODULE_GROUP_ARRAY = "moduleGroup.array";
 
   /**
-   * returns array of {@link com.intellij.uiDesigner.projectView.Form}
-   */
-  @NonNls String GUI_DESIGNER_FORM_ARRAY = "form.array";
-
-  /**
    * returns array of {@link com.intellij.ide.projectView.impl.nodes.LibraryGroupElement}
    */
   @NonNls String LIBRARY_GROUP_ARRAY = "libraryGroup.array";

@@ -36,7 +36,7 @@ public class FormMoveProvider implements MoveAction.MoveProvider, RefactoringAct
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.projectView.FormMoveProvider");
 
   public boolean isEnabledOnDataContext(DataContext dataContext) {
-    Form[] forms = (Form[]) dataContext.getData(DataConstantsEx.GUI_DESIGNER_FORM_ARRAY);
+    Form[] forms = Form.DATA_KEY.getData(dataContext);
     return forms != null && forms.length > 0;
   }
 
@@ -49,7 +49,7 @@ public class FormMoveProvider implements MoveAction.MoveProvider, RefactoringAct
   }
 
   public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
-    Form[] forms = (Form[]) dataContext.getData(DataConstantsEx.GUI_DESIGNER_FORM_ARRAY);
+    Form[] forms = Form.DATA_KEY.getData(dataContext);
     LOG.assertTrue(forms != null);
     PsiClass[] classesToMove = new PsiClass[forms.length];
     PsiFile[] filesToMove = new PsiFile[forms.length];

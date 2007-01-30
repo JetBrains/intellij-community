@@ -9,7 +9,6 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -36,7 +35,7 @@ public class UIDesignerFavoriteNodeProvider implements FavoriteNodeProvider {
   public Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, final ViewSettings viewSettings) {
     Project project = DataKeys.PROJECT.getData(context);
     if (project == null) return null;
-    Form[] forms = (Form[]) context.getData(DataConstantsEx.GUI_DESIGNER_FORM_ARRAY);
+    Form[] forms = Form.DATA_KEY.getData(context);
     if (forms != null) {
       Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
       Set<PsiClass> bindClasses = new HashSet<PsiClass>();
