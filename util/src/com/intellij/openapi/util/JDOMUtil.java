@@ -448,7 +448,7 @@ public class JDOMUtil {
     public boolean hasNullAttributes = false;
   }
 
-  public static org.w3c.dom.Element convertToDOM(Element e) {
+  public static org.w3c.dom.Element convertToDOM(@NotNull Element e) {
     try {
       final Document d = new Document();
       final Element newRoot = new Element(e.getName());

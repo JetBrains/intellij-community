@@ -15,14 +15,18 @@ import java.util.List;
 
 //todo: extends from base store class
 public class DefaultProjectStoreImpl extends ProjectStoreImpl {
-  private Element myElement;
+  private @Nullable Element myElement;
   private ProjectManagerImpl myProjectManager;
 
   public DefaultProjectStoreImpl(final ComponentManagerImpl componentManager, final ProjectImpl project, final ProjectManagerImpl projectManager) {
     super(componentManager, project, projectManager);
     myProjectManager = projectManager;
 
-    myElement = JDOMUtil.convertToDOM(projectManager.getDefaultProjectRootElement());
+    final org.jdom.Element projectRootElement = projectManager.getDefaultProjectRootElement();
+
+    if (projectRootElement != null) {
+      myElement = JDOMUtil.convertToDOM(projectRootElement);
+    }
   }
 
 
