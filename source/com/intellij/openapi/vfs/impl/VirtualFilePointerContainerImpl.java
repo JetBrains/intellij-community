@@ -107,7 +107,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   public void killAll() {
     final VirtualFilePointerManager virtualFilePointerManager = VirtualFilePointerManager.getInstance();
     for (final VirtualFilePointer virtualFilePointer : myList) {
-      virtualFilePointerManager.kill(virtualFilePointer);
+      virtualFilePointerManager.kill(virtualFilePointer, null);
     }
   }
 

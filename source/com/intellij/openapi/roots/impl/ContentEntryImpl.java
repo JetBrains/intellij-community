@@ -253,7 +253,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
 
   protected void dispose() {
     super.dispose();
-    VirtualFilePointerManager.getInstance().kill(myRoot);
+    VirtualFilePointerManager.getInstance().kill(myRoot, null);
     for (final Object mySourceFolder : mySourceFolders) {
       ContentFolder contentFolder = (ContentFolder)mySourceFolder;
       ((RootModelComponentBase)contentFolder).dispose();

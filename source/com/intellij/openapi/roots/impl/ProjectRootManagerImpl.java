@@ -690,18 +690,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
 
   private class MyVirtualFilePointerListener implements VirtualFilePointerListener {
-    private void assertPointersCorrect(VirtualFilePointer[] pointers) {
-      for (VirtualFilePointer pointer : pointers) {
-        final RootModelImpl rootModel = pointer.getUserData(RootModelImpl.ORIGINATING_ROOT_MODEL);
-        if (rootModel != null) {
-          LOG.assertTrue(!rootModel.isDisposed());
-          LOG.assertTrue(!rootModel.isWritable());
-        }
-      }
-    }
-
     public void beforeValidityChanged(VirtualFilePointer[] pointers) {
-      assertPointersCorrect(pointers);
       if (!myInsideRefresh) {
         beforeRootsChange(false);
       }
@@ -713,7 +702,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
 
     public void validityChanged(VirtualFilePointer[] pointers) {
-      assertPointersCorrect(pointers);
       if (myInsideRefresh) {
         clearScopesCaches();
       }

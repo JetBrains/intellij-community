@@ -7,7 +7,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -17,44 +16,27 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.SmartVirtualFilePointerImpl");
   private String myUrl; // is null when myFile is not null
   private VirtualFile myFile;
-  private VirtualFilePointerListener myListener;
   private boolean myInitialized = false;
   private boolean myWasRecentlyValid = false;
-  private boolean myIsDead = false;
-  private VirtualFileManager myVirtualFileManager;
+  private final VirtualFileManager myVirtualFileManager;
   @NonNls private static final String ATTRIBUTE_URL = "url";
 
-  VirtualFilePointerImpl(VirtualFile file, VirtualFilePointerListener listener, VirtualFileManager virtualFileManager) {
+  VirtualFilePointerImpl(VirtualFile file, VirtualFileManager virtualFileManager) {
     LOG.assertTrue(file != null);
     myFile = file;
     myUrl = null;
-    myListener = listener;
     myVirtualFileManager = virtualFileManager;
   }
 
-  VirtualFilePointerImpl(String url, VirtualFilePointerListener listener, VirtualFileManager virtualFileManager) {
+  VirtualFilePointerImpl(String url, VirtualFileManager virtualFileManager) {
     LOG.assertTrue(url != null);
     myFile = null;
     myUrl = url;
-    myListener = listener;
-    myVirtualFileManager = virtualFileManager;
-  }
-
-  VirtualFilePointerImpl(VirtualFilePointerImpl that, VirtualFilePointerListener listener, VirtualFileManager virtualFileManager) {
-    if (that.myFile != null) {
-      myFile = that.myFile;
-      myUrl = that.myUrl;
-    } else {
-      myFile = null;
-      myUrl = that.myUrl;
-    }
-    myListener = listener;
     myVirtualFileManager = virtualFileManager;
   }
 
   @NotNull
   public String getFileName() {
-    LOG.assertTrue(!myIsDead);
     if (!myInitialized) update();
 
     if (myFile != null) {
@@ -66,14 +48,12 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   }
 
   public VirtualFile getFile() {
-    LOG.assertTrue(!myIsDead);
     if (!myInitialized) update();
     return myFile;
   }
 
   @NotNull
   public String getUrl() {
-    LOG.assertTrue(!myIsDead);
     if (!myInitialized) update();
     if (myUrl != null) {
       return myUrl;
@@ -84,14 +64,12 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
 
   @NotNull
   public String getPresentableUrl() {
-    LOG.assertTrue(!myIsDead);
     if (!myInitialized) update();
 
     return PathUtil.toPresentableUrl(getUrl());
   }
 
   public boolean isValid() {
-    LOG.assertTrue(!myIsDead);
     if (!myInitialized) update();
 
     return myFile != null; // && myFile.isValid();
@@ -121,18 +99,6 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
 
   public boolean wasRecentlyValid() {
     return myWasRecentlyValid;
-  }
-
-  public VirtualFilePointerListener getListener() {
-    return myListener;
-  }
-
-  void die() {
-    myIsDead = true;
-  }
-
-  boolean isDead() {
-    return myIsDead;
   }
 
   public void readExternal(Element element) throws InvalidDataException {

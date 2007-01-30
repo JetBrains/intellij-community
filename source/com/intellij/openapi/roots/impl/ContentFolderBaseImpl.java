@@ -72,6 +72,6 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
 
   protected void dispose() {
     super.dispose();
-    VirtualFilePointerManager.getInstance().kill(myFilePointer);
+    VirtualFilePointerManager.getInstance().kill(myFilePointer, null);
   }
 }

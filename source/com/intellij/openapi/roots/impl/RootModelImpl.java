@@ -960,7 +960,7 @@ class RootModelImpl implements ModifiableRootModel {
     }
 
     for (VirtualFilePointer pointer : myPointersToDispose) {
-      myFilePointerManager.kill(pointer);
+      myFilePointerManager.kill(pointer, myVirtualFilePointerListener);
     }
     myPointersToDispose.clear();
     myVirtualFilePointerListener = null;
@@ -976,7 +976,6 @@ class RootModelImpl implements ModifiableRootModel {
   public void setExcludeExplodedDirectory(boolean excludeExplodedDir) { myExcludeExploded = excludeExplodedDir; }
 
   private void annotatePointer(VirtualFilePointer pointer) {
-    pointer.putUserData(ORIGINATING_ROOT_MODEL, this);
     myPointersToDispose.add(pointer);
   }
 

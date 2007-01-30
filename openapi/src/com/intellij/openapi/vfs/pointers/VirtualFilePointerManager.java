@@ -29,7 +29,7 @@ public abstract class VirtualFilePointerManager {
 
   public abstract VirtualFilePointer duplicate (VirtualFilePointer pointer, VirtualFilePointerListener listener);
 
-  public abstract void kill(VirtualFilePointer pointer);
+  public abstract void kill(VirtualFilePointer pointer, final VirtualFilePointerListener listener);
 
   public abstract VirtualFilePointerContainer createContainer();
 

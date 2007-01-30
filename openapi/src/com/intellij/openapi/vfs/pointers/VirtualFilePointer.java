@@ -16,12 +16,11 @@
 package com.intellij.openapi.vfs.pointers;
 
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface VirtualFilePointer extends JDOMExternalizable, UserDataHolder {
+public interface VirtualFilePointer extends JDOMExternalizable {
   @NotNull
   String getFileName();
 

@@ -555,7 +555,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   private void killPointers(final VirtualFilePointerManager manager, Map<OrderRootType, Set<VirtualFilePointer>> cach) {
     for (Set<VirtualFilePointer> pointers : cach.values()) {
       for (VirtualFilePointer pointer : pointers) {
-        manager.kill(pointer);
+        manager.kill(pointer, null);
       }
     }
   }
