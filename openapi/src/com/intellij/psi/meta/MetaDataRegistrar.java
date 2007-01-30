@@ -17,8 +17,8 @@
 
 package com.intellij.psi.meta;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.openapi.application.ApplicationManager;
 
 /**
  * Provides association for element filter with metadata class.
@@ -33,6 +33,6 @@ public abstract class MetaDataRegistrar {
     ElementFilter filter, Class<T> metadataDescriptorClass);
 
   public static MetaDataRegistrar getInstance() {
-    return ApplicationManager.getApplication().getComponent(MetaDataRegistrar.class);
+    return ServiceManager.getService(MetaDataRegistrar.class);
   }
 }

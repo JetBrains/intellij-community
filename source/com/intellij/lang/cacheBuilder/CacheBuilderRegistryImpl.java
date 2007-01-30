@@ -4,13 +4,12 @@
 
 package com.intellij.lang.cacheBuilder;
 
+import com.intellij.openapi.fileTypes.FileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
-import com.intellij.openapi.fileTypes.FileType;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author yole
@@ -25,16 +24,5 @@ public class CacheBuilderRegistryImpl extends CacheBuilderRegistry {
   @Nullable
   public WordsScanner getCacheBuilder(@NotNull FileType fileType) {
     return myMap.get(fileType);
-  }
-
-  @NonNls @NotNull
-  public String getComponentName() {
-    return "CacheBuilderRegistry";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

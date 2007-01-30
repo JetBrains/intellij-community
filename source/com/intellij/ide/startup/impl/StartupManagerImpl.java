@@ -3,20 +3,18 @@ package com.intellij.ide.startup.impl;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author mike
  */
-public class StartupManagerImpl extends StartupManagerEx implements ProjectComponent {
+public class StartupManagerImpl extends StartupManagerEx {
   private List<Runnable> myActivities = new ArrayList<Runnable>();
   private List<Runnable> myPostStartupActivities = Collections.synchronizedList(new ArrayList<Runnable>());
   private List<Runnable> myPreStartupActivities = Collections.synchronizedList(new ArrayList<Runnable>());
@@ -32,22 +30,6 @@ public class StartupManagerImpl extends StartupManagerEx implements ProjectCompo
 
   public StartupManagerImpl(Project project) {
     myProject = project;
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
-
-  public void projectClosed() {
-  }
-
-  public void projectOpened() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "StartupManager";
   }
 
   public void registerStartupActivity(Runnable runnable) {

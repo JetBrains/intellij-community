@@ -16,12 +16,12 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
 import org.jdom.Element;
@@ -34,19 +34,26 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   private static final @NonNls String ADDITIONAL_INDENT_OPTIONS = "ADDITIONAL_INDENT_OPTIONS";
   private static final @NonNls String FILETYPE = "fileType";
 
+
   public CodeStyleSettings() {
+    this(true);
+  }
+
+  public CodeStyleSettings(boolean loadExtensions) {
     initTypeToName();
     initImports();
 
-    final CodeStyleSettingsProvider[] codeStyleSettingsProviders = Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME);
-    for (final CodeStyleSettingsProvider provider : codeStyleSettingsProviders) {
-      addCustomSettings(provider.createCustomSettings(this));
-    }
+    if (loadExtensions) {
+      final CodeStyleSettingsProvider[] codeStyleSettingsProviders = Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME);
+      for (final CodeStyleSettingsProvider provider : codeStyleSettingsProviders) {
+        addCustomSettings(provider.createCustomSettings(this));
+      }
 
-    final FileTypeIndentOptionsProvider[] fileTypeIndentOptionsProviders =
-      ApplicationManager.getApplication().getComponents(FileTypeIndentOptionsProvider.class);
-    for (final FileTypeIndentOptionsProvider provider : fileTypeIndentOptionsProviders) {
-      registerAdditionalIndentOptions(provider.getFileType(),provider.createIndentOptions());
+      final FileTypeIndentOptionsProvider[] fileTypeIndentOptionsProviders =
+        ApplicationManager.getApplication().getComponents(FileTypeIndentOptionsProvider.class);
+      for (final FileTypeIndentOptionsProvider provider : fileTypeIndentOptionsProviders) {
+        registerAdditionalIndentOptions(provider.getFileType(),provider.createIndentOptions());
+      }
     }
   }
 

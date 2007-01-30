@@ -16,7 +16,7 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,9 +27,7 @@ public abstract class FileTypeFactory {
 
   @NotNull
   public static FileTypeFactory getFileTypeFactory() {
-    final FileTypeFactory factory = ApplicationManager.getApplication().getComponent(FileTypeFactory.class);
-    assert factory != null;
-    return factory;
+    return ServiceManager.getService(FileTypeFactory.class);
   }
 
   @NotNull

@@ -6,7 +6,6 @@ import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.Language;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -37,7 +36,6 @@ import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.CharArrayCharSequence;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
@@ -47,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.Introspector;
 import java.util.*;
 
-public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectComponent {
+public class CodeStyleManagerImpl extends CodeStyleManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl");
 
   private Project myProject;
@@ -87,19 +85,6 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       }
     });
   }
-
-  @NotNull
-  public String getComponentName() {
-    return "CodeStyleManager";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() { }
-
-  public void projectOpened() { }
-
-  public void projectClosed() { }
 
   @NotNull
   public Project getProject() {

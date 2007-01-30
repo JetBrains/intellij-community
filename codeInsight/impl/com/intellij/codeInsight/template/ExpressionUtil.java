@@ -1,14 +1,15 @@
  package com.intellij.codeInsight.template;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.text.BlockSupport;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
+ import com.intellij.openapi.components.ServiceManager;
+ import com.intellij.openapi.diagnostic.Logger;
+ import com.intellij.openapi.project.Project;
+ import com.intellij.psi.*;
+ import com.intellij.psi.codeStyle.CodeStyleManager;
+ import com.intellij.psi.codeStyle.SuggestedNameInfo;
+ import com.intellij.psi.codeStyle.VariableKind;
+ import com.intellij.psi.text.BlockSupport;
+ import com.intellij.util.IncorrectOperationException;
+ import org.jetbrains.annotations.Nullable;
 
  /**
   * @author mike
@@ -34,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
      }
      else{
        PsiFile fileCopy = (PsiFile)file.copy();
-       BlockSupport blockSupport = project.getComponent(BlockSupport.class);
+       BlockSupport blockSupport = ServiceManager.getService(project, BlockSupport.class);
        try{
          blockSupport.reparseRange(fileCopy, offset, offset, "xxx");
        }

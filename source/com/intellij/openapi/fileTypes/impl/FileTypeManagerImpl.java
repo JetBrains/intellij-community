@@ -99,8 +99,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   // Constructor
   // -------------------------------------------------------------------------
 
-  public FileTypeManagerImpl(MessageBus bus, FileTypeFactoryImpl fileTypeFactory) {
-    registerStandardFileTypes(fileTypeFactory);
+  public FileTypeManagerImpl(MessageBus bus) {
+    registerStandardFileTypes((FileTypeFactoryImpl)FileTypeFactory.getFileTypeFactory());
     if (loadAllFileTypes()) {
       restoreStandardFileExtensions();
     }

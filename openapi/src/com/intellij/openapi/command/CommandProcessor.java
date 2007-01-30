@@ -15,15 +15,15 @@
  */
 package com.intellij.openapi.command;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.Disposable;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class CommandProcessor {
   public static CommandProcessor getInstance(){
-    return ApplicationManager.getApplication().getComponent(CommandProcessor.class);
+    return ServiceManager.getService(CommandProcessor.class);
   }
 
   /**

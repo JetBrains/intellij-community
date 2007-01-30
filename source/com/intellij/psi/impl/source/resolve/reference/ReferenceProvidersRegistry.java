@@ -4,7 +4,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlEncodingReferenceProvider;
 import com.intellij.codeInspection.i18n.I18nUtil;
 import com.intellij.lang.properties.PropertiesReferenceProvider;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -19,8 +19,8 @@ import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ReflectionCache;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.xml.util.HtmlReferenceProvider;
@@ -33,8 +33,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -43,7 +43,7 @@ import java.util.concurrent.ConcurrentMap;
  * Time: 17:13:45
  * To change this template use Options | File Templates.
  */
-public class ReferenceProvidersRegistry implements ProjectComponent, ElementManipulatorsRegistry {
+public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
   private final List<Class> myTempScopes = new ArrayList<Class>();
   private final ConcurrentMap<Class,ProviderBinding> myBindingsMap = new ConcurrentWeakHashMap<Class, ProviderBinding>();
   private final List<Pair<Class<?>, ElementManipulator<?>>> myManipulators = new CopyOnWriteArrayList<Pair<Class<?>, ElementManipulator<?>>>();
@@ -64,7 +64,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
   public static ReferenceProviderType SCHEMA_PROVIDER = new ReferenceProviderType("Schema references provider");
 
   public static ReferenceProvidersRegistry getInstance(@NotNull Project project) {
-    return project.getComponent(ReferenceProvidersRegistry.class);
+    return ServiceManager.getService(project, ReferenceProvidersRegistry.class);
   }
 
   public void registerTypeWithProvider(@NotNull ReferenceProviderType type, @NotNull PsiReferenceProvider provider) {
@@ -397,16 +397,4 @@ public class ReferenceProvidersRegistry implements ProjectComponent, ElementMani
     return true;
   }
 
-  public void projectOpened() {}
-
-  public void projectClosed() {}
-
-  @NotNull
-  public String getComponentName() {
-    return "Reference providers registry";
-  }
-
-  public void initComponent() {}
-
-  public void disposeComponent() {}
 }

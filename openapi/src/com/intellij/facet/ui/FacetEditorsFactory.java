@@ -17,19 +17,18 @@
 
 package com.intellij.facet.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.facet.ui.libraries.FacetLibrariesConfiguration;
 import com.intellij.facet.ui.libraries.FacetLibrariesEditor;
 import com.intellij.facet.ui.libraries.FacetLibrariesEditorDescription;
 import com.intellij.facet.ui.libraries.LibraryInfo;
-import com.intellij.facet.ui.libraries.FacetLibrariesConfiguration;
+import com.intellij.openapi.components.ServiceManager;
 
 /**
  * @author nik
  */
 public abstract class FacetEditorsFactory {
-
   public static FacetEditorsFactory getInstance() {
-    return ApplicationManager.getApplication().getComponent(FacetEditorsFactory.class);
+    return ServiceManager.getService(FacetEditorsFactory.class);
   }
 
   public abstract FacetLibrariesEditor createLibrariesEditor(FacetEditorContext editorContext,

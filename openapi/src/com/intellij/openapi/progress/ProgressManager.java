@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.progress;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -29,7 +29,7 @@ public abstract class ProgressManager {
   public static ProgressManager getInstance() {
     ProgressManager instance = ourCachedInstance;
     if( instance == null )
-      instance = ourCachedInstance = ApplicationManager.getApplication().getComponent(ProgressManager.class);
+      instance = ourCachedInstance = ServiceManager.getService(ProgressManager.class);
     return instance;
   }
 

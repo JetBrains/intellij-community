@@ -15,7 +15,7 @@
  */
 package com.intellij.psi;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 
 /**
  * The substitutor which does not provide any mappings for the type parameters.
@@ -25,6 +25,6 @@ import com.intellij.openapi.application.ApplicationManager;
  */
 public abstract class EmptySubstitutor implements PsiSubstitutor {
   public static EmptySubstitutor getInstance()  {
-    return ApplicationManager.getApplication().getComponent(EmptySubstitutor.class);
+    return ServiceManager.getService(EmptySubstitutor.class);
   }
 }

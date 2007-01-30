@@ -1,8 +1,6 @@
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -11,7 +9,7 @@ import java.util.Map;
 /**
  *  @author dsl
  */
-public final class EmptySubstitutorImpl extends EmptySubstitutor implements PsiSubstitutorEx, ApplicationComponent {
+public final class EmptySubstitutorImpl extends EmptySubstitutor implements PsiSubstitutorEx {
   public PsiType substitute(PsiTypeParameter typeParameter){
     return typeParameter.getManager().getElementFactory().createType(typeParameter);
   }
@@ -50,11 +48,6 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor implements PsiS
     return another;
   }
 
-  @NonNls
-  public String toString() {
-    return "EMPTY";
-  }
-
   @NotNull
   public Map<PsiTypeParameter, PsiType> getSubstitutionMap() {
     return Collections.emptyMap();
@@ -62,15 +55,6 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor implements PsiS
 
   public boolean isValid() {
     return true;
-  }
-
-  public String getComponentName() {
-    return "EmptySubstitutorComponent";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
   }
 
   public PsiSubstitutor inplacePut(PsiTypeParameter classParameter, PsiType mapping) {

@@ -15,12 +15,13 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class SmartPointerManager {
   public static SmartPointerManager getInstance(Project project) {
-    return project.getComponent(SmartPointerManager.class);
+    return ServiceManager.getService(project, SmartPointerManager.class);
   }
 
   @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(E element);

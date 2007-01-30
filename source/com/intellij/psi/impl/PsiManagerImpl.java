@@ -19,6 +19,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
@@ -28,8 +29,8 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
@@ -132,7 +133,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
                         PsiManagerConfiguration psiManagerConfiguration,
                         final ProjectRootManagerEx projectRootManagerEx,
                         ExternalResourceManagerEx externalResourceManagerEx,
-                        StartupManagerEx startupManagerEx,
+                        StartupManager startupManager,
                         FileTypeManager fileTypeManager,
                         VirtualFileManager virtualFileManager,
                         FileDocumentManager fileDocumentManager) {
@@ -189,8 +190,8 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
       externalResourceManagerEx.addExteralResourceListener(myExternalResourceListener);
     }
 
-    if (startupManagerEx != null) {
-      startupManagerEx.registerPreStartupActivity(
+    if (startupManager != null) {
+      ((StartupManagerEx)startupManager).registerPreStartupActivity(
         new Runnable() {
           public void run() {
             // update effective language level before the project is opened because it might be changed
@@ -203,7 +204,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
         }
       );
 
-      startupManagerEx.registerStartupActivity(
+      startupManager.registerStartupActivity(
         new Runnable() {
           public void run() {
             runStartupActivity();

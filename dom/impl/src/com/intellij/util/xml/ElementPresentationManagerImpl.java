@@ -5,14 +5,12 @@
 package com.intellij.util.xml;
 
 import com.intellij.codeInsight.lookup.LookupValueFactory;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.util.Function;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiFormatUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -22,8 +20,7 @@ import java.util.Collection;
 /**
  * @author Dmitry Avdeev
  */
-public class ElementPresentationManagerImpl extends ElementPresentationManager implements ApplicationComponent {
-
+public class ElementPresentationManagerImpl extends ElementPresentationManager {
   @NotNull
   public <T> Object[] createVariants(Collection<T> elements, Function<T, String> namer) {
     ArrayList<Object> result = new ArrayList<Object>(elements.size());
@@ -52,17 +49,4 @@ public class ElementPresentationManagerImpl extends ElementPresentationManager i
     return result.toArray();
   }
 
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "ElementPresentationManager";
-  }
-
-  public void initComponent() {
-
-  }
-
-  public void disposeComponent() {
-
-  }
 }

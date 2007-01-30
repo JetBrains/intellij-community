@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -63,7 +64,7 @@ public class ExpectedTypeMacro implements Macro{
     PsiElement element = file.findElementAt(offset);
     if (!(element instanceof PsiIdentifier)) {
       PsiFile fileCopy = (PsiFile)file.copy();
-      BlockSupport blockSupport = project.getComponent(BlockSupport.class);
+      BlockSupport blockSupport = ServiceManager.getService(project, BlockSupport.class);
       try{
         blockSupport.reparseRange(fileCopy, offset, offset, "xxx)");
       }

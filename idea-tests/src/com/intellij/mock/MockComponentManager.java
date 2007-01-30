@@ -10,7 +10,9 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
+import org.picocontainer.defaults.DefaultPicoContainer;
 
 import java.lang.reflect.Array;
 import java.util.HashMap;
@@ -18,11 +20,16 @@ import java.util.Map;
 
 public class MockComponentManager extends UserDataHolderBase implements ComponentManager {
   private final MessageBus myMessageBus = MessageBusFactory.newMessageBus(this);
+  private final MutablePicoContainer myPicoContainer = new DefaultPicoContainer();
 
   private final Map<Class, Object> myComponents = new HashMap<Class, Object>();
 
   public BaseComponent getComponent(String name) {
     return null;
+  }
+
+  public <T> void registerService(Class<T> serviceInterface, Class<? extends T> serviceImplementation) {
+    myPicoContainer.registerComponentImplementation(serviceInterface.getName(), serviceImplementation);
   }
 
   public <T> void addComponent(Class<T> interfaceClass, T instance) {
@@ -53,7 +60,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   @NotNull
   public PicoContainer getPicoContainer() {
-    throw new UnsupportedOperationException("Method getPicoContainer is not supported in " + getClass());
+    return myPicoContainer;
   }
 
   public MessageBus getMessageBus() {

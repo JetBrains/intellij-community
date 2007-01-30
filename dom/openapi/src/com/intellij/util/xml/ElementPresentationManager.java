@@ -15,7 +15,7 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -56,7 +56,7 @@ public abstract class ElementPresentationManager {
   };
 
   public static ElementPresentationManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(ElementPresentationManager.class);
+    return ServiceManager.getService(ElementPresentationManager.class);
   }
 
   @NotNull

@@ -1,19 +1,6 @@
 <components>
   <application-components>
     <component>
-      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.facet.FacetTypeRegistry</interface-class>
-      <implementation-class>com.intellij.facet.impl.FacetTypeRegistryImpl</implementation-class>
-    </component>
-
-    <component>
-      <interface-class>com.intellij.facet.ui.FacetEditorsFactory</interface-class>
-      <implementation-class>com.intellij.facet.impl.ui.FacetEditorsFactoryImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.util.xml.impl.DomApplicationComponent</implementation-class>
     </component>
 
@@ -28,10 +15,6 @@
     </component>
     -->
     <component>
-      <interface-class>com.intellij.psi.meta.MetaDataRegistrar</interface-class>
-      <implementation-class>com.intellij.psi.impl.meta.MetaRegistry</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.ide.XmlRpcServer</interface-class>
       <implementation-class>com.intellij.ide.XmlRpcServerImpl</implementation-class>
     </component>
@@ -44,24 +27,12 @@
       <implementation-class>com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.openapi.fileTypes.FileTypeFactory</interface-class>
-      <implementation-class>com.intellij.openapi.fileTypes.impl.FileTypeFactoryImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.module.ModuleTypeManager</interface-class>
-      <implementation-class>com.intellij.openapi.module.impl.ModuleTypeManagerImpl</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.vfs.VirtualFileManager</interface-class>
       <implementation-class>com.intellij.openapi.vfs.impl.VirtualFileManagerImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.openapi.vfs.watcher.FileSystemTracker</interface-class>
       <implementation-class>com.intellij.openapi.vfs.impl.watcher.FileSystemTrackerImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.vfs.CharsetSettings</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.impl.CharsetSettingsImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.openapi.vfs.pointers.VirtualFilePointerManager</interface-class>
@@ -90,14 +61,7 @@
       <implementation-class>com.intellij.openapi.editor.impl.EditorFactoryImpl</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.psi.impl.cache.impl.GlobalCacheManager</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.psi.codeStyle.CodeStyleSettingsManager</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.psi.impl.cache.impl.GlobalRepositoryManager</interface-class>
-      <implementation-class>com.intellij.psi.impl.cache.impl.GlobalRepositoryManager</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.psi.statistics.StatisticsManager</interface-class>
@@ -112,10 +76,6 @@
       <implementation-class>com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.openapi.progress.ProgressManager</interface-class>
-      <implementation-class>com.intellij.openapi.progress.impl.ProgressManagerImpl</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.project.ProjectManager</interface-class>
       <implementation-class>com.intellij.openapi.project.impl.ProjectManagerImpl</implementation-class>
     </component>
@@ -126,10 +86,6 @@
     <component>
       <interface-class>com.intellij.openapi.roots.libraries.LibraryTable</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.command.CommandProcessor</interface-class>
-      <implementation-class>com.intellij.openapi.command.impl.CommandProcessorImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.openapi.command.undo.UndoManager</interface-class>
@@ -155,10 +111,6 @@
       <implementation-class>com.intellij.refactoring.migration.MigrationMapSet</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.psi.EmptySubstitutor</interface-class>
-      <implementation-class>com.intellij.psi.impl.EmptySubstitutorImpl</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.roots.libraries.LibraryTablesRegistrar</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl</implementation-class>
     </component>
@@ -170,24 +122,12 @@
       <implementation-class>com.intellij.ide.OpenFileXmlRpcHandler</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.lang.cacheBuilder.CacheBuilderRegistry</interface-class>
-      <implementation-class>com.intellij.lang.cacheBuilder.CacheBuilderRegistryImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.util.xml.ElementPresentationManager</interface-class>
-      <implementation-class>com.intellij.util.xml.ElementPresentationManagerImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.ide.Exe4jListener</implementation-class>
     </component>
   </application-components>
 
 
   <project-components>
-    <component>
-      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
-    </component>
-
     <component>
       <interface-class>com.intellij.util.xml.DomManager</interface-class>
       <implementation-class>com.intellij.util.xml.impl.DomManagerImpl</implementation-class>
@@ -201,15 +141,6 @@
     <component>
       <implementation-class>com.intellij.util.xml.ui.CommittableUtil</implementation-class>
       <skipForDummyProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.util.xml.DomElementsNavigationManager</interface-class>
-      <implementation-class>com.intellij.util.xml.impl.DomElementsNavigationManagerImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.startup.StartupManager</interface-class>
-      <implementation-class>com.intellij.ide.startup.impl.StartupManagerImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.ide.util.PropertiesComponent</interface-class>
@@ -230,23 +161,11 @@
       <implementation-class>com.intellij.psi.impl.PsiManagerImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.psi.text.BlockSupport</interface-class>
-      <implementation-class>com.intellij.psi.impl.source.text.BlockSupportImpl</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.psi.PsiDocumentManager</interface-class>
       <implementation-class>com.intellij.psi.impl.PsiDocumentManagerImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.psi.SmartPointerManager</interface-class>
-      <implementation-class>com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.psi.codeStyle.CodeStyleSettingsManager</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.psi.codeStyle.CodeStyleManager</interface-class>
-      <implementation-class>com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.openapi.module.ModuleManager</interface-class>
@@ -263,15 +182,6 @@
       <skipForDummyProject/>
     </component>
 
-    <component>
-      <interface-class>com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry</interface-class>
-      <implementation-class>com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.pom.PomModel</interface-class>
-      <implementation-class>com.intellij.pom.core.impl.PomModelImpl</implementation-class>
-    </component>
     <component>
       <interface-class>com.intellij.pom.xml.XmlAspect</interface-class>
       <implementation-class>com.intellij.pom.xml.impl.XmlAspectImpl</implementation-class>
@@ -353,10 +263,6 @@
 
 
   <module-components>
-    <component>
-      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
-    </component>
-
     <component>
       <interface-class>com.intellij.facet.FacetManager</interface-class>
       <implementation-class>com.intellij.facet.impl.FacetManagerImpl</implementation-class>

@@ -8,14 +8,12 @@ import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.DummyComplexUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.impl.source.codeStyle.TooComplexPSIModificationException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Stack;
@@ -24,7 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  *
  */
-public class CommandProcessorImpl extends CommandProcessorEx implements ApplicationComponent {
+public class CommandProcessorImpl extends CommandProcessorEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.CommandProcessorImpl");
 
   private static class CommandDescriptor {
@@ -55,25 +53,6 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
   private CopyOnWriteArrayList<CommandListener> myListeners = new CopyOnWriteArrayList<CommandListener>();
 
   private int myUndoTransparentCount = 0;
-
-  public CommandProcessorImpl() {
-    /*
-    if (Diagnostic.STATISTICS_LOG_TRACE_ENABLED){
-      Application.getInstance().addApplicationListener(
-        new ApplicationAdapter(){
-          public void applicationExiting(ApplicationEvent event){
-            Util.writeStatisticsLog(myStatisticsMap);
-          }
-        }
-      );
-    }
-    */
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
 
   public void executeCommand(Runnable runnable, String name, Object groupId) {
     executeCommand(null, runnable, name, groupId);
@@ -282,8 +261,4 @@ public class CommandProcessorImpl extends CommandProcessorEx implements Applicat
     }
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "CommandProcessor";
-  }
 }

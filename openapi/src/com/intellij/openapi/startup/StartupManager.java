@@ -16,6 +16,7 @@
 package com.intellij.openapi.startup;
 
 import com.intellij.ide.startup.FileSystemSynchronizer;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -30,7 +31,7 @@ public abstract class StartupManager {
    * @return the startup manager instance.
    */
   public static StartupManager getInstance(Project project) {
-    return project.getComponent(StartupManager.class);
+    return ServiceManager.getService(project, StartupManager.class);
   }
 
   /**

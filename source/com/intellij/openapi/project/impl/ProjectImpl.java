@@ -8,6 +8,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -151,7 +152,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   @NotNull
   public PomModel getModel() {
-    final PomModel pomModel = myModel != null ? myModel : (myModel = getComponent(PomModel.class));
+    final PomModel pomModel = myModel != null ? myModel : (myModel = ServiceManager.getService(this, PomModel.class));
     assert pomModel != null;
 
     return pomModel;

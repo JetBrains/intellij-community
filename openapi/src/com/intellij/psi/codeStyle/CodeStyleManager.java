@@ -16,16 +16,17 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Service for reformatting code fragments, getting names for elements
@@ -41,7 +42,7 @@ public abstract class CodeStyleManager {
    * @return the code style manager instance.
    */
   public static CodeStyleManager getInstance(@NotNull Project project) {
-    return project.getComponent(CodeStyleManager.class);
+    return ServiceManager.getService(project, CodeStyleManager.class);
   }
 
   /**

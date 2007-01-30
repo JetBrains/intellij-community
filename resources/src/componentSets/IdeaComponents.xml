@@ -4,6 +4,22 @@
             xsi:schemaLocation="http://www.w3.org/2001/XInclude
    http://www.w3.org/2001/XInclude.xsd">
 
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
+    </component>
+  </application-components>
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
+    </component>
+  </project-components>
+  <module-components>
+    <component>
+      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
+    </component>
+  </module-components>
+
   <xi:include href="Lvcs.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Core.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="UILaf.xml" xpointer="xpointer(/components/*)"/>

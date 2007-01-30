@@ -4,7 +4,7 @@
 
 package com.intellij.facet;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class FacetTypeRegistry {
 
   public static FacetTypeRegistry getInstance() {
-    return ApplicationManager.getApplication().getComponent(FacetTypeRegistry.class);
+    return ServiceManager.getService(FacetTypeRegistry.class);
   }
 
   public abstract void registerFacetType(FacetType facetType);

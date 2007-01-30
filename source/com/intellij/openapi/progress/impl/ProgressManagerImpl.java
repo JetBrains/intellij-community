@@ -4,7 +4,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
@@ -19,9 +18,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class ProgressManagerImpl extends ProgressManager implements ApplicationComponent {
+public class ProgressManagerImpl extends ProgressManager {
   @NonNls private static final String PROCESS_CANCELED_EXCEPTION = "idea.ProcessCanceledException";
 
   private final ConcurrentHashMap<Thread, ProgressIndicator> myThreadToIndicatorMap = new ConcurrentHashMap<Thread, ProgressIndicator>();
@@ -100,16 +99,6 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
 
   public void removeFunComponentProvider(ProgressFunComponentProvider provider) {
     myFunComponentProviders.remove(provider);
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "ProgressManager";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
   }
 
   public boolean hasProgressIndicator() {

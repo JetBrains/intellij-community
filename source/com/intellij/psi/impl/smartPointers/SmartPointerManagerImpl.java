@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -24,7 +23,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-public class SmartPointerManagerImpl extends SmartPointerManager implements ProjectComponent {
+public class SmartPointerManagerImpl extends SmartPointerManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl");
 
   private static final Key<ArrayList<WeakReference<SmartPointerEx>>> SMART_POINTERS_IN_PSI_FILE_KEY = Key.create(
@@ -35,23 +34,6 @@ public class SmartPointerManagerImpl extends SmartPointerManager implements Proj
 
   public SmartPointerManagerImpl(Project project) {
     myProject = project;
-  }
-
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "SmartPointerManager";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
   }
 
   public static void fastenBelts(PsiFile file) {

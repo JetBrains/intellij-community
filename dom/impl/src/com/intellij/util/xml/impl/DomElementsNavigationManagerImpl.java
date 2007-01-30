@@ -4,7 +4,6 @@
 
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
@@ -12,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigationProvider;
 import com.intellij.util.xml.DomElementsNavigationManager;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,7 +20,7 @@ import java.util.Set;
 /**
  * User: Sergey.Vasiliev
  */
-public class DomElementsNavigationManagerImpl extends DomElementsNavigationManager implements ProjectComponent {
+public class DomElementsNavigationManagerImpl extends DomElementsNavigationManager {
   private Map<String, DomElementNavigationProvider> myProviders = new HashMap<String, DomElementNavigationProvider>();
   private Project myProject;
 
@@ -48,27 +46,6 @@ public class DomElementsNavigationManagerImpl extends DomElementsNavigationManag
 
   public void registerDomElementsNavigateProvider(DomElementNavigationProvider provider) {
     myProviders.put(provider.getProviderName(), provider);
-  }
-
-  public void projectOpened() {
-
-  }
-
-  public void projectClosed() {
-
-  }
-
-  @NonNls
-  public String getComponentName() {
-    return getClass().getName();
-  }
-
-  public void initComponent() {
-
-  }
-
-  public void disposeComponent() {
-
   }
 
   private class MyDomElementNavigateProvider extends DomElementNavigationProvider {

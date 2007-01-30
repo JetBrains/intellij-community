@@ -2,7 +2,6 @@ package com.intellij.psi.impl.meta;
 
 import com.intellij.jsp.impl.RelaxedNsXmlNSDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
@@ -23,7 +22,6 @@ import com.intellij.xml.impl.schema.SchemaNSDescriptor;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +33,7 @@ import java.util.List;
  * Time: 3:31:09
  * To change this template use Options | File Templates.
  */
-public class MetaRegistry extends MetaDataRegistrar implements ApplicationComponent {
+public class MetaRegistry extends MetaDataRegistrar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.meta.MetaRegistry");
   private static final List<MyBinding> ourBindings = new ArrayList<MyBinding>();
 
@@ -227,14 +225,6 @@ public class MetaRegistry extends MetaDataRegistrar implements ApplicationCompon
   public <T extends PsiMetaDataBase> void registerMetaData(ElementFilter filter, Class<T> metadataDescriptorClass) {
     addMetadataBinding(filter, metadataDescriptorClass);
   }
-
-  @NonNls
-  public String getComponentName() {
-    return "MetaRegistry";
-  }
-
-  public void initComponent() {}
-  public void disposeComponent() {}
 
   private static class MyBinding {
     ElementFilter myFilter;

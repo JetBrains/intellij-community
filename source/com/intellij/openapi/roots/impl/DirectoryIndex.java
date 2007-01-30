@@ -1,5 +1,6 @@
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Query;
@@ -7,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class DirectoryIndex {
   public static DirectoryIndex getInstance(Project project) {
-    return project.getComponent(DirectoryIndex.class);
+    return ServiceManager.getService(project, DirectoryIndex.class);
   }
 
   // for tests

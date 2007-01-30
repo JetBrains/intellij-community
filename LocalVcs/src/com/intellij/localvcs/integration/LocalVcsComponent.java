@@ -12,9 +12,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,11 +44,11 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
     return p.getComponent(ILocalVcsComponent.class);
   }
 
-  public LocalVcsComponent(Project p, StartupManagerEx sm, ProjectRootManagerEx rm, VirtualFileManagerEx fm, LocalFileSystem fs,
+  public LocalVcsComponent(Project p, StartupManager sm, ProjectRootManagerEx rm, VirtualFileManagerEx fm, LocalFileSystem fs,
                            FileDocumentManager dm,
                            FileTypeManager tm) {
     myProject = p;
-    myStartupManager = sm;
+    myStartupManager = (StartupManagerEx)sm;
     myRootManager = rm;
     myFileManager = fm;
     myFileSystem = fs;

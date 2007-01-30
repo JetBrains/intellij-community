@@ -4,33 +4,20 @@
 
 package com.intellij.facet.impl.ui;
 
-import com.intellij.facet.ui.FacetEditorsFactory;
-import com.intellij.facet.ui.FacetEditorContext;
-import com.intellij.facet.ui.FacetValidatorsManager;
-import com.intellij.facet.ui.libraries.*;
-import com.intellij.facet.impl.ui.libraries.FacetLibrariesEditorImpl;
 import com.intellij.facet.impl.ui.libraries.FacetLibrariesConfigurationImpl;
-import com.intellij.openapi.components.ApplicationComponent;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.facet.impl.ui.libraries.FacetLibrariesEditorImpl;
+import com.intellij.facet.ui.FacetEditorContext;
+import com.intellij.facet.ui.FacetEditorsFactory;
+import com.intellij.facet.ui.FacetValidatorsManager;
+import com.intellij.facet.ui.libraries.FacetLibrariesConfiguration;
+import com.intellij.facet.ui.libraries.FacetLibrariesEditor;
+import com.intellij.facet.ui.libraries.FacetLibrariesEditorDescription;
+import com.intellij.facet.ui.libraries.LibraryInfo;
 
 /**
  * @author nik
  */
-public class FacetEditorsFactoryImpl extends FacetEditorsFactory implements ApplicationComponent {
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "FacetEditorsFactory";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
+public class FacetEditorsFactoryImpl extends FacetEditorsFactory {
   public FacetLibrariesEditor createLibrariesEditor(final FacetEditorContext editorContext, final FacetValidatorsManager validatorsManager,
                                                     final FacetLibrariesConfiguration configuration,
                                                     FacetLibrariesEditorDescription editorDescription, final LibraryInfo[] libraryInfos) {

@@ -17,8 +17,7 @@
 
 package com.intellij.lang.cacheBuilder;
 
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,9 +29,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author yole
  */
-public abstract class CacheBuilderRegistry implements ApplicationComponent {
+public abstract class CacheBuilderRegistry {
   public static CacheBuilderRegistry getInstance() {
-    return ApplicationManager.getApplication().getComponent(CacheBuilderRegistry.class);
+    return ServiceManager.getService(CacheBuilderRegistry.class);
   }
 
   /**

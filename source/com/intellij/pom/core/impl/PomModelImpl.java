@@ -61,7 +61,6 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.lang.CompoundRuntimeException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -306,12 +305,4 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
   // Project component
 
-  public void projectOpened() {}
-  public void projectClosed() {}
-  @NotNull
-  public String getComponentName() {
-    return "PomModel";
-  }
-  public void initComponent() {}
-  public void disposeComponent() {}
 }

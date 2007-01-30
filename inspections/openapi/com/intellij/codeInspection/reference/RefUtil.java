@@ -18,7 +18,7 @@ package com.intellij.codeInspection.reference;
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -34,9 +34,9 @@ import java.util.List;
  * @author anna
  * @since 6.0
  */
-public abstract class RefUtil implements ApplicationComponent {
+public abstract class RefUtil {
   public static RefUtil getInstance() {
-    return ApplicationManager.getApplication().getComponent(RefUtil.class);
+    return ServiceManager.getService(RefUtil.class);
   }
 
   public abstract boolean belongsToScope(PsiElement psiElement, RefManager refManager);

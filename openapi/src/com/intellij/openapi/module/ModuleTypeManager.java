@@ -15,12 +15,11 @@
  */
 package com.intellij.openapi.module;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 
-public abstract class ModuleTypeManager implements ApplicationComponent {
+public abstract class ModuleTypeManager {
   public static ModuleTypeManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(ModuleTypeManager.class);
+    return ServiceManager.getService(ModuleTypeManager.class);
   }
 
   public abstract void registerModuleType(ModuleType type);

@@ -17,6 +17,7 @@
 
 package com.intellij.util.xml;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
 import java.util.Set;
@@ -28,7 +29,7 @@ public abstract class DomElementsNavigationManager {
   public static String DEFAULT_PROVIDER_NAME = "DEFAULT_PROVIDER_NAME";
 
   public static DomElementsNavigationManager getManager(Project project) {
-    return project.getComponent(DomElementsNavigationManager.class);
+    return ServiceManager.getService(project, DomElementsNavigationManager.class);
   }
 
   public abstract Set<DomElementNavigationProvider> getDomElementsNavigateProviders(DomElement domElement);

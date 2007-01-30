@@ -16,15 +16,13 @@
 package com.intellij.pom;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.Disposable;
 import com.intellij.pom.event.PomModelListener;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.Set;
 
-public interface PomModel extends UserDataHolder, ProjectComponent {
+public interface PomModel extends UserDataHolder {
   <T extends PomModelAspect> T getModelAspect(Class<T> aClass);
 
   void registerAspect(Class<? extends PomModelAspect> aClass,

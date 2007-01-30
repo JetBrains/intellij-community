@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.impl.PsiManagerConfiguration;
@@ -44,12 +45,12 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private VirtualFileListener myVirtualFileListener;
   private final MessageBusConnection myConnection;
 
-  public DirectoryIndexImpl(Project project, PsiManagerConfiguration psiManagerConfiguration, StartupManagerEx startupManagerEx) {
+  public DirectoryIndexImpl(Project project, PsiManagerConfiguration psiManagerConfiguration, StartupManager startupManager) {
     myProject = project;
     myConnection = project.getMessageBus().connect();
 
     LAZY_MODE = !psiManagerConfiguration.REPOSITORY_ENABLED;
-    startupManagerEx.registerPreStartupActivity(
+    ((StartupManagerEx)startupManager).registerPreStartupActivity(
       new Runnable() {
         public void run() {
           initialize();

@@ -36,7 +36,6 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.module.UnknownModuleType;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
 
@@ -86,18 +85,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
     return provider != null && provider.booleanValue();
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "ModuleTypeManager";
-  }
-
-  public void initComponent() {
-  }
-
   private void registerDefaultTypes() {
     registerModuleType(ModuleType.JAVA, true);
-  }
-
-  public void disposeComponent() {
   }
 }

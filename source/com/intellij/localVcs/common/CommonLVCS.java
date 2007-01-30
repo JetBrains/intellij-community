@@ -2,7 +2,7 @@ package com.intellij.localVcs.common;
 
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
-import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.localVcs.impl.OldLvcsImplemetation;
 import com.intellij.localvcs.integration.ILocalVcsComponent;
 import com.intellij.openapi.application.Application;
@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -80,24 +81,26 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   public CommonLVCS(final Project project,
                     final ProjectRootManagerEx projectRootManager,
                     final FileTypeManager fileTypeManager,
-                    final StartupManagerImpl startupManagerEx,
+                    final StartupManager startupManager,
                     final LvcsConfiguration configuration) {
 
     myProject = project;
+
     myFileIndex = projectRootManager.getFileIndex();
     myFileTypeManager = fileTypeManager;
     myConfiguration = configuration;
+
     myVcsLocation = findProjectVcsLocation();
     myImplementation = new OldLvcsImplemetation(project, this);
 
-    startupManagerEx.registerPreStartupActivity(new Runnable() {
+    ((StartupManagerEx)startupManager).registerPreStartupActivity(new Runnable() {
       public void run() {
         runStartupActivity();
       }
     });
 
     myRefreshRootsOperation = new DelayedSyncOperation(myProject, this, LocalVcsBundle.message("operation.name.refreshing.roots"));
-    startupManagerEx.getFileSystemSynchronizer().registerCacheUpdater(myRefreshRootsOperation);
+    startupManager.getFileSystemSynchronizer().registerCacheUpdater(myRefreshRootsOperation);
     projectRootManager.registerChangeUpdater(myRefreshRootsOperation);
 
     myTracker = new LvcsFileTracker(this);
@@ -440,7 +443,7 @@ public class CommonLVCS extends LocalVcs implements ProjectComponent, FileConten
   private static ProgressIndicator getProgress() {
     final Application application = ApplicationManager.getApplication();
     if (application != null) {
-      return application.getComponent(ProgressManager.class).getProgressIndicator();
+      return ProgressManager.getInstance().getProgressIndicator();
     }
     return null;
   }
