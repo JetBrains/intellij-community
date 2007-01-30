@@ -125,14 +125,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
 
-    if (myAutoPopupRec != null) {
-      if (myOrientation == SwingUtilities.HORIZONTAL) {
-        final int dy = myAutoPopupRec.height / 2 - myAutoPopupIcon.getIconHeight() / 2;
-        myAutoPopupIcon.paintIcon(this, g, (int)myAutoPopupRec.getMaxX() - myAutoPopupIcon.getIconWidth() - 1, myAutoPopupRec.y + dy);
-      }
-      else {
-        final int dx = myAutoPopupRec.width / 2 - myAutoPopupIcon.getIconWidth() / 2;
-        myAutoPopupIcon.paintIcon(this, g, myAutoPopupRec.x + dx, (int)myAutoPopupRec.getMaxY() - myAutoPopupIcon.getIconWidth() - 1);
+    if (myLayoutPolicy == AUTO_LAYOUT_POLICY) {
+      if (myAutoPopupRec != null) {
+        if (myOrientation == SwingUtilities.HORIZONTAL) {
+          final int dy = myAutoPopupRec.height / 2 - myAutoPopupIcon.getIconHeight() / 2;
+          myAutoPopupIcon.paintIcon(this, g, (int)myAutoPopupRec.getMaxX() - myAutoPopupIcon.getIconWidth() - 1, myAutoPopupRec.y + dy);
+        }
+        else {
+          final int dx = myAutoPopupRec.width / 2 - myAutoPopupIcon.getIconWidth() / 2;
+          myAutoPopupIcon.paintIcon(this, g, myAutoPopupRec.x + dx, (int)myAutoPopupRec.getMaxY() - myAutoPopupIcon.getIconWidth() - 1);
+        }
       }
     }
   }
@@ -353,7 +355,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   private void calculateBoundsWrapImpl(Dimension sizeToFit, ArrayList<Rectangle> bounds) {
-   // We have to gracefull handle case when toolbar was not layed out yet.
+    // We have to gracefull handle case when toolbar was not layed out yet.
     // In this case we calculate bounds as it is a NOWRAP toolbar.
     if (getWidth() == 0 || getHeight() == 0) {
       try {

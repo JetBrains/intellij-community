@@ -261,4 +261,11 @@ public class DefaultActionGroup extends ActionGroup {
     }    
     return children;
   }
+
+  public final void addAll(ActionGroup group) {
+    final AnAction[] actions = group.getChildren(null);
+    for (AnAction each : actions) {
+      add(each);
+    }
+  }
 }
