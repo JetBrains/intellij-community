@@ -26,12 +26,14 @@ public class FileBasedStorage extends XmlElementStorage {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.FileBasedStorage");
 
   private String myFilePath;
+  private String myRootElementName;
   private Document myDocument;
   private File myFile;
 
-  public FileBasedStorage(@Nullable PathMacroSubstitutor pathMacroManager, final String filePath) {
+  public FileBasedStorage(@Nullable PathMacroSubstitutor pathMacroManager, final String filePath, String rootElementName) {
     super(pathMacroManager);
     myFilePath = filePath;
+    myRootElementName = rootElementName;
     myFile = new File(myFilePath);
   }
 
@@ -154,8 +156,10 @@ public class FileBasedStorage extends XmlElementStorage {
   public Document getDocument() throws StateStorageException {
     if (myDocument == null) {
       try {
-        if (!myFile.exists()) {
+        if (!myFile.exists() || myFile.length() == 0) {
           myDocument = DOMUtil.createDocument();
+          final Element rootElement = myDocument.createElement(myRootElementName);
+          myDocument.appendChild(rootElement);
         }
         else {
           myDocument = DOMUtil.load(myFile);
