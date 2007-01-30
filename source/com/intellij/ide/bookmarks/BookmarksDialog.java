@@ -1,14 +1,15 @@
 package com.intellij.ide.bookmarks;
 
+import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
-import com.intellij.ide.IdeBundle;
-import com.intellij.CommonBundle;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -19,6 +20,9 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 abstract class BookmarksDialog extends DialogWrapper{
   private MyModel myModel;
@@ -125,7 +129,7 @@ abstract class BookmarksDialog extends DialogWrapper{
     constr.fill = GridBagConstraints.BOTH;
     constr.anchor = GridBagConstraints.WEST;
     panel.add(tableScrollPane, constr);
-    myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
     constr = new GridBagConstraints();
     constr.gridx = 1;
@@ -198,22 +202,29 @@ abstract class BookmarksDialog extends DialogWrapper{
     }
   }
 
-  protected <T extends Bookmark> void fillList(java.util.List<T> bookmarks, Bookmark defaultSelectedBookmark) {
+  protected <T extends Bookmark> void fillList(List<T> bookmarks, Bookmark selectedBookmark) {
+    final List<Bookmark> list = new ArrayList<Bookmark>();
+    list.add(selectedBookmark);
+    fillList(bookmarks, list);
+  }
+
+  protected <T extends Bookmark> void fillList(List<T> bookmarks, Collection<Bookmark> selectedBookmarks) {
     while (myModel.getRowCount() > 0){
       myModel.removeRow(0);
     }
     for(int i = 0; i < bookmarks.size(); i++){
       Bookmark bookmark = bookmarks.get(i);
       myModel.addRow(new Object[] {new BookmarkWrapper(bookmark), null});
-      if (i == 0 || bookmark == defaultSelectedBookmark) {
-        myTable.getSelectionModel().setSelectionInterval(i, i);
+      if ((i == 0 && selectedBookmarks.size()==0 ) || selectedBookmarks.contains(bookmark) ) {
+        myTable.getSelectionModel().addSelectionInterval(i, i);
       }
     }
-    final int index = myTable.getSelectionModel().getMinSelectionIndex();
-    if (index >= 0) {
+    final int minIndex = myTable.getSelectionModel().getMinSelectionIndex();
+    final int maxIndex = myTable.getSelectionModel().getMaxSelectionIndex();
+    if (minIndex >= 0) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          myTable.scrollRectToVisible(myTable.getCellRect(index, 0, true));
+          myTable.scrollRectToVisible(myTable.getCellRect(minIndex, 0, true).union(myTable.getCellRect(maxIndex,0,true)));
         }
       });
     }
@@ -253,7 +264,7 @@ abstract class BookmarksDialog extends DialogWrapper{
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           stopCellEditing();
-          removeSelectedBookmark();
+          removeSelectedBookmarks();
           myTable.requestFocus();
         }
       }
@@ -279,8 +290,12 @@ abstract class BookmarksDialog extends DialogWrapper{
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           stopCellEditing();
-          Bookmark bookmark = getSelectedBookmark();
-          fillList(myBookmarkManager.moveBookmarkUp(bookmark), bookmark);
+          final List<Bookmark> selectedBookmarks = getSelectedBookmarks();
+          List<Bookmark> allBookmarks = null;
+          for ( Bookmark bookmark : selectedBookmarks ) {
+            allBookmarks = myBookmarkManager.moveBookmarkUp(bookmark);
+          }
+          fillList(allBookmarks, selectedBookmarks);
           myTable.requestFocus();
         }
       }
@@ -289,9 +304,13 @@ abstract class BookmarksDialog extends DialogWrapper{
     myMoveDownButton.addActionListener(
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          stopCellEditing();
-          Bookmark bookmark = getSelectedBookmark();
-          fillList(myBookmarkManager.moveBookmarkDown(bookmark), bookmark);
+          final List<Bookmark> selectedBookmarks = getSelectedBookmarks();
+          final Bookmark[] bookmarksArray = selectedBookmarks.toArray(new Bookmark[0]);
+          List<Bookmark> allBookmarks = null;
+          for (int i = bookmarksArray.length - 1; i >= 0; i--) {
+            allBookmarks = myBookmarkManager.moveBookmarkDown(bookmarksArray[i]);
+          }
+          fillList(allBookmarks, selectedBookmarks);
           myTable.requestFocus();
         }
       }
@@ -323,7 +342,7 @@ abstract class BookmarksDialog extends DialogWrapper{
     getRootPane().registerKeyboardAction(
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          removeSelectedBookmark();
+          removeSelectedBookmarks();
         }
       },
       KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
@@ -337,30 +356,45 @@ abstract class BookmarksDialog extends DialogWrapper{
     HelpManager.getInstance().invokeHelp("find.bookmarks");
   }
 
-  private void removeSelectedBookmark() {
-    Bookmark selectedBookmark = getSelectedBookmark();
-    if (selectedBookmark != null){
+  private void removeSelectedBookmarks() {
+    for ( Bookmark selectedBookmark : getSelectedBookmarks() ){
       myBookmarkManager.removeBookmark(selectedBookmark);
-      TableUtil.removeSelectedItems(myTable);
-      enableButtons();
     }
+    TableUtil.removeSelectedItems(myTable);
+    enableButtons();
   }
 
   protected void enableButtons() {
-    int selectedIndex = myTable.getSelectionModel().getMinSelectionIndex();
-    myRemoveButton.setEnabled(selectedIndex != -1);
+    int minSelectedIndex = myTable.getSelectionModel().getMinSelectionIndex();
+    int maxSelectedIndex = myTable.getSelectionModel().getMaxSelectionIndex();
+    myRemoveButton.setEnabled(minSelectedIndex != -1);
     myRemoveAllButton.setEnabled(myModel.getRowCount() > 0);
-    myGotoButton.setEnabled(selectedIndex != -1);
-    myMoveUpButton.setEnabled(selectedIndex > 0);
-    myMoveDownButton.setEnabled(selectedIndex != -1 && selectedIndex < myModel.getRowCount() - 1);
+    myGotoButton.setEnabled(minSelectedIndex != -1 && minSelectedIndex == maxSelectedIndex);
+    myMoveUpButton.setEnabled(minSelectedIndex > 0);
+    myMoveDownButton.setEnabled(maxSelectedIndex != -1 && maxSelectedIndex < myModel.getRowCount() - 1);
   }
 
   abstract protected void gotoSelectedBookmark(boolean closeWindow);
 
+  @Nullable
   protected Bookmark getSelectedBookmark() {
-    int selectedIndex = myTable.getSelectionModel().getMinSelectionIndex();
-    if (selectedIndex == -1 || selectedIndex >= myModel.getRowCount()) return null;
-    return myModel.getBookmarkWrapper(selectedIndex).getBookmark();
+    List<Bookmark> selected = getSelectedBookmarks();
+    return selected.size() == 1 ? selected.get(0) : null;
+  }
+
+  protected List<Bookmark> getSelectedBookmarks() {
+    List<Bookmark> bookmarks = new ArrayList<Bookmark>();
+    final ListSelectionModel model = myTable.getSelectionModel();
+    int minIndex = model.getMinSelectionIndex();
+    int maxIndex = model.getMaxSelectionIndex();
+    if (minIndex>=0) {
+      for ( int i = minIndex; i <= maxIndex; i++ ) {
+        if ( model.isSelectedIndex(i)) {
+          bookmarks.add ( myModel.getBookmarkWrapper(i).getBookmark() );
+        }
+      }
+    }
+    return bookmarks;
   }
 
   public void dispose() {
