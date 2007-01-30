@@ -24,4 +24,9 @@ public class DomFileElementNode extends BaseDomElementNode {
   public DomFileElement getDomElement() {
     return (DomFileElement)super.getDomElement();
   }
+
+
+  public boolean isShowContainingFileInfo() {
+    return false;
+  }
 }

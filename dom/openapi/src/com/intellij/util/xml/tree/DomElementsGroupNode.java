@@ -18,14 +18,17 @@ import java.util.List;
 
 public class DomElementsGroupNode extends AbstractDomElementNode {
   private DomElement myParentElement;
+  private DomElement myRootDomElement;
   private String myChildrenTagName;
   private DomCollectionChildDescription myChildDescription;
 
-  public DomElementsGroupNode(final DomElement modelElement, DomCollectionChildDescription description, SimpleNode parent) {
+  public DomElementsGroupNode(final DomElement modelElement, DomCollectionChildDescription description, SimpleNode parent,
+                              final DomElement rootDomElement) {
     super(modelElement, parent);
     myParentElement = modelElement;
     myChildDescription = description;
     myChildrenTagName = description.getXmlElementName();
+    myRootDomElement = rootDomElement;
   }
 
   public SimpleNode[] getChildren() {
@@ -34,7 +37,7 @@ public class DomElementsGroupNode extends AbstractDomElementNode {
     final List<SimpleNode> simpleNodes = new ArrayList<SimpleNode>();
     for (DomElement domChild : myChildDescription.getStableValues(myParentElement)) {
       if (shouldBeShown(domChild.getDomElementType())) {
-        simpleNodes.add(new BaseDomElementNode(domChild, this));
+        simpleNodes.add(new BaseDomElementNode(domChild, myRootDomElement, this));
       }
     }
     return simpleNodes.toArray(new SimpleNode[simpleNodes.size()]);

@@ -29,18 +29,20 @@ public class BaseDomElementNode extends AbstractDomElementNode {
   public static final Key<List<Class>> CONSOLIDATED_NODES_KEY = Key.create("CONSOLIDATED_NODES_KEY");
   public static final Key<List<Class>> FOLDER_NODES_KEY = Key.create("FOLDER_NODES_KEY");
 
+  private final DomElement myRootDomElement;
   private final DomElement myDomElement;
   private final String myTagName;
   private final boolean folder;
 
   public BaseDomElementNode(final DomElement modelElement) {
-    this(modelElement, null);
+    this(modelElement, modelElement, null);
   }
 
-  public BaseDomElementNode(final DomElement modelElement, SimpleNode parent) {
+  public BaseDomElementNode(final DomElement modelElement, final DomElement modelRootElement, SimpleNode parent) {
     super(modelElement, parent);
 
     myDomElement = modelElement;
+    myRootDomElement = modelRootElement;
     myTagName = modelElement.getXmlElementName();
     folder = isMarkedType(modelElement.getDomElementType(), FOLDER_NODES_KEY);
   }
@@ -84,7 +86,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
         }
         else {
           for (DomElement domElement : values) {
-            children.add(new BaseDomElementNode(domElement, this));
+            children.add(new BaseDomElementNode(domElement, myRootDomElement, this));
           }
         }
       }
@@ -92,7 +94,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
     for (DomCollectionChildDescription description : element.getGenericInfo().getCollectionChildrenDescriptions()) {
       if (shouldBeShown(description.getType())) {
-        DomElementsGroupNode groupNode = new DomElementsGroupNode(element, description, this);
+        DomElementsGroupNode groupNode = new DomElementsGroupNode(element, description, this, myRootDomElement);
         if (isMarkedType(description.getType(), CONSOLIDATED_NODES_KEY)) {
           Collections.addAll(children, groupNode.getChildren());
         }
@@ -172,7 +174,11 @@ public class BaseDomElementNode extends AbstractDomElementNode {
       holder.getProblems(myDomElement, highlightIfChildrenHaveProblems(), HighlightSeverity.ERROR);
 
     if (problems.size() > 0) {
-      addColoredFragment(getNodeName(), TooltipUtils.getTooltipText(problems), getWavedAttributes(SimpleTextAttributes.STYLE_PLAIN));
+      final String toolTip = TooltipUtils.getTooltipText(problems);
+      addColoredFragment(getNodeName(), toolTip, getWavedAttributes(SimpleTextAttributes.STYLE_PLAIN));
+      if (isShowContainingFileInfo()) {
+        addColoredFragment(" (" + myDomElement.getRoot().getFile().getName() + ")", toolTip, SimpleTextAttributes.GRAY_ATTRIBUTES);
+      }
     }
     else if (myDomElement.getXmlTag() == null && !(myDomElement instanceof DomFileElement)) {
       addColoredFragment(getNodeName(), folder ? SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
@@ -180,10 +186,14 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     else if (folder) {
       addColoredFragment(getNodeName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       final int childrenCount = getChildren().length;
-      addColoredFragment(" (" + childrenCount + ')', SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+      addColoredFragment(" (" + childrenCount + ')', SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
     else {
       addColoredFragment(getNodeName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+
+      if (isShowContainingFileInfo()) {
+        addColoredFragment(" (" + myDomElement.getRoot().getFile().getName() + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      }
     }
   }
 
@@ -205,7 +215,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
   public String getNodeName() {
     if (!myDomElement.isValid()) return "";
-    
+
     final String name = myDomElement.getPresentation().getElementName();
     return name != null && name.trim().length() > 0 ? name : getPropertyName();
   }
@@ -224,5 +234,14 @@ public class BaseDomElementNode extends AbstractDomElementNode {
 
   public boolean expandOnDoubleClick() {
     return true;
+  }
+
+  public boolean isShowContainingFileInfo() {
+    if (!myRootDomElement.isValid()) return false;
+    DomElement root = myRootDomElement;
+    while (root instanceof StableElement) {
+      root = ((StableElement<DomElement>) root).getWrappedElement();
+    }
+    return root instanceof MergedObject && ((MergedObject)root).getImplementations().size() > 1;
   }
 }
