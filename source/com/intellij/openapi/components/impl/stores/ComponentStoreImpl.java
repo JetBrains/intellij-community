@@ -156,11 +156,13 @@ abstract class ComponentStoreImpl implements IComponentStore {
     if (stateStorage == null) return;
 
     Element element = null;
-    try {
-      element = getJdomState(component, componentName, stateStorage);
-    }
-    catch (StateStorage.StateStorageException e) {
-      LOG.error(e);
+    if (!(this instanceof ProjectStoreImpl && ((ProjectStoreImpl)this).getProject().isDefault())) {
+      try {
+        element = getJdomState(component, componentName, stateStorage);
+      }
+      catch (StateStorage.StateStorageException e) {
+        LOG.error(e);
+      }
     }
 
     if (element != null) {

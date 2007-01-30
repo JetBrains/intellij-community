@@ -254,6 +254,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @Nullable
   public VirtualFile getProjectFile() {
+    if (myProject.isDefault()) return null;
+
     try {
       return ((FileBasedStorage)getStateStorageManager().getStateStorage(PROJECT_FILE_STORAGE)).getVirtualFile();
     }
@@ -265,6 +267,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @Nullable
   public VirtualFile getWorkspaceFile() {
+    if (myProject.isDefault()) return null;
+    
     try {
       return ((FileBasedStorage)getStateStorageManager().getStateStorage(WS_FILE_STORAGE)).getVirtualFile();
     }
@@ -284,6 +288,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @NotNull
   public String getProjectFilePath() {
+    if (myProject.isDefault()) return "";
+
     return ((FileBasedStorage)getStateStorageManager().getStateStorage(PROJECT_FILE_STORAGE)).getFilePath();
   }
 
@@ -367,6 +373,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return new ProjectStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myProject);
   }
 
+  public ProjectImpl getProject() {
+    return myProject;
+  }
 
   @Override
   public void commit() {
