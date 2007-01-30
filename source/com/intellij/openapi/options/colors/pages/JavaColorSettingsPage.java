@@ -112,6 +112,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
     ourTags.put("warning", CodeInsightColors.WARNINGS_ATTRIBUTES);
     ourTags.put("info", CodeInsightColors.INFO_ATTRIBUTES);
     ourTags.put("server_problems", CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING);
+    ourTags.put("server_duplicate", CodeInsightColors.DUPLICATE_FROM_SERVER);
     ourTags.put("unknownType", CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
     ourTags.put("localVar", CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES);
     ourTags.put("reassignedLocalVar", CodeInsightColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES);
@@ -152,6 +153,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.warning"), CodeInsightColors.WARNINGS_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.info"), CodeInsightColors.INFO_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.problems"), CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
+    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.duplicate"), CodeInsightColors.DUPLICATE_FROM_SERVER));
     final Collection<HighlightInfoType.HighlightInfoTypeImpl> infoTypes = SeverityRegistrar.getRegisteredHighlightingInfoTypes();
     for (HighlightInfoType type : infoTypes) {
       descriptors.add(new AttributesDescriptor(type.getSeverity(null).toString(), type.getAttributesKey()));

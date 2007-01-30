@@ -198,6 +198,15 @@
           <option name="ERROR_STRIPE_COLOR" value="f49810" />
         </value>
       </option>
+      <option name="DUPLICATE_FROM_SERVER">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND" value="cccccc"/>
+          <option name="EFFECT_COLOR"/>
+          <option name="EFFECT_TYPE"/>
+          <option name="ERROR_STRIPE_COLOR"/>
+        </value>
+      </option>
       <option name="INFO_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>
