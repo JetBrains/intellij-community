@@ -13,10 +13,7 @@ import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.xml.DomChangeAdapter;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -207,7 +204,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
         if (validCandidate && nodeElement.equals(domElement)) {
           return simpleNode;
         }
-        if (!isParent(nodeElement, domElement)) {
+        if (!(nodeElement instanceof MergedObject) && !isParent(nodeElement, domElement)) {
           return null;
         }
       }
