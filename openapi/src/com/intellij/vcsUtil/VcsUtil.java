@@ -100,6 +100,7 @@ public class VcsUtil
     final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance( project );
     ApplicationManager.getApplication().runReadAction( new Runnable() { public void run() { mgr.fileDirty( path ); } } );
   }
+
   public static String getCanonicalPath(File file) {
     if (SystemInfo.isFileSystemCaseSensitive) {
       return file.getAbsolutePath().replace(File.separatorChar, '/');
@@ -196,10 +197,15 @@ public class VcsUtil
     }
   }
 
-  public static void refreshFiles(final FilePath[] roots, final Runnable runnable) {
-
+  public static void refreshFiles(final FilePath[] roots, final Runnable runnable)
+  {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    refreshFiles(collectFilesToRefresh(roots), runnable);
+  }
 
+  public static void refreshFiles(final File[] roots, final Runnable runnable)
+  {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     refreshFiles(collectFilesToRefresh(roots), runnable);
   }
 
@@ -209,12 +215,6 @@ public class VcsUtil
       result[i] = roots[i].getIOFile();
     }
     return result;
-  }
-
-  public static void refreshFiles(final File[] roots, final Runnable runnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    refreshFiles(collectFilesToRefresh(roots), runnable);
   }
 
   private static void refreshFiles(final List<VirtualFile> filesToRefresh, final Runnable runnable) {
@@ -273,7 +273,7 @@ public class VcsUtil
   @Nullable
   public static VirtualFile getVirtualFile( final String path ) {
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      public VirtualFile compute() {
+      @Nullable public VirtualFile compute() {
         return LocalFileSystem.getInstance().findFileByPath( path.replace( File.separatorChar, '/' ));
       }
     });
@@ -282,10 +282,22 @@ public class VcsUtil
   @Nullable
   public static VirtualFile getVirtualFile( final File file ) {
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      public VirtualFile compute() {
+      @Nullable public VirtualFile compute() {
         return LocalFileSystem.getInstance().findFileByIoFile( file );
       }
     });
+  }
+
+  public static String getFileContent( final File file )
+  {
+    return ApplicationManager.getApplication().runReadAction( new Computable<String>()
+      {
+        public String compute() {
+          VirtualFile vFile = VcsUtil.getVirtualFile( file.getPath() );
+          final Document doc = FileDocumentManager.getInstance().getDocument( vFile );
+          return doc.getText();
+        }
+      });
   }
 
   public static boolean isPathUnderProject( Project project, final String path )
