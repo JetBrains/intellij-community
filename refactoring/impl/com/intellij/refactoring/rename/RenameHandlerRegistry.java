@@ -1,6 +1,7 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.containers.HashSet;
 
 import java.util.Set;
@@ -23,12 +24,18 @@ public class RenameHandlerRegistry {
   }
 
   public boolean hasAvailableHandler(DataContext dataContext) {
+    for (RenameHandler renameHandler : Extensions.getExtensions(RenameHandler.EP_NAME)) {
+      if (renameHandler.isAvailableOnDataContext(dataContext)) return true;
+    }
     for (RenameHandler renameHandler : myHandlers) {
       if (renameHandler.isAvailableOnDataContext(dataContext)) return true;
     }
     return myDefaultElementRenameHandler.isAvailableOnDataContext(dataContext);
   }
   public RenameHandler getRenameHandler(DataContext dataContext) {
+    for (RenameHandler renameHandler : Extensions.getExtensions(RenameHandler.EP_NAME)) {
+      if (renameHandler.isRenaming(dataContext)) return renameHandler;
+    }
     for (RenameHandler renameHandler : myHandlers) {
       if (renameHandler.isRenaming(dataContext)) return renameHandler;
     }

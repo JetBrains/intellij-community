@@ -1361,10 +1361,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myShowStructure.put(paneId, showStructure ? Boolean.TRUE : Boolean.FALSE);
   }
 
-  static {
-    RenameHandlerRegistry.getInstance().registerHandler(RenameModuleHandler.INSTANCE);
-  }
-
   private class HideEmptyMiddlePackagesAction extends PaneOptionAction {
     public HideEmptyMiddlePackagesAction() {
       super(myHideEmptyPackages, "", "", null, ourHideEmptyPackagesDefaults);

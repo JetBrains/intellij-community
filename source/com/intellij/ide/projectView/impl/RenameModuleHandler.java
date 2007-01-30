@@ -25,11 +25,6 @@ import com.intellij.refactoring.rename.RenameHandler;
  */
 public class RenameModuleHandler implements RenameHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.actions.RenameModuleHandler");
-  static final RenameModuleHandler INSTANCE = new RenameModuleHandler();
-
-  private RenameModuleHandler() {
-
-  }
 
   public boolean isAvailableOnDataContext(DataContext dataContext) {
     Module module = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);

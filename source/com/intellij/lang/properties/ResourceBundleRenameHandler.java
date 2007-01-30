@@ -25,11 +25,6 @@ import java.io.File;
 import java.util.List;
 
 public class ResourceBundleRenameHandler implements RenameHandler {
-  public static final RenameHandler INSTANCE = new ResourceBundleRenameHandler();
-
-  private ResourceBundleRenameHandler() {
-  }
-
   public boolean isAvailableOnDataContext(DataContext dataContext) {
     return getResourceBundleFromDataContext(dataContext) != null;
   }

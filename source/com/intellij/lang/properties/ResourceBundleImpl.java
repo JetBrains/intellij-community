@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,10 +52,6 @@ public class ResourceBundleImpl implements ResourceBundle {
       throw new IllegalStateException();
     }
   };
-
-  static {
-    RenameHandlerRegistry.getInstance().registerHandler(ResourceBundleRenameHandler.INSTANCE);
-  }
 
   @NotNull
   public List<PropertiesFile> getPropertiesFiles(final Project project) {

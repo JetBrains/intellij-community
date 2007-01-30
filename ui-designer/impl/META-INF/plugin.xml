@@ -32,6 +32,7 @@
     <projectConfigurable implementation="com.intellij.uiDesigner.GuiDesignerConfigurable"/> <!-- GUI Designer -->
 
     <favoriteNodeProvider implementation="com.intellij.uiDesigner.projectView.UIDesignerFavoriteNodeProvider"/>
+    <renameHandler implementation="com.intellij.uiDesigner.projectView.FormRenameHandler"/>
   </extensions>
 
   <application-components>
@@ -49,9 +50,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.uiDesigner.binding.UIDesignerImplicitUsageProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.projectView.FormRenameHandler</implementation-class>
     </component>
   </application-components>
 
