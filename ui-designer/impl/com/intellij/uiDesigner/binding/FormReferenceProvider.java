@@ -6,6 +6,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -240,19 +242,27 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
                                                final String className) {
     final XmlAttribute valueAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, Utils.FORM_NAMESPACE);
     if (valueAttribute != null) {
-      PsiClass psiClass = file.getManager().findClass(className, file.getProject().getAllScope());
-      if (psiClass != null) {
-        PsiMethod getter = PropertyUtil.findPropertyGetter(psiClass, tag.getName(), false, true);
-        if (getter != null) {
-          final PsiType returnType = getter.getReturnType();
-          if (returnType instanceof PsiClassType) {
-            PsiClassType propClassType = (PsiClassType)returnType;
-            PsiClass propClass = propClassType.resolve();
-            if (propClass != null && propClass.isEnum()) {
-              processor.execute(new FormEnumConstantReference(file, getValueRange(valueAttribute), propClassType));
+      FormEnumConstantReference reference = ApplicationManager.getApplication().runReadAction(new Computable<FormEnumConstantReference>() {
+        @Nullable
+        public FormEnumConstantReference compute() {
+          PsiClass psiClass = file.getManager().findClass(className, file.getProject().getAllScope());
+          if (psiClass != null) {
+            PsiMethod getter = PropertyUtil.findPropertyGetter(psiClass, tag.getName(), false, true);
+            if (getter != null) {
+              final PsiType returnType = getter.getReturnType();
+              if (returnType instanceof PsiClassType) {
+                PsiClassType propClassType = (PsiClassType)returnType;
+                PsiClass propClass = propClassType.resolve();
+                if (propClass != null && propClass.isEnum()) {
+                  return new FormEnumConstantReference(file, getValueRange(valueAttribute), propClassType);
+                }
+              }
             }
           }
-        }
+          return null;
+      }});
+      if (reference != null) {
+        processor.execute(reference);
       }
     }
   }
