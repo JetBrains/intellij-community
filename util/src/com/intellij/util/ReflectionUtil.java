@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
 import java.util.Arrays;
+import java.util.ArrayList;
 
 public class ReflectionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ReflectionUtil");
@@ -108,4 +109,60 @@ public class ReflectionUtil {
     }
     return null;
   }
+
+  public static ArrayList<Field> collectFields(Class clazz) {
+    ArrayList<Field> result = new ArrayList<Field>();
+    collectFields(clazz, result);
+    return result;
+  }
+
+  public static Field findField(Class clazz, Class type, String name) throws NoSuchFieldException {
+    final ArrayList<Field> fields = collectFields(clazz);
+    for (Field each : fields) {
+      if (name.equals(each.getName()) && each.getType().equals(type)) return each;
+    }
+
+    throw new NoSuchFieldException("Class: " + clazz + " name: " + name + " type: " + type);
+  }
+
+  private static void collectFields(final Class clazz, final ArrayList<Field> result) {
+    final Field[] fields = clazz.getDeclaredFields();
+    for (Field field : fields) {
+      result.add(field);
+    }
+    final Class superClass = clazz.getSuperclass();
+    if (superClass != null) {
+      collectFields(superClass, result);
+    }
+    final Class[] interfaces = clazz.getInterfaces();
+    for (Class each : interfaces) {
+      collectFields(each, result);
+    }
+  }
+
+  public static void resetField(Class clazz, Class type, String name) throws NoSuchFieldException, IllegalAccessException {
+    resetField(null, findField(clazz, type, name));
+  }
+  public static void resetField(Object object, Class type, String name) throws NoSuchFieldException, IllegalAccessException {
+    resetField(object, findField(object.getClass(), type, name));
+  }
+
+  private static void resetField(@Nullable final Object object, final Field field) throws IllegalAccessException {
+    field.setAccessible(true);
+    Class<?> type = field.getType();
+    if (type.isPrimitive()) {
+      if (boolean.class.equals(type)) {
+        field.set(object, Boolean.FALSE);
+      } else if (int.class.equals(type)){
+        field.set(object, new Integer(0));
+      } else if (double.class.equals(type)) {
+        field.set(object, new Double(0));
+      } else if (float.class.equals(type)) {
+        field.set(object, new Float(0));
+      }
+    } else {
+      field.set(object, null);
+    }
+  }
+
 }

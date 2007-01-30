@@ -7,6 +7,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.ReflectionUtil;
 
 import javax.swing.FocusManager;
 import javax.swing.*;
@@ -76,21 +77,10 @@ public final class SwingCleanuper implements ApplicationComponent{
                       }
 
                       // Clear "realOppositeComponent", "realOppositeWindow"
-
                       final KeyboardFocusManager focusManager = FocusManager.getCurrentKeyboardFocusManager();
-                      if (focusManager instanceof DefaultKeyboardFocusManager) {
-                        try {
-                          final Field realOppositeComponentField = DefaultKeyboardFocusManager.class.getDeclaredField("realOppositeComponent");
-                          realOppositeComponentField.setAccessible(true);
-                          realOppositeComponentField.set(focusManager, null);
+                      resetField(focusManager, Component.class, "realOppositeComponent");
+                      resetField(focusManager, Window.class, "realOppositeWindow");
 
-                          final Field realOppositeWindowField = DefaultKeyboardFocusManager.class.getDeclaredField("realOppositeWindow");
-                          realOppositeWindowField.setAccessible(true);
-                          realOppositeWindowField.set(focusManager, null);
-                        } catch(Exception e){
-                          LOG.error(e);
-                        }
-                      }
 
                       // Memory leak on static field in BasicPopupMenuUI
 
@@ -180,6 +170,15 @@ public final class SwingCleanuper implements ApplicationComponent{
         }
       }
     );
+  }
+
+  private static void resetField(Object object, Class type, String name) {
+    try {
+      ReflectionUtil.resetField(object, type, name);
+    }
+    catch (Exception e) {
+      LOG.info(e);
+    }
   }
 
   public final void disposeComponent(){}
