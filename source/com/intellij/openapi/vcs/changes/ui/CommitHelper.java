@@ -198,13 +198,8 @@ public class CommitHelper {
         handler.checkinFailed(errors);
       }
 
-      int index = 1;
-      String failedListName = VcsBundle.message("commit.dialog.failed.commit.template", changeList.getName());
-      while(ChangeListManager.getInstance(myProject).findChangeList(failedListName) != null) {
-        index++;
-        failedListName = VcsBundle.message("commit.dialog.failed.commit.template", changeList.getName()) + " (" + index + ")";
-      }
-      moveToFailedList(changeList, commitMessage, failedChanges, failedListName, myProject);
+      moveToFailedList(changeList, commitMessage, failedChanges, 
+                       VcsBundle.message("commit.dialog.failed.commit.template", changeList.getName()), myProject);
     }
 
     if (errorsSize == 0 || warningsSize == 0) {
@@ -244,6 +239,13 @@ public class CommitHelper {
     if (failedChanges.containsAll(changeList.getChanges())) return;
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    int index = 1;
+    String failedListName = newChangelistName;
+    while(changeListManager.findChangeList(failedListName) != null) {
+      index++;
+      failedListName = newChangelistName + " (" + index + ")";
+    }
+
     final LocalChangeList failedList =
       changeListManager.addChangeList(newChangelistName, commitMessage);
     changeListManager.moveChangesTo(failedList, failedChanges.toArray(new Change[failedChanges.size()]));
