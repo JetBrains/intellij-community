@@ -124,11 +124,18 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
     onChange();
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(final Element element) throws WriteExternalException {
     for (Map.Entry<ConfigFileMetaData,Collection<ConfigFileInfo>> entry : myConfigFiles.entrySet()) {
       String id = entry.getKey().getId();
       for (ConfigFileInfo configuration : entry.getValue()) {
-        element.addContent(new Element(ELEMENT_NAME).setAttribute(ID_AATRIBUTE, id).setAttribute(URL_ATTRIBUTE, configuration.getUrl()));
+        final Element child = new Element(ELEMENT_NAME);
+        child.setAttribute(ID_AATRIBUTE, id);
+        child.setAttribute(URL_ATTRIBUTE, configuration.getUrl());
+        //for backward compatibility
+        child.setAttribute("optional", "false");
+        child.setAttribute("version", configuration.getMetaData().getDefaultVersion().getName());
+        element.addContent(child);
       }
     }
   }
