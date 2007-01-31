@@ -156,7 +156,7 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
       try{
         PsiTypeParameter typeParameter = myManager.getParserFacade().createTypeParameterFromText(text, this);
         myParsedFromRepository = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(typeParameter);
-        new DummyHolder(myManager, myParsedFromRepository, this);
+        new DummyHolder(myManager, myParsedFromRepository, getParent());
       }
       catch(IncorrectOperationException e){
         LOG.error(e);
