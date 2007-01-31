@@ -102,4 +102,12 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
     element.setAttribute(ATTRIBUTE_PROPORTIONS, result.toString());
     element.setAttribute(ATTRIBUTE_VERSION, DATA_VERSION);
   }
+
+  public List<Float> getProportions() {
+    return proportions;
+  }
+
+  public void setProportions(final List<Float> proportions) {
+    this.proportions = proportions;
+  }
 }

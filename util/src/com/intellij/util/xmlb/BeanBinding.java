@@ -94,14 +94,14 @@ class BeanBinding implements Binding {
 
 
   public void deserializeInto(final Object bean, final Element element) {
-    _deserialize(bean, element);
+    _deserializeInto(bean, element);
   }
 
   public Object deserialize(Object o, Node... nodes) {
-    return _deserialize(instantiateBean(), nodes);
+    return _deserializeInto(instantiateBean(), nodes);
   }
 
-  private Object _deserialize(final Object result, final Node... nodes) {
+  private Object _deserializeInto(final Object result, final Node... nodes) {
     assert nodes.length == 1;
     assert nodes[0] instanceof Element : "Wrong node: " + nodes;
     Element e = (Element)nodes[0];

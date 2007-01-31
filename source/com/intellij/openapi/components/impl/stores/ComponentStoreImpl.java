@@ -4,6 +4,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.util.DOMUtil;
+import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -259,8 +260,23 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
 
   private static Class getComponentStateClass(final PersistentStateComponent<Object> persistentStateComponent) {
+    final Class persistentStateComponentClass = PersistentStateComponent.class;
+    Class componentClass = persistentStateComponent.getClass();
+
+    nextSuperClass: while (true) {
+      final Class[] interfaces = ReflectionCache.getInterfaces(componentClass);
+
+      for (Class anInterface : interfaces) {
+        if (anInterface.equals(persistentStateComponentClass)) {
+          break nextSuperClass;
+        }
+      }
+
+      componentClass = componentClass.getSuperclass();
+    }
+
     final Type type =
-      ReflectionUtil.resolveVariable(PersistentStateComponent.class.getTypeParameters()[0], persistentStateComponent.getClass());
+      ReflectionUtil.resolveVariable(persistentStateComponentClass.getTypeParameters()[0], componentClass);
 
     return ReflectionUtil.getRawType(type);
   }

@@ -8,7 +8,8 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -30,7 +31,6 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -39,8 +39,8 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.event.KeyEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -50,7 +50,15 @@ import java.util.Set;
  * User: anna
  * Date: 01-Jul-2006
  */
-public class ScopeChooserConfigurable extends MasterDetailsComponent implements ProjectComponent {
+@State(
+  name = "ScopeChooserConfigurable.UI",
+  storages = {
+    @Storage(
+      id ="other",
+      file = "$WORKSPACE_FILE$"
+    )}
+)
+public class ScopeChooserConfigurable extends MasterDetailsComponent {
   private static final Icon SCOPES = IconLoader.getIcon("/ide/scopeConfigurable.png");
   private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
 
@@ -230,24 +238,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   @NonNls
   public String getHelpTopic() {
     return "project.scopes";  //todo help id
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   private String createUniqueName() {

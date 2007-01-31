@@ -5,15 +5,18 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
-import com.intellij.openapi.util.*;
-import com.intellij.peer.PeerFactory;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.profile.Profile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
@@ -22,7 +25,6 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,23 +45,28 @@ import java.util.Set;
  * User: anna
  * Date: 29-May-2006
  */
-public abstract class MasterDetailsComponent implements Configurable, JDOMExternalizable {
+public abstract class MasterDetailsComponent implements Configurable, PersistentStateComponent<MasterDetailsComponent.UIState> {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.MasterDetailsComponent");
   protected static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
+
+  public static class UIState {
+    public SplitterProportionsDataImpl proportions = new SplitterProportionsDataImpl();
+    public String lastEditedConfigurable;
+  }
+
+  private UIState myState = new UIState();
 
   protected Runnable TREE_UPDATER = new Runnable() {
     public void run() {
       MyNode node = (MyNode)myTree.getSelectionPath().getLastPathComponent();
       if (node != null) {
-        myLastEditedConfigurable = node.getDisplayName(); //survive after rename
+        myState.lastEditedConfigurable = node.getDisplayName(); //survive after rename
         myBanner.setText(node.getConfigurable().getBannerSlogan());
         ((DefaultTreeModel)myTree.getModel()).reload(node);
         fireItemsChangedExternally();
       }
     }
   };
-
-  private SplitterProportionsData mySplitterProportionsData = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
 
   protected MyNode myRoot = new MyRootNode();
   protected Tree myTree;
@@ -74,7 +81,6 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
 
   private Set<NamedConfigurable> myInitializedConfigurables = new HashSet<NamedConfigurable>();
 
-  public String myLastEditedConfigurable = null;
   private boolean myHasDeletedItems;
   protected AutoScrollToSourceHandler myAutoScrollHandler;
 
@@ -205,7 +211,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     myTree.requestFocus();
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        if (myLastEditedConfigurable == null) {
+        if (myState.lastEditedConfigurable == null) {
           TreeUtil.selectFirstNode(myTree);
           return;
         }
@@ -215,7 +221,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
           final Object userObject = node.getUserObject();
           if (userObject instanceof Configurable) {
             final Configurable configurable = (Configurable)userObject;
-            if (Comparing.strEqual(configurable.getDisplayName(), myLastEditedConfigurable)) {
+            if (Comparing.strEqual(configurable.getDisplayName(), myState.lastEditedConfigurable)) {
               TreeUtil.selectInTree(node, true, myTree);
               return;
             }
@@ -228,22 +234,21 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
     final Dimension preferredSize = new Dimension(myTree.getPreferredSize().width + 20, myScrollPane.getPreferredSize().height);
     myScrollPane.setPreferredSize(preferredSize);
     myScrollPane.setMaximumSize(new Dimension(150, -1));
-    mySplitterProportionsData.restoreSplitterProportions(myWholePanel);
+    myState.proportions.restoreSplitterProportions(myWholePanel);
   }
 
 
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-    mySplitterProportionsData.readExternal(element);
+  public UIState getState() {
+    return myState;
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-    mySplitterProportionsData.writeExternal(element);
+  public void loadState(final UIState object) {
+    myState.lastEditedConfigurable = object.lastEditedConfigurable;
+    myState.proportions = object.proportions;
   }
 
   public void disposeUIResources() {
-    mySplitterProportionsData.saveSplitterProportions(myWholePanel);
+    myState.proportions.saveSplitterProportions(myWholePanel);
     myAutoScrollHandler.cancelAllRequests();
     myOptionsPanel.removeAll();
     myInitializedConfigurables.clear();
@@ -432,7 +437,7 @@ public abstract class MasterDetailsComponent implements Configurable, JDOMExtern
   }
 
   protected void updateSelection(@NotNull NamedConfigurable configurable) {
-    myLastEditedConfigurable = configurable.getDisplayName();
+    myState.lastEditedConfigurable = configurable.getDisplayName();
     myBanner.setText(configurable.getBannerSlogan());
     myBanner.repaint();
     myOptionsPanel.removeAll();

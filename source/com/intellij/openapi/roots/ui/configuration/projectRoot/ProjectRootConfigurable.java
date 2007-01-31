@@ -15,7 +15,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -81,7 +82,15 @@ import java.util.List;
  * User: anna
  * Date: 02-Jun-2006
  */
-public class ProjectRootConfigurable extends MasterDetailsComponent implements ProjectComponent, SearchableConfigurable {
+@State(
+  name = "ProjectRootConfigurable.UI",
+  storages = {
+    @Storage(
+      id ="other",
+      file = "$WORKSPACE_FILE$"
+    )}
+)
+public class ProjectRootConfigurable extends MasterDetailsComponent implements SearchableConfigurable {
   private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
   private static final Icon ICON = IconLoader.getIcon("/modules/modules.png");
   private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
@@ -726,12 +735,6 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     return "root.settings";
   }
 
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
 
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
@@ -760,18 +763,6 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements P
     result.add(actionsManager.createExpandAllAction(expander, myTree));
     result.add(actionsManager.createCollapseAllAction(expander, myTree));
     return result;
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootMasterDetailsConfigurable";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public static ProjectRootConfigurable getInstance(final Project project) {

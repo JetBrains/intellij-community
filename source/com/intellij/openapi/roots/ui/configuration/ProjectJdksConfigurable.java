@@ -13,6 +13,8 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -41,6 +43,14 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
+@State(
+  name = "ProjectJDKsConfigurable.UI",
+  storages = {
+    @Storage(
+      id ="other",
+      file = "$APP_CONFIG$/other.xml"
+    )}
+)
 public class ProjectJdksConfigurable extends MasterDetailsComponent {
 
   private ProjectJdksModel myProjectJdksModel;

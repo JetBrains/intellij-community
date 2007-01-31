@@ -1,8 +1,10 @@
 package com.intellij.util.xmlb;
 
-import com.intellij.util.DOMUtil;
 import org.jetbrains.annotations.NonNls;
 import org.w3c.dom.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 //todo: use TagBinding
 class OptionTagBinding implements Binding {
@@ -47,9 +49,17 @@ class OptionTagBinding implements Binding {
       accessor.write(o, value);
     }
     else {
-      final Node[] children = DOMUtil.toArray(element.getChildNodes());
-      if (children.length > 0) {
-        Object value = myBinding.deserialize(accessor.read(o), children);
+      NodeList nodeList = element.getChildNodes();
+      List<Node> children = new ArrayList<Node>();
+
+      for (int i = 0; i < nodeList.getLength(); i++) {
+        final Node child = nodeList.item(i);
+        if (XmlSerializerImpl.isIgnoredNode(child)) continue;
+        children.add(child);
+      }
+
+      if (children.size() > 0) {
+        Object value = myBinding.deserialize(accessor.read(o), children.toArray(new Node[children.size()]));
         accessor.write(o, value);
       }
       else {

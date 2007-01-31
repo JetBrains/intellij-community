@@ -129,6 +129,7 @@ abstract class AbstractCollectionBinding implements Binding {
       NodeList childNodes = e.getChildNodes();
       for (int i = 0; i < childNodes.getLength(); i++) {
         final Node n = childNodes.item(i);
+        if (XmlSerializerImpl.isIgnoredNode(n)) continue;
         final Binding elementBinding = getElementBinding(n);
         Object v = elementBinding.deserialize(o, n);
         //noinspection unchecked
