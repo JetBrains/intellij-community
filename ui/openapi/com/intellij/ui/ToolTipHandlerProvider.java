@@ -16,13 +16,13 @@
 
 package com.intellij.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 
 import javax.swing.*;
 
 public abstract class ToolTipHandlerProvider {
   public static ToolTipHandlerProvider getToolTipHandlerProvider() {
-    return ApplicationManager.getApplication().getComponent(ToolTipHandlerProvider.class);
+    return ServiceManager.getService(ToolTipHandlerProvider.class);
   }
 
   public abstract void install(JComponent component);

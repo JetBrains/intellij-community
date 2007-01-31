@@ -4,19 +4,17 @@ import com.intellij.ide.*;
 import com.intellij.ide.actions.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.AutoScrollToSourceHandler;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
  * @author max
  */
-public class CommonActionsManagerImpl extends CommonActionsManager implements ApplicationComponent {
+public class CommonActionsManagerImpl extends CommonActionsManager {
   public AnAction createPrevOccurenceAction(OccurenceNavigator navigator) {
     return new PreviousOccurenceToolbarAction(navigator);
   }
@@ -66,13 +64,6 @@ public class CommonActionsManagerImpl extends CommonActionsManager implements Ap
   public AnAction createExportToTextFileAction(ExporterToTextFile exporter) {
     return new ExportToTextFileToolbarAction(exporter);
   }
-
-  @NotNull
-  public String getComponentName() {
-    return "CommonActionsManager";
-  }
-  public void initComponent() {}
-  public void disposeComponent() {}
 
   private static final class HelpAction extends AnAction {
     private String myHelpId;

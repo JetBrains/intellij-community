@@ -6,9 +6,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -24,7 +23,6 @@ import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.UIHelper;
 import com.intellij.util.EventDispatcher;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,12 +30,12 @@ import java.awt.datatransfer.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.ExecutionException;
 
-public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwner, ApplicationComponent {
+public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.CopyPasteManagerEx");
 
   private ArrayList<Transferable> myDatas;
@@ -53,20 +51,6 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   private boolean myIsWarningShown = false;
 
   public CopyPasteManagerEx() {
-    myDatas = new ArrayList<Transferable>();
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
-
-  public void projectClosed() {
-    myDatas = new ArrayList<Transferable>();
-    clear();
-  }
-
-  public void projectOpened() {
     myDatas = new ArrayList<Transferable>();
   }
 
@@ -440,11 +424,6 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
   public void removeContentChangedListener(ContentChangedListener listener) {
     myDispatcher.removeListener(listener);
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "CopyPasteManager";
   }
 
   public void setContents(Transferable content) {

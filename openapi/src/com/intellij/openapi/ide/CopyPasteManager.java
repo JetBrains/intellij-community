@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.ide;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
@@ -26,7 +26,7 @@ public abstract class CopyPasteManager {
   public static final Color CUT_COLOR = new Color(160, 160, 160);
 
   public static CopyPasteManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(CopyPasteManager.class);
+    return ServiceManager.getService(CopyPasteManager.class);
   }
 
   public abstract void addContentChangedListener(ContentChangedListener listener);

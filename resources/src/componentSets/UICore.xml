@@ -13,14 +13,6 @@
       <implementation-class>com.intellij.openapi.actionSystem.impl.ActionManagerImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.ide.actions.CommonActionsFactory</interface-class>
-      <implementation-class>com.intellij.ide.actions.CommonActionsFactoryImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.ide.CopyPasteManager</interface-class>
-      <implementation-class>com.intellij.ide.CopyPasteManagerEx</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.keymap.KeymapManager</interface-class>
       <implementation-class>com.intellij.openapi.keymap.impl.KeymapManagerImpl</implementation-class>
     </component>
@@ -56,22 +48,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.ide.MacOSApplicationProvider</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.ide.CommonActionsManager</interface-class>
-      <implementation-class>com.intellij.ide.impl.CommonActionsManagerImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.ui.popup.JBPopupFactory</interface-class>
-      <implementation-class>com.intellij.ui.popup.PopupFactoryImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.ui.ToolTipHandlerProvider</interface-class>
-      <implementation-class>com.intellij.ui.ToolTipHandlerProviderImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.ide.dnd.DnDManager</interface-class>
-      <implementation-class>com.intellij.ide.dnd.DnDManagerImpl</implementation-class>
     </component>
   </application-components>
 </components>

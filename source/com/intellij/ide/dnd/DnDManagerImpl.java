@@ -5,7 +5,6 @@
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -22,7 +21,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 
-public class DnDManagerImpl extends DnDManager implements ApplicationComponent, DnDEvent.DropTargetHighlightingType {
+public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHighlightingType {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.dnd.DnDManager");
 
   static final @NonNls String SOURCE_KEY = "DnD Source";
@@ -61,19 +60,7 @@ public class DnDManagerImpl extends DnDManager implements ApplicationComponent, 
 
   public DnDManagerImpl(final Application app) {
     myApp = app;
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "DnDManager";
-  }
-
-  public void initComponent() {
     myTooltipTimer.start();
-  }
-
-  public void disposeComponent() {
-    myTooltipTimer.stop();
   }
 
   public void registerSource(@NotNull final AdvancedDnDSource source) {

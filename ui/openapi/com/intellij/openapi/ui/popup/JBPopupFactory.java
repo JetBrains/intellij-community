@@ -2,7 +2,7 @@ package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +23,7 @@ public abstract class JBPopupFactory {
    * @return the popup factory instance.
    */
   public static JBPopupFactory getInstance() {
-    return ApplicationManager.getApplication().getComponent(JBPopupFactory.class);
+    return ServiceManager.getService(JBPopupFactory.class);
   }
 
   public PopupChooserBuilder createListPopupBuilder(JList list) {

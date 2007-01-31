@@ -16,7 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
@@ -30,7 +30,7 @@ import javax.swing.*;
  */
 public abstract class CommonActionsManager {
   public static CommonActionsManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(CommonActionsManager.class);
+    return ServiceManager.getService(CommonActionsManager.class);
   }
 
   public abstract AnAction createPrevOccurenceAction(OccurenceNavigator navigator);

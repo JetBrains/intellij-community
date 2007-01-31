@@ -4,13 +4,9 @@
 
 package com.intellij.ui;
 
-import com.intellij.openapi.components.ApplicationComponent;
-
 import javax.swing.*;
 
-import org.jetbrains.annotations.NonNls;
-
-public class ToolTipHandlerProviderImpl extends ToolTipHandlerProvider implements ApplicationComponent {
+public class ToolTipHandlerProviderImpl extends ToolTipHandlerProvider {
   public void install(JComponent component) {
     if (component instanceof JTree) {
       TreeToolTipHandler.install((JTree)component);
@@ -27,16 +23,4 @@ public class ToolTipHandlerProviderImpl extends ToolTipHandlerProvider implement
   }
 
 
-  @NonNls
-  public String getComponentName() {
-    return "ToolTipHandlerProvider";
-  }
-
-  public void initComponent() {
-
-  }
-
-  public void disposeComponent() {
-
-  }
 }
