@@ -119,7 +119,7 @@ public class PaletteComponentList extends JList {
     setLayoutOrientation(HORIZONTAL_WRAP);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    final DnDManager dndManager = DnDManager.getInstance(project);
+    final DnDManager dndManager = DnDManager.getInstance();
     dndManager.registerSource(new MyDnDSource(), this);
     dndManager.registerTarget(new MyDnDTarget(), this);
 

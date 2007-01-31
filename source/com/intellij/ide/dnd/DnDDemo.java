@@ -22,7 +22,7 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
     JPanel panel = new JPanel(new BorderLayout());
     final JTree source = new JTree();
     panel.add(source, BorderLayout.WEST);
-    final DnDManager dndManager = new DnDManagerImpl();
+    final DnDManager dndManager = new DnDManagerImpl(null);
     dndManager.registerSource(new DnDSource() {
       public boolean canStartDragging(DnDAction action, Point dragOrigin) {
         return true;

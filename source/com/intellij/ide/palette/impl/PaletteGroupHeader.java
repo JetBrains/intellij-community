@@ -61,7 +61,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
       setPreferredSize(pref);
     }
 
-    DnDManager.getInstance(paletteWindow.getProject()).registerTarget(new DnDTarget() {
+    DnDManager.getInstance().registerTarget(new DnDTarget() {
       public boolean update(DnDEvent aEvent) {
         setBorderPainted(true);
         aEvent.setDropPossible(aEvent.getAttachedObject() instanceof PaletteItem, null);

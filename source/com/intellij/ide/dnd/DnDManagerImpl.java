@@ -4,8 +4,8 @@
  */
 package com.intellij.ide.dnd;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -22,7 +22,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 
-public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDEvent.DropTargetHighlightingType {
+public class DnDManagerImpl extends DnDManager implements ApplicationComponent, DnDEvent.DropTargetHighlightingType {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.dnd.DnDManager");
 
   static final @NonNls String SOURCE_KEY = "DnD Source";
@@ -57,15 +57,15 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
   private Rectangle myLastHighlightedRec;
   private int myLastProcessedAction;
 
-  public void projectOpened() {
-  }
+  private Application myApp;
 
-  public void projectClosed() {
+  public DnDManagerImpl(final Application app) {
+    myApp = app;
   }
 
   @NotNull
   public String getComponentName() {
-    return "FabriqueDnDManager";
+    return "DnDManager";
   }
 
   public void initComponent() {
@@ -77,7 +77,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
   }
 
   public void registerSource(@NotNull final AdvancedDnDSource source) {
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!getApplication().isHeadlessEnvironment()) {
       final JComponent c = source.getComponent();
       registerSource(source, c);
 
@@ -87,7 +87,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
   }
 
   public void registerSource(DnDSource source, JComponent component) {
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!getApplication().isHeadlessEnvironment()) {
       component.putClientProperty(SOURCE_KEY, source);
       final DragSource defaultDragSource = DragSource.getDefaultDragSource();
       defaultDragSource.createDefaultDragGestureRecognizer(component, DnDConstants.ACTION_COPY_OR_MOVE, myDragGestureListener);
@@ -112,7 +112,7 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
   }
 
   public void registerTarget(DnDTarget target, JComponent component) {
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!getApplication().isHeadlessEnvironment()) {
       component.putClientProperty(TARGET_KEY, target);
       new DropTarget(component, DnDConstants.ACTION_COPY_OR_MOVE, myDropTargetListener);
     }
@@ -612,6 +612,10 @@ public class DnDManagerImpl extends DnDManager implements ProjectComponent, DnDE
     myLastProcessedTarget.cleanUpOnLeave();
     hideCurrentHighlighter();
     myHightlighterShowRequest = null;
+  }
+
+  private Application getApplication() {
+    return myApp;
   }
 
 }

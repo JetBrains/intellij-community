@@ -17,12 +17,13 @@
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
 
 import javax.swing.*;
 
 public abstract class DnDManager {
-  public static DnDManager getInstance(Project project) {
-    return project.getComponent(DnDManager.class);
+  public static DnDManager getInstance() {
+    return ApplicationManager.getApplication().getComponent(DnDManager.class);
   }
 
   public abstract void registerSource(DnDSource source, JComponent component);

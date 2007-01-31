@@ -117,7 +117,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   public void installDndSupport(ChangeListOwner owner) {
     myDragOwner = owner;
     myDropTarget = new DropTarget();
-    myDndManager = DnDManager.getInstance(myProject);
+    myDndManager = DnDManager.getInstance();
 
     myDndManager.registerSource(this);
     myDndManager.registerTarget(myDropTarget, this);

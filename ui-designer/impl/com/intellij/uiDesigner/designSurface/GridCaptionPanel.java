@@ -66,8 +66,8 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     addKeyListener(new MyKeyListener());
     setFocusable(true);
 
-    DnDManager.getInstance(editor.getProject()).registerSource(new MyDnDSource(), this);
-    DnDManager.getInstance(editor.getProject()).registerTarget(new MyDnDTarget(), this);
+    DnDManager.getInstance().registerSource(new MyDnDSource(), this);
+    DnDManager.getInstance().registerTarget(new MyDnDTarget(), this);
 
     addFocusListener(new FocusAdapter() {
       @Override public void focusGained(FocusEvent e) {
