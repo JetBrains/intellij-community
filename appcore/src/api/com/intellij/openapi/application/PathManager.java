@@ -68,23 +68,29 @@ public class PathManager {
 
     if (System.getProperty(PROPERTY_HOME_PATH) != null) {
       ourHomePath = getAbsolutePath(System.getProperty(PROPERTY_HOME_PATH));
-      return ourHomePath;
     }
+    else {
+      final Class aClass = PathManager.class;
 
-    final Class aClass = PathManager.class;
+      String rootPath = getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
+      if (rootPath != null) {
+        File root = new File(rootPath).getAbsoluteFile();
 
-    String rootPath = getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
-    if (rootPath != null) {
-      File root = new File(rootPath).getAbsoluteFile();
+        do {
+          final String parent = root.getParent();
+          assert parent != null : "No parent found for " + root + "; " + BIN_FOLDER + " folder with " + IDEA_PROPERTIES + " file not found";
+          root = new File(parent).getAbsoluteFile(); // one step back to get folder
+        }
+        while (root != null && !isIdeaHome(root));
 
-      do {
-        final String parent = root.getParent();
-        assert parent != null : "No parent found for " + root + "; " + BIN_FOLDER + " folder with " + IDEA_PROPERTIES + " file not found";
-        root = new File(parent).getAbsoluteFile(); // one step back to get folder
+        ourHomePath = root != null ? root.getAbsolutePath() : null;
       }
-      while (root != null && !isIdeaHome(root));
-
-      ourHomePath = root != null? root.getAbsolutePath() : null;
+    }
+    try {
+      ourHomePath = ourHomePath == null ? null : new File(ourHomePath).getCanonicalPath();
+    }
+    catch (IOException e) {
+      // ignore
     }
 
     return ourHomePath;

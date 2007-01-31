@@ -68,7 +68,7 @@ public class FileUtil {
 
     if (len == 0) return null;
 
-    StringBuffer relativePath = new StringBuffer();
+    StringBuilder relativePath = new StringBuilder();
     for (int i=len; i < basePath.length(); i++) {
       if (basePath.charAt(i) == File.separatorChar) {
         relativePath.append("..");
@@ -268,7 +268,7 @@ public class FileUtil {
         tempFiles.add(tempFile);
       }
     }
-    if (tempFiles.size() != 0) {
+    if (!tempFiles.isEmpty()) {
       startDeletionThread(tempFiles.toArray(new File[tempFiles.size()]));
     }
   }
