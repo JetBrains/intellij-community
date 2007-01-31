@@ -201,7 +201,7 @@
       <option name="DUPLICATE_FROM_SERVER">
         <value>
           <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="cccccc"/>
+          <option name="BACKGROUND" value="f5f7f0"/>
           <option name="EFFECT_COLOR"/>
           <option name="EFFECT_TYPE"/>
           <option name="ERROR_STRIPE_COLOR"/>
