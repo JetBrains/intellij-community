@@ -43,6 +43,7 @@ public abstract class PsiDocumentManager {
    * @param document the document for which the PSI file is requested.
    * @return the PSI file instance.
    */
+  @Nullable
   public abstract PsiFile getPsiFile(@NotNull Document document);
 
   /**

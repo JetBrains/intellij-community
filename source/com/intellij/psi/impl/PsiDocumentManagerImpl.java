@@ -87,6 +87,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(this);
   }
 
+  @Nullable
   public PsiFile getPsiFile(@NotNull Document document) {
     final PsiFile userData = document.getUserData(HARD_REF_TO_PSI);
     if(userData != null) return userData;
