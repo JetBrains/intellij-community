@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -11,7 +12,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
@@ -24,9 +24,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.concurrent.Future;
 
 /**
  * Created by IntelliJ IDEA.
@@ -393,7 +393,7 @@ public class JavaDocExternalFilter {
             return;
           }
 
-          data.append(read);
+          appendLine(data, read);
 
           if (isClassDoc) {
             boolean skip = false;
@@ -403,7 +403,9 @@ public class JavaDocExternalFilter {
                 data.append(H2);
                 skip = true;
               }
-              else if (!skip) data.append(read); //correctRefs(root, read));
+              else if (!skip) {
+                appendLine(data, read);
+              }
             }
 
             data.append(DL);
@@ -411,11 +413,11 @@ public class JavaDocExternalFilter {
             StringBuffer classDetails = new StringBuffer();
 
             while (((read = buf.readLine()) != null) && !read.toUpperCase().equals(HR)) {
-              classDetails.append(read); //correctRefs(root, read));
+              appendLine(classDetails, read);
             }
 
             while (((read = buf.readLine()) != null) && !read.toUpperCase().equals(P)) {
-              data.append(read.replaceAll(DT, DT + BR)); //correctRefs(root, read));
+              appendLine(data, read.replaceAll(DT, DT + BR));
             }
 
             data.append(classDetails);
@@ -424,7 +426,7 @@ public class JavaDocExternalFilter {
 
           while (((read = buf.readLine()) != null) && read.indexOf(endSection) == -1) {
             if (read.toUpperCase().indexOf(HR) == -1) {
-              data.append(read); //correctRefs(root, read));
+              appendLine(data, read);
             }
           }
 
@@ -448,6 +450,11 @@ public class JavaDocExternalFilter {
       finally {
         ourFree = true;
       }
+    }
+
+    private static void appendLine(final StringBuffer buffer, final String read) {
+      buffer.append(read);
+      buffer.append("\n");
     }
 
     public Exception getException() {
