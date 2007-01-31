@@ -141,14 +141,9 @@ public class DomElementsHighlightingUtil {
     final ASTNode node = tag.getNode();
     assert node != null;
     final ASTNode startNode = XmlChildRole.START_TAG_NAME_FINDER.findChild(node);
-    final ASTNode endNode = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(node);
 
     final int startOffset = tag.getTextRange().getStartOffset();
     descritors.add(creator.fun(Pair.create(startNode.getTextRange().shiftRight(-startOffset), (PsiElement)tag)));
-
-    if (endNode != null && !startNode.equals(endNode)) {
-      descritors.add(creator.fun(Pair.create(endNode.getTextRange().shiftRight(-startOffset), (PsiElement)tag)));
-    }
   }
 
   @Nullable
