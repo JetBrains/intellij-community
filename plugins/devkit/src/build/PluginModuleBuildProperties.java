@@ -52,7 +52,7 @@ import java.io.File;
 public class PluginModuleBuildProperties extends ModuleBuildProperties implements JDOMExternalizable {
   private Module myModule;
   private ConfigFileContainer myPluginXmlContainer;
-  private VirtualFilePointer myPluginXMLPointer;
+  private VirtualFilePointer myPluginXmlPointer;
   private VirtualFilePointer myManifestFilePointer;
   private boolean myUseUserManifest = false;
   @NonNls private static final String URL_ATTR = "url";
@@ -93,10 +93,6 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
 
   public boolean isBuildOnFrameDeactivation() {
     return false;
-  }
-
-  public boolean isSyncExplodedDir() {
-    return true;
   }
 
   public boolean isBuildExternalDependencies() {
@@ -140,16 +136,16 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   public void readExternal(Element element) throws InvalidDataException {
     String url = element.getAttributeValue(URL_ATTR);
     if (url != null) {
-      setPluginXMLUrl(VfsUtil.urlToPath(url));
+      setPluginXmlUrl(url);
     }
     url = element.getAttributeValue(MANIFEST_ATTR);
     if (url != null) {
-      setManifestUrl(VfsUtil.urlToPath(url));
+      setManifestPath(VfsUtil.urlToPath(url));
     }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    element.setAttribute(URL_ATTR, getPluginXMLPointer().getUrl());
+    element.setAttribute(URL_ATTR, getPluginXmlPointer().getUrl());
     if (myManifestFilePointer != null){
       element.setAttribute(MANIFEST_ATTR, myManifestFilePointer.getUrl());
     }
@@ -158,7 +154,7 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   public ConfigFile getPluginXML() {
     final ConfigFile descriptor = myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
     if (descriptor == null) {
-      return createDescriptor(getPluginXMLPointer().getUrl());
+      return createDescriptor(getPluginXmlPointer().getUrl());
     }
     return descriptor;
   }
@@ -170,46 +166,49 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
     return myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
   }
 
-  public VirtualFilePointer getPluginXMLPointer() {
-    if (myPluginXMLPointer == null) {
+  public VirtualFilePointer getPluginXmlPointer() {
+    if (myPluginXmlPointer == null) {
       final String defaultPluginXMLLocation = new File(myModule.getModuleFilePath()).getParent() + File.separator + META_INF + File.separator + PLUGIN_XML;
-      setPluginXMLUrl(defaultPluginXMLLocation);
+      setPluginXmlPath(defaultPluginXMLLocation);
     }
-    return myPluginXMLPointer;
+    return myPluginXmlPointer;
   }
 
   public String getPluginXmlPath() {
-    VirtualFile file = getPluginXMLPointer().getFile();
+    VirtualFile file = getPluginXmlPointer().getFile();
     if (file == null){ //e.g. file deleted
-      myPluginXMLPointer = null;
-      file = getPluginXMLPointer().getFile(); //to suggest default location
+      myPluginXmlPointer = null;
+      file = getPluginXmlPointer().getFile(); //to suggest default location
     }
     assert file != null;
     return FileUtil.toSystemDependentName(file.getPath());
   }
 
-  public void setPluginXMLUrl(final String pluginXMLUrl) {
-    final String url = VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(pluginXMLUrl));
+  public void setPluginXmlPath(final String pluginXmlPath) {
+    setPluginXmlUrl(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(pluginXmlPath)));
+  }
+
+  public void setPluginXmlUrl(final String url) {
     myPluginXmlContainer.getConfiguration().removeConfigFiles(PluginDescriptorConstants.META_DATA);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        createDescriptor(pluginXMLUrl);
-        myPluginXMLPointer = VirtualFilePointerManager.getInstance().create(url, null);
+        createDescriptor(url);
+        myPluginXmlPointer = VirtualFilePointerManager.getInstance().create(url, null);
       }
     });
   }
 
-  public void setManifestUrl(final String manifestUrl) {
-    if (manifestUrl == null || manifestUrl.length() == 0){
+  public void setManifestPath(final String manifestPath) {
+    if (manifestPath == null || manifestPath.length() == 0){
       myManifestFilePointer = null;
     } else {
 
-      final VirtualFile manifest = LocalFileSystem.getInstance().findFileByPath(manifestUrl);
+      final VirtualFile manifest = LocalFileSystem.getInstance().findFileByPath(manifestPath);
       if (manifest == null){
-        Messages.showErrorDialog(myModule.getProject(), DevKitBundle.message("error.file.not.found.message", manifestUrl), DevKitBundle.message("error.file.not.found"));
+        Messages.showErrorDialog(myModule.getProject(), DevKitBundle.message("error.file.not.found.message", manifestPath), DevKitBundle.message("error.file.not.found"));
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            myManifestFilePointer = VirtualFilePointerManager.getInstance().create(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(manifestUrl)), null);
+            myManifestFilePointer = VirtualFilePointerManager.getInstance().create(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(manifestPath)), null);
           }
         });
       } else {

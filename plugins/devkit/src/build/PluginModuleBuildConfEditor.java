@@ -121,8 +121,8 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
                                                     DevKitBundle.message("deployment.cleanup", META_INF),
                                                     null);
     }
-    myBuildProperties.setPluginXMLUrl(newPluginPath);
-    myBuildProperties.setManifestUrl(myManifest.getText());
+    myBuildProperties.setPluginXmlPath(newPluginPath);
+    myBuildProperties.setManifestPath(myManifest.getText());
     myBuildProperties.setUseUserManifest(myUseUserManifest.isSelected());
   }
 

@@ -116,7 +116,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
 
     final ModuleBuildProperties buildProperties = module.getComponent(ModuleBuildProperties.class);
     if (!(buildProperties instanceof PluginModuleBuildProperties)) return null;
-    final VirtualFilePointer pluginXMLPointer = ((PluginModuleBuildProperties)buildProperties).getPluginXMLPointer();
+    final VirtualFilePointer pluginXMLPointer = ((PluginModuleBuildProperties)buildProperties).getPluginXmlPointer();
     final VirtualFile vFile = pluginXMLPointer.getFile();
     if (vFile == null) return null;
     final PsiFile file = PsiManager.getInstance(module.getProject()).findFile(vFile);
