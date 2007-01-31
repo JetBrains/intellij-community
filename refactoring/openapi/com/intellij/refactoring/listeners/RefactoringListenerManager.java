@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.listeners;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -56,6 +57,6 @@ public abstract class RefactoringListenerManager {
   public abstract void removeMoveMembersListener(MoveMemberListener moveMembersListener);
 
   public static RefactoringListenerManager getInstance(Project project) {
-    return project.getComponent(RefactoringListenerManager.class);
+    return ServiceManager.getService(project, RefactoringListenerManager.class);
   }
 }

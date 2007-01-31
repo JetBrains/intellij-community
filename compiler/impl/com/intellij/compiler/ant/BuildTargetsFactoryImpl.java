@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 public class BuildTargetsFactoryImpl extends BuildTargetsFactory {
   private ModuleChunk myChunk;
@@ -116,17 +115,5 @@ public class BuildTargetsFactoryImpl extends BuildTargetsFactory {
   //for test
   public GenerationOptions getDefaultOptions(Project project) {
     return new GenerationOptionsImpl(project, true, false, false, true, ArrayUtil.EMPTY_STRING_ARRAY);
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "BuildTargetsFactoryImpl";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

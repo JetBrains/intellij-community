@@ -9,18 +9,16 @@
 package com.intellij.compiler.ant;
 
 import com.intellij.compiler.ant.taskdefs.Target;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.make.ModuleBuildProperties;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 
-public abstract class BuildTargetsFactory implements ApplicationComponent {
-
+public abstract class BuildTargetsFactory {
   public static BuildTargetsFactory getInstance() {
-    return ApplicationManager.getApplication().getComponent(BuildTargetsFactory.class);
+    return ServiceManager.getService(BuildTargetsFactory.class);
   }
 
   public abstract void init(ModuleChunk chunk,

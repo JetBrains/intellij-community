@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.deployment;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.compiler.make.ModuleBuildProperties;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.OrderEntry;
@@ -43,7 +43,7 @@ import java.util.jar.Manifest;
 
 public abstract class DeploymentUtil {
   public static DeploymentUtil getInstance() {
-    return ApplicationManager.getApplication().getComponent(DeploymentUtil.class);
+    return ServiceManager.getService(DeploymentUtil.class);
   }
 
   public abstract boolean addModuleOutputContents(@NotNull CompileContext context,

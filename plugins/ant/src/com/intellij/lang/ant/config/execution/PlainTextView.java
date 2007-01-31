@@ -26,7 +26,7 @@ public final class PlainTextView implements AntOutputView {
 
   public PlainTextView(Project project) {
     myProject = project;
-    TextConsoleBuilder builder = TextConsoleBuidlerFactory.getInstance().createBuilder(project);
+    TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     builder.addFilter(new AntMessageFilter());
     builder.addFilter(new RegexpFilter(project, "$FILE_PATH$\\s+\\($LINE$\\:$COLUMN$\\)"));
     builder.addFilter(new JUnitFilter());

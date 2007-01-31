@@ -22,8 +22,8 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
 
 /**
  * @author dyoma
@@ -32,6 +32,6 @@ public abstract class TextConsoleBuilderFactory {
   public abstract TextConsoleBuilder createBuilder(Project project);
 
   public static TextConsoleBuilderFactory getInstance() {
-    return ApplicationManager.getApplication().getComponent(TextConsoleBuilderFactory.class);
+    return ServiceManager.getService(TextConsoleBuilderFactory.class);
   }
 }

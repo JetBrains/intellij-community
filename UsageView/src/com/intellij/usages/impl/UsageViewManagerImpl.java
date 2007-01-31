@@ -17,7 +17,6 @@ package com.intellij.usages.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -44,7 +43,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author max
  */
-public class UsageViewManagerImpl extends UsageViewManager implements ProjectComponent {
+public class UsageViewManagerImpl extends UsageViewManager {
   private Project myProject;
   private static final Key<UsageView> USAGE_VIEW_KEY = Key.create("USAGE_VIEW");
   private volatile boolean mySearchHasBeenCancelled;
@@ -166,19 +165,6 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
     });
   }
 
-
-  @NotNull
-  public String getComponentName() {
-    return "NewUsageViewManager";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() { }
-
-  public void projectOpened() { }
-
-  public void projectClosed() { }
 
   public synchronized void setCurrentSearchCancelled(boolean flag) {
     mySearchHasBeenCancelled = flag;

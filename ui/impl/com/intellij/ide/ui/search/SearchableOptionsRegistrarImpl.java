@@ -7,7 +7,6 @@ package com.intellij.ide.ui.search;
 import com.intellij.application.options.CodeStyleSchemesConfigurable;
 import com.intellij.application.options.ProjectCodeStyleConfigurable;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -34,8 +33,7 @@ import java.util.*;
  * User: anna
  * Date: 07-Feb-2006
  */
-public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar implements ApplicationComponent {
-
+public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   private Map<String, Set<OptionDescription>> myStorage = new THashMap<String, Set<OptionDescription>>(1500, 0.9f);
   private Map<String, String> myId2Name = new THashMap<String, String>(20, 0.9f);
 
@@ -299,18 +297,6 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar i
 
   public void addOption(SearchableConfigurable configurable, String option, String path, final String hit) {
     putOptionWithHelpId(option, configurable.getId(), configurable.getDisplayName(), hit, path);
-  }
-
-  @NotNull
-  @NonNls
-  public String getComponentName() {
-    return "SearchableOptionsRegistrar";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public Set<String> getProcessedWordsWithoutStemming(@NotNull String text) {

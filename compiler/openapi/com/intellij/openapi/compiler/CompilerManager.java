@@ -15,10 +15,11 @@
  */
 package com.intellij.openapi.compiler;
 
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.FileType;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -33,7 +34,7 @@ public abstract class CompilerManager {
    * @return the manager instance.
    */
   public static CompilerManager getInstance(Project project) {
-    return project.getComponent(CompilerManager.class);
+    return ServiceManager.getService(project, CompilerManager.class);
   }
 
   /**

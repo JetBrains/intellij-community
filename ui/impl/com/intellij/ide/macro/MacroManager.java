@@ -6,8 +6,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -16,17 +15,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ConvertingIterator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.Iterator;
 
-public final class MacroManager implements ApplicationComponent {
+public final class MacroManager {
   private final HashMap<String, Macro> myMacrosMap = new HashMap<String, Macro>();
 
   public static MacroManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(MacroManager.class);
+    return ServiceManager.getService(MacroManager.class);
   }
 
   private MacroManager() {
@@ -74,11 +72,6 @@ public final class MacroManager implements ApplicationComponent {
       registerMacro(new FileRelativePathMacro2());
     }
   }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
 
   private void registerMacro(Macro macro) {
     myMacrosMap.put(macro.getName(), macro);
@@ -147,11 +140,6 @@ public final class MacroManager implements ApplicationComponent {
                               return macro;
                             }
                           }));
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "MacroManager";
   }
 
 }

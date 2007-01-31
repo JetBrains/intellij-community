@@ -9,10 +9,6 @@
       <implementation-class>com.intellij.tools.ToolManager</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.ide.macro.MacroManager</interface-class>
-      <implementation-class>com.intellij.ide.macro.MacroManager</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.featureStatistics.ProductivityFeaturesRegistry</interface-class>
       <implementation-class>com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl</implementation-class>
     </component>
@@ -22,13 +18,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.ide.TipOfTheDayManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.updateSettings.impl.UpdateChecker</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.diff.DiffManager</interface-class>
-      <implementation-class>com.intellij.openapi.diff.impl.external.DiffManagerImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.openapi.projectRoots.JavaSdk</interface-class>
@@ -46,10 +35,6 @@
       <implementation-class>com.intellij.ide.ui.customization.CustomizableActionsSchemas</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.util.projectImport.JBuilderLibraryImportHelper</interface-class>
-      <implementation-class>com.intellij.openapi.project.impl.importProject.jbuilder.JBuilderLibraryImporter</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.ide.util.projectWizard.JBuilderApplicationProjectImportHelper</implementation-class>
     </component>
     <component>
@@ -57,10 +42,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.ide.util.projectWizard.j2ee.JBuilderWebProjectImportHelper</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.ide.ui.search.SearchableOptionsRegistrar</interface-class>
-      <implementation-class>com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl</implementation-class>
     </component>
   </application-components>
 
@@ -78,26 +59,8 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <interface-class>com.intellij.usages.UsageViewManager</interface-class>
-      <implementation-class>com.intellij.usages.impl.UsageViewManagerImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.find.findInProject.FindInProjectManager</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.find.replaceInProject.ReplaceInProjectManager</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <interface-class>com.intellij.javadoc.JavadocGenerationManager</interface-class>
       <implementation-class>com.intellij.javadoc.JavadocGenerationManager</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.ide.util.TreeClassChooserFactory</interface-class>
-      <implementation-class>com.intellij.ide.util.TreeClassChooserFactoryImpl</implementation-class>
       <skipForDummyProject/>
     </component>
     <component>

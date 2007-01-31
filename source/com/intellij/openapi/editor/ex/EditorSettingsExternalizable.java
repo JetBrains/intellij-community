@@ -1,6 +1,7 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.lang.properties.PropertiesFilesManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
@@ -72,10 +73,9 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   @NonNls public static String DEFAULT_FONT_NAME = "Courier";
 
   public static EditorSettingsExternalizable getInstance() {
-    return ApplicationManager.getApplication().getComponent(EditorSettingsExternalizable.class);
-  }
-
-  public EditorSettingsExternalizable() {
+    final Application app = ApplicationManager.getApplication();
+    if (app.isDisposed()) return new EditorSettingsExternalizable();
+    return app.getComponent(EditorSettingsExternalizable.class);
   }
 
   public void initComponent() { }

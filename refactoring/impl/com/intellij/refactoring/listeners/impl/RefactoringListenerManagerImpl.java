@@ -1,24 +1,21 @@
 package com.intellij.refactoring.listeners.impl;
 
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
-import com.intellij.refactoring.listeners.RefactoringListenerManager;
-import com.intellij.refactoring.listeners.MoveMemberListener;
-import com.intellij.refactoring.listeners.impl.impl.RefactoringTransactionImpl;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMember;
+import com.intellij.refactoring.listeners.MoveMemberListener;
+import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
+import com.intellij.refactoring.listeners.RefactoringListenerManager;
+import com.intellij.refactoring.listeners.impl.impl.RefactoringTransactionImpl;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
  * @author dsl
  */
-public class RefactoringListenerManagerImpl extends RefactoringListenerManager implements ProjectComponent {
+public class RefactoringListenerManagerImpl extends RefactoringListenerManager {
   private final ArrayList<RefactoringElementListenerProvider> myListenerProviders;
   private final Project myProject;
   private List<MoveMemberListener> myMoveMemberListeners = new CopyOnWriteArrayList<MoveMemberListener>();
@@ -38,29 +35,6 @@ public class RefactoringListenerManagerImpl extends RefactoringListenerManager i
 
   public RefactoringTransaction startTransaction() {
     return new RefactoringTransactionImpl(myListenerProviders);
-  }
-
-  //
-  // ProjectComponent implementation
-  //
-
-  public void projectOpened() {
-    // do nothing
-  }
-
-  public void projectClosed() {
-    // do nothing
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "RefactoringListenerManager";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public void addMoveMembersListener(MoveMemberListener moveMembersListener) {

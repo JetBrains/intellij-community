@@ -16,7 +16,7 @@
 
 package com.intellij.ide.ui.search;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -34,7 +34,7 @@ import java.util.Set;
  */
 public abstract class SearchableOptionsRegistrar{
   public static SearchableOptionsRegistrar getInstance(){
-    return ApplicationManager.getApplication().getComponent(SearchableOptionsRegistrar.class);
+    return ServiceManager.getService(SearchableOptionsRegistrar.class);
   }
 
   @NotNull

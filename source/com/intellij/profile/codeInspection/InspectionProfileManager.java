@@ -38,6 +38,8 @@ import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * User: anna
@@ -47,6 +49,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
   @NonNls private static final String PROFILE_NAME_TAG = "profile_name";
 
   private InspectionToolRegistrar myRegistrar;
+  private AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
 
   public static InspectionProfileManager getInstance() {
     return ApplicationManager.getApplication().getComponent(InspectionProfileManager.class);
@@ -63,13 +66,6 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
           },
           "inspection");
     myRegistrar = registrar;
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable(){
-        public void run() {
-          initProfiles();
-        }
-      });
-    }
   }
 
   public void initComponent() {
@@ -93,29 +89,38 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
     return InspectionsBundle.message("inspection.profiles.presentable.name");
   }
 
+  public Map<String, Profile> getProfiles() {
+    initProfiles();
+    return super.getProfiles();
+  }
+
   public void initProfiles() {
-    File dir = getProfileDirectory();
-    File[] files = dir.listFiles(new FileFilter() {
-      public boolean accept(File pathname) {
-        @NonNls final String name = pathname.getName();
-        int lastExtentionIdx = name.lastIndexOf(".xml");
-        return lastExtentionIdx != -1;
-      }
-    });
+    if (!myProfilesAreInitialized.getAndSet(true)) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) return;
+      
+      File dir = getProfileDirectory();
+      File[] files = dir.listFiles(new FileFilter() {
+        public boolean accept(File pathname) {
+          @NonNls final String name = pathname.getName();
+          int lastExtentionIdx = name.lastIndexOf(".xml");
+          return lastExtentionIdx != -1;
+        }
+      });
 
-    if (files == null || files.length == 0) {
-      createDefaultProfile();
-      return;
-    }
-
-    for (File file : files) {
-      try {
-        InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file), file, myRegistrar, this);
-        profile.load();
-        addProfile(profile);
+      if (files == null || files.length == 0) {
+        createDefaultProfile();
+        return;
       }
-      catch (Exception e) {
-        file.delete();
+
+      for (File file : files) {
+        try {
+          InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file), file, myRegistrar, this);
+          profile.load();
+          addProfile(profile);
+        }
+        catch (Exception e) {
+          file.delete();
+        }
       }
     }
   }

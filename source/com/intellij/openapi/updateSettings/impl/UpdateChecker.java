@@ -8,27 +8,26 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.text.DateFormatUtil;
 import org.jdom.Document;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -43,7 +42,7 @@ import java.util.concurrent.TimeoutException;
  * </message>
  * </idea>
  */
-public final class UpdateChecker implements ApplicationComponent {
+public final class UpdateChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker");
   @NonNls private static String UPDATE_URL = null;
 
@@ -59,16 +58,6 @@ public final class UpdateChecker implements ApplicationComponent {
       UPDATE_URL = appInfo.getUpdateUrls().getCheckingUrl();
     }
     return UPDATE_URL;
-  }
-
-  public String getComponentName() {
-    return "UpdateChecker";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public static boolean isMyVeryFirstOpening() {

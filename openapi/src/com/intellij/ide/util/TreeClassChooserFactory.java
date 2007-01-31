@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.util;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -29,10 +29,10 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  * Date: Jan 25, 2005
  */
-public abstract class TreeClassChooserFactory implements ProjectComponent {
+public abstract class TreeClassChooserFactory {
 
   public static TreeClassChooserFactory getInstance(Project project) {
-    return project.getComponent(TreeClassChooserFactory.class);
+    return ServiceManager.getService(project, TreeClassChooserFactory.class);
   }
 
 

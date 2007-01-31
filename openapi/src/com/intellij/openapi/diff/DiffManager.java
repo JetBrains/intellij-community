@@ -15,26 +15,16 @@
  */
 package com.intellij.openapi.diff;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.project.Project;
 
 import java.awt.*;
 
-public abstract class DiffManager implements ApplicationComponent {
-  public void disposeComponent() {
-  }
-
-  public String getComponentName() {
-    return "DiffManager";
-  }
-
-  public void initComponent() {
-  }
+public abstract class DiffManager {
 
   public static DiffManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(DiffManager.class);
+    return ServiceManager.getService(DiffManager.class);
   }
 
   public abstract DiffTool getDiffTool();

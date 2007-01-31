@@ -7,7 +7,7 @@ import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
@@ -16,31 +16,17 @@ import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class FindInProjectManager implements ProjectComponent {
+public class FindInProjectManager {
   private Project myProject;
   private ArrayList<Content> myUsagesContents = new ArrayList<Content>();
   private boolean myToOpenInNewTab = false;
   private boolean myIsFindInProgress = false;
 
-  public void projectOpened() {}
-
-  public void projectClosed() {}
-
-  @NotNull
-  public String getComponentName() {
-    return "FindInProjectManager";
-  }
-
-  public void initComponent() {}
-
-  public void disposeComponent() {}
-
   public static FindInProjectManager getInstance(Project project) {
-    return project.getComponent(FindInProjectManager.class);
+    return ServiceManager.getService(project, FindInProjectManager.class);
   }
 
   public FindInProjectManager(Project project) {

@@ -1,16 +1,16 @@
 package com.intellij.refactoring;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.migration.MigrationManager;
 import com.intellij.refactoring.typeMigration.ui.TypeMigrationDialog;
 
-public class RefactoringManager implements ProjectComponent {
+public class RefactoringManager {
   private MigrationManager myMigrateManager;
   private TypeMigrationDialog myMigrationDialog;
 
   public static RefactoringManager getInstance(Project project) {
-    return project.getComponent(RefactoringManager.class);
+    return ServiceManager.getService(project, RefactoringManager.class);
   }
 
   public RefactoringManager(Project project) {
@@ -18,24 +18,8 @@ public class RefactoringManager implements ProjectComponent {
     myMigrationDialog = null;
   }
 
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
-  }
-
-  public void projectClosed() {
-  }
-
-  public void projectOpened() {
-  }
-
   public MigrationManager getMigrateManager() {
     return myMigrateManager;
-  }
-
-  public String getComponentName() {
-    return "RefactoringManager";
   }
 
   public void startTypeMigrationSession(final TypeMigrationDialog d){

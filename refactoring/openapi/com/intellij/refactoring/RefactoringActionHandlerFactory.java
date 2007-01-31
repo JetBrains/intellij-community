@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 
 /**
  * Use this project component to create {@link RefactoringActionHandler}s for various
@@ -24,7 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
  */
 public abstract class RefactoringActionHandlerFactory {
   public static RefactoringActionHandlerFactory getInstance() {
-    return ApplicationManager.getApplication().getComponent(RefactoringActionHandlerFactory.class);
+    return ServiceManager.getService(RefactoringActionHandlerFactory.class);
   }
 
 

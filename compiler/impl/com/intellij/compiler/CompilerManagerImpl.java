@@ -10,7 +10,6 @@ import com.intellij.compiler.impl.rmiCompiler.RmicCompiler;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingCompiler;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -18,10 +17,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 
-import java.util.*;
 import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-public class CompilerManagerImpl extends CompilerManager implements ProjectComponent{
+public class CompilerManagerImpl extends CompilerManager {
   private final Project myProject;
 
   private List<Compiler> myCompilers = new ArrayList<Compiler>();
@@ -43,11 +45,6 @@ public class CompilerManagerImpl extends CompilerManager implements ProjectCompo
     //
     //addCompiler(new DummyTransformingCompiler()); // this one is for testing purposes only
     //addCompiler(new DummySourceGeneratingCompiler(myProject)); // this one is for testing purposes only
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
   }
 
   public final void addCompiler(Compiler compiler) {
@@ -136,16 +133,6 @@ public class CompilerManagerImpl extends CompilerManager implements ProjectCompo
   public void executeTask(CompileTask task, CompileScope scope, String contentName, Runnable onTaskFinished) {
     final CompileDriver compileDriver = new CompileDriver(myProject);
     compileDriver.executeCompileTask(task, scope, contentName, onTaskFinished);
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  public String getComponentName() {
-    return "CompilerManager";
   }
 
   // Compiler tests support

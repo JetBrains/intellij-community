@@ -1,7 +1,6 @@
 package com.intellij.openapi.diff.impl.external;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffPanel;
@@ -107,7 +106,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
   }
 
   public static DiffManagerImpl getInstanceEx() {
-    return (DiffManagerImpl)ApplicationManager.getApplication().getComponent(DiffManager.class);
+    return (DiffManagerImpl)DiffManager.getInstance();
   }
 
   public void readExternal(Element element) throws InvalidDataException {

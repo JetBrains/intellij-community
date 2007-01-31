@@ -8,8 +8,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.RegexpFilter;
-import com.intellij.execution.filters.TextConsoleBuidlerFactory;
 import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.ide.IdeEventQueue;
@@ -69,7 +69,7 @@ public class ToolRunProfile implements RunProfile{
         return result;
       }
     };
-    TextConsoleBuilder builder = TextConsoleBuidlerFactory.getInstance().createBuilder(project);
+    TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     final FilterInfo[] outputFilters = myTool.getOutputFilters();
     for (int i = 0; i < outputFilters.length; i++) {
       builder.addFilter(new RegexpFilter(project, outputFilters[i].getRegExp()));

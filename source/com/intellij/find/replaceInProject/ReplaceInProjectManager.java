@@ -11,7 +11,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -28,33 +28,19 @@ import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ReplaceInProjectManager implements ProjectComponent {
+public class ReplaceInProjectManager {
   private Project myProject;
   private boolean myIsFindInProgress = false;
 
   public static ReplaceInProjectManager getInstance(Project project) {
-    return project.getComponent(ReplaceInProjectManager.class);
+    return ServiceManager.getService(project, ReplaceInProjectManager.class);
   }
-
-  public void projectOpened() {}
-
-  public void projectClosed() {}
-
-  @NotNull
-  public String getComponentName() {
-    return "ReplaceInProjectManager";
-  }
-
-  public void initComponent() {}
-
-  public void disposeComponent() {}
 
   public ReplaceInProjectManager(Project project) {
     myProject = project;

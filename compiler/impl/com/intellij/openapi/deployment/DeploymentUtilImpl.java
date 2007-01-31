@@ -8,7 +8,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.make.*;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -46,17 +45,8 @@ import java.util.jar.Manifest;
 /**
  * @author Alexey Kudravtsev
  */
-public class DeploymentUtilImpl extends DeploymentUtil implements ApplicationComponent {
+public class DeploymentUtilImpl extends DeploymentUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.deployment.MakeUtilImpl");
-  @NotNull
-  public String getComponentName() {
-    return getClass().getName();
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
 
   public boolean addModuleOutputContents(@NotNull CompileContext context,
                                          @NotNull BuildRecipe items,

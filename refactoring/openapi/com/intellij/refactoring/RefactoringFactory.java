@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class RefactoringFactory {
   public static RefactoringFactory getInstance(Project project) {
-    return project.getComponent(RefactoringFactory.class);
+    return ServiceManager.getService(project,RefactoringFactory.class);
   }
 
   public abstract RenameRefactoring createRename(PsiElement element, String newName);

@@ -6,23 +6,14 @@
  */
 package com.intellij.execution.filters;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dyoma
  */
-public class TextConsoleBuilderFactoryImpl extends TextConsoleBuilderFactory implements ApplicationComponent {
+public class TextConsoleBuilderFactoryImpl extends TextConsoleBuilderFactory {
   public TextConsoleBuilder createBuilder(final Project project) {
     return new TextConsoleBuilderImpl(project);
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "TextConsoleBuilderFactory";
-  }
-
-  public void initComponent() {}
-  public void disposeComponent() {}
 }

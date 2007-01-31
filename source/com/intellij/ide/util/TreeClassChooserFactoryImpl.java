@@ -103,22 +103,4 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
                                            boolean showLibraryContents) {
     return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter, disableStructureProviders, showLibraryContents);
   }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "com.intellij.ide.util.TreeClassFactoryImpl";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
 }

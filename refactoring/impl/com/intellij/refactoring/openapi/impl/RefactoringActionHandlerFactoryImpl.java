@@ -6,17 +6,16 @@ package com.intellij.refactoring.openapi.impl;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
-import com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler;
 import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodHandler;
 import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler;
 import com.intellij.refactoring.extractInterface.ExtractInterfaceHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
+import com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler;
 import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationHandler;
 import com.intellij.refactoring.inline.InlineHandler;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
@@ -38,16 +37,7 @@ import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 /**
  * @author dsl
  */
-public class RefactoringActionHandlerFactoryImpl extends RefactoringActionHandlerFactory implements ApplicationComponent {
-  public String getComponentName() {
-    return "RefactoringActionHandlerFactory";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
+public class RefactoringActionHandlerFactoryImpl extends RefactoringActionHandlerFactory {
 
   public RefactoringActionHandler createSafeDeleteHandler() {
     return new SafeDeleteHandler();

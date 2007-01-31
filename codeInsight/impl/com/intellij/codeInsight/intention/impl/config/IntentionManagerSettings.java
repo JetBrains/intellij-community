@@ -37,11 +37,6 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
 
   private final HashMap<String, ArrayList<String>> myWords2DescriptorsMap = new HashMap<String, ArrayList<String>>();
-  private final SearchableOptionsRegistrar mySearchableOptionsRegistrar;
-
-  public IntentionManagerSettings(@NotNull final SearchableOptionsRegistrar searchableOptionsRegistrar) {
-    mySearchableOptionsRegistrar = searchableOptionsRegistrar;
-  }
 
   public String getExternalFileName() {
     return "intentionSettings";
@@ -129,10 +124,11 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
   private void processMetaData(@NotNull final IntentionActionMetaData metaData) throws IOException {
     final URL description = metaData.getDescription();
     if (description != null) {
+      SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
       @NonNls String descriptionText = ResourceUtil.loadText(description).toLowerCase();
       descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
-      final Set<String> words = mySearchableOptionsRegistrar.getProcessedWordsWithoutStemming(descriptionText);
-      words.addAll(mySearchableOptionsRegistrar.getProcessedWords(metaData.myFamily));
+      final Set<String> words = registrar.getProcessedWordsWithoutStemming(descriptionText);
+      words.addAll(registrar.getProcessedWords(metaData.myFamily));
       for (String word : words) {
         ArrayList<String> descriptors = myWords2DescriptorsMap.get(word);
         if (descriptors == null) {

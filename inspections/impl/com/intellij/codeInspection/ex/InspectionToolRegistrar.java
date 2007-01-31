@@ -41,10 +41,8 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
   private static HashMap<String, ArrayList<String>> myWords2InspectionToolNameMap = null;
 
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
-  private SearchableOptionsRegistrar mySearchableOptionsRegistrar;
 
-  public InspectionToolRegistrar(InspectionToolProvider[] providers, SearchableOptionsRegistrar searchableOptionsRegistrar) {
-    mySearchableOptionsRegistrar = searchableOptionsRegistrar;
+  public InspectionToolRegistrar(InspectionToolProvider[] providers) {
     myInspectionTools = new ArrayList<Class>();
     myLocalInspectionTools = new ArrayList<Class>();
     myGlobalInspectionTools = new ArrayList<Class>();
@@ -173,8 +171,8 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
     }
   }
 
-  private void processText(final @NonNls @NotNull String descriptionText, final InspectionTool tool) {
-    final Set<String> words = mySearchableOptionsRegistrar.getProcessedWordsWithoutStemming(descriptionText);
+  private static void processText(final @NonNls @NotNull String descriptionText, final InspectionTool tool) {
+    final Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWordsWithoutStemming(descriptionText);
     for (String word : words) {
       ArrayList<String> descriptors = myWords2InspectionToolNameMap.get(word);
       if (descriptors == null) {

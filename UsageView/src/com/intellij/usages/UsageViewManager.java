@@ -16,6 +16,7 @@
 package com.intellij.usages;
 
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class UsageViewManager {
   public static UsageViewManager getInstance (Project project) {
-    return project.getComponent(UsageViewManager.class);
+    return ServiceManager.getService(project, UsageViewManager.class);
   }
 
   @NotNull

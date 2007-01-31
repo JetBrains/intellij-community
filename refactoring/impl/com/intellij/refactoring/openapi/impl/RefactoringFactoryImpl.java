@@ -4,7 +4,6 @@
  */
 package com.intellij.refactoring.openapi.impl;
 
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,28 +17,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author dsl
  */
-public class RefactoringFactoryImpl extends RefactoringFactory implements ProjectComponent {
+public class RefactoringFactoryImpl extends RefactoringFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.openapi.impl.RefactoringFactoryImpl");
   private final Project myProject;
 
   public RefactoringFactoryImpl(Project project) {
     myProject = project;
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  public String getComponentName() {
-    return "RefactoringFactory";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public RenameRefactoring createRename(PsiElement element, String newName) {
