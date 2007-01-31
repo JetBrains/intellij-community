@@ -14,19 +14,16 @@ public class AsyncProcessIcon extends JComponent implements Disposable {
   private Icon[] myIcons;
   private Dimension myPrefSize = new Dimension();
 
-  private Timer myTimer;
-  private String myName;
-
-  private int myCurrentIconIndex = 0;
-  private int myCurrentCount = 0;
+  private int myCurrentIconIndex;
 
   public static final int COUNT = 12;
   private Icon myPassiveIcon;
 
   private boolean myRunning = true;
 
+  private Animator myAnimator;
+
   public AsyncProcessIcon(@NonNls String name) {
-    myName = name;
     myIcons = new Icon[COUNT];
     for (int i = 0; i <= COUNT - 1; i++) {
       myIcons[i] = IconLoader.getIcon("/process/step_" + (i + 1) + ".png");
@@ -39,53 +36,39 @@ public class AsyncProcessIcon extends JComponent implements Disposable {
 
     UIUtil.removeQuaquaVisualMarginsIn(this);
 
-    myTimer = new Timer(myName, 800 / COUNT) {
-      protected void onTimer() {
-        if (myCurrentCount > COUNT) return;
-
-        if (myCurrentIconIndex + 1 < myIcons.length) {
-          myCurrentIconIndex++;
-        } else {
-          myCurrentIconIndex = 0;
-        }
-        myCurrentCount++;
-
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            myCurrentCount--;
-            paintImmediately(0, 0, getWidth(), getHeight());
-          }
-        });
+    myAnimator = new Animator(name, COUNT, 800, true) {
+      public void paintNow(final int frame) {
+        myCurrentIconIndex = frame;
+        paintImmediately(0, 0, getWidth(), getHeight());
       }
     };
   }
 
   public void resume() {
     myRunning = true;
-    myTimer.resume();
-    repaint();
+    myAnimator.resume();
   }
 
   public void addNotify() {
     super.addNotify();
     if (myRunning) {
-      myTimer.resume();
+      myAnimator.resume();
     }
   }
 
   public void removeNotify() {
     super.removeNotify();
-    myTimer.suspend();
+    myAnimator.suspend();
   }
 
   public void suspend() {
     myRunning = false;
-    myTimer.suspend();
+    myAnimator.suspend();
     repaint();
   }
 
   public void dispose() {
-    myTimer.dispose();
+    myAnimator.dispose();
   }
 
   public Dimension getPreferredSize() {
@@ -109,7 +92,7 @@ public class AsyncProcessIcon extends JComponent implements Disposable {
 
     Icon icon;
 
-    if (myTimer.isRunning()) {
+    if (myAnimator.isRunning()) {
       icon = myIcons[myCurrentIconIndex];
     } else {
       icon = myPassiveIcon;
@@ -138,7 +121,7 @@ public class AsyncProcessIcon extends JComponent implements Disposable {
         Thread sleeper = new Thread() {
           public void run() {
             try {
-              sleep(5000);
+              sleep(15000);
             } catch (InterruptedException e1) {
               e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
