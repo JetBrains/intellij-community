@@ -4,19 +4,21 @@
 
 package com.intellij.util.descriptors.impl;
 
-import com.intellij.util.descriptors.ConfigFile;
-import com.intellij.util.descriptors.ConfigFileMetaData;
-import com.intellij.util.descriptors.ConfigFileInfo;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.descriptors.ConfigFile;
+import com.intellij.util.descriptors.ConfigFileInfo;
+import com.intellij.util.descriptors.ConfigFileMetaData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +50,7 @@ public class ConfigFileImpl implements ConfigFile {
     myProject = myContainer.getProject();
   }
 
-  public void setUrl(String url) {
+  private void setUrl(String url) {
     final VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
     if (myFilePointer != null) {
       pointerManager.kill(myFilePointer, myListener);
