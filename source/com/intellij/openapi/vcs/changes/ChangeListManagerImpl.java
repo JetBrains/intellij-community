@@ -4,7 +4,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -232,7 +231,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
       final VcsDirtyScopeManagerImpl dirtyScopeManager = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(myProject));
       final boolean wasEverythingDirty = dirtyScopeManager.isEverythingDirty();
-      final List<VcsDirtyScope> scopes = dirtyScopeManager.retreiveScopes();
+      final List<VcsDirtyScope> scopes = dirtyScopeManager.retrieveScopes();
 
       final VirtualFileHolder unversionedHolder;
       final VirtualFileHolder modifiedWithoutEditingHolder;

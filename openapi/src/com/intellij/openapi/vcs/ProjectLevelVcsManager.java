@@ -21,8 +21,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -73,7 +75,36 @@ public abstract class ProjectLevelVcsManager {
    * @return the VCS instance, or null if the file does not belong to any module or the module
    *         it belongs to is not under version control.
    */
+  @Nullable
   public abstract AbstractVcs getVcsFor(VirtualFile file);
+
+  /**
+   * Returns the VCS managing the specified file path.
+   *
+   * @param file the file to check.
+   * @return the VCS instance, or null if the file does not belong to any module or the module
+   *         it belongs to is not under version control.
+   */
+  @Nullable
+  public abstract AbstractVcs getVcsFor(FilePath file);
+
+  /**
+   * Return the parent directory of the specified file which is mapped to a VCS.
+   *
+   * @param file the file for which the root is requested.
+   * @return the root, or null if the specified file is not in a VCS-managed directory.
+   */
+  @Nullable
+  public abstract VirtualFile getVcsRootFor(VirtualFile file);
+
+  /**
+   * Return the parent directory of the specified file path which is mapped to a VCS.
+   *
+   * @param file the file for which the root is requested.
+   * @return the root, or null if the specified file is not in a VCS-managed directory.
+   */
+  @Nullable
+  public abstract VirtualFile getVcsRootFor(FilePath file);
 
   /**
    * Checks if the specified VCS is used by any of the modules in the project.
@@ -191,4 +222,6 @@ public abstract class ProjectLevelVcsManager {
   public abstract void setDirectoryMapping(final String path, final String activeVcsName);
 
   public abstract void setDirectoryMappings(final List<VcsDirectoryMapping> items);
+
+  public abstract void iterateVcsRoot(final VirtualFile root, final Processor<FilePath> iterator);
 }

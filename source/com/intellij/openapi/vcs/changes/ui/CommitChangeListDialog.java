@@ -7,8 +7,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.Messages;
@@ -371,8 +369,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public String getCommitActionName() {
     String name = null;
     for (AbstractVcs vcs : getAffectedVcses()) {
-      if (name == null && vcs.getCheckinEnvironment() != null) {
-        name = vcs.getCheckinEnvironment().getCheckinOperationName();
+      final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
+      if (name == null && checkinEnvironment != null) {
+        name = checkinEnvironment.getCheckinOperationName();
       }
       else {
         name = VcsBundle.message("commit.dialog.default.commit.operation.name");
@@ -525,11 +524,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   public Collection<VirtualFile> getRoots() {
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     Set<VirtualFile> result = new HashSet<VirtualFile>();
     for (Change change : myBrowser.getCurrentDisplayedChanges()) {
       final FilePath filePath = ChangesUtil.getFilePath(change);
-      VirtualFile root = VcsDirtyScope.getRootFor(fileIndex, filePath);
+      VirtualFile root = ProjectLevelVcsManager.getInstance(myProject).getVcsRootFor(filePath);
       if (root != null) {
         result.add(root);
       }

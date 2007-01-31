@@ -3,8 +3,6 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -30,26 +28,15 @@ public class ChangesUtil {
   }
 
   public static AbstractVcs getVcsForChange(Change change, final Project project) {
-    return getVcsForPath(getFilePath(change), project);
+    return ProjectLevelVcsManager.getInstance(project).getVcsFor(getFilePath(change));
   }
 
   public static AbstractVcs getVcsForFile(VirtualFile file, Project project) {
-    return getVcsForPath(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file), project);
+    return ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
   }
 
   public static AbstractVcs getVcsForFile(File file, Project project) {
-    return getVcsForPath(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file), project);
-  }
-
-  private static AbstractVcs getVcsForPath(final FilePath filePath, final Project project) {
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    VirtualFile root = VcsDirtyScope.getRootFor(fileIndex, filePath);
-    if (root != null) {
-      return vcsManager.getVcsFor(root);
-    }
-
-    return null;
+    return ProjectLevelVcsManager.getInstance(project).getVcsFor(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file));
   }
 
   public static Collection<FilePath> getPaths(final List<Change> changes) {

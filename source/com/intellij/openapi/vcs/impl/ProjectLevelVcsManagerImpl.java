@@ -84,6 +84,7 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ContentsUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.EditorAdapter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -286,6 +287,19 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Nullable
   public AbstractVcs getVcsFor(VirtualFile file) {
+    VcsDirectoryMapping mapping = getMappingFor(file);
+    if (mapping == null) {
+      return null;
+    }
+    final String vcs = mapping.getVcs();
+    if (vcs.length() == 0) {
+      return null;
+    }
+    return findVcsByName(vcs);
+  }
+
+  @Nullable
+  private VcsDirectoryMapping getMappingFor(VirtualFile file) {
     if (file == null) return null;
     if (myProject.isDisposed()) return null;
 
@@ -296,14 +310,65 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     for(int i = myDirectoryMappings.size()-1; i >= 0; i--) {
       final VcsDirectoryMapping mapping = myDirectoryMappings.get(i);
       if (fileMatchesMapping(file, mapping)) {
-        final String vcs = mapping.getVcs();
-        if (vcs.length() == 0) {
-          return null;
-        }
-        return findVcsByName(vcs);
+        return mapping;
       }
     }
     return null;
+  }
+
+  @Nullable
+  public AbstractVcs getVcsFor(final FilePath file) {
+    VirtualFile vFile = findValidParent(file);
+    if (vFile != null) {
+      return getVcsFor(vFile);
+    }
+    return null;
+  }
+
+  @Nullable
+  public VirtualFile getVcsRootFor(final VirtualFile file) {
+    VcsDirectoryMapping mapping = getMappingFor(file);
+    if (mapping == null) {
+      return null;
+    }
+    final String directory = mapping.getDirectory();
+    if (directory.length() == 0) {
+      final VirtualFile contentRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(file);
+      if (contentRoot != null) {
+        return contentRoot;
+      }
+      return myProject.getBaseDir();
+    }
+    return LocalFileSystem.getInstance().findFileByPath(directory);
+  }
+
+  @Nullable
+  public VirtualFile getVcsRootFor(final FilePath file) {
+    VirtualFile vFile = findValidParent(file);
+    if (vFile != null) {
+      return getVcsRootFor(vFile);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static VirtualFile findValidParent(FilePath file) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    VirtualFile parent = file.getVirtualFile();
+    if (parent == null) {
+      parent = file.getVirtualFileParent();
+    }
+    if (parent == null) {
+      File ioFile = file.getIOFile();
+      do {
+        parent = LocalFileSystem.getInstance().findFileByIoFile(ioFile);
+        if (parent != null) break;
+        ioFile = ioFile.getParentFile();
+        if (ioFile == null) return null;
+      }
+      while (true);
+    }
+    return parent;
   }
 
   private boolean fileMatchesMapping(final VirtualFile file, final VcsDirectoryMapping mapping) {
@@ -558,6 +623,42 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myDirectoryMappings.clear();
     myDirectoryMappings.addAll(items);
     sortDirectoryMappings();
+  }
+
+  public void iterateVcsRoot(final VirtualFile root, final Processor<FilePath> iterator) {
+    Set<VirtualFile> filesToExclude = null;
+    VcsDirectoryMapping mapping = getMappingFor(root);
+    if (mapping != null) {
+      for(VcsDirectoryMapping otherMapping: myDirectoryMappings) {
+        if (otherMapping != mapping && otherMapping.getDirectory().startsWith(mapping.getDirectory())) {
+          if (filesToExclude == null) {
+            filesToExclude = new HashSet<VirtualFile>();
+          }
+          filesToExclude.add(LocalFileSystem.getInstance().findFileByPath(otherMapping.getDirectory()));
+        }
+      }
+    }
+
+    iterateChildren(root, iterator, filesToExclude);
+  }
+
+  private static boolean iterateChildren(final VirtualFile root, final Processor<FilePath> iterator, final Collection<VirtualFile> filesToExclude) {
+    if (!iterator.process(new FilePathImpl(root))) {
+      return false;
+    }
+    final VirtualFile[] files = root.getChildren();
+    if (files == null) {
+      return true;
+    }
+    for(VirtualFile child: files) {
+      if (filesToExclude != null && filesToExclude.contains(child)) {
+        continue;
+      }
+      if (!iterateChildren(child, iterator, filesToExclude)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private VcsShowOptionsSettingImpl getOrCreateOption(String actionName) {

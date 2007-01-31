@@ -4,32 +4,30 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.io.File;
 
 /**
  * @author max
  */
 public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements ProjectComponent {
-  private final ProjectFileIndex myIndex;
   private final Map<AbstractVcs, VcsDirtyScopeImpl> myScopes = new HashMap<AbstractVcs, VcsDirtyScopeImpl>();
   private final VcsDirtyScopeManagerImpl.MyVfsListener myVfsListener;
   private final Project myProject;
@@ -41,13 +39,11 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private MessageBusConnection myConnection;
 
   public VcsDirtyScopeManagerImpl(Project project,
-                                  ProjectRootManager rootManager,
                                   ChangeListManager changeListManager,
                                   ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myChangeListManager = changeListManager;
     myVcsManager = vcsManager;
-    myIndex = rootManager.getFileIndex();
     myVfsListener = new MyVfsListener();
   }
 
@@ -78,17 +74,19 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   public void markEverythingDirty() {
     if (!myIsInitialized || myIsDisposed || myProject.isDisposed()) return;
-    Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    for (Module module : modules) {
-      final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-      VirtualFile[] roots = rootManager.getContentRoots();
-      for (VirtualFile root : roots) {
-        dirDirtyRecursively(root, true);
+
+    final AbstractVcs[] abstractVcses = myVcsManager.getAllActiveVcss();
+    for(AbstractVcs vcs: abstractVcses) {
+      VcsDirtyScopeImpl scope = getScope(vcs);
+      final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(vcs);
+      for(VirtualFile root: roots) {
+        scope.addDirtyDirRecursively(new FilePathImpl(root));
       }
     }
     synchronized(myScopes) {
       myEverythingDirty = true;
     }
+    myChangeListManager.scheduleUpdate();
   }
 
   public void projectClosed() {
@@ -116,9 +114,9 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     if (!myIsInitialized || myIsDisposed) return;
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    VirtualFile root = VcsDirtyScope.getRootFor(myIndex, file);
-    if (root != null) {
-      getScope(root).addDirtyFile(file);
+    AbstractVcs vcs = myVcsManager.getVcsFor(file);
+    if (vcs != null) {
+      getScope(vcs).addDirtyFile(file);
       myChangeListManager.scheduleUpdate();
     }
   }
@@ -126,18 +124,16 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   public void dirDirtyRecursively(final VirtualFile dir, final boolean scheduleUpdate) {
     if (!myIsInitialized || myIsDisposed) return;
 
-    final VirtualFile root = myIndex.getContentRootForFile(dir);
-    if (root != null) {
-      FilePath path = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir);
-      getScope(root).addDirtyDirRecursively(path);
+    final AbstractVcs vcs = myVcsManager.getVcsFor(dir);
+    if (vcs != null) {
+      getScope(vcs).addDirtyDirRecursively(new FilePathImpl(dir));
       myChangeListManager.scheduleUpdate();
     }
   }
 
   @NotNull
-  private VcsDirtyScopeImpl getScope(final VirtualFile root) {
+  private VcsDirtyScopeImpl getScope(final AbstractVcs vcs) {
     synchronized (myScopes) {
-      final AbstractVcs vcs = myVcsManager.getVcsFor(root);
       VcsDirtyScopeImpl scope = myScopes.get(vcs);
       if (scope == null) {
         scope = new VcsDirtyScopeImpl(vcs, myProject);
@@ -153,7 +149,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
-  public List<VcsDirtyScope> retreiveScopes() {
+  public List<VcsDirtyScope> retrieveScopes() {
     synchronized (myScopes) {
       myEverythingDirty = false;
       final ArrayList<VcsDirtyScope> result = new ArrayList<VcsDirtyScope>(myScopes.values());

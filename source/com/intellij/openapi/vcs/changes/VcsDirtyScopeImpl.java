@@ -11,13 +11,12 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
@@ -33,14 +32,14 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
   private final Set<FilePath> myDirtyFiles = new THashSet<FilePath>();
   private final Set<FilePath> myDirtyDirectoriesRecursively = new THashSet<FilePath>();
   private final Set<VirtualFile> myAffectedContentRoots = new THashSet<VirtualFile>();
-  private final ProjectFileIndex myIndex;
-  private Project myProject;
+  private final Project myProject;
+  private final ProjectLevelVcsManager myVcsManager;
   private AbstractVcs myVcs;
 
   public VcsDirtyScopeImpl(final AbstractVcs vcs, final Project project) {
     myProject = project;
     myVcs = vcs;
-    myIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
   }
 
   public Collection<VirtualFile> getAffectedContentRoots() {
@@ -64,7 +63,7 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
   }
 
   public synchronized void addDirtyDirRecursively(FilePath newcomer) {
-    myAffectedContentRoots.add(getRootFor(myIndex, newcomer));
+    myAffectedContentRoots.add(myVcsManager.getVcsRootFor(newcomer));
 
     for (FilePath oldBoy : myDirtyDirectoriesRecursively) {
       if (newcomer.isUnder(oldBoy, false)) {
@@ -81,7 +80,7 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
   }
 
   public synchronized void addDirtyFile(FilePath newcomer) {
-    myAffectedContentRoots.add(getRootFor(myIndex, newcomer));
+    myAffectedContentRoots.add(myVcsManager.getVcsRootFor(newcomer));
 
     for (FilePath oldBoy : myDirtyDirectoriesRecursively) {
       if (newcomer.isUnder(oldBoy, false)) {
@@ -111,26 +110,15 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
   public synchronized void iterate(final Processor<FilePath> iterator) {
     if (myProject.isDisposed()) return;
 
-    ContentIterator iteratorAdapter = new ContentIterator() {
-      public boolean processFile(VirtualFile fileOrDir) {
-        return iterator.process(new FilePathImpl(fileOrDir));
-      }
-    };
-
     for (VirtualFile root : myAffectedContentRoots) {
-      final Module module = VfsUtil.getModuleForFile(myProject, root);
-      if (module == null) continue; // Roots probably change. We'll handle this in next dirty scope processing iteration.
-
-      final ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
-
       for (FilePath dir : myDirtyDirectoriesRecursively) {
         final VirtualFile vFile = dir.getVirtualFile();
         if (vFile != null && vFile.isValid()) {
           if (VfsUtil.isAncestor(root, vFile, false)) {
-            index.iterateContentUnderDirectory(vFile, iteratorAdapter);
+            myVcsManager.iterateVcsRoot(vFile, iterator);
           }
           else if (VfsUtil.isAncestor(vFile, root, false)) {
-            index.iterateContentUnderDirectory(root, iteratorAdapter);
+            myVcsManager.iterateVcsRoot(root, iterator);
           }
         }
       }
@@ -152,7 +140,7 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
       public Boolean compute() {
         synchronized (VcsDirtyScopeImpl.this) {
           if (myProject.isDisposed()) return Boolean.FALSE;
-          if (!myAffectedContentRoots.contains(getRootFor(myIndex, path))) return Boolean.FALSE;
+          if (!myAffectedContentRoots.contains(myVcsManager.getVcsRootFor(path))) return Boolean.FALSE;
 
           for (FilePath filePath : myDirtyDirectoriesRecursively) {
             if (path.isUnder(filePath, false)) return Boolean.TRUE;
