@@ -306,10 +306,14 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     if (!(file.getFileSystem() instanceof LocalFileSystem)) {
       return null;
     }
+
+    // performance: calculate file path just once, rather than once per mapping
+    String path = file.getPath();
+
     // scan from bottom-most mapping to topmost
     for(int i = myDirectoryMappings.size()-1; i >= 0; i--) {
       final VcsDirectoryMapping mapping = myDirectoryMappings.get(i);
-      if (fileMatchesMapping(file, mapping)) {
+      if (fileMatchesMapping(file, path, mapping)) {
         return mapping;
       }
     }
@@ -371,11 +375,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return parent;
   }
 
-  private boolean fileMatchesMapping(final VirtualFile file, final VcsDirectoryMapping mapping) {
+  private boolean fileMatchesMapping(final VirtualFile file, final String path, final VcsDirectoryMapping mapping) {
     if (mapping.getDirectory().length() == 0) {
       return VfsUtil.getModuleForFile(myProject, file) != null;
     }
-    return file.getPath().startsWith(mapping.getDirectory());
+    return path.startsWith(mapping.getDirectory());
   }
 
   private void dispose() {
@@ -642,20 +646,24 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     iterateChildren(root, iterator, filesToExclude);
   }
 
-  private static boolean iterateChildren(final VirtualFile root, final Processor<FilePath> iterator, final Collection<VirtualFile> filesToExclude) {
+  private boolean iterateChildren(final VirtualFile root, final Processor<FilePath> iterator, final Collection<VirtualFile> filesToExclude) {
     if (!iterator.process(new FilePathImpl(root))) {
       return false;
     }
-    final VirtualFile[] files = root.getChildren();
-    if (files == null) {
-      return true;
-    }
-    for(VirtualFile child: files) {
-      if (filesToExclude != null && filesToExclude.contains(child)) {
-        continue;
-      }
-      if (!iterateChildren(child, iterator, filesToExclude)) {
-        return false;
+    if (root.isDirectory()) {
+      final VirtualFile[] files = root.getChildren();
+      for(VirtualFile child: files) {
+        if (child.isDirectory()) {
+          if (filesToExclude != null && filesToExclude.contains(child)) {
+            continue;
+          }
+          if (ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(child)) {
+            continue;
+          }
+        }
+        if (!iterateChildren(child, iterator, filesToExclude)) {
+          return false;
+        }
       }
     }
     return true;

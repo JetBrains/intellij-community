@@ -331,7 +331,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                   if (file == null || !updateUnversionedFiles) return;
                   if (myDisposed) throw new DisposedException();
                   if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
-                  if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+                  if (scope.belongsTo(new FilePathImpl(file))) {
                     if (isIgnoredFile(file)) {
                       ignoredHolder.addFile(file);
                     }
