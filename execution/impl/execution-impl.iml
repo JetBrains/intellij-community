@@ -22,7 +22,6 @@
     <orderEntry module-name="idea_rt" type="module" />
     <orderEntry module-name="resources_eng" type="module" />
     <orderEntry module-name="refactoring-openapi" type="module" />
-    <orderEntry module-name="ui-designer-impl" type="module" />
     <orderEntry module-name="debugger-impl" type="module" />
     <orderEntry module-name="action-system-impl" type="module" />
     <orderEntry level="project" name="JUnit4" type="library" />
