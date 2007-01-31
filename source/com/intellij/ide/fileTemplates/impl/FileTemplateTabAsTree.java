@@ -105,6 +105,13 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
         setText((String) node.getUserObject());
         setIcon(node.getIcon());
         setFont(getFont().deriveFont(AllFileTemplatesConfigurable.isInternalTemplate(node.getTemplate(), getTitle()) ? Font.BOLD : Font.PLAIN));
+
+        final FileTemplate template = getTemplate(node);
+        if (template != null && !template.isDefault()) {
+          if (!sel) {
+            super.setForeground(MODIFIED_FOREGROUND);
+          }
+        }
       }
       return this;
     }
@@ -141,9 +148,13 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath == null) return null;
     final FileTemplateNode node = (FileTemplateNode)selectionPath.getLastPathComponent();
+    return getTemplate(node);
+  }
+
+  @Nullable
+  private FileTemplate getTemplate(final FileTemplateNode node) {
     final String template = node.getTemplate();
-    if (template == null) return null;
-    return savedTemplates.get(FileTemplateManager.getInstance().getJ2eeTemplate(template));
+    return template == null ? null : savedTemplates.get(FileTemplateManager.getInstance().getJ2eeTemplate(template));
   }
 
   public JComponent getComponent() {

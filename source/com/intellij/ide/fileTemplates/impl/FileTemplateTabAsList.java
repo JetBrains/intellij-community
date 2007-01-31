@@ -46,9 +46,8 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
         }
 
         if (!template.isDefault()) {
-          Color foreground = new Color(0, 0, 210);
           if (!isSelected) {
-            super.setForeground(foreground);
+            super.setForeground(MODIFIED_FOREGROUND);
           }
         }
       }

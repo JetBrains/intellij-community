@@ -2,12 +2,12 @@ package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexey Kudravtsev
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 abstract class FileTemplateTab {
   public Map<FileTemplate, FileTemplate> savedTemplates;
   private final String myTitle;
+  protected static final Color MODIFIED_FOREGROUND = new Color(0, 0, 210);
 
   protected FileTemplateTab(String title) {
     myTitle = title;
