@@ -86,7 +86,7 @@ public class FindInProjectManager {
       myToOpenInNewTab = toOpenInNewTab[0] = findModel.isOpenInNewTab();
     }
 
-    com.intellij.usages.UsageViewManager manager = myProject.getComponent(com.intellij.usages.UsageViewManager.class);
+    com.intellij.usages.UsageViewManager manager = com.intellij.usages.UsageViewManager.getInstance(myProject);
 
     if (manager!=null) {
       findManager.getFindInProjectModel().copyFrom(findModel);

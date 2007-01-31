@@ -9,7 +9,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -803,7 +802,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     presentation.setUsagesString(upcastedString);
     presentation.setTabText(upcastedString);
 
-    UsageViewManager manager = myProject.getComponent(UsageViewManager.class);
+    UsageViewManager manager = UsageViewManager.getInstance(myProject);
     manager.showUsages(
       new UsageTarget[]{new PsiElement2UsageTargetAdapter(myClass)},
       UsageInfoToUsageConverter.convert(new UsageInfoToUsageConverter.TargetElementsDescriptor(myClass), usages),

@@ -2,8 +2,8 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,13 +20,12 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
-
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 public class UsagesPanel extends JPanel implements Disposable, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.ui.UsagesPanel");
@@ -118,8 +117,7 @@ public class UsagesPanel extends JPanel implements Disposable, DataProvider {
       Usage[] usages = UsageInfoToUsageConverter.convert(descriptor, usageInfos);
       UsageViewPresentation presentation = new UsageViewPresentation();
       presentation.setCodeUsagesString(myBuilder.getRootNodeNameInUsageView());
-      myCurrentUsageView = myProject.getComponent(UsageViewManager.class).createUsageView(new UsageTarget[0],
-                                                                                           usages, presentation, null);
+      myCurrentUsageView = UsageViewManager.getInstance(myProject).createUsageView(new UsageTarget[0], usages, presentation, null);
       setToComponent(myCurrentUsageView.getComponent());
     }
     catch (ProcessCanceledException e) {

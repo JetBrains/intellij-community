@@ -91,7 +91,7 @@ public class ReplaceInProjectManager {
       return;
     }
 
-    UsageViewManager manager = myProject.getComponent(UsageViewManager.class);
+    UsageViewManager manager = UsageViewManager.getInstance(myProject);
 
     if (manager == null) {
       return;

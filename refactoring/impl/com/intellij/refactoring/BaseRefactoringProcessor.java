@@ -240,7 +240,7 @@ public abstract class BaseRefactoringProcessor {
                              boolean showReadAccessIcon,
                              boolean showWriteAccessIcon,
                              final Factory<UsageSearcher> factory, final UsageInfo[] usageInfos) {
-    UsageViewManager viewManager = myProject.getComponent(UsageViewManager.class);
+    UsageViewManager viewManager = UsageViewManager.getInstance(myProject);
 
     final PsiElement[] initialElements = viewDescriptor.getElements();
     final UsageTarget[] targets = PsiElement2UsageTargetAdapter.convert(initialElements);
