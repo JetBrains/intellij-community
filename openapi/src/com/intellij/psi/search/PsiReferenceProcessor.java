@@ -19,6 +19,7 @@ import com.intellij.psi.PsiReference;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 public interface PsiReferenceProcessor{
   boolean execute(PsiReference element);
@@ -27,11 +28,11 @@ public interface PsiReferenceProcessor{
     private final Collection<PsiReference> myCollection;
 
     public CollectElements(Collection<PsiReference> collection) {
-      myCollection = collection;
+      myCollection = Collections.synchronizedCollection(collection);
     }
 
     public CollectElements() {
-      myCollection = new ArrayList<PsiReference>();
+      this(new ArrayList<PsiReference>());
     }
 
     public PsiReference[] toArray(){
@@ -49,7 +50,7 @@ public interface PsiReferenceProcessor{
   }
 
   class FindElement implements PsiReferenceProcessor{
-    private PsiReference myFoundElement = null;
+    private volatile PsiReference myFoundElement = null;
 
     public boolean isFound() {
       return myFoundElement != null;
