@@ -16,6 +16,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.NamedJDOMExternalizable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
@@ -87,7 +88,9 @@ public class PathManager {
       }
     }
     try {
-      ourHomePath = ourHomePath == null ? null : new File(ourHomePath).getCanonicalPath();
+      if (!SystemInfo.isFileSystemCaseSensitive) {
+        ourHomePath = ourHomePath == null ? null : new File(ourHomePath).getCanonicalPath();
+      }
     }
     catch (IOException e) {
       // ignore
