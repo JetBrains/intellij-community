@@ -11,6 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -150,7 +152,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     return true;
   }
 
-  private static boolean processReferences(Processor<PsiReference> processor, PsiFile file, String name, PsiElement element,
+  private static boolean processReferences(Processor<PsiReference> processor, final PsiFile file, String name, PsiElement element,
                                            final LocalSearchScope filterScope) {
     if (filterScope != null) {
       boolean isInScope = false;
@@ -162,7 +164,10 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
       }
       if (!isInScope) return true;
     }
-    CharSequence chars = file.getViewProvider().getContents();
+    CharSequence chars = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence>() {
+      public CharSequence compute() {
+        return file.getViewProvider().getContents();
+    }});
     int index = 0;
     final int offset = name.lastIndexOf('.');
     while(true){

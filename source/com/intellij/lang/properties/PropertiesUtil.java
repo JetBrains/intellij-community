@@ -6,7 +6,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiDirectory;
@@ -79,20 +81,24 @@ public class PropertiesUtil {
   }
 
   @Nullable
-  public static String getFullName(PropertiesFile psiFile) {
-    PsiDirectory directory = (PsiDirectory)psiFile.getParent();
-    PsiPackage pkg = directory.getPackage();
-    if (pkg == null) {
-      return null;
-    }
-    StringBuilder qName = new StringBuilder(pkg.getQualifiedName());
-      if (qName.length() > 0) {
-        qName.append(".");
+  public static String getFullName(final PropertiesFile psiFile) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        PsiDirectory directory = psiFile.getParent();
+        PsiPackage pkg = directory.getPackage();
+        if (pkg == null) {
+          return null;
+        }
+        StringBuilder qName = new StringBuilder(pkg.getQualifiedName());
+          if (qName.length() > 0) {
+            qName.append(".");
+          }
+        final VirtualFile virtualFile = psiFile.getVirtualFile();
+        assert virtualFile != null;
+        qName.append(getBaseName(virtualFile));
+        return qName.toString();
       }
-    final VirtualFile virtualFile = psiFile.getVirtualFile();
-    assert virtualFile != null;
-    qName.append(getBaseName(virtualFile));
-    return qName.toString();
+    });
   }
 
   @NotNull
