@@ -117,6 +117,10 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   public void runValidators(File output, CompileContext context) throws Exception {
   }
 
+  public boolean isSyncExplodedDir() {
+    return false;
+  }
+
   public void projectOpened() {}
 
   public void projectClosed() {}
