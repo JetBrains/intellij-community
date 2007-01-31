@@ -135,7 +135,7 @@ class SuppressActionWrapper extends AnAction {
         return;
       }
       final PsiElement element = content.first.getElement();
-      if (!getAction(content.second, element).isAvailable(myProject, null, element.getContainingFile())) {
+      if (element == null || !getAction(content.second, element).isAvailable(myProject, null, element.getContainingFile())) {
         myAvailable = false;
         return;
       }

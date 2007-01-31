@@ -112,11 +112,20 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     return null;
   }
 
-  public void ignoreElement(RefEntity refElement){
+  public void ignoreElementInView(RefEntity refElement) {
     final List<RefEntity> children = refElement.getChildren();
     if (children != null) {
       for (RefEntity child : children) {
-        ignoreElement(child);
+        ignoreElementInView(child);
+      }
+    }
+  }
+
+  public void amnesty(RefEntity refEntity) {
+    final List<RefEntity> children = refEntity != null ? refEntity.getChildren() : null;
+    if (children != null) {
+      for (RefEntity child : children) {
+        amnesty(child);
       }
     }
   }
@@ -196,5 +205,5 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   public IntentionAction findQuickFixes(final CommonProblemDescriptor descriptor, final String hint) {
     return null;
   }
-  
+
 }

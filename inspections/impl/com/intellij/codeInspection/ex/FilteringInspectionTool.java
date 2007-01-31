@@ -30,7 +30,7 @@ public abstract class FilteringInspectionTool extends InspectionTool {
       public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
         RefElement refElement = (RefElement) refEntity;
-        if (!myIgnoreElements.contains(refElement) && refElement.isValid() && getFilter().accepts(refElement)) {
+        if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS && myIgnoreElements.contains(refElement)) && refElement.isValid() && getFilter().accepts(refElement)) {
           String packageName = RefUtil.getInstance().getPackageName(refEntity);
           Set<RefElement> content = myPackageContents.get(packageName);
           if (content == null) {
@@ -49,7 +49,7 @@ public abstract class FilteringInspectionTool extends InspectionTool {
       return containsOnlyDiff(myPackageContents) ||
              myOldPackageContents != null && containsOnlyDiff(myOldPackageContents);
     } else {
-      if (myPackageContents.size() > 0) return true;
+      if (!myPackageContents.isEmpty()) return true;
     }
     return isOldProblemsIncluded() && myOldPackageContents.size() > 0;
   }
@@ -76,9 +76,15 @@ public abstract class FilteringInspectionTool extends InspectionTool {
     return myOldPackageContents;
   }
 
-  public void ignoreElement(RefEntity refEntity) {
+  public void ignoreElementInView(RefEntity refEntity) {
+    if (refEntity == null) return;
     myIgnoreElements.add((RefElement)refEntity);
-    super.ignoreElement(refEntity);
+    super.ignoreElementInView(refEntity);
+  }
+
+  public void amnesty(RefEntity refEntity) {
+    myIgnoreElements.remove((RefElement)refEntity);
+    super.amnesty(refEntity);
   }
 
   public void cleanup() {

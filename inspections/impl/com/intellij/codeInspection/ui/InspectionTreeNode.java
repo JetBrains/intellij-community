@@ -11,6 +11,7 @@ import java.util.Enumeration;
  * @author max
  */
 public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
+  private boolean myResolved = false;
   protected InspectionTreeNode(Object userObject) {
     super(userObject);
   }
@@ -33,7 +34,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
   }
 
   public boolean isResolved(){
-    return false;
+    return myResolved;
   }
 
   public boolean appearsBold() {
@@ -42,5 +43,23 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
 
   public FileStatus getNodeStatus(){
     return FileStatus.NOT_CHANGED;
+  }
+
+  public void ignoreElement() {
+    myResolved = true;
+    Enumeration enumeration = children();
+    while (enumeration.hasMoreElements()) {
+      InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
+      child.ignoreElement();
+    }
+  }
+
+  public void amnesty() {
+    myResolved = false;
+    Enumeration enumeration = children();
+    while (enumeration.hasMoreElements()) {
+      InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
+      child.amnesty();
+    }
   }
 }

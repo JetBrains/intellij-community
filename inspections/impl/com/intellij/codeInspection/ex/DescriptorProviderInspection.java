@@ -117,11 +117,21 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     }
   }
 
-  public void ignoreElement(RefEntity refEntity) {
+  public void ignoreElement(final RefEntity refEntity) {
     if (refEntity == null) return;
-    ignoreProblemElement(refEntity);
+    getProblemElements().remove(refEntity);
     getQuickFixActions().remove(refEntity);
-    super.ignoreElement(refEntity);
+  }
+
+  public void ignoreElementInView(RefEntity refEntity) { 
+    if (refEntity == null) return;
+    getIgnoredElements().put(refEntity, getProblemElements().get(refEntity));
+    super.ignoreElementInView(refEntity);
+  }
+
+  public void amnesty(RefEntity refEntity) {
+    getIgnoredElements().remove(refEntity);
+    super.amnesty(refEntity);
   }
 
   public void ignoreProblem(RefEntity refEntity, CommonProblemDescriptor problem, int idx) {
@@ -307,6 +317,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     myModulesProblems = new HashSet<RefModule>();
     final Set<RefEntity> elements = getProblemElements().keySet();
     for (RefEntity element : elements) {
+      if (getContext().getUIOptions().FILTER_RESOLVED_ITEMS && getIgnoredElements().containsKey(element)) continue;
       if (element instanceof RefElement) {
         String packageName = RefUtil.getInstance().getPackageName(element);
         Set<RefElement> content = myPackageContents.get(packageName);
@@ -319,7 +330,6 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
         myModulesProblems.add((RefModule)element);
       }
     }
-    myIgnoredElements = null;
   }
 
   public Map<String, Set<RefElement>> getPackageContent() {

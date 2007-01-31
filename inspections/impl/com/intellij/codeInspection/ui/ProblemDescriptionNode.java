@@ -72,6 +72,13 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
     return myElement instanceof RefElement && myTool.isElementIgnored((RefElement)myElement);
   }
 
+  public void ignoreElement() {
+    myTool.ignoreElementInView(getElement());
+  }
+
+  public void amnesty() {
+    myTool.amnesty(getElement());
+  }
 
   public FileStatus getNodeStatus() {
     if (myElement instanceof RefElement){

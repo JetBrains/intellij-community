@@ -37,7 +37,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     myContent = content;
   }
 
-  public boolean hasReportedProblems(final InspectionTool tool) {
+  public boolean checkReportedProblems(final InspectionTool tool) {
     return myContent.containsKey(tool.getShortName());
   }
 

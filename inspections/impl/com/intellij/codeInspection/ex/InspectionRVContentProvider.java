@@ -40,7 +40,7 @@ public abstract class InspectionRVContentProvider {
     boolean areEqual(final T o1, final T o2);
   }
 
-  public abstract boolean hasReportedProblems(final InspectionTool tool);
+  public abstract boolean checkReportedProblems(final InspectionTool tool);
 
   @Nullable
   public abstract QuickFixAction[] getQuickFixes(final InspectionTool tool, final InspectionTree tree);

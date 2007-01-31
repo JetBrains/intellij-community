@@ -89,6 +89,14 @@ public class RefElementNode extends InspectionTreeNode {
   }
 
 
+  public void ignoreElement() {
+    myTool.ignoreElementInView(getElement());
+  }
+
+  public void amnesty() {
+    myTool.amnesty(getElement());
+  }
+
   public FileStatus getNodeStatus() {
     return  myTool.getElementStatus(getElement());    
   }

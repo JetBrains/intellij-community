@@ -21,7 +21,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.TreePath;
 import java.util.*;
 
 public class InspectionRVContentProviderImpl extends InspectionRVContentProvider {
@@ -30,14 +29,13 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     super(project);
   }
 
-  public boolean hasReportedProblems(final InspectionTool tool) {
+  public boolean checkReportedProblems(final InspectionTool tool) {
     tool.updateContent();
     return tool.hasReportedProblems();
   }
 
   @Nullable
   public QuickFixAction[] getQuickFixes(final InspectionTool tool, final InspectionTree tree) {
-    final TreePath[] treePaths = tree.getSelectionPaths();
     final List<RefEntity> selectedElements = new ArrayList<RefEntity>();
     selectedElements.addAll(Arrays.asList(tree.getSelectedElements()));
     return selectedElements.isEmpty() ? null : tool.getQuickFixes(selectedElements.toArray(new RefEntity[selectedElements.size()]));

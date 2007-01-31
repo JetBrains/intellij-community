@@ -659,7 +659,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     final Set<Pair<InspectionTool, InspectionProfile>> tools = myTools.get(tool.getShortName());
     if (tools != null){
       for (Pair<InspectionTool, InspectionProfile> inspectionTool : tools) {
-        inspectionTool.first.ignoreElement(refElement);
+        inspectionTool.first.ignoreElementInView(refElement);
       }
     }
   }

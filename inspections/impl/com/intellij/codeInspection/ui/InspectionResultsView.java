@@ -411,7 +411,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   public boolean updateView(boolean strict) {
-    if (!strict && !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) return false;
+    if (!strict && !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS){
+      myTree.repaint();
+      return false;
+    }
     clearTree();
     boolean resultsFound = buildTree();
     myTree.sort();
@@ -432,7 +435,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         if (profile != null && !profile.isToolEnabled(key)) {
           break; //exclude disabled inspections from view
         }
-        if (myProvider.hasReportedProblems(tool)) {
+        if (myProvider.checkReportedProblems(tool)) {
           addTool(tool, toolWithProfile.second.getErrorLevel(key), isGroupedBySeverity);
           resultsFound = true;
         }
@@ -611,9 +614,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return psiElements.toArray(new PsiElement[psiElements.size()]);
   }
 
+  @SuppressWarnings({"NonStaticInitializer"})
   private void popupInvoked(Component component, int x, int y) {
-    if (!isSingleToolInSelection()) return;
-
     final TreePath path;
     if (myTree.hasFocus()) {
       path = myTree.getLeadSelectionPath();
@@ -629,26 +631,54 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     actions.add(actionManager.getAction(IdeActions.ACTION_EDIT_SOURCE));
     actions.add(actionManager.getAction(IdeActions.ACTION_FIND_USAGES));
 
-    final InspectionTool tool = myTree.getSelectedTool();
-    if (tool == null) return;
+    actions.add(new AnAction(InspectionsBundle.message("inspections.result.view.include.action.text")){
+      {
+        registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
+      }
 
-    final QuickFixAction[] quickFixes = myProvider.getQuickFixes(tool, myTree);
-    if (quickFixes != null) {
-      for (QuickFixAction quickFixe : quickFixes) {
-        actions.add(quickFixe);
+      public void actionPerformed(AnActionEvent e) {
+        ((InspectionTreeNode)path.getLastPathComponent()).amnesty();
+        updateView(false);
+      }
+
+      public void update(final AnActionEvent e) {
+        e.getPresentation().setEnabled(!myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS);
+      }
+    });
+
+    actions.add(new AnAction(InspectionsBundle.message("inspections.result.view.exclude.action.text")) {
+      {
+        registerCustomShortcutSet(CommonShortcuts.DELETE, myTree);
+      }
+
+      public void actionPerformed(final AnActionEvent e) {
+        ((InspectionTreeNode)path.getLastPathComponent()).ignoreElement();
+        updateView(false);
+      }
+    });
+
+    actions.addSeparator();
+
+    final InspectionTool tool = myTree.getSelectedTool();
+    if (tool != null) {
+      final QuickFixAction[] quickFixes = myProvider.getQuickFixes(tool, myTree);
+      if (quickFixes != null) {
+        for (QuickFixAction quickFixe : quickFixes) {
+          actions.add(quickFixe);
+        }
+      }
+      final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+      if (key == null) return; //e.g. DummyEntryPointsTool
+
+      //options
+      actions.addSeparator();
+      actions.add(new EditSettingsAction());
+      final List<AnAction> options = new InspectionsOptionsToolbarAction(this).createActions();
+      for (AnAction action : options) {
+        actions.add(action);
       }
     }
-    final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
-    if (key == null) return; //e.g. DummyEntryPointsTool
 
-    //options
-    actions.addSeparator();
-    actions.add(new EditSettingsAction());
-    final List<AnAction> options = new InspectionsOptionsToolbarAction(this).createActions();
-    for (AnAction action : options) {
-      actions.add(action);
-    }
-    
     actions.addSeparator();
     actions.add(actionManager.getAction(IdeActions.GROUP_VERSION_CONTROLS));
 
