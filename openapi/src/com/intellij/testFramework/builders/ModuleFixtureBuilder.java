@@ -40,7 +40,14 @@ public interface ModuleFixtureBuilder<T extends ModuleFixture> {
    * @return current builder
    */
   ModuleFixtureBuilder<T> addSourceRoot(String sourceRootPath);
-  
+
+  /**
+   * Sets compiler output path.
+   *
+   * @param outputPath absolute path.
+   */
+  void setOutputPath(String outputPath);
+
   T getFixture();
 
 }

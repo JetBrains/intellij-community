@@ -34,6 +34,7 @@ abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements Modu
   protected final List<String> mySourceRoots = new ArrayList<String>();
   protected final TestFixtureBuilder<? extends IdeaProjectTestFixture> myFixtureBuilder;
   private T myModuleFixture;
+  private String myOutputPath;
 
   public ModuleFixtureBuilderImpl(@NotNull final ModuleType moduleType, TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
     myModuleType = moduleType;
@@ -49,6 +50,10 @@ abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements Modu
     assert myContentRoots.size() > 0 : "content root should be added first";
     mySourceRoots.add(sourceRootPath);
     return this;
+  }
+
+  public void setOutputPath(final String outputPath) {
+    myOutputPath = outputPath;
   }
 
   protected Module createModule() {
@@ -104,7 +109,11 @@ abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements Modu
         mainRoot = false;
       }
     }
-
+    if (myOutputPath != null) {
+      final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myOutputPath);
+      assert virtualFile != null : "cannot find output path: " + myOutputPath;
+      rootModel.setCompilerOutputPath(virtualFile);
+    }
     rootModel.commit();
   }
 
