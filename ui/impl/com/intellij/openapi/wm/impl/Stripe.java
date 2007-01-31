@@ -19,10 +19,12 @@ import java.util.Iterator;
  */
 final class Stripe extends JPanel{
   private final int myAnchor;
-  private final ArrayList myButtons = new ArrayList();
+  private final ArrayList<StripeButton> myButtons = new ArrayList<StripeButton>();
   private final MyKeymapManagerListener myKeymapManagerListener;
   private final WeakKeymapManagerListener myWeakKeymapManagerListener;
   private final MyUISettingsListener myUISettingsListener;
+
+  private Dimension myPrefSize;
 
   Stripe(final int anchor){
     super(new GridBagLayout());
@@ -54,48 +56,85 @@ final class Stripe extends JPanel{
   }
 
   void addButton(final StripeButton button,final Comparator comparator){
+    myPrefSize = null;
     myButtons.add(button);
     Collections.sort(myButtons,comparator);
-    rebuild();
+    add(button);
+    revalidate();
   }
 
   void removeButton(final StripeButton button) {
+    myPrefSize = null;
     myButtons.remove(button);
-    rebuild();
+    remove(button);
+    revalidate();
   }
 
-  private void rebuild() {
-    removeAll();
-    if (myAnchor == SwingConstants.TOP || myAnchor == SwingConstants.BOTTOM) {
-      add(Box.createHorizontalStrut(19));
-      int idx=1;
-      for (Iterator i=myButtons.iterator();i.hasNext();) {
-        final StripeButton button=(StripeButton)i.next();
-        add(
-          button,
-          new GridBagConstraints(idx,0,1,1,0,1,GridBagConstraints.WEST,GridBagConstraints.VERTICAL,new Insets(0,0,0,0),0,0)
-        );
-        idx++;
-      }
-      add(
-        Box.createGlue(),
-        new GridBagConstraints(idx,0,1,1,1,1,GridBagConstraints.WEST,GridBagConstraints.NONE,new Insets(0,0,0,0),0,0)
-      );
-    }else if(myAnchor == SwingConstants.LEFT || myAnchor == SwingConstants.RIGHT) {
-      for (int i = 0; i < myButtons.size(); i++) {
-        final StripeButton button=(StripeButton)myButtons.get(i);
-        add(
-          button,
-          new GridBagConstraints(0,i,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0)
-        );
-      }
-      final GridBagConstraints gc = new GridBagConstraints();
-      gc.gridy = myButtons.size();
-      gc.weighty = 1;
-      gc.anchor = GridBagConstraints.NORTH;
-      add(Box.createGlue(), gc);
-    }
+
+  public void doLayout() {
+    recomputeBounds(true);
   }
+
+  private Dimension recomputeBounds(boolean setBounds) {
+    final boolean horizontal = isHorizontal();
+
+    int eachX = -1;
+    int eachY = 0;
+    Dimension size = new Dimension();
+    final int gap = 1;
+
+    Dimension max = new Dimension();
+    for (StripeButton eachButton : myButtons) {
+      final Dimension eachSize = eachButton.getPreferredSize();
+      max.width = Math.max(eachSize.width, max.width);
+      max.height = Math.max(eachSize.height, max.height);
+    }
+
+    for (StripeButton eachButton : myButtons) {
+      if (!eachButton.isVisible()) continue;
+
+      final Dimension eachSize = eachButton.getPreferredSize();
+      if (eachX == -1) {
+        if (horizontal) {
+          final Insets insets = eachButton.getInsets();
+          eachX = eachSize.height - (insets == null ? 0 : insets.top);
+        } else {
+          eachX = 0;
+        }
+      }
+
+      if (setBounds) {
+        final int width = horizontal ? eachSize.width : max.width;
+        final int height = horizontal ? max.height : eachSize.height;
+        eachButton.setBounds(eachX, eachY, width, height);
+      }
+      if (horizontal) {
+        final int deltaX = eachSize.width + gap;
+        eachX += deltaX;
+        size.width += deltaX;
+        size.height = eachSize.height;
+      } else {
+        final int deltaY = eachSize.height + gap;
+        eachY += deltaY;
+        size.width = eachSize.width;
+        size.height += deltaY;
+      }
+    }
+
+    return size;
+  }
+
+  private boolean isHorizontal() {
+    return myAnchor == SwingConstants.TOP || myAnchor == SwingConstants.BOTTOM;
+  }
+
+  public Dimension getPreferredSize() {
+    if (myPrefSize == null) {
+      myPrefSize = recomputeBounds(false);
+    }
+    return myPrefSize;
+  }
+
 
   private void updateText(){
     final int size=myButtons.size();
