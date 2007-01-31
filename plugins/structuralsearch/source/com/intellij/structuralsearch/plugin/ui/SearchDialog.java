@@ -5,8 +5,10 @@ import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
-import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -17,35 +19,33 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.structuralsearch.plugin.replace.ui.NavigateSearchResultsDialog;
 import com.intellij.structuralsearch.plugin.ui.actions.DoSearchAction;
-import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Collection;
+import java.util.Iterator;
 
 // Class to show the user the request for search
 
@@ -384,7 +384,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   protected void createUsageView(final SearchContext searchContext, final Configuration config) {
-    UsageViewManager manager = searchContext.getProject().getComponent(UsageViewManager.class);
+    UsageViewManager manager = UsageViewManager.getInstance(searchContext.getProject());
 
     final UsageViewContext context = createUsageViewContext(config);
     final UsageViewPresentation presentation = new UsageViewPresentation();
