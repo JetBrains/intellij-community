@@ -255,6 +255,14 @@ final class ToolWindowsPane extends JPanel{
     myBottomStripe.setVisible(visible);
   }
 
+  public Stripe getStripeFor(final Point screenPoint) {
+    if (myLeftStripe.containsScreen(screenPoint)) return myLeftStripe;
+    if (myRightStripe.containsScreen(screenPoint)) return myRightStripe;
+    if (myTopStripe.containsScreen(screenPoint)) return myTopStripe;
+    if (myBottomStripe.containsScreen(screenPoint)) return myBottomStripe;
+    return null;
+  }
+
   private final class AddDockedComponentCmd extends FinalizableCommand{
     private final JComponent myComponent;
     private final WindowInfo myInfo;

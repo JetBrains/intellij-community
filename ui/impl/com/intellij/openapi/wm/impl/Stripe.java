@@ -150,6 +150,12 @@ final class Stripe extends JPanel{
     }
   }
 
+  public boolean containsScreen(final Point screenPoint) {
+    Point point = new Point(screenPoint);
+    SwingUtilities.convertPointFromScreen(point, this);
+    return contains(point);
+  }
+
   private final class MyKeymapManagerListener implements KeymapManagerListener{
     public void activeKeymapChanged(final Keymap keymap){
       updateText();

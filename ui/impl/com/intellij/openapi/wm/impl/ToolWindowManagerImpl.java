@@ -525,7 +525,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     // Create and show tool button
 
-    final StripeButton button = new StripeButton(decorator);
+    final StripeButton button = new StripeButton(decorator, myToolWindowsPane);
     myId2StripeButton.put(id, button);
     final ArrayList<FinalizableCommand> commandsList = new ArrayList<FinalizableCommand>();
     appendAddButtonCmd(button, info, commandsList);
