@@ -55,6 +55,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vcs.changes.Change;
@@ -379,7 +380,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     if (mapping.getDirectory().length() == 0) {
       return VfsUtil.getModuleForFile(myProject, file) != null;
     }
-    return path.startsWith(mapping.getDirectory());
+    return FileUtil.startsWith(path, mapping.getDirectory());
   }
 
   private void dispose() {
