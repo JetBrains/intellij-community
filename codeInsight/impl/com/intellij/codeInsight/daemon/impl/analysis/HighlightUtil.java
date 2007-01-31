@@ -43,7 +43,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -1762,7 +1762,7 @@ public class HighlightUtil {
 
   private static String getFQName(PsiType type, boolean longName) {
     if (type == null) return "";
-    return XmlUtil.escapeString(longName ? type.getInternalCanonicalText() : type.getPresentableText());
+    return XmlStringUtil.escapeString(longName ? type.getInternalCanonicalText() : type.getPresentableText());
   }
 
 

@@ -29,7 +29,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentHashSet;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -148,7 +148,7 @@ public class IntentionHintComponent extends JPanel {
 
       return new IntentionListStep(quickFixes, intentions){
         public String getTitle() {
-          return XmlUtil.escapeString(action.getToolName());
+          return XmlStringUtil.escapeString(action.getToolName());
         }
       };
     }

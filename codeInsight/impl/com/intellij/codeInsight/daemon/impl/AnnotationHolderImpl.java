@@ -7,7 +7,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SmartList;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.util.XmlStringUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -67,7 +67,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
 
   protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
     //noinspection HardCodedStringLiteral
-    String tooltip = message == null ? null : "<html><body>" + XmlUtil.escapeString(message) + "</body></html>";
+    String tooltip = message == null ? null : "<html><body>" + XmlStringUtil.escapeString(message) + "</body></html>";
     Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, message, tooltip);
     add(annotation);
     return annotation;

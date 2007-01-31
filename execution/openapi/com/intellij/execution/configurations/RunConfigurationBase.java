@@ -16,6 +16,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -25,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author dyoma
@@ -39,10 +42,22 @@ public abstract class RunConfigurationBase implements RunConfiguration {
   @NonNls private static final String LOG_FILE = "log_file";
   @NonNls private static final String PREDEFINED_LOG_FILE_ELEMENT = "predefined_log_file";
 
+  private Map<Class<? extends RunConfigurationExtension>, Object> myExtensionSettings =
+    new HashMap<Class<? extends RunConfigurationExtension>, Object>();
+
   protected RunConfigurationBase(final Project project, final ConfigurationFactory factory, final String name) {
     myProject = project;
     myFactory = factory;
     myName = name;
+  }
+
+  @Nullable
+  public Object getExtensionSettings(Class<? extends RunConfigurationExtension> extensionClass) {
+    return myExtensionSettings.get(extensionClass);
+  }
+
+  public void setExtensionSettings(Class<? extends RunConfigurationExtension> extensionClass, Object value) {
+    myExtensionSettings.put(extensionClass, value);
   }
 
   public final ConfigurationFactory getFactory() {

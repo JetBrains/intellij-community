@@ -18,7 +18,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +69,7 @@ public class HighlightInfo {
 
   @NonNls
   private static String htmlEscapeToolTip(String description) {
-    return description == null ? null : "<html><body>"+XmlUtil.escapeString(description)+"</body></html>";
+    return description == null ? null : "<html><body>"+ XmlStringUtil.escapeString(description)+"</body></html>";
   }
 
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull PsiElement element, String description, String toolTip) {

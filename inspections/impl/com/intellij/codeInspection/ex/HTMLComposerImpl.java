@@ -14,7 +14,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.export.HTMLExporter;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.*;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -135,7 +135,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
         appendClassOrInterface(buf, refClass, false);
         buf.append(NBSP).append(B_OPENING).append(CODE_OPENING);
         final String name = refClass.getName();
-        buf.append(refClass.isSyntheticJSP() ? XmlUtil.escapeString(name) : name);
+        buf.append(refClass.isSyntheticJSP() ? XmlStringUtil.escapeString(name) : name);
         buf.append(CODE_CLOSING).append(B_CLOSING);
       }
 
@@ -218,7 +218,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
       final String name;
       if (refEntity instanceof RefElement && ((RefElement)refEntity).isSyntheticJSP()) {
-        name = XmlUtil.escapeString(refEntity.getName());
+        name = XmlStringUtil.escapeString(refEntity.getName());
       } else if (refEntity instanceof RefMethod) {
         PsiMethod psiMethod = (PsiMethod)((RefMethod)refEntity).getElement();
         if (psiMethod != null) {
@@ -330,7 +330,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       buf.append(InspectionsBundle.message("inspection.reference.anonymous"));
     }
     else if (refElement.isSyntheticJSP()) {
-      buf.append(XmlUtil.escapeString(refElement.getName()));
+      buf.append(XmlStringUtil.escapeString(refElement.getName()));
     }
     else if (refElement instanceof RefMethod) {
       PsiMethod psiMethod = (PsiMethod)refElement.getElement();

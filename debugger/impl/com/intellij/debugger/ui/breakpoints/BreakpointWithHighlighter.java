@@ -39,7 +39,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import com.sun.jdi.ReferenceType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -215,13 +215,13 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
         //noinspection HardCodedStringLiteral
         buf.append("&nbsp;<br>&nbsp;");
         buf.append(DebuggerBundle.message("breakpoint.property.name.log.expression")).append(": ");
-        buf.append(XmlUtil.escapeString(getLogMessage().getText()));
+        buf.append(XmlStringUtil.escapeString(getLogMessage().getText()));
       }
       if (CONDITION_ENABLED && getCondition() != null && !"".equals(getCondition().getText())) {
         //noinspection HardCodedStringLiteral
         buf.append("&nbsp;<br>&nbsp;");
         buf.append(DebuggerBundle.message("breakpoint.property.name.condition")).append(": ");
-        buf.append(XmlUtil.escapeString(getCondition().getText()));
+        buf.append(XmlStringUtil.escapeString(getCondition().getText()));
       }
       if (COUNT_FILTER_ENABLED) {
         //noinspection HardCodedStringLiteral

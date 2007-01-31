@@ -34,6 +34,7 @@
     <favoriteNodeProvider implementation="com.intellij.uiDesigner.projectView.UIDesignerFavoriteNodeProvider"/>
     <renameHandler implementation="com.intellij.uiDesigner.projectView.FormRenameHandler"/>
     <implicitUsageProvider implementation="com.intellij.uiDesigner.binding.UIDesignerImplicitUsageProvider"/>
+    <runConfigurationExtension implementation="com.intellij.uiDesigner.snapShooter.SnapShooterConfigurationExtension"/>
 
     <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty"
                     serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty"/>

@@ -21,7 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.text.MessageFormat;
@@ -498,7 +498,7 @@ public class HighlightMethodUtil {
       PsiParameter parameter = parameters[j];
       PsiType type = substitutor.substitute(parameter.getType());
       ms += "<td><b>" + (j == 0 ? "(" : "") +
-            XmlUtil.escapeString(type.getPresentableText())
+            XmlStringUtil.escapeString(type.getPresentableText())
             + (j == parameters.length - 1 ? ")" : ",") + "</b></td>";
     }
     if (parameters.length == 0) {
@@ -544,7 +544,7 @@ public class HighlightMethodUtil {
       @NonNls String mismatchColor = showShortType(i, parameters, expressions, substitutor) ? null : "red";
       ms += "<td> " + "<b><nobr>" + (i == 0 ? "(" : "")
             + "<font " + (mismatchColor == null ? "" : "color=" + mismatchColor) + ">" +
-            XmlUtil.escapeString(showShortType(i, parameters, expressions, substitutor)
+            XmlStringUtil.escapeString(showShortType(i, parameters, expressions, substitutor)
                                  ? type.getPresentableText()
                                  : HighlightUtil.formatType(type))
             + "</font>"
@@ -565,7 +565,7 @@ public class HighlightMethodUtil {
       PsiParameter parameter = parameters[i];
       PsiType type = substitutor.substituteAndCapture(parameter.getType());
       ms += "<td><b><nobr>" + (i == 0 ? "(" : "") +
-            XmlUtil.escapeString(showShortType(i, parameters, expressions, substitutor)
+            XmlStringUtil.escapeString(showShortType(i, parameters, expressions, substitutor)
                                  ? type.getPresentableText()
                                  : HighlightUtil.formatType(type))
             + (i == parameters.length - 1 ? ")" : ",") + "</nobr></b></td>";

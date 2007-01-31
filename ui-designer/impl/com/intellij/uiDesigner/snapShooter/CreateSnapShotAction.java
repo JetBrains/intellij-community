@@ -7,30 +7,30 @@ package com.intellij.uiDesigner.snapShooter;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionRegistry;
 import com.intellij.execution.RunManagerEx;
-import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunStrategy;
+import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -44,8 +44,8 @@ import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
-import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadComponentFactory;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -57,11 +57,11 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.nio.charset.Charset;
 
 /**
  * @author yole
@@ -71,8 +71,8 @@ public class CreateSnapShotAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    final Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
-    final IdeView view = (IdeView)e.getDataContext().getData(DataConstants.IDE_VIEW);
+    final Project project = e.getData(DataKeys.PROJECT);
+    final IdeView view = e.getData(DataKeys.IDE_VIEW);
     e.getPresentation().setVisible(project != null && view != null && hasDirectoryInPackage(project, view));
   }
 
@@ -88,8 +88,8 @@ public class CreateSnapShotAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
-    final IdeView view = (IdeView)e.getDataContext().getData(DataConstants.IDE_VIEW);
+    final Project project = e.getData(DataKeys.PROJECT);
+    final IdeView view = e.getData(DataKeys.IDE_VIEW);
     if (project == null || view == null) {
       return;
     }
@@ -110,10 +110,11 @@ public class CreateSnapShotAction extends AnAction {
         ApplicationConfiguration appConfig = (ApplicationConfiguration) config.getConfiguration();
         appConfigurations.add(config);
         if (appConfig.ENABLE_SWING_INSPECTOR) {
+          SnapShooterConfigurationSettings settings = SnapShooterConfigurationSettings.get(appConfig);
           snapshotConfiguration = config;
-          if (appConfig.getLastSnapShooterPort() > 0) {
+          if (settings.getLastPort() > 0) {
             try {
-              client.connect(appConfig.getLastSnapShooterPort());
+              client.connect(settings.getLastPort());
               connected = true;
             }
             catch(IOException ex) {
@@ -137,14 +138,15 @@ public class CreateSnapShotAction extends AnAction {
       final JavaProgramRunner runner = ExecutionRegistry.getInstance().getDefaultRunner();
 
       final ApplicationConfiguration appConfig = (ApplicationConfiguration) snapshotConfiguration.getConfiguration();
-      appConfig.setSnapShooterNotifyRunnable(new Runnable() {
+      final SnapShooterConfigurationSettings settings = SnapShooterConfigurationSettings.get(appConfig);
+      settings.setNotifyRunnable(new Runnable() {
         public void run() {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.prepare.notice"),
                                          UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
               try {
-                client.connect(appConfig.getLastSnapShooterPort());
+                client.connect(settings.getLastPort());
               }
               catch(IOException ex) {
                 Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.connection.error"),

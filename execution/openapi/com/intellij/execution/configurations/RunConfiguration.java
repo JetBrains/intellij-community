@@ -16,9 +16,11 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.runners.JavaProgramRunner;
+import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
+import org.jetbrains.annotations.Nullable;
 
 public interface RunConfiguration extends RunProfile, JDOMExternalizable, Cloneable {
   ConfigurationFactory getFactory();
@@ -36,4 +38,9 @@ public interface RunConfiguration extends RunProfile, JDOMExternalizable, Clonea
   SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(JavaProgramRunner runner);
 
   RunConfiguration clone();
+
+  @Nullable
+  Object getExtensionSettings(Class<? extends RunConfigurationExtension> extensionClass);
+
+  void setExtensionSettings(Class<? extends RunConfigurationExtension> extensionClass, Object value);
 }
