@@ -225,14 +225,12 @@ public class PsiClassImplUtil {
       }
     }, PsiSubstitutor.EMPTY, new HashSet<PsiClass>(), null, psiClass, false);
 
-    synchronized (PsiLock.LOCK) {
-      Map<Class<? extends PsiMember>, Map<String, List>> result = new HashMap<Class<? extends PsiMember>, Map<String, List>>(3);
-      result.put(PsiClass.class, generateMapByList(classes));
-      result.put(PsiMethod.class, generateMapByList(methods));
-      result.put(PsiField.class, generateMapByList(fields));
-      psiClass.putUserData(NAME_MAPS_BUILT_FLAG, "");
-      return result;
-    }
+    Map<Class<? extends PsiMember>, Map<String, List>> result = new HashMap<Class<? extends PsiMember>, Map<String, List>>(3);
+    result.put(PsiClass.class, generateMapByList(classes));
+    result.put(PsiMethod.class, generateMapByList(methods));
+    result.put(PsiField.class, generateMapByList(fields));
+    psiClass.putUserData(NAME_MAPS_BUILT_FLAG, "");
+    return result;
   }
 
   private static <T extends PsiMember> Map<String, List> generateMapByList(final List<Pair<T, PsiSubstitutor>> list) {
@@ -284,10 +282,8 @@ public class PsiClassImplUtil {
     if (visited.contains(aClass)) return true;
     isRaw = isRaw || PsiUtil.isRawSubstitutor(aClass, substitutor);
     if (last instanceof PsiTypeParameterList || last instanceof PsiModifierList) return true; //TypeParameterList and ModifierList do not see our declarations
-    final Object data;
-    synchronized (PsiLock.LOCK) {
-      data = aClass.getUserData(NAME_MAPS_BUILT_FLAG);
-    }
+
+    final Object data = aClass.getUserData(NAME_MAPS_BUILT_FLAG);
     if (data == null) {
       return processDeclarationsInClassNotCached(aClass, processor, substitutor, visited, last, place, isRaw);
     }
