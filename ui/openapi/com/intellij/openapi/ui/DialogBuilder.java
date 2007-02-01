@@ -64,6 +64,9 @@ public class DialogBuilder {
     myDialogWrapper.init();
     myDialogWrapper.setModal(isModal);
     myDialogWrapper.show();
+    if (isModal) {
+      myDialogWrapper.dispose();
+    }
     return myDialogWrapper;
   }
 
@@ -288,6 +291,7 @@ public class DialogBuilder {
     protected JComponent createCenterPanel() { return myCenterPanel; }
 
     public void dispose() {
+      myPreferedFocusComponent = null;
       for (Disposable disposable : myDisposables) {
         disposable.dispose();
       }
