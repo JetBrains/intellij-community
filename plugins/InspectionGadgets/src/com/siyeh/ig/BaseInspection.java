@@ -44,7 +44,7 @@ public abstract class BaseInspection extends LocalInspectionTool {
     @NonNls private static final String INSPECTION = "Inspection";
 
     @NotNull
-    public String getShortName() {
+    public final String getShortName() {
         if (m_shortName == null) {
             final Class<? extends BaseInspection> aClass = getClass();
             final String name = aClass.getName();

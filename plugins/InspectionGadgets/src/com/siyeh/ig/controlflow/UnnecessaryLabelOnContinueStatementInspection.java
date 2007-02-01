@@ -30,12 +30,6 @@ import org.jetbrains.annotations.NotNull;
 public class UnnecessaryLabelOnContinueStatementInspection
         extends BaseInspection {
 
-    @NotNull
-    public String getShortName() {
-        return InspectionGadgetsBundle.message(
-                "unnecessary.label.on.continue.statement.display.name");
-    }
-
     public String getGroupDisplayName() {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
