@@ -28,10 +28,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.StatementInspection;
-import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.StringUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
@@ -39,7 +38,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class WhileCanBeForeachInspection extends StatementInspection {
+public class WhileCanBeForeachInspection extends BaseInspection {
 
     public String getID() {
         return "WhileLoopReplaceableByForEach";
@@ -373,7 +372,7 @@ public class WhileCanBeForeachInspection extends StatementInspection {
     }
 
     private static class WhileCanBeForeachVisitor
-            extends StatementInspectionVisitor {
+            extends BaseInspectionVisitor {
 
         public void visitWhileStatement(
                 @NotNull PsiWhileStatement whileStatement) {

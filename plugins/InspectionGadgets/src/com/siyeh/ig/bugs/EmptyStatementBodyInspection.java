@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,14 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.StatementInspection;
-import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-public class EmptyStatementBodyInspection extends StatementInspection {
+public class EmptyStatementBodyInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
     public boolean m_reportEmptyBlocks = false;
@@ -66,7 +65,7 @@ public class EmptyStatementBodyInspection extends StatementInspection {
         return new EmptyStatementVisitor();
     }
 
-    private class EmptyStatementVisitor extends StatementInspectionVisitor {
+    private class EmptyStatementVisitor extends BaseInspectionVisitor {
 
         public void visitDoWhileStatement(
                 @NotNull PsiDoWhileStatement statement) {
@@ -131,6 +130,9 @@ public class EmptyStatementBodyInspection extends StatementInspection {
             final PsiStatement elseBranch = statement.getElseBranch();
             if (elseBranch != null && isEmpty(elseBranch)) {
                 final PsiElement elseToken = statement.getElseElement();
+                if (elseToken == null) {
+                    return;
+                }
                 registerError(elseToken);
             }
         }

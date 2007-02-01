@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,12 @@ package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.StatementInspection;
-import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class InstanceofChainInspection extends StatementInspection {
+public class InstanceofChainInspection extends BaseInspection {
 
     public String getID(){
         return "ChainOfInstanceofChecks";
@@ -48,7 +47,7 @@ public class InstanceofChainInspection extends StatementInspection {
     }
 
     private static class InstanceofChainVisitor
-            extends StatementInspectionVisitor {
+            extends BaseInspectionVisitor {
 
         public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);

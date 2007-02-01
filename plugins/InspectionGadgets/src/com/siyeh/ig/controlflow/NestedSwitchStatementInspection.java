@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSwitchStatement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.StatementInspection;
-import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class NestedSwitchStatementInspection extends StatementInspection {
+public class NestedSwitchStatementInspection extends BaseInspection {
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "nested.switch.statement.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
@@ -43,7 +48,7 @@ public class NestedSwitchStatementInspection extends StatementInspection {
     }
 
     private static class NestedSwitchStatementVisitor
-            extends StatementInspectionVisitor {
+            extends BaseInspectionVisitor {
 
         public void visitSwitchStatement(
                 @NotNull PsiSwitchStatement statement) {

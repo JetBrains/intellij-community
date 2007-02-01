@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,22 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiReturnStatement;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.StatementInspection;
-import com.siyeh.ig.StatementInspectionVisitor;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ReturnFromFinallyBlockInspection extends StatementInspection {
+public class ReturnFromFinallyBlockInspection extends BaseInspection {
 
     public String getID() {
         return "ReturnInsideFinallyBlock";
+    }
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "return.from.finally.block.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -49,7 +54,7 @@ public class ReturnFromFinallyBlockInspection extends StatementInspection {
     }
 
     private static class ReturnFromFinallyBlockVisitor
-            extends StatementInspectionVisitor {
+            extends BaseInspectionVisitor {
 
         public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
             super.visitReturnStatement(statement);

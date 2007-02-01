@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,8 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiSwitchStatement;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.StatementInspection;
-import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.JComponent;
 
 public class SwitchStatementWithTooManyBranchesInspection
-        extends StatementInspection {
+        extends BaseInspection {
 
     private static final int DEFAULT_BRANCH_LIMIT = 10;
     /**
@@ -37,6 +36,12 @@ public class SwitchStatementWithTooManyBranchesInspection
      * @noinspection PublicField
      */
     public int m_limit = DEFAULT_BRANCH_LIMIT;
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "switch.statement.with.too.many.branches.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
@@ -62,7 +67,7 @@ public class SwitchStatementWithTooManyBranchesInspection
     }
 
     private class SwitchStatementWithTooManyBranchesVisitor
-            extends StatementInspectionVisitor {
+            extends BaseInspectionVisitor {
 
         public void visitSwitchStatement(
                 @NotNull PsiSwitchStatement statement) {

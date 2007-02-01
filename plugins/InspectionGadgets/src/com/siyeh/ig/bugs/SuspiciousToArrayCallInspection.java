@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Bas Leijdekkers
+ * Copyright 2005-2007 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class SuspiciousToArrayCallInspection extends StatementInspection {
+public class SuspiciousToArrayCallInspection extends BaseInspection {
 
     @NotNull
     public String getGroupDisplayName() {

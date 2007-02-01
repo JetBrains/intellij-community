@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,18 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiLabeledStatement;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.StatementInspection;
-import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class LabeledStatementInspection extends StatementInspection {
+public class LabeledStatementInspection extends BaseInspection {
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "labeled.statement.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
@@ -41,7 +46,7 @@ public class LabeledStatementInspection extends StatementInspection {
     }
 
     private static class LabeledStatementVisitor
-            extends StatementInspectionVisitor {
+            extends BaseInspectionVisitor {
 
         public void visitLabeledStatement(PsiLabeledStatement statement) {
             super.visitLabeledStatement(statement);

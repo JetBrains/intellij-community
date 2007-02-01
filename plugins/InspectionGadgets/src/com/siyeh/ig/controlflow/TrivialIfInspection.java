@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,19 +24,21 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.StatementInspection;
-import com.siyeh.ig.StatementInspectionVisitor;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class TrivialIfInspection extends StatementInspection {
+public class TrivialIfInspection extends BaseInspection {
 
     public String getID() {
         return "RedundantIfStatement";
+    }
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message("trivial.if.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -258,7 +260,7 @@ public class TrivialIfInspection extends StatementInspection {
         }
     }
 
-    private static class TrivialIfVisitor extends StatementInspectionVisitor {
+    private static class TrivialIfVisitor extends BaseInspectionVisitor {
 
         public void visitIfStatement(@NotNull PsiIfStatement ifStatement) {
             super.visitIfStatement(ifStatement);

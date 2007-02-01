@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,20 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchStatement;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.StatementInspection;
-import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-public class SwitchStatementDensityInspection extends StatementInspection {
+public class SwitchStatementDensityInspection extends BaseInspection {
 
     private static final int DEFAULT_DENSITY_LIMIT = 20;
     /**
@@ -35,6 +37,12 @@ public class SwitchStatementDensityInspection extends StatementInspection {
      * @noinspection PublicField
      */
     public int m_limit = DEFAULT_DENSITY_LIMIT;
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "switch.statement.density.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
@@ -59,7 +67,7 @@ public class SwitchStatementDensityInspection extends StatementInspection {
     }
 
     private class SwitchStatementWithTooFewBranchesVisitor
-            extends StatementInspectionVisitor {
+            extends BaseInspectionVisitor {
 
         public void visitSwitchStatement(
                 @NotNull PsiSwitchStatement statement) {

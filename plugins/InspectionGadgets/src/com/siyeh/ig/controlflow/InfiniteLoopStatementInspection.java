@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,15 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiDoWhileStatement;
 import com.intellij.psi.PsiForStatement;
-import com.intellij.psi.PsiWhileStatement;
 import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiWhileStatement;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.StatementInspection;
-import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class InfiniteLoopStatementInspection extends StatementInspection {
+public class InfiniteLoopStatementInspection extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -53,7 +52,7 @@ public class InfiniteLoopStatementInspection extends StatementInspection {
     }
 
     private static class InfiniteLoopStatementsVisitor
-            extends StatementInspectionVisitor {
+            extends BaseInspectionVisitor {
 
         public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);

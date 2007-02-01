@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,16 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiStatement;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.StatementInspection;
-import com.siyeh.ig.StatementInspectionVisitor;
-import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class IfStatementWithTooManyBranchesInspection
-        extends StatementInspection {
+        extends BaseInspection {
 
     private static final int DEFAULT_BRANCH_LIMIT = 3;
 
@@ -38,6 +37,12 @@ public class IfStatementWithTooManyBranchesInspection
      * @noinspection PublicField
      */
     public int m_limit = DEFAULT_BRANCH_LIMIT;
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "if.statement.with.too.many.branches.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.CONTROL_FLOW_GROUP_NAME;
@@ -63,7 +68,7 @@ public class IfStatementWithTooManyBranchesInspection
     }
 
     private class IfStatementWithTooManyBranchesVisitor
-            extends StatementInspectionVisitor {
+            extends BaseInspectionVisitor {
 
         public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);

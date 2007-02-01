@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,20 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiBreakStatement;
 import com.intellij.psi.PsiContinueStatement;
 import com.intellij.psi.PsiStatement;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.StatementInspection;
-import com.siyeh.ig.StatementInspectionVisitor;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ContinueOrBreakFromFinallyBlockInspection
-        extends StatementInspection {
+        extends BaseInspection {
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "continue.or.break.from.finally.block.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.ERRORHANDLING_GROUP_NAME;
@@ -48,7 +53,7 @@ public class ContinueOrBreakFromFinallyBlockInspection
     }
 
     private static class ContinueOrBreakFromFinallyBlockVisitor
-            extends StatementInspectionVisitor {
+            extends BaseInspectionVisitor {
 
         public void visitContinueStatement(
                 @NotNull PsiContinueStatement statement) {

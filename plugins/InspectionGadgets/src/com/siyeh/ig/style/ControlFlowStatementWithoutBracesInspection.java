@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.StatementInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ControlFlowStatementWithoutBracesInspection
-        extends StatementInspection {
+        extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -115,6 +115,9 @@ public class ControlFlowStatementWithoutBracesInspection
             }
             if (!(body instanceof PsiBlockStatement)) {
                 final PsiElement doKeyword = statement.getFirstChild();
+                if (doKeyword == null) {
+                    return;
+                }
                 registerError(doKeyword);
             }
         }
@@ -127,6 +130,9 @@ public class ControlFlowStatementWithoutBracesInspection
             }
             if (!(body instanceof PsiBlockStatement)) {
                 final PsiElement forKeyword = statement.getFirstChild();
+                if (forKeyword == null) {
+                    return;
+                }
                 registerError(forKeyword);
             }
         }
@@ -139,6 +145,9 @@ public class ControlFlowStatementWithoutBracesInspection
             }
             if (!(body instanceof PsiBlockStatement)) {
                 final PsiElement forKeyword = statement.getFirstChild();
+                if (forKeyword == null) {
+                    return;
+                }
                 registerError(forKeyword);
             }
         }
@@ -151,6 +160,9 @@ public class ControlFlowStatementWithoutBracesInspection
             }
             if (!(thenBranch instanceof PsiBlockStatement)) {
                 final PsiElement ifKeyword = statement.getFirstChild();
+                if (ifKeyword == null) {
+                    return;
+                }
                 registerError(ifKeyword);
             }
             final PsiStatement elseBranch = statement.getElseBranch();
@@ -160,6 +172,9 @@ public class ControlFlowStatementWithoutBracesInspection
             if (!(elseBranch instanceof PsiBlockStatement) &&
                 !(elseBranch instanceof PsiIfStatement)) {
                 final PsiKeyword elseKeyword = statement.getElseElement();
+                if (elseKeyword == null) {
+                    return;
+                }
                 registerError(elseKeyword);
             }
         }
@@ -172,6 +187,9 @@ public class ControlFlowStatementWithoutBracesInspection
             }
             if (!(body instanceof PsiBlockStatement)) {
                 final PsiElement whileKeyword = statement.getFirstChild();
+                if (whileKeyword == null) {
+                    return;
+                }
                 registerError(whileKeyword);
             }
         }

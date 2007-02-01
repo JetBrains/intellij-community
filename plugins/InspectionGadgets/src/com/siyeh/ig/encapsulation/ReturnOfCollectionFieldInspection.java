@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,17 @@ package com.siyeh.ig.encapsulation;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.StatementInspection;
-import com.siyeh.ig.StatementInspectionVisitor;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 
-public class ReturnOfCollectionFieldInspection extends StatementInspection{
+public class ReturnOfCollectionFieldInspection extends BaseInspection{
 
     /** @noinspection PublicField*/
     public boolean ignorePrivateMethods = true;
@@ -73,7 +72,7 @@ public class ReturnOfCollectionFieldInspection extends StatementInspection{
     }
 
     private class ReturnOfCollectionFieldVisitor
-            extends StatementInspectionVisitor{
+            extends BaseInspectionVisitor {
 
         public void visitReturnStatement(@NotNull PsiReturnStatement statement){
             super.visitReturnStatement(statement);

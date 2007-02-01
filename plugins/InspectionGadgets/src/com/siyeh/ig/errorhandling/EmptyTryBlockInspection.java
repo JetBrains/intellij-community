@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,16 @@ import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.StatementInspection;
-import com.siyeh.ig.StatementInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class EmptyTryBlockInspection extends StatementInspection {
+public class EmptyTryBlockInspection extends BaseInspection {
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message("empty.try.block.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.ERRORHANDLING_GROUP_NAME;
@@ -46,7 +50,7 @@ public class EmptyTryBlockInspection extends StatementInspection {
     }
 
     private static class EmptyTryBlockVisitor
-            extends StatementInspectionVisitor {
+            extends BaseInspectionVisitor {
 
         public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
