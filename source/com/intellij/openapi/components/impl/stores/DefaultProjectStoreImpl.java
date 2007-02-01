@@ -42,7 +42,9 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
 
       public void save() throws StateStorageException {
-        myProjectManager.setDefaultProjectRootElement(JDOMUtil.convertFromDOM(myElement));
+        if (myElement != null) {
+          myProjectManager.setDefaultProjectRootElement(JDOMUtil.convertFromDOM(myElement));
+        }
       }
 
       public boolean  needsSave() throws StateStorageException {
