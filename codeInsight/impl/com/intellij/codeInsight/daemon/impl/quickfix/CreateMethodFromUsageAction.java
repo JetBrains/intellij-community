@@ -49,16 +49,18 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
   }
 
   protected void invokeImpl(PsiClass targetClass) {
-    PsiManager psiManager = getMethodCall().getManager();
+    PsiMethodCallExpression expression = getMethodCall();
+    if (expression == null) return;
+    PsiManager psiManager = expression.getManager();
     final Project project = psiManager.getProject();
-    PsiReferenceExpression ref = getMethodCall().getMethodExpression();
+    PsiReferenceExpression ref = expression.getMethodExpression();
 
-    if (isValidElement(getMethodCall())) {
+    if (isValidElement(expression)) {
       return;
     }
 
-    PsiClass parentClass = PsiTreeUtil.getParentOfType(getMethodCall(), PsiClass.class);
-    PsiMember enclosingContext = PsiTreeUtil.getParentOfType(getMethodCall(),
+    PsiClass parentClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+    PsiMember enclosingContext = PsiTreeUtil.getParentOfType(expression,
       PsiMethod.class,
       PsiField.class,
       PsiClassInitializer.class);
@@ -102,7 +104,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
 
       setupVisibility(parentClass, targetClass, method.getModifierList());
 
-      if (shouldCreateStaticMember(getMethodCall().getMethodExpression(), enclosingContext, targetClass) && !targetClass.isInterface()) {
+      if (shouldCreateStaticMember(expression.getMethodExpression(), enclosingContext, targetClass) && !targetClass.isInterface()) {
         method.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
       }
 
@@ -115,11 +117,11 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
       TemplateBuilder builder = new TemplateBuilder(method);
 
       targetClass = method.getContainingClass();
-      final ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(getMethodCall(), true);
-      final PsiSubstitutor substitutor = getTargetSubstitutor(getMethodCall());
-      final PsiElement context = PsiTreeUtil.getParentOfType(getMethodCall(), PsiClass.class, PsiMethod.class);
+      final ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(expression, true);
+      final PsiSubstitutor substitutor = getTargetSubstitutor(expression);
+      final PsiElement context = PsiTreeUtil.getParentOfType(expression, PsiClass.class, PsiMethod.class);
 
-      CreateFromUsageUtils.setupMethodParameters(method, builder, getMethodCall().getArgumentList(), substitutor);
+      CreateFromUsageUtils.setupMethodParameters(method, builder, expression.getArgumentList(), substitutor);
       new GuessTypeParameters(factory).setupTypeElement(method.getReturnTypeElement(), expectedTypes, substitutor, builder, context, targetClass);
       builder.setEndVariableAfter(targetClass.isInterface() ? method : body.getLBrace());
       method = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(method);
@@ -173,7 +175,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
   }
 
   @Nullable
-  public PsiMethodCallExpression getMethodCall() {
+  private PsiMethodCallExpression getMethodCall() {
     return (PsiMethodCallExpression)myMethodCall.getElement();
   }
 }
