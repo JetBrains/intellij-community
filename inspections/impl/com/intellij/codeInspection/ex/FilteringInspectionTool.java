@@ -12,6 +12,7 @@ import com.intellij.util.containers.HashSet;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.Collection;
 
 /**
  * @author max
@@ -22,7 +23,7 @@ public abstract class FilteringInspectionTool extends InspectionTool {
 
   private HashMap<String, Set<RefElement>> myOldPackageContents = null;
 
-  private Set<RefElement> myIgnoreElements = new HashSet<RefElement>();
+  private Set<RefEntity> myIgnoreElements = new HashSet<RefEntity>();
  
   public void updateContent() {
     myPackageContents = new HashMap<String, Set<RefElement>>();
@@ -76,10 +77,9 @@ public abstract class FilteringInspectionTool extends InspectionTool {
     return myOldPackageContents;
   }
 
-  public void ignoreElementInView(RefEntity refEntity) {
+  public void ignoreCurrentElement(RefEntity refEntity) {
     if (refEntity == null) return;
     myIgnoreElements.add((RefElement)refEntity);
-    super.ignoreElementInView(refEntity);
   }
 
   public void amnesty(RefEntity refEntity) {
@@ -137,6 +137,10 @@ public abstract class FilteringInspectionTool extends InspectionTool {
       return FileStatus.ADDED;
     }
     return FileStatus.NOT_CHANGED;
+  }
+
+  public Collection<RefEntity> getIgnoredRefElements() {
+    return myIgnoreElements;
   }
 
   private static Set<RefEntity> collectRefElements(HashMap<String, Set<RefElement>> packageContents) {

@@ -123,10 +123,9 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     getQuickFixActions().remove(refEntity);
   }
 
-  public void ignoreElementInView(RefEntity refEntity) { 
+  public void ignoreCurrentElement(RefEntity refEntity) {
     if (refEntity == null) return;
     getIgnoredElements().put(refEntity, getProblemElements().get(refEntity));
-    super.ignoreElementInView(refEntity);
   }
 
   public void amnesty(RefEntity refEntity) {
@@ -475,6 +474,10 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       }
     }
     return FileStatus.NOT_CHANGED;
+  }
+
+  public Collection<RefEntity> getIgnoredRefElements() {
+    return getIgnoredElements().keySet();
   }
 
   public THashMap<RefEntity, CommonProblemDescriptor[]> getProblemElements() {

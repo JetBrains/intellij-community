@@ -90,7 +90,8 @@ public class RefElementNode extends InspectionTreeNode {
 
 
   public void ignoreElement() {
-    myTool.ignoreElementInView(getElement());
+    myTool.ignoreCurrentElement(getElement());
+    super.ignoreElement();
   }
 
   public void amnesty() {

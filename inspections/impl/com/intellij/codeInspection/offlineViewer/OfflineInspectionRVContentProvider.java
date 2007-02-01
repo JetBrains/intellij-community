@@ -16,6 +16,7 @@ import com.intellij.codeInspection.ex.InspectionRVContentProvider;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -38,7 +39,8 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
   }
 
   public boolean checkReportedProblems(final InspectionTool tool) {
-    return myContent.containsKey(tool.getShortName());
+    final Map<String, Set<OfflineProblemDescriptor>> content = getFilteredContent(tool);
+    return content != null && !content.values().isEmpty();
   }
 
   @Nullable
@@ -88,21 +90,55 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
   public void appendToolNodeContent(final InspectionNode toolNode, final InspectionTreeNode parentNode, final boolean showStructure) {
     final InspectionTool tool = toolNode.getTool();
-    final String shortName = tool.getShortName();
-    if (myContent.containsKey(shortName)) {
+    final Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(tool);
+    if (filteredContent != null && !filteredContent.values().isEmpty()) {
       final Function<OfflineProblemDescriptor, UserObjectContainer<OfflineProblemDescriptor>> computeContainer =
         new Function<OfflineProblemDescriptor, UserObjectContainer<OfflineProblemDescriptor>>() {
           public UserObjectContainer<OfflineProblemDescriptor> fun(final OfflineProblemDescriptor descriptor) {
             return new OfflineProblemDescriptorContainer(descriptor);
           }
         };
-
-      final List<InspectionTreeNode> list = buildTree(myContent.get(shortName), false, tool, computeContainer, showStructure);
-
+      final List<InspectionTreeNode> list = buildTree(filteredContent, false, tool, computeContainer, showStructure);
       for (InspectionTreeNode node : list) {
         toolNode.add(node);
       }
       parentNode.add(toolNode);
+    }
+  }
+
+  @Nullable
+  @SuppressWarnings({"UnusedAssignment"})
+  private Map<String, Set<OfflineProblemDescriptor>> getFilteredContent(final InspectionTool tool) {
+    Map<String, Set<OfflineProblemDescriptor>> content = myContent.get(tool.getShortName());
+    if (content == null) return null;
+    if (tool.getContext().getUIOptions().FILTER_RESOLVED_ITEMS) {
+      final Map<String, Set<OfflineProblemDescriptor>> current = new HashMap<String, Set<OfflineProblemDescriptor>>(content);
+      content = null; //GC it
+      for (RefEntity refEntity : tool.getIgnoredRefElements()) {
+        if (refEntity instanceof RefElement) {
+          excludeProblem(((RefElement)refEntity).getExternalName(), current);
+        }
+      }
+      return current;
+    }
+    return content;
+  }
+
+  private static void excludeProblem(final String externalName, final Map<String, Set<OfflineProblemDescriptor>> content) {
+    for (String packageName : content.keySet()) {
+      final Set<OfflineProblemDescriptor> descriptors = content.get(packageName);
+      for (OfflineProblemDescriptor descriptor : descriptors) {
+        if (Comparing.strEqual(descriptor.getFQName(), externalName)) {
+          final Set<OfflineProblemDescriptor> excluded = new HashSet<OfflineProblemDescriptor>(descriptors);
+          excluded.remove(descriptor);
+          if (excluded.isEmpty()) {
+            content.remove(packageName);
+          } else {
+            content.put(packageName, excluded);
+          }
+          return;
+        }
+      }
     }
   }
 

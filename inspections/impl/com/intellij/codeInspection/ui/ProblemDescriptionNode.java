@@ -73,7 +73,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   }
 
   public void ignoreElement() {
-    myTool.ignoreElementInView(getElement());
+    myTool.ignoreCurrentElement(getElement());
   }
 
   public void amnesty() {

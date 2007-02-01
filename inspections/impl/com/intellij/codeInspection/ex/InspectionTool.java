@@ -112,14 +112,9 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     return null;
   }
 
-  public void ignoreElementInView(RefEntity refElement) {
-    final List<RefEntity> children = refElement.getChildren();
-    if (children != null) {
-      for (RefEntity child : children) {
-        ignoreElementInView(child);
-      }
-    }
-  }
+  public abstract void ignoreCurrentElement(RefEntity refElement);
+
+  public abstract Collection<RefEntity> getIgnoredRefElements();
 
   public void amnesty(RefEntity refEntity) {
     final List<RefEntity> children = refEntity != null ? refEntity.getChildren() : null;

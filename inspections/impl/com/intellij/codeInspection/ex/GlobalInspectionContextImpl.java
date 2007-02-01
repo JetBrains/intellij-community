@@ -659,7 +659,19 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     final Set<Pair<InspectionTool, InspectionProfile>> tools = myTools.get(tool.getShortName());
     if (tools != null){
       for (Pair<InspectionTool, InspectionProfile> inspectionTool : tools) {
-        inspectionTool.first.ignoreElementInView(refElement);
+        ignoreElementRecursively(inspectionTool.first, refElement);
+      }
+    }
+  }
+
+  private static void ignoreElementRecursively(final InspectionTool tool, final RefEntity refElement) {
+    if (refElement != null) {
+      tool.ignoreCurrentElement(refElement);
+      final List<RefEntity> children = refElement.getChildren();
+      if (children != null) {
+        for (RefEntity child : children) {
+          ignoreElementRecursively(tool, child);
+        }
       }
     }
   }
