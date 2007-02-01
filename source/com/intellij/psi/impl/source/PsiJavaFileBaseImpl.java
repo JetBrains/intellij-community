@@ -1,34 +1,34 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -340,19 +340,11 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
           }
         }
       }
-      processor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, null);
-
-      PsiJavaCodeReferenceElement[] implicitlyImported = getImplicitlyImportedPackageReferences();
-      for (PsiJavaCodeReferenceElement aImplicitlyImported : implicitlyImported) {
-        PsiElement resolved = aImplicitlyImported.resolve();
-        if (resolved != null) {
-          processOnDemandTarget(resolved, processor, substitutor, place);
-        }
-      }
     }
 
     if(classHint == null || classHint.shouldProcess(PsiPackage.class)){
       final PsiPackage rootPackage = getManager().findPackage("");
+      processor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, rootPackage);
       if(rootPackage != null) rootPackage.processDeclarations(processor, substitutor, null, place);
     }
 
@@ -390,6 +382,18 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       }
 
       staticImportProcessor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, null);
+    }
+
+    if (classHint == null || classHint.shouldProcess(PsiClass.class)){
+      processor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, null);
+      
+      PsiJavaCodeReferenceElement[] implicitlyImported = getImplicitlyImportedPackageReferences();
+      for (PsiJavaCodeReferenceElement aImplicitlyImported : implicitlyImported) {
+        PsiElement resolved = aImplicitlyImported.resolve();
+        if (resolved != null) {
+          processOnDemandTarget(resolved, processor, substitutor, place);
+        }
+      }
     }
 
     return true;
