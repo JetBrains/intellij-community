@@ -60,14 +60,13 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
 
     final PsiClass containingClass = method.getContainingClass();
-    final PsiReference psiReference = editor != null ? TargetElementUtil.findReference(editor) : null;
-    final PsiReferenceExpression refExpr = psiReference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)psiReference) : null;
+    final PsiReferenceExpression refExpr = editor != null ? TargetElementUtil.findReferenceExpression(editor) : null;
     final ChangeSignatureDialog dialog = new ChangeSignatureDialog(project, method, containingClass != null && !containingClass.isInterface(),
                                                                    refExpr);
     dialog.show();
   }
 
-  private void invoke(final PsiClass aClass) {
+  private static void invoke(final PsiClass aClass) {
     final PsiTypeParameterList typeParameterList = aClass.getTypeParameterList();
     Project project = aClass.getProject();
     if (typeParameterList == null) {

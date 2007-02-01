@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
+import org.jetbrains.annotations.Nullable;
 
 public class TargetElementUtil {
   public static final int REFERENCED_ELEMENT_ACCEPTED = 0x01;
@@ -33,6 +34,12 @@ public class TargetElementUtil {
 
   public static PsiReference findReference(Editor editor) {
     return findReference(editor, editor.getCaretModel().getOffset());
+  }
+
+  @Nullable
+  public static PsiReferenceExpression findReferenceExpression(Editor editor) {
+    final PsiReference ref = findReference(editor);
+    return ref instanceof PsiReferenceExpression ? (PsiReferenceExpression)ref : null;
   }
 
   public static PsiReference findReference(Editor editor, int offset) {

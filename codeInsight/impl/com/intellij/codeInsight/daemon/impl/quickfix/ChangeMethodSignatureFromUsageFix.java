@@ -149,8 +149,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     }
     else {
       List<ParameterInfo> parameterInfos = Arrays.asList(myNewParametersInfo);
-      final PsiReference psiReference = TargetElementUtil.findReference(editor);
-      final PsiReferenceExpression refExpr = psiReference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)psiReference) : null;
+      final PsiReferenceExpression refExpr = TargetElementUtil.findReferenceExpression(editor);
       ChangeSignatureDialog dialog = new ChangeSignatureDialog(project, method, false, refExpr);
       dialog.setParameterInfos(parameterInfos);
       dialog.show();
