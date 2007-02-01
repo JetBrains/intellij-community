@@ -56,7 +56,7 @@ public class PersistentStringEnumerator {
     }
   }
 
-  public int enumerate(String value) throws IOException {
+  public synchronized int enumerate(String value) throws IOException {
     int depth = 0;
     final int valueHC = value.hashCode();
     int hc = valueHC;
@@ -196,7 +196,7 @@ public class PersistentStringEnumerator {
     return myStorage.getInt(idx + 4);
   }
 
-  public String valueOf(int idx) throws IOException {
+  public synchronized String valueOf(int idx) throws IOException {
     final String result;
     final MappedFile storage = myStorage;
     storage.seek(idx + 8);
