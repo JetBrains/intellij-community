@@ -77,6 +77,8 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   protected abstract Icon getSetIcon();
 
   protected abstract Icon getVerifiedIcon();
+  
+  protected abstract Icon getVerifiedWarningsIcon();
 
   public Icon getIcon() {
     return myIcon;
@@ -145,7 +147,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       if (!isVerified) {
         return getInvalidIcon();
       }
-      return getInvalidIcon();  // todo: return here verified icon with warning sign 
+      return getVerifiedWarningsIcon();  // todo: return here verified icon with warning sign 
     }
 
     if(isVerified){

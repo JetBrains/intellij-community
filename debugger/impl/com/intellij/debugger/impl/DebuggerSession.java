@@ -29,7 +29,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.Event;
@@ -404,21 +406,30 @@ public class DebuggerSession {
       });
 
       if (position != null) {
-        List<Pair<Breakpoint, Event>> eventDescriptors = DebuggerUtilsEx.getEventDescriptors(suspendContext);
-        RequestManagerImpl requestsManager = suspendContext.getDebugProcess().getRequestsManager();
+        final List<Pair<Breakpoint, Event>> eventDescriptors = DebuggerUtilsEx.getEventDescriptors(suspendContext);
+        final RequestManagerImpl requestsManager = suspendContext.getDebugProcess().getRequestsManager();
+        final PsiFile foundFile = position.getFile();
+        final boolean sourceMissing = foundFile == null || foundFile instanceof PsiCompiledElement;
         for (Pair<Breakpoint, Event> eventDescriptor : eventDescriptors) {
           Breakpoint breakpoint = eventDescriptor.getFirst();
           if (breakpoint instanceof LineBreakpoint) {
             final SourcePosition breakpointPosition = ((BreakpointWithHighlighter)breakpoint).getSourcePosition();
-            if (breakpointPosition == null) {
+            if (breakpointPosition == null || (!sourceMissing && breakpointPosition.getLine() != position.getLine())) {
               requestsManager.deleteRequest(breakpoint);
               requestsManager.setInvalid(breakpoint, DebuggerBundle.message("error.invalid.breakpoint.source.changed"));
               breakpoint.updateUI();
             }
-            else if (breakpointPosition.getLine() != position.getLine()) {
+            else if (sourceMissing) {
               // adjust position to be position of the breakpoint in order to show the real originator of the event
               position = breakpointPosition;
-              requestsManager.setInvalid(breakpoint, "Was unable to locate source for the breakpoint in the classpath");
+              String className;
+              try {
+                className = positionContext.getFrameProxy().location().declaringType().name();
+              }
+              catch (EvaluateException e) {
+                className = "";
+              }
+              requestsManager.setInvalid(breakpoint, DebuggerBundle.message("error.invalid.breakpoint.source.not.found", className));
               breakpoint.updateUI();
             }
           }

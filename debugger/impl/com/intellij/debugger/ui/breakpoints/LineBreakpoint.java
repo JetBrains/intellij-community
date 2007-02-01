@@ -44,6 +44,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   public static final Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_line_breakpoint.png");
   private static Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_breakpoint.png");
   private static Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_breakpoint.png");
+  private static Icon ourVerifiedWarningsIcon = IconLoader.getIcon("/debugger/db_verified_warning_breakpoint.png");
 
   private String myMethodName;
   public static final @NonNls Key<LineBreakpoint> CATEGORY = BreakpointCategory.lookup("line_breakpoints");
@@ -71,6 +72,10 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
   protected Icon getVerifiedIcon() {
     return ourVerifiedIcon;
+  }
+
+  protected Icon getVerifiedWarningsIcon() {
+    return ourVerifiedWarningsIcon;
   }
 
   public Key<LineBreakpoint> getCategory() {
