@@ -124,6 +124,7 @@ public abstract class BaseRefactoringProcessor {
   protected abstract String getCommandName();
 
   protected void doRun() {
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     final Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>();
 
     final Runnable findUsagesRunnable = new Runnable() {
@@ -168,7 +169,7 @@ public abstract class BaseRefactoringProcessor {
         }
       };
 
-      showUsageView(descriptor, isVariable(), isVariable(), factory, usages);
+      showUsageView(descriptor, factory, usages);
     } else {
       execute(usages);
     }
@@ -236,10 +237,7 @@ public abstract class BaseRefactoringProcessor {
     return presentation;
   }
 
-  private void showUsageView(final UsageViewDescriptor viewDescriptor,
-                             boolean showReadAccessIcon,
-                             boolean showWriteAccessIcon,
-                             final Factory<UsageSearcher> factory, final UsageInfo[] usageInfos) {
+  private void showUsageView(final UsageViewDescriptor viewDescriptor, final Factory<UsageSearcher> factory, final UsageInfo[] usageInfos) {
     UsageViewManager viewManager = UsageViewManager.getInstance(myProject);
 
     final PsiElement[] initialElements = viewDescriptor.getElements();
