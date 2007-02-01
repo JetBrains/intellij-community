@@ -16,9 +16,10 @@ import org.jetbrains.annotations.Nullable;
  * @author cdr
 */
 public class WolfPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
+  public static final int PASS_ID = 0x200;
   public WolfPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, new int[]{Pass.LOCAL_INSPECTIONS}, false, -1);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, new int[]{Pass.LOCAL_INSPECTIONS}, false, PASS_ID);
   }
 
   @NonNls
@@ -29,6 +30,6 @@ public class WolfPassFactory extends AbstractProjectComponent implements TextEdi
 
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    return new WolfHighlightingPass(myProject);
+    return new WolfHighlightingPass(myProject, editor.getDocument());
   }
 }

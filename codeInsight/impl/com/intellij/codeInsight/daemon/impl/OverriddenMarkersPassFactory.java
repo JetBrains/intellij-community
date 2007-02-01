@@ -61,7 +61,6 @@ public class OverriddenMarkersPassFactory extends AbstractProjectComponent imple
     if (LOG.isDebugEnabled()) {
       LOG.debug("Dirty block optimization works");
     }
-    TextRange range = dirtyScope.getTextRange();
-    return range;
+    return dirtyScope.getTextRange();
   }
 }

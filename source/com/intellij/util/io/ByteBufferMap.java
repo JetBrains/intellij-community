@@ -1,6 +1,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -55,14 +56,12 @@ public class ByteBufferMap<K,V> {
     return new ByteBufferMapWriteHandler<V>(null, valueProvider, map, searchFactor).calcLength();
   }
 
-  public ByteBufferMap(RandomAccessDataInput buffer,
+  public ByteBufferMap(@NotNull RandomAccessDataInput buffer,
                        int startOffset,
                        int endOffset,
-                       KeyProvider<K> keyProvider,
-                       ValueProvider<V> valueProvider) {
-    assert (keyProvider != null);
-    assert (valueProvider != null);
-    assert (startOffset < endOffset);
+                       @NotNull KeyProvider<K> keyProvider,
+                       @NotNull ValueProvider<V> valueProvider) {
+    assert startOffset < endOffset;
 
     myBuffer = buffer;
     myStartOffset = startOffset;

@@ -190,27 +190,30 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     if (psiModificationCount == myPsiModificationCount) return; //optimization
 
     progressablePass.setProgressLimit(myCheckingQueue.size());
+    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    String oldInfo = null;
     try {
+      if (statusBar instanceof StatusBarEx) {
+        oldInfo = ((StatusBarEx)statusBar).getInfo();
+      }
       for (VirtualFile virtualFile : myCheckingQueue) {
         if (progress.isCanceled()) break;
-        if (virtualFile.isValid()) {
-          // place the file to the end of queue to give all files a fair share
-          myCheckingQueue.remove(virtualFile);
-          myCheckingQueue.add(virtualFile);
-          orderVincentToCleanTheCar(virtualFile, progress);
-          progressablePass.advanceProgress();
-        }
-        else {
+        statusBar.setInfo("Checking '" + virtualFile.getPresentableUrl() + "'");
+        myCheckingQueue.remove(virtualFile);
+        if (!virtualFile.isValid() || orderVincentToCleanTheCar(virtualFile, progress)) {
           synchronized (myProblems) {
             myProblems.remove(virtualFile);
-            myCheckingQueue.remove(virtualFile);
           }
         }
+        progressablePass.advanceProgress(1);
       }
       myPsiModificationCount = psiModificationCount;
     }
     catch (ProcessCanceledException e) {
       // ignore
+    }
+    finally {
+      restoreStatusBar(statusBar, oldInfo);
     }
   }
 
@@ -224,30 +227,23 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
-  private void orderVincentToCleanTheCar(final VirtualFile file, ProgressIndicator progressIndicator) throws ProcessCanceledException {
+  // returns true if car has been cleaned
+  private boolean orderVincentToCleanTheCar(final VirtualFile file, ProgressIndicator progressIndicator) throws ProcessCanceledException {
     if (hasSyntaxErrors(file)) {
       // it's no use anyway to try clean the file with syntax errors, only changing the file itself can help
-      return;
+      return false;
     }
-    if (!myProject.isOpen()) return;
-    if (willBeHighlightedAnyway(file)) return;
+    if (myProject.isDisposed()) return false;
+    if (willBeHighlightedAnyway(file)) return false;
     final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-    if (psiFile == null) return;
+    if (psiFile == null) return false;
     final Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null) return;
+    if (document == null) return false;
 
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    String oldInfo = null;
     try {
-      if (statusBar instanceof StatusBarEx) {
-        oldInfo = ((StatusBarEx)statusBar).getInfo();
-        statusBar.setInfo("Checking '" + file.getPresentableUrl() + "'");
-      }
-
       GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), true) {
         protected HighlightInfoHolder createInfoHolder() {
-          final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getExtensions(HighlightInfoFilter.EXTENSION_POINT_NAME);
-          return new HighlightInfoHolder(psiFile, filters) {
+          return new HighlightInfoHolder(psiFile, HighlightInfoFilter.EMPTY_ARRAY) {
             public boolean add(HighlightInfo info) {
               if (info != null && info.getSeverity() == HighlightSeverity.ERROR) {
                 throw new HaveGotErrorException(info, myHasErrorElement);
@@ -262,11 +258,14 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     catch (HaveGotErrorException e) {
       ProblemImpl problem = new ProblemImpl(file, e.myHighlightInfo, e.myHasErrorElement);
       reportProblems(file, Collections.<Problem>singleton(problem));
+      return false;
     }
-    finally {
-      if (statusBar instanceof StatusBarEx) {
-        statusBar.setInfo(oldInfo);
-      }
+    return true;
+  }
+
+  private void restoreStatusBar(final StatusBar statusBar, final String oldInfo) {
+    if (statusBar instanceof StatusBarEx) {
+      statusBar.setInfo(oldInfo);
     }
   }
 

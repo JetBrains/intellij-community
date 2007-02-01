@@ -2,6 +2,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -14,12 +15,11 @@ public class ByteBufferIntObjectMap<V> {
   private int myMod;
   private final int myEndOffset;
 
-  public ByteBufferIntObjectMap(RandomAccessDataInput buffer,
+  public ByteBufferIntObjectMap(@NotNull RandomAccessDataInput buffer,
                        int startOffset,
                        int endOffset,
-                       ByteBufferMap.ValueProvider<V> valueProvider) {
-    assert (valueProvider != null);
-    assert (startOffset < endOffset);
+                       @NotNull ByteBufferMap.ValueProvider<V> valueProvider) {
+    assert startOffset < endOffset;
 
     myBuffer = buffer;
     myStartOffset = startOffset;

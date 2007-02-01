@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,7 +24,7 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
   private int myInfoCount;
   private boolean writable = false;
 
-  public HighlightInfoHolder(PsiFile contextFile, HighlightInfoFilter[] filters) {
+  public HighlightInfoHolder(@NotNull PsiFile contextFile, @NotNull HighlightInfoFilter[] filters) {
     super(5);
     myContextFile = contextFile;
     myFilters = filters;

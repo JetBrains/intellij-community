@@ -32,6 +32,7 @@ public class FileStatusMap {
     private PsiElement overridenDirtyScope;
     private PsiElement localInspectionsDirtyScope;
     public boolean defensivelyMarked; // file marked dirty without knowlesdge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
+    public boolean wolfPassFinfished;
 
     private FileStatus(PsiElement dirtyScope, PsiElement overridenDirtyScope, PsiElement inspectionDirtyScope) {
       this.dirtyScope = dirtyScope;
@@ -76,6 +77,9 @@ public class FileStatusMap {
           break;
         case Pass.LOCAL_INSPECTIONS:
           status.localInspectionsDirtyScope = null;
+          break;
+        case WolfPassFactory.PASS_ID:
+          status.wolfPassFinfished = true;
           break;
         default:
           //LOG.error("unknown id "+passId);
@@ -156,14 +160,16 @@ public class FileStatusMap {
     }
     return refCountHolder;
   }
-  public boolean getAllDirtyScopesAreNull(final Document document) {
+  public boolean allDirtyScopesAreNull(final Document document) {
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       return status != null
              && !status.defensivelyMarked
              && status.dirtyScope == null
              && status.overridenDirtyScope == null
-             && status.localInspectionsDirtyScope == null;
+             && status.localInspectionsDirtyScope == null
+             && status.wolfPassFinfished
+        ;
     }
   }
 }

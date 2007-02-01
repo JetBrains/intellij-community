@@ -98,7 +98,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         if (fileEditor != null && !wasCanceled) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              if (myProject.isDisposed()) return;
+              if (myDisposed || myProject.isDisposed()) return;
               if (fileEditor.getComponent().isDisplayable()) {
                 pass.applyInformationToEditor();
                 
@@ -303,7 +303,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
     return document != null &&
            document.getModificationStamp() == file.getModificationStamp() &&
-           myFileStatusMap.getAllDirtyScopesAreNull(document);
+           myFileStatusMap.allDirtyScopesAreNull(document);
   }
 
   public boolean isErrorAnalyzingFinished(PsiFile file) {

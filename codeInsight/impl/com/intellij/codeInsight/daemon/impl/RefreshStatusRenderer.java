@@ -24,7 +24,6 @@ import java.util.List;
 public class RefreshStatusRenderer implements ErrorStripeRenderer {
   private static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/errorsInProgress.png");
   private static final Icon NO_ANALYSIS_ICON = IconLoader.getIcon("/general/noAnalysis.png");
-  private static final Icon INSPECTION_ICON = IconLoader.getIcon("/general/inspectionInProgress.png");
   private static final Icon NO_ICON = new EmptyIcon(IN_PROGRESS_ICON.getIconWidth(), IN_PROGRESS_ICON.getIconHeight());
 
   private final Project myProject;
@@ -61,7 +60,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     public int rootsNumber;
 
     public String toString() {
-      String s = "DS: finished=" + errorAnalyzingFinished;
+      @NonNls String s = "DS: finished=" + errorAnalyzingFinished;
       s += "; pass statuses: " + passStati.size() + "; ";
       for (PassStatus passStatus : passStati) {
         s += String.format("(%s %2.0f%% %b)", passStatus.name, passStatus.progress*100, passStatus.finished);
@@ -101,8 +100,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
 
       double progress = pass.getProgress();
       if (progress < 0) continue;
-      DaemonCodeAnalyzerStatus.PassStatus passStatus =
-        new DaemonCodeAnalyzerStatus.PassStatus(pass.getPresentableName(), progress, pass.isFinished(), pass.getInProgressIcon());
+      DaemonCodeAnalyzerStatus.PassStatus passStatus = new DaemonCodeAnalyzerStatus.PassStatus(pass.getPresentableName(), progress, pass.isFinished(), pass.getInProgressIcon());
       passStati.add(passStatus);
     }
     status.passStati = passStati;
@@ -138,7 +136,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus();
 
     if (status == null) return null;
-    String text = HTML_HEADER;
+    @NonNls String text = HTML_HEADER;
     if (status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
       text += DaemonBundle.message("analysis.hasnot.been.run");
       text += HTML_FOOTER;
@@ -199,7 +197,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
   private static final URL progressPlaceHolderUrl = RefreshStatusRenderer.class.getClassLoader().getResource("/general/progressTransparentPlaceHolder.png");
 
   private static String renderProgressHtml(double progress) {
-    String text = "<table><tr><td>";
+    @NonNls String text = "<table><tr><td>";
     int nBricks = 5;
     int nFilledBricks = (int)(nBricks * progress);
     int i;
@@ -230,44 +228,46 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
   }
 
   public void paint(Component c, Graphics g, Rectangle r) {
-    DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus();
-
-    Icon icon;
-    if (status == null) {
-      icon = NO_ICON;
-    }
-    else if (status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
-      icon = NO_ANALYSIS_ICON;
-    }
-    else {
-      Icon inProgressMask = null;
-      boolean atLeastOnePassFinished = status.errorAnalyzingFinished;
-      for (DaemonCodeAnalyzerStatus.PassStatus passStatus : status.passStati) {
-        atLeastOnePassFinished |= passStatus.finished;
-        if (!passStatus.finished) {
-          Icon progressIcon = passStatus.inProgressIcon;
-          if (progressIcon != null) {
-            inProgressMask = inProgressMask == null ? progressIcon : IconUtilEx.createLayeredIcon(inProgressMask, progressIcon);
-          }
-        }
-      }
-      icon = status.errorAnalyzingFinished ? HighlightDisplayLevel.DO_NOT_SHOW.getIcon() : IN_PROGRESS_ICON;
-      if (atLeastOnePassFinished) {
-        for (int i = status.errorCount.length - 1; i >= 0; i--) {
-          if (status.errorCount[i] != 0) {
-            icon = HighlightDisplayLevel.createIconByMask(SeverityRegistrar.getRendererColorByIndex(i));
-            break;
-          }
-        }
-      }
-
-      if (inProgressMask != null) {
-        icon = IconUtilEx.createLayeredIcon(icon, inProgressMask);
-      }
-    }
+    Icon icon = getTrafficLightIcon();
 
     int height = icon.getIconHeight();
     int width = icon.getIconWidth();
     icon.paintIcon(c, g, r.x + (r.width - width) / 2, r.y + (r.height - height) / 2);
+  }
+
+  private Icon getTrafficLightIcon() {
+    DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus();
+
+    if (status == null) {
+      return NO_ICON;
+    }
+    if (status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
+      return NO_ANALYSIS_ICON;
+    }
+    Icon inProgressMask = null;
+    boolean atLeastOnePassFinished = status.errorAnalyzingFinished;
+    for (DaemonCodeAnalyzerStatus.PassStatus passStatus : status.passStati) {
+      atLeastOnePassFinished |= passStatus.finished;
+      if (!passStatus.finished) {
+        Icon progressIcon = passStatus.inProgressIcon;
+        if (progressIcon != null) {
+          inProgressMask = inProgressMask == null ? progressIcon : IconUtilEx.createLayeredIcon(inProgressMask, progressIcon);
+        }
+      }
+    }
+    Icon icon = status.errorAnalyzingFinished ? HighlightDisplayLevel.DO_NOT_SHOW.getIcon() : IN_PROGRESS_ICON;
+    if (atLeastOnePassFinished) {
+      for (int i = status.errorCount.length - 1; i >= 0; i--) {
+        if (status.errorCount[i] != 0) {
+          icon = HighlightDisplayLevel.createIconByMask(SeverityRegistrar.getRendererColorByIndex(i));
+          break;
+        }
+      }
+    }
+
+    if (inProgressMask != null) {
+      icon = IconUtilEx.createLayeredIcon(icon, inProgressMask);
+    }
+    return icon;
   }
 }

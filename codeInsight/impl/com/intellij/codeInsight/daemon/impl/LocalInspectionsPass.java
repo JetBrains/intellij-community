@@ -4,6 +4,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.impl.actions.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -56,7 +57,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   @NotNull private List<HighlightInfoType> myLevels = Collections.emptyList();
   @NotNull private List<LocalInspectionTool> myTools = Collections.emptyList();
   @NotNull private List<InjectedPsiInspectionUtil.InjectedPsiInspectionResult> myInjectedPsiInspectionResults = Collections.emptyList();
-  static final String PRESENTABLE_NAME = "Inspections";
+  static final String PRESENTABLE_NAME = DaemonBundle.message("pass.inspection");
 
   public LocalInspectionsPass(@NotNull PsiFile file, @Nullable Document document, int startOffset, int endOffset, @Nullable ExecutorService executorService) {
     super(file.getProject(), document, IN_PROGRESS_ICON, PRESENTABLE_NAME);
@@ -131,9 +132,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                   for (PsiElement element : elements) {
                     progressManager.checkCanceled();
                     element.accept(elementVisitor);
-                    advanceProgress();
                   }
-                  //System.out.println("tool finished "+tool);
+                  advanceProgress(elements.length);
+
                   if (holder.hasResults()) {
                     appendDescriptors(holder.getResults(), tool);
                   }
@@ -251,10 +252,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     myDescriptors = Collections.emptyList();
     myLevels = Collections.emptyList();
     myTools = Collections.emptyList();
-
-    DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, Pass.LOCAL_INSPECTIONS);
-    //daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, FileStatusMap.LOCAL_INSPECTIONS);
 
     HighlightUtil.addErrorsToWolf(infos, myFile);
   }

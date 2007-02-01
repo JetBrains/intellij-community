@@ -4,6 +4,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -13,7 +14,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author cdr
  */
 public abstract class ProgressableTextEditorHighlightingPass extends TextEditorHighlightingPass {
-  private volatile boolean finished;
+  private volatile boolean myFinished;
   private volatile long myProgessLimit = 0;
   private final AtomicLong myProgressCount = new AtomicLong();
   private final Icon myInProgressIcon;
@@ -27,15 +28,17 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   }
 
   public final void doCollectInformation(final ProgressIndicator progress) {
-    setFinished(false);
+    myFinished = false;
     collectInformationWithProgress(progress);
   }
 
   protected abstract void collectInformationWithProgress(final ProgressIndicator progress);
 
   public final void doApplyInformationToEditor() {
-    setFinished(true);
+    myFinished = true;
     applyInformationWithProgress();
+    DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
+    daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
   }
 
   protected abstract void applyInformationWithProgress();
@@ -46,15 +49,11 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
    */
   public double getProgress() {
     if (myProgessLimit == 0) return -1;
-    return 1.0 * myProgressCount.get() / myProgessLimit;
+    return (double)myProgressCount.get() / myProgessLimit;
   }
 
   public boolean isFinished() {
-    return finished;
-  }
-
-  void setFinished(final boolean finished) {
-    this.finished = finished;
+    return myFinished;
   }
 
   protected final Icon getInProgressIcon() {
@@ -69,8 +68,8 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     myProgessLimit = limit;
   }
 
-  public void advanceProgress() {
-    myProgressCount.addAndGet(1);
+  public void advanceProgress(int progress) {
+    myProgressCount.addAndGet(progress);
   }
 
   public static class EmptyPass extends ProgressableTextEditorHighlightingPass {
@@ -90,8 +89,9 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
       return true;
     }
 
-    void setFinished(final boolean finished) {
-      super.setFinished(true);
+    // always valid
+    public double getProgress() {
+      return 0;
     }
   }
 }

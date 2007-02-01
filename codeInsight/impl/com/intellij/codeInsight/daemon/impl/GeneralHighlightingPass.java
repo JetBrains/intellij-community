@@ -4,6 +4,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.lang.Language;
@@ -57,7 +58,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   private final DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
   protected boolean myHasErrorElement;
-  static final String PRESENTABLE_NAME = "Syntax";
+  static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
 
   public GeneralHighlightingPass(@NotNull Project project,
                                  @NotNull PsiFile file,
@@ -169,9 +170,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     // highlights from both passes should be in the same layer 
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myHighlights, Pass.UPDATE_ALL);
-
-    DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
   }
 
   public Collection<LineMarkerInfo> queryLineMarkers() {
@@ -212,7 +210,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     final HighlightInfoHolder holder = createInfoHolder();
     ProgressManager progressManager = ProgressManager.getInstance();
-    setProgressLimit(1L * elements.size() * visitors.size());
+    setProgressLimit((long)elements.size() * visitors.size());
 
     for (PsiElement element : elements) {
       progressManager.checkCanceled();
@@ -230,8 +228,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         holder.clear();
         for (HighlightVisitor visitor : visitors) {
           visitor.visit(element, holder);
-          advanceProgress();
         }
+        advanceProgress(visitors.size());
       }
       finally {
         holder.setWritable(false);
