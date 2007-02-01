@@ -83,8 +83,14 @@ public class ExpectedHighlightingData {
     highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(INFO_MARKER, HighlightInfoType.TODO, HighlightSeverity.INFORMATION, false, checkInfos));
     highlightingTypes.put(END_LINE_HIGHLIGHT_MARKER, new ExpectedHighlightingSet(END_LINE_HIGHLIGHT_MARKER, HighlightInfoType.ERROR, HighlightSeverity.ERROR, true, true));
     highlightingTypes.put(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(END_LINE_WARNING_MARKER, HighlightInfoType.WARNING, HighlightSeverity.WARNING, true, checkWarnings));
+    initAdditionalHighlightingTypes();
     extractExpectedHighlightsSet(document);
   }
+
+  /**
+   * Override in order to register special highlighting
+   */
+  protected void initAdditionalHighlightingTypes() {}
 
   /**
    * remove highlights (bounded with <marker>...</marker>) from test case file
