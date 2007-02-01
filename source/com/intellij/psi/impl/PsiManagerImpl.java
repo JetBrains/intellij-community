@@ -33,10 +33,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.RepositoryManager;
-import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
-import com.intellij.psi.impl.cache.impl.CacheUtil;
-import com.intellij.psi.impl.cache.impl.CompositeCacheManager;
-import com.intellij.psi.impl.cache.impl.RepositoryManagerImpl;
+import com.intellij.psi.impl.cache.impl.*;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
@@ -261,6 +258,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   public void dropResolveCaches() {
     myResolveCache.clearCache();
     ControlFlowFactory.getInstance(myProject).clearCache();
+    ((RepositoryIndexImpl)myRepositoryManager.getIndex()).resetIndexCaches();
   }
 
   public boolean isInPackage(@NotNull PsiElement element, @NotNull PsiPackage aPackage) {
