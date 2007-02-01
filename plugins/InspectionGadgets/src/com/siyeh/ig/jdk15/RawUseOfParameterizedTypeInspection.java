@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.lang.StdLanguages;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.VariableInspection;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 
-public class RawUseOfParameterizedTypeInspection extends VariableInspection {
+public class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
     public boolean ignoreObjectConstruction = true;

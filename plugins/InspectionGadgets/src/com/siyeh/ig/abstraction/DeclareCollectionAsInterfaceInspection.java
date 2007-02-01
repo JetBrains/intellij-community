@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.siyeh.ig.abstraction;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.VariableInspection;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 
-public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
+public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
     public boolean ignoreLocalVariables = false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.VariableInspection;
+import com.siyeh.ig.BaseInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
-public class UseOfSunClassesInspection extends VariableInspection {
+public class UseOfSunClassesInspection extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("use.sun.classes.display.name");

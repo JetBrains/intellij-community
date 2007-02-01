@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.VariableInspection;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NonNls;
 import java.util.HashMap;
 import java.util.Map;
 
-public class StandardVariableNamesInspection extends VariableInspection {
+public class StandardVariableNamesInspection extends BaseInspection {
 
     @NonNls static final Map<String, String> s_expectedTypes =
             new HashMap<String, String>(13);
