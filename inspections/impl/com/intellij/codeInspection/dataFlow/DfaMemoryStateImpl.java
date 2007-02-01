@@ -10,18 +10,20 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiVariable;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.Stack;
+import gnu.trove.THashSet;
 import gnu.trove.TIntStack;
 import gnu.trove.TLongArrayList;
 import gnu.trove.TLongHashSet;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
 
 public class DfaMemoryStateImpl implements DfaMemoryState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl");
@@ -203,8 +205,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     result.append(" stack: ");
-    for (int i = 0; i < myStack.size(); i++) {
-      result.append(myStack.elementAt(i));
+    for (DfaValue value : myStack) {
+      result.append(value);
     }
     result.append('>');
     return result.toString();
@@ -227,7 +229,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public void emptyStack() {
-    myStack.removeAllElements();
+    myStack.clear();
   }
 
   public void setVarValue(DfaVariableValue var, DfaValue value) {
