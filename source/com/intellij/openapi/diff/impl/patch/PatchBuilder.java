@@ -163,7 +163,7 @@ public class PatchBuilder {
         continue;
       }
 
-      if (result.isEmpty() || endLine + CONTEXT_LINES >= fragment.getStartingLine1()) {
+      if (result.isEmpty() || endLine + CONTEXT_LINES >= fragment.getStartingLine1() - CONTEXT_LINES) {
         result.add(fragment);
         fragments.remove(0);
         endLine = fragment.getStartingLine1() + fragment.getModifiedLines1();
