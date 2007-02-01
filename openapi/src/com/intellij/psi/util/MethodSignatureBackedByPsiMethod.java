@@ -33,7 +33,7 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     super(substitutor, parameterTypes, methodTypeParameters);
     myIsRaw = isRaw;
     myIsInGenericContext = isInGenericContext;
-    assert method.isValid();
+    assert method.isValid() : method;
     myMethod = method;
   }
 
