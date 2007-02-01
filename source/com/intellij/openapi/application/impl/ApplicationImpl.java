@@ -80,11 +80,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @NonNls private static final String NULL_STR = "null";
 
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
-    1,
+    5,
     Integer.MAX_VALUE,
     30 * 60L,
     TimeUnit.SECONDS,
-    new SynchronousQueue<Runnable>(),
+    new ArrayBlockingQueue<Runnable>(50),
     new ThreadFactory() {
       public Thread newThread(Runnable r) {
         return new Thread(r, "ApplicationImpl pooled thread")
