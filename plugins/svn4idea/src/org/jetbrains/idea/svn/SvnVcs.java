@@ -567,4 +567,10 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     }
     return new SvnRevisionNumber(revision);
   }
+
+  @Override
+  public boolean isVersionedDirectory(final VirtualFile dir) {
+    final VirtualFile child = dir.findChild(".svn");
+    return child != null && child.isDirectory();
+  }
 }
