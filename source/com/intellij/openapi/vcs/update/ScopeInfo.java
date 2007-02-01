@@ -1,7 +1,6 @@
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,13 +20,13 @@ public interface ScopeInfo {
     public FilePath[] getRoots(VcsContext context, final ActionInfo actionInfo) {
       ArrayList<FilePath> result = new ArrayList<FilePath>();
       Project project = context.getProject();
-      VirtualFile[] contentRoots = ProjectRootManager.getInstance(project).getContentRoots();
-      for (VirtualFile contentRoot : contentRoots) {
-        AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(contentRoot);
-        if (vcs != null) {
-          UpdateEnvironment updateEnvironment = actionInfo.getEnvironment(vcs);
-          if (updateEnvironment != null) {
-            result.add(new FilePathImpl(contentRoot));
+      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+      final AbstractVcs[] vcses = vcsManager.getAllActiveVcss();
+      for(AbstractVcs vcs: vcses) {
+        if (actionInfo.getEnvironment(vcs) != null) {
+          final VirtualFile[] files = vcsManager.getRootsUnderVcs(vcs);
+          for(VirtualFile file: files) {
+            result.add(new FilePathImpl(file));
           }
         }
       }

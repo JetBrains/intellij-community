@@ -35,15 +35,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AsyncUpdateAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
 
 import java.util.*;
@@ -59,32 +55,22 @@ public abstract class AbstractVcsAction extends AsyncUpdateAction<VcsContext> {
   }
 
   protected static FilePath[] filterDescindingFiles(FilePath[] roots, Project project) {
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
     List<FilePath> result = new ArrayList<FilePath>(Arrays.asList(roots));
     for (FilePath first : roots) {
       for (FilePath second : roots) {
-        Module firstModule = getModuleForPath(fileIndex, first);
-        Module secondModule = getModuleForPath(fileIndex, second);
+        if (first != second) {
+          AbstractVcs firstVcs = manager.getVcsFor(first);
+          AbstractVcs secondVcs = manager.getVcsFor(second);
 
-        if ((first != second) && (firstModule == secondModule) && VfsUtil.isAncestor(first.getIOFile(), second.getIOFile(), false)) {
-          result.remove(second);
+          if (firstVcs == secondVcs && VfsUtil.isAncestor(first.getIOFile(), second.getIOFile(), false)) {
+            result.remove(second);
+          }
         }
       }
     }
 
     return result.toArray(new FilePath[result.size()]);
-  }
-
-  private static Module getModuleForPath(ProjectFileIndex fileIndex, FilePath path) {
-    VirtualFile virtualFile = path.getVirtualFile();
-    if (virtualFile != null) {
-      return fileIndex.getModuleForFile(virtualFile);
-    }
-    VirtualFile virtualFileParent = path.getVirtualFileParent();
-    if (virtualFileParent != null) {
-      return fileIndex.getModuleForFile(virtualFileParent);
-    }
-    return null;
   }
 
   protected VcsContext prepareDataFromContext(final AnActionEvent e) {

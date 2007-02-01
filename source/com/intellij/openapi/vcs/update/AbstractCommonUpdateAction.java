@@ -82,7 +82,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           ApplicationManager.getApplication().saveAll();
         }
 
-        final FilePath[] roots = filterDescindingFiles(filterRoots(myScopeInfo.getRoots(context, myActionInfo), context), project);
+        final FilePath[] filePaths = myScopeInfo.getRoots(context, myActionInfo);
+        final FilePath[] roots = filterDescindingFiles(filterRoots(filePaths, context), project);
 
         final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles = createVcsToFilesMap(roots, project);
 
