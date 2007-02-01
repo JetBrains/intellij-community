@@ -1,5 +1,6 @@
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -12,6 +13,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class ChangeSignatureHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("changeSignature.refactoring.name");
@@ -20,7 +22,7 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
     if (element instanceof PsiMethod) {
-      invoke((PsiMethod) element, project);
+      invoke((PsiMethod) element, project, editor);
     }
     else if (element instanceof PsiClass) {
       invoke((PsiClass) element);
@@ -36,14 +38,14 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
     if (elements[0] instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)elements[0];
 
-      invoke(method, project);
+      invoke(method, project, (Editor)dataContext.getData(DataConstants.EDITOR));
     }
     else if (elements[0] instanceof PsiClass){
       invoke((PsiClass) elements[0]);
     }
   }
 
-  private void invoke(final PsiMethod method, final Project project) {
+  private static void invoke(final PsiMethod method, final Project project, final @Nullable Editor editor) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
 
     final String actionString = RefactoringBundle.message("to.refactor");
@@ -51,14 +53,17 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
     if (newMethod == null) return;
 
     if (!newMethod.equals(method)) {
-      invoke(newMethod, project);
+      invoke(newMethod, project, editor);
       return;
     }
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
 
     final PsiClass containingClass = method.getContainingClass();
-    final ChangeSignatureDialog dialog = new ChangeSignatureDialog(project, method, containingClass != null && !containingClass.isInterface());
+    final PsiReference psiReference = editor != null ? TargetElementUtil.findReference(editor) : null;
+    final PsiReferenceExpression refExpr = psiReference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)psiReference) : null;
+    final ChangeSignatureDialog dialog = new ChangeSignatureDialog(project, method, containingClass != null && !containingClass.isInterface(),
+                                                                   refExpr);
     dialog.show();
   }
 

@@ -2,8 +2,8 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.refactoring.ui.RowEditableTableModel;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.RowEditableTableModel;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
@@ -18,12 +18,14 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
   private List<ParameterInfo> myParameterInfos;
   private List<PsiTypeCodeFragment> myTypeCodeFraments;
   private List<PsiCodeFragment> myDefaultValuesCodeFragments;
-  private final PsiElement myContext;
+  private final PsiParameterList myParameterList;
+  private PsiReferenceExpression myReferenceExpression; //if change signature was invoked on mehod reference, this is it. Default value is edited in the context of this ref
   private final ChangeSignatureDialog myDialog;
   static final String ANY_VAR_COLUMN_NAME = RefactoringBundle.message("column.name.any.var");
 
-  public ParameterTableModel(PsiElement context, ChangeSignatureDialog dialog) {
-    myContext = context;
+  public ParameterTableModel(PsiParameterList parameterList, final PsiReferenceExpression ref, ChangeSignatureDialog dialog) {
+    myParameterList = parameterList;
+    myReferenceExpression = ref;
     myDialog = dialog;
   }
 
@@ -48,7 +50,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
   public void addRow() {
     ParameterInfo info = new ParameterInfo(-1);
     myParameterInfos.add(info);
-    myTypeCodeFraments.add(createParameterTypeCodeFragment("", myContext));
+    myTypeCodeFraments.add(createParameterTypeCodeFragment("", myParameterList));
     myDefaultValuesCodeFragments.add(createDefaultValueCodeFragment("", null));
     fireTableRowsInserted(myParameterInfos.size() - 1, myParameterInfos.size() - 1);
   }
@@ -169,7 +171,8 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
   }
 
   private PsiCodeFragment createDefaultValueCodeFragment(final String expressionText, final PsiType expectedType) {
-    PsiExpressionCodeFragment codeFragment = myContext.getManager().getElementFactory().createExpressionCodeFragment(expressionText, null, expectedType, true);
+    PsiExpressionCodeFragment codeFragment = myParameterList.getManager().getElementFactory().createExpressionCodeFragment(expressionText,
+                                                                                                                           myReferenceExpression, expectedType, true);
     codeFragment.setVisibilityChecker(PsiCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
     return codeFragment;
   }
@@ -203,7 +206,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
   }
 
   PsiTypeCodeFragment createParameterTypeCodeFragment(final String typeText, PsiElement context) {
-    return myContext.getManager().getElementFactory().createTypeCodeFragment(
+    return myParameterList.getManager().getElementFactory().createTypeCodeFragment(
         typeText, context, false, true, true
       );
   }

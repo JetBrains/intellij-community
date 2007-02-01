@@ -8,6 +8,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
@@ -148,7 +149,9 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     }
     else {
       List<ParameterInfo> parameterInfos = Arrays.asList(myNewParametersInfo);
-      ChangeSignatureDialog dialog = new ChangeSignatureDialog(project, method, false);
+      final PsiReference psiReference = TargetElementUtil.findReference(editor);
+      final PsiReferenceExpression refExpr = psiReference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)psiReference) : null;
+      ChangeSignatureDialog dialog = new ChangeSignatureDialog(project, method, false, refExpr);
       dialog.setParameterInfos(parameterInfos);
       dialog.show();
     }

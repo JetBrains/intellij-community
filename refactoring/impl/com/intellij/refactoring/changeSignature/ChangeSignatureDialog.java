@@ -67,11 +67,11 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   private Tree myExceptionPropagationTree;
   private Tree myParameterPropagationTree;
 
-  public ChangeSignatureDialog(Project project, final PsiMethod method, boolean allowDelegation) {
+  public ChangeSignatureDialog(Project project, final PsiMethod method, boolean allowDelegation, final PsiReferenceExpression ref) {
     super(project, true);
     myProject = project;
     myMethod = method;
-    myParametersTableModel = new ParameterTableModel(myMethod.getParameterList(), this);
+    myParametersTableModel = new ParameterTableModel(myMethod.getParameterList(), ref, this);
     myExceptionsTableModel = new ExceptionsTableModel(myMethod.getThrowsList());
     myAllowDelegation = allowDelegation;
 
