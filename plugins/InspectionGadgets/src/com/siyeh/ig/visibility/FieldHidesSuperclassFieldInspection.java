@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,21 +19,22 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.HashSet;
 import java.util.Set;
 
-public class FieldHidesSuperclassFieldInspection extends FieldInspection {
+public class FieldHidesSuperclassFieldInspection extends BaseInspection {
+
     /** @noinspection PublicField*/
     public boolean m_ignoreInvisibleFields = true;
 

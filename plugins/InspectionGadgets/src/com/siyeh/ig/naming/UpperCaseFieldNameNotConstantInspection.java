@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,20 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class UpperCaseFieldNameNotConstantInspection extends FieldInspection {
+public class UpperCaseFieldNameNotConstantInspection extends BaseInspection {
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "upper.case.field.name.not.constant.display.name");
+    }
 
     public String getID() {
         return "NonConstantFieldWithUpperCaseName";

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class FieldMayBeStaticInspection extends FieldInspection {
+public class FieldMayBeStaticInspection extends BaseInspection {
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "field.may.be.static.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.PERFORMANCE_GROUP_NAME;
@@ -60,8 +66,13 @@ public class FieldMayBeStaticInspection extends FieldInspection {
             final PsiJavaToken m_fieldNameToken =
                     (PsiJavaToken)descriptor.getPsiElement();
             final PsiField field = (PsiField)m_fieldNameToken.getParent();
-            assert field != null;
+            if (field == null) {
+                return;
+            }
             final PsiModifierList modifiers = field.getModifierList();
+            if (modifiers == null) {
+                return;
+            }
             modifiers.setModifierProperty(PsiModifier.STATIC, true);
         }
     }

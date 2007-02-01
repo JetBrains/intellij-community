@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,17 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.FieldInspection;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class RedundantFieldInitializationInspection extends FieldInspection {
+public class RedundantFieldInitializationInspection extends BaseInspection {
 
     @NonNls private static final Set<String> s_defaultValues =
             new HashSet<String>(10);
@@ -46,6 +46,12 @@ public class RedundantFieldInitializationInspection extends FieldInspection {
         s_defaultValues.add("0l");
         s_defaultValues.add("0x0");
         s_defaultValues.add("0X0");
+    }
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "redundant.field.initialization.display.name");
     }
 
     public String getGroupDisplayName() {

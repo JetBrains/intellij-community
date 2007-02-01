@@ -18,8 +18,8 @@ package com.siyeh.ig.encapsulation;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.EncapsulateVariableFix;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 
-public class PublicFieldInspection extends FieldInspection {
+public class PublicFieldInspection extends BaseInspection {
 
     @SuppressWarnings({"PublicField"})
     public boolean ignoreEnums = false;
@@ -44,7 +44,8 @@ public class PublicFieldInspection extends FieldInspection {
 
     @NotNull
     public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message("public.field.problem.descriptor");
+        return InspectionGadgetsBundle.message(
+                "public.field.problem.descriptor");
     }
 
     @Nullable
