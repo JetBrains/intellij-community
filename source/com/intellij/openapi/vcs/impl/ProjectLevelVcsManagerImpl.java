@@ -819,6 +819,14 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return result.toArray(new VirtualFile[result.size()]);
   }
 
+  public VirtualFile[] getAllVersionedRoots() {
+    List<VirtualFile> vFiles = new ArrayList<VirtualFile>();
+    for(AbstractVcs vcs: myActiveVcss) {
+      Collections.addAll(vFiles, getRootsUnderVcs(vcs));
+    }
+    return vFiles.toArray(new VirtualFile[vFiles.size()]);
+  }
+
   private void addDefaultVcsRoots(final AbstractVcs vcs, final List<VirtualFile> result) {
     final VirtualFile baseDir = myProject.getBaseDir();
     if (getVcsFor(baseDir) == vcs) {

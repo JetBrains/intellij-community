@@ -43,11 +43,13 @@ import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 
 
 public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
@@ -220,7 +222,8 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
   protected static FilePath[] getAllContentRoots(final VcsContext context) {
     Project project = context.getProject();
     ArrayList<FilePath> virtualFiles = new ArrayList<FilePath>();
-    VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
+    ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
+    VirtualFile[] roots = manager.getAllVersionedRoots();
     for (VirtualFile root : roots) {
       virtualFiles.add(new FilePathImpl(root));
     }
