@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ui.UIUtil;
@@ -44,6 +45,7 @@ public final class StripeButton extends JToggleButton implements ActionListener 
   private ToolWindowsPane myPane;
   private JLabel myDragButtonImage;
   private Point myPressedPoint;
+  private Stripe myLastStripe;
 
   StripeButton(final InternalDecorator decorator, ToolWindowsPane pane) {
     myDecorator = decorator;
@@ -103,11 +105,17 @@ public final class StripeButton extends JToggleButton implements ActionListener 
     if (!isDraggingNow()) {
       myDragPane = findLayeredPane(e);
       if (myDragPane == null) return;
-      final BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+      final BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
       paint(image.getGraphics());
-      myDragButtonImage = new JLabel(new ImageIcon(image));
+      myDragButtonImage = new JLabel(new ImageIcon(image)) {
+
+        public String toString() {
+          return "Image for: " + StripeButton.this.toString();
+        }
+      };
       myDragPane.add(myDragButtonImage, JLayeredPane.POPUP_LAYER);
       myDragButtonImage.setSize(myDragButtonImage.getPreferredSize());
+      setVisible(false);
     }
     if (!isDraggingNow()) return;
 
@@ -116,10 +124,21 @@ public final class StripeButton extends JToggleButton implements ActionListener 
     xy.y -= myPressedPoint.y;
     myDragButtonImage.setLocation(xy);
 
-    final Point screenPoint = e.getPoint();
-    SwingUtilities.convertPointToScreen(screenPoint, e.getComponent());
+    SwingUtilities.convertPointToScreen(xy, myDragPane);
 
-    final Stripe stripe = myPane.getStripeFor(screenPoint);
+    final Stripe stripe = myPane.getStripeFor(new Rectangle(xy, myDragButtonImage.getSize()), (Stripe)getParent());
+    if (stripe == null) {
+      if (myLastStripe != null) {
+        myLastStripe.removeDropButton();
+      }
+    } else {
+      if (myLastStripe != null && myLastStripe != stripe) {
+        myLastStripe.removeDropButton();
+      }
+      stripe.processDropButton(this, myDragButtonImage, xy);
+    }
+
+    myLastStripe = stripe;
   }
 
   @Nullable
@@ -237,6 +256,15 @@ public final class StripeButton extends JToggleButton implements ActionListener 
     myDragPane.remove(myDragButtonImage);
     myDragButtonImage = null;
     myDragPane.repaint();
+    setVisible(true);
+    if (myLastStripe != null) {
+      myLastStripe.removeDropButton();
+      myLastStripe = null;
+    }
   }
 
+
+  public String toString() {
+    return StringUtil.getShortName(getClass().getName()) + " text: " + getText();
+  }
 }

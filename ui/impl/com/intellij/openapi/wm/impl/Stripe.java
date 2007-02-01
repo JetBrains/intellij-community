@@ -9,10 +9,10 @@ import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 
 /**
  * @author Eugene Belyaev
@@ -25,6 +25,8 @@ final class Stripe extends JPanel{
   private final MyUISettingsListener myUISettingsListener;
 
   private Dimension myPrefSize;
+  private JComponent myDragButton;
+  private Rectangle myDropRectangle;
 
   Stripe(final int anchor){
     super(new GridBagLayout());
@@ -75,53 +77,84 @@ final class Stripe extends JPanel{
     recomputeBounds(true);
   }
 
-  private Dimension recomputeBounds(boolean setBounds) {
-    final boolean horizontal = isHorizontal();
-
-    int eachX = -1;
-    int eachY = 0;
-    Dimension size = new Dimension();
-    final int gap = 1;
-
-    Dimension max = new Dimension();
-    for (StripeButton eachButton : myButtons) {
-      final Dimension eachSize = eachButton.getPreferredSize();
-      max.width = Math.max(eachSize.width, max.width);
-      max.height = Math.max(eachSize.height, max.height);
+  private LayoutData recomputeBounds(boolean setBounds) {
+    final LayoutData data = new LayoutData();
+    data.eachY = 0;
+    data.size = new Dimension();
+    data.gap = 1;
+    data.horizontal = isHorizontal();
+    if (data.horizontal) {
+      if (myButtons.size() > 0) {
+        final StripeButton template = myButtons.get(0);
+        final Insets insets = template.getInsets();
+        data.eachX = template.getPreferredSize().height - (insets == null ? 0 : insets.top);
+      } else {
+        data.eachX = 19;
+      }
+    } else {
+      data.eachX = 0;
     }
 
-    for (StripeButton eachButton : myButtons) {
-      if (!eachButton.isVisible()) continue;
+    data.max = new Dimension();
 
+    int sensivity = 20;
+    final Rectangle stripeSensetiveRec = new Rectangle(-sensivity, -sensivity, getWidth() + sensivity * 2, getHeight() + sensivity * 2);
+    boolean processDrop = isDroppingButton() && stripeSensetiveRec.intersects(myDropRectangle);
+
+    for (StripeButton eachButton : myButtons) {
       final Dimension eachSize = eachButton.getPreferredSize();
-      if (eachX == -1) {
-        if (horizontal) {
-          final Insets insets = eachButton.getInsets();
-          eachX = eachSize.height - (insets == null ? 0 : insets.top);
+      data.max.width = Math.max(eachSize.width, data.max.width);
+      data.max.height = Math.max(eachSize.height, data.max.height);
+    }
+
+    boolean dropRectangeWasLaidOut = false;
+    for (StripeButton eachButton : myButtons) {
+      if (!isConsideredInLayout(eachButton)) continue;
+      final Dimension eachSize = eachButton.getPreferredSize();
+      if (processDrop && !dropRectangeWasLaidOut) {
+        if (data.horizontal) {
+          int distance = myDropRectangle.x - data.eachX;
+          if (distance < eachSize.width / 2 || (myDropRectangle.x + myDropRectangle.width) < eachSize.width / 2) {
+            layoutButton(data, myDragButton, false);
+            dropRectangeWasLaidOut = true;
+          }
         } else {
-          eachX = 0;
         }
       }
-
-      if (setBounds) {
-        final int width = horizontal ? eachSize.width : max.width;
-        final int height = horizontal ? max.height : eachSize.height;
-        eachButton.setBounds(eachX, eachY, width, height);
-      }
-      if (horizontal) {
-        final int deltaX = eachSize.width + gap;
-        eachX += deltaX;
-        size.width += deltaX;
-        size.height = eachSize.height;
-      } else {
-        final int deltaY = eachSize.height + gap;
-        eachY += deltaY;
-        size.width = eachSize.width;
-        size.height += deltaY;
-      }
+      layoutButton(data, eachButton, setBounds);
     }
 
-    return size;
+    return data;
+  }
+
+
+  private static void layoutButton(final LayoutData data, final JComponent eachButton, boolean setBounds) {
+    final Dimension eachSize = eachButton.getPreferredSize();
+    if (setBounds) {
+      final int width = data.horizontal ? eachSize.width : data.max.width;
+      final int height = data.horizontal ? data.max.height : eachSize.height;
+      eachButton.setBounds(data.eachX, data.eachY, width, height);
+    }
+    if (data.horizontal) {
+      final int deltaX = eachSize.width + data.gap;
+      data.eachX += deltaX;
+      data.size.width += deltaX;
+      data.size.height = eachSize.height;
+    } else {
+      final int deltaY = eachSize.height + data.gap;
+      data.eachY += deltaY;
+      data.size.width = eachSize.width;
+      data.size.height += deltaY;
+    }
+  }
+
+  private static class LayoutData {
+    int eachX;
+    int eachY;
+    int gap;
+    Dimension size;
+    public Dimension max;
+    public boolean horizontal;
   }
 
   private boolean isHorizontal() {
@@ -130,7 +163,7 @@ final class Stripe extends JPanel{
 
   public Dimension getPreferredSize() {
     if (myPrefSize == null) {
-      myPrefSize = recomputeBounds(false);
+      myPrefSize = recomputeBounds(false).size;
     }
     return myPrefSize;
   }
@@ -150,10 +183,40 @@ final class Stripe extends JPanel{
     }
   }
 
-  public boolean containsScreen(final Point screenPoint) {
-    Point point = new Point(screenPoint);
+  public boolean containsScreen(final Rectangle screenRec) {
+    final Point point = screenRec.getLocation();
     SwingUtilities.convertPointFromScreen(point, this);
-    return contains(point);
+    return new Rectangle(point, screenRec.getSize()).intersects(new Rectangle(0, 0, getWidth(), getHeight()));
+  }
+
+  public void removeDropButton() {
+    myDragButton = null;
+    revalidate();
+    repaint();
+  }
+
+  public void processDropButton(final StripeButton button, Component buttonImage, Point screenPoint) {
+    if (!isDroppingButton()) {
+      final BufferedImage image = new BufferedImage(button.getWidth(), button.getHeight(), BufferedImage.TYPE_INT_RGB);
+      buttonImage.paint(image.getGraphics());
+      myDragButton = (JComponent)buttonImage;
+    }
+
+    final Point point = new Point(screenPoint);
+    SwingUtilities.convertPointFromScreen(point, this);
+
+    myDropRectangle = new Rectangle(point, buttonImage.getSize());
+
+    revalidate();
+    repaint();
+  }
+
+  private boolean isDroppingButton() {
+    return myDragButton != null;
+  }
+
+  private boolean isConsideredInLayout(final StripeButton each) {
+    return each.isVisible();
   }
 
   private final class MyKeymapManagerListener implements KeymapManagerListener{
@@ -167,5 +230,25 @@ final class Stripe extends JPanel{
       updateText();
       updateState();
     }
+  }
+
+
+  public String toString() {
+    String anchor = null;
+    switch(myAnchor) {
+      case SwingConstants.TOP:
+        anchor = "TOP";
+        break;
+      case SwingConstants.BOTTOM:
+        anchor = "BOTTOM";
+        break;
+      case SwingConstants.LEFT:
+        anchor = "LEFT";
+        break;
+      case SwingConstants.RIGHT:
+        anchor = "RIGHT";
+        break;
+    }
+    return getClass().getName() + " " + anchor;
   }
 }

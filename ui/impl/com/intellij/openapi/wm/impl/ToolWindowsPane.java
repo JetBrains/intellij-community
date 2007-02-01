@@ -15,6 +15,7 @@ import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.image.BufferedImage;
 import java.util.Comparator;
+import java.util.ArrayList;
 
 /**
  * This panel contains all tool stripes and JLayeredPanle at the center area. All tool windows are
@@ -51,6 +52,8 @@ final class ToolWindowsPane extends JPanel{
   private final Stripe myBottomStripe;
   private final Stripe myTopStripe;
 
+  private ArrayList<Stripe> myStipes = new ArrayList<Stripe>();
+
   private final MyUISettingsListenerImpl myUISettingsListener;
 
   ToolWindowsPane(final IdeFrameImpl frame){
@@ -76,9 +79,14 @@ final class ToolWindowsPane extends JPanel{
     // Tool stripes
 
     myTopStripe=new Stripe(SwingConstants.TOP);
+    myStipes.add(myTopStripe);
     myLeftStripe=new Stripe(SwingConstants.LEFT);
+    myStipes.add(myLeftStripe);
     myBottomStripe=new Stripe(SwingConstants.BOTTOM);
+    myStipes.add(myBottomStripe);
     myRightStripe=new Stripe(SwingConstants.RIGHT);
+    myStipes.add(myRightStripe);
+
     updateToolStripesVisibility();
 
     // Layered pane
@@ -255,11 +263,17 @@ final class ToolWindowsPane extends JPanel{
     myBottomStripe.setVisible(visible);
   }
 
-  public Stripe getStripeFor(final Point screenPoint) {
-    if (myLeftStripe.containsScreen(screenPoint)) return myLeftStripe;
-    if (myRightStripe.containsScreen(screenPoint)) return myRightStripe;
-    if (myTopStripe.containsScreen(screenPoint)) return myTopStripe;
-    if (myBottomStripe.containsScreen(screenPoint)) return myBottomStripe;
+  Stripe getStripeFor(final Rectangle screenRec, Stripe preferred) {
+    if (preferred.containsScreen(screenRec)) {
+      return myStipes.get(myStipes.indexOf(preferred));
+    }
+
+    for (Stripe each : myStipes) {
+      if (each.containsScreen(screenRec)) {
+        return myStipes.get(myStipes.indexOf(each));
+      }
+    }
+
     return null;
   }
 
