@@ -116,7 +116,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     final ArrayList<FinalizableCommand> commandsList = new ArrayList<FinalizableCommand>();
 
-    myToolWindowsPane = new ToolWindowsPane(myFrame);
+    myToolWindowsPane = new ToolWindowsPane(myFrame, this);
     ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(myToolWindowsPane);
     appendUpdateToolWindowsPaneCmd(commandsList);
 
@@ -710,7 +710,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     setToolWindowAnchor(id, anchor, -1);
   }
 
-  private void setToolWindowAnchor(final String id, final ToolWindowAnchor anchor, final int order) {
+  void setToolWindowAnchor(final String id, final ToolWindowAnchor anchor, final int order) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
     setToolWindowAnchorImpl(id, anchor, order, commandList);
@@ -1242,6 +1242,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     public void lookAndFeelChanged(final LafManager source) {
       updateComponentTreeUI();
     }
+  }
+
+
+  public WindowManagerEx getWindowManager() {
+    return myWindowManager;
   }
 
   @NotNull

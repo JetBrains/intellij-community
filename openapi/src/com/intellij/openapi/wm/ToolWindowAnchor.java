@@ -17,6 +17,8 @@ package com.intellij.openapi.wm;
 
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.*;
+
 public final class ToolWindowAnchor {
   public static final ToolWindowAnchor TOP = new ToolWindowAnchor("top");
   public static final ToolWindowAnchor LEFT = new ToolWindowAnchor("left");
@@ -32,4 +34,21 @@ public final class ToolWindowAnchor {
   public String toString(){
     return myText;
   }
+
+
+  public static ToolWindowAnchor get(int swingOrientationConstant) {
+    switch(swingOrientationConstant) {
+      case SwingConstants.TOP:
+        return TOP;
+      case SwingConstants.BOTTOM:
+        return BOTTOM;
+      case SwingConstants.LEFT:
+        return LEFT;
+      case SwingConstants.RIGHT:
+        return RIGHT;
+    }
+
+    throw new IllegalArgumentException("Unknown anchor constant: " + swingOrientationConstant);
+  }
+
 }

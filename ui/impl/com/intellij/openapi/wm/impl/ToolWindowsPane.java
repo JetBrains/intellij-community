@@ -56,7 +56,7 @@ final class ToolWindowsPane extends JPanel{
 
   private final MyUISettingsListenerImpl myUISettingsListener;
 
-  ToolWindowsPane(final IdeFrameImpl frame){
+  ToolWindowsPane(final IdeFrameImpl frame, ToolWindowManagerImpl manager){
     super(new BorderLayout());
 
     setOpaque(false);
@@ -78,13 +78,13 @@ final class ToolWindowsPane extends JPanel{
 
     // Tool stripes
 
-    myTopStripe=new Stripe(SwingConstants.TOP);
+    myTopStripe=new Stripe(SwingConstants.TOP, manager);
     myStipes.add(myTopStripe);
-    myLeftStripe=new Stripe(SwingConstants.LEFT);
+    myLeftStripe=new Stripe(SwingConstants.LEFT, manager);
     myStipes.add(myLeftStripe);
-    myBottomStripe=new Stripe(SwingConstants.BOTTOM);
+    myBottomStripe=new Stripe(SwingConstants.BOTTOM, manager);
     myStipes.add(myBottomStripe);
-    myRightStripe=new Stripe(SwingConstants.RIGHT);
+    myRightStripe=new Stripe(SwingConstants.RIGHT, manager);
     myStipes.add(myRightStripe);
 
     updateToolStripesVisibility();
