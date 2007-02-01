@@ -643,7 +643,7 @@ public class TypeConversionUtil {
         return IS_ASSIGNABLE_BIT_SET[rightTypeIndex][leftTypeIndex];
       }
       else {
-        LOG.assertTrue(right instanceof PsiClassType, right.toString());
+        assert right instanceof PsiClassType : right.toString();
         if (left instanceof PsiPrimitiveType) {
           return isUnboxable((PsiPrimitiveType)left, (PsiClassType)right);
         }
@@ -837,7 +837,7 @@ public class TypeConversionUtil {
       substitutor = getSuperClassSubstitutorInner(superClass, derivedClass, derivedSubstitutor, visited, manager);
     }
     if (substitutor == null) {
-      LOG.assertTrue(false, "Not inheritor: " + derivedClass + " super: " + superClass);
+      LOG.error("Not inheritor: " + derivedClass + " super: " + superClass);
     }
     return substitutor;
   }
