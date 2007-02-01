@@ -53,23 +53,30 @@ public class PatchHunk {
   }
 
   public ApplyPatchStatus apply(final List<String> lines) throws ApplyPatchException {
+    List<String> originalLines = new ArrayList<String>(lines);
+    try {
+      return tryApply(lines, false);
+    }
+    catch(ApplyPatchException ex) {
+      lines.clear();
+      lines.addAll(originalLines);
+      return tryApply(lines, true);
+    }
+  }
+
+  private ApplyPatchStatus tryApply(final List<String> lines, boolean acceptPartial) throws ApplyPatchException {
     ApplyPatchStatus result = null;
     int curLine = findStartLine(lines);
     for(PatchLine line: myLines) {
       final String patchLineText = line.getText();
       switch (line.getType()) {
         case CONTEXT:
-          if (curLine >= lines.size()) {
-            throw new ApplyPatchException("Unexpected end of document. Expected line:\n" + patchLineText);
-          }
-          if (!patchLineText.equals(lines.get(curLine))) {
-            throw new ApplyPatchException("Context mismatch. Expected line:\n" + patchLineText + "\nFound line:\n" + lines.get(curLine));
-          }
+          checkContextMismatch(lines, curLine, patchLineText);
           curLine++;
           break;
 
         case ADD:
-          if (curLine < lines.size() && lines.get(curLine).equals(patchLineText)) {
+          if (curLine < lines.size() && lines.get(curLine).equals(patchLineText) && acceptPartial) {
             result = ApplyPatchStatus.and(result, ApplyPatchStatus.ALREADY_APPLIED);
           }
           else {
@@ -81,8 +88,13 @@ public class PatchHunk {
 
         case REMOVE:
           if (curLine >= lines.size() || !patchLineText.equals(lines.get(curLine))) {
-            // we'll get a context mismatch exception later if it's actually a conflict and not an already applied line
-            result = ApplyPatchStatus.and(result, ApplyPatchStatus.ALREADY_APPLIED);
+            if (acceptPartial) {
+              // we'll get a context mismatch exception later if it's actually a conflict and not an already applied line
+              result = ApplyPatchStatus.and(result, ApplyPatchStatus.ALREADY_APPLIED);
+            }
+            else {
+              checkContextMismatch(lines, curLine, patchLineText);
+            }
           }
           else {
             lines.remove(curLine);
@@ -95,6 +107,15 @@ public class PatchHunk {
       return result;
     }
     return ApplyPatchStatus.SUCCESS;
+  }
+
+  private static void checkContextMismatch(final List<String> lines, final int curLine, final String patchLineText) throws ApplyPatchException {
+    if (curLine >= lines.size()) {
+      throw new ApplyPatchException("Unexpected end of document. Expected line:\n" + patchLineText);
+    }
+    if (!patchLineText.equals(lines.get(curLine))) {
+      throw new ApplyPatchException("Context mismatch. Expected line:\n" + patchLineText + "\nFound line:\n" + lines.get(curLine));
+    }
   }
 
   private int findStartLine(final List<String> lines) throws ApplyPatchException {
