@@ -197,6 +197,22 @@ public class VcsUtil
     }
   }
 
+  /**
+   *
+   * @param project Project component
+   * @param file File to check
+   * @return true if the given file resides under the root associated with any
+   *         Version Control.
+   */
+  public static boolean isFileUnderVcs( Project project, VirtualFile file )
+  {
+    return isFileUnderVcs( project, getFilePath( file.getPath() ));
+  }
+  public static boolean isFileUnderVcs( Project project, FilePath file )
+  {
+    return getVcsFor( project, file ) != null;
+  }
+
   public static void refreshFiles(final FilePath[] roots, final Runnable runnable)
   {
     ApplicationManager.getApplication().assertIsDispatchThread();
