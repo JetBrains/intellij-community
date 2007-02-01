@@ -55,6 +55,7 @@ final class ToolWindowsPane extends JPanel{
   private ArrayList<Stripe> myStipes = new ArrayList<Stripe>();
 
   private final MyUISettingsListenerImpl myUISettingsListener;
+  private JComponent myTemplateButton;
 
   ToolWindowsPane(final IdeFrameImpl frame, ToolWindowManagerImpl manager){
     super(new BorderLayout());
@@ -275,6 +276,18 @@ final class ToolWindowsPane extends JPanel{
     }
 
     return null;
+  }
+
+  void startDrag() {
+    for (Stripe each : myStipes) {
+      each.startDrag();
+    }
+  }
+
+  void stopDrag() {
+    for (Stripe each : myStipes) {
+      each.stopDrag();
+    }
   }
 
   private final class AddDockedComponentCmd extends FinalizableCommand{
@@ -691,4 +704,22 @@ final class ToolWindowsPane extends JPanel{
       }
     }
   }
+
+  JComponent getTemplateButton() {
+    if (myTemplateButton == null) {
+      for (Stripe each : myStipes) {
+        if (each.getComponentCount() > 0) {
+          myTemplateButton = (JComponent)each.getComponent(0);
+          break;
+        }
+      }
+    }
+
+    if (myTemplateButton == null) {
+      myTemplateButton = new JLabel("XXX");
+    }
+
+    return myTemplateButton;
+  }
+
 }

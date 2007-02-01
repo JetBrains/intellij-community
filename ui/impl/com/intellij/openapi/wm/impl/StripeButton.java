@@ -121,6 +121,7 @@ public final class StripeButton extends JToggleButton implements ActionListener 
       myDragPane.add(myDragButtonImage, JLayeredPane.POPUP_LAYER);
       myDragButtonImage.setSize(myDragButtonImage.getPreferredSize());
       setVisible(false);
+      myPane.startDrag();
     }
     if (!isDraggingNow()) return;
 
@@ -134,11 +135,11 @@ public final class StripeButton extends JToggleButton implements ActionListener 
     final Stripe stripe = myPane.getStripeFor(new Rectangle(xy, myDragButtonImage.getSize()), (Stripe)getParent());
     if (stripe == null) {
       if (myLastStripe != null) {
-        myLastStripe.finishDrop();
+        myLastStripe.resetDrop();
       }
     } else {
       if (myLastStripe != null && myLastStripe != stripe) {
-        myLastStripe.finishDrop();
+        myLastStripe.resetDrop();
       }
       stripe.processDropButton(this, myDragButtonImage, xy);
     }
@@ -159,7 +160,7 @@ public final class StripeButton extends JToggleButton implements ActionListener 
       myPressedWhenSelected = isSelected();
     }
     else if (MouseEvent.MOUSE_RELEASED == e.getID()) {
-      resetDraggingNow();
+      finishDragging();
     }
     super.processMouseEvent(e);
   }
@@ -256,10 +257,11 @@ public final class StripeButton extends JToggleButton implements ActionListener 
     return myDragButtonImage != null;
   }
 
-  private void resetDraggingNow() {
+  private void finishDragging() {
     if (!isDraggingNow()) return;
     myDragPane.remove(myDragButtonImage);
     myDragButtonImage = null;
+    myPane.stopDrag();
     myDragPane.repaint();
     setVisible(true);
     if (myLastStripe != null) {

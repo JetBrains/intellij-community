@@ -1253,4 +1253,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   public String getComponentName() {
     return "ToolWindowManager";
   }
+
+
+  public ToolWindowsPane getToolWindowsPane() {
+    return myToolWindowsPane;
+  }
 }

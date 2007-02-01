@@ -7,7 +7,6 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.impl.commands.InvokeLaterCmd;
 
 import javax.swing.*;
 import java.awt.*;
@@ -94,13 +93,9 @@ final class Stripe extends JPanel{
     data.horizontal = isHorizontal();
     data.dragInsertPosition = -1;
     if (data.horizontal) {
-      if (myButtons.size() > 0) {
-        final StripeButton template = myButtons.get(0);
-        final Insets insets = template.getInsets();
-        data.eachX = template.getPreferredSize().height - (insets == null ? 0 : insets.top);
-      } else {
-        data.eachX = 19;
-      }
+      final JComponent template = myManager.getToolWindowsPane().getTemplateButton();
+      final Insets insets = template.getInsets();
+      data.eachX = template.getPreferredSize().height - (insets == null ? 0 : insets.top);
     } else {
       data.eachX = 0;
     }
@@ -117,9 +112,9 @@ final class Stripe extends JPanel{
       data.max.height = Math.max(eachSize.height, data.max.height);
     }
 
-    int index = -1;
+    int insertOrder = -1;
     for (StripeButton eachButton : myButtons) {
-      index++;
+      insertOrder = eachButton.getDecorator().getWindowInfo().getOrder();
       if (!isConsideredInLayout(eachButton)) continue;
       final Dimension eachSize = eachButton.getPreferredSize();
       if (processDrop && data.dragInsertPosition == -1) {
@@ -127,13 +122,13 @@ final class Stripe extends JPanel{
           int distance = myDropRectangle.x - data.eachX;
           if (distance < eachSize.width / 2 || (myDropRectangle.x + myDropRectangle.width) < eachSize.width / 2) {
             layoutButton(data, myDragButtonImage, false);
-            data.dragInsertPosition = index;
+            data.dragInsertPosition = insertOrder;
           }
         } else {
           int distance = myDropRectangle.y - data.eachY;
           if (distance < eachSize.height / 2 || (myDropRectangle.y + myDropRectangle.height) < eachSize.height / 2) {
             layoutButton(data, myDragButtonImage, false);
-            data.dragInsertPosition = index;
+            data.dragInsertPosition = insertOrder;
           }
         }
       }
@@ -163,6 +158,26 @@ final class Stripe extends JPanel{
       data.size.height += deltaY;
     }
     data.processedComponents++;
+  }
+
+  public void startDrag() {
+    if (getComponentCount() == 0) {
+      final JComponent template = myManager.getToolWindowsPane().getTemplateButton();
+      if (isHorizontal()) {
+        myPrefSize = new Dimension(0, template.getPreferredSize().height);
+      } else {
+        myPrefSize = new Dimension(template.getPreferredSize().width, 0);
+      }
+    }
+
+    revalidate();
+    repaint();
+  }
+
+  public void stopDrag() {
+    myPrefSize = null;
+    revalidate();
+    repaint();
   }
 
   private static class LayoutData {
@@ -216,14 +231,18 @@ final class Stripe extends JPanel{
     myManager.setToolWindowAnchor(info.getId(), ToolWindowAnchor.get(myAnchor), myLastLayoutData.dragInsertPosition);
     myManager.invokeLater(new Runnable() {
       public void run() {
-        myDragButton = null;
-        myDragButtonImage = null;
-        myLayoutEnabled = true;
-        revalidate();
-        repaint();
+        resetDrop();
       }
     });
 
+  }
+
+  public void resetDrop() {
+    myDragButton = null;
+    myDragButtonImage = null;
+    myLayoutEnabled = true;
+    revalidate();
+    repaint();
   }
 
   public void processDropButton(final StripeButton button, JComponent buttonImage, Point screenPoint) {
