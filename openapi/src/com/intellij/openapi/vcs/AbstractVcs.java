@@ -224,5 +224,16 @@ public abstract class AbstractVcs {
   public VcsRevisionNumber parseRevisionNumber(String revisionNumberString) {
     return null;
   }
+
+  /**
+   * Checks if the specified directory is managed by this version control system (regardless of the
+   * project VCS configuration). For example, for CVS this checks the presense of "CVS" admin directories.
+   *
+   * @param dir the directory to check.
+   * @return true if the directory is managed by the specified VCS, false otherwise.
+   */
+  public boolean isVersionedDirectory(VirtualFile dir) {
+    return false;
+  }
 }
 

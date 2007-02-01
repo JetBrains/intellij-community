@@ -386,5 +386,11 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
   public VcsRevisionNumber parseRevisionNumber(final String revisionNumberString) {
     return new CvsRevisionNumber(revisionNumberString);
   }
+
+  @Override
+  public boolean isVersionedDirectory(final VirtualFile dir) {
+    final VirtualFile child = dir.findChild("CVS");
+    return child != null && child.isDirectory();
+  }
 }
 

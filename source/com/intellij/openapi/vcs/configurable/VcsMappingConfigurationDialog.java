@@ -8,9 +8,14 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -28,8 +33,9 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     super(project, false);
     myProject = project;
     myVCSComboBox.setModel(VcsDirectoryConfigurationPanel.buildVcsWrappersModel(project));
-    myDirectoryTextField.addBrowseFolderListener("Select Directory", "Select directory to map to a VCS", project,
-                                                 new FileChooserDescriptor(false, true, false, false, false, false));
+    myDirectoryTextField.addActionListener(new MyBrowseFolderListener("Select Directory", "Select directory to map to a VCS",
+                                                                      myDirectoryTextField, project,
+                                                                      new FileChooserDescriptor(false, true, false, false, false, false)));
     setTitle(title);
     init();
   }
@@ -49,10 +55,32 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     mapping.setDirectory(FileUtil.toSystemIndependentName(myDirectoryTextField.getText()));
   }
 
-
   @Override
   protected Action[] createLeftSideActions() {
     return new Action[] { new ConfigureVcsAction() };
+  }
+
+  private class MyBrowseFolderListener extends ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> {
+
+    public MyBrowseFolderListener(String title, String description, TextFieldWithBrowseButton textField, Project project,
+                                  FileChooserDescriptor fileChooserDescriptor) {
+      super(title, description, textField, project, fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    }
+
+    @Override
+    protected void onFileChoosen(final VirtualFile chosenFile) {
+      String oldText = myDirectoryTextField.getText();
+      super.onFileChoosen(chosenFile);
+      final VcsWrapper wrapper = (VcsWrapper)myVCSComboBox.getSelectedItem();
+      if (oldText.length() == 0 && wrapper.getOriginal() == null) {
+        for(AbstractVcs vcs: ProjectLevelVcsManager.getInstance(myProject).getAllVcss()) {
+          if (vcs.isVersionedDirectory(chosenFile)) {
+            myVCSComboBox.setSelectedItem(new VcsWrapper(vcs));
+            break;
+          }
+        }
+      }
+    }
   }
 
   private class ConfigureVcsAction extends AbstractAction {
