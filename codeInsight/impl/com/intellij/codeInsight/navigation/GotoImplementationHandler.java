@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -65,6 +66,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
                                             final boolean includeSelfIfNoOthers) {
     if (element == null) return PsiElement.EMPTY_ARRAY;
     final PsiElement[] elements = searchDefinitions(element);
+    if (elements == null) return PsiElement.EMPTY_ARRAY; //the search has been cancelled
     if (elements.length > 0) {
       if (!includeSelfAlways) return filterElements(editor, file, element, elements, offset);
       PsiElement[] all = new PsiElement[elements.length + 1];
@@ -77,7 +79,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
            PsiElement.EMPTY_ARRAY;
   }
 
-  @NotNull
+  @Nullable("For the case the search has been cancelled")
   protected PsiElement[] searchDefinitions(final PsiElement element) {
     final PsiElement[][] result = new PsiElement[1][];
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
@@ -85,7 +87,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
         result[0] = DefinitionsSearch.search(element).toArray(PsiElement.EMPTY_ARRAY);
       }
     }, CodeInsightBundle.message("searching.for.implementations"), true, element.getProject())) {
-      return PsiElement.EMPTY_ARRAY;
+      return null;
     }
     return result[0];
   }
