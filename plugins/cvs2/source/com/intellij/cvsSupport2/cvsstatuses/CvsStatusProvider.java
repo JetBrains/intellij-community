@@ -9,11 +9,7 @@ import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -121,16 +117,11 @@ public class CvsStatusProvider {
     return diff < TIME_STAMP_EPSILON;
   }
 
-  private static boolean isInContent(VirtualFile file, Module module) {
-    return file == null || !FileTypeManager.getInstance().isFileIgnored(file.getName()) &&
-                           ModuleRootManager.getInstance(module).getFileIndex().isInContent(file);
+  private static boolean isInContent(VirtualFile file) {
+    return file == null || !FileTypeManager.getInstance().isFileIgnored(file.getName());
   }
 
-  public static DirectoryContent getDirectoryContent(VirtualFile directory, Project project) {
-    return getDirectoryContent(directory, VfsUtil.getModuleForFile(project, directory));
-  }
-
-  public static DirectoryContent getDirectoryContent(VirtualFile directory, Module module) {
+  public static DirectoryContent getDirectoryContent(VirtualFile directory) {
     CvsInfo cvsInfo = getEntriesManager().getCvsInfoFor(directory);
     DirectoryContent result = new DirectoryContent(cvsInfo);
 
@@ -149,7 +140,7 @@ public class CvsStatusProvider {
       if (entry.isDirectory()) {
         if (nameToFileMap.containsKey(fileName)) {
           VirtualFile virtualFile = nameToFileMap.get(fileName);
-          if (isInContent(virtualFile, module)) {
+          if (isInContent(virtualFile)) {
             result.addDirectory(new VirtualFileEntry(virtualFile, entry));
           }
         }
@@ -160,7 +151,7 @@ public class CvsStatusProvider {
       else {
         if (nameToFileMap.containsKey(fileName) || entry.isRemoved()) {
           VirtualFile virtualFile = nameToFileMap.get(fileName);
-          if (isInContent(virtualFile, module)) {
+          if (isInContent(virtualFile)) {
             result.addFile(new VirtualFileEntry(virtualFile, entry));
           }
         }
@@ -174,12 +165,12 @@ public class CvsStatusProvider {
     for (final String name : nameToFileMap.keySet()) {
       VirtualFile unknown = nameToFileMap.get(name);
       if (unknown.isDirectory()) {
-        if (isInContent(unknown, module)) {
+        if (isInContent(unknown)) {
           result.addUnknownDirectory(unknown);
         }
       }
       else {
-        if (isInContent(unknown, module)) {
+        if (isInContent(unknown)) {
           boolean isIgnored = result.getCvsInfo().getIgnoreFilter().shouldBeIgnored(unknown.getName());
           if (isIgnored) {
             result.addIgnoredFile(unknown);
