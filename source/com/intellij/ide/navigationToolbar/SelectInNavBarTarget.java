@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NonNls;
  * Date: 09-Nov-2005
  */
 public class SelectInNavBarTarget extends SelectInTargetPsiWrapper {
-  protected SelectInNavBarTarget(final Project project) {
+  public SelectInNavBarTarget(final Project project) {
     super(project);
   }
 

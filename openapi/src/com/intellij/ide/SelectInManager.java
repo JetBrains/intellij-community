@@ -15,26 +15,19 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.Extensions;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
-public class SelectInManager implements JDOMExternalizable, ProjectComponent {
+public class SelectInManager  {
+  private Project myProject;
   private List<SelectInTarget> myTargets = new ArrayList<SelectInTarget>();
-  private List<String> myOrder = new ArrayList<String>();
-  @NonNls private static final String ELEMENT_TARGET = "target";
-  @NonNls private static final String ATTRIBUTE_NAME = "name";
+  private boolean myLoadedExtensions = false;
   @NonNls public static final String PROJECT = IdeBundle.message("select.in.project");
   @NonNls public static final String PACKAGES = IdeBundle.message("select.in.packages");
   @NonNls public static final String ASPECTS = IdeBundle.message("select.in.aspects");
@@ -43,21 +36,14 @@ public class SelectInManager implements JDOMExternalizable, ProjectComponent {
   @NonNls public static final String NAV_BAR = IdeBundle.message("select.in.nav.bar");
   @NonNls public static final String SCOPE = IdeBundle.message("select.in.scope");
 
-  private SelectInManager() {
+  public SelectInManager(final Project project) {
+    myProject = project;
   }
 
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
-  }
-
-  public void projectClosed() {
-  }
-
-  public void projectOpened() {
-  }
-
+  /**
+   * "Select In" targets should be registered as extension points ({@link com.intellij.ide.SelectInTarget#EP_NAME}).
+   */
+  @Deprecated
   public void addTarget(SelectInTarget target) {
     myTargets.add(target);
   }
@@ -66,32 +52,9 @@ public class SelectInManager implements JDOMExternalizable, ProjectComponent {
     myTargets.remove(target);
   }
 
-  public void moveToTop(SelectInTarget target) {
-    String targetName = target.toString();
-    if (myOrder.contains(targetName)) {
-      myOrder.remove(targetName);
-    }
-    myOrder.add(0, targetName);
-  }
-
   public SelectInTarget[] getTargets() {
+    checkLoadExtensions();
     SelectInTarget[] targets = myTargets.toArray(new SelectInTarget[myTargets.size()]);
-    /*
-    for(int i = 0; i < targets.length; i++){
-      String name = targets[i].toString();
-      if (!myOrder.contains(name)) {
-        myOrder.add(name);
-      }
-    }
-    Arrays.sort(targets, new Comparator() {
-       public int compare(Object o1, Object o2) {
-         int index1 = myOrder.indexOf(o1.toString());
-         int index2 = myOrder.indexOf(o2.toString());
-         return index1 - index2;
-       }
-     });
-    */
-
     Arrays.sort(targets, new Comparator<SelectInTarget>() {
       public int compare(final SelectInTarget o1, final SelectInTarget o2) {
         if (o1.getWeight() < o2.getWeight()) return -1;
@@ -103,8 +66,16 @@ public class SelectInManager implements JDOMExternalizable, ProjectComponent {
     return targets;
   }
 
+  private void checkLoadExtensions() {
+    if (!myLoadedExtensions) {
+      myLoadedExtensions = true;
+      Collections.addAll(myTargets, Extensions.getExtensions(SelectInTarget.EP_NAME, myProject));
+    }
+  }
+
   @Nullable
   public SelectInTarget getTarget(@NotNull String name) {
+    checkLoadExtensions();
     for (SelectInTarget target : myTargets) {
       if (name.equals(target.toString())) return target;
     }
@@ -112,26 +83,6 @@ public class SelectInManager implements JDOMExternalizable, ProjectComponent {
   }
 
   public static SelectInManager getInstance(Project project) {
-    return project.getComponent(SelectInManager.class);
+    return ServiceManager.getService(project, SelectInManager.class);
   }
-
-  public void readExternal(Element parentNode) throws InvalidDataException {
-    myOrder.clear();
-    for (Element element : (List<Element>)parentNode.getChildren(ELEMENT_TARGET)) {
-      myOrder.add(element.getAttributeValue(ATTRIBUTE_NAME));
-    }
-  }
-
-  public void writeExternal(Element parentNode) throws WriteExternalException {
-    for (String targetName : myOrder) {
-      Element e = new Element(ELEMENT_TARGET);
-      e.setAttribute(ATTRIBUTE_NAME, targetName);
-      parentNode.addContent(e);
-    }
-  }
-
-  public String getComponentName() {
-    return "SelectInManager";
-  }
-
 }

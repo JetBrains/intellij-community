@@ -11,7 +11,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.SelectInManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.actionSystem.*;
@@ -22,17 +21,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +81,6 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     myContentManager.addContent(content);
 
     WolfTheProblemSolver.getInstance(myProject).addProblemListener(myProblemListener);
-    SelectInManager.getInstance(myProject).addTarget(new SelectInChangesViewTarget(myProject));
   }
 
   public void projectClosed() {

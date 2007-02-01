@@ -179,7 +179,6 @@ public class IdeRootPane extends JRootPane{
 
   public void installNavigationBar(final Project project) {
     myNavigationBar = new NavigationToolbarPanel(project);
-    myNavigationBar.registerSelectInTarget();
     myNorthPanel.add(myNavigationBar, BorderLayout.SOUTH);
     updateNavigationBarVisibility();
   }

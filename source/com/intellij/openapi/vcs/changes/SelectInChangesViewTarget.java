@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class SelectInChangesViewTarget extends SelectInTargetPsiWrapper {
-  protected SelectInChangesViewTarget(final Project project) {
+  public SelectInChangesViewTarget(final Project project) {
     super(project);
   }
 

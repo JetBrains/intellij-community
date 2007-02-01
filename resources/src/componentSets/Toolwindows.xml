@@ -43,12 +43,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <interface-class>com.intellij.ide.SelectInManager</interface-class>
-      <implementation-class>com.intellij.ide.SelectInManager</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <interface-class>com.intellij.ide.hierarchy.HierarchyBrowserManager</interface-class>
       <implementation-class>com.intellij.ide.hierarchy.HierarchyBrowserManager</implementation-class>
       <option name="workspace" value="true"/>

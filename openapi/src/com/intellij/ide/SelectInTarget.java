@@ -15,7 +15,11 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+
 public interface SelectInTarget {
+  ExtensionPointName<SelectInTarget> EP_NAME = new ExtensionPointName<SelectInTarget>("com.intellij.selectInTarget");
+
   String toString();
 
   /**

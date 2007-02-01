@@ -1,7 +1,5 @@
 package com.intellij.ide.structureView.impl;
 
-import com.intellij.ide.SelectInManager;
-import com.intellij.ide.impl.StructureViewSelectInTarget;
 import com.intellij.ide.impl.StructureViewWrapperImpl;
 import com.intellij.ide.structureView.StructureViewExtension;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
@@ -58,7 +56,6 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
         ToolWindowManager toolWindowManager=ToolWindowManager.getInstance(myProject);
         ToolWindow toolWindow=toolWindowManager.registerToolWindow(ToolWindowId.STRUCTURE_VIEW,myStructureViewWrapperImpl.getComponent(),ToolWindowAnchor.LEFT);
         toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowStructure.png"));
-        SelectInManager.getInstance(myProject).addTarget(new StructureViewSelectInTarget(myProject));
       }
     });
   }

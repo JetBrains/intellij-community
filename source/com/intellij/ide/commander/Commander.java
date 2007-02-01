@@ -296,7 +296,6 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
   protected void setupToolWindow() {
     final ToolWindow toolWindow = myToolWindowManager.registerToolWindow(ToolWindowId.COMMANDER, this, ToolWindowAnchor.RIGHT);
     toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowCommander.png"));
-    SelectInManager.getInstance(myProject).addTarget(new CommanderSelectInTarget(myProject));
   }
 
 

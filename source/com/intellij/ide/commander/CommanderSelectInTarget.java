@@ -13,7 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.util.PsiUtil;
 
-final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
+public final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
   public CommanderSelectInTarget(final Project project) {
     super(project);
   }
