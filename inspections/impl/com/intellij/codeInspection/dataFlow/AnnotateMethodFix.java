@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.intention.impl.AddAnnotationAction;
+import com.intellij.codeInsight.intention.impl.AddAnnotationFix;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -79,7 +79,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
 
   private void annotateMethod(final PsiMethod method) {
     try {
-      new AddAnnotationAction(myAnnotation, method).invoke(method.getProject(), null, method.getContainingFile());
+      new AddAnnotationFix(myAnnotation, method).invoke(method.getProject(), null, method.getContainingFile());
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

@@ -10,8 +10,8 @@ import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.reference.AntReference;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
-import com.intellij.lang.ant.quickfix.AntCreateMacroDefAction;
-import com.intellij.lang.ant.quickfix.AntCreatePresetDefAction;
+import com.intellij.lang.ant.quickfix.AntCreateMacroDefFix;
+import com.intellij.lang.ant.quickfix.AntCreatePresetDefFix;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -97,11 +97,11 @@ public class AntAnnotator implements Annotator {
     if (se.getSourceElement().getName().length() == 0) return;
 
     final AntProject project = se.getAntProject();
-    annotation.registerFix(new AntCreateMacroDefAction(se));
-    annotation.registerFix(new AntCreatePresetDefAction(se));
+    annotation.registerFix(new AntCreateMacroDefFix(se));
+    annotation.registerFix(new AntCreatePresetDefFix(se));
     for (final AntFile antFile : project.getImportedFiles()) {
-      annotation.registerFix(new AntCreateMacroDefAction(se, antFile));
-      annotation.registerFix(new AntCreatePresetDefAction(se, antFile));
+      annotation.registerFix(new AntCreateMacroDefFix(se, antFile));
+      annotation.registerFix(new AntCreatePresetDefFix(se, antFile));
     }
   }
 

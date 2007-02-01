@@ -18,12 +18,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author mike
  */
-public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorFromCallAction");
+public class CreateConstructorFromCallFix extends CreateFromUsageBaseAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorFromCallFix");
 
   private final PsiConstructorCall myConstructorCall;
 
-  public CreateConstructorFromCallAction(PsiConstructorCall constructorCall) {
+  public CreateConstructorFromCallFix(PsiConstructorCall constructorCall) {
     myConstructorCall = constructorCall;
   }
 

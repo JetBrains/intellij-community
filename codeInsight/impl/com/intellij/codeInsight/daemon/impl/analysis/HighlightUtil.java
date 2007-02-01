@@ -652,7 +652,7 @@ public class HighlightUtil {
       errorResult = HighlightInfo.createHighlightInfo(highlightType, fixRange, getUnhandledExceptionsDescriptor(unhandledExceptions));
       QuickFixAction.registerQuickFixAction(errorResult, new AddExceptionToCatchFix());
       QuickFixAction.registerQuickFixAction(errorResult, new AddExceptionToThrowsFix(element));
-      QuickFixAction.registerQuickFixAction(errorResult, new SurroundWithTryCatchAction(element));
+      QuickFixAction.registerQuickFixAction(errorResult, new SurroundWithTryCatchFix(element));
       if (unhandledExceptions.length == 1) {
         QuickFixAction.registerQuickFixAction(errorResult, new GeneralizeCatchFix(element, unhandledExceptions[0]));
       }
@@ -1834,7 +1834,7 @@ public class HighlightUtil {
         }
 
         HighlightInfo info = HighlightInfo.createHighlightInfo(type, refName, description);
-        QuickFixAction.registerQuickFixAction(info, new ImportClassAction(ref));
+        QuickFixAction.registerQuickFixAction(info, new ImportClassFix(ref));
         QuickFixAction.registerQuickFixAction(info, SetupJDKFix.getInstnace());
         OrderEntryFix.registerFixes(info, ref);
         if (ref instanceof PsiReferenceExpression) {
@@ -1843,17 +1843,17 @@ public class HighlightUtil {
           QuickFixAction.registerQuickFixAction(info, fixRange, new CreateEnumConstantFromUsageAction(refExpr), null, null);
           QuickFixAction.registerQuickFixAction(info, fixRange, new CreateConstantFieldFromUsageAction(refExpr), null, null);
           QuickFixAction.registerQuickFixAction(info, fixRange, new CreateFieldFromUsageAction(refExpr), null, null);
-          QuickFixAction.registerQuickFixAction(info, new RenameWrongRefAction(refExpr));
+          QuickFixAction.registerQuickFixAction(info, new RenameWrongRefFix(refExpr));
           if (!ref.isQualified()) {
-            QuickFixAction.registerQuickFixAction(info, fixRange, new BringVariableIntoScopeAction(refExpr), null, null);
+            QuickFixAction.registerQuickFixAction(info, fixRange, new BringVariableIntoScopeFix(refExpr), null, null);
             QuickFixAction.registerQuickFixAction(info, fixRange, new CreateLocalFromUsageAction(refExpr), null, null);
             QuickFixAction.registerQuickFixAction(info, fixRange, new CreateParameterFromUsageAction(refExpr), null, null);
           }
         }
-        QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageAction(ref, CreateClassKind.CLASS));
-        QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageAction(ref, CreateClassKind.INTERFACE));
-        QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageAction(ref, CreateClassKind.ENUM));
-        QuickFixAction.registerQuickFixAction(info, new CreateInnerClassFromUsageAction(ref, CreateClassKind.CLASS));
+        QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));
+        QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageFix(ref, CreateClassKind.INTERFACE));
+        QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
+        QuickFixAction.registerQuickFixAction(info, new CreateInnerClassFromUsageFix(ref, CreateClassKind.CLASS));
         PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
         if (parent instanceof PsiNewExpression) {
           QuickFixAction.registerQuickFixAction(info, new CreateClassFromNewAction((PsiNewExpression)parent));
@@ -1868,7 +1868,7 @@ public class HighlightUtil {
           if (result.isStaticsScopeCorrect()) {
             registerAccessQuickFixAction((PsiMember)resolved, ref, info, result.getCurrentFileResolveScope());
             if (ref instanceof PsiReferenceExpression) {
-              QuickFixAction.registerQuickFixAction(info, new RenameWrongRefAction((PsiReferenceExpression)ref));
+              QuickFixAction.registerQuickFixAction(info, new RenameWrongRefFix((PsiReferenceExpression)ref));
             }
           }
           return info;
@@ -1879,7 +1879,7 @@ public class HighlightUtil {
           HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(), description);
           registerStaticProblemQuickFixAction(resolved, info, ref);
           if (ref instanceof PsiReferenceExpression) {
-            QuickFixAction.registerQuickFixAction(info, new RenameWrongRefAction((PsiReferenceExpression)ref));
+            QuickFixAction.registerQuickFixAction(info, new RenameWrongRefFix((PsiReferenceExpression)ref));
           }
           return info;
         }

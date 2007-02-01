@@ -16,9 +16,9 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author Mike
  */
-public class CreateClassFromUsageAction extends CreateClassFromUsageBaseAction {
+public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
-  public CreateClassFromUsageAction(PsiJavaCodeReferenceElement refElement, CreateClassKind kind) {
+  public CreateClassFromUsageFix(PsiJavaCodeReferenceElement refElement, CreateClassKind kind) {
     super(kind, refElement);
   }
 

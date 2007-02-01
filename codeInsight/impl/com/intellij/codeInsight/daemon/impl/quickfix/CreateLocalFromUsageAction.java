@@ -18,7 +18,7 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author Mike
  */
-public class CreateLocalFromUsageAction extends CreateVarFromUsageAction {
+public class CreateLocalFromUsageAction extends CreateVarFromUsageFix {
 
   public CreateLocalFromUsageAction(PsiReferenceExpression referenceExpression) {
     super(referenceExpression);

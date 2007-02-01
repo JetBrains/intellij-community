@@ -341,7 +341,7 @@ public class HighlightMethodUtil {
         else {
           TextRange range = getFixRange(methodCall);
           QuickFixAction.registerQuickFixAction(highlightInfo, range, new CreateMethodFromUsageAction(methodCall), null, null);
-          QuickFixAction.registerQuickFixAction(highlightInfo, range, new CreatePropertyFromUsageAction(methodCall), null, null);
+          QuickFixAction.registerQuickFixAction(highlightInfo, range, new CreatePropertyFromUsageFix(methodCall), null, null);
         }
       }
     }
@@ -449,7 +449,7 @@ public class HighlightMethodUtil {
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreateMethodFromUsageAction(methodCall), null, null);
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreateConstructorFromSuperAction(methodCall), null, null);
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreateConstructorFromThisAction(methodCall), null, null);
-    QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreatePropertyFromUsageAction(methodCall), null, null);
+    QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreatePropertyFromUsageFix(methodCall), null, null);
     CandidateInfo[] methodCandidates = resolveHelper.getReferencedMethodCandidates(methodCall, false);
     CastMethodArgumentFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     PermuteArgumentsFix.registerFix(highlightInfo, methodCall, methodCandidates, fixRange);
@@ -1040,7 +1040,7 @@ public class HighlightMethodUtil {
         String description = JavaErrorMessages.message("wrong.constructor.arguments", constructorName+"()", argTypes);
         String tooltip = createMismatchedArgumentsHtmlTooltip(list, PsiParameter.EMPTY_ARRAY, constructorName, PsiSubstitutor.EMPTY, aClass);
         HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, description, tooltip);
-        QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), new CreateConstructorFromCallAction(constructorCall), null, null);
+        QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), new CreateConstructorFromCallFix(constructorCall), null, null);
         if (classReference != null) {
           CastConstructorParametersFix.registerCastActions(classReference, constructorCall, info,getFixRange(list));
         }
@@ -1065,7 +1065,7 @@ public class HighlightMethodUtil {
         name += buildArgTypesList(list);
         String description = JavaErrorMessages.message("cannot.resolve.constructor", name);
         HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, description);
-        QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), new CreateConstructorFromCallAction(constructorCall), null, null);
+        QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), new CreateConstructorFromCallFix(constructorCall), null, null);
         if (classReference != null) {
           CastConstructorParametersFix.registerCastActions(classReference, constructorCall, info,getFixRange(list));
         }
@@ -1091,7 +1091,7 @@ public class HighlightMethodUtil {
           String toolTip = createMismatchedArgumentsHtmlTooltip(result, list);
           PsiElement infoElement = list.getTextLength() > 0 ? list : constructorCall;
           HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, infoElement, description, toolTip);
-          QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), new CreateConstructorFromCallAction(constructorCall), null, null);
+          QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), new CreateConstructorFromCallFix(constructorCall), null, null);
           if (classReference != null) {
             CastConstructorParametersFix.registerCastActions(classReference, constructorCall, info, getFixRange(infoElement));
             ChangeMethodSignatureFromUsageFix.registerIntentions(results, list, info, null);

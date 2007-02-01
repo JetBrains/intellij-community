@@ -27,12 +27,12 @@ import java.util.List;
 /**
  * @author ven
  */
-public class CreateConstructorMatchingSuperAction extends BaseIntentionAction {
-  private Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperAction");
+public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
+  private Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperFix");
 
   private PsiClass myClass;
 
-  public CreateConstructorMatchingSuperAction(PsiClass aClass) {
+  public CreateConstructorMatchingSuperFix(PsiClass aClass) {
     myClass = aClass;
   }
 

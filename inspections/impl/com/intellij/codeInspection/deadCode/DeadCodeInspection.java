@@ -650,9 +650,9 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   public IntentionAction findQuickFixes(final CommonProblemDescriptor descriptor, final String hint) {
     if (descriptor instanceof ProblemDescriptor) {
       if (DELETE.equals(hint)) {
-        return new PermanentDeleteIntention(((ProblemDescriptor)descriptor).getPsiElement());
+        return new PermanentDeleteFix(((ProblemDescriptor)descriptor).getPsiElement());
       } else if (COMMENT.equals(hint)) {
-        return new CommentOutIntention(((ProblemDescriptor)descriptor).getPsiElement());
+        return new CommentOutFix(((ProblemDescriptor)descriptor).getPsiElement());
       }
     }
     return null;
@@ -683,10 +683,10 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     }
   }
 
-  private static class PermanentDeleteIntention implements IntentionAction {
+  private static class PermanentDeleteFix implements IntentionAction {
     private PsiElement myElement;
 
-    public PermanentDeleteIntention(final PsiElement element) {
+    public PermanentDeleteFix(final PsiElement element) {
       myElement = element;
     }
 
@@ -744,11 +744,10 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     }
   }
 
-  private static class CommentOutIntention implements IntentionAction {
+  private static class CommentOutFix implements IntentionAction {
     private PsiElement myElement;
 
-    @SuppressWarnings({"UnusedDeclaration"})
-    public CommentOutIntention(final PsiElement element) {
+    public CommentOutFix(final PsiElement element) {
       myElement = element;
     }
 

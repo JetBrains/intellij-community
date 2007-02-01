@@ -19,16 +19,16 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
-public class AntCreateMacroDefAction extends BaseIntentionAction {
+public class AntCreateMacroDefFix extends BaseIntentionAction {
 
   private final AntStructuredElement myUndefinedElement;
   private final AntFile myFile;
 
-  public AntCreateMacroDefAction(final AntStructuredElement undefinedElement) {
+  public AntCreateMacroDefFix(final AntStructuredElement undefinedElement) {
     this(undefinedElement, null);
   }
 
-  public AntCreateMacroDefAction(final AntStructuredElement undefinedElement, final AntFile file) {
+  public AntCreateMacroDefFix(final AntStructuredElement undefinedElement, final AntFile file) {
     myUndefinedElement = undefinedElement;
     myFile = file;
   }

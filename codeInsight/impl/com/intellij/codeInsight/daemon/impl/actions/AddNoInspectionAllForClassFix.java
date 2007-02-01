@@ -22,11 +22,11 @@ import org.jetbrains.annotations.NotNull;
  * User: anna
  * Date: May 13, 2005
  */
-public class AddNoInspectionAllForClassAction extends AddNoInspectionDocTagAction{
+public class AddNoInspectionAllForClassFix extends AddNoInspectionDocTagFix {
   @NonNls private static final String ID = "ALL";
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionAllForClassAction");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionAllForClassFix");
 
-  public AddNoInspectionAllForClassAction(final PsiElement context) {
+  public AddNoInspectionAllForClassFix(final PsiElement context) {
     super(ID, context);
   }
 

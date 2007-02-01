@@ -2,7 +2,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.impl.actions.*;
@@ -340,18 +339,18 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     List<IntentionAction> options = new ArrayList<IntentionAction>();
     options.add(new EditInspectionToolsSettingsAction(tool));
     options.add(new RunInspectionIntention(tool));
-    options.add(new AddNoInspectionCommentAction(tool, psiElement));
-    options.add(new AddNoInspectionDocTagAction(tool, psiElement));
-    options.add(new AddNoInspectionForClassAction(tool, psiElement));
-    options.add(new AddNoInspectionAllForClassAction(psiElement));
+    options.add(new AddNoInspectionCommentFix(tool, psiElement));
+    options.add(new AddNoInspectionDocTagFix(tool, psiElement));
+    options.add(new AddNoInspectionForClassFix(tool, psiElement));
+    options.add(new AddNoInspectionAllForClassFix(psiElement));
 
     if (tool instanceof CustomSuppressableInspectionTool) {
       options.addAll(Arrays.asList(((CustomSuppressableInspectionTool)tool).getSuppressActions(descriptor)));
     }
 
-    options.add(new AddSuppressWarningsAnnotationAction(tool, psiElement));
-    options.add(new AddSuppressWarningsAnnotationForClassAction(tool, psiElement));
-    options.add(new AddSuppressWarningsAnnotationForAllAction(psiElement));
+    options.add(new AddSuppressWarningsAnnotationFix(tool, psiElement));
+    options.add(new AddSuppressWarningsAnnotationForClassFix(tool, psiElement));
+    options.add(new AddSuppressWarningsAnnotationForAllFix(psiElement));
     options.add(new DisableInspectionToolAction(tool));
     return options;
   }

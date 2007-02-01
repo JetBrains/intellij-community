@@ -59,7 +59,7 @@ public class IntentionManagerImpl extends IntentionManager {
     registerIntentionAndMetaData(new SimplifyBooleanExpressionAction(), CodeInsightBundle.message("intentions.category.boolean"));
     registerIntentionAndMetaData(new ConcatenationToMessageFormatAction(), CodeInsightBundle.message("intentions.category.i18n"));
 
-    registerIntentionAndMetaData(new MakeTypeGeneric(), CodeInsightBundle.message("intentions.category.declaration"));
+    registerIntentionAndMetaData(new MakeTypeGenericAction(), CodeInsightBundle.message("intentions.category.declaration"));
     registerIntentionAndMetaData(new AddOverrideAnnotationAction(), CodeInsightBundle.message("intentions.category.declaration"));
 
     registerIntentionAndMetaData(new AddOnDemandStaticImportAction(), CodeInsightBundle.message("intentions.category.imports"));
@@ -117,13 +117,13 @@ public class IntentionManagerImpl extends IntentionManager {
   public List<IntentionAction> getStandardIntentionOptions(final HighlightDisplayKey displayKey, final PsiElement context) {
     List<IntentionAction> options = new ArrayList<IntentionAction>();
     options.add(new EditInspectionToolsSettingsAction(displayKey));
-    options.add(new AddNoInspectionCommentAction(displayKey, context));
-    options.add(new AddNoInspectionDocTagAction(displayKey, context));
-    options.add(new AddNoInspectionForClassAction(displayKey, context));
-    options.add(new AddNoInspectionAllForClassAction(context));
-    options.add(new AddSuppressWarningsAnnotationAction(displayKey, context));
-    options.add(new AddSuppressWarningsAnnotationForClassAction(displayKey, context));
-    options.add(new AddSuppressWarningsAnnotationForAllAction(context));
+    options.add(new AddNoInspectionCommentFix(displayKey, context));
+    options.add(new AddNoInspectionDocTagFix(displayKey, context));
+    options.add(new AddNoInspectionForClassFix(displayKey, context));
+    options.add(new AddNoInspectionAllForClassFix(context));
+    options.add(new AddSuppressWarningsAnnotationFix(displayKey, context));
+    options.add(new AddSuppressWarningsAnnotationForClassFix(displayKey, context));
+    options.add(new AddSuppressWarningsAnnotationForAllFix(context));
     options.add(new DisableInspectionToolAction(displayKey));
     return options;
   }

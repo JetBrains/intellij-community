@@ -23,11 +23,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
-public class SurroundWithTryCatchAction implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SurroundWithTryCatchAction");
+public class SurroundWithTryCatchFix implements IntentionAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SurroundWithTryCatchFix");
   private PsiStatement myStatement;
 
-  public SurroundWithTryCatchAction(PsiElement element) {
+  public SurroundWithTryCatchFix(PsiElement element) {
     myStatement = PsiTreeUtil.getNonStrictParentOfType(element, PsiStatement.class);
   }
 

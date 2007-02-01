@@ -87,7 +87,7 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
   public IntentionAction[] getSuppressActions(ProblemDescriptor context) {
     Property property = PsiTreeUtil.getParentOfType(context.getPsiElement(), Property.class, false);
     if (property == null) return new IntentionAction[] {new SuppressForFile()};
-    return new IntentionAction[] {new SuppressSingleProperty(property), new SuppressForFile()};
+    return new IntentionAction[] {new SuppressSinglePropertyFix(property), new SuppressForFile()};
   }
 
   public boolean isSuppressedFor(PsiElement element) {
@@ -131,10 +131,10 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
   }
 
 
-  private static class SuppressSingleProperty implements IntentionAction {
+  private static class SuppressSinglePropertyFix implements IntentionAction {
     @NotNull private final Property myProperty;
 
-    public SuppressSingleProperty(@NotNull final Property property) {
+    public SuppressSinglePropertyFix(@NotNull final Property property) {
       myProperty = property;
     }
 

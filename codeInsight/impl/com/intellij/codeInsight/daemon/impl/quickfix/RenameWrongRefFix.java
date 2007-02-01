@@ -25,12 +25,12 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
-public class RenameWrongRefAction implements IntentionAction {
+public class RenameWrongRefFix implements IntentionAction {
   private PsiReferenceExpression myRefExpr;
   private static final @NonNls String INPUT_VARIABLE_NAME = "INPUTVAR";
   private static final @NonNls String OTHER_VARIABLE_NAME = "OTHERVAR";
 
-  public RenameWrongRefAction(PsiReferenceExpression refExpr) {
+  public RenameWrongRefFix(PsiReferenceExpression refExpr) {
     myRefExpr = refExpr;
   }
 

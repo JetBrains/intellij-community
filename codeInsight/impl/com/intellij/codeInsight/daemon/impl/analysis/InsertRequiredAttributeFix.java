@@ -41,14 +41,14 @@ import org.jetbrains.annotations.NonNls;
  * User: anna
  * Date: 18-Nov-2005
  */
-public class InsertRequiredAttributeIntention implements IntentionAction {
+public class InsertRequiredAttributeFix implements IntentionAction {
   private final XmlTag myTag;
   private final String myAttrName;
   private String[] myValues;
   @NonNls
   private static final String NAME_TEMPLATE_VARIABLE = "name";
 
-  public InsertRequiredAttributeIntention(final XmlTag tag, final String attrName,final String[] values) {
+  public InsertRequiredAttributeFix(final XmlTag tag, final String attrName,final String[] values) {
     myTag = tag;
     myAttrName = attrName;
     myValues = values;

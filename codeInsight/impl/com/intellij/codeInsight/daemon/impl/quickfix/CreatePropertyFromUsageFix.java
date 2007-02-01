@@ -30,15 +30,15 @@ import java.util.Set;
 /**
  * @author ven
  */
-public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreatePropertyFromUsageAction");
+public class CreatePropertyFromUsageFix extends CreateFromUsageBaseAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreatePropertyFromUsageFix");
   private static final @NonNls String FIELD_VARIABLE = "FIELD_NAME_VARIABLE";
   private static final @NonNls String TYPE_VARIABLE = "FIELD_TYPE_VARIABLE";
   private static final @NonNls String GET_PREFIX = "get";
   private static final @NonNls String IS_PREFIX = "is";
   private static final @NonNls String SET_PREFIX = "set";
 
-  public CreatePropertyFromUsageAction(PsiMethodCallExpression methodCall) {
+  public CreatePropertyFromUsageFix(PsiMethodCallExpression methodCall) {
     myMethodCall = methodCall;
   }
 

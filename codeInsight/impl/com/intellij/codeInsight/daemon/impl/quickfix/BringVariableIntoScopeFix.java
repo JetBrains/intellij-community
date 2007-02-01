@@ -14,12 +14,12 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author ven
  */
-public class BringVariableIntoScopeAction implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeAction");
-  PsiReferenceExpression myUnresolvedReference;
-  PsiLocalVariable myOutOfScopeVariable;
+public class BringVariableIntoScopeFix implements IntentionAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix");
+  private final PsiReferenceExpression myUnresolvedReference;
+  private PsiLocalVariable myOutOfScopeVariable;
 
-  public BringVariableIntoScopeAction(PsiReferenceExpression unresolvedReference) {
+  public BringVariableIntoScopeFix(PsiReferenceExpression unresolvedReference) {
     myUnresolvedReference = unresolvedReference;
   }
 

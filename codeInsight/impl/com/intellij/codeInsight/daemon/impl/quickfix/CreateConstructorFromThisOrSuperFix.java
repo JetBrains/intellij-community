@@ -25,12 +25,12 @@ import org.jetbrains.annotations.NonNls;
  * Time: 6:41:19 PM
  * To change this template use Options | File Templates.
  */
-public abstract class CreateConstructorFromThisOrSuperAction extends CreateFromUsageBaseAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorFromThisOrSuperAction");
+public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsageBaseAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorFromThisOrSuperFix");
 
   protected PsiMethodCallExpression myMethodCall;
 
-  public CreateConstructorFromThisOrSuperAction(PsiMethodCallExpression methodCall) {
+  public CreateConstructorFromThisOrSuperFix(PsiMethodCallExpression methodCall) {
     myMethodCall = methodCall;
   }
 

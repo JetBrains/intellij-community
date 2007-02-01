@@ -12,11 +12,11 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author ven
  */
-public class AddAnnotationAction implements IntentionAction {
+public class AddAnnotationFix implements IntentionAction {
   private final String myFQN;
   private final PsiModifierListOwner myModifierListOwner;
 
-  public AddAnnotationAction(String fqn, PsiModifierListOwner modifierListOwner) {
+  public AddAnnotationFix(String fqn, PsiModifierListOwner modifierListOwner) {
     myFQN = fqn;
     myModifierListOwner = modifierListOwner;
   }

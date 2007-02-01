@@ -20,9 +20,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class AssignFieldFromParameterAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AssignFieldFromParameterAction");
-  private PsiParameter myParameter;
 
-  private  PsiType getType() {
+  private static PsiType getType(final PsiParameter myParameter) {
     if (myParameter == null) return null;
     PsiType type = myParameter.getType();
     if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
@@ -30,8 +29,8 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    myParameter = CreateFieldFromParameterAction.findParameterAtCursor(file, editor);
-    final PsiType type = getType();
+    PsiParameter myParameter = CreateFieldFromParameterAction.findParameterAtCursor(file, editor);
+    final PsiType type = getType(myParameter);
     PsiClass targetClass = myParameter == null ? null : PsiTreeUtil.getParentOfType(myParameter, PsiClass.class);
     if (myParameter == null
         || !myParameter.isValid()
@@ -45,7 +44,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
         || CreateFieldFromParameterAction.isParameterAssignedToField(myParameter)) {
       return false;
     }
-    PsiField field = findFieldToAssign();
+    PsiField field = findFieldToAssign(myParameter);
     if (field == null) return false;
     setText(CodeInsightBundle.message("intention.assign.field.from.parameter.text", field.getName()));
 
@@ -58,12 +57,12 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
-    myParameter = CreateFieldFromParameterAction.findParameterAtCursor(file, editor);
+    PsiParameter myParameter = CreateFieldFromParameterAction.findParameterAtCursor(file, editor);
     if (!CodeInsightUtil.prepareFileForWrite(myParameter.getContainingFile())) return;
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     try {
-      PsiField field = findFieldToAssign();
+      PsiField field = findFieldToAssign(myParameter);
       addFieldAssignmentStatement(project, field, myParameter, editor);
     }
     catch (IncorrectOperationException e) {
@@ -119,7 +118,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     return false;
   }
 
-  private PsiField findFieldToAssign() {
+  private PsiField findFieldToAssign(final PsiParameter myParameter) {
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(myParameter.getProject());
     final String parameterName = myParameter.getName();
     String propertyName = styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER);
@@ -129,7 +128,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     final boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
 
     VariableKind kind = isMethodStatic ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
-    SuggestedNameInfo suggestedNameInfo = styleManager.suggestVariableName(kind, propertyName, null, getType());
+    SuggestedNameInfo suggestedNameInfo = styleManager.suggestVariableName(kind, propertyName, null, getType(myParameter));
 
     final String fieldName = suggestedNameInfo.names[0];
 

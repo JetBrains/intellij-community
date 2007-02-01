@@ -111,7 +111,7 @@ public class FileReferenceQuickFixProvider {
       isdirectory = false;
     }
 
-    final CreateFileIntentionAction action = new CreateFileIntentionAction(isdirectory, newFileName, directory);
+    final CreateFileFix action = new CreateFileFix(isdirectory, newFileName, directory);
     QuickFixAction.registerQuickFixAction(info, action);
     return Arrays.asList(action);
   }

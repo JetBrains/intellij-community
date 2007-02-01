@@ -15,7 +15,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class CastMethodArgumentFix extends FixMethodArgumentAction {
+public class CastMethodArgumentFix extends MethodArgumentFix {
   private CastMethodArgumentFix(PsiExpressionList list, int i, PsiType toType, final ArgumentFixerActionFactory factory) {
     super(list, i, toType, factory);
   }

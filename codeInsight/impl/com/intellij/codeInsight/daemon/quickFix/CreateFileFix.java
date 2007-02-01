@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
 */
-class CreateFileIntentionAction implements IntentionAction, LocalQuickFix {
+class CreateFileFix implements IntentionAction, LocalQuickFix {
   private final boolean myIsdirectory;
   private final String myNewFileName;
   private final PsiDirectory myDirectory;
@@ -36,7 +36,7 @@ class CreateFileIntentionAction implements IntentionAction, LocalQuickFix {
   private long myIsAvailableTimeStamp;
   private static final int REFRESH_INTERVAL = 1000;
 
-  public CreateFileIntentionAction(final boolean isdirectory,
+  public CreateFileFix(final boolean isdirectory,
                                    final String newFileName,
                                    final PsiDirectory directory,
                                    @Nullable String text,
@@ -50,7 +50,7 @@ class CreateFileIntentionAction implements IntentionAction, LocalQuickFix {
     myIsAvailableTimeStamp = System.currentTimeMillis();
   }
 
-  public CreateFileIntentionAction(final boolean isdirectory,
+  public CreateFileFix(final boolean isdirectory,
                                    final String newFileName,
                                    final PsiDirectory directory) {
     this(isdirectory,newFileName,directory,null,isdirectory ? "create.directory.text":"create.file.text" );

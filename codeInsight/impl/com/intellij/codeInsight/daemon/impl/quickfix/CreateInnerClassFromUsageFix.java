@@ -23,9 +23,9 @@ import java.util.List;
 /**
  * @author ven
  */
-public class CreateInnerClassFromUsageAction extends CreateClassFromUsageBaseAction {
+public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
-  public CreateInnerClassFromUsageAction(final PsiJavaCodeReferenceElement refElement, final CreateClassKind kind) {
+  public CreateInnerClassFromUsageFix(final PsiJavaCodeReferenceElement refElement, final CreateClassKind kind) {
     super(kind, refElement);
   }
 

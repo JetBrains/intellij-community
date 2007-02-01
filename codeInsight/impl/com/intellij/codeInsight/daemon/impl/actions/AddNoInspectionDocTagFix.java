@@ -23,21 +23,21 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ven
  */
-public class AddNoInspectionDocTagAction implements IntentionAction {
+public class AddNoInspectionDocTagFix implements IntentionAction {
   private String myID;
   protected PsiElement myContext;
 
-  public AddNoInspectionDocTagAction(LocalInspectionTool tool, PsiElement context) {
+  public AddNoInspectionDocTagFix(LocalInspectionTool tool, PsiElement context) {
     myID = tool.getID();
     myContext = context;
   }
 
-  public AddNoInspectionDocTagAction(HighlightDisplayKey key, PsiElement context) {
+  public AddNoInspectionDocTagFix(HighlightDisplayKey key, PsiElement context) {
     myID = key.getID();
     myContext = context;
   }
 
-  public AddNoInspectionDocTagAction(String ID, PsiElement context) {
+  public AddNoInspectionDocTagFix(String ID, PsiElement context) {
     myID = ID;
     myContext = context;
   }

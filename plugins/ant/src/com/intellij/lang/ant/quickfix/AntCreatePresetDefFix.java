@@ -8,7 +8,6 @@ import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.impl.AntFileImpl;
-import com.intellij.lang.ant.psi.impl.reference.AntTargetReference;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
@@ -19,25 +18,25 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
-public class AntCreateTargetAction extends BaseIntentionAction {
+public class AntCreatePresetDefFix extends BaseIntentionAction {
 
-  private final AntTargetReference myRef;
+  private final AntStructuredElement myUndefinedElement;
   private final AntFile myFile;
 
-  public AntCreateTargetAction(final AntTargetReference ref) {
-    this(ref, null);
+  public AntCreatePresetDefFix(final AntStructuredElement undefinedElement) {
+    this(undefinedElement, null);
   }
 
-  public AntCreateTargetAction(final AntTargetReference ref, final AntFile file) {
-    myRef = ref;
+  public AntCreatePresetDefFix(final AntStructuredElement undefinedElement, final AntFile file) {
+    myUndefinedElement = undefinedElement;
     myFile = file;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   @NotNull
   public String getFamilyName() {
-    final String i18nName = AntBundle.message("intention.create.target.family.name");
-    return (i18nName == null) ? "Create target" : i18nName;
+    final String i18nName = AntBundle.message("intention.create.presetdef.family.name");
+    return (i18nName == null) ? "Create presetdef" : i18nName;
   }
 
   @NotNull
@@ -46,7 +45,7 @@ public class AntCreateTargetAction extends BaseIntentionAction {
     try {
       builder.append(getFamilyName());
       builder.append(" '");
-      builder.append(myRef.getCanonicalRepresentationText());
+      builder.append(myUndefinedElement.getSourceElement().getName());
       builder.append('\'');
       if (myFile != null) {
         builder.append(' ');
@@ -64,14 +63,24 @@ public class AntCreateTargetAction extends BaseIntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final AntElement element = myRef.getElement();
+    final AntStructuredElement element = myUndefinedElement;
     final AntProject antProject = (myFile == null) ? element.getAntProject() : myFile.getAntProject();
     final AntElement anchor =
       (myFile == null) ? AntPsiUtil.getSubProjectElement(element) : PsiTreeUtil.getChildOfType(antProject, AntStructuredElement.class);
+    final XmlTag se = element.getSourceElement();
     final XmlTag projectTag = antProject.getSourceElement();
-    XmlTag targetTag = projectTag.createChildTag(AntFileImpl.TARGET_TAG, projectTag.getNamespace(), null, false);
-    targetTag.setAttribute(AntFileImpl.NAME_ATTR, myRef.getCanonicalRepresentationText());
-    targetTag = (XmlTag)((anchor == null) ? projectTag.add(targetTag) : projectTag.addBefore(targetTag, anchor.getSourceElement()));
-    ((Navigatable)targetTag).navigate(true);
+
+    // create presetdef tag
+    XmlTag presetDef = projectTag.createChildTag("presetdef", projectTag.getNamespace(), null, false);
+    presetDef.setAttribute(AntFileImpl.NAME_ATTR, se.getName());
+
+    // insert presetdef in file and navigate to it
+    presetDef = (XmlTag)((anchor == null) ? projectTag.add(presetDef) : projectTag.addBefore(presetDef, anchor.getSourceElement()));
+    ((Navigatable)presetDef).navigate(true);
+
+    // if presetdef is inserted into an imported file, clear caches in order to re-annotate current element
+    if (myFile != null) {
+      element.getAntFile().clearCaches();
+    }
   }
 }

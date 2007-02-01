@@ -7,7 +7,7 @@ import com.intellij.codeInsight.completion.scope.CompletionProcessor;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageIntentionAction;
+import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
@@ -324,11 +324,11 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return Collections.emptyList();
   }
 
-  protected CreateClassOrPackageIntentionAction doRegisterQuickFix(final HighlightInfo info, final List<PsiDirectory> writableDirectoryList,
+  protected CreateClassOrPackageFix doRegisterQuickFix(final HighlightInfo info, final List<PsiDirectory> writableDirectoryList,
                                                                  final boolean createJavaClass,
                                                                  final String extendClass) {
-    final CreateClassOrPackageIntentionAction action =
-      new CreateClassOrPackageIntentionAction(writableDirectoryList, this, createJavaClass, extendClass);
+    final CreateClassOrPackageFix action =
+      new CreateClassOrPackageFix(writableDirectoryList, this, createJavaClass, extendClass);
     QuickFixAction.registerQuickFixAction(info, action);
     return action;
   }

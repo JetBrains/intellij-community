@@ -32,7 +32,7 @@ public class AddOverrideAnnotationAction implements IntentionAction {
     PsiMethod[] superMethods = method.findSuperMethods();
     for (PsiMethod superMethod : superMethods) {
       if (!superMethod.hasModifierProperty(PsiModifier.ABSTRACT)
-          && new AddAnnotationAction(ourFQName, method).isAvailable(project, editor, file)) {
+          && new AddAnnotationFix(ourFQName, method).isAvailable(project, editor, file)) {
         return true;
       }
     }
@@ -42,7 +42,7 @@ public class AddOverrideAnnotationAction implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiMethod method = findMethod(file, editor.getCaretModel().getOffset());
-    new AddAnnotationAction(ourFQName, method).invoke(project, editor, file);
+    new AddAnnotationFix(ourFQName, method).invoke(project, editor, file);
   }
 
   private static PsiMethod findMethod(PsiFile file, int offset) {

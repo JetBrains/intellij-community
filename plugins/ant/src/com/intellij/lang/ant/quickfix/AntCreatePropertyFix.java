@@ -17,16 +17,16 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
-public class AntCreatePropertyAction extends BaseIntentionAction {
+public class AntCreatePropertyFix extends BaseIntentionAction {
 
   private final AntPropertyReference myRef;
   private final PropertiesFile myPropFile;
 
-  public AntCreatePropertyAction(final AntPropertyReference ref) {
+  public AntCreatePropertyFix(final AntPropertyReference ref) {
     this(ref, null);
   }
 
-  public AntCreatePropertyAction(final AntPropertyReference ref, final PropertiesFile propFile) {
+  public AntCreatePropertyFix(final AntPropertyReference ref, final PropertiesFile propFile) {
     myRef = ref;
     myPropFile = propFile;
   }

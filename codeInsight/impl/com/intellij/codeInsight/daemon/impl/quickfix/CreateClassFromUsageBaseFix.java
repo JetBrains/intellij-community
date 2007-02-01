@@ -12,18 +12,18 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ven
  */
-public abstract class CreateClassFromUsageBaseAction extends BaseIntentionAction {
+public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
   protected static final Logger LOG = Logger.getInstance(
-    "#com.intellij.codeInsight.daemon.impl.quickfix.CreateClassFromUsageBaseAction");
+    "#com.intellij.codeInsight.daemon.impl.quickfix.CreateClassFromUsageBaseFix");
   protected CreateClassKind myKind;
-  protected final SmartPsiElementPointer<PsiJavaCodeReferenceElement> myRefElement;
+  private final SmartPsiElementPointer<PsiJavaCodeReferenceElement> myRefElement;
 
-  public CreateClassFromUsageBaseAction(CreateClassKind kind, final PsiJavaCodeReferenceElement refElement) {
+  public CreateClassFromUsageBaseFix(CreateClassKind kind, final PsiJavaCodeReferenceElement refElement) {
     myKind = kind;
     myRefElement = SmartPointerManager.getInstance(refElement.getProject()).createLazyPointer(refElement);
   }
 
-  public abstract String getText(String varName);
+  protected abstract String getText(String varName);
 
   private boolean isAvailableInContext(final @NotNull PsiJavaCodeReferenceElement element) {
     PsiElement parent = element.getParent();
@@ -101,7 +101,7 @@ public abstract class CreateClassFromUsageBaseAction extends BaseIntentionAction
   }
 
   @Nullable
-  public PsiJavaCodeReferenceElement getRefElement() {
+  protected PsiJavaCodeReferenceElement getRefElement() {
     return myRefElement.getElement();
   }
 

@@ -15,13 +15,13 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author ven
  */
-public class CreateGetterOrSetterAction implements IntentionAction{
+public class CreateGetterOrSetterFix implements IntentionAction{
   private final boolean myCreateGetter;
   private final boolean myCreateSetter;
   private final PsiField myField;
   private final String myPropertyName;
 
-  public CreateGetterOrSetterAction(boolean createGetter, boolean createSetter, PsiField field) {
+  public CreateGetterOrSetterFix(boolean createGetter, boolean createSetter, PsiField field) {
     myCreateGetter = createGetter;
     myCreateSetter = createSetter;
     myField = field;

@@ -311,9 +311,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         String message = MessageFormat.format(JavaErrorMessages.message("private.field.is.not.used"), identifier.getText());
         HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
         QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(field), options, displayName);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, false, field), options, displayName);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(false, true, field), options, displayName);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, true, field), options, displayName);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterFix(true, false, field), options, displayName);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterFix(false, true, field), options, displayName);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterFix(true, true, field), options, displayName);
         QuickFixAction.registerQuickFixAction(highlightInfo, new CreateConstructorParameterFromFieldFix(field), options, displayName);
         return highlightInfo;
       }
@@ -323,9 +323,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         String message = MessageFormat.format(JavaErrorMessages.message("private.field.is.not.used.for.reading"), identifier.getText());
         HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
         QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(field), options, displayName);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, false, field), options, displayName);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(false, true, field), options, displayName);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterAction(true, true, field), options, displayName);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterFix(true, false, field), options, displayName);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterFix(false, true, field), options, displayName);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterFix(true, true, field), options, displayName);
         return highlightInfo;
       }
 
@@ -335,7 +335,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         if (!writeReferenced && !isInjected && !isImplicitWrite(field)) {
           String message = MessageFormat.format(JavaErrorMessages.message("private.field.is.not.assigned"), identifier.getText());
           final HighlightInfo info = createUnusedSymbolInfo(identifier, message);
-          QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterAction(false, true, field), options, displayName);
+          QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterFix(false, true, field), options, displayName);
           QuickFixAction.registerQuickFixAction(info, new CreateConstructorParameterFromFieldFix(field), options, displayName);
           SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(field, new Processor<String>() {
             public boolean process(final String annoName) {

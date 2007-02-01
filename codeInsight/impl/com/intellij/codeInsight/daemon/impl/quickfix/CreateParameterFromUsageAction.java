@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mike
  */
-public class CreateParameterFromUsageAction extends CreateVarFromUsageAction {
+public class CreateParameterFromUsageAction extends CreateVarFromUsageFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateParameterFromUsageAction");
 
   public CreateParameterFromUsageAction(PsiReferenceExpression referenceElement) {

@@ -21,7 +21,6 @@ import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.idea.LoggerFactory;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.jsp.impl.JspElementDescriptor;
-import com.intellij.jsp.impl.JspNsDescriptor;
 import com.intellij.jsp.impl.TldDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,7 +42,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.xml.XmlNotationDeclImpl;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
@@ -173,15 +171,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
-  private static XmlEntitiesInspection getInspectionProfile(final XmlTag tag, final String inspectionName) {
-    final PsiFile psiFile = tag.getContainingFile();
-    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(psiFile.getProject()).getInspectionProfile(psiFile);
-    XmlEntitiesInspection inspection = (XmlEntitiesInspection)((LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(
-      inspectionName)
-    ).getTool();
-    return inspection;
-  }
-
   private void checkUnboundNamespacePrefix(final XmlElement element, final XmlTag context, String namespacePrefix) {
     if (namespacePrefix.length() > 0) {
       final String namespaceByPrefix = context.getNamespaceByPrefix(namespacePrefix);
@@ -225,7 +214,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               infoType,
               0,
               messageLength,
-              localizedMessage, null, new CreateNSDeclarationIntentionAction(context, namespacePrefix,taglibDeclaration)
+              localizedMessage, null, new CreateNSDeclarationIntentionFix(context, namespacePrefix,taglibDeclaration)
             );
           } else {
             bindMessageToAstNode(
@@ -233,7 +222,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               infoType,
               0,
               messageLength,
-              localizedMessage, null, new CreateNSDeclarationIntentionAction(element, namespacePrefix,false)
+              localizedMessage, null, new CreateNSDeclarationIntentionFix(element, namespacePrefix,false)
             );
           }
         }
@@ -385,7 +374,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           if (!(elementDescriptor instanceof JspElementDescriptor) ||
               !((JspElementDescriptor)elementDescriptor).isRequiredAttributeImplicitlyPresent(tag, attrName)
               ) {
-            final InsertRequiredAttributeIntention insertRequiredAttributeIntention = new InsertRequiredAttributeIntention(
+            final InsertRequiredAttributeFix insertRequiredAttributeIntention = new InsertRequiredAttributeFix(
                 tag, attrName, null);
             final String localizedMessage = XmlErrorMessages.message("element.doesnt.have.required.attribute", name, attrName);
             final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
@@ -479,7 +468,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           if (jspManager != null) {
             QuickFixAction.registerQuickFixAction(
             highlightInfo,
-            new InsertRequiredAttributeIntention(
+            new InsertRequiredAttributeFix(
                 tag,
                 URI_ATT,
                 jspManager.getPossibleTldUris(jspFile)
@@ -489,7 +478,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
           QuickFixAction.registerQuickFixAction(
             highlightInfo,
-            new InsertRequiredAttributeIntention(tag, TAGDIR_ATT,null)
+            new InsertRequiredAttributeFix(tag, TAGDIR_ATT,null)
           );
         }
       }
@@ -564,7 +553,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     IntentionAction[] quickFixes;
     HighlightDisplayKey key = null;
 
-    final RemoveAttributeIntentionAction removeAttributeIntention = new RemoveAttributeIntentionAction(localName,attribute);
+    final RemoveAttributeIntentionFix removeAttributeIntention = new RemoveAttributeIntentionFix(localName,attribute);
 
     if (tag instanceof HtmlTag) {
       //final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile(tag);
@@ -630,7 +619,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           XmlErrorMessages.message("duplicate.attribute", localName));
         addToResults(highlightInfo);
 
-        IntentionAction intentionAction = new RemoveAttributeIntentionAction(localName, attribute);
+        IntentionAction intentionAction = new RemoveAttributeIntentionFix(localName, attribute);
 
         QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction);
       }
@@ -935,11 +924,11 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     parent.putUserData(DO_NOT_VALIDATE_KEY, "");
   }
 
-  private static class RemoveAttributeIntentionAction implements IntentionAction {
+  private static class RemoveAttributeIntentionFix implements IntentionAction {
     private final String myLocalName;
     private final XmlAttribute myAttribute;
 
-    public RemoveAttributeIntentionAction(final String localName, final XmlAttribute attribute) {
+    public RemoveAttributeIntentionFix(final String localName, final XmlAttribute attribute) {
       myLocalName = localName;
       myAttribute = attribute;
     }
@@ -982,14 +971,14 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
-  public static class CreateNSDeclarationIntentionAction implements IntentionAction {
+  public static class CreateNSDeclarationIntentionFix implements IntentionAction {
     boolean myTaglibDeclaration;
     private final XmlElement myElement;
     private final String myNamespacePrefix;
     @NonNls private static final String MY_DEFAULT_XML_NS = "someuri";
     @NonNls private static final String URI_ATTR_NAME = "uri";
 
-    public CreateNSDeclarationIntentionAction(final @NotNull XmlElement element, final @NotNull String namespacePrefix, boolean taglibDeclaration) {
+    public CreateNSDeclarationIntentionFix(final @NotNull XmlElement element, final @NotNull String namespacePrefix, boolean taglibDeclaration) {
       myElement = element;
       myNamespacePrefix = namespacePrefix;
       myTaglibDeclaration = taglibDeclaration;

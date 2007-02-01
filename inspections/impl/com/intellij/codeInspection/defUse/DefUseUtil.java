@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 public class DefUseUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defUse.DefUseUtil");
 
@@ -236,6 +238,7 @@ public class DefUseUtil {
 
   }
 
+  @NotNull
   public static PsiElement[] getDefs(PsiCodeBlock body, final PsiVariable def, PsiElement ref) {
     try {
       return new RefsDefs(body) {
@@ -278,10 +281,11 @@ public class DefUseUtil {
       }.get(def, ref);
     }
     catch (AnalysisCanceledException e) {
-      return null;
+      return PsiElement.EMPTY_ARRAY;
     }
   }
 
+  @NotNull
   public static PsiElement[] getRefs(PsiCodeBlock body, final PsiVariable def, PsiElement ref) {
     try {
       return new RefsDefs(body) {
@@ -315,7 +319,7 @@ public class DefUseUtil {
       }.get(def, ref);
     }
     catch (AnalysisCanceledException e) {
-      return null;
+      return PsiElement.EMPTY_ARRAY;
     }
   }
 
@@ -453,9 +457,10 @@ public class DefUseUtil {
     }
   };
 
+  @NotNull
   public static PsiElement[] getDefsRefs (final boolean defs, PsiFile file, final PsiElement target) {
     if (!(target instanceof PsiIdentifier)) {
-      return null;
+      return PsiElement.EMPTY_ARRAY;
     }
 
     if (file instanceof PsiCompiledElement) {
@@ -487,7 +492,7 @@ public class DefUseUtil {
                : getRefs(body, var, refElem);
       }
     }
-    return null;
+    return PsiElement.EMPTY_ARRAY;
   }
 
 }

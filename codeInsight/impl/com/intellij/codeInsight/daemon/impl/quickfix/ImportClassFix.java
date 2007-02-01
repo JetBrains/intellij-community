@@ -24,10 +24,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ImportClassAction implements IntentionAction {
+public class ImportClassFix implements IntentionAction {
   private PsiJavaCodeReferenceElement myRef;
 
-  public ImportClassAction(PsiJavaCodeReferenceElement element) {
+  public ImportClassFix(PsiJavaCodeReferenceElement element) {
     myRef = element;
   }
 

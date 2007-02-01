@@ -13,15 +13,15 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
-public abstract class FixMethodArgumentAction implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.FixMethodArgumentAction");
+public abstract class MethodArgumentFix implements IntentionAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodArgumentFix");
 
   protected final PsiExpressionList myArgList;
   protected final int myIndex;
   private ArgumentFixerActionFactory myArgumentFixerActionFactory;
   protected final PsiType myToType;
 
-  protected FixMethodArgumentAction(PsiExpressionList list, int i, PsiType toType, ArgumentFixerActionFactory fixerActionFactory) {
+  protected MethodArgumentFix(PsiExpressionList list, int i, PsiType toType, ArgumentFixerActionFactory fixerActionFactory) {
     myArgList = list;
     myIndex = i;
     myArgumentFixerActionFactory = fixerActionFactory;

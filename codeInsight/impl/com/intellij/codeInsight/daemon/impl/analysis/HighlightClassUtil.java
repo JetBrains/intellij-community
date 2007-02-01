@@ -504,7 +504,7 @@ public class HighlightClassUtil {
     String description = JavaErrorMessages.message("no.default.constructor.available", HighlightUtil.formatClass(baseClass));
 
     HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
-    QuickFixAction.registerQuickFixAction(info, new CreateConstructorMatchingSuperAction(aClass));
+    QuickFixAction.registerQuickFixAction(info, new CreateConstructorMatchingSuperFix(aClass));
 
     return info;
   }

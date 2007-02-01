@@ -6,7 +6,7 @@ import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.AntElementImpl;
-import com.intellij.lang.ant.quickfix.AntCreatePropertyAction;
+import com.intellij.lang.ant.quickfix.AntCreatePropertyFix;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.project.Project;
@@ -128,7 +128,7 @@ public class AntPropertyReference extends AntGenericReference {
 
     final List<IntentionAction> result = new ArrayList<IntentionAction>();
     final AntProject project = getElement().getAntProject();
-    result.add(new AntCreatePropertyAction(this));
+    result.add(new AntCreatePropertyFix(this));
     final Set<String> files = StringSetSpinAllocator.alloc();
     try {
       for (final PsiElement child : project.getChildren()) {
@@ -138,7 +138,7 @@ public class AntPropertyReference extends AntGenericReference {
             final String fileName = propFile.getName();
             if (!files.contains(fileName)) {
               files.add(fileName);
-              result.add(new AntCreatePropertyAction(this, propFile));
+              result.add(new AntCreatePropertyFix(this, propFile));
             }
           }
         }

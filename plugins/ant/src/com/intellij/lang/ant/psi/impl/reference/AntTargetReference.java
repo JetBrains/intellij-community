@@ -5,7 +5,7 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.AntAntImpl;
-import com.intellij.lang.ant.quickfix.AntCreateTargetAction;
+import com.intellij.lang.ant.quickfix.AntCreateTargetFix;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -173,10 +173,10 @@ public class AntTargetReference extends AntGenericReference {
     final AntProject project = getElement().getAntProject();
     final AntFile[] importedFiles = project.getImportedFiles();
     final List<IntentionAction> result = new ArrayList<IntentionAction>(importedFiles.length + 1);
-    result.add(new AntCreateTargetAction(this));
+    result.add(new AntCreateTargetFix(this));
     for (final AntFile file : importedFiles) {
       if (file.isPhysical()) {
-        result.add(new AntCreateTargetAction(this, file));
+        result.add(new AntCreateTargetFix(this, file));
       }
     }
     return result.toArray(new IntentionAction[result.size()]);

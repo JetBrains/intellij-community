@@ -96,6 +96,6 @@ public abstract class ArgumentFixerActionFactory {
 
   public abstract boolean areTypesConvertible(final PsiType exprType, final PsiType parameterType);
 
-  public abstract FixMethodArgumentAction createFix(final PsiExpressionList list, final int i, final PsiType parameterType);
+  public abstract MethodArgumentFix createFix(final PsiExpressionList list, final int i, final PsiType parameterType);
 
 }
