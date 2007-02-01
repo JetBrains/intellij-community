@@ -481,7 +481,11 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       }
     }
   }
-
+  
+  public boolean isHideWarnings() {
+    return ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings();
+  }
+  
   private class MyTreeExpander implements TreeExpander {
     public void expandAll() {
       NewErrorTreeViewPanel.this.expandAll();
