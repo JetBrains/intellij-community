@@ -8,5 +8,5 @@ import com.intellij.debugger.engine.jdi.ThreadGroupReferenceProxy;
  */
 
 public interface ThreadGroupDescriptor extends NodeDescriptor{
-  public ThreadGroupReferenceProxy getThreadGroupReference();
+  ThreadGroupReferenceProxy getThreadGroupReference();
 }

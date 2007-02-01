@@ -4,6 +4,7 @@ import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.Nullable;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -23,4 +24,9 @@ public interface ValueDescriptor extends NodeDescriptor{
   boolean isLvalue();
   boolean isNull();
   boolean isPrimitive();
+  
+  @Nullable
+  ValueMarkup getMarkup(DebuggerContext context);
+  
+  void setMarkup(DebuggerContext context, @Nullable ValueMarkup markup);
 }

@@ -14,7 +14,7 @@ public interface NodeDescriptor {
   String getName();
   String getLabel();
 
-  <T> T    getUserData(Key<T> key);
+  <T> T getUserData(Key<T> key);
   <T> void putUserData(Key<T> key, T value);
 
   void displayAs(NodeDescriptor descriptor);

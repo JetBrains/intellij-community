@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
+import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.ui.CompletionEditor;
@@ -309,10 +310,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
     final List<Pair<Breakpoint, Event>> eventDescriptors = new ArrayList<Pair<Breakpoint, Event>>();
 
-    for (Iterator<Event> iterator = suspendContext.getEventSet().iterator(); iterator.hasNext();) {
-      Event event = iterator.next();
-      Requestor requestor = suspendContext.getDebugProcess().getRequestsManager().findRequestor(event.request());
-      if(requestor instanceof Breakpoint) {
+    final RequestManagerImpl requestManager = suspendContext.getDebugProcess().getRequestsManager();
+    for (final Event event : suspendContext.getEventSet()) {
+      Requestor requestor = requestManager.findRequestor(event.request());
+      if (requestor instanceof Breakpoint) {
         eventDescriptors.add(new Pair<Breakpoint, Event>((Breakpoint)requestor, event));
       }
     }

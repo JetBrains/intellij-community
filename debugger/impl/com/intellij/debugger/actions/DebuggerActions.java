@@ -30,6 +30,7 @@ public interface DebuggerActions {
   @NonNls String NEW_WATCH = "Debugger.NewWatch";
   @NonNls String ADD_TO_WATCH = "Debugger.AddToWatch";
   @NonNls String EDIT_WATCH = "Debugger.EditWatch";
+  @NonNls String MARK_OBJECT = "Debugger.MarkObject";
   @NonNls String SET_VALUE = "Debugger.SetValue";
   @NonNls String EDIT_FRAME_SOURCE = "Debugger.EditFrameSource";
   @NonNls String EDIT_NODE_SOURCE = "Debugger.EditNodeSource";

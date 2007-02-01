@@ -529,6 +529,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
 
     public NodeManagerImpl getNodeManager() {
+      
       return myNodeManager;
     }
 

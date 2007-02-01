@@ -42,7 +42,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   private static final Key<Requestor> REQUESTOR = Key.create("Requestor");
 
   private DebugProcessImpl myDebugProcess;
-  private HashMap<Requestor, String> myInvalidRequestors = new HashMap<Requestor, String>();
+  private HashMap<Requestor, String> myRequestWarnings = new HashMap<Requestor, String>();
 
   private Map<Requestor, Set<EventRequest>> myRequestorToBelongedRequests = new HashMap<Requestor, Set<EventRequest>>();
   private EventRequestManager myEventRequestManager;
@@ -256,6 +256,17 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     for (final EventRequest request : requests) {
       try {
         myEventRequestManager.deleteEventRequest(request);
+        final Requestor targetRequestor = (Requestor)request.getProperty(REQUESTOR);
+        if (targetRequestor != requestor) {
+          // the same request may be assigned to more than one requestor, but
+          // there is only one 'targetRequestor' for each request, so if target requestor and requestor being processed are different,
+          // should clear also the mapping targetRequestor->request
+          final Set<EventRequest> allTargetRequestorRequests = myRequestorToBelongedRequests.get(targetRequestor);
+          allTargetRequestorRequests.remove(request);
+          if (allTargetRequestorRequests.size() == 0) {
+            myRequestorToBelongedRequests.remove(targetRequestor);
+          }
+        }
       }
       catch (InternalException e) {
         if (e.errorCode() == 41) {
@@ -322,17 +333,12 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public void setInvalid(Requestor requestor, String message) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    myInvalidRequestors.put(requestor, message);
+    myRequestWarnings.put(requestor, message);
   }
-
-  public boolean isInvalid(Requestor requestor) {
+  
+  public @Nullable String getWarning(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    return myInvalidRequestors.containsKey(requestor);
-  }
-
-  public String getInvalidMessage(Requestor requestor) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    return myInvalidRequestors.get(requestor);
+    return myRequestWarnings.get(requestor);
   }
 
   public boolean isVerified(Requestor requestor) {
@@ -344,7 +350,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   public void processDetached(DebugProcessImpl process, boolean closedByUser) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myEventRequestManager = null;
-    myInvalidRequestors.clear();
+    myRequestWarnings.clear();
     myRequestorToBelongedRequests.clear();
   }
 
@@ -413,7 +419,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   public static void updateRequests(final Breakpoint breakpoint) {
     invoke(breakpoint.getProject(), new AllProcessesCommand (){
       public void action(DebugProcessImpl process)  {
-        process.getRequestsManager().myInvalidRequestors.remove(breakpoint);
+        process.getRequestsManager().myRequestWarnings.remove(breakpoint);
         process.getRequestsManager().deleteRequest(breakpoint);
         breakpoint.createRequest(process);
       }
@@ -423,6 +429,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   public static void deleteRequests(final Breakpoint breakpoint) {
     invoke(breakpoint.getProject(), new AllProcessesCommand (){
       public void action(DebugProcessImpl process)  {
+        process.getRequestsManager().myRequestWarnings.remove(breakpoint);
         process.getRequestsManager().deleteRequest(breakpoint);
       }
     });

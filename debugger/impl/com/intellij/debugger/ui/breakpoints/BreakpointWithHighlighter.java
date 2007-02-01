@@ -137,13 +137,19 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
     final RequestManagerImpl requestsManager = debugProcess.getRequestsManager();
 
-    if(requestsManager.isVerified(this)){
-      return getVerifiedIcon();
+    final boolean isVerified = requestsManager.isVerified(this);
+
+    final String warning = requestsManager.getWarning(this);
+    if(warning != null){
+      myInvalidMessage = warning;
+      if (!isVerified) {
+        return getInvalidIcon();
+      }
+      return getInvalidIcon();  // todo: return here verified icon with warning sign 
     }
 
-    if(requestsManager.isInvalid(this)){
-      myInvalidMessage = requestsManager.getInvalidMessage(this);
-      return getInvalidIcon();
+    if(isVerified){
+      return getVerifiedIcon();
     }
 
     return getSetIcon();
@@ -191,7 +197,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       if(myInvalidMessage != null && !"".equals(myInvalidMessage)) {
         //noinspection HardCodedStringLiteral
         buf.append("<br><font color='red'>");
-        buf.append(DebuggerBundle.message("error.invalid.breakpoint", myInvalidMessage));
+        buf.append(DebuggerBundle.message("breakpoint.warning", myInvalidMessage));
         //noinspection HardCodedStringLiteral
         buf.append("</font>");
       }

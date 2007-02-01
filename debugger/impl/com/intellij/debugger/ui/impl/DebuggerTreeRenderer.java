@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.impl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.debugger.ui.tree.ValueMarkup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,6 +51,18 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     }
 
     setIcon(node.getIcon());
+    if (!selected) {
+      final NodeDescriptorImpl descriptor = node.getDescriptor();
+      if (descriptor instanceof ValueDescriptorImpl) {
+        final ValueMarkup markup = ((ValueDescriptorImpl)descriptor).getMarkup(node.getTree().getDebuggerContext());
+        if (markup != null) {
+          final Color color = markup.getColor();
+          if (color != null) {
+            setBackground(color);
+          }
+        }
+      }
+    }
   }
 
   public static Icon getDescriptorIcon(NodeDescriptorImpl descriptor) {

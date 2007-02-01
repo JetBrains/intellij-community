@@ -1737,7 +1737,13 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   public SuspendContextCommandImpl createResumeCommand(SuspendContextImpl suspendContext) {
-    return new ResumeCommand(suspendContext);
+    final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
+    return new ResumeCommand(suspendContext) {
+      public void contextAction() {
+        breakpointManager.applyThreadFilter(DebugProcessImpl.this, null); // clear the filter on resume
+        super.contextAction();
+      }
+    };
   }
 
   public SuspendContextCommandImpl createStepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints) {

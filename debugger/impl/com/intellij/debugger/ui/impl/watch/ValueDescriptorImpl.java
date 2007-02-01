@@ -2,6 +2,7 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -13,17 +14,23 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
+import com.intellij.debugger.ui.tree.ValueMarkup;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor{
   protected final Project myProject;
@@ -188,14 +195,13 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
 
   public String setValueLabel(String label) {
-    String customLabel = getCustomLabel(label);
+    final String customLabel = getCustomLabel(label);
     myValueLabel = customLabel;
-
     return setLabel(calcValueName() + " = " + customLabel);
   }
 
   public String setValueLabelFailed(EvaluateException e) {
-    String label = setFailed(e);
+    final String label = setFailed(e);
     setValueLabel(label);
     return label;
   }
@@ -227,6 +233,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myRenderer != null ? myRenderer: myAutoRenderer;
   }
 
+  @Nullable
   public Type getType() {
     Value value = getValue();
     return value != null ? value.type() : null;
@@ -243,7 +250,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myAutoRenderer;
   }
 
-  public void setRenderer   (NodeRenderer renderer) {
+  public void setRenderer(NodeRenderer renderer) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myRenderer = renderer;
     myAutoRenderer = null;
@@ -328,5 +335,35 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     super.clear();
     setValueLabel("");
     myIsExpandable = false;
+  }
+
+  private static final Key<Map<Long, ValueMarkup>> MARKUP_MAP_KEY = new Key<Map<Long, ValueMarkup>>("ValueMarkupMap");
+
+  @Nullable
+  public ValueMarkup getMarkup(DebuggerContext context) {
+    final Value value = getValue();
+    if (value instanceof ObjectReference) {
+      final long id = ((ObjectReference)value).uniqueID();
+      return getMarkupMap(context).get(id);
+    }
+    return null;
+  }
+
+  public void setMarkup(DebuggerContext context, @Nullable final ValueMarkup markup) {
+    final Value value = getValue();
+    if (value instanceof ObjectReference) {
+      final long id = ((ObjectReference)value).uniqueID();
+      getMarkupMap(context).put(id, markup);
+    }
+  }
+  
+  private static Map<Long, ValueMarkup> getMarkupMap(DebuggerContext context) {
+    final DebugProcess process = context.getDebugProcess();
+    Map<Long, ValueMarkup> map = process.getUserData(MARKUP_MAP_KEY);
+    if (map == null) {
+      map = new HashMap<Long, ValueMarkup>();
+      process.putUserData(MARKUP_MAP_KEY, map);
+    }
+    return map;
   }
 }
