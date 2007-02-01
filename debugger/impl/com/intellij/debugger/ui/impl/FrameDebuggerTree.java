@@ -129,9 +129,12 @@ public class FrameDebuggerTree extends DebuggerTree {
   }
 
   private static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(final SourcePosition position) {
+    final int line = position.getLine();
     final PsiFile file = position.getFile();
     final Document doc = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
-    final int line = position.getLine();
+    if (line < 0 || doc.getLineCount() == 0) {
+      return new Pair<Set<String>, Set<TextWithImports>>(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
+    }
 
     int startLine = Math.max(0, line - 1);
     while (startLine > 0 && isLineEmpty(doc, startLine)) startLine--;
