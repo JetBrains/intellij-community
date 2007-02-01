@@ -29,7 +29,6 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
     private BaseInspection inspection = null;
     private boolean onTheFly = false;
     private List<ProblemDescriptor> errors = null;
-    private boolean classVisited = false;
     private ProblemsHolder holder = null;
 
     public void setInspection(BaseInspection inspection){
@@ -175,20 +174,6 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
     public final void visitWhiteSpace(PsiWhiteSpace space){
         // none of our inspections need to do anything with white space,
         // so this is a performance optimization
-    }
-
-    public void visitClass(PsiClass aClass) {
-        // only visit a class if we're starting in it, to prevent duplicate
-        // messages which would occur if the visitor descended into
-        // nested and anonymous classes.
-        if(inspection instanceof ClassInspection && !classVisited) {
-            classVisited = true;
-            super.visitClass(aClass);
-        } else if (inspection instanceof ExpressionInspection) {
-            super.visitClass(aClass);
-        } else if (inspection instanceof FileInspection) {
-            super.visitClass(aClass);
-        }
     }
 
     public void setProblemsHolder(ProblemsHolder holder) {
