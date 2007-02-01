@@ -66,7 +66,12 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
             if (!isDeclarationVisible(container, editor)) {
               break;
             }
+
             container = container.getParent();
+            while(container != null && EditorFragmentComponent.getPossibleDeclarationAtRange(container) == null) {
+              container = container.getParent();
+              if (container instanceof PsiFile) return;
+            }
           }
         }
       }

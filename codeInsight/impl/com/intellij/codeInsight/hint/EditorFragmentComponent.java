@@ -18,6 +18,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -182,6 +183,10 @@ public class EditorFragmentComponent extends JPanel {
 
   // Q: not a good place?
   public static @NotNull TextRange getDeclarationRange(PsiElement container) {
+    return getPossibleDeclarationAtRange(container);
+  }
+
+  public static @Nullable TextRange getPossibleDeclarationAtRange(final PsiElement container) {
     if (container instanceof PsiMethod){
       PsiMethod method = (PsiMethod)container;
       int startOffset = method.getModifierList().getTextRange().getStartOffset();
@@ -231,7 +236,6 @@ public class EditorFragmentComponent extends JPanel {
         }
       }
 
-      LOG.assertTrue(false);
       return null;
     }
   }
