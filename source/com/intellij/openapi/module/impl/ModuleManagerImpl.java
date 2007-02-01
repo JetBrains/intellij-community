@@ -511,7 +511,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     private void assertWritable() {
-      LOG.assertTrue(myIsWritable, "Attempt to modify commited ModifiableModuleModel");
+      LOG.assertTrue(myIsWritable, "Attempt to modify committed ModifiableModuleModel");
     }
 
     @NotNull

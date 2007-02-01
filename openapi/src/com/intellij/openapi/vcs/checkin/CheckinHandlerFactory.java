@@ -14,7 +14,7 @@ public abstract class CheckinHandlerFactory {
   /**
    * Creates a handler for a single Checkin Project or Checkin File operation.
    *
-   * @param panel the class which can be used to retrieve information about the files to be commited,
+   * @param panel the class which can be used to retrieve information about the files to be committed,
    *              and to get or set the commit message.
    * @return the handler instance.
    */

@@ -51,7 +51,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     TextBlock textBlock = getTextBlock(document, psiFile);
 
     if (!textBlock.isEmpty()) {
-      LOG.error("Attempt to modify PSI for non-commited Document!");
+      LOG.error("Attempt to modify PSI for non-committed Document!");
       textBlock.clear();
     }
 

@@ -210,7 +210,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   private void _saveDocument(final Document document) {
-    boolean commited = false;
+    boolean committed = false;
     try{
       Writer writer = null;
       VirtualFile file = getFile(document);
@@ -254,7 +254,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         }
         writer = LoadTextUtil.getWriter(file, this, text, document.getModificationStamp());
         writer.write(text);
-        commited = true;
+        committed = true;
       }
       finally{
         if (writer != null){
@@ -264,10 +264,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
     catch(IOException e){
       reportErrorOnSave(e);
-      commited = false;
+      committed = false;
     }
     finally{
-      if (commited){
+      if (committed){
         myUnsavedDocuments.remove(document);
         LOG.assertTrue(!myUnsavedDocuments.contains(document));
         ((DocumentEx)document).clearLineModificationFlags();

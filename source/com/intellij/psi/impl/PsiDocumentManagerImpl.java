@@ -253,14 +253,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
       final Semaphore s1 = new Semaphore();
       final Semaphore s2 = new Semaphore();
-      final boolean[] commited = {false};
+      final boolean[] committed = {false};
 
       application.runReadAction(
         new Runnable() {
           public void run() {
             if (myUncommittedDocuments.isEmpty()){
               runnable.run();
-              commited[0] = true;
+              committed[0] = true;
             }
             else{
               s1.down();
@@ -284,7 +284,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         }
       );
 
-      if (!commited[0]){
+      if (!committed[0]){
         s1.waitFor();
         application.runReadAction(
           new Runnable() {

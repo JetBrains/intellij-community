@@ -40,7 +40,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     myElement = element;
     myElementInfo = null;
 
-    // Assert document commited.
+    // Assert document committed.
     PsiFile file = element.getContainingFile();
     if (file != null) {
       PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
