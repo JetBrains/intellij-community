@@ -2,7 +2,7 @@ package com.intellij.ui;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -34,7 +34,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
   private SearchPopup mySearchPopup;
   private JLayeredPane myPopupLayeredPane;
   protected final Comp myComponent;
-  private final Project myProject;
   private final ToolWindowManagerListener myWindowManagerListener = new MyToolWindowManagerListener();
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   private String myRecentEnteredPrefix;
@@ -45,13 +44,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
 
   public SpeedSearchBase(Comp component) {
     myComponent = component;
-
-    if (ApplicationManager.getApplication() != null) {
-      myProject = (Project)DataManager.getInstance().getDataContext(component).getData(DataConstants.PROJECT);
-    }
-    else {
-      myProject = null;
-    }
 
     myComponent.addFocusListener(new FocusAdapter() {
       public void focusLost(FocusEvent e) {
@@ -405,14 +397,22 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
   }
 
   private void manageSearchPopup(SearchPopup searchPopup) {
+    final Project project;
+    if (ApplicationManager.getApplication() != null) {
+      project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComponent));
+    }
+    else {
+      project = null;
+    }
+
     if (mySearchPopup != null) {
       myPopupLayeredPane.remove(mySearchPopup);
       myPopupLayeredPane.validate();
       myPopupLayeredPane.repaint();
       myPopupLayeredPane = null;
 
-      if (myProject != null) {
-        ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).removeToolWindowManagerListener(myWindowManagerListener);
+      if (project != null) {
+        ((ToolWindowManagerEx)ToolWindowManager.getInstance(project)).removeToolWindowManagerListener(myWindowManagerListener);
       }
     }
     else if (searchPopup != null) {
@@ -430,8 +430,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
 
     if (mySearchPopup == null || !myComponent.isDisplayable()) return;
 
-    if (myProject != null) {
-      ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(myWindowManagerListener);
+    if (project != null) {
+      ((ToolWindowManagerEx)ToolWindowManager.getInstance(project)).addToolWindowManagerListener(myWindowManagerListener);
     }
     JRootPane rootPane = myComponent.getRootPane();
     if (rootPane != null) {

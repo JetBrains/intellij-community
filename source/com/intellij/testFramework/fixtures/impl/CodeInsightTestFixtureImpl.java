@@ -75,7 +75,7 @@ import java.util.Map;
 /**
  * @author Dmitry Avdeev
  */
-public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
+public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsightTestFixture {
 
   @NonNls protected static final String PROFILE = "Configurable";
 
@@ -270,6 +270,8 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
   }
 
   public void setUp() throws Exception {
+    super.setUp();
+
     final String testDataPath = getTestDataPath();
     if (testDataPath != null) {
       FileUtil.copyDir(new File(testDataPath), new File(getTempDirPath()), false);
@@ -332,9 +334,10 @@ public class CodeInsightTestFixtureImpl implements CodeInsightTestFixture {
     for (VirtualFile openFile : openFiles) {
       editorManager.closeFile(openFile);
     }
-    myEditor = null;
     myProjectFixture.tearDown();
     myTempDirFixture.tearDown();
+
+    super.tearDown();
   }
 
   protected int configureByFiles(@NonNls String... filePaths) throws IOException {

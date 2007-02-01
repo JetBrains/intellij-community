@@ -20,7 +20,7 @@ import java.util.ArrayList;
 /**
  * @author Dmitry Avdeev
  */
-public class TempDirTextFixtureImpl implements TempDirTestFixture {
+public class TempDirTextFixtureImpl extends BaseFixture implements TempDirTestFixture {
 
   private final ArrayList<File> myFilesToDelete = new ArrayList<File>();
   private File myTempDir;
@@ -79,6 +79,7 @@ public class TempDirTextFixtureImpl implements TempDirTestFixture {
   }
 
   public void setUp() throws Exception {
+    super.setUp();
     createTempDirectory();
   }
 
@@ -86,6 +87,7 @@ public class TempDirTextFixtureImpl implements TempDirTestFixture {
     for (final File fileToDelete : myFilesToDelete) {
       delete(fileToDelete);
     }
+    super.tearDown();
   }
 
   protected File createTempDirectory() {

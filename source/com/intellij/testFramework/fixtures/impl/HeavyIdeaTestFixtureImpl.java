@@ -39,7 +39,7 @@ import java.util.Set;
 /**
  * @author mike
  */
-class HeavyIdeaTestFixtureImpl implements IdeaProjectTestFixture {
+class HeavyIdeaTestFixtureImpl extends BaseFixture implements IdeaProjectTestFixture {
 
   @NonNls private static final String PROJECT_FILE_PREFIX = "temp";
   @NonNls private static final String PROJECT_FILE_SUFFIX = ".ipr";
@@ -54,6 +54,8 @@ class HeavyIdeaTestFixtureImpl implements IdeaProjectTestFixture {
   }
 
   public void setUp() throws Exception {
+    super.setUp();
+
     initApplication();
     setUpProject();
   }
@@ -103,6 +105,8 @@ class HeavyIdeaTestFixtureImpl implements IdeaProjectTestFixture {
       editorFactory.releaseEditor(editor);
     }
     assert 0 == allEditors.length : "There are unrealeased editors";
+
+    super.tearDown();
   }
 
   public Project getProject() {

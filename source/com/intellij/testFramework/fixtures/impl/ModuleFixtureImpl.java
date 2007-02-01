@@ -10,7 +10,7 @@ import com.intellij.testFramework.fixtures.ModuleFixture;
 /**
  * @author mike
  */
-class ModuleFixtureImpl implements ModuleFixture {
+class ModuleFixtureImpl extends BaseFixture implements ModuleFixture {
 
   private Module myModule;
   protected final ModuleFixtureBuilderImpl myBuilder;
@@ -26,10 +26,12 @@ class ModuleFixtureImpl implements ModuleFixture {
   }
 
   public void setUp() throws Exception {
+    super.setUp();
     getModule();
   }
 
   public void tearDown() throws Exception {
     myModule = null;
+    super.tearDown();
   }
 }

@@ -16,15 +16,18 @@ import java.util.HashMap;
 /**
  * @author mike
  */
-class LightIdeaTestFixtureImpl implements IdeaProjectTestFixture {
+class LightIdeaTestFixtureImpl extends BaseFixture implements IdeaProjectTestFixture {
 
   public void setUp() throws Exception {
+    super.setUp();
+
     LightIdeaTestCase.initApplication(null);
     LightIdeaTestCase.doSetup(JavaSdkImpl.getMockJdk15("50"), new LocalInspectionTool[0], new HashMap<String, LocalInspectionTool>(), null);
   }
 
   public void tearDown() throws Exception {
     LightIdeaTestCase.doTearDown();
+    super.tearDown();
   }
 
   public Project getProject() {
