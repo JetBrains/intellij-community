@@ -103,6 +103,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private List<AbstractVcs> myVcss = new ArrayList<AbstractVcs>();
   private AbstractVcs[] myCachedVCSs = null;
   private final Project myProject;
+  private final MessageBus myMessageBus;
 
   private boolean myIsDisposed = false;
 
@@ -135,15 +136,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public ProjectLevelVcsManagerImpl(Project project, AbstractVcs[] vcses, MessageBus bus) {
     myProject = project;
+    myMessageBus = bus;
     myVcss = new ArrayList<AbstractVcs>(Arrays.asList(vcses));
     doSetDirectoryMapping("", "");
-    if (bus != null) {
-      bus.connect().subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
-        public void moduleAdded(final Project project, final Module module) {
-          autoDetectModuleVcsMapping(module);
-        }
-      });
-    }
   }
 
   private final Map<String, VcsShowOptionsSettingImpl> myOptions = new LinkedHashMap<String, VcsShowOptionsSettingImpl>();
@@ -269,6 +264,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
             toolWindowManager.registerToolWindow(ToolWindowId.VCS, myContentManager.getComponent(), ToolWindowAnchor.BOTTOM);
           toolWindow.setIcon(Icons.VCS_SMALL_TAB);
           toolWindow.installWatcher(myContentManager);
+        }
+        if (myMessageBus != null) {
+          myMessageBus.connect().subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+            public void moduleAdded(final Project project, final Module module) {
+              autoDetectModuleVcsMapping(module);
+            }
+          });
         }
       }
     });
