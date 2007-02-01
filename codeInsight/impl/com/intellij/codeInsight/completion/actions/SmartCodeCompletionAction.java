@@ -5,7 +5,6 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.completion.CodeCompletionHandler;
 import com.intellij.codeInsight.completion.SmartCodeCompletionHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -55,7 +54,7 @@ public class SmartCodeCompletionAction extends BaseCodeInsightAction {
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return file.getViewProvider().getPsi(StdLanguages.JAVA) != null;
+    return true;
   }
 
   protected boolean isValidForLookup() {
