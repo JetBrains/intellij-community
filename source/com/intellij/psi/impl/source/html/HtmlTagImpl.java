@@ -4,7 +4,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.xml.XmlTagImpl;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,17 +43,8 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     return result.toArray(new XmlTag[result.size()]);
   }
 
-  public XmlAttribute getAttribute(String name, String namespace) {
-    final XmlAttribute[] attributes = getAttributes();
-    name = name.toLowerCase();
-
-    for (final XmlAttribute attribute : attributes) {
-      if (attribute.getName().toLowerCase().equals(name)) {
-        return attribute;
-      }
-    }
-
-    return null;
+  protected boolean isCaseSensitive() {
+    return false;
   }
 
   public String getAttributeValue(String qname) {

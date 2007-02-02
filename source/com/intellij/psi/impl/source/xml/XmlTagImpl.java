@@ -4,6 +4,7 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
@@ -428,12 +429,22 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     final XmlAttribute[] attributes = getAttributes();
 
     final CharSequence charTableIndex = charTableByTree.intern(qname);
+    final boolean caseSensitive = isCaseSensitive();
 
     for (final XmlAttribute attribute : attributes) {
       final LeafElement attrNameElement = (LeafElement)XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(attribute.getNode());
-      if (attrNameElement != null && attrNameElement.getInternedText().equals(charTableIndex)) return attribute;
+      if (attrNameElement != null &&
+          ((caseSensitive && attrNameElement.getInternedText().equals(charTableIndex)) ||
+           (!caseSensitive && Comparing.equal(attrNameElement.getInternedText(), charTableIndex, false))
+          )) {
+        return attribute;
+      }
     }
     return null;
+  }
+
+  protected boolean isCaseSensitive() {
+    return true;
   }
 
   @NotNull
