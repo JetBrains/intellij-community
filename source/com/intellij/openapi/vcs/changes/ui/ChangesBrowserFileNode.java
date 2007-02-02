@@ -57,4 +57,9 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> {
   public String getTextPresentation() {
     return getUserObject().getName();
   }
+
+  @Override
+  public String toString() {
+    return getUserObject().getPresentableUrl();
+  }
 }

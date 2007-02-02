@@ -149,8 +149,12 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     }
   }
 
+  public String toString() {
+    return getTextPresentation();
+  }
+
   public String getTextPresentation() {
-    return toString();
+    return userObject == null ? "" : userObject.toString();
   }
 
   public T getUserObject() {

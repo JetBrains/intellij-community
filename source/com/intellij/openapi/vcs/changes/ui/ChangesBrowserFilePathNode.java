@@ -5,6 +5,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 
@@ -52,5 +53,10 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   @Override
   public String getTextPresentation() {
     return getUserObject().getName();
+  }
+
+  @Override
+  public String toString() {
+    return FileUtil.toSystemDependentName(getUserObject().getPath());
   }
 }

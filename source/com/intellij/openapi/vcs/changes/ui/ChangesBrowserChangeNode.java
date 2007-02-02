@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 
@@ -74,5 +75,10 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> {
   @Override
   public String getTextPresentation() {
     return ChangesUtil.getFilePath(getUserObject()).getName();
+  }
+
+  @Override
+  public String toString() {
+    return FileUtil.toSystemDependentName(ChangesUtil.getFilePath(getUserObject()).getPath());
   }
 }
