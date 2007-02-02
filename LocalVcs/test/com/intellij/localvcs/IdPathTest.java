@@ -2,7 +2,7 @@ package com.intellij.localvcs;
 
 import org.junit.Test;
 
-public class IdPathTest extends TestCase {
+public class IdPathTest extends LocalVcsTestCase {
   @Test
   public void testAppending() {
     IdPath p = new IdPath(1, 2);

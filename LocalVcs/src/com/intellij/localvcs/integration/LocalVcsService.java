@@ -16,11 +16,8 @@ import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-
 public class LocalVcsService {
   // todo test exceptions...
-  // todo use CacheUpdater to update roots
   // todo extract inner classes
 
   private ILocalVcs myVcs;
@@ -49,8 +46,8 @@ public class LocalVcsService {
     myDocumentManager = dm;
     myFileFilter = f;
 
-    // todo review startup order
     registerStartupActivity();
+    subscribeForRootChanges();
   }
 
   public void shutdown() {
@@ -60,34 +57,19 @@ public class LocalVcsService {
 
   private void registerStartupActivity() {
     FileSystemSynchronizer fs = myStartupManager.getFileSystemSynchronizer();
-    fs.registerCacheUpdater(new CacheUpdaterAdaptor() {
-      public void updatingDone() {
-        updateRoots(true);
-        subscribeForRootChanges();
-        registerFileContentProvider();
+    fs.registerCacheUpdater(new CacheUpdaterAdaptor(new Runnable() {
+      public void run() {
+        registerFileListenerAndContentProvider();
       }
-    });
-  }
-
-  private void updateRoots(boolean performFullUpdate) {
-    try {
-      Updater.update(myVcs, myFileSystem, myFileFilter, performFullUpdate, myRootManager.getContentRoots());
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    }));
   }
 
   private void subscribeForRootChanges() {
-    myCacheUpdater = new CacheUpdaterAdaptor() {
-      public void updatingDone() {
-        updateRoots(false);
-      }
-    };
+    myCacheUpdater = new CacheUpdaterAdaptor(null);
     myRootManager.registerChangeUpdater(myCacheUpdater);
   }
 
-  private void registerFileContentProvider() {
+  private void registerFileListenerAndContentProvider() {
     myFileListener = new FileListener(myVcs, myFileFilter, myFileSystem);
 
     myFileContentProvider = new FileContentProvider() {
@@ -98,7 +80,9 @@ public class LocalVcsService {
       @Nullable
       public ProvidedContent getProvidedContent(VirtualFile f) {
         Entry e = myVcs.findEntry(f.getPath());
-        return e == null ? null : new EntryContent(e);
+        if (e == null) return null;
+        if (e.getContent().isTooLong()) return null;
+        return new EntryProvidedContent(e);
       }
 
       public VirtualFileListener getVirtualFileListener() {
@@ -114,15 +98,30 @@ public class LocalVcsService {
     return a;
   }
 
-  private abstract class CacheUpdaterAdaptor implements CacheUpdater {
+  private class CacheUpdaterAdaptor implements CacheUpdater {
+    private Updater myUpdater;
+    private Runnable myOnFinishTask;
+
+    protected CacheUpdaterAdaptor(Runnable onFinishTask) {
+      myOnFinishTask = onFinishTask;
+    }
+
     public VirtualFile[] queryNeededFiles() {
-      return new VirtualFile[0];
+      myUpdater = new Updater(myVcs, myFileFilter, myRootManager.getContentRoots());
+      return myUpdater.queryNeededFiles();
     }
 
     public void processFile(FileContent c) {
+      myUpdater.processFile(c);
+    }
+
+    public void updatingDone() {
+      myUpdater.updatingDone();
+      if (myOnFinishTask != null) myOnFinishTask.run();
     }
 
     public void canceled() {
+      myUpdater.canceled();
     }
   }
 }

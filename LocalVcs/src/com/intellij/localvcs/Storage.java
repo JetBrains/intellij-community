@@ -5,7 +5,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.io.*;
 
 public class Storage {
-  private static final int VERSION = 2;
+  private static final int VERSION = 4;
 
   private File myDir;
   private IContentStorage myContentStorage;
@@ -151,6 +151,11 @@ public class Storage {
   }
 
   public Content createContent(byte[] bytes) {
+    if (bytes.length > LongContent.MAX_LENGTH) return new LongContent();
+    return doCreateContent(bytes);
+  }
+
+  protected Content doCreateContent(byte[] bytes) {
     try {
       int id = myContentStorage.store(bytes);
       return new Content(this, id);

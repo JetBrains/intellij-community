@@ -6,11 +6,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class TestCase extends Assert {
+public abstract class LocalVcsTestCase extends Assert {
   protected static Content c(String data) {
     return new ByteContent(b(data));
   }
- 
+
   protected static byte[] b(String data) {
     return data == null ? null : data.getBytes();
   }

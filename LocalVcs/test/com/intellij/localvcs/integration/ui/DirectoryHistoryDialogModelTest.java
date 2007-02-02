@@ -2,7 +2,7 @@ package com.intellij.localvcs.integration.ui;
 
 import com.intellij.localvcs.Difference;
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.TestStorage;
+import com.intellij.localvcs.TestLocalVcs;
 import com.intellij.localvcs.integration.TestVirtualFile;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -11,7 +11,7 @@ import org.junit.Test;
 import java.util.List;
 
 public class DirectoryHistoryDialogModelTest {
-  private LocalVcs vcs = new LocalVcs(new TestStorage());
+  private LocalVcs vcs = new TestLocalVcs();
   private DirectoryHistoryDialogModel m;
 
   @Test

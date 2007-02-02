@@ -1,11 +1,11 @@
 package com.intellij.localvcs;
 
-import java.util.List;
-
 import org.junit.Before;
 import org.junit.Test;
 
-public class ChangeListTest extends TestCase {
+import java.util.List;
+
+public class ChangeListTest extends LocalVcsTestCase {
   private RootEntry r;
   private ChangeList cl;
 
@@ -52,16 +52,14 @@ public class ChangeListTest extends TestCase {
 
   @Test
   public void testSeveralChangesForSameFileInOneChangeSet() {
-    cl.applyChangeSetTo(r, cs(new CreateFileChange(1, "file", null, null),
-                              new ChangeFileContentChange("file", null, null)));
+    cl.applyChangeSetTo(r, cs(new CreateFileChange(1, "file", null, null), new ChangeFileContentChange("file", null, null)));
 
     assertEquals(1, getChangeSetsFor("file").size());
   }
 
   @Test
   public void testChangeSetsWithChangesForAnotherFile() {
-    cl.applyChangeSetTo(r, cs(new CreateFileChange(1, "file1", null, null),
-                              new CreateFileChange(2, "file2", null, null)));
+    cl.applyChangeSetTo(r, cs(new CreateFileChange(1, "file1", null, null), new CreateFileChange(2, "file2", null, null)));
 
     assertEquals(1, getChangeSetsFor("file1").size());
   }
@@ -94,8 +92,7 @@ public class ChangeListTest extends TestCase {
 
   @Test
   public void testChangeSetsForDirectoriesWithFilesMovedAround() {
-    cl.applyChangeSetTo(r, cs(new CreateDirectoryChange(1, "dir1", null),
-                              new CreateDirectoryChange(2, "dir2", null)));
+    cl.applyChangeSetTo(r, cs(new CreateDirectoryChange(1, "dir1", null), new CreateDirectoryChange(2, "dir2", null)));
     cl.labelLastChangeSet("1");
 
     cl.applyChangeSetTo(r, cs(new CreateFileChange(3, "dir1/file", null, null)));
@@ -119,8 +116,7 @@ public class ChangeListTest extends TestCase {
 
   @Test
   public void testChangeSetsForMovedFiles() {
-    cl.applyChangeSetTo(r, cs(new CreateDirectoryChange(1, "dir1", null),
-                              new CreateDirectoryChange(2, "dir2", null)));
+    cl.applyChangeSetTo(r, cs(new CreateDirectoryChange(1, "dir1", null), new CreateDirectoryChange(2, "dir2", null)));
 
     cl.applyChangeSetTo(r, cs(new CreateFileChange(3, "dir1/file", null, null)));
     cl.applyChangeSetTo(r, cs(new MoveChange("dir1/file", "dir2")));
@@ -130,8 +126,7 @@ public class ChangeListTest extends TestCase {
 
   @Test
   public void testChangingParentDoesNotChangesItsChildren() {
-    cl.applyChangeSetTo(r, cs(new CreateDirectoryChange(1, "d1", null),
-                              new CreateDirectoryChange(2, "d2", null),
+    cl.applyChangeSetTo(r, cs(new CreateDirectoryChange(1, "d1", null), new CreateDirectoryChange(2, "d2", null),
                               new CreateFileChange(3, "d1/file", null, null)));
 
     assertEquals(1, getChangeSetsFor("d1/file").size());
@@ -143,10 +138,8 @@ public class ChangeListTest extends TestCase {
 
   @Test
   public void testChangeSetsForComplexMovingCase() {
-    cl.applyChangeSetTo(r, cs(new CreateDirectoryChange(1, "d1", null),
-                              new CreateFileChange(2, "d1/file", null, null),
-                              new CreateDirectoryChange(3, "d1/d11", null),
-                              new CreateDirectoryChange(4, "d1/d12", null),
+    cl.applyChangeSetTo(r, cs(new CreateDirectoryChange(1, "d1", null), new CreateFileChange(2, "d1/file", null, null),
+                              new CreateDirectoryChange(3, "d1/d11", null), new CreateDirectoryChange(4, "d1/d12", null),
                               new CreateDirectoryChange(5, "d2", null)));
 
     cl.applyChangeSetTo(r, cs(new MoveChange("d1/file", "d1/d11")));

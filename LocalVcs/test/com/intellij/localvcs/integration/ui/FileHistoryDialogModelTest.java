@@ -1,8 +1,8 @@
 package com.intellij.localvcs.integration.ui;
 
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.TestCase;
-import com.intellij.localvcs.TestStorage;
+import com.intellij.localvcs.LocalVcsTestCase;
+import com.intellij.localvcs.TestLocalVcs;
 import com.intellij.localvcs.integration.TestVirtualFile;
 import com.intellij.localvcs.integration.stubs.StubFileDocumentManager;
 import com.intellij.mock.MockDocument;
@@ -12,8 +12,8 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class FileHistoryDialogModelTest extends TestCase {
-  private LocalVcs vcs = new LocalVcs(new TestStorage());
+public class FileHistoryDialogModelTest extends LocalVcsTestCase {
+  private LocalVcs vcs = new TestLocalVcs();
   private MyFileDocumentManager dm = new MyFileDocumentManager();
   private FileHistoryDialogModel m;
 

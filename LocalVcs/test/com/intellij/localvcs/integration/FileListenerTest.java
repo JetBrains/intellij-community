@@ -2,12 +2,11 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.TestStorage;
+import com.intellij.localvcs.TestLocalVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import org.junit.Test;
 import org.junit.Before;
+import org.junit.Test;
 
 public class FileListenerTest extends MockedLocalFileSystemTestCase {
   LocalVcs vcs;
@@ -15,7 +14,7 @@ public class FileListenerTest extends MockedLocalFileSystemTestCase {
 
   @Before
   public void setUp() {
-    vcs = new LocalVcs(new TestStorage());
+    vcs = new TestLocalVcs();
     l = new FileListener(vcs, new MyFileFilter(), fileSystem);
   }
 
@@ -51,21 +50,6 @@ public class FileListenerTest extends MockedLocalFileSystemTestCase {
     assertFalse(vcs.hasEntry("filtered2"));
   }
 
-  @Test
-  public void testCreationAndDeletionOfFilteredBigFile() {
-    VirtualFile f = new TestVirtualFile("allowed", null, null, FileFilter.MAX_FILE_SIZE + 1);
-
-    l.fileCreated(new VirtualFileEvent(null, f, null, null));
-    assertFalse(vcs.hasEntry("allowed"));
-
-    // when we catch the beforeFileDeletion event, the file might be already
-    // removed from disk, so it will return 0 as it's lenght
-    f = new TestVirtualFile("allowed", null, null, 0L);
-
-    l.beforeFileDeletion(new VirtualFileEvent(null, f, null, null));
-    assertFalse(vcs.hasEntry("allowed"));
-  }
-
   private void fireRename(VirtualFile f, String newName) {
     l.beforePropertyChange(new VirtualFilePropertyEvent(null, f, VirtualFile.PROP_NAME, null, newName));
   }
@@ -76,13 +60,13 @@ public class FileListenerTest extends MockedLocalFileSystemTestCase {
     }
 
     @Override
-    protected boolean isFileTypeAllowed(VirtualFile f) {
-      return f.getName().equals("allowed");
+    public boolean isUnderContentRoot(VirtualFile f) {
+      return true;
     }
 
     @Override
-    public boolean isUnderContentRoot(VirtualFile f) {
-      return true;
+    public boolean isAllowed(VirtualFile f) {
+      return f.getName().equals("allowed");
     }
   }
 }

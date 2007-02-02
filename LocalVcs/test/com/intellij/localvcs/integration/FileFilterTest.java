@@ -64,25 +64,6 @@ public class FileFilterTest {
     assertTrue(f.isAllowed(f1));
   }
 
-  @Test
-  public void testFilteringBigFiles() {
-    VirtualFile big = new TestVirtualFile(null, null, null, FileFilter.MAX_FILE_SIZE + 1);
-    VirtualFile small = new TestVirtualFile(null, null, null, FileFilter.MAX_FILE_SIZE - 1);
-    VirtualFile dir = new TestVirtualFile(null, null);
-
-    expect(fi.isInContent((VirtualFile)anyObject())).andStubReturn(true);
-    replay(fi);
-
-    expect(tm.getFileTypeByFile((VirtualFile)anyObject())).andStubReturn(nonBinary);
-    replay(tm);
-
-    FileFilter f = new FileFilter(fi, tm);
-
-    assertFalse(f.isAllowed(big));
-    assertTrue(f.isAllowed(small));
-    assertTrue(f.isAllowed(dir));
-  }
-
   private FileType createFileType(boolean isBinary) {
     FileType t = createMock(FileType.class);
     expect(t.isBinary()).andStubReturn(isBinary);

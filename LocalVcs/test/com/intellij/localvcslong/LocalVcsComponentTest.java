@@ -2,7 +2,6 @@ package com.intellij.localvcslong;
 
 
 import com.intellij.localvcs.*;
-import com.intellij.localvcs.integration.FileFilter;
 import com.intellij.localvcs.integration.LocalVcsAction;
 import com.intellij.localvcs.integration.LocalVcsComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -108,17 +107,17 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     assertTrue(vcsHasEntryFor(f));
   }
 
-  public void testDeletingFilteredBigFiles() throws Exception {
+  public void testDeletingBigFiles() throws Exception {
     File tempDir = createTempDirectory();
     File tempFile = new File(tempDir, "bigFile.java");
     OutputStream s = new FileOutputStream(tempFile);
-    s.write(new byte[(int)(FileFilter.MAX_FILE_SIZE + 1)]);
+    s.write(new byte[(int)(LongContent.MAX_LENGTH + 1)]);
     s.close();
 
     VirtualFile f = LocalFileSystem.getInstance().findFileByIoFile(tempFile);
 
     f.move(null, root);
-    assertFalse(vcsHasEntryFor(f));
+    assertTrue(vcsHasEntryFor(f));
 
     f.delete(null);
     assertFalse(vcsHasEntryFor(f));
@@ -151,6 +150,16 @@ public class LocalVcsComponentTest extends IdeaTestCase {
 
     assertFalse(vcsHasEntryFor(f));
     assertEquals(1, f.contentsToByteArray()[0]);
+  }
+
+  public void testContentForBigFiles() throws Exception {
+    VirtualFile f = root.createChildData(null, "file.java");
+
+    byte[] c = new byte[LongContent.MAX_LENGTH + 1];
+    c[0] = 7;
+    f.setBinaryContent(c);
+
+    assertEquals(7, f.contentsToByteArray()[0]);
   }
 
   public void testActions() throws Exception {

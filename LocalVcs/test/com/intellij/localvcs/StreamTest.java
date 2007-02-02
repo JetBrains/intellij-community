@@ -8,7 +8,7 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.List;
 
-public class StreamTest extends TestCase {
+public class StreamTest extends LocalVcsTestCase {
   private Stream is;
   private Stream os;
   private Storage s;
@@ -19,14 +19,6 @@ public class StreamTest extends TestCase {
     PipedInputStream pis = new PipedInputStream(pos);
 
     s = new TestStorage();
-    os = new Stream(pos);
-    is = new Stream(pis, s);
-  }
-
-  private void initStreamsFor(Storage s) throws IOException {
-    PipedOutputStream pos = new PipedOutputStream();
-    PipedInputStream pis = new PipedInputStream(pos);
-
     os = new Stream(pos);
     is = new Stream(pis, s);
   }
@@ -70,6 +62,21 @@ public class StreamTest extends TestCase {
   public void testNullContent() throws Exception {
     os.writeContent(null);
     assertNull(is.readContent());
+  }
+
+  @Test
+  public void testLongContent() throws Exception {
+    os.writeContent(new LongContent());
+    assertEquals(LongContent.class, is.readContent().getClass());
+  }
+
+  @Test
+  public void testDataAfterLongContent() throws IOException {
+    os.writeContent(new LongContent());
+    os.writeInteger(777);
+
+    is.readContent();
+    assertEquals(777, is.readInteger());
   }
 
   @Test

@@ -46,46 +46,6 @@ public class LocalVcsServiceRootsOnUpdateTest extends LocalVcsServiceTestCase {
   }
 
   @Test
-  public void testDoesNotAddNewFiles() {
-    vcs.createDirectory("root", null);
-    vcs.apply();
-
-    root = new TestVirtualFile("root", null);
-    root.addChild(new TestVirtualFile("file", "", null));
-    roots.add(root);
-    fireUpdateRoots();
-
-    assertTrue(vcs.hasEntry("root"));
-    assertFalse(vcs.hasEntry("root/file"));
-  }
-
-  @Test
-  public void testDoesNotDeleteObsoleteFiles() {
-    vcs.createDirectory("root", null);
-    vcs.createFile("root/file", null, null);
-    vcs.apply();
-
-    roots.add(new TestVirtualFile("root", null));
-    fireUpdateRoots();
-
-    assertTrue(vcs.hasEntry("root/file"));
-  }
-
-  @Test
-  public void testDoesNotUpdateOutdatedFiles() {
-    vcs.createDirectory("root", null);
-    vcs.createFile("root/file", b("old"), 123L);
-    vcs.apply();
-
-    root = new TestVirtualFile("root", null);
-    root.addChild(new TestVirtualFile("file", "new", 456L));
-    roots.add(root);
-    fireUpdateRoots();
-
-    assertEquals(c("old"), vcs.getEntry("root/file").getContent());
-  }
-
-  @Test
   public void testRenamingContentRoot() {
     vcs.createDirectory("c:/dir/root", null);
     vcs.createFile("c:/dir/root/file", null, null);

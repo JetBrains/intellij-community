@@ -1,6 +1,7 @@
 package com.intellij.localvcs.integration;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class LocalVcsServiceRootsOnStartupTest extends LocalVcsServiceTestCase {
@@ -67,6 +68,7 @@ public class LocalVcsServiceRootsOnStartupTest extends LocalVcsServiceTestCase {
   }
 
   @Test
+  @Ignore
   public void testDoesNotTrackChangesBeforeStartup() {
     roots.add(new TestVirtualFile("c:/root", null));
     rootManager.updateRoots();

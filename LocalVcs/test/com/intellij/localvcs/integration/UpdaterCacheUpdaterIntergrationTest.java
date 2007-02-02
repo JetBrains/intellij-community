@@ -1,0 +1,89 @@
+package com.intellij.localvcs.integration;
+
+import com.intellij.ide.startup.FileContent;
+import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.LocalVcsTestCase;
+import com.intellij.localvcs.TestLocalVcs;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.junit.Before;
+import org.junit.Test;
+
+public class UpdaterCacheUpdaterIntergrationTest extends LocalVcsTestCase {
+  LocalVcs vcs = new TestLocalVcs();
+  TestFileFilter filter = new TestFileFilter();
+  Updater updater;
+
+  TestVirtualFile root;
+  TestVirtualFile file;
+
+  @Before
+  public void setUp() {
+    root = new TestVirtualFile("root", null);
+    file = new TestVirtualFile("file", "new content", 1L);
+    root.addChild(file);
+
+    updater = new Updater(vcs, filter, root);
+  }
+
+  @Test
+  public void testCreatingNewFiles() {
+    VirtualFile[] files = updater.queryNeededFiles();
+    assertEquals(1, files.length);
+    assertSame(file, files[0]);
+
+    updater.processFile(fileContentOf(file));
+    updater.updatingDone();
+
+    assertEquals(c("new content"), vcs.getEntry("root/file").getContent());
+  }
+
+  @Test
+  public void testCreatingNewFilesOnlyOnProcessingFile() {
+    updater.queryNeededFiles();
+
+    vcs.apply();
+    assertFalse(vcs.hasEntry("root/file"));
+
+    updater.processFile(fileContentOf(file));
+    assertFalse(vcs.hasEntry("root/file"));
+
+    updater.updatingDone();
+    assertEquals(c("new content"), vcs.getEntry("root/file").getContent());
+  }
+
+  @Test
+  public void testUpdaingOutdatedFiles() {
+    vcs.createDirectory("root", null);
+    vcs.createFile("root/file", b("old content"), file.getTimeStamp() - 1);
+    vcs.apply();
+
+    VirtualFile[] files = updater.queryNeededFiles();
+    assertEquals(1, files.length);
+    assertSame(file, files[0]);
+
+    updater.processFile(fileContentOf(file));
+    updater.updatingDone();
+    assertEquals(c("new content"), vcs.getEntry("root/file").getContent());
+  }
+
+  @Test
+  public void testUpdaingOutdatedFilesOnlyOnProcessingFile() {
+    vcs.createDirectory("root", null);
+    vcs.createFile("root/file", b("old content"), file.getTimeStamp() - 1);
+    vcs.apply();
+
+    updater.queryNeededFiles();
+    vcs.apply();
+    assertEquals(c("old content"), vcs.getEntry("root/file").getContent());
+
+    updater.processFile(fileContentOf(file));
+    assertEquals(c("old content"), vcs.getEntry("root/file").getContent());
+
+    updater.updatingDone();
+    assertEquals(c("new content"), vcs.getEntry("root/file").getContent());
+  }
+
+  private FileContent fileContentOf(VirtualFile f) {
+    return CacheUpdaterHelper.fileContentOf(f);
+  }
+}

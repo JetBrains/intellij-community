@@ -2,9 +2,9 @@ package com.intellij.localvcs;
 
 import org.junit.Test;
 
-public class LocalVcsBasicsTest extends TestCase {
+public class LocalVcsBasicsTest extends LocalVcsTestCase {
   // todo clean up LocalVcs tests
-  private LocalVcs vcs = new LocalVcs(new TestStorage());
+  private LocalVcs vcs = new TestLocalVcs();
 
   @Test
   public void testClearingChangesOnApply() {
@@ -86,6 +86,18 @@ public class LocalVcsBasicsTest extends TestCase {
 
     assertEquals(c("content"), e.getContent());
     assertEquals(123L, e.getTimestamp());
+  }
+
+  @Test
+  public void testCreatingLongFiles() {
+    vcs.createFile("file", new byte[LongContent.MAX_LENGTH + 1], 777L);
+    vcs.apply();
+
+    assertTrue(vcs.hasEntry("file"));
+    Entry e = vcs.getEntry("file");
+
+    assertEquals(LongContent.class, e.getContent().getClass());
+    assertEquals(777L, e.getTimestamp());
   }
 
   @Test

@@ -2,7 +2,7 @@ package com.intellij.localvcs;
 
 import org.junit.Test;
 
-public class RootEntryDirectoriesTest extends TestCase {
+public class RootEntryDirectoriesTest extends LocalVcsTestCase {
   private RootEntry root = new RootEntry();
 
   @Test

@@ -1,19 +1,17 @@
 package com.intellij.localvcs;
 
-import java.util.ArrayList;
-
 import org.junit.Before;
 import org.junit.Test;
 
-public class ChangeSetTest extends TestCase {
+import java.util.ArrayList;
+
+public class ChangeSetTest extends LocalVcsTestCase {
   private ChangeSet changeSet;
   private ArrayList<Integer> log;
 
   @Before
   public void setUp() {
-    changeSet = cs(new LoggingChange(1),
-                   new LoggingChange(2),
-                   new LoggingChange(3));
+    changeSet = cs(new LoggingChange(1), new LoggingChange(2), new LoggingChange(3));
     log = new ArrayList<Integer>();
   }
 

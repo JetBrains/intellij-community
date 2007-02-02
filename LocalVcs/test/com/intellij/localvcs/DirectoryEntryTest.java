@@ -1,14 +1,11 @@
 package com.intellij.localvcs;
 
-import java.util.List;
-
-import static com.intellij.localvcs.Difference.Kind.CREATED;
-import static com.intellij.localvcs.Difference.Kind.DELETED;
-import static com.intellij.localvcs.Difference.Kind.MODIFIED;
-import static com.intellij.localvcs.Difference.Kind.NOT_MODIFIED;
+import static com.intellij.localvcs.Difference.Kind.*;
 import org.junit.Test;
 
-public class DirectoryEntryTest extends TestCase {
+import java.util.List;
+
+public class DirectoryEntryTest extends LocalVcsTestCase {
   @Test
   public void testAddingChildren() {
     Entry dir = new DirectoryEntry(null, null, null);
@@ -23,6 +20,38 @@ public class DirectoryEntryTest extends TestCase {
   }
 
   @Test
+  public void testAddingExistentChildThrowsException() {
+    Entry dir = new DirectoryEntry(null, "dir", null);
+    dir.addChild(new FileEntry(null, "child", null, null));
+
+    Paths.setCaseSensitive(true);
+
+    try {
+      dir.addChild(new FileEntry(null, "CHILD", null, null));
+    }
+    catch (RuntimeException e) {
+      fail();
+    }
+
+    try {
+      dir.addChild(new FileEntry(null, "child", null, null));
+      fail();
+    }
+    catch (RuntimeException e) {
+      assertEquals("entry 'child' already exists in 'dir'", e.getMessage());
+    }
+
+    Paths.setCaseSensitive(false);
+
+    try {
+      dir.addChild(new FileEntry(null, "CHILD", null, null));
+      fail();
+    }
+    catch (RuntimeException e) {
+    }
+  }
+
+  @Test
   public void testRemovingChildren() {
     Entry dir = new DirectoryEntry(null, null, null);
     Entry file = new FileEntry(null, null, null, null);
@@ -33,6 +62,27 @@ public class DirectoryEntryTest extends TestCase {
     dir.removeChild(file);
     assertTrue(dir.getChildren().isEmpty());
     assertNull(file.getParent());
+  }
+
+  @Test
+  public void testFindChild() {
+    Entry dir = new DirectoryEntry(null, null, null);
+    Entry one = new FileEntry(null, "one", null, null);
+    Entry two = new FileEntry(null, "two", null, null);
+
+    dir.addChild(one);
+    dir.addChild(two);
+
+    assertSame(one, dir.findChild("one"));
+    assertSame(two, dir.findChild("two"));
+
+    assertNull(dir.findChild("aaa"));
+
+    Paths.setCaseSensitive(true);
+    assertNull(dir.findChild("ONE"));
+
+    Paths.setCaseSensitive(false);
+    assertSame(one, dir.findChild("ONE"));
   }
 
   @Test
@@ -173,6 +223,18 @@ public class DirectoryEntryTest extends TestCase {
     assertFalse(d.isFile());
     assertSame(e1, d.getLeft());
     assertSame(e2, d.getRight());
+  }
+
+  @Test
+  public void testDifferenceInNameIsAlwaysCaseSensitive() {
+    DirectoryEntry e1 = new DirectoryEntry(null, "name", null);
+    DirectoryEntry e2 = new DirectoryEntry(null, "NAME", null);
+
+    Paths.setCaseSensitive(false);
+    assertEquals(MODIFIED, e1.getDifferenceWith(e2).getKind());
+
+    Paths.setCaseSensitive(true);
+    assertEquals(MODIFIED, e1.getDifferenceWith(e2).getKind());
   }
 
   @Test

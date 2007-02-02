@@ -24,6 +24,7 @@ public class Reverter {
       return;
     }
 
+    // todo test case-insensitivity
     if (!older.getName().equals(f.getName())) {
       f.rename(null, older.getName());
     }

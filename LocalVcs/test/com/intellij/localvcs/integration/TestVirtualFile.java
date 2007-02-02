@@ -1,5 +1,6 @@
 package com.intellij.localvcs.integration;
 
+import com.intellij.localvcs.Paths;
 import com.intellij.mock.MockFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -44,6 +45,11 @@ public class TestVirtualFile extends VirtualFile {
     return myName;
   }
 
+  @Override
+  protected boolean nameEquals(String name) {
+    return Paths.isCaseSensitive() ? myName.equals(name) : myName.equalsIgnoreCase(name);
+  }
+
   public boolean isDirectory() {
     return myIsDirectory;
   }
@@ -72,7 +78,7 @@ public class TestVirtualFile extends VirtualFile {
   }
 
   public byte[] contentsToByteArray() throws IOException {
-    return myContent.getBytes();
+    return myContent == null ? null : myContent.getBytes();
   }
 
   @NotNull

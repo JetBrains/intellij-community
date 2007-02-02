@@ -3,7 +3,7 @@ package com.intellij.localvcs;
 import org.junit.Before;
 import org.junit.Test;
 
-public class RootEntryTest extends TestCase {
+public class RootEntryTest extends LocalVcsTestCase {
   private RootEntry root;
   private Entry child;
 

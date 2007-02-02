@@ -2,7 +2,7 @@ package com.intellij.localvcs;
 
 import org.junit.Test;
 
-public class RootEntryFindingTest extends TestCase {
+public class RootEntryFindingTest extends LocalVcsTestCase {
   private RootEntry root = new RootEntry();
 
   @Test
@@ -45,6 +45,23 @@ public class RootEntryFindingTest extends TestCase {
     assertSame(dir, root.findEntry("dir"));
     assertSame(file1, root.findEntry("file1"));
     assertSame(file2, root.findEntry("dir/file2"));
+  }
+
+  @Test
+  public void testFindingUnderRoots() {
+    Entry dir1 = new DirectoryEntry(null, "c:/dir1", null);
+    Entry dir2 = new DirectoryEntry(null, "c:/dir2", null);
+    Entry file1 = new FileEntry(null, "file1", null, null);
+    Entry file2 = new FileEntry(null, "file2", null, null);
+    dir1.addChild(file1);
+    dir2.addChild(file2);
+    root.addChild(dir1);
+    root.addChild(dir2);
+
+    assertSame(dir1, root.findEntry("c:/dir1"));
+    assertSame(dir2, root.findEntry("c:/dir2"));
+    assertSame(file1, root.findEntry("c:/dir1/file1"));
+    assertSame(file2, root.findEntry("c:/dir2/file2"));
   }
 
   @Test

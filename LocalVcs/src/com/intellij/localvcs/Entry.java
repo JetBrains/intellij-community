@@ -1,7 +1,5 @@
 package com.intellij.localvcs;
 
-import com.intellij.openapi.util.text.StringUtil;
-
 import java.io.IOException;
 import static java.lang.String.format;
 import java.util.Collections;
@@ -50,6 +48,14 @@ public abstract class Entry {
     return myParent.getPathAppendedWith(myName);
   }
 
+  public boolean nameEquals(String name) {
+    return Paths.equals(myName, name);
+  }
+
+  public boolean pathEquals(String path) {
+    return Paths.equals(getPath(), path);
+  }
+
   public Long getTimestamp() {
     return myTimestamp;
   }
@@ -86,6 +92,13 @@ public abstract class Entry {
     return Collections.emptyList();
   }
 
+  public Entry findChild(String name) {
+    for (Entry e : getChildren()) {
+      if (e.nameEquals(name)) return e;
+    }
+    return null;
+  }
+
   public boolean hasEntry(String path) {
     return findEntry(path) != null;
   }
@@ -100,7 +113,7 @@ public abstract class Entry {
 
   public Entry findEntry(String path) {
     String withoutMe = Paths.withoutRootIfUnder(path, myName);
-    
+
     if (withoutMe == null) return null;
     if (withoutMe.length() == 0) return this;
 

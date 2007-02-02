@@ -3,7 +3,7 @@ package com.intellij.localvcs;
 import static org.easymock.EasyMock.*;
 import org.junit.Test;
 
-public class CachingContentStorageTest extends TestCase {
+public class CachingContentStorageTest extends LocalVcsTestCase {
   IContentStorage subject = createMock(IContentStorage.class);
   IContentStorage s = new CachingContentStorage(subject);
 
@@ -43,7 +43,7 @@ public class CachingContentStorageTest extends TestCase {
 
     verify(subject);
   }
-  
+
   @Test
   public void testSaveAndClose() throws Exception {
     subject.save();

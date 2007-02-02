@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class RootEntryRootsTest extends TestCase {
+public class RootEntryRootsTest extends LocalVcsTestCase {
   private RootEntry root = new RootEntry();
 
   @Test
@@ -49,7 +49,7 @@ public class RootEntryRootsTest extends TestCase {
   public void testRenamingRoots() {
     root.createDirectory(null, "c:/dir/root", null);
     root.rename("c:/dir/root", "newName");
-    
+
     assertTrue(root.hasEntry("c:/dir/newName"));
     assertFalse(root.hasEntry("c:/dir/root"));
   }

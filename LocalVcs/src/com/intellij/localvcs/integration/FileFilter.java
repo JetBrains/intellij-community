@@ -19,21 +19,12 @@ public class FileFilter {
     return isUnderContentRoot(f) && isAllowed(f);
   }
 
-  public boolean isAllowed(VirtualFile f) {
-    return isFileTypeAllowed(f) && isFileSizeAllowed(f);
-  }
-
   public boolean isUnderContentRoot(VirtualFile f) {
     return myFileIndex.isInContent(f);
   }
 
-  protected boolean isFileTypeAllowed(VirtualFile f) {
+  public boolean isAllowed(VirtualFile f) {
     if (f.isDirectory()) return true;
     return !myTypeManager.getFileTypeByFile(f).isBinary();
-  }
-
-  private boolean isFileSizeAllowed(VirtualFile f) {
-    if (f.isDirectory()) return true;
-    return f.getLength() < MAX_FILE_SIZE;
   }
 }

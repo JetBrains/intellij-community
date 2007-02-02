@@ -25,7 +25,7 @@ public class StorageTest extends TempDirTestCase {
     assertTrue(entry.getChildren().isEmpty());
     assertEquals(0, counter);
   }
-  
+
   @Test
   public void testCleaningStorageOnVersionChange() {
     s = new Storage(tempDir) {
@@ -46,7 +46,7 @@ public class StorageTest extends TempDirTestCase {
 
     assertEquals(0, s.loadCounter());
   }
-    
+
   @Test
   public void testDoesNotCleanStorageWithProperVersion() {
     s = new Storage(tempDir) {
@@ -79,10 +79,18 @@ public class StorageTest extends TempDirTestCase {
   }
 
   @Test
-  public void testStoringContent() {
+  public void testCreatingContent() {
     s = new Storage(tempDir);
 
     Content c = s.createContent(new byte[]{1, 2, 3});
     assertEquals(new byte[]{1, 2, 3}, c.getBytes());
+  }
+
+  @Test
+  public void testCreatingLongContent() {
+    s = new Storage(tempDir);
+
+    Content c = s.createContent(new byte[LongContent.MAX_LENGTH + 1]);
+    assertEquals(LongContent.class, c.getClass());
   }
 }

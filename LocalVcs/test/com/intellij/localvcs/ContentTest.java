@@ -3,7 +3,7 @@ package com.intellij.localvcs;
 import org.junit.Test;
 
 
-public class ContentTest extends TestCase {
+public class ContentTest extends LocalVcsTestCase {
   @Test
   public void testEqualityAndHash() {
     assertTrue(new Content(null, 1).equals(new Content(null, 1)));

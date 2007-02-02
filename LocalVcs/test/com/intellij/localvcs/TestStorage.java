@@ -30,7 +30,7 @@ public class TestStorage extends Storage {
   }
 
   @Override
-  public Content createContent(byte[] bytes) {
+  protected Content doCreateContent(byte[] bytes) {
     int id = myContents.size();
     myContents.put(id, bytes);
     return new Content(this, id);

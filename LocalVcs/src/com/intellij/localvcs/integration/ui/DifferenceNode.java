@@ -1,8 +1,8 @@
 package com.intellij.localvcs.integration.ui;
 
+import com.intellij.localvcs.Content;
 import com.intellij.localvcs.Difference;
 import com.intellij.localvcs.Entry;
-import com.intellij.localvcs.Content;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vcs.checkin.DiffTreeNode;
 import com.intellij.openapi.vcs.checkin.DifferenceType;
@@ -92,10 +92,10 @@ public class DifferenceNode implements TreeNode, PresentableDiffTreeNode {
 
   private Icon getFileIconOr(Icon dirIcon) {
     if (!isFile()) return dirIcon;
-    return getFileTypeManager().getFileTypeByFileName(getAnyName()).getIcon();
+    return getFileTypeManager().getFileTypeByFileName(getEntryName()).getIcon();
   }
 
-  private String getAnyName() {
+  private String getEntryName() {
     Entry e = myDiff.getLeft() != null ? myDiff.getLeft() : myDiff.getRight();
     return e.getName();
   }

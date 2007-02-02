@@ -36,6 +36,9 @@ public class Content {
     return new ByteArrayInputStream(getBytes());
   }
 
+  public boolean isTooLong() {
+    return false;
+  }
 
   @Override
   public String toString() {

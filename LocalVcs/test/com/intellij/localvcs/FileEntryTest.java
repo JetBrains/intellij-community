@@ -3,7 +3,7 @@ package com.intellij.localvcs;
 import static com.intellij.localvcs.Difference.Kind.*;
 import org.junit.Test;
 
-public class FileEntryTest extends TestCase {
+public class FileEntryTest extends LocalVcsTestCase {
   @Test
   public void testCopying() {
     FileEntry file = new FileEntry(33, "name", c("content"), 123L);
@@ -47,13 +47,25 @@ public class FileEntryTest extends TestCase {
 
   @Test
   public void testDifferenceInName() {
-    FileEntry e1 = new FileEntry(null, "name", c("content"), null);
-    FileEntry e2 = new FileEntry(null, "another name", c("content"), null);
+    Entry e1 = new FileEntry(null, "name", c("content"), null);
+    Entry e2 = new FileEntry(null, "another name", c("content"), null);
 
     Difference d = e1.getDifferenceWith(e2);
     assertEquals(MODIFIED, d.getKind());
     assertSame(e1, d.getLeft());
     assertSame(e2, d.getRight());
+  }
+
+  @Test
+  public void testDifferenceInNameIsAlwaysCaseSensitive() {
+    Entry e1 = new FileEntry(null, "name", c(""), null);
+    Entry e2 = new FileEntry(null, "NAME", c(""), null);
+
+    Paths.setCaseSensitive(false);
+    assertEquals(MODIFIED, e1.getDifferenceWith(e2).getKind());
+
+    Paths.setCaseSensitive(true);
+    assertEquals(MODIFIED, e1.getDifferenceWith(e2).getKind());
   }
 
   @Test

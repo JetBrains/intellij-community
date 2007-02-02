@@ -4,7 +4,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 
 public class Paths {
-  public static final char DELIM = '/';
+  private static final char DELIM = '/';
   private static boolean myIsCaseSensitive = SystemInfo.isFileSystemCaseSensitive;
 
   public static String getNameOf(String path) {
@@ -40,7 +40,15 @@ public class Paths {
     return myIsCaseSensitive ? path.startsWith(prefix) : StringUtil.startsWithIgnoreCase(path, prefix);
   }
 
-  protected static void setCaseSensitive(boolean b) {
+  public static boolean equals(String p1, String p2) {
+    return myIsCaseSensitive ? p1.equals(p2) : p1.equalsIgnoreCase(p2);
+  }
+
+  public static void setCaseSensitive(boolean b) {
     myIsCaseSensitive = b;
+  }
+
+  public static boolean isCaseSensitive() {
+    return myIsCaseSensitive;
   }
 }

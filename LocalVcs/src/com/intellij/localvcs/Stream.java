@@ -2,7 +2,7 @@ package com.intellij.localvcs;
 
 import java.io.*;
 
-// todo remove all null-saves and replace with wrapper for tests
+// todo remove all null-saves and replace with wrapper for tests!!!!
 public class Stream {
   private DataInputStream myIs;
   private DataOutputStream myOs;
@@ -27,6 +27,31 @@ public class Stream {
 
   public void writeIdPath(IdPath p) throws IOException {
     p.write(this);
+  }
+
+  public Content readContent() throws IOException {
+    if (!myIs.readBoolean()) return null;
+    switch (myIs.readInt()) {
+      case 0:
+        return new Content(this);
+      case 1:
+        return new LongContent(this);
+    }
+    return null;
+  }
+
+  public void writeContent(Content content) throws IOException {
+    myOs.writeBoolean(content != null);
+    if (content == null) return;
+
+    Integer id = null;
+
+    Class c = content.getClass();
+    if (c.equals(Content.class)) id = 0;
+    if (c.equals(LongContent.class)) id = 1;
+
+    myOs.writeInt(id);
+    content.write(this);
   }
 
   public Entry readEntry() throws IOException {
@@ -134,15 +159,5 @@ public class Stream {
   public void writeLong(Long l) throws IOException {
     myOs.writeBoolean(l != null);
     if (l != null) myOs.writeLong(l);
-  }
-
-  public Content readContent() throws IOException {
-    if (!myIs.readBoolean()) return null;
-    return new Content(this);
-  }
-
-  public void writeContent(Content c) throws IOException {
-    myOs.writeBoolean(c != null);
-    if (c != null) c.write(this);
   }
 }

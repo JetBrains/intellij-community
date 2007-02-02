@@ -44,7 +44,11 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
     return p.getComponent(ILocalVcsComponent.class);
   }
 
-  public LocalVcsComponent(Project p, StartupManager sm, ProjectRootManagerEx rm, VirtualFileManagerEx fm, LocalFileSystem fs,
+  public LocalVcsComponent(Project p,
+                           StartupManager sm,
+                           ProjectRootManagerEx rm,
+                           VirtualFileManagerEx fm,
+                           LocalFileSystem fs,
                            FileDocumentManager dm,
                            FileTypeManager tm) {
     myProject = p;
@@ -124,7 +128,7 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   }
 
   public boolean isEnabled() {
-    if (System.getProperty("localvcs.disabled") != null) return false;
+    if (System.getProperty("newlocalvcs.disabled") != null) return false;
     if (isUnitTestMode()) return true;
     return ApplicationManagerEx.getApplicationEx().isInternal();
   }

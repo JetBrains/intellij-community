@@ -2,7 +2,7 @@ package com.intellij.localvcs;
 
 import org.junit.Test;
 
-public class PathsTest extends TestCase {
+public class PathsTest extends LocalVcsTestCase {
   @Test
   public void testParent() {
     assertEquals("dir1/dir2", Paths.getParentOf("dir1/dir2/file"));
@@ -43,5 +43,17 @@ public class PathsTest extends TestCase {
 
     Paths.setCaseSensitive(false);
     assertEquals("file", Paths.withoutRootIfUnder("dir/file", "DiR"));
+  }
+
+  @Test
+  public void testEquals() {
+    assertTrue(Paths.equals("one", "one"));
+    assertFalse(Paths.equals("one", "two"));
+
+    Paths.setCaseSensitive(true);
+    assertFalse(Paths.equals("one", "ONE"));
+
+    Paths.setCaseSensitive(false);
+    assertTrue(Paths.equals("one", "ONE"));
   }
 }

@@ -1,15 +1,15 @@
 package com.intellij.localvcs;
 
-import java.io.File;
-import java.net.URISyntaxException;
-
 import com.intellij.openapi.util.io.FileUtil;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-public abstract class TempDirTestCase extends TestCase {
+import java.io.File;
+import java.net.URISyntaxException;
+
+public abstract class TempDirTestCase extends LocalVcsTestCase {
   protected static File classTempDir;
   protected File tempDir;
 
@@ -42,13 +42,13 @@ public abstract class TempDirTestCase extends TestCase {
       result.mkdirs();
 
       return result;
-    } catch (URISyntaxException e) {
+    }
+    catch (URISyntaxException e) {
       throw new RuntimeException(e);
     }
   }
 
   private static void deleteDir(File dir) {
-    if (!FileUtil.delete(dir))
-      throw new RuntimeException("can't delete dir <" + dir.getName() + ">");
+    if (!FileUtil.delete(dir)) throw new RuntimeException("can't delete dir <" + dir.getName() + ">");
   }
 }

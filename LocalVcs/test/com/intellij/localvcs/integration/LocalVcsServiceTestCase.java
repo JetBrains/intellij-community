@@ -3,7 +3,7 @@ package com.intellij.localvcs.integration;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.TestStorage;
+import com.intellij.localvcs.TestLocalVcs;
 import com.intellij.localvcs.integration.stubs.StubProjectRootManagerEx;
 import com.intellij.localvcs.integration.stubs.StubStartupManagerEx;
 import com.intellij.localvcs.integration.stubs.StubVirtualFileManagerEx;
@@ -54,7 +54,7 @@ public class LocalVcsServiceTestCase extends MockedLocalFileSystemTestCase {
   }
 
   protected LocalVcs createLocalVcs() {
-    return new LocalVcs(new TestStorage());
+    return new TestLocalVcs();
   }
 
   protected class MyStartupManager extends StubStartupManagerEx {
@@ -71,7 +71,7 @@ public class LocalVcsServiceTestCase extends MockedLocalFileSystemTestCase {
     }
 
     public void synchronizeFileSystem() {
-      myUpdater.updatingDone();
+      CacheUpdaterHelper.performUpdate(myUpdater);
     }
   }
 
@@ -94,7 +94,9 @@ public class LocalVcsServiceTestCase extends MockedLocalFileSystemTestCase {
     }
 
     public void updateRoots() {
-      if (myUpdater != null) myUpdater.updatingDone();
+      if (myUpdater != null) {
+        CacheUpdaterHelper.performUpdate(myUpdater);
+      }
     }
   }
 

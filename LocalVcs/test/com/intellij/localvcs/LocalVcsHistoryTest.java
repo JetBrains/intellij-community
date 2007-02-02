@@ -1,15 +1,13 @@
 package com.intellij.localvcs;
 
-import java.util.List;
-
-import static com.intellij.localvcs.Difference.Kind.CREATED;
-import static com.intellij.localvcs.Difference.Kind.MODIFIED;
-import static com.intellij.localvcs.Difference.Kind.NOT_MODIFIED;
+import static com.intellij.localvcs.Difference.Kind.*;
 import org.junit.Test;
 
-public class LocalVcsHistoryTest extends TestCase {
+import java.util.List;
+
+public class LocalVcsHistoryTest extends LocalVcsTestCase {
   // todo difference on root does not work!!!
-  private LocalVcs vcs = new LocalVcs(new TestStorage());
+  private LocalVcs vcs = new TestLocalVcs();
 
   @Test
   public void testLabelingEmptyLocalVcsThrowsException() {
@@ -17,7 +15,9 @@ public class LocalVcsHistoryTest extends TestCase {
     try {
       vcs.putLabel("label");
       fail();
-    } catch (AssertionError e) {}
+    }
+    catch (AssertionError e) {
+    }
   }
 
   @Test
