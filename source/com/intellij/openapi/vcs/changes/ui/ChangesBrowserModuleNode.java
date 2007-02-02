@@ -10,7 +10,7 @@ import com.intellij.ui.SimpleTextAttributes;
 /**
  * @author yole
  */
-public class ChangesBrowserModuleNode extends ChangesBrowserNode {
+public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
   protected ChangesBrowserModuleNode(Module userObject) {
     super(userObject);
   }
@@ -22,5 +22,10 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode {
     renderer.append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     appendCount(renderer);
     renderer.setIcon(module.getModuleType().getNodeIcon(expanded));
+  }
+
+  @Override
+  public String getTextPresentation() {
+    return getUserObject().getName();
   }
 }

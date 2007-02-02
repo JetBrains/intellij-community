@@ -14,7 +14,7 @@ import com.intellij.ui.SimpleTextAttributes;
 /**
  * @author yole
  */
-public class ChangesBrowserChangeListNode extends ChangesBrowserNode {
+public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList> {
   private ChangeListDecorator[] myDecorators;
 
   public ChangesBrowserChangeListNode(Project project, ChangeList userObject) {
@@ -37,9 +37,13 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode {
       }
     }
     else {
-      final ChangeList list = ((ChangeList)userObject);
-      renderer.append(list.getName(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+      renderer.append(getUserObject().getName(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
       appendCount(renderer);
     }
+  }
+
+  @Override
+  public String getTextPresentation() {
+    return getUserObject().getName().trim();
   }
 }

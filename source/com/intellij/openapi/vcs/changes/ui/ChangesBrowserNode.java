@@ -15,12 +15,11 @@ import javax.swing.tree.MutableTreeNode;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.awt.*;
 
 /**
  * @author max
  */
-public class ChangesBrowserNode extends DefaultMutableTreeNode {
+public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   protected int myCount = -1;
   private int myDirectoryCount = -1;
 
@@ -144,5 +143,14 @@ public class ChangesBrowserNode extends DefaultMutableTreeNode {
     else {
       renderer.append(" " + VcsBundle.message("changes.nodetitle.directory.file.changecount", dirCount, count), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
     }
+  }
+
+  public String getTextPresentation() {
+    return toString();
+  }
+
+  public T getUserObject() {
+    //noinspection unchecked
+    return (T) userObject;
   }
 }

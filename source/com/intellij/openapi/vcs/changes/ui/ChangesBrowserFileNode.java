@@ -15,7 +15,7 @@ import com.intellij.util.Icons;
 /**
  * @author yole
  */
-public class ChangesBrowserFileNode extends ChangesBrowserNode {
+public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> {
   private Project myProject;
 
   public ChangesBrowserFileNode(Project project, VirtualFile userObject) {
@@ -28,14 +28,14 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode {
 
   @Override
   protected boolean isDirectory() {
-    return ((VirtualFile) userObject).isDirectory() &&
-           FileStatusManager.getInstance(myProject).getStatus((VirtualFile) userObject) != FileStatus.NOT_CHANGED;
+    return (getUserObject()).isDirectory() &&
+           FileStatusManager.getInstance(myProject).getStatus(getUserObject()) != FileStatus.NOT_CHANGED;
   }
 
 
   @Override
   public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
-    final VirtualFile file = (VirtualFile)userObject;
+    final VirtualFile file = getUserObject();
     renderer.appendFileName(file, file.getName(), ChangeListManager.getInstance(myProject).getStatus(file).getColor());
     if (renderer.isShowFlatten() && file.isValid()) {
       final VirtualFile parentFile = file.getParent();
@@ -51,5 +51,10 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode {
     else {
       renderer.setIcon(file.getFileType().getIcon());
     }
+  }
+
+  @Override
+  public String getTextPresentation() {
+    return getUserObject().getName();
   }
 }

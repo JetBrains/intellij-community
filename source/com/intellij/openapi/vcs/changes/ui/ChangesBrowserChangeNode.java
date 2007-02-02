@@ -17,7 +17,7 @@ import java.io.File;
 /**
  * @author yole
  */
-public class ChangesBrowserChangeNode extends ChangesBrowserNode {
+public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> {
   protected ChangesBrowserChangeNode(Change userObject) {
     super(userObject);
     if (!ChangesUtil.getFilePath(userObject).isDirectory()) {
@@ -27,12 +27,12 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode {
 
   @Override
   protected boolean isDirectory() {
-    return ChangesUtil.getFilePath((Change) userObject).isDirectory();
+    return ChangesUtil.getFilePath(getUserObject()).isDirectory();
   }
 
   @Override
   public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
-    final Change change = (Change)userObject;
+    final Change change = getUserObject();
     final FilePath filePath = ChangesUtil.getFilePath(change);
     final String fileName = filePath.getName();
     VirtualFile vFile = filePath.getVirtualFile();
@@ -65,5 +65,10 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode {
     else {
       renderer.setIcon(filePath.getFileType().getIcon());
     }
+  }
+
+  @Override
+  public String getTextPresentation() {
+    return ChangesUtil.getFilePath(getUserObject()).getName();
   }
 }

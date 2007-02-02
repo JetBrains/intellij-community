@@ -11,7 +11,7 @@ import com.intellij.util.Icons;
 /**
  * @author yole
  */
-public class ChangesBrowserFilePathNode extends ChangesBrowserNode {
+public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   public ChangesBrowserFilePathNode(FilePath userObject) {
     super(userObject);
     if (!userObject.isDirectory()) {
@@ -21,9 +21,8 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode {
 
   @Override
   protected boolean isDirectory() {
-    return ((FilePath) userObject).isDirectory() && isLeaf();
+    return getUserObject().isDirectory() && isLeaf();
   }
-
 
   @Override
   public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
@@ -48,5 +47,10 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode {
       }
       renderer.setIcon(path.getFileType().getIcon());
     }
+  }
+
+  @Override
+  public String getTextPresentation() {
+    return getUserObject().getName();
   }
 }

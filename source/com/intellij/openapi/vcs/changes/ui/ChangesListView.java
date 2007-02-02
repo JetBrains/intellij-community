@@ -6,7 +6,6 @@ import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
@@ -567,30 +566,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   private static class NodeToTextConvertor implements Convertor<TreePath, String> {
     public String convert(final TreePath path) {
       ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
-      final Object object = node.getUserObject();
-      if (object instanceof ChangeList) {
-        final ChangeList list = ((ChangeList)object);
-        return list.getName();
-      }
-      else if (object instanceof Change) {
-        final Change change = (Change)object;
-        final FilePath filePath = ChangesUtil.getFilePath(change);
-        return filePath.getName();
-      }
-      else if (object instanceof VirtualFile) {
-        final VirtualFile file = (VirtualFile)object;
-        return file.getName();
-      }
-      else if (object instanceof FilePath) {
-        final FilePath filePath = (FilePath)object;
-        return filePath.getName();
-      }
-      else if (object instanceof Module) {
-        final Module module = (Module)object;
-        return module.getName();
-      }
-
-      return node.toString();
+      return node.getTextPresentation();
     }
   }
 
