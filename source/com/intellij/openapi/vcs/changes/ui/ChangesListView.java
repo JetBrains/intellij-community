@@ -461,39 +461,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
 
   }
 
-  private static class ChangeListDragBean {
-    private ChangesListView myView;
-    private Change[] myChanges;
-    private List<VirtualFile> myUnversionedFiles;
-    private LocalChangeList myDropList = null;
-
-    public ChangeListDragBean(final ChangesListView view, final Change[] changes, final List<VirtualFile> unversionedFiles) {
-      myView = view;
-      myChanges = changes;
-      myUnversionedFiles = unversionedFiles;
-    }
-
-    public ChangesListView getView() {
-      return myView;
-    }
-
-    public Change[] getChanges() {
-      return myChanges;
-    }
-
-    public List<VirtualFile> getUnversionedFiles() {
-      return myUnversionedFiles;
-    }
-
-    public void setTargetList(final LocalChangeList dropList) {
-      myDropList = dropList;
-    }
-
-    public LocalChangeList getDropList() {
-      return myDropList;
-    }
-  }
-
   public class DropTarget implements DnDTarget {
     public boolean update(DnDEvent aEvent) {
       aEvent.hideHighlighter();
@@ -505,7 +472,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
       final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
       if (dragBean.getView() != ChangesListView.this) return false;
       if (dragBean.getChanges().length == 0 && dragBean.getUnversionedFiles().size() == 0) return false;
-      dragBean.setTargetList(null);
+      dragBean.setTargetNode(null);
 
       RelativePoint dropPoint = aEvent.getRelativePoint();
       Point onTree = dropPoint.getPoint(ChangesListView.this);
@@ -513,22 +480,13 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
 
       if (dropPath == null) return false;
 
-      Object object;
       ChangesBrowserNode dropNode = (ChangesBrowserNode)dropPath.getLastPathComponent();
-      do {
-        if (dropNode == null || dropNode.isRoot()) return false;
-        object = dropNode.getUserObject();
-        if (object instanceof ChangeList) break;
+      while(!((ChangesBrowserNode) dropNode.getParent()).isRoot()) {
         dropNode = (ChangesBrowserNode)dropNode.getParent();
       }
-      while (true);
 
-      LocalChangeList dropList = (LocalChangeList)object;
-      final Change[] changes = dragBean.getChanges();
-      for (Change change : dropList.getChanges()) {
-        for (Change incomingChange : changes) {
-          if (change == incomingChange) return false;
-        }
+      if (!dropNode.canAcceptDrop(dragBean)) {
+        return false;
       }
 
       final Rectangle tableCellRect = getPathBounds(new TreePath(dropNode.getPath()));
@@ -536,7 +494,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
       aEvent.setHighlighting(new RelativeRectangle(ChangesListView.this, tableCellRect), DnDEvent.DropTargetHighlightingType.RECTANGLE);
 
       aEvent.setDropPossible(true, null);
-      dragBean.setTargetList(dropList);
+      dragBean.setTargetNode(dropNode);
 
       return false;
     }
@@ -546,13 +504,9 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
       if (!(attached instanceof ChangeListDragBean)) return;
 
       final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
-      final LocalChangeList dropList = dragBean.getDropList();
-      if (dropList != null) {
-        myDragOwner.moveChangesTo(dropList, dragBean.getChanges());
-        final List<VirtualFile> unversionedFiles = dragBean.getUnversionedFiles();
-        if (unversionedFiles != null) {
-          myDragOwner.addUnversionedFiles(dropList, unversionedFiles);
-        }
+      final ChangesBrowserNode changesBrowserNode = dragBean.getTargetNode();
+      if (changesBrowserNode != null) {
+        changesBrowserNode.acceptDrop(myDragOwner, dragBean);
       }
     }
 

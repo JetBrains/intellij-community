@@ -4,12 +4,13 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListDecorator;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -45,5 +46,30 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
   @Override
   public String getTextPresentation() {
     return getUserObject().getName().trim();
+  }
+
+  @Override
+  public boolean canAcceptDrop(final ChangeListDragBean dragBean) {
+    final Change[] changes = dragBean.getChanges();
+    for (Change change : getUserObject().getChanges()) {
+      for (Change incomingChange : changes) {
+        if (change == incomingChange) return false;
+      }
+    }
+
+    return true;
+  }
+
+  @Override
+  public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
+    if (!(userObject instanceof LocalChangeList)) {
+      return;
+    }
+    final LocalChangeList dropList = (LocalChangeList)getUserObject();
+    dragOwner.moveChangesTo(dropList, dragBean.getChanges());
+    final List<VirtualFile> unversionedFiles = dragBean.getUnversionedFiles();
+    if (unversionedFiles != null) {
+      dragOwner.addUnversionedFiles(dropList, unversionedFiles);
+    }
   }
 }

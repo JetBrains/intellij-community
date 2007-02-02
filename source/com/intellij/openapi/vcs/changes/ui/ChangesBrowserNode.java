@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListOwner;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -152,5 +153,12 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   public T getUserObject() {
     //noinspection unchecked
     return (T) userObject;
+  }
+
+  public boolean canAcceptDrop(final ChangeListDragBean dragBean) {
+    return false;
+  }
+
+  public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
   }
 }
