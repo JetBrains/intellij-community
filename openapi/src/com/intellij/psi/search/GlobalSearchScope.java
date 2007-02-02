@@ -94,6 +94,26 @@ public abstract class GlobalSearchScope extends SearchScope {
     return new FilterScopeAdapter(project, set, includeNonJavaFiles);
   }
 
+  public static GlobalSearchScope notScope(final GlobalSearchScope scope) {
+    return new GlobalSearchScope() {
+      public boolean contains(final VirtualFile file) {
+        return !scope.contains(file);
+      }
+
+      public int compare(final VirtualFile file1, final VirtualFile file2) {
+        return scope.compare(file1, file2);
+      }
+
+      public boolean isSearchInModuleContent(final Module aModule) {
+        return scope.isSearchInLibraries();
+      }
+
+      public boolean isSearchInLibraries() {
+        return scope.isSearchInLibraries();
+      }
+    };
+  }
+
   /**
    * Returns module scope including sources and tests, excluding libraries and dependencies.
    *

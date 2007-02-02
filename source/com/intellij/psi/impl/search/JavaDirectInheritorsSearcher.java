@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -38,11 +39,22 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     });
 
     if ("java.lang.Object".equals(aClass.getQualifiedName())) {
-      return psiManager.getSearchHelper().processAllClasses(new PsiElementProcessor<PsiClass>() {
-        public boolean execute(final PsiClass psiClass) {
-          return consumer.process(psiClass);
-        }
-      }, useScope);
+      return psiManager.getSearchHelper().processAllClasses(
+        new PsiElementProcessor<PsiClass>() {
+          public boolean execute(final PsiClass psiClass) {
+            return consumer.process(psiClass);
+          }
+        },
+        useScope.intersectWith(
+          GlobalSearchScope.notScope(
+            GlobalSearchScope.getScopeRestrictedByFileTypes(
+              GlobalSearchScope.allScope(psiManager.getProject()),
+              StdFileTypes.JSP,
+              StdFileTypes.JSPX
+            )
+          )
+        )
+      );
     }
     else {
       final RepositoryManager repositoryManager = psiManager.getRepositoryManager();
