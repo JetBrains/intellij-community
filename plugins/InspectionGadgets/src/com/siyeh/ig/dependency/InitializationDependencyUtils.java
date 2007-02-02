@@ -1,3 +1,18 @@
+/*
+ * Copyright 2006-2007 Dave Griffith
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.siyeh.ig.dependency;
 
 import com.intellij.codeInspection.reference.*;
@@ -5,8 +20,8 @@ import com.intellij.openapi.util.Key;
 
 import java.util.*;
 
-@SuppressWarnings({"MethodWithMultipleLoops"})
 public class InitializationDependencyUtils {
+
     private static final Key<Set<RefClass>> INITIALIZATION_DEPENDENT_CLASSES_KEY =
             new Key<Set<RefClass>>("INITIALIZATION_DEPENDENT_CLASSES");
     private static final Key<Set<RefClass>> INITIALIZATION_DEPENDENCY_CLASSES_KEY =
@@ -19,7 +34,8 @@ public class InitializationDependencyUtils {
     private InitializationDependencyUtils() {
     }
 
-    public static Set<RefClass> calculateInitializationDependenciesForClass(RefClass refClass) {
+    public static Set<RefClass> calculateInitializationDependenciesForClass(
+            RefClass refClass) {
         final Set<RefClass> dependencies =
                 refClass.getUserData(INITIALIZATION_DEPENDENCY_CLASSES_KEY);
         if (dependencies != null) {
@@ -28,12 +44,14 @@ public class InitializationDependencyUtils {
         final Set<RefClass> newDependencies = new HashSet<RefClass>();
         tabulateInitializationDependencyClasses(refClass, newDependencies);
         newDependencies.remove(refClass);
-        refClass.putUserData(INITIALIZATION_DEPENDENCY_CLASSES_KEY, newDependencies);
+        refClass.putUserData(INITIALIZATION_DEPENDENCY_CLASSES_KEY,
+                newDependencies);
         return newDependencies;
     }
 
     @SuppressWarnings({"MethodWithMultipleLoops"})
-    static void tabulateInitializationDependencyClasses(RefElement element, Set<RefClass> dependencies) {
+    static void tabulateInitializationDependencyClasses(
+            RefElement element, Set<RefClass> dependencies) {
         final Collection<RefElement> references = element.getOutReferences();
         final RefUtil refUtil = RefUtil.getInstance();
         for (RefElement reference : references) {
@@ -48,25 +66,29 @@ public class InitializationDependencyUtils {
         }
         for (RefEntity child : children) {
             if (child instanceof RefElement) {
-                tabulateInitializationDependencyClasses((RefElement) child, dependencies);
+                tabulateInitializationDependencyClasses((RefElement) child,
+                        dependencies);
             }
         }
     }
 
-    public static Set<RefClass> calculateTransitiveInitializationDependenciesForClass(RefClass refClass) {
+    public static Set<RefClass> calculateTransitiveInitializationDependenciesForClass(
+            RefClass refClass) {
         final Set<RefClass> dependencies =
                 refClass.getUserData(TRANSITIVE_INITIALIZATION_DEPENDENCY_CLASSES_KEY);
         if (dependencies != null) {
             return dependencies;
         }
         final Set<RefClass> newDependencies = new HashSet<RefClass>();
-        tabulateTransitiveInitializationDependencyClasses(refClass, newDependencies);
-        refClass.putUserData(TRANSITIVE_INITIALIZATION_DEPENDENCY_CLASSES_KEY, newDependencies);
+        tabulateTransitiveInitializationDependencyClasses(refClass,
+                newDependencies);
+        refClass.putUserData(TRANSITIVE_INITIALIZATION_DEPENDENCY_CLASSES_KEY,
+                newDependencies);
         return newDependencies;
     }
 
-    private static void tabulateTransitiveInitializationDependencyClasses(RefClass refClass,
-                                                            Set<RefClass> newDependencies) {
+    private static void tabulateTransitiveInitializationDependencyClasses(
+            RefClass refClass, Set<RefClass> newDependencies) {
         final LinkedList<RefClass> pendingClasses = new LinkedList<RefClass>();
         final Set<RefClass> processedClasses = new HashSet<RefClass>();
         pendingClasses.addLast(refClass);
@@ -87,7 +109,8 @@ public class InitializationDependencyUtils {
     }
 
 
-    public static Set<RefClass> calculateInitializationDependentsForClass(RefClass refClass) {
+    public static Set<RefClass> calculateInitializationDependentsForClass(
+            RefClass refClass) {
         final Set<RefClass> dependents =
                 refClass.getUserData(INITIALIZATION_DEPENDENT_CLASSES_KEY);
         if (dependents != null) {
@@ -101,7 +124,8 @@ public class InitializationDependencyUtils {
     }
 
     @SuppressWarnings({"MethodWithMultipleLoops"})
-    private static void tabulateInitializationDependentClasses(RefElement element, Set<RefClass> dependents) {
+    private static void tabulateInitializationDependentClasses(
+            RefElement element, Set<RefClass> dependents) {
         final Collection<RefElement> references = element.getInReferences();
         final RefUtil refUtil = RefUtil.getInstance();
         for (RefElement reference : references) {
@@ -116,12 +140,14 @@ public class InitializationDependencyUtils {
         }
         for (RefEntity child : children) {
             if (child instanceof RefElement) {
-                tabulateInitializationDependentClasses((RefElement) child, dependents);
+                tabulateInitializationDependentClasses((RefElement) child,
+                        dependents);
             }
         }
     }
 
-    public static Set<RefClass> calculateTransitiveInitializationDependentsForClass(RefClass refClass) {
+    public static Set<RefClass> calculateTransitiveInitializationDependentsForClass(
+            RefClass refClass) {
         final Set<RefClass> dependents =
                 refClass.getUserData(TRANSITIVE_INITIALIZATION_DEPENDENT_CLASSES_KEY);
         if (dependents != null) {
@@ -129,12 +155,13 @@ public class InitializationDependencyUtils {
         }
         final Set<RefClass> newDependents = new HashSet<RefClass>();
         tabulateInitializationTransitiveDependentClasses(refClass, newDependents);
-        refClass.putUserData(TRANSITIVE_INITIALIZATION_DEPENDENT_CLASSES_KEY, newDependents);
+        refClass.putUserData(TRANSITIVE_INITIALIZATION_DEPENDENT_CLASSES_KEY,
+                newDependents);
         return newDependents;
     }
 
-    private static void tabulateInitializationTransitiveDependentClasses(RefClass refClass,
-                                                                         Set<RefClass> newDependents) {
+    private static void tabulateInitializationTransitiveDependentClasses(
+            RefClass refClass, Set<RefClass> newDependents) {
         final LinkedList<RefClass> pendingClasses = new LinkedList<RefClass>();
         final Set<RefClass> processedClasses = new HashSet<RefClass>();
         pendingClasses.addLast(refClass);
@@ -142,7 +169,8 @@ public class InitializationDependencyUtils {
             final RefClass classToProcess = pendingClasses.removeFirst();
             newDependents.add(classToProcess);
             processedClasses.add(classToProcess);
-            final Set<RefClass> dependents = calculateInitializationDependentsForClass(classToProcess);
+            final Set<RefClass> dependents =
+                    calculateInitializationDependentsForClass(classToProcess);
             for (RefClass dependent : dependents) {
                 if (!pendingClasses.contains(dependent) &&
                         !processedClasses.contains(dependent)) {
