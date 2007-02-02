@@ -16,6 +16,8 @@
 package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.ReadWriteAccessUsage;
@@ -65,7 +67,7 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
 
     if (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null) { return UsageType.COMMENT_USAGE; }
 
-    UsageTypeProvider[] providers = element.getProject().getComponents(UsageTypeProvider.class);
+    UsageTypeProvider[] providers = Extensions.getExtensions(UsageTypeProvider.EP_NAME);
     for(UsageTypeProvider provider: providers) {
       UsageType usageType = provider.getUsageType(element);
       if (usageType != null) {
