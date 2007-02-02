@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 public class Disposer {
-
   private static final ObjectTree ourTree = new ObjectTree();
 
   private static final ObjectTreeAction ourDisposeAction = new ObjectTreeAction() {
@@ -29,15 +28,21 @@ public class Disposer {
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) {
     assert parent != child : " Cannot register to intself";
 
-    ourTree.register(parent, child);
+    synchronized (ourTree) {
+      ourTree.register(parent, child);
+    }
   }
 
   public static void dispose(Disposable disposable) {
-    ourTree.executeAll(disposable, true, ourDisposeAction);
+    synchronized (ourTree) {
+      ourTree.executeAll(disposable, true, ourDisposeAction);
+    }
   }
 
   public static void disposeChildAndReplace(Disposable toDipose, Disposable toReplace) {
-    ourTree.executeChildAndReplace(toDipose, toReplace, true, ourDisposeAction);
+    synchronized (ourTree) {
+      ourTree.executeChildAndReplace(toDipose, toReplace, true, ourDisposeAction);
+    }
   }
 
   static ObjectTree getTree() {
