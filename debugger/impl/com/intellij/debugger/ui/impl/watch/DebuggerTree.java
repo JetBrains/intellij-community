@@ -31,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TreeSpeedSearch;
 import com.sun.jdi.*;
 
@@ -83,7 +84,15 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     setModel(model);
 
     myProject = project;
-    new TreeSpeedSearch(this);
+    final TreeSpeedSearch search = new TreeSpeedSearch(this);
+    search.setComparator(new SpeedSearchBase.SpeedSearchComparator() {
+      public void translatePattern(final StringBuilder buf, final String pattern) {
+        final int len = pattern.length();
+        for (int i = 0; i < len; ++i) {
+          translateCharacter(buf, pattern.charAt(i));
+        }
+      }
+    });
   }
 
   public void dispose() {

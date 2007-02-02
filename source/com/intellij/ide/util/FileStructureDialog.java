@@ -318,7 +318,7 @@ public class FileStructureDialog extends DialogWrapper {
 
   private static SpeedSearchBase.SpeedSearchComparator createSpeedSearchComparator() {
     return new SpeedSearchBase.SpeedSearchComparator() {
-      public void translateCharacter(final StringBuffer buf, final char ch) {
+      public void translateCharacter(final StringBuilder buf, final char ch) {
         if (ch == '*') {
           buf.append(".*"); // overrides '*' handling to skip (,) in parameter lists
         }

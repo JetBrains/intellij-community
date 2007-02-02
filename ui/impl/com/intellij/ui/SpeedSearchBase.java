@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -120,24 +121,29 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
       }
       else {
         myRecentSearchText = pattern;
-        @NonNls final StringBuffer buf = new StringBuffer(pattern.length());
-
-        translatePattern(buf, pattern);
+        @NonNls final StringBuilder buf = StringBuilderSpinAllocator.alloc();
 
         try {
-          boolean allLowercase = pattern.equals(pattern.toLowerCase());
-          final Pattern recentSearchPattern = Pattern.compile(buf.toString(), allLowercase ? Pattern.CASE_INSENSITIVE : 0);
-          return (myRecentSearchMatcher = recentSearchPattern.matcher(text)).find();
+          translatePattern(buf, pattern);
+
+          try {
+            boolean allLowercase = pattern.equals(pattern.toLowerCase());
+            final Pattern recentSearchPattern = Pattern.compile(buf.toString(), allLowercase ? Pattern.CASE_INSENSITIVE : 0);
+            return (myRecentSearchMatcher = recentSearchPattern.matcher(text)).find();
+          }
+          catch (PatternSyntaxException ex) {
+            myRecentSearchText = null;
+          }
         }
-        catch (PatternSyntaxException ex) {
-          myRecentSearchText = null;
+        finally {
+          StringBuilderSpinAllocator.dispose(buf);
         }
 
         return false;
       }
     }
 
-    public void translatePattern(final StringBuffer buf, final String pattern) {
+    public void translatePattern(final StringBuilder buf, final String pattern) {
       buf.append('^'); // match from the line start
       final int len = pattern.length();
       for (int i = 0; i < len; ++i) {
@@ -145,7 +151,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
       }
     }
 
-    public void translateCharacter(final StringBuffer buf, final char ch) {
+    public void translateCharacter(final StringBuilder buf, final char ch) {
       if (ch == '*' ) {
         buf.append("(\\w|:)"); // ':' for xml tags
       }
