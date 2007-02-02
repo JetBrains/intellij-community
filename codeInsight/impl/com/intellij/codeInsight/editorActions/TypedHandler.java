@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
+import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.jsp.JspFile;
@@ -718,6 +719,7 @@ public class TypedHandler implements TypedActionHandler {
     final int offset = editor.getCaretModel().getOffset();
     PsiElement element = provider.findElementAt(offset - 1, XMLLanguage.class);
     if (element == null) return;
+    if (!(element.getLanguage() instanceof XMLLanguage)) return;
 
     ASTNode prevLeaf = element.getNode();
     if (prevLeaf != null && !"/".equals(prevLeaf.getText())) return;
