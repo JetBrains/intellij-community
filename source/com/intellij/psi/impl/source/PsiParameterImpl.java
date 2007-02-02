@@ -4,7 +4,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -20,11 +20,11 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
   private Boolean myCachedIsVarArgs = null;
   private PsiAnnotation[] myCachedAnnotations = null;
 
-  public PsiParameterImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiParameterImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 
-  public PsiParameterImpl(PsiManagerImpl manager, SrcRepositoryPsiElement owner, int index) {
+  public PsiParameterImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner, int index) {
     super(manager, owner, index);
   }
 

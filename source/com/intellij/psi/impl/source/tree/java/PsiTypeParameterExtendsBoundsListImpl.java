@@ -2,7 +2,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SlaveRepositoryPsiElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -18,11 +18,11 @@ import org.jetbrains.annotations.NotNull;
 public class PsiTypeParameterExtendsBoundsListImpl extends SlaveRepositoryPsiElement implements PsiReferenceList {
   private volatile PsiClassType[] myCachedTypes;
 
-  public PsiTypeParameterExtendsBoundsListImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiTypeParameterExtendsBoundsListImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 
-  public PsiTypeParameterExtendsBoundsListImpl(PsiManagerImpl manager, SrcRepositoryPsiElement owner) {
+  public PsiTypeParameterExtendsBoundsListImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner) {
     super(manager, owner);
   }
 

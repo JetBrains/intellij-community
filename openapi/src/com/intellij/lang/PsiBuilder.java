@@ -20,6 +20,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * The IDEA side of a custom language parser. Provides lexing results to the
@@ -55,6 +56,7 @@ public interface PsiBuilder extends UserDataHolder {
    *
    * @return the token text, or null when the lexing is over.
    */
+  @NonNls
   @Nullable
   String getTokenText();
 

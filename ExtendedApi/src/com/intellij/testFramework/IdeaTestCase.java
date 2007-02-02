@@ -86,16 +86,6 @@ import java.util.HashSet;
     return DEFAULT_TEST_TIME;
   }
 
-  protected String getTestName(boolean lowercaseFirstLetter) {
-    String name = getName();
-    assertTrue(name.startsWith("test"));
-    name = name.substring("test".length());
-    if (lowercaseFirstLetter) {
-      name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
-    }
-    return name;
-  }
-
   protected void initApplication() throws Exception {
     ourApplication = IdeaTestApplication.getInstance();
     ourApplication.setDataProvider(this);

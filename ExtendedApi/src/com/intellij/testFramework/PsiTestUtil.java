@@ -3,14 +3,18 @@ package com.intellij.testFramework;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
@@ -114,5 +118,35 @@ import java.util.Collection;
     PsiFile dummyFile = factory.createFileFromText(file.getName(), file.getText());
     String reparsedTree = DebugUtil.psiTreeToString(dummyFile, false);
     Assert.assertEquals(reparsedTree, originalTree);
+  }
+
+  public static void addLibrary(final Module module, final String libName, final String libPath, final String... jarArr) {
+    assert ModuleRootManager.getInstance(module).getContentRoots().length > 0 : "content roots must not be empty";
+    new WriteCommandAction(module.getProject()) {
+      protected void run(Result result) throws Throwable {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        final LibraryTable libraryTable = ProjectLibraryTable.getInstance(module.getProject());
+        final Library library = libraryTable.createLibrary(libName);
+        final Library.ModifiableModel libraryModel = library.getModifiableModel();
+        for (String jar : jarArr) {
+          final String path = libPath + jar;
+          final String newPath = model.getContentRoots()[0].getPath() + "/" + jar;
+          FileUtil.copy(new File(path), new File(newPath));
+          final VirtualFile root = JarFileSystem.getInstance().refreshAndFindFileByPath(newPath + "!/");
+          assert root != null;
+          libraryModel.addRoot(root, OrderRootType.CLASSES);
+        }
+        libraryModel.commit();
+        model.addLibraryEntry(library);
+        final OrderEntry[] orderEntries = model.getOrderEntries();
+        OrderEntry last = orderEntries[orderEntries.length - 1];
+        for (int i = orderEntries.length - 2; i > -1; i--) {
+          orderEntries[i + 1] = orderEntries[i];
+        }
+        orderEntries[0] = last;
+        model.rearrangeOrderEntries(orderEntries);
+        model.commit();
+      }
+    }.execute();
   }
 }

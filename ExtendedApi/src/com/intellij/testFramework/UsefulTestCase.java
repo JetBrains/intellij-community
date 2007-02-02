@@ -6,11 +6,15 @@ package com.intellij.testFramework;
 import com.intellij.util.Consumer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
+import java.io.FileReader;
+import java.io.IOException;
 
 /**
  * @author peter
@@ -91,7 +95,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertUnorderedCollection(Arrays.asList(collection), checkers);
   }
 
-  public static <T> void assertUnorderedCollection(Collection<T> collection, Consumer<T>... checkers) {
+  public static <T> void assertUnorderedCollection(Collection<? extends T> collection, Consumer<T>... checkers) {
     assertNotNull(collection);
     if (collection.size() != checkers.length) {
       fail(toString(collection));
@@ -160,5 +164,33 @@ public abstract class UsefulTestCase extends TestCase {
   protected <T extends Disposable> T disposeOnTearDown(final T disposable) {
     Disposer.register(myTestRootDisposable, disposable);
     return disposable;
+  }
+
+  public static void assertSameLines(String expected, String actual) {
+    String expectedText = StringUtil.convertLineSeparators(expected.trim());
+    String actualText = StringUtil.convertLineSeparators(actual.trim());
+    assertEquals(expectedText, actualText);
+  }
+
+  protected String getTestName(boolean lowercaseFirstLetter) {
+    String name = getName();
+    assertTrue(name.startsWith("test"));
+    name = name.substring("test".length());
+    if (lowercaseFirstLetter) {
+      name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
+    }
+    return name;
+  }
+
+  protected static void assertSameLinesWithFile(final String filePath, final String actualText) {
+    String fileText;
+    try {
+      final FileReader reader = new FileReader(filePath);
+      fileText = FileUtil.loadTextAndClose(reader);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    assertSameLines(fileText, actualText);
   }
 }

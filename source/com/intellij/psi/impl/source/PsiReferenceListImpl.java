@@ -3,10 +3,13 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.parsing.Parsing;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.PatchedSoftReference;
@@ -22,12 +25,12 @@ public final class PsiReferenceListImpl extends SlaveRepositoryPsiElement implem
 
   private volatile Reference<PsiClassType[]> myRepositoryTypesRef = null;
 
-  public PsiReferenceListImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiReferenceListImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
     myElementType = treeElement.getElementType();
   }
 
-  public PsiReferenceListImpl(PsiManagerImpl manager, SrcRepositoryPsiElement owner, IElementType elementType) {
+  public PsiReferenceListImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner, IElementType elementType) {
     super(manager, owner);
     myElementType = elementType;
   }

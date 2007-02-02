@@ -70,7 +70,7 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class PsiManagerImpl extends PsiManager implements ProjectComponent {
+public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
 
   private final Project myProject;

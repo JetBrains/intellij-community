@@ -3,7 +3,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.FileView;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.tree.IElementType;
@@ -28,11 +28,11 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
     }
   };
 
-  public PsiImportListImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiImportListImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 
-  public PsiImportListImpl(PsiManagerImpl manager, SrcRepositoryPsiElement owner) {
+  public PsiImportListImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner) {
     super(manager, owner);
   }
 

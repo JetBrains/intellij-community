@@ -3,7 +3,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.DeclarationView;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.IndexedRepositoryPsiElement;
@@ -23,11 +23,11 @@ public class PsiAnnotationImpl extends IndexedRepositoryPsiElement implements Ps
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl");
   private CompositeElement myParsedFromRepository;
 
-  public PsiAnnotationImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiAnnotationImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 
-  public PsiAnnotationImpl(PsiManagerImpl manager, SrcRepositoryPsiElement owner, int index) {
+  public PsiAnnotationImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner, int index) {
     super(manager, owner, index);
   }
 

@@ -56,7 +56,9 @@ public class TokenSet {
   public static TokenSet create(IElementType... types) {
     TokenSet set = new TokenSet();
     for (IElementType type : types) {
-      set.mySet[type.getIndex()] = true;
+      if (type != null) {
+        set.mySet[type.getIndex()] = true;
+      }
     }
     return set;
   }

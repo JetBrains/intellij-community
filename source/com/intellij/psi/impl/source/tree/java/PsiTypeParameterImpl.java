@@ -35,15 +35,15 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
   private PsiTypeParameterExtendsBoundsListImpl myExtendsBoundsList;
   private LightEmptyImplementsList myLightEmptyImplementsList;
 
-  public PsiTypeParameterImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiTypeParameterImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 
-  public PsiTypeParameterImpl(PsiManagerImpl manager, SrcRepositoryPsiElement owner, int index) {
+  public PsiTypeParameterImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner, int index) {
     super(manager, owner, index);
   }
 
-  public PsiTypeParameterImpl(PsiManagerImpl manager, SrcRepositoryPsiElement owner) {
+  public PsiTypeParameterImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner) {
     super(manager, owner);
   }
 

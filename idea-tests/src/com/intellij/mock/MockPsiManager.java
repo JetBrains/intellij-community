@@ -11,7 +11,11 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.RepositoryElementsManager;
+import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -26,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class MockPsiManager extends PsiManager {
+public class MockPsiManager extends PsiManagerEx {
   public Project getProject() {
     return null;
   }
@@ -245,5 +249,45 @@ public class MockPsiManager extends PsiManager {
 
   public PsiConstantEvaluationHelper getConstantEvaluationHelper() {
     return null;
+  }
+
+  public boolean isBatchFilesProcessingMode() {
+    throw new UnsupportedOperationException("Method isBatchFilesProcessingMode is not yet implemented in " + getClass().getName());
+  }
+
+  public RepositoryManager getRepositoryManager() {
+    throw new UnsupportedOperationException("Method getRepositoryManager is not yet implemented in " + getClass().getName());
+  }
+
+  public RepositoryElementsManager getRepositoryElementsManager() {
+    throw new UnsupportedOperationException("Method getRepositoryElementsManager is not yet implemented in " + getClass().getName());
+  }
+
+  public boolean isAssertOnFileLoading(VirtualFile file) {
+    return false;
+  }
+
+  public void nonPhysicalChange() {
+    throw new UnsupportedOperationException("Method nonPhysicalChange is not yet implemented in " + getClass().getName());
+  }
+
+  public ResolveCache getResolveCache() {
+    throw new UnsupportedOperationException("Method getResolveCache is not yet implemented in " + getClass().getName());
+  }
+
+  public void registerRunnableToRunOnChange(Runnable runnable) {
+    throw new UnsupportedOperationException("Method registerRunnableToRunOnChange is not yet implemented in " + getClass().getName());
+  }
+
+  public void registerWeakRunnableToRunOnChange(Runnable runnable) {
+    throw new UnsupportedOperationException("Method registerWeakRunnableToRunOnChange is not yet implemented in " + getClass().getName());
+  }
+
+  public void registerRunnableToRunOnAnyChange(Runnable runnable) {
+    throw new UnsupportedOperationException("Method registerRunnableToRunOnAnyChange is not yet implemented in " + getClass().getName());
+  }
+
+  public void registerRunnableToRunAfterAnyChange(Runnable runnable) {
+    throw new UnsupportedOperationException("Method registerRunnableToRunAfterAnyChange is not yet implemented in " + getClass().getName());
   }
 }

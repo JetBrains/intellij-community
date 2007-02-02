@@ -24,6 +24,10 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   private final Map<Class, Object> myComponents = new HashMap<Class, Object>();
 
+  public MockComponentManager() {
+    myPicoContainer.registerComponentInstance(this);
+  }
+
   public BaseComponent getComponent(String name) {
     return null;
   }

@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.DeclarationView;
 import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.source.tree.*;
@@ -57,11 +57,11 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
   private int myCachedModifiers = -1;
   private PsiAnnotation[] myRepositoryAnnotations = null;
 
-  public PsiModifierListImpl(PsiManagerImpl manager, SrcRepositoryPsiElement owner) {
+  public PsiModifierListImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner) {
     super(manager, owner);
   }
 
-  public PsiModifierListImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiModifierListImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 

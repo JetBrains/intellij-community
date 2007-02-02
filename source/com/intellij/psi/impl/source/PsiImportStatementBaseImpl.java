@@ -3,7 +3,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.util.PatchedSoftReference;
@@ -18,11 +18,11 @@ public abstract class PsiImportStatementBaseImpl extends IndexedRepositoryPsiEle
   private Reference myCachedMirrorReference = null;
   private Boolean myCachedIsOnDemand = null;
 
-  protected PsiImportStatementBaseImpl(PsiManagerImpl manager, SrcRepositoryPsiElement owner, int index) {
+  protected PsiImportStatementBaseImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner, int index) {
     super(manager, owner, index);
   }
 
-  protected PsiImportStatementBaseImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  protected PsiImportStatementBaseImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 

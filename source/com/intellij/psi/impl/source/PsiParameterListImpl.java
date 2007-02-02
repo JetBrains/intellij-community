@@ -6,11 +6,11 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements PsiParameterList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterListImpl");
@@ -23,11 +23,11 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
     }
   };
 
-  public PsiParameterListImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiParameterListImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 
-  public PsiParameterListImpl(PsiManagerImpl manager, SrcRepositoryPsiElement owner) {
+  public PsiParameterListImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner) {
     super(manager, owner);
   }
 

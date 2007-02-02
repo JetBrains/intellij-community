@@ -4,16 +4,17 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiImportStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.*;
 
 public class PsiImportStatementImpl extends PsiImportStatementBaseImpl implements PsiImportStatement {
 
-  public PsiImportStatementImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiImportStatementImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 
-  public PsiImportStatementImpl(PsiManagerImpl manager, SrcRepositoryPsiElement owner, int index) {
+  public PsiImportStatementImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner, int index) {
     super(manager, owner, index);
   }
 

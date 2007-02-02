@@ -4,6 +4,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Function;
 import com.intellij.util.containers.WeakHashMap;
@@ -274,7 +275,7 @@ public class ResolveCache {
     return result;
   }
 
-  public <K,V> WeakHashMap<K,V> getOrCreateWeakMap(final PsiManagerImpl manager, final Key<MapPair<K, V>> key, boolean forPhysical) {
+  public <K,V> WeakHashMap<K,V> getOrCreateWeakMap(final PsiManagerEx manager, final Key<MapPair<K, V>> key, boolean forPhysical) {
     MapPair<K, V> pair = manager.getUserData(key);
     if (pair == null){
       pair = new MapPair<K,V>();

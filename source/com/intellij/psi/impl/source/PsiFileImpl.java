@@ -46,7 +46,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   protected PsiFileImpl( FileViewProvider provider ) {
-    super((PsiManagerImpl)provider.getManager(), !provider.isPhysical() ? -1 : -2);
+    super((PsiManagerEx)provider.getManager(), !provider.isPhysical() ? -1 : -2);
     myViewProvider = provider;
   }
 

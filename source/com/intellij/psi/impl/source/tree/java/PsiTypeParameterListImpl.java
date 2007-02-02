@@ -3,7 +3,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.SlaveRepositoryPsiElement;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
@@ -29,11 +29,11 @@ public class PsiTypeParameterListImpl extends SlaveRepositoryPsiElement implemen
   private PsiTypeParameter[] myRepositoryClassParameters;
   private static final TokenSet TYPE_PARAMETER_BIT_SET = TokenSet.create(ElementType.TYPE_PARAMETER);
 
-  public PsiTypeParameterListImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiTypeParameterListImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 
-  public PsiTypeParameterListImpl(PsiManagerImpl manager, SrcRepositoryPsiElement owner) {
+  public PsiTypeParameterListImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner) {
     super(manager, owner);
   }
 

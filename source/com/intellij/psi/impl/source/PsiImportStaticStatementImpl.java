@@ -1,19 +1,19 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.parsing.JavaParsingContext;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.util.PsiUtil;
 
 public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl implements PsiImportStaticStatement {
 
-  public PsiImportStaticStatementImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiImportStaticStatementImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 
-  public PsiImportStaticStatementImpl(PsiManagerImpl manager, SrcRepositoryPsiElement owner, int index) {
+  public PsiImportStaticStatementImpl(PsiManagerEx manager, SrcRepositoryPsiElement owner, int index) {
     super(manager, owner, index);
   }
 
