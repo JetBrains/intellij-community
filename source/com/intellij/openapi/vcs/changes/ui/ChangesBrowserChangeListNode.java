@@ -71,5 +71,9 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     if (unversionedFiles != null) {
       dragOwner.addUnversionedFiles(dropList, unversionedFiles);
     }
+    final List<VirtualFile> ignoredFiles = dragBean.getIgnoredFiles();
+    if (ignoredFiles != null) {
+      dragOwner.addUnversionedFiles(dropList, ignoredFiles);
+    }
   }
 }

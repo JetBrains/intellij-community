@@ -16,12 +16,15 @@ class ChangeListDragBean {
   private ChangesListView myView;
   private Change[] myChanges;
   private List<VirtualFile> myUnversionedFiles;
+  private List<VirtualFile> myIgnoredFiles;
   private ChangesBrowserNode myTargetNode;
 
-  public ChangeListDragBean(final ChangesListView view, final Change[] changes, final List<VirtualFile> unversionedFiles) {
+  public ChangeListDragBean(final ChangesListView view, final Change[] changes, final List<VirtualFile> unversionedFiles,
+                            final List<VirtualFile> ignoredFiles) {
     myView = view;
     myChanges = changes;
     myUnversionedFiles = unversionedFiles;
+    myIgnoredFiles = ignoredFiles;
   }
 
   public ChangesListView getView() {
@@ -34,6 +37,10 @@ class ChangeListDragBean {
 
   public List<VirtualFile> getUnversionedFiles() {
     return myUnversionedFiles;
+  }
+
+  public List<VirtualFile> getIgnoredFiles() {
+    return myIgnoredFiles;
   }
 
   public ChangesBrowserNode getTargetNode() {

@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.IgnoredFileBean;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -167,5 +168,18 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
   @Override @NonNls
   protected String getDimensionServiceKey() {
     return "IgnoreUnversionedDialog";
+  }
+
+  public static void ignoreSelectedFiles(final Project project, final List<VirtualFile> files) {
+    IgnoreUnversionedDialog dlg = new IgnoreUnversionedDialog(project);
+    dlg.setFilesToIgnore(files);
+    dlg.show();
+    if (!dlg.isOK()) {
+      return;
+    }
+    final IgnoredFileBean[] ignoredFiles = dlg.getSelectedIgnoredFiles();
+    if (ignoredFiles.length > 0) {
+      ChangeListManager.getInstance(project).addFilesToIgnore(ignoredFiles);
+    }
   }
 }

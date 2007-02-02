@@ -44,6 +44,9 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     if (userObject instanceof Module) {
       return new ChangesBrowserModuleNode((Module) userObject);
     }
+    if (userObject == ChangesListView.IGNORED_FILES_TAG) {
+      return new ChangesBrowserIgnoredFilesNode(userObject);
+    }
     return new ChangesBrowserNode(userObject);
   }
 

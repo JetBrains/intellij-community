@@ -729,6 +729,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     ChangesViewManager.getInstance(myProject).scheduleRefresh();
   }
 
+  public Project getProject() {
+    return myProject;
+  }
+
   public void addChangeListListener(ChangeListListener listener) {
     myListeners.addListener(listener);
   }

@@ -55,13 +55,11 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   private TreeState myTreeState;
   private boolean myShowFlatten = false;
 
-  @NonNls public static final String UNVERSIONED_FILES_KEY = "ChangeListView.UnversionedFiles";
-  @NonNls public static final String MISSING_FILES_KEY = "ChangeListView.MissingFiles";
   @NonNls public static final String HELP_ID_KEY = "helpId";
   @NonNls public static final String ourHelpId = "ideaInterface.changes";
-  @NonNls public static final DataKey<List<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create(UNVERSIONED_FILES_KEY);
+  @NonNls public static final DataKey<List<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
   @NonNls public static final DataKey<List<VirtualFile>> MODIFIED_WITHOUT_EDITING_DATA_KEY = DataKey.create("ChangeListView.ModifiedWithoutEditing");
-  @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create(MISSING_FILES_KEY);
+  @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<String> HELP_ID_DATA_KEY = DataKey.create(HELP_ID_KEY);
 
   public static final Object UNVERSIONED_FILES_TAG = new Object() {
@@ -207,6 +205,10 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     return getSelectedVirtualFiles(MODIFIED_WITHOUT_EDITING_TAG);
   }
 
+  private List<VirtualFile> getSelectedIgnoredFiles() {
+    return getSelectedVirtualFiles(IGNORED_FILES_TAG);
+  }
+
   private List<VirtualFile> getSelectedVirtualFiles(final Object tag) {
     List<VirtualFile> files = new ArrayList<VirtualFile>();
     final TreePath[] paths = getSelectionPaths();
@@ -267,7 +269,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   private PsiElement[] getPsiElements(final DataContext dataContext) {
     List<PsiElement> elements = new ArrayList<PsiElement>();
     final PsiManager manager = PsiManager.getInstance(myProject);
-    List<VirtualFile> files = (List<VirtualFile>)dataContext.getData(UNVERSIONED_FILES_KEY);
+    List<VirtualFile> files = UNVERSIONED_FILES_DATA_KEY.getData(dataContext);
     if (files == null) return PsiElement.EMPTY_ARRAY;
 
     for (VirtualFile file : files) {
@@ -471,7 +473,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
 
       final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
       if (dragBean.getView() != ChangesListView.this) return false;
-      if (dragBean.getChanges().length == 0 && dragBean.getUnversionedFiles().size() == 0) return false;
       dragBean.setTargetNode(null);
 
       RelativePoint dropPoint = aEvent.getRelativePoint();
@@ -525,11 +526,13 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   }
 
   public boolean canStartDragging(DnDAction action, Point dragOrigin) {
-    return action == DnDAction.MOVE && (getSelectedChanges().length > 0 || getSelectedUnversionedFiles().size() > 0);
+    return action == DnDAction.MOVE && 
+           (getSelectedChanges().length > 0 || getSelectedUnversionedFiles().size() > 0 || getSelectedIgnoredFiles().size() > 0);
   }
 
   public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
-    return new DnDDragStartBean(new ChangeListDragBean(this, getSelectedChanges(), getSelectedUnversionedFiles()));
+    return new DnDDragStartBean(new ChangeListDragBean(this, getSelectedChanges(), getSelectedUnversionedFiles(),
+                                                       getSelectedIgnoredFiles()));
   }
 
   @Nullable

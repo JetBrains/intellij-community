@@ -16,8 +16,6 @@ import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.IgnoreUnversionedDialog;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.IgnoredFileBean;
 import com.intellij.openapi.project.Project;
 
 import java.util.List;
@@ -28,16 +26,7 @@ public class IgnoreUnversionedAction extends AnAction {
     final List<VirtualFile> files = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
     if (files == null) return;
 
-    IgnoreUnversionedDialog dlg = new IgnoreUnversionedDialog(project);
-    dlg.setFilesToIgnore(files);
-    dlg.show();
-    if (!dlg.isOK()) {
-      return;
-    }
-    final IgnoredFileBean[] ignoredFiles = dlg.getSelectedIgnoredFiles();
-    if (ignoredFiles.length > 0) {
-      ChangeListManager.getInstance(project).addFilesToIgnore(ignoredFiles);
-    }
+    IgnoreUnversionedDialog.ignoreSelectedFiles(project, files);
   }
 
   public void update(AnActionEvent e) {
