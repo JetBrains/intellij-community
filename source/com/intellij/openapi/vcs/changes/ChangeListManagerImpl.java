@@ -865,7 +865,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   private static final class OutdatedFakeRevisionException extends Exception {}
 
-  private static class FakeRevision implements ContentRevision {
+  public static class FakeRevision implements ContentRevision {
     private final FilePath myFile;
 
     public FakeRevision(String path) throws OutdatedFakeRevisionException {

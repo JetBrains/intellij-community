@@ -48,6 +48,12 @@ public class ShowDiffAction extends AnAction {
     Change[] changes = e.getData(DataKeys.CHANGES);
     if (project == null || changes == null) return;
 
+    changes = checkLoadFakeRevisions(project, changes);
+    if (changes == null) {
+      // VCS synchronization was cancelled
+      return;
+    }
+
     int index = 0;
     if (changes.length == 1) {
       final Change selectedChange = changes[0];
@@ -73,6 +79,28 @@ public class ShowDiffAction extends AnAction {
     }
 
     showDiffForChange(changes, index, project);
+  }
+
+  @Nullable
+  private static Change[] checkLoadFakeRevisions(final Project project, final Change[] changes) {
+    for(Change change: changes) {
+      if (change.getBeforeRevision() instanceof ChangeListManagerImpl.FakeRevision) {
+        return loadFakeRevisions(project, changes);
+      }
+    }
+    return changes;
+  }
+
+  @Nullable
+  private static Change[] loadFakeRevisions(final Project project, final Change[] changes) {
+    if (!ChangeListManager.getInstance(project).ensureUpToDate(true)) {
+      return null;
+    }
+    List<Change> matchingChanges = new ArrayList<Change>();
+    for(Change change: changes) {
+      matchingChanges.addAll(ChangeListManager.getInstance(project).getChangesIn(ChangesUtil.getFilePath(change)));
+    }
+    return matchingChanges.toArray(new Change[matchingChanges.size()]);
   }
 
   public static void showDiffForChange(final Change[] changes, final int index, final Project project) {
