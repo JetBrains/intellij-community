@@ -139,6 +139,7 @@ public abstract class DomManager implements ProjectComponent, ModificationTracke
    * @return The scope within which the element's name identity will be checked by
    * {@link com.intellij.util.xml.highlighting.DomHighlightingHelper#checkNameIdentity(DomElement, com.intellij.util.xml.highlighting.DomElementAnnotationHolder)}
    */
+  @Nullable
   public abstract DomElement getIdentityScope(DomElement element);
 
   /**

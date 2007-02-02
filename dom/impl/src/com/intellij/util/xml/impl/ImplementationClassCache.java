@@ -54,7 +54,7 @@ class ImplementationClassCache extends WeakFactoryMap<Class<? extends DomElement
     }
   }
 
-  public final <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
+  public final void registerImplementation(Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass) {
     assert domElementClass.isAssignableFrom(implementationClass);
     myImplementationClasses.put(domElementClass, implementationClass);
     super.clear();

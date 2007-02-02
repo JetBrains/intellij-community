@@ -129,13 +129,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     pomModel.addModelListener(new PomModelListener() {
       public void modelChanged(PomModelEvent event) {
         final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(xmlAspect);
-        if (changeSet != null) {
-          if (!myChanging) {
-            new ExternalChangeProcessor(DomManagerImpl.this, changeSet).processChanges();
-          }
-          final XmlFile xmlFile = changeSet.getChangedFile();
-          if (xmlFile == null) return;
-          updateDependantFiles(xmlFile);
+        if (changeSet != null && !myChanging) {
+          new ExternalChangeProcessor(DomManagerImpl.this, changeSet).processChanges();
         }
       }
 
@@ -207,9 +202,13 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
 
   private void processFileChange(final PsiFile file) {
     if (file != null && StdFileTypes.XML.equals(file.getFileType()) && file instanceof XmlFile) {
-      final XmlFile xmlFile = (XmlFile)file;
-      updateFileDomness(xmlFile, null);
-      updateDependantFiles(xmlFile);
+      final List<DomEvent> list;
+      synchronized (PsiLock.LOCK) {
+        list = getOrCreateCachedValueProvider((XmlFile)file).computeFileElement(true);
+      }
+      for (final DomEvent event : list) {
+        fireEvent(event);
+      }
     }
   }
 
@@ -227,24 +226,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     }
   }
 
-  private void updateDependantFiles(final XmlFile xmlFile) {
-    final DomFileDescription description = getOrCreateCachedValueProvider(xmlFile).getFileDescription();
-    if (description != null) {
-      final DomFileElementImpl<DomElement> fileElement = getCachedFileElement(xmlFile);
-      assert fileElement != null;
-    }
-  }
-
-  private void updateFileDomness(final XmlFile file, @Nullable DomFileElement changedRoot) {
-    final List<DomEvent> list;
-    synchronized (PsiLock.LOCK) {
-      list = getOrCreateCachedValueProvider(file).computeFileElement(true, changedRoot);
-    }
-    for (final DomEvent event : list) {
-      fireEvent(event);
-    }
-  }
-
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   public static DomManagerImpl getDomManager(Project project) {
     return (DomManagerImpl)project.getComponent(DomManager.class);
   }
@@ -298,6 +280,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
 
   @Nullable
   final Class<? extends DomElement> getImplementation(final Class concreteInterface) {
+    //noinspection unchecked
     return myCachedImplementationClasses.get(concreteInterface);
   }
 
@@ -307,7 +290,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
 
   @NotNull
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(final XmlFile file, final Class<T> aClass, String rootTagName) {
-    DomFileDescription description = file.getUserData(MOCK_DESCIPRTION);
+    //noinspection unchecked
+    DomFileDescription<T> description = file.getUserData(MOCK_DESCIPRTION);
     if (description == null) {
       description = new MockDomFileDescription<T>(aClass, rootTagName, file);
       registerFileDescription(description);
@@ -320,6 +304,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
 
   @NotNull
   final <T extends DomElement> FileDescriptionCachedValueProvider<T> getOrCreateCachedValueProvider(XmlFile xmlFile) {
+    //noinspection unchecked
     FileDescriptionCachedValueProvider<T> provider = xmlFile.getUserData(CACHED_FILE_ELEMENT_PROVIDER);
     if (provider == null) {
       xmlFile.putUserData(CACHED_FILE_ELEMENT_PROVIDER, provider = new FileDescriptionCachedValueProvider<T>(this, xmlFile));
@@ -391,7 +376,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   public final void projectClosed() {
   }
 
-  public final <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
+  public final void registerImplementation(Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass) {
     myCachedImplementationClasses.registerImplementation(domElementClass, implementationClass);
   }
 
@@ -533,6 +518,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     intf.addAll(Arrays.asList(initial.getClass().getInterfaces()));
     intf.add(StableElement.class);
     final Class superClass = initial.getClass().getSuperclass();
+    //noinspection unchecked
     final T proxy = (T)AdvancedProxy.createProxy(superClass, intf.toArray(new Class[intf.size()]),
                                               handler, Collections.<JavaMethodSignature>emptySet());
     final Set<Class> classes = new HashSet<Class>();
@@ -543,7 +529,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     return proxy;
   }
 
-  public final void registerFileDescription(final DomFileDescription description, Disposable parentDisposable) {
+  public final <T extends DomElement> void registerFileDescription(final DomFileDescription<T> description, Disposable parentDisposable) {
     registerFileDescription(description);
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
@@ -554,15 +540,16 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   public final void registerFileDescription(final DomFileDescription description) {
-    final Map<Class<? extends DomElement>, Class<? extends DomElement>> implementations =
-      ((DomFileDescription<?>)description).getImplementations();
+    //noinspection unchecked
+    final Map<Class<? extends DomElement>, Class<? extends DomElement>> implementations = description.getImplementations();
     for (final Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : implementations.entrySet()) {
-      registerImplementation((Class)entry.getKey(), entry.getValue());
+      registerImplementation(entry.getKey(), entry.getValue());
     }
     myTypeChooserManager.copyFrom(description.getTypeChooserManager());
 
     final DomElementsAnnotator annotator = description.createAnnotator();
     if (annotator != null) {
+      //noinspection unchecked
       myAnnotationsManager.registerDomElementsAnnotator(annotator, description.getRootElementClass());
     }
 
@@ -620,6 +607,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     return description == null ? element.getRoot() : description.getResolveScope(element);
   }
 
+  @Nullable
   public final DomElement getIdentityScope(DomElement element) {
     final DomFileDescription description = findFileDescription(element);
     return description == null ? element.getParent() : description.getIdentityScope(element);

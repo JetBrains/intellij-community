@@ -60,6 +60,7 @@ public class XmlName {
     return result;
   }
 
+  @NotNull
   public EvaluatedXmlName createEvaluatedXmlName(@Nullable DomInvocationHandler parent) {
     String namespaceKey = myNamespaceKey;
     if (namespaceKey == null && parent != null) {
