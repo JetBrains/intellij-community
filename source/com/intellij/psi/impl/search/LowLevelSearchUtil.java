@@ -35,8 +35,12 @@ public class LowLevelSearchUtil {
     List<Pair<PsiElement,TextRange>> list = injectionHost.getInjectedPsi();
     if (list == null) return null;
     for (Pair<PsiElement, TextRange> pair : list) {
-      PsiElement injected = pair.getFirst();
-      if (!processElementsContainingWordInElement(processor, injected, searcher)) return Boolean.FALSE;
+      final PsiElement injected = pair.getFirst();
+      if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        public Boolean compute() {
+          return processElementsContainingWordInElement(processor, injected, searcher);
+        }
+      })) return Boolean.FALSE;
     }
     return Boolean.TRUE;
   }
