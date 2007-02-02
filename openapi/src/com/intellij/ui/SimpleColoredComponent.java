@@ -26,8 +26,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * This is high performance Swing component which represents an icon
@@ -94,9 +92,9 @@ public class SimpleColoredComponent extends JComponent {
    * Appends string fragments to existing ones. Appended string
    * will have specified <code>attributes</code>.
    */
-  public void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, boolean isMainText) {
+  public synchronized void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, boolean isMainText) {
     myFragments.add(fragment);
-    getAttributes().add(attributes);
+    myAttributes.add(attributes);
     if (isMainText) {
       myMainTextLastIndex = myFragments.size() - 1;
     }
@@ -106,12 +104,12 @@ public class SimpleColoredComponent extends JComponent {
    * Clear all special attributes of <code>SimpleColoredComponent</code>.
    * The are icon, text fragments and their attributes, "paint focus border".
    */
-  public void clear() {
+  public synchronized void clear() {
     myIcon = null;
     myPaintFocusBorder = false;
     setBorder(null);
     myFragments.clear();
-    getAttributes().clear();
+    myAttributes.clear();
     myMainTextLastIndex = -1;
   }
 
@@ -185,7 +183,7 @@ public class SimpleColoredComponent extends JComponent {
 
   }
 
-  public final Dimension computePreferredSize(final boolean mainTextOnly) {
+  public synchronized final Dimension computePreferredSize(final boolean mainTextOnly) {
     // Calculate width
     int width = myIpad.left + myIpad.right;
 
@@ -242,7 +240,7 @@ public class SimpleColoredComponent extends JComponent {
     }
   }
 
-  private void doPaint(final Graphics g) {
+  private synchronized void doPaint(final Graphics g) {
     checkCanPaint();
     int xOffset = 0;
 
@@ -290,7 +288,7 @@ public class SimpleColoredComponent extends JComponent {
     // Paint text
     UIUtil.applyRenderingHints(g);
     for (int i = 0; i < myFragments.size(); i++) {
-      final SimpleTextAttributes attributes = getAttributes().get(i);
+      final SimpleTextAttributes attributes = myAttributes.get(i);
       Font font = getFont();
       if (font.getStyle() != attributes.getStyle()) { // derive font only if it is necessary
         font = font.deriveFont(attributes.getStyle());
@@ -341,16 +339,7 @@ public class SimpleColoredComponent extends JComponent {
     }
   }
 
-  @NotNull
-  protected final String getText() {
-    StringBuffer buffer = new StringBuffer();
-    for (String s : myFragments) {
-      buffer.append(s);
-    }
-    return buffer.toString();
-  }
-
-  private void checkCanPaint() {
+  private static void checkCanPaint() {
     /* wtf??
     if (!isDisplayable()) {
       LOG.assertTrue(false, logSwingPath());
@@ -367,20 +356,12 @@ public class SimpleColoredComponent extends JComponent {
 
   private String logSwingPath() {
     //noinspection HardCodedStringLiteral
-    final StringBuffer buffer = new StringBuffer("Components hierarchy:\n");
+    final StringBuilder buffer = new StringBuilder("Components hierarchy:\n");
     for (Container c = this; c != null; c = c.getParent()) {
       buffer.append('\n');
       buffer.append(c.toString());
     }
     return buffer.toString();
-  }
-
-  public List<String> getFragments() {
-    return Collections.unmodifiableList(myFragments);
-  }
-
-  private ArrayList<SimpleTextAttributes> getAttributes() {
-    return myAttributes;
   }
 
   private static final class MyBorder implements Border {

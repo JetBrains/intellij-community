@@ -61,6 +61,7 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * @author max
@@ -102,7 +103,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final ButtonPanel myButtonPanel = new ButtonPanel();
 
   private boolean myChangesDetected = false;
-  private final Collection<Usage> myUsagesToFlush = new ConcurrentHashSet<Usage>();
+  private final Queue<Usage> myUsagesToFlush = new ConcurrentLinkedQueue<Usage>();
   private final List<Disposable> myDisposables = new ArrayList<Disposable>();
   static final Comparator<Usage> USAGE_COMPARATOR = new Comparator<Usage>() {
     public int compare(final Usage o1, final Usage o2) {
@@ -528,26 +529,18 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       300, indicator != null ? indicator.getModalityState() : ModalityState.defaultModalityState());
 
 
-    myUsagesToFlush.add(usage);
+    myUsagesToFlush.offer(usage);
     if (myUsagesToFlush.size() > 50) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          flush();
-        }
-      });
+      flush();
     }
   }
 
   private void flush() {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        while (!myUsagesToFlush.isEmpty()) {
-          Iterator<Usage> iterator = myUsagesToFlush.iterator();
-          while (iterator.hasNext()) {
-            Usage usage = iterator.next();
-            appendUsage(usage);
-            iterator.remove();
-          }
+        Usage usage;
+        while ((usage = myUsagesToFlush.poll()) != null) {
+          appendUsage(usage);
         }
       }
     });
@@ -692,10 +685,15 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   }
 
-  private synchronized void showNode(final UsageNode node) {
-    TreePath usagePath = new TreePath(node.getPath());
-    myTree.expandPath(usagePath.getParentPath());
-    myTree.setSelectionPath(usagePath);
+  private void showNode(final UsageNode node) {
+    Runnable runnable = new Runnable() {
+      public void run() {
+        TreePath usagePath = new TreePath(node.getPath());
+        myTree.expandPath(usagePath.getParentPath());
+        myTree.setSelectionPath(usagePath);
+      }
+    };
+    SwingUtilities.invokeLater(runnable);
   }
 
   public void addButtonToLowerPane(Runnable runnable, String text) {
