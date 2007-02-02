@@ -155,7 +155,6 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
 
   private static JComponent createToolbarComponent(final DefaultActionGroup group) {
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
-    actionToolbar.setLayoutPolicy(ActionToolbar.WRAP_LAYOUT_POLICY);
     return actionToolbar.getComponent();
   }
 
