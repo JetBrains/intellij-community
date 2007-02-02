@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 
@@ -18,8 +19,11 @@ import java.io.File;
  * @author yole
  */
 public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> {
-  protected ChangesBrowserChangeNode(Change userObject) {
+  private Project myProject;
+
+  protected ChangesBrowserChangeNode(final Project project, Change userObject) {
     super(userObject);
+    myProject = project;
     if (!ChangesUtil.getFilePath(userObject).isDirectory()) {
       myCount = 1;
     }
@@ -45,7 +49,7 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> {
         renderer.append(" - renamed from "+ beforePath.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
       else {
-        renderer.append(" - moved from " + change.getMoveRelativePath(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        renderer.append(" - moved from " + change.getMoveRelativePath(myProject), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     }
 

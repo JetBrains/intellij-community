@@ -30,7 +30,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   public static ChangesBrowserNode create(final Project project, Object userObject) {
     if (userObject instanceof Change) {
-      return new ChangesBrowserChangeNode((Change) userObject);
+      return new ChangesBrowserChangeNode(project, (Change) userObject);
     }
     if (userObject instanceof VirtualFile) {
       return new ChangesBrowserFileNode(project, (VirtualFile) userObject);

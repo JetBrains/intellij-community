@@ -4,6 +4,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -109,21 +114,21 @@ public class Change {
   }
 
   public boolean isRenamed() {
-    cacheRenameOrMove();
+    cacheRenameOrMove(null);
     return myRenamed;
   }
 
   public boolean isMoved() {
-    cacheRenameOrMove();
+    cacheRenameOrMove(null);
     return myMoved;
   }
 
-  public String getMoveRelativePath() {
-    cacheRenameOrMove();
+  public String getMoveRelativePath(Project project) {
+    cacheRenameOrMove(project);
     return myMoveRelativePath;
   }
 
-  private void cacheRenameOrMove() {
+  private void cacheRenameOrMove(final Project project) {
     if (!myRenameOrMoveCached) {
       myRenameOrMoveCached = true;
       if (myBeforeRevision != null && myAfterRevision != null &&
@@ -133,8 +138,22 @@ public class Change {
         }
         else {
           myMoved = true;
-          myMoveRelativePath = FileUtil.getRelativePath(myAfterRevision.getFile().getIOFile(), myBeforeRevision.getFile().getIOFile());
         }
+      }
+    }
+    if (myMoved && myMoveRelativePath == null && project != null) {
+      // need to use parent path because the old file is already not there
+      final VirtualFile oldFile = myBeforeRevision.getFile().getParentPath().getVirtualFile();
+      final VirtualFile newFile = myAfterRevision.getFile().getParentPath().getVirtualFile();
+      if (oldFile != null && newFile != null) {
+        Module oldModule = VfsUtil.getModuleForFile(project, oldFile);
+        Module newModule = VfsUtil.getModuleForFile(project, newFile);
+        if (oldModule != newModule) {
+          myMoveRelativePath = ProjectLevelVcsManager.getInstance(project).getPresentableRelativePathFor(oldFile);
+        }
+      }
+      if (myMoveRelativePath == null) {
+        myMoveRelativePath = FileUtil.getRelativePath(myAfterRevision.getFile().getIOFile(), myBeforeRevision.getFile().getIOFile());
       }
     }
   }
