@@ -22,6 +22,7 @@ import com.intellij.ui.TreeUtils;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
 import org.jetbrains.annotations.NonNls;
@@ -343,6 +344,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   public void setMenuActions(final ActionGroup menuGroup) {
     PopupHandler.installPopupHandler(this, menuGroup, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
     EditSourceOnDoubleClickHandler.install(this);
+    EditSourceOnEnterKeyHandler.install(this);
   }
 
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
