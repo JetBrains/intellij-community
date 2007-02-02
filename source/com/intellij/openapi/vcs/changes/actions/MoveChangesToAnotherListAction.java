@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -109,7 +110,8 @@ public class MoveChangesToAnotherListAction extends AnAction {
   public static boolean askAndMove(final Project project, final Change[] changes, final List<VirtualFile> unversionedFiles) {
     final ChangeListManagerImpl listManager = ChangeListManagerImpl.getInstanceImpl(project);
     final List<LocalChangeList> lists = listManager.getChangeLists();
-    ChangeListChooser chooser = new ChangeListChooser(project, getPreferredLists(lists, changes, true), guessPreferredList(lists, changes));
+    ChangeListChooser chooser = new ChangeListChooser(project, getPreferredLists(lists, changes, true), guessPreferredList(lists, changes),
+                                                      VcsBundle.message("changes.changelist.chooser.title"));
     chooser.show();
     LocalChangeList resultList = chooser.getSelectedList();
     if (resultList != null) {

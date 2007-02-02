@@ -32,7 +32,7 @@ public class ChangeListChooser extends DialogWrapper {
 
   public ChangeListChooser(@NotNull Project project,
                            @NotNull Collection<? extends ChangeList> changelists,
-                           @Nullable ChangeList defaultSelection) {
+                           @Nullable ChangeList defaultSelection, final String title) {
     super(project, false);
     myProject = project;
 
@@ -70,7 +70,7 @@ public class ChangeListChooser extends DialogWrapper {
 
     updateEnabledItems();
 
-    setTitle(VcsBundle.message("changes.changelist.chooser.title"));
+    setTitle(title);
 
     init();
   }
