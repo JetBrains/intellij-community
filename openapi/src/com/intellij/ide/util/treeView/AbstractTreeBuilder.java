@@ -31,7 +31,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeBuilder");
 
   protected final JTree myTree;
-  protected final DefaultTreeModel myTreeModel;
+  private final DefaultTreeModel myTreeModel;
   protected AbstractTreeStructure myTreeStructure;
 
   protected AbstractTreeUpdater myUpdater;
@@ -51,7 +51,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
   protected final DefaultMutableTreeNode myRootNode;
 
   private final HashMap<Object, Object> myElementToNodeMap = new HashMap<Object, Object>();
-  protected final HashSet<DefaultMutableTreeNode> myUnbuiltNodes = new HashSet<DefaultMutableTreeNode>();
+  private final HashSet<DefaultMutableTreeNode> myUnbuiltNodes = new HashSet<DefaultMutableTreeNode>();
   private final TreeExpansionListener myExpansionListener;
 
   private WorkerThread myWorker = null;

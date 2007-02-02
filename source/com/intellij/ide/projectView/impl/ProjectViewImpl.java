@@ -160,7 +160,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private static final Icon BULLET_ICON = IconLoader.getIcon("/general/bullet.png");
   private final MessageBusConnection myConnection;
 
-  public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, SelectInManager selectInManager, ProjectRootManager rootManager) {
+  public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, SelectInManager selectInManager) {
     myProject = project;
     myFileEditorManager = fileEditorManager;
     mySelectInManager = selectInManager;
@@ -1277,7 +1277,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     return getPaneOptionValue(myAutoscrollToSource, paneId, ourAutoscrollToSourceDefaults);
   }
 
-  public void setAutoscrollToSource(boolean autoscrollMode, String paneId) {
+  private void setAutoscrollToSource(boolean autoscrollMode, String paneId) {
     myAutoscrollToSource.put(paneId, autoscrollMode ? Boolean.TRUE : Boolean.FALSE);
   }
 
@@ -1285,7 +1285,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     return getPaneOptionValue(myAutoscrollFromSource, paneId, ourAutoscrollFromSourceDefaults);
   }
 
-  public void setAutoscrollFromSource(boolean autoscrollMode, String paneId) {
+  private void setAutoscrollFromSource(boolean autoscrollMode, String paneId) {
     setPaneOption(myAutoscrollFromSource, autoscrollMode, paneId, false);
   }
 
@@ -1307,10 +1307,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   public boolean isAbbreviatePackageNames(String paneId) {
     return getPaneOptionValue(myAbbreviatePackageNames, paneId, ourAbbreviatePackagesDefaults);
-  }
-
-  public void setShowMembers(boolean showMembers, String paneId) {
-    setPaneOption(myShowMembers, showMembers, paneId, true);
   }
 
   public boolean isShowLibraryContents(String paneId) {
@@ -1352,12 +1348,12 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     return value == null ? defaultValue : value.booleanValue();
   }
 
-  public boolean isShowStructure() {
+  private boolean isShowStructure() {
     Boolean status = myShowStructure.get(getCurrentViewId());
     return status == null ? ourShowStructureDefaults : status.booleanValue();
   }
 
-  public void setShowStructure(boolean showStructure, String paneId) {
+  private void setShowStructure(boolean showStructure, String paneId) {
     myShowStructure.put(paneId, showStructure ? Boolean.TRUE : Boolean.FALSE);
   }
 
