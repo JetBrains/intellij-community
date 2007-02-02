@@ -9,7 +9,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -138,6 +137,9 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       myDocument.getCharsSequence(), myDocument.getLineEndOffset(myLine2), " \t\n"), myFile, languageAtStart);
 
     Commenter blockSuitableCommenter = languageSuitableForCompleteFragment != languageAtStart ? languageSuitableForCompleteFragment.getCommenter(): null;
+    if (blockSuitableCommenter == null && languageAtStart.getCommenter() == null) {
+      blockSuitableCommenter = myFile.getLanguage().getCommenter();
+    }
 
     for (int line = myLine1; line <= myLine2; line++) {
       final Commenter commenter = blockSuitableCommenter != null ? blockSuitableCommenter : findCommenter(line);

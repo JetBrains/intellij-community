@@ -164,6 +164,9 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       lang = evaluateLanguageInRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), file, lang);
     }
 
+    if (lang.getCommenter() == null) {
+      lang = file.getLanguage();
+    }
     return lang.getCommenter();
   }
 
