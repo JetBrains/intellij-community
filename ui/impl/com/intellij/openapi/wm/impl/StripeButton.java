@@ -126,8 +126,10 @@ public final class StripeButton extends JToggleButton implements ActionListener 
     if (!isDraggingNow()) return;
 
     Point xy = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), myDragPane);
-    xy.x -= myPressedPoint.x;
-    xy.y -= myPressedPoint.y;
+    if (myPressedPoint != null) {
+      xy.x -= myPressedPoint.x;
+      xy.y -= myPressedPoint.y;
+    }
     myDragButtonImage.setLocation(xy);
 
     SwingUtilities.convertPointToScreen(xy, myDragPane);
