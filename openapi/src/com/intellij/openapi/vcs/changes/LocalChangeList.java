@@ -1,13 +1,12 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -209,9 +208,9 @@ public class LocalChangeList implements Cloneable, ChangeList {
     return myName.hashCode();
   }
 
-  @Override @NonNls
+  @Override
   public String toString() {
-    return "LocalChangeList[name=" + myName + "]";
+    return myName.trim();
   }
 
   public synchronized LocalChangeList clone() {
