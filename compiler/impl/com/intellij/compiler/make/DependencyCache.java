@@ -130,50 +130,51 @@ public class DependencyCache {
 
     final int[] namesToUpdate = myToUpdate.toArray();
     final Cache cache = getCache();
+    final Cache newCache = getNewClassesCache();
     final DependencyCacheNavigator navigator = getCacheNavigator();
 
     // remove unnecesary dependencies
     for (final int qName : namesToUpdate) {
       final int oldClassId = cache.getClassId(qName);
-      if (oldClassId != Cache.UNKNOWN) {
-        // process use-dependencies
-        final int[] referencedClasses = cache.getReferencedClasses(oldClassId);
-        for (int referencedClass : referencedClasses) {
-          final int referencedClassDeclarationId = cache.getClassDeclarationId(referencedClass);
-          if (referencedClassDeclarationId == Cache.UNKNOWN) {
-            continue;
-          }
-
-          cache.removeClassReferencer(referencedClassDeclarationId, qName);
-
-          final int[] fieldIds = cache.getFieldIds(referencedClassDeclarationId);
-          for (int fieldId : fieldIds) {
-            cache.removeFieldReferencer(fieldId, qName);
-          }
-
-          final int[] methodIds = cache.getMethodIds(referencedClassDeclarationId);
-          for (int methodId : methodIds) {
-            cache.removeMethodReferencer(methodId, qName);
-          }
-        }
-        // process inheritance dependencies
-        navigator.walkSuperClasses(qName, new ClassInfoProcessor() {
-          public boolean process(int classQName) throws CacheCorruptedException {
-            final int classId = cache.getClassId(classQName);
-            cache.removeSubclass(classId, qName);
-            return true;
-          }
-        });
+      if (oldClassId == Cache.UNKNOWN) {
+        continue;
       }
+      // process use-dependencies
+      final int[] referencedClasses = cache.getReferencedClasses(oldClassId);
+      for (int referencedClassQName : referencedClasses) {
+        final int referencedClassDeclarationId = cache.getClassDeclarationId(referencedClassQName);
+        if (referencedClassDeclarationId == Cache.UNKNOWN) {
+          continue;
+        }
+        cache.removeClassReferencer(referencedClassDeclarationId, qName);
+
+        final int[] fieldIds = cache.getFieldIds(referencedClassDeclarationId);
+        for (int fieldId : fieldIds) {
+          cache.removeFieldReferencer(fieldId, qName);
+        }
+
+        final int[] methodIds = cache.getMethodIds(referencedClassDeclarationId);
+        for (int methodId : methodIds) {
+          cache.removeMethodReferencer(methodId, qName);
+        }
+      }
+      // process inheritance dependencies
+      navigator.walkSuperClasses(qName, new ClassInfoProcessor() {
+        public boolean process(int classQName) throws CacheCorruptedException {
+          final int classId = cache.getClassId(classQName);
+          cache.removeSubclass(classId, qName);
+          return true;
+        }
+      });
     }
 
     // do update of classInfos
     for (final int qName : namesToUpdate) {
-      final int newInfoId = getNewClassesCache().getClassId(qName);
+      final int newInfoId = newCache.getClassId(qName);
       if (newInfoId == Cache.UNKNOWN) {
         continue; // no member data to update
       }
-      cache.importClassInfo(getNewClassesCache(), qName);
+      cache.importClassInfo(newCache, qName);
     }
 
     // build forward-dependencies for the new infos, all new class infos must be already in the main cache!
@@ -182,12 +183,12 @@ public class DependencyCache {
     
     final WorkerArray workers = new WorkerArray(3);
     try {
-      final CountDownLatch forwardDependenciesBuildtask = new CountDownLatch(namesToUpdate.length);
+      final CountDownLatch forwardDependenciesBuildTask = new CountDownLatch(namesToUpdate.length);
       final CacheCorruptedException[] exception = new CacheCorruptedException[] {null};
       for (final int qName : namesToUpdate) {
-        final int newClassId = getNewClassesCache().getClassId(qName);
+        final int newClassId = newCache.getClassId(qName);
         if (newClassId == Cache.UNKNOWN) {
-          forwardDependenciesBuildtask.countDown();
+          forwardDependenciesBuildTask.countDown();
           continue;
         }
         workers.submit(new Runnable() {
@@ -196,7 +197,7 @@ public class DependencyCache {
               if (exception[0] != null) {
                 return;
               }
-              buildForwardDependencies(qName, getNewClassesCache().getReferences(newClassId));
+              buildForwardDependencies(qName, newCache.getReferences(newClassId));
               boolean isRemote = false;
               final int classId = cache.getClassId(qName);
               // "remote objects" are classes that _directly_ implement remote interfaces
@@ -224,13 +225,13 @@ public class DependencyCache {
               }
             }
             finally {
-              forwardDependenciesBuildtask.countDown();
+              forwardDependenciesBuildTask.countDown();
             }
           }
         });
       }
       try {
-        forwardDependenciesBuildtask.await();
+        forwardDependenciesBuildTask.await();
       }
       catch (InterruptedException e) {
       }
