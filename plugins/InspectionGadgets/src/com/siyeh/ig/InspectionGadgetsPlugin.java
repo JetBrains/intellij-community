@@ -905,6 +905,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(CallToSimpleSetterInClassInspection.class);
         m_inspectionClasses.add(CollectionsMustHaveInitialCapacityInspection.class);
         m_inspectionClasses.add(ConstantStringInternInspection.class);
+        m_inspectionClasses.add(EqualsHashCodeCalledOnUrlInspection.class);
         m_inspectionClasses.add(FieldMayBeStaticInspection.class);
         m_inspectionClasses.add(InnerClassMayBeStaticInspection.class);
         m_inspectionClasses.add(InstantiatingObjectToGetClassObjectInspection.class);
