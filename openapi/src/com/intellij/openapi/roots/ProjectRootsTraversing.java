@@ -54,8 +54,12 @@ public class ProjectRootsTraversing {
 
   public static PathsList collectRoots(Project project, RootTraversePolicy policy) {
     PathsList listBuilder = new PathsList();
-    traverseOrder(project, policy, new TraverseState(listBuilder));
+    collectRoots(project, policy, listBuilder);
     return listBuilder;
+  }
+
+  public static void collectRoots(final Project project, final RootTraversePolicy policy, final PathsList listBuilder) {
+    traverseOrder(project, policy, new TraverseState(listBuilder));
   }
 
   public static PathsList collectRoots(Module module, RootTraversePolicy policy) {

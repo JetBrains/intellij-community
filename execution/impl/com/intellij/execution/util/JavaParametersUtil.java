@@ -5,21 +5,11 @@ import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.projectRoots.ex.OrdersMerger;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectHashingStrategy;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * User: lex
@@ -37,52 +27,56 @@ public class JavaParametersUtil {
     parameters.setWorkingDirectory(workingDirectory);
   }
 
+  static final boolean newWay = true;
+
   public static void configureModule(final RunConfigurationModule runConfigurationModule,
                                      final JavaParameters parameters,
                                      final int classPathType,
                                      final String jreHome) throws CantRunException {
-    if(runConfigurationModule.getModule() == null) {
+    Module module = runConfigurationModule.getModule();
+    if (module == null) {
       throw CantRunException.noModuleConfigured(runConfigurationModule.getModuleName());
     }
-    if (jreHome == null){
-      parameters.configureByModule(runConfigurationModule.getModule(), classPathType);
-    } else {
-      configureOneModuleClassPath(parameters, runConfigurationModule.getModule(), jreHome);
-    }
+    parameters.configureByModule(module, classPathType, createModuleJdk(module, jreHome));
   }
 
-  private static void configureOneModuleClassPath(final  JavaParameters parameters, Module module, String jreHome) throws CantRunException {
-    final List<CommandLineEntry> common = getClassPath(module, true);
+  public static void configureProject(Project project, final JavaParameters parameters, final int classPathType, final String jreHome) throws CantRunException {
+    parameters.configureByProject(project, classPathType, createProjectJdk(project, jreHome));
+  }
 
+  private static ProjectJdk createModuleJdk(final Module module, final String jreHome) throws CantRunException {
+    return jreHome == null ? JavaParameters.getModuleJdk(module) : createAlternativeJdk(jreHome);
+  }
+
+  private static ProjectJdk createProjectJdk(final Project project, final String jreHome) throws CantRunException {
+    return jreHome == null ? createProjectJdk(project) : createAlternativeJdk(jreHome);
+  }
+
+  private static ProjectJdk createProjectJdk(final Project project) throws CantRunException {
+    final ProjectJdk jdk = PathUtilEx.getAnyJdk(project);
+    if (jdk == null) {
+      throw CantRunException.noJdkConfigured();
+    }
+    return jdk;
+  }
+
+  private static ProjectJdk createAlternativeJdk(final String jreHome) throws CantRunException {
     final ProjectJdk jdk = JavaSdk.getInstance().createJdk("", jreHome);
     if (jdk == null) throw CantRunException.noJdkConfigured();
+    return jdk;
+  }
 
+// TODO delete below code if IDEADEV-13910 fix works out well
+  /*
+  private static void configureClassPath(final JavaParameters parameters, final ProjectJdk jdk, final List<CommandLineEntry> common) {
     parameters.setJdk(jdk);
     for (final CommandLineEntry entry : common) {
       entry.addPath(parameters, jdk);
     }
   }
 
-  public static void configureClassPath(final JavaParameters parameters, Project project, final String jreHome) throws CantRunException {
-    final List<CommandLineEntry> common = composeClassPath(project);
-
-    final ProjectJdk jdk;
-    if (jreHome == null) {
-      jdk = PathUtilEx.getAnyJdk(project);
-      if (jdk == null) throw CantRunException.noJdkConfigured();
-    } else {
-      jdk = JavaSdk.getInstance().createJdk("", jreHome);
-      if (jdk == null) throw CantRunException.noJdkConfigured();
-    }
-
-    parameters.setJdk(jdk);
-    for (final CommandLineEntry entry : common) {
-      entry.addPath(parameters, jdk);
-    }
-  }
-
-  private static List<CommandLineEntry> composeClassPath(Project project) {
-    final ArrayList<ArrayList<CommandLineEntry>> orders = new ArrayList<ArrayList<CommandLineEntry>>();
+  private static List<CommandLineEntry> getClassPath(Project project) {
+    final List<List<CommandLineEntry>> orders = new ArrayList<List<CommandLineEntry>>();
 
     Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
@@ -91,51 +85,43 @@ public class JavaParametersUtil {
     return OrdersMerger.mergeOrder(orders, (TObjectHashingStrategy<CommandLineEntry>)TObjectHashingStrategy.CANONICAL);
   }
 
-  private static ArrayList<CommandLineEntry> getClassPath(final Module module, final boolean withDependencies) {
-    final ArrayList<CommandLineEntry> entries = new ArrayList<CommandLineEntry>();
+  private static List<CommandLineEntry> getClassPath(final Module module, final boolean withDependencies) {
+    final Set<Module> alreadyVisited = new HashSet<Module>();
+    final List<CommandLineEntry> entries = new ArrayList<CommandLineEntry>();
     final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-    moduleRootManager.processOrder(new RootPolicy<Object>() {
-      public Object visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final Object object) {
+    moduleRootManager.processOrder(new RootPolicy<Module>() {
+      public Module visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final Module module) {
         entries.add(JavaParametersUtil.JDK_ENTRY);
-        return null;
+        return module;
       }
 
-      public Object visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry, final Object object) {
-        final String[] urls = libraryOrderEntry.getUrls(OrderRootType.CLASSES_AND_OUTPUT);
+      public Module visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry, final Module module) {
+        addUrls(Arrays.asList(libraryOrderEntry.getUrls(OrderRootType.CLASSES_AND_OUTPUT)));
+        return module;
+      }
+
+      public Module visitModuleOrderEntry(final ModuleOrderEntry moduleOrderEntry, final Module module) {
+        if (withDependencies) {
+          final Module moduleDep = moduleOrderEntry.getModule();
+          if ( ! alreadyVisited.contains ( moduleDep ) ) {
+            alreadyVisited.add( moduleDep );
+            ModuleRootManager.getInstance(moduleDep).processOrder(this,moduleDep);
+          }
+        }
+        return module;
+      }
+
+      public Module visitModuleSourceOrderEntry(final ModuleSourceOrderEntry moduleSourceOrderEntry, final Module module) {
+        addUrls(ProjectRootsTraversing.RootTraversePolicy.ALL_OUTPUTS.getOutputs(module));
+        return module;
+      }
+
+      private void addUrls(final Iterable<String> urls) {
         for (final String url : urls) {
           entries.add(new ClassPathEntry(PathUtil.toPresentableUrl(url)));
         }
-        return null;
       }
-
-      public Object visitModuleSourceOrderEntry(final ModuleSourceOrderEntry moduleSourceOrderEntry, final Object object) {
-        final List<String> outputs = ProjectRootsTraversing.RootTraversePolicy.ALL_OUTPUTS.getOutputs(module);
-        if (withDependencies){
-          final Module[] dependencies = moduleRootManager.getDependencies();
-          if (dependencies != null){
-            for (Module module1 : dependencies) {
-              outputs.addAll(ProjectRootsTraversing.RootTraversePolicy.ALL_OUTPUTS.getOutputs(module1));
-              final OrderEntry[] orderEntries = ModuleRootManager.getInstance(module1).getOrderEntries();
-              for (OrderEntry entry : orderEntries) {
-                if (entry instanceof LibraryOrderEntry){
-                  final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
-                  if (libraryOrderEntry.isExported()){
-                    final String[] urls = libraryOrderEntry.getUrls(OrderRootType.CLASSES_AND_OUTPUT);
-                    for (final String url : urls) {
-                      entries.add(new ClassPathEntry(PathUtil.toPresentableUrl(url)));
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-        for (final String url : outputs) {
-          entries.add(new ClassPathEntry(PathUtil.toPresentableUrl(url)));
-        }
-        return null;
-      }
-    }, null);
+    }, module);
     return entries;
   }
 
@@ -144,20 +130,20 @@ public class JavaParametersUtil {
   }
 
   private static final CommandLineEntry JDK_ENTRY = new CommandLineEntry() {
-      public void addPath(final JavaParameters parameters, final ProjectJdk jdk) {
-        parameters.setJdk(jdk);
-        final List<String> jdkPaths = ContainerUtil.map(jdk.getRootProvider().getUrls(OrderRootType.CLASSES_AND_OUTPUT),
-                                                                       URL_TO_LOCAL_PATH);
-        for (final String jdkPath : jdkPaths) {
-          parameters.getClassPath().add(jdkPath);
-        }
+    public void addPath(final JavaParameters parameters, final ProjectJdk jdk) {
+      parameters.setJdk(jdk);
+      final List<String> jdkPaths = ContainerUtil.map(jdk.getRootProvider().getUrls(OrderRootType.CLASSES_AND_OUTPUT), URL_TO_LOCAL_PATH);
+      for (final String jdkPath : jdkPaths) {
+        parameters.getClassPath().add(jdkPath);
       }
-    };
-    public static final Function<String, String> URL_TO_LOCAL_PATH = new Function<String, String>() {
-      public String fun(final String url) {
-        return PathUtil.toPresentableUrl(url);
-      }
-    };
+    }
+  };
+
+  public static final Function<String, String> URL_TO_LOCAL_PATH = new Function<String, String>() {
+    public String fun(final String url) {
+      return PathUtil.toPresentableUrl(url);
+    }
+  };
 
   private static class ClassPathEntry implements CommandLineEntry {
     private final String myClassPath;
@@ -180,4 +166,5 @@ public class JavaParametersUtil {
       parameters.getClassPath().add(myClassPath);
     }
   }
+  */
 }

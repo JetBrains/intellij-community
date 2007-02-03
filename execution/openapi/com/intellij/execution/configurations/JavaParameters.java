@@ -18,14 +18,15 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathsList;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -93,18 +94,12 @@ public class JavaParameters {
   public static final int JDK_AND_CLASSES = JDK_ONLY | CLASSES_ONLY;
   public static final int JDK_AND_CLASSES_AND_TESTS = JDK_ONLY | CLASSES_ONLY | TESTS_ONLY;
 
-  public void configureByModule(final Module module, final int classPathType) throws CantRunException {
+  public void configureByModule(final Module module, final int classPathType, final ProjectJdk jdk) throws CantRunException {
     if ((classPathType & JDK_ONLY) != 0) {
-      final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-      final ProjectJdk jdk = rootManager.getJdk();
       if (jdk == null) {
-        throw CantRunException.noJdkForModule(module);
+        throw CantRunException.noJdkConfigured();
       }
       myJdk = jdk;
-      final VirtualFile homeDirectory = jdk.getHomeDirectory();
-      if (homeDirectory == null || !homeDirectory.isValid()) {
-        throw CantRunException.jdkMisconfigured(jdk, module);
-      }
     }
 
     if((classPathType & CLASSES_ONLY) == 0) {
@@ -112,6 +107,37 @@ public class JavaParameters {
     }
 
     ProjectRootsTraversing.collectRoots(module, (classPathType & TESTS_ONLY) != 0 ? ProjectRootsTraversing.FULL_CLASSPATH_RECURSIVE : ProjectRootsTraversing.FULL_CLASSPATH_WITHOUT_TESTS, myClassPath);
+  }
+
+  public void configureByModule(final Module module, final int classPathType) throws CantRunException {
+    configureByModule(module, classPathType, getModuleJdk(module));
+  }
+
+  public static ProjectJdk getModuleJdk(final Module module) throws CantRunException {
+    final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
+    if (jdk == null) {
+      throw CantRunException.noJdkForModule(module);
+    }
+    final VirtualFile homeDirectory = jdk.getHomeDirectory();
+    if (homeDirectory == null || !homeDirectory.isValid()) {
+      throw CantRunException.jdkMisconfigured(jdk, module);
+    }
+    return jdk;
+  }
+
+  public void configureByProject(final Project project, final int classPathType, final ProjectJdk jdk ) throws CantRunException {
+    if ((classPathType & JDK_ONLY) != 0) {
+      if (jdk == null) {
+        throw CantRunException.noJdkConfigured();
+      }
+      myJdk = jdk;
+    }
+
+    if ((classPathType & CLASSES_ONLY) == 0) {
+      return;
+    }
+
+    ProjectRootsTraversing.collectRoots(project, (classPathType & TESTS_ONLY) != 0 ? ProjectRootsTraversing.FULL_CLASSPATH_RECURSIVE : ProjectRootsTraversing.FULL_CLASSPATH_WITHOUT_TESTS, myClassPath);
   }
 
   public ParametersList getVMParametersList() {
