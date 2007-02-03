@@ -25,6 +25,8 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleLibraryTable;
@@ -116,6 +118,32 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
   private ProjectConfigurable myProjectConfigurable;
   private final ProjectJdksModel myJdksTreeModel = new ProjectJdksModel();
 
+  SdkModel.Listener myListener = new SdkModel.Listener() {
+    public void sdkAdded(Sdk sdk) {
+    }
+
+    public void beforeSdkRemove(Sdk sdk) {
+    }
+
+    public void sdkChanged(Sdk sdk, String previousName) {
+      updateName();
+    }
+
+    public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
+      updateName();
+    }
+
+    private void updateName() {
+      final TreePath path = myTree.getSelectionPath();
+      if (path != null) {
+        final NamedConfigurable configurable = ((MyNode)path.getLastPathComponent()).getConfigurable();
+        if (configurable != null && configurable instanceof JdkConfigurable) {
+          configurable.updateName();
+        }
+      }
+    }
+  };
+
   private boolean myDisposed = true;
 
   private FacetEditorFacadeImpl myFacetEditorFacade = new FacetEditorFacadeImpl(this);
@@ -155,6 +183,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
       }
     });
     initTree();
+    myJdksTreeModel.addListener(myListener);
   }
 
 
@@ -687,6 +716,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
 
   private void dispose() {
     myDisposed = true;
+    myJdksTreeModel.removeListener(myListener);
     myJdksTreeModel.disposeUIResources();
     myModulesConfigurator.disposeUIResources();
     myModule2LibrariesMap.clear();

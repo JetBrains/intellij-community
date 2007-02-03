@@ -56,8 +56,12 @@ public abstract class NamedConfigurable<T> implements Configurable {
       myOptionsComponent = createOptionsPanel();
     }
     myOptionsPanel.add(myOptionsComponent, BorderLayout.CENTER);
-    myNameField.setText(getDisplayName());
+    updateName();
     return myWholePanel;
+  }
+
+  public void updateName() {
+    myNameField.setText(getDisplayName());
   }
 
   public abstract JComponent createOptionsPanel();
