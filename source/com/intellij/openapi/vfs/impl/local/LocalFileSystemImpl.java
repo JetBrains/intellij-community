@@ -341,33 +341,29 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public VirtualFile findFileByIoFile(File file) {
-    String path = getCanonicalPath(file);
+    String path = file.getAbsolutePath();
     if (path == null) return null;
-    path = path.replace(File.separatorChar, '/');
-    return findFileByPath(path);
+    return findFileByPath(path.replace(File.separatorChar, '/'));
   }
 
   @Nullable
   public VirtualFile findFileByIoFile(final IFile file) {
-    String path = file.getCanonicalPath();
+    String path = file.getPath();
     if (path == null) return null;
-    path = path.replace(File.separatorChar, '/');
-    return findFileByPath(path);
+    return findFileByPath(path.replace(File.separatorChar, '/'));
   }
 
   public VirtualFile refreshAndFindFileByIoFile(File file) {
-    String path = getCanonicalPath(file);
+    String path = file.getAbsolutePath();
     if (path == null) return null;
-    path = path.replace(File.separatorChar, '/');
-    return refreshAndFindFileByPath(path);
+    return refreshAndFindFileByPath(path.replace(File.separatorChar, '/'));
   }
 
   @Nullable
   public VirtualFile refreshAndFindFileByIoFile(final IFile ioFile) {
-    String path = ioFile.getCanonicalPath();
+    String path = ioFile.getPath();
     if (path == null) return null;
-    path = path.replace(File.separatorChar, '/');
-    return refreshAndFindFileByPath(path);
+    return refreshAndFindFileByPath(path.replace(File.separatorChar, '/'));
   }
 
   public void refreshIoFiles(Iterable<File> files) {
