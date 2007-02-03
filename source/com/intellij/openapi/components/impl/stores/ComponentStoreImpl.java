@@ -9,7 +9,10 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
+import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.output.DOMOutputter;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -136,7 +139,15 @@ abstract class ComponentStoreImpl implements IComponentStore {
     try {
       final Element element = new Element("temp_element");
       component.writeExternal(element);
-      final org.w3c.dom.Element domElement = JDOMUtil.convertToDOM(element);
+      final org.w3c.dom.Element domElement;
+      try {
+        final Document d = new Document();
+        d.addContent(element);
+        domElement = new DOMOutputter().output(d).getDocumentElement();
+      }
+      catch (JDOMException e1) {
+        throw new RuntimeException(e1);
+      }
       stateStorage.setState(component, componentName, domElement);
     }
     catch (WriteExternalException ex) {
