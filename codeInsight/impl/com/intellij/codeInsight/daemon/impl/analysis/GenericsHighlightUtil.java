@@ -467,6 +467,11 @@ public class GenericsHighlightUtil {
     PsiClassType.ClassResolveResult rResolveResult = ((PsiClassType)rType).resolveGenerics();
     PsiClass lClass = lResolveResult.getElement();
     PsiClass rClass = rResolveResult.getElement();
+
+    if (rClass instanceof PsiAnonymousClass) {
+      return isRawToGeneric(lType, ((PsiAnonymousClass)rClass).getBaseClassType());
+    }
+
     PsiSubstitutor lSubstitutor = lResolveResult.getSubstitutor();
     PsiSubstitutor rSubstitutor = rResolveResult.getSubstitutor();
     if (lClass == null || rClass == null) return false;
