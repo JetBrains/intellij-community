@@ -26,7 +26,6 @@ import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal;
 import com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection;
 import com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection;
 import com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection;
-import com.intellij.codeInspection.miscGenerics.UnnecessaryTypeParameterInspection;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
@@ -83,7 +82,6 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       DefUseInspection.class,
       RedundantCastInspection.class,
       RedundantTypeArgsInspection.class,
-      UnnecessaryTypeParameterInspection.class,
       RedundantArrayForVarargsCallInspection.class,
       SuspiciousCollectionsMethodCallsInspection.class,
       LocalCanBeFinal.class,
