@@ -11,9 +11,6 @@ import com.intellij.debugger.ui.tree.ValueMarkup;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.ui.ColorChooser;
-
-import java.awt.*;
 
 /*
  * Class SetValueAction
@@ -43,8 +40,13 @@ public class MarkObjectAction extends DebuggerAction {
       valueDescriptor.setMarkup(debuggerContext, null);
     }
     else {
-      final Color color = ColorChooser.chooseColor(null, MARK_TEXT, null);
-      valueDescriptor.setMarkup(debuggerContext, new ValueMarkup(null, color));
+      final ValueMarkup valueMarkup = ObjectMarkupPropertiesDialog.chooseMarkup();
+      if (valueMarkup != null) {
+        valueDescriptor.setMarkup(debuggerContext, valueMarkup);
+      }
+      else {
+        return;
+      }
     }
     
     final DebuggerSession session = debuggerContext.getDebuggerSession();

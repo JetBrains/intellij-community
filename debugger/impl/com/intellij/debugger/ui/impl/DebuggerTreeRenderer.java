@@ -46,23 +46,19 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
   public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     DebuggerTreeNodeImpl node = (DebuggerTreeNodeImpl) value;
 
+    final NodeDescriptorImpl descriptor = node.getDescriptor();
+    if (descriptor instanceof ValueDescriptorImpl) {
+      final ValueMarkup markup = ((ValueDescriptorImpl)descriptor).getMarkup(node.getTree().getDebuggerContext());
+      if (markup != null) {
+        append(markup.getText(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
+      }
+    }
+
     if(node.getText() != null) {
       node.getText().appendToComponent(this);
     }
 
     setIcon(node.getIcon());
-    if (!selected) {
-      final NodeDescriptorImpl descriptor = node.getDescriptor();
-      if (descriptor instanceof ValueDescriptorImpl) {
-        final ValueMarkup markup = ((ValueDescriptorImpl)descriptor).getMarkup(node.getTree().getDebuggerContext());
-        if (markup != null) {
-          final Color color = markup.getColor();
-          if (color != null) {
-            setBackground(color);
-          }
-        }
-      }
-    }
   }
 
   public static Icon getDescriptorIcon(NodeDescriptorImpl descriptor) {

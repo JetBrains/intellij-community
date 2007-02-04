@@ -4,7 +4,8 @@
  */
 package com.intellij.debugger.ui.tree;
 
-import javax.swing.*;
+import org.jetbrains.annotations.NotNull;
+
 import java.awt.*;
 
 /**
@@ -12,16 +13,17 @@ import java.awt.*;
  *         Date: Jan 27, 2007
  */
 public class ValueMarkup {
-  private final Icon myIcon;
+  private final String myText;
   private final Color myColor;
 
-  public ValueMarkup(final Icon icon, final Color color) {
-    myIcon = icon;
+  public ValueMarkup(final String text, final Color color) {
+    myText = "[" + text + "] ";
     myColor = color;
   }
 
-  public Icon getIcon() {
-    return myIcon;
+  @NotNull
+  public String getText() {
+    return myText;
   }
 
   public Color getColor() {
