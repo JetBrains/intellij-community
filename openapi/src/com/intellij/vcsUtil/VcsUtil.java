@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -304,16 +305,38 @@ public class VcsUtil
     });
   }
 
-  public static String getFileContent( final File file )
+  public static String getFileContent( final String path )
   {
     return ApplicationManager.getApplication().runReadAction( new Computable<String>()
       {
         public String compute() {
-          VirtualFile vFile = VcsUtil.getVirtualFile( file.getPath() );
+          VirtualFile vFile = VcsUtil.getVirtualFile( path );
           final Document doc = FileDocumentManager.getInstance().getDocument( vFile );
           return doc.getText();
         }
       });
+  }
+
+  //  FileDocumentManager has difficulties in loading the content for files
+  //  which are outside the project structure?
+  public static byte[] getFileByteContent( final File file ) throws IOException
+  {
+    return ApplicationManager.getApplication().runReadAction( new Computable<byte[]>()
+      {
+        public byte[] compute()
+        {
+          byte[] content;
+          try {  content = FileUtil.loadFileBytes( file );   }
+          catch( IOException e ) { content = null;  }
+          return content;
+        }
+      });
+  }
+
+  public static String getFileContent( final File file ) throws IOException
+  {
+    byte[] content = getFileByteContent( file );
+    return new String( content );
   }
 
   public static boolean isPathUnderProject( Project project, final String path )
