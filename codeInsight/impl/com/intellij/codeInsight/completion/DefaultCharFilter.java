@@ -15,6 +15,7 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.Language;
 
@@ -26,7 +27,8 @@ public class DefaultCharFilter implements CharFilter {
   public DefaultCharFilter(PsiFile file, int offset) {
     myFile = file;
 
-    final PsiElement psiElement = file.findElementAt(offset);
+    PsiElement psiElement = file.findElementAt(offset);
+    if (psiElement == null && offset > 0) psiElement = file.findElementAt(offset - 1);
 
     if (myFile instanceof XmlFile) {
       boolean inJavaContext = false;
@@ -44,7 +46,8 @@ public class DefaultCharFilter implements CharFilter {
       }
       
       if (!inJavaContext) {
-        myDelegate = PsiUtil.isInJspFile(myFile) ? new JspCharFilter() : new XmlCharFilter();
+        final boolean withinTag = psiElement != null && psiElement.getParent() instanceof XmlTag;
+        myDelegate = PsiUtil.isInJspFile(myFile) ? new JspCharFilter(withinTag) : new XmlCharFilter(withinTag);
       }
     } else {
 
