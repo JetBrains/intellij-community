@@ -56,12 +56,10 @@ public class EqualsHashCodeCalledOnUrlInspection extends BaseInspection {
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final PsiMethod method = expression.resolveMethod();
-            if (method == null) return;
             if (!MethodUtils.isEquals(method) &&
                     !MethodUtils.isHashCode(method)) {
                 return;
             }
-            //System.out.println("expression: " + expression);
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
             if (!TypeUtils.expressionHasType("java.net.URL", qualifier)) {

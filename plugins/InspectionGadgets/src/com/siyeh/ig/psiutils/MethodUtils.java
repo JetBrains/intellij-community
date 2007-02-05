@@ -49,7 +49,10 @@ public class MethodUtils{
                 HardcodedMethodConstants.HASH_CODE);
     }
 
-    public static boolean isEquals(PsiMethod method){
+    public static boolean isEquals(@Nullable PsiMethod method){
+        if (method == null) {
+            return false;
+        }
         final PsiManager manager = method.getManager();
         final Project project = method.getProject();
         final PsiClassType objectType = PsiType.getJavaLangObject(
