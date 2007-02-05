@@ -55,7 +55,6 @@ final class ToolWindowsPane extends JPanel{
   private ArrayList<Stripe> myStipes = new ArrayList<Stripe>();
 
   private final MyUISettingsListenerImpl myUISettingsListener;
-  private JComponent myTemplateButton;
 
   ToolWindowsPane(final IdeFrameImpl frame, ToolWindowManagerImpl manager){
     super(new BorderLayout());
@@ -705,21 +704,9 @@ final class ToolWindowsPane extends JPanel{
     }
   }
 
-  JComponent getTemplateButton() {
-    if (myTemplateButton == null) {
-      for (Stripe each : myStipes) {
-        if (each.getComponentCount() > 0) {
-          myTemplateButton = (JComponent)each.getComponent(0);
-          break;
-        }
-      }
-    }
-
-    if (myTemplateButton == null) {
-      myTemplateButton = new JLabel("XXX");
-    }
-
-    return myTemplateButton;
+//todo
+  static int getHorizontalInsetX() {
+    return 19;
   }
 
 }

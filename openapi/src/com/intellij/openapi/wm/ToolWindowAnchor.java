@@ -35,6 +35,9 @@ public final class ToolWindowAnchor {
     return myText;
   }
 
+  public boolean isHorizontal() {
+    return this == TOP || this == BOTTOM;
+  }
 
   public static ToolWindowAnchor get(int swingOrientationConstant) {
     switch(swingOrientationConstant) {
