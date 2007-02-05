@@ -148,11 +148,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
                      if (indicator != null) {
                        indicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
                      }
-                     Date date = logEntry.getDate();
-                     String author = logEntry.getAuthor();
-                     String message = logEntry.getMessage();
-                     SVNRevision rev = SVNRevision.create(logEntry.getRevision());
-                     result.add(new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, rev, myURL.toString(), author, date, message));
+                     result.add(new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, myURL.toString()));
                    }
                  });
   }

@@ -27,12 +27,8 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.ISVNLogEntryHandler;
-import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
 import java.util.Date;
@@ -61,12 +57,20 @@ public class SvnAnnotationProvider implements AnnotationProvider {
         try {
           final SvnFileAnnotation result = new SvnFileAnnotation(myVcs);
 
+          final File ioFile = new File(file.getPath()).getAbsoluteFile();
+          SVNWCClient wcClient = myVcs.createWCClient();
+          SVNInfo info = wcClient.doInfo(ioFile, SVNRevision.WORKING);
+          if (info == null) {
+              exception[0] = new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "File ''{0}'' is not under version control", ioFile));
+              return;
+          }
+          final String url = info.getURL() == null ? null : info.getURL().toString();
+
           SVNLogClient client = myVcs.createLogClient();
           SVNRevision endRevision = ((SvnRevisionNumber)revision.getRevisionNumber()).getRevision();
           if (progress != null) {
             progress.setText(SvnBundle.message("progress.text.computing.annotation", file.getName()));
           }
-          final File ioFile = new File(file.getPath()).getAbsoluteFile();
           client.doAnnotate(ioFile, SVNRevision.UNDEFINED,
                             SVNRevision.create(0), endRevision, new ISVNAnnotateHandler() {
             public void handleLine(Date date, long revision, String author, String line) {
@@ -80,7 +84,7 @@ public class SvnAnnotationProvider implements AnnotationProvider {
                            if (progress != null) {
                              progress.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
                            }
-                           result.setRevisionMessage(logEntry.getRevision(), logEntry.getMessage());
+                           result.setRevision(logEntry.getRevision(), new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, url));
                          }
                        });
 

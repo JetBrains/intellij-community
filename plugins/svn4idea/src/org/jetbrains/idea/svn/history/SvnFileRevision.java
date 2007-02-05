@@ -27,6 +27,7 @@ import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
@@ -59,6 +60,21 @@ public class SvnFileRevision implements VcsFileRevision {
     myAuthor = author;
     myDate = date;
     myCommitMessage = commitMessage;
+    myVCS = vcs;
+    myURL = url;
+  }
+
+  public SvnFileRevision(SvnVcs vcs,
+                         SVNRevision pegRevision,
+                         SVNLogEntry logEntry,
+                         String url) {
+    final SVNRevision revision = SVNRevision.create(logEntry.getRevision());
+    myRevisionNumber = new SvnRevisionNumber(revision);
+    myPegRevision = pegRevision;
+    myRevision = revision;
+    myAuthor = logEntry.getAuthor();
+    myDate = logEntry.getDate();
+    myCommitMessage = logEntry.getMessage();
     myVCS = vcs;
     myURL = url;
   }

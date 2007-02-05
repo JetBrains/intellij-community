@@ -60,12 +60,16 @@ public class ShowAllSubmittedFilesAction extends AnAction {
     if (revision != null) {
       final SvnFileRevision svnRevision = ((SvnFileRevision)revision);
 
-      final SvnChangeList changeList = loadRevisions(project, svnRevision);
+      showSubmittedFiles(project, svnRevision);
+    }
+  }
 
-      if (changeList != null) {
-        long revNumber = ((SvnRevisionNumber)revision.getRevisionNumber()).getRevision().getNumber();
-        AbstractVcsHelper.getInstance(project).showChangesBrowser(changeList, getTitle(revNumber));
-      }
+  public static void showSubmittedFiles(final Project project, final SvnFileRevision svnRevision) {
+    final SvnChangeList changeList = loadRevisions(project, svnRevision);
+
+    if (changeList != null) {
+      long revNumber = ((SvnRevisionNumber)svnRevision.getRevisionNumber()).getRevision().getNumber();
+      AbstractVcsHelper.getInstance(project).showChangesBrowser(changeList, getTitle(revNumber));
     }
   }
 
