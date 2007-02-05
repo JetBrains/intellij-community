@@ -52,17 +52,17 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     return configurableEditor.isOK();
   }
 
-  public Configurable findProjectConfigurable(Project project, Class<? extends Configurable> confClass) {
-    return selectConfigurable(confClass, project.getExtensions(Configurable.PROJECT_CONFIGURABLES));
-  }
-
-  public Configurable findApplicationConfigurable(Class<? extends Configurable> confClass) {
+  public <T extends Configurable> T findApplicationConfigurable(final Class<T> confClass) {
     return selectConfigurable(confClass, ApplicationManager.getApplication().getExtensions(Configurable.PROJECT_CONFIGURABLES));
   }
 
-  private static Configurable selectConfigurable(final Class<? extends Configurable> confClass, final Configurable... configurables) {
+  public <T extends Configurable> T findProjectConfigurable(final Project project, final Class<T> confClass) {
+    return selectConfigurable(confClass, project.getExtensions(Configurable.PROJECT_CONFIGURABLES));
+  }
+
+  private static <T extends Configurable> T selectConfigurable(final Class<T> confClass, final Configurable... configurables) {
     for (Configurable configurable : configurables) {
-      if (confClass.isAssignableFrom(configurable.getClass())) return configurable;
+      if (confClass.isAssignableFrom(configurable.getClass())) return (T)configurable;
     }
 
     throw new IllegalStateException("Can't find configurable of class " + confClass.getName());
