@@ -20,6 +20,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.TableViewModel;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -30,8 +31,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 public class TableView<Item> extends BaseTableView implements ItemsProvider, SelectionProvider {
   public TableView() {
@@ -84,13 +83,17 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
       }
       else if (columnInfo.getMaxStringValue() != null) {
         String maxStringValue = columnInfo.getMaxStringValue();
-        TableColumn additionalColumn = getColumnModel().getColumn(i);
         int width = getFontMetrics(getFont()).stringWidth(maxStringValue) + columnInfo.getAdditionalWidth();
-        additionalColumn.setPreferredWidth(width);
-        additionalColumn.setMaxWidth(width);
-
+        column.setPreferredWidth(width);
+        column.setMaxWidth(width);
       }
-
+      else {
+        final String preferredValue = columnInfo.getPreferredStringValue();
+        if (preferredValue != null) {
+          int width = getFontMetrics(getFont()).stringWidth(preferredValue) + columnInfo.getAdditionalWidth();
+          column.setPreferredWidth(width);
+        }
+      }
     }
   }
 

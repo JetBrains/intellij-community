@@ -84,6 +84,13 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
         column.setMaxWidth(width);
         column.setMinWidth(width);
       }
+      else {
+        final String preferredValue = columnInfo.getPreferredStringValue();
+        if (preferredValue != null) {
+          int width = getFontMetrics(getFont()).stringWidth(preferredValue) + columnInfo.getAdditionalWidth();
+          column.setPreferredWidth(width);
+        }
+      }
     }
   }
 

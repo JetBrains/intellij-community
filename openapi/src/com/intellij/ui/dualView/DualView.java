@@ -25,8 +25,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.fileView.DualViewColumnInfo;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.UIHelper;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.UIHelper;
 import com.intellij.ui.table.BaseTableView;
 import com.intellij.ui.table.SelectionProvider;
 import com.intellij.ui.table.TableView;
@@ -37,7 +37,7 @@ import com.intellij.util.ui.Table;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
 import com.intellij.util.ui.treetable.TreeTableModel;
-import com.intellij.execution.ExecutionBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
@@ -55,8 +55,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 public class DualView extends JPanel {
   private final CardLayout myCardLayout;
@@ -179,12 +177,12 @@ public class DualView extends JPanel {
 
   public void switchToTheFlatMode() {
     if (myFlatView == myCurrentView) return;
-    changeVeiwTo(myFlatView);
+    changeViewTo(myFlatView);
     copySelection(myTreeView, myFlatView);
     myCardLayout.show(this, FLAT);
   }
 
-  private void changeVeiwTo(JTable view) {
+  private void changeViewTo(JTable view) {
     myCurrentView = view;
   }
 
@@ -200,7 +198,7 @@ public class DualView extends JPanel {
 
   public void switchToTheTreeMode() {
     if (myTreeView == myCurrentView) return;
-    changeVeiwTo(myTreeView);
+    changeViewTo(myTreeView);
     copySelection(myFlatView, myTreeView);
     myCardLayout.show(this, TREE);
   }

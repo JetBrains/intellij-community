@@ -104,6 +104,11 @@ public abstract class ColumnInfo <Item, Aspect> {
     return null;
   }
 
+  @Nullable
+  public String getPreferredStringValue() {
+    return null;
+  }
+
   public int getAdditionalWidth() {
     return 0;
   }

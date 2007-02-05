@@ -17,10 +17,10 @@ package com.intellij.ui.table;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.config.Storage;
+import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.util.ui.Table;
-import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -33,7 +33,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 
 /**
  * Do NOT add code wich assumes that table has same number of rows as model. It isn't true!
@@ -115,28 +114,29 @@ public abstract class BaseTableView extends Table {
   public static void restore(final Storage storage, final JTable table) {
     final TableColumnModel columnModel = table.getTableHeader().getColumnModel();
     int index = 0;
-    final ArrayList columnIndicies = new ArrayList();
+    final ArrayList<String> columnIndices = new ArrayList<String>();
     while (true) {
       final String order = storage.get(orderPropertyName(index));
       if (order == null) break;
-      columnIndicies.add(order);
+      columnIndices.add(order);
       index++;
       if (index == table.getColumnCount()) break;
     }
     index = 0;
-    for (Iterator iterator = columnIndicies.iterator(); iterator.hasNext();) {
-      final String order = (String) iterator.next();
-      columnModel.moveColumn(indexbyModelIndex(columnModel, Integer.parseInt(order)), index);
+    for (final String columnIndex : columnIndices) {
+      columnModel.moveColumn(indexbyModelIndex(columnModel, Integer.parseInt(columnIndex)), index);
       index++;
     }
-    for (int i = 0; i < columnIndicies.size(); i++) {
+    for (int i = 0; i < columnIndices.size(); i++) {
       final String width = storage.get(widthPropertyName(i));
-      try {
-        columnModel.getColumn(i).setPreferredWidth(Integer.parseInt(width));
-      } catch(NumberFormatException e) {
-        LOG.error("Bad width: " + width + " at column: "+ i + " from: " + storage +
-                  " actual columns count: " + columnModel.getColumnCount() +
-                  " info count: " + columnIndicies.size(), e);
+      if (width != null && width.length() > 0) {
+        try {
+          columnModel.getColumn(i).setPreferredWidth(Integer.parseInt(width));
+        } catch(NumberFormatException e) {
+          LOG.error("Bad width: " + width + " at column: "+ i + " from: " + storage +
+                    " actual columns count: " + columnModel.getColumnCount() +
+                    " info count: " + columnIndices.size(), e);
+        }
       }
     }
   }

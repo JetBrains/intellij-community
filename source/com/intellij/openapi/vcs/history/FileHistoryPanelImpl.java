@@ -86,6 +86,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     public Object valueOf(Object object) {
       return ((VcsFileRevision)object).getRevisionNumber().asString();
     }
+
+    @Override
+    public String getPreferredStringValue() {
+      return "123.4567";
+    }
   };
 
   public static final DualViewColumnInfo DATE = new VcsColumnInfo(VcsBundle.message("column.name.revision.date")) {
@@ -99,11 +104,21 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       return ((VcsFileRevision)o1).getRevisionDate()
         .compareTo(((VcsFileRevision)o2).getRevisionDate());
     }
+
+    @Override
+    public String getPreferredStringValue() {
+      return DATE_FORMAT.format(new Date());
+    }
   };
 
   public static final DualViewColumnInfo AUTHOR = new VcsColumnInfo(VcsBundle.message("column.name.revision.list.author")) {
     protected Comparable getDataOf(Object object) {
       return ((VcsFileRevision)object).getAuthor();
+    }
+
+    @Override @NonNls
+    public String getPreferredStringValue() {
+      return "author_author";
     }
   };
 
@@ -135,6 +150,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       } else {
         return Math.min(index10, index13);
       }
+    }
+
+    @Override
+    public String getPreferredStringValue() {
+      return StringUtil.repeatSymbol('a', 125);
     }
 
     public TableCellRenderer getRenderer(Object p0) {
