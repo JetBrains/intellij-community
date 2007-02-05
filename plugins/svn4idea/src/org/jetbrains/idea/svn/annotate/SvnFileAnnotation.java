@@ -24,9 +24,7 @@ import org.jetbrains.idea.svn.SvnEntriesListener;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class SvnFileAnnotation implements FileAnnotation {
   private final StringBuffer myContentBuffer = new StringBuffer();
@@ -34,9 +32,8 @@ public class SvnFileAnnotation implements FileAnnotation {
   private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT));
 
   private final SvnVcs myVcs;
-
-
   private final List<AnnotationListener> myListeners = new ArrayList<AnnotationListener>();
+  private final Map<Long, String> myRevisionMap = new HashMap<Long, String>();
 
   private final LineAnnotationAspect DATE_ASPECT = new LineAnnotationAspect() {
     public String getValue(int lineNumber) {
@@ -78,6 +75,10 @@ public class SvnFileAnnotation implements FileAnnotation {
       }
     }
   };
+
+  public void setRevisionMessage(final long revision, final String message) {
+    myRevisionMap.put(revision, message);
+  }
 
   static class LineInfo {
     private final Date myDate;
@@ -126,7 +127,15 @@ public class SvnFileAnnotation implements FileAnnotation {
   }
 
   public String getToolTip(final int lineNumber) {
-    return "";  // TODO[yole]: return checkin comment
+    if (myLineInfos.size() <= lineNumber || lineNumber < 0) {
+      return "";
+    }
+    final LineInfo info = myLineInfos.get(lineNumber);
+    String message = myRevisionMap.get(info.getRevision());
+    if (message != null) {
+      return "Revision " + info.getRevision() + ": " + message;
+    }
+    return "";
   }
 
   public String getAnnotatedContent() {

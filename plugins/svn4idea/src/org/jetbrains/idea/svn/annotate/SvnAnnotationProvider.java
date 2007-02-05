@@ -28,6 +28,8 @@ import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -64,12 +66,24 @@ public class SvnAnnotationProvider implements AnnotationProvider {
           if (progress != null) {
             progress.setText(SvnBundle.message("progress.text.computing.annotation", file.getName()));
           }
-          client.doAnnotate(new File(file.getPath()).getAbsoluteFile(), SVNRevision.UNDEFINED,
+          final File ioFile = new File(file.getPath()).getAbsoluteFile();
+          client.doAnnotate(ioFile, SVNRevision.UNDEFINED,
                             SVNRevision.create(0), endRevision, new ISVNAnnotateHandler() {
             public void handleLine(Date date, long revision, String author, String line) {
               result.appendLineInfo(date, revision, author, line);
             }
           });
+
+          client.doLog(new File[]{ioFile}, SVNRevision.HEAD, SVNRevision.create(1), false, false, 0,
+                       new ISVNLogEntryHandler() {
+                         public void handleLogEntry(SVNLogEntry logEntry) {
+                           if (progress != null) {
+                             progress.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
+                           }
+                           result.setRevisionMessage(logEntry.getRevision(), logEntry.getMessage());
+                         }
+                       });
+
           annotation[0] = result;
         }
         catch (SVNException e) {
