@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
@@ -52,13 +53,17 @@ public class ChooseModulesDialog extends DialogWrapper {
   private final List<Module> myCandidateModules;
   private final boolean[] myStates;
 
-  public ChooseModulesDialog(final Project project, List<Module> candidateModules, String title) {
+  public ChooseModulesDialog(final Project project, List<Module> candidateModules, @NonNls String title) {
+    this ( project, candidateModules, title, DevKitBundle.message("select.plugin.modules.to.patch"));
+  }
+
+  public ChooseModulesDialog(final Project project, List<Module> candidateModules, @NonNls String title, final String message) {
     super(project, false);
     setTitle(title);
 
     myCandidateModules = candidateModules;
     myIcon = Messages.getQuestionIcon();
-    myMessage = DevKitBundle.message("select.plugin.modules.to.patch");
+    myMessage = message;
     myView = new JTable(new AbstractTableModel() {
       public int getRowCount() {
         return myCandidateModules.size();

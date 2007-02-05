@@ -18,8 +18,6 @@ package org.jetbrains.idea.devkit.build;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.make.ManifestBuilder;
 import com.intellij.openapi.compiler.make.ModuleBuildProperties;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -41,8 +39,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.io.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -63,7 +60,39 @@ public class PrepareToDeployAction extends AnAction {
 
   public void actionPerformed(final AnActionEvent e) {
     final Module module = (Module)e.getDataContext().getData(DataConstants.MODULE);
-    if (module == null) return;
+    if (module != null && module.getModuleType() instanceof PluginModuleType) {
+      doPrepare(Arrays.asList(module));
+    }
+  }
+
+  public void doPrepare(final List<Module> pluginModules) {
+    final List<String> errorMessages = new ArrayList<String>();
+    final List<String> successMessages = new ArrayList<String>();
+
+    for (Module aModule : pluginModules) {
+      if (!doPrepare(aModule, errorMessages, successMessages)) {
+        return;
+      }
+    }
+
+    if (!errorMessages.isEmpty()) {
+      Messages.showErrorDialog(errorMessages.iterator().next(), DevKitBundle.message("error.occured"));
+    }
+    else if (!successMessages.isEmpty()) {
+      StringBuffer messageBuf = new StringBuffer();
+      for (String message : successMessages) {
+        if (messageBuf.length() != 0) {
+          messageBuf.append('\n');
+        }
+        messageBuf.append(message);
+      }
+      Messages.showInfoMessage(messageBuf.toString(), pluginModules.size() == 1 ?
+                                                      DevKitBundle.message("success.deployment.message", pluginModules.get(0).getName()) : 
+                                                      DevKitBundle.message("success.deployment.message.all"));
+    }
+  }
+
+  private boolean doPrepare(final Module module, final List<String> errorMessages, final List<String> successMessages) {
     final String name = module.getName();
     final String defaultPath = new File(module.getModuleFilePath()).getParent() + File.separator + name;
     final HashSet<Module> modules = new HashSet<Module>();
@@ -73,67 +102,49 @@ public class PrepareToDeployAction extends AnAction {
     for (Module module1 : modules) {
       PluginBuildUtil.getLibraries(module1, libs);
     }
-    boolean isZip = true;
-    final String zipPath = defaultPath + ZIP_EXTENSION;
-    final File zipFile = new File(zipPath);
-    if (libs.size() == 0) {
-      if (zipFile.exists()) {
-        if (Messages
-          .showYesNoDialog(module.getProject(), DevKitBundle.message("suggest.to.delete", zipPath), DevKitBundle.message("info.message"),
-                           Messages.getInformationIcon()) == DialogWrapper.OK_EXIT_CODE) {
-          FileUtil.delete(zipFile);
-        }
-      }
-      isZip = false;
-    }
-    else if (new File(defaultPath + JAR_EXTENSION).exists()) {
-      if (Messages.showYesNoDialog(module.getProject(), DevKitBundle.message("suggest.to.delete", defaultPath + JAR_EXTENSION),
-                                   DevKitBundle.message("info.message"),
-                                   Messages.getInformationIcon()) == DialogWrapper.OK_EXIT_CODE) {
-        FileUtil.delete(new File(defaultPath + JAR_EXTENSION));
+    final boolean isZip = libs.size() != 0;
+    final String oldPath = defaultPath + (isZip ? JAR_EXTENSION : ZIP_EXTENSION);
+    final File oldFile = new File(oldPath);
+    if (oldFile.exists()) {
+      if (Messages
+        .showYesNoDialog(module.getProject(), DevKitBundle.message("suggest.to.delete", oldPath), DevKitBundle.message("info.message"),
+                         Messages.getInformationIcon()) == DialogWrapper.OK_EXIT_CODE) {
+        FileUtil.delete(oldFile);
       }
     }
 
-    @NonNls final Set<String> errorSet = new HashSet<String>();
-    final boolean isOk = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
+        final String dstPath = defaultPath + (isZip ? ZIP_EXTENSION : JAR_EXTENSION);
+
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        if (progressIndicator != null){
+        if (progressIndicator != null) {
           progressIndicator.setText(DevKitBundle.message("prepare.for.deployment.common"));
           progressIndicator.setIndeterminate(true);
         }
         try {
+          final File dstFile = new File(dstPath);
           File jarFile = preparePluginsJar(module, modules);
-          if (libs.size() == 0) {
-            FileUtil.copy(jarFile, new File(defaultPath + JAR_EXTENSION));
-            return;
+          if (isZip) {
+            processLibraries(jarFile, dstFile, name, libs, progressIndicator);
           }
-          processLibraries(jarFile, zipFile, name, libs, progressIndicator);
+          else {
+            FileUtil.copy(jarFile, dstFile);
+          }
+          successMessages.add(DevKitBundle.message("saved.message", isZip ? 1 : 2, module.getName(), dstPath));
         }
-        catch (final IOException e1) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              errorSet.add("error");
-              Messages.showErrorDialog(e1.getMessage(), DevKitBundle.message("error.occured"));
-            }
-          }, ModalityState.NON_MODAL);
+        catch (final IOException e) {
+          errorMessages.add(e.getMessage() + "\n(" + dstPath + ")");
         }
       }
     }, DevKitBundle.message("prepare.for.deployment", module.getName()), true, module.getProject());
-
-    if (isOk && errorSet.isEmpty()) {
-      Messages.showInfoMessage(
-        DevKitBundle.message("saved.message", isZip ? 1 : 2, module.getName(), defaultPath + (isZip ? ZIP_EXTENSION : JAR_EXTENSION)),
-        DevKitBundle.message("success.deployment.message", module.getName()));
-    }
   }
 
   private void processLibraries(final File jarFile,
                                 final File zipFile,
                                 final String name,
                                 final HashSet<Library> libs,
-                                final ProgressIndicator progressIndicator
-  ) throws IOException {
+                                final ProgressIndicator progressIndicator) throws IOException {
     if (zipFile.exists() || zipFile.createNewFile()) {
       ZipOutputStream zos = null;
       try {
@@ -171,8 +182,9 @@ public class PrepareToDeployAction extends AnAction {
                                     final ZipOutputStream zos,
                                     final File zipFile,
                                     final String name,
-                                    final Library library, final Set<String> names, final ProgressIndicator progressIndicator
-  ) throws IOException {
+                                    final Library library,
+                                    final Set<String> names,
+                                    final ProgressIndicator progressIndicator) throws IOException {
     File libraryJar = FileUtil.createTempFile(TEMP_PREFIX, JAR_EXTENSION);
     libraryJar.deleteOnExit();
     ZipOutputStream jar = null;
@@ -224,8 +236,7 @@ public class PrepareToDeployAction extends AnAction {
                                     final File zipFile,
                                     final String name,
                                     final ZipOutputStream zos,
-                                    final ProgressIndicator progressIndicator
-  ) throws IOException {
+                                    final ProgressIndicator progressIndicator) throws IOException {
     File ioFile = VfsUtil.virtualToIoFile(virtualFile);
     final FileFilter filter = new FileFilter() {
       public boolean accept(File pathname) {
@@ -272,18 +283,14 @@ public class PrepareToDeployAction extends AnAction {
       }
       final String pluginXmlPath = pluginModuleBuildProperties.getPluginXmlPath();
       @NonNls final String metainf = "/META-INF/plugin.xml";
-      ZipUtil.addFileToZip(jarPlugin,
-                           new File(pluginXmlPath),
-                           metainf,
-                           writtenItemRelativePaths,
-                           new FileFilter() {
-                             public boolean accept(File pathname) {
-                               if (progressIndicator != null) {
-                                 progressIndicator.setText2("");
-                               }
-                               return true;
-                             }
-                           });
+      ZipUtil.addFileToZip(jarPlugin, new File(pluginXmlPath), metainf, writtenItemRelativePaths, new FileFilter() {
+        public boolean accept(File pathname) {
+          if (progressIndicator != null) {
+            progressIndicator.setText2("");
+          }
+          return true;
+        }
+      });
 
     }
     finally {
