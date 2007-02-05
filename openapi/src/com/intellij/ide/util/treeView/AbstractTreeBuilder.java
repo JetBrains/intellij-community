@@ -31,7 +31,8 @@ public abstract class AbstractTreeBuilder implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeBuilder");
 
   protected final JTree myTree;
-  private final DefaultTreeModel myTreeModel;
+  // protected for TestNG
+  protected final DefaultTreeModel myTreeModel;
   protected AbstractTreeStructure myTreeStructure;
 
   protected AbstractTreeUpdater myUpdater;
