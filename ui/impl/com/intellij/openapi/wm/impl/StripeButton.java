@@ -47,6 +47,7 @@ public final class StripeButton extends JToggleButton implements ActionListener 
   private JLabel myDragButtonImage;
   private Point myPressedPoint;
   private Stripe myLastStripe;
+  private static final int DRAG_START_DEADZONE = 7;
 
   StripeButton(final InternalDecorator decorator, ToolWindowsPane pane) {
     myDecorator = decorator;
@@ -109,6 +110,9 @@ public final class StripeButton extends JToggleButton implements ActionListener 
 
   private void processDrag(final MouseEvent e) {
     if (!isDraggingNow()) {
+      if (myPressedPoint == null) return;
+      if (isWithinDeadZone(e)) return;
+
       myDragPane = findLayeredPane(e);
       if (myDragPane == null) return;
       final BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
@@ -150,6 +154,10 @@ public final class StripeButton extends JToggleButton implements ActionListener 
     myLastStripe = stripe;
   }
 
+  private boolean isWithinDeadZone(final MouseEvent e) {
+    return Math.abs(myPressedPoint.x - e.getPoint().x) < DRAG_START_DEADZONE && Math.abs(myPressedPoint.y - e.getPoint().y) < DRAG_START_DEADZONE;
+  }
+
   @Nullable
   private static JLayeredPane findLayeredPane(MouseEvent e) {
     if (!(e.getComponent() instanceof JComponent)) return null;
@@ -164,6 +172,8 @@ public final class StripeButton extends JToggleButton implements ActionListener 
     }
     else if (MouseEvent.MOUSE_RELEASED == e.getID()) {
       finishDragging();
+      myPressedPoint = null;
+      myDragButtonImage = null;
     }
     super.processMouseEvent(e);
   }
