@@ -38,4 +38,8 @@ public abstract class ShowSettingsUtil {
   public abstract boolean editConfigurable(Project project, String dimensionServiceKey, Configurable configurable);
 
   public abstract boolean editConfigurable(Component parent, String dimensionServiceKey, Configurable configurable);
+
+  public abstract <T extends Configurable> T findProjectConfigurable(Project project, Class<T> confClass);
+
+  public abstract <T extends Configurable> T findApplicationConfigurable(Class<T> confClass);
 }

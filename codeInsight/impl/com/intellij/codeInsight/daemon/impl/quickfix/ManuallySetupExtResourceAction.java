@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.j2ee.extResources.ExternalResourceConfigurable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -11,7 +11,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.javaee.ExternalResourceManager;
 
 /**
  * @author mike
@@ -46,7 +45,7 @@ public class ManuallySetupExtResourceAction extends BaseIntentionAction {
     if (uri == null) return;
 
     ExternalResourceManager.getInstance().addResource(uri,"");
-    final ExternalResourceConfigurable component = ApplicationManager.getApplication().getComponent(ExternalResourceConfigurable.class);
+    final ExternalResourceConfigurable component = ShowSettingsUtil.getInstance().findApplicationConfigurable(ExternalResourceConfigurable.class);
     ShowSettingsUtil.getInstance().editConfigurable(
       project,
       component,

@@ -3,10 +3,10 @@ package com.intellij.ide.todo.configurable;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoFilter;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.search.TodoAttributes;
@@ -470,7 +470,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
   }
 
   public static TodoConfigurable getInstance() {
-    return ApplicationManager.getApplication().getComponent(TodoConfigurable.class);
+    return ShowSettingsUtil.getInstance().findApplicationConfigurable(TodoConfigurable.class);
   }
 
   private final class MyFilterNameTableCellRenderer extends DefaultTableCellRenderer {

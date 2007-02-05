@@ -15,7 +15,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -267,7 +266,7 @@ public class SeverityEditorDialog extends DialogWrapper {
     if (colorsScheme instanceof DefaultColorsScheme) {
       final int res = Messages.showYesNoCancelDialog(myPanel, InspectionsBundle.message("highlight.severity.default.color.scheme.warning"), ApplicationBundle.message("title.cannot.modify.default.scheme"), Messages.getQuestionIcon());
       if (res == DialogWrapper.OK_EXIT_CODE){
-        ShowSettingsUtil.getInstance().editConfigurable(myPanel, ApplicationManager.getApplication().getComponent(ColorAndFontOptions.class));
+        ShowSettingsUtil.getInstance().editConfigurable(myPanel, ShowSettingsUtil.getInstance().findApplicationConfigurable(ColorAndFontOptions.class));
         return;
       } else if (res != DialogWrapper.CANCEL_EXIT_CODE) {
         return;

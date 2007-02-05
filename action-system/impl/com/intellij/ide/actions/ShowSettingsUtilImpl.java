@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 import com.intellij.application.options.CodeStyleSchemesConfigurable;
 import com.intellij.application.options.ProjectCodeStyleConfigurable;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -49,6 +50,22 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     final SingleConfigurableEditor configurableEditor = new SingleConfigurableEditor(project, configurable, createDimensionKey(configurable));
     configurableEditor.show();
     return configurableEditor.isOK();
+  }
+
+  public Configurable findProjectConfigurable(Project project, Class<? extends Configurable> confClass) {
+    return selectConfigurable(confClass, project.getExtensions(Configurable.PROJECT_CONFIGURABLES));
+  }
+
+  public Configurable findApplicationConfigurable(Class<? extends Configurable> confClass) {
+    return selectConfigurable(confClass, ApplicationManager.getApplication().getExtensions(Configurable.PROJECT_CONFIGURABLES));
+  }
+
+  private static Configurable selectConfigurable(final Class<? extends Configurable> confClass, final Configurable... configurables) {
+    for (Configurable configurable : configurables) {
+      if (confClass.isAssignableFrom(configurable.getClass())) return configurable;
+    }
+
+    throw new IllegalStateException("Can't find configurable of class " + confClass.getName());
   }
 
   public boolean editConfigurable(Project project, String dimensionServiceKey, Configurable configurable) {

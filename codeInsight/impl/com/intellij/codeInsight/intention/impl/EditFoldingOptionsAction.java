@@ -4,7 +4,6 @@ import com.intellij.application.options.EditorOptions;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.ui.search.DefaultSearchableConfigurable;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -31,7 +30,7 @@ public class EditFoldingOptionsAction implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    EditorOptions editorOptions = ApplicationManager.getApplication().getComponent(EditorOptions.class);
+    EditorOptions editorOptions = ShowSettingsUtil.getInstance().findApplicationConfigurable(EditorOptions.class);
     final DefaultSearchableConfigurable configurable = new DefaultSearchableConfigurable(editorOptions);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
       public void run() {
