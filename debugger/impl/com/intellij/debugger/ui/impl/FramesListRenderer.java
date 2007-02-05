@@ -6,6 +6,7 @@ package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.settings.DebuggerColors;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
+import com.intellij.debugger.ui.tree.ValueMarkup;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.Comparing;
@@ -29,6 +30,11 @@ class FramesListRenderer extends ColoredListCellRenderer {
     final StackFrameDescriptorImpl selectedDescriptor = (StackFrameDescriptorImpl)((FramesList)list).getSelectedValue();
     final boolean shouldHighlightAsRecursive = isOccurrenceOfSelectedFrame(selectedDescriptor, descriptor);
 
+    final ValueMarkup markup = descriptor.getValueMarkup();
+    if (markup != null) {
+      append(markup.getText(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
+    }
+    
     if (selected) {
       setBackground(com.intellij.util.ui.UIUtil.getListSelectionBackground());
     }

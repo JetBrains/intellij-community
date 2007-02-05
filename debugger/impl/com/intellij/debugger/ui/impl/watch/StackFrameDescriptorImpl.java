@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.tree.StackFrameDescriptor;
+import com.intellij.debugger.ui.tree.ValueMarkup;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -18,13 +19,11 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.sun.jdi.AbsentInformationException;
-import com.sun.jdi.Location;
-import com.sun.jdi.Method;
-import com.sun.jdi.ReferenceType;
+import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Map;
 
 /**
  * Nodes of this type cannot be updated, because StackFrame objects become invalid as soon as VM has been resumed
@@ -36,6 +35,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private MethodsTracker.MethodOccurrence myMethodOccurrence;
   private boolean myIsSynthetic;
   private boolean myIsInLibraryContent;
+  private Long myObjectId;
 
   private static Icon myStackFrameIcon = IconLoader.getIcon("/debugger/stackFrame.png");
   private static Icon myObsoleteFrameIcon = IconLoader.getIcon("/debugger/db_obsolete.png");
@@ -45,6 +45,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     myFrame = frame;
     try {
       myLocation = frame.location();
+      final ObjectReference thisObject = frame.thisObject();
+      myObjectId = thisObject != null? thisObject.uniqueID() : null;
       myMethodOccurrence = tracker.getMethodOccurrence(myLocation.method());
       myIsSynthetic = DebuggerUtils.isSynthetic(myMethodOccurrence.getMethod());
       ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -91,6 +93,17 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return myMethodOccurrence.isRecursive();
   }
 
+  @Nullable
+  public ValueMarkup getValueMarkup() {
+    if (myObjectId != null) {
+      final Map<Long,ValueMarkup> markupMap = getMarkupMap(myFrame.getVirtualMachine().getDebugProcess());
+      if (markupMap != null) {
+        return markupMap.get(myObjectId);
+      }
+    }
+    return null;
+  }
+  
   public String getName() {
     return myName;
   }

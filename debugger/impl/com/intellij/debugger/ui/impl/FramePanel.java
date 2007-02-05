@@ -87,11 +87,16 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     add(mySplitter, BorderLayout.CENTER);
     registerDisposable(DebuggerAction.installEditAction(frameTree, DebuggerActions.EDIT_NODE_SOURCE));
 
-    final AnAction setValueAction  = ActionManager.getInstance().getAction(DebuggerActions.SET_VALUE);
-    setValueAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), frameTree);
+    overrideShortcut(frameTree, DebuggerActions.SET_VALUE, KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
+    overrideShortcut(frameTree, DebuggerActions.MARK_OBJECT, KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
+  }
+
+  private void overrideShortcut(final JComponent forComponent, final String actionId, final KeyStroke keyStroke) {
+    final AnAction setValueAction  = ActionManager.getInstance().getAction(actionId);
+    setValueAction.registerCustomShortcutSet(new CustomShortcutSet(keyStroke), forComponent);
     registerDisposable(new Disposable() {
       public void dispose() {
-        setValueAction.unregisterCustomShortcutSet(frameTree);
+        setValueAction.unregisterCustomShortcutSet(forComponent);
       }
     });
   }
@@ -322,6 +327,7 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
             try {
               myThreadsListener.setEnabled(false);
               selectThread(threadToSelect);
+              myFramesList.repaint();
             }
             finally {
               myThreadsListener.setEnabled(true);

@@ -1,6 +1,7 @@
 package com.intellij.debugger.ui.tree;
 
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.Value;
@@ -26,7 +27,7 @@ public interface ValueDescriptor extends NodeDescriptor{
   boolean isPrimitive();
   
   @Nullable
-  ValueMarkup getMarkup(DebuggerContext context);
+  ValueMarkup getMarkup(final DebugProcess debugProcess);
   
-  void setMarkup(DebuggerContext context, @Nullable ValueMarkup markup);
+  void setMarkup(final DebugProcess debugProcess, @Nullable ValueMarkup markup);
 }

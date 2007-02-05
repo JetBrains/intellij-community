@@ -1,19 +1,23 @@
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.debugger.ui.tree.ValueMarkup;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashMap;
 import com.sun.jdi.InconsistentDebugInfoException;
 import com.sun.jdi.InvalidStackFrameException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class NodeDescriptorImpl implements NodeDescriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl");
@@ -30,6 +34,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   private HashMap<Key, Object> myUserData;
 
   private final List<NodeDescriptorImpl> myChildren = new ArrayList<NodeDescriptorImpl>();
+  private static final Key<Map<Long, ValueMarkup>> MARKUP_MAP_KEY = new Key<Map<Long, ValueMarkup>>("ValueMarkupMap");
 
   public String getName() {
     return null;
@@ -131,5 +136,18 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
 
   public void setAncestor(NodeDescriptor oldDescriptor) {
     displayAs(oldDescriptor);
+  }
+
+  @Nullable
+  protected static Map<Long, ValueMarkup> getMarkupMap(final DebugProcess process) {
+    if (process == null) {
+      return null;
+    }
+    Map<Long, ValueMarkup> map = process.getUserData(MARKUP_MAP_KEY);
+    if (map == null) {
+      map = new java.util.HashMap<Long, ValueMarkup>();
+      process.putUserData(MARKUP_MAP_KEY, map);
+    }
+    return map;
   }
 }

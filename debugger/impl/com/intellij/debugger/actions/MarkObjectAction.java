@@ -35,23 +35,28 @@ public class MarkObjectAction extends DebuggerAction {
     
     final ValueDescriptorImpl valueDescriptor = ((ValueDescriptorImpl)descriptor);
     final DebuggerContextImpl debuggerContext = tree.getDebuggerContext();
-    final ValueMarkup markup = valueDescriptor.getMarkup(debuggerContext);
-    if (markup != null) {
-      valueDescriptor.setMarkup(debuggerContext, null);
-    }
-    else {
-      final ValueMarkup valueMarkup = ObjectMarkupPropertiesDialog.chooseMarkup();
-      if (valueMarkup != null) {
-        valueDescriptor.setMarkup(debuggerContext, valueMarkup);
+    final ValueMarkup markup = valueDescriptor.getMarkup(debuggerContext.getDebugProcess());
+    try {
+      if (markup != null) {
+        valueDescriptor.setMarkup(debuggerContext.getDebugProcess(), null);
       }
       else {
-        return;
+        final ValueMarkup valueMarkup = ObjectMarkupPropertiesDialog.chooseMarkup();
+        if (valueMarkup != null) {
+          valueDescriptor.setMarkup(debuggerContext.getDebugProcess(), valueMarkup);
+        }
+        else {
+          return;
+        }
       }
+    }
+    finally {
+      tree.restoreState(node);
     }
     
     final DebuggerSession session = debuggerContext.getDebuggerSession();
     if (session != null) {
-      session.refresh(false);
+      session.refresh(true);
     }
   }
 
@@ -63,7 +68,7 @@ public class MarkObjectAction extends DebuggerAction {
       final NodeDescriptorImpl descriptor = node.getDescriptor();
       enable = (descriptor instanceof ValueDescriptor);
       if (enable) {
-        final ValueMarkup markup = ((ValueDescriptor)descriptor).getMarkup(node.getTree().getDebuggerContext());
+        final ValueMarkup markup = ((ValueDescriptor)descriptor).getMarkup(node.getTree().getDebuggerContext().getDebugProcess());
         if (markup != null) { // already exists
           text = UNMARK_TEXT; 
         }

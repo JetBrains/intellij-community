@@ -21,7 +21,6 @@ import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -29,7 +28,6 @@ import com.intellij.util.concurrency.Semaphore;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor{
@@ -337,14 +335,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     myIsExpandable = false;
   }
 
-  private static final Key<Map<Long, ValueMarkup>> MARKUP_MAP_KEY = new Key<Map<Long, ValueMarkup>>("ValueMarkupMap");
-
   @Nullable
-  public ValueMarkup getMarkup(DebuggerContext context) {
+  public ValueMarkup getMarkup(final DebugProcess debugProcess) {
     final Value value = getValue();
     if (value instanceof ObjectReference) {
       final long id = ((ObjectReference)value).uniqueID();
-      final Map<Long, ValueMarkup> map = getMarkupMap(context);
+      final Map<Long, ValueMarkup> map = getMarkupMap(debugProcess);
       if (map != null) {
         return map.get(id);
       }
@@ -352,27 +348,15 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return null;
   }
 
-  public void setMarkup(DebuggerContext context, @Nullable final ValueMarkup markup) {
+  public void setMarkup(final DebugProcess debugProcess, @Nullable final ValueMarkup markup) {
     final Value value = getValue();
     if (value instanceof ObjectReference) {
-      final Map<Long, ValueMarkup> map = getMarkupMap(context);
+      final Map<Long, ValueMarkup> map = getMarkupMap(debugProcess);
       if (map != null) {
         final long id = ((ObjectReference)value).uniqueID();
         map.put(id, markup);
       }
     }
   }
-  
-  private static @Nullable Map<Long, ValueMarkup> getMarkupMap(DebuggerContext context) {
-    final DebugProcess process = context.getDebugProcess();
-    if (process == null) {
-      return null;
-    }
-    Map<Long, ValueMarkup> map = process.getUserData(MARKUP_MAP_KEY);
-    if (map == null) {
-      map = new HashMap<Long, ValueMarkup>();
-      process.putUserData(MARKUP_MAP_KEY, map);
-    }
-    return map;
-  }
+
 }
