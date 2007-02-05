@@ -19,10 +19,13 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author max
@@ -49,6 +52,9 @@ public class AnnotationUtil {
   public static final String NON_NLS = "org.jetbrains.annotations.NonNls";
   public static final String PROPERTY_KEY = "org.jetbrains.annotations.PropertyKey";
   @NonNls public static final String PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER = "resourceBundle";
+
+  @NonNls public static final String NON_NLS_SIMPLE_NAME = "NonNls";
+  @NonNls public static final String PROPERTY_KEY_SIMPLE_NAME = "PropertyKey";
 
   public final static Set<String> ALL_ANNOTATIONS;
 
@@ -162,5 +168,10 @@ public class AnnotationUtil {
   public static boolean isAnnotatingApplicable(PsiElement elt) {
     if (PsiUtil.getLanguageLevel(elt).compareTo(LanguageLevel.JDK_1_5) < 0) return false;
     return elt.getManager().findClass(NULLABLE, elt.getResolveScope()) != null;
+  }
+
+  public static boolean isJetbrainsAnnotation(@NonNls final String simpleName) {
+    return NOT_NULL_SIMPLE_NAME.equals(simpleName) || NULLABLE_SIMPLE_NAME.equals(simpleName) ||
+           NON_NLS_SIMPLE_NAME.equals(simpleName) || PROPERTY_KEY_SIMPLE_NAME.equals(simpleName);
   }
 }
