@@ -151,10 +151,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myBrowser.addToolbarActions(CommitMessage.getToolbarActions());
 
     myCommitMessageArea = new CommitMessage();
-    setCommitMessage(getInitialMessage(getPaths(), project));
+
+    setCommitMessage(VcsConfiguration.getInstance(project).LAST_COMMIT_MESSAGE);
     myCommitMessageArea.init();
 
     updateComment();
+
+    String messageFromVcs = getInitialMessageFromVcs();
+    if (messageFromVcs != null) {
+      myCommitMessageArea.setText(messageFromVcs);      
+    }
 
     myActionName = VcsBundle.message("commit.dialog.title");
 
@@ -304,7 +310,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                      commitExecutor.getActionText());
 
             for (CheckinHandler handler : myHandlers) {
-              handler.checkinFailed(Arrays.asList(new VcsException[]{new VcsException(e)}));
+              handler.checkinFailed(Arrays.asList(new VcsException(e)));
             }
           }
         }
@@ -317,23 +323,22 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  private static String getInitialMessage(FilePath[] filesToCheckin, Project project) {
+  @Nullable
+  private String getInitialMessageFromVcs() {
+    FilePath[] filesToCheckin = getPaths();
     if (filesToCheckin != null) {
       for (FilePath virtualFile : filesToCheckin) {
-        AbstractVcs activeVcs = VcsUtil.getVcsFor(project, virtualFile);
+        AbstractVcs activeVcs = VcsUtil.getVcsFor(myProject, virtualFile);
         if (activeVcs == null) continue;
         CheckinEnvironment checkinEnvironment = activeVcs.getCheckinEnvironment();
         if (checkinEnvironment != null) {
           String defaultMessage = checkinEnvironment.getDefaultMessageFor(filesToCheckin);
           if (defaultMessage != null) return defaultMessage;
         }
-
       }
     }
 
-    VcsConfiguration config = VcsConfiguration.getInstance(project);
-
-    return config.LAST_COMMIT_MESSAGE;
+    return null;
   }
 
   private void updateComment() {

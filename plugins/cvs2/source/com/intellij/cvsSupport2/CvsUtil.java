@@ -20,6 +20,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.text.SyncDateFormat;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entries;
 import org.netbeans.lib.cvsclient.admin.EntriesHandler;
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -246,6 +247,7 @@ public class CvsUtil {
     return loadFrom(file, CVS_ROOT_FILE, true);
   }
 
+  @Nullable
   private static String loadFrom(File directory, String fileName, boolean trimContent) {
     if (directory == null) return null;
     File file = getFileInTheAdminDir(directory, fileName);
@@ -450,6 +452,7 @@ public class CvsUtil {
 
   }
 
+  @Nullable
   public static String getTemplateFor(FilePath file) {
     return loadFrom(file.isDirectory() ? file.getIOFile().getParentFile() : file.getIOFile(), TEMPLATE, false);
   }
