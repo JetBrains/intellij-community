@@ -125,6 +125,10 @@ public class SvnFileAnnotation implements FileAnnotation {
     return new LineAnnotationAspect[]{REVISION_ASPECT, DATE_ASPECT, AUTHOR_ASPECT};
   }
 
+  public String getToolTip(final int lineNumber) {
+    return "";  // TODO[yole]: return checkin comment
+  }
+
   public String getAnnotatedContent() {
     return myContentBuffer.toString();
   }
