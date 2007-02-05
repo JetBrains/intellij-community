@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class PassExecutorService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PassExecutorService");
   public static int PROCESSORS = /*10;//*/Runtime.getRuntime().availableProcessors();
-  private final ThreadPoolExecutor myExecutorService = new ThreadPoolExecutor(PROCESSORS, Integer.MAX_VALUE, 30, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
+  private final ThreadPoolExecutor myExecutorService = new ThreadPoolExecutor(PROCESSORS, Integer.MAX_VALUE, 30*60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
     public Thread newThread(Runnable r) {
       Thread t = new Thread(r, "Highlighting thread");
       t.setPriority(Thread.MIN_PRIORITY);
