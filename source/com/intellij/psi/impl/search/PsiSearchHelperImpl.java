@@ -365,7 +365,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       public boolean execute(PsiElement element, int offsetInElement) {
         if (element.getNode() != null && !COMMENT_BIT_SET.contains(element.getNode().getElementType())) return true;
         if (element.findReferenceAt(offsetInElement) == null) {
-          results.add(element);
+          synchronized (results) {
+            results.add(element);
+          }
         }
         return true;
       }
@@ -380,7 +382,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
         if (element instanceof PsiLiteralExpression) {
-          results.add((PsiLiteralExpression)element);
+          synchronized (results) {
+            results.add((PsiLiteralExpression)element);
+          }
         }
         return true;
       }
