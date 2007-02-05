@@ -29,7 +29,12 @@ import java.util.*;
  * @author peter
  */
 public class ModelMergerImpl implements ModelMerger {
-  private final SoftArrayHashMap<Object, Object> myMergedMap = new SoftArrayHashMap<Object, Object>(TObjectHashingStrategy.IDENTITY);
+  // [greg] the key should actually be the MergingStrategy class, but this will break the API
+  private final FactoryMap<Class, SoftArrayHashMap<Object, Object>> myMergedMap = new FactoryMap<Class, SoftArrayHashMap<Object, Object>>() {
+    protected SoftArrayHashMap<Object, Object> create(final Class key) {
+      return new SoftArrayHashMap<Object, Object>(TObjectHashingStrategy.IDENTITY);
+    }
+  };
   private final List<Pair<InvocationStrategy,Class>> myInvocationStrategies = new ArrayList<Pair<InvocationStrategy,Class>>();
   private final List<MergingStrategy> myMergingStrategies = new ArrayList<MergingStrategy>();
   private final List<Class> myMergingStrategyClasses = new ArrayList<Class>();
@@ -188,7 +193,7 @@ public class ModelMergerImpl implements ModelMerger {
   }
 
   public <T> T mergeModels(final Class<T> aClass, final T... implementations) {
-    final Object o = myMergedMap.get(implementations);
+    final Object o = myMergedMap.get(aClass).get(implementations);
     if (o != null) {
       return (T)o;
     }
@@ -207,31 +212,24 @@ public class ModelMergerImpl implements ModelMerger {
     commonClasses.add(MERGED_OBJECT_CLASS);
     commonClasses.add(aClass);
     final T t = AdvancedProxy.<T>createProxy(handler, null, commonClasses.toArray(new Class[commonClasses.size()]));
-    myMergedMap.put(implementations, t);
+    myMergedMap.get(aClass).put(implementations, t);
     return t;
   }
 
-  private static void addAllInterfaces(Class aClass, List<Class> list) {
-    final Class[] interfaces = aClass.getInterfaces();
-    list.addAll(Arrays.asList(interfaces));
-    for (Class anInterface : interfaces) {
-      addAllInterfaces(anInterface, list);
-    }
-  }
-
   private static Set<Class> getCommonClasses(final Object... implementations) {
-    final HashSet<Class> set = new HashSet<Class>();
     if (implementations.length > 0) {
-      final ArrayList<Class> list = new ArrayList<Class>();
-      addAllInterfaces(implementations[0].getClass(), list);
-      set.addAll(list);
+      final HashSet<Class> set = new HashSet<Class>();
+      DomUtil.getAllInterfaces(implementations[0].getClass(), set);
       for (int i = 1; i < implementations.length; i++) {
         final ArrayList<Class> list1 = new ArrayList<Class>();
-        addAllInterfaces(implementations[i].getClass(), list1);
+        DomUtil.getAllInterfaces(implementations[i].getClass(), list1);
         set.retainAll(list1);
       }
+      return set;
     }
-    return set;
+    else {
+      return Collections.emptySet();
+    }
   }
 
 

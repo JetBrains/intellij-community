@@ -49,8 +49,10 @@ class ImplementationClassCache extends WeakFactoryMap<Class<? extends DomElement
     if (aClass != null) {
       results.add(aClass);
     }
-    for (final Class aClass1 : ReflectionCache.getInterfaces(concreteInterface)) {
-      findImplementationClassDFS(aClass1, results);
+    else {
+      for (final Class aClass1 : ReflectionCache.getInterfaces(concreteInterface)) {
+        findImplementationClassDFS(aClass1, results);
+      }
     }
   }
 
