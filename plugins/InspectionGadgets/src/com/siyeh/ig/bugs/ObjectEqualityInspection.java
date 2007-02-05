@@ -296,7 +296,9 @@ public class ObjectEqualityInspection extends ExpressionInspection {
                 return false;
             }
             return !(type instanceof PsiPrimitiveType)
-                    && !TypeUtils.isJavaLangString(type);
+                    && !TypeUtils.isJavaLangString(type)
+                    && !TypeUtils.expressionHasTypeOrSubtype("java.lang.Number",
+                    expression);
         }
     }
 }
