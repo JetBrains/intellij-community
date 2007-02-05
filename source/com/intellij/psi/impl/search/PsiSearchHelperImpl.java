@@ -430,24 +430,28 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
     return fileIndex.iterateContent(new ContentIterator() {
-      public boolean processFile(VirtualFile fileOrDir) {
-        if (!fileOrDir.isDirectory() && searchScope.contains(fileOrDir)) {
-          final PsiFile psiFile = myManager.findFile(fileOrDir);
-          if (psiFile instanceof PsiJavaFile) {
-            long fileId = myManager.getRepositoryManager().getFileId(fileOrDir);
-            if (fileId >= 0) {
-              long[] allClasses = myManager.getRepositoryManager().getFileView().getAllClasses(fileId);
-              for (long allClass : allClasses) {
-                PsiClass psiClass = (PsiClass)myManager.getRepositoryElementsManager().findOrCreatePsiElementById(allClass);
-                if (!processor.execute(psiClass)) return false;
+      public boolean processFile(final VirtualFile fileOrDir) {
+        return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          public Boolean compute() {
+            if (!fileOrDir.isDirectory() && searchScope.contains(fileOrDir)) {
+              final PsiFile psiFile = myManager.findFile(fileOrDir);
+              if (psiFile instanceof PsiJavaFile) {
+                long fileId = myManager.getRepositoryManager().getFileId(fileOrDir);
+                if (fileId >= 0) {
+                  long[] allClasses = myManager.getRepositoryManager().getFileView().getAllClasses(fileId);
+                  for (long allClass : allClasses) {
+                    PsiClass psiClass = (PsiClass)myManager.getRepositoryElementsManager().findOrCreatePsiElementById(allClass);
+                    if (!processor.execute(psiClass)) return false;
+                  }
+                }
+                else {
+                  if (!processScopeRootForAllClasses(psiFile, processor)) return false;
+                }
               }
             }
-            else {
-              if (!processScopeRootForAllClasses(psiFile, processor)) return false;
-            }
+            return true;
           }
-        }
-        return true;
+        });
       }
     });
   }
