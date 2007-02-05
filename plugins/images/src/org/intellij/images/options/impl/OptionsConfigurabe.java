@@ -15,8 +15,6 @@
  */
 package org.intellij.images.options.impl;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.BaseConfigurableWithChangeSupport;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -98,8 +96,7 @@ public final class OptionsConfigurabe extends BaseConfigurableWithChangeSupport 
     }
 
   public static void show(Project project) {
-        Application application = ApplicationManager.getApplication();
-        OptionsConfigurabe component = application.getComponent(OptionsConfigurabe.class);
+        OptionsConfigurabe component = ShowSettingsUtil.getInstance().findApplicationConfigurable(OptionsConfigurabe.class);
         ShowSettingsUtil.getInstance().editConfigurable(project, component);
     }
 
