@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class PassExecutorService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PassExecutorService");
   public static int PROCESSORS = /*10;//*/Runtime.getRuntime().availableProcessors();
-  private final ThreadPoolExecutor myExecutorService = new ThreadPoolExecutor(PROCESSORS, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
+  private final ThreadPoolExecutor myExecutorService = new ThreadPoolExecutor(PROCESSORS, Integer.MAX_VALUE, 30, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
     public Thread newThread(Runnable r) {
       Thread t = new Thread(r, "Highlighting thread");
       t.setPriority(Thread.MIN_PRIORITY);
@@ -40,7 +40,21 @@ public abstract class PassExecutorService {
     }
   }){
     public Future<?> submit(final Runnable runnable) {
-      MyFutureTask task = new MyFutureTask(runnable);
+      final Runnable toSubmit = new Runnable() {
+        public void run() {
+          //allow exceptions to manifest themselves
+          try {
+            runnable.run();
+          }
+          catch (CancellationException e) {
+            //ok
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
+        }
+      };
+      FutureTask task = new FutureTask<Void>(toSubmit, null);
       execute(task);
       return task;
     }
@@ -172,27 +186,6 @@ public abstract class PassExecutorService {
     return textEditorPass;
   }
 
-  private static class MyFutureTask extends FutureTask {
-    public MyFutureTask(Runnable runnable) {
-      super(runnable, null);
-    }
-
-    protected void done() {
-      try {
-        //allow exceptions to manifest themselves
-        get();
-      }
-      catch (CancellationException e) {
-        //ok
-      }
-      catch (InterruptedException e) {
-        LOG.error(e);
-      }
-      catch (ExecutionException e) {
-        LOG.error(e.getCause());
-      }
-    }
-  }
   private void submit(ScheduledPass pass) {
     if (!pass.myUpdateProgress.isCanceled()) {
       Future<?> future = myExecutorService.submit(pass);
