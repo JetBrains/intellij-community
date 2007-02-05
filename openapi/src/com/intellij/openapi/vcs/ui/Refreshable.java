@@ -31,7 +31,7 @@ public interface Refreshable {
    *
    * @see com.intellij.openapi.actionSystem.DataContext#getData(String)
    */
-  @NonNls String PANEL = "Panel";
+  @NonNls @Deprecated String PANEL = "Panel";
   DataKey<Refreshable> PANEL_KEY = DataKey.create(PANEL);
 
   void refresh();

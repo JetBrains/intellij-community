@@ -148,6 +148,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myBrowser);
     myBrowser.addToolbarAction(editSourceAction);
 
+    myBrowser.addToolbarAction(ActionManager.getInstance().getAction("Vcs.CheckinProjectToolbar"));
     myBrowser.addToolbarActions(CommitMessage.getToolbarActions());
 
     myCommitMessageArea = new CommitMessage();
@@ -600,6 +601,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   public void refresh() {
+    ChangeListManager.getInstance(myProject).ensureUpToDate(false);
+    myBrowser.rebuildList();
     for (RefreshableOnComponent component : myAdditionalComponents) {
       component.refresh();
     }
