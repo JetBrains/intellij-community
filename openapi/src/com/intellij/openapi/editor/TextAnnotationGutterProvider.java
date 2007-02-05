@@ -35,6 +35,9 @@ public interface TextAnnotationGutterProvider {
   @Nullable
   String getLineText(int line, Editor editor);
 
+  @Nullable
+  String getToolTip(int line, Editor editor);
+
   /**
    * Called when the annotations are removed from the editor gutter.
    *

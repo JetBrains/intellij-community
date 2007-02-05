@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
@@ -73,6 +74,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private static final int GAP_BETWEEN_ANNOTATIONS = 6;
   private Color myBackgroundColor = null;
   private GutterDraggableObject myGutterDraggableObject;
+  private String myLastGutterTooltip = null;
 
 
   public EditorGutterComponentImpl(EditorImpl editor) {
@@ -903,6 +905,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   public void mouseMoved(final MouseEvent e) {
     String tooltip = null;
     GutterIconRenderer renderer = getGutterRenderer(e);
+    TooltipController controller = HintManager.getInstance().getTooltipController();
     if (renderer != null) {
       tooltip = renderer.getTooltipText();
       if (renderer.isNavigateAction()) {
@@ -917,16 +920,23 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
       else {
         TextAnnotationGutterProvider provider = getProviderAtPoint(e.getPoint());
-        if (provider != null && myProviderToListener.containsKey(provider)) {
-          final EditorGutterAction action = myProviderToListener.get(provider);
-          if (action != null) {
-            setCursor(action.getCursor(getLineNumAtPoint(e.getPoint())));
+        if (provider != null) {
+          final int line = getLineNumAtPoint(e.getPoint());
+          tooltip = provider.getToolTip(line, myEditor);
+          if (!Comparing.equal(tooltip, myLastGutterTooltip)) {
+            controller.cancelTooltip(GUTTER_TOOLTIP_GROUP);
+            myLastGutterTooltip = tooltip;
+          }
+          if (myProviderToListener.containsKey(provider)) {
+            final EditorGutterAction action = myProviderToListener.get(provider);
+            if (action != null) {
+              setCursor(action.getCursor(line));
+            }
           }
         }
       }
     }
 
-    TooltipController controller = HintManager.getInstance().getTooltipController();
     if (tooltip != null && tooltip.length() != 0) {
       controller.showTooltipByMouseMove(myEditor, e, new LineTooltipRenderer(tooltip), false, GUTTER_TOOLTIP_GROUP);
     }

@@ -41,6 +41,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.VcsBundle;
+import org.jetbrains.annotations.Nullable;
 
 public class Annotater {
 
@@ -72,6 +73,11 @@ public class Annotater {
       final TextAnnotationGutterProvider provider = new TextAnnotationGutterProvider() {
         public String getLineText(int line, Editor editor) {
           return aspect.getValue(line);
+        }
+
+        @Nullable
+        public String getToolTip(final int line, final Editor editor) {
+          return myFileAnnotation.getToolTip(line);
         }
 
         public void gutterClosed() {

@@ -20,5 +20,6 @@ public interface FileAnnotation {
   void removeListener(AnnotationListener listener);
   void dispose();
   LineAnnotationAspect[] getAspects();
+  String getToolTip(int lineNumber);
   String getAnnotatedContent();
 }

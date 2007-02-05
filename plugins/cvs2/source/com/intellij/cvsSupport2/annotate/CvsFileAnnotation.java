@@ -128,6 +128,10 @@ public class CvsFileAnnotation implements FileAnnotation{
     return new LineAnnotationAspect[]{REVISION, DATE, USER};
   }
 
+  public String getToolTip(final int lineNumber) {
+    return "";  // TODO[yole]: return checkin comment
+  }
+
   public String getAnnotatedContent() {
     return myContent;
   }
