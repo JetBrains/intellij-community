@@ -1,8 +1,10 @@
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.ValueMarkup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
@@ -45,14 +47,6 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     DebuggerTreeNodeImpl node = (DebuggerTreeNodeImpl) value;
-
-    final NodeDescriptorImpl descriptor = node.getDescriptor();
-    if (descriptor instanceof ValueDescriptorImpl) {
-      final ValueMarkup markup = ((ValueDescriptorImpl)descriptor).getMarkup(node.getTree().getDebuggerContext());
-      if (markup != null) {
-        append(markup.getText(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
-      }
-    }
 
     if(node.getText() != null) {
       node.getText().appendToComponent(this);
@@ -108,15 +102,16 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     return nodeIcon;
   }
 
-  public static SimpleColoredText getDescriptorText(NodeDescriptorImpl descriptor, boolean multiline) {
-    return getDescriptorText(descriptor, multiline, true);
+  public static SimpleColoredText getDescriptorText(final DebuggerContextImpl debuggerContext, NodeDescriptorImpl descriptor, boolean multiline) {
+    return getDescriptorText(debuggerContext, descriptor, multiline, true);
   }
 
-  public static SimpleColoredText getDescriptorTitle(NodeDescriptorImpl descriptor) {
-    return getDescriptorText(descriptor, false, false);
+  public static SimpleColoredText getDescriptorTitle(final DebuggerContextImpl debuggerContext, NodeDescriptorImpl descriptor) {
+    return getDescriptorText(debuggerContext, descriptor, false, false);
   }
 
-  private static SimpleColoredText getDescriptorText(NodeDescriptorImpl descriptor, boolean multiline, boolean appendValue) {
+  private static SimpleColoredText getDescriptorText(final DebuggerContextImpl debuggerContext, final NodeDescriptorImpl descriptor, boolean multiline,
+                                                     boolean appendValue) {
     SimpleColoredText descriptorText = new SimpleColoredText();
 
     String text;
@@ -134,6 +129,13 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     if(text.equals(NodeDescriptorImpl.EVALUATING_MESSAGE)) {
       descriptorText.append(NodeDescriptorImpl.EVALUATING_MESSAGE, EVALUATING_HIGHLIGHT_ATTR);
       return descriptorText;
+    }
+
+    if (descriptor instanceof ValueDescriptor) {
+      final ValueMarkup markup = ((ValueDescriptor)descriptor).getMarkup(debuggerContext);
+      if (markup != null) {
+        descriptorText.append(markup.getText(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
+      }
     }
 
     String[] strings = breakString(text, nodeName);

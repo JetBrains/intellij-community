@@ -42,12 +42,11 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
   }
 
   public DebuggerTree getTree() {
-    return (DebuggerTree) getTreeBuilder().getUserObject();
+    return myTree;
   }
 
   public String toString() {
-    NodeDescriptorImpl descriptor = getDescriptor();
-    return descriptor != null? descriptor.toString() : "";
+    return myText != null? myText.toString() : "";
   }
 
   public NodeDescriptorImpl getDescriptor() {
@@ -66,7 +65,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
   private void updateCaches() {
     final NodeDescriptorImpl descriptor = getDescriptor();
     myIcon = DebuggerTreeRenderer.getDescriptorIcon(descriptor);
-    myText = DebuggerTreeRenderer.getDescriptorText(descriptor, false);
+    myText = DebuggerTreeRenderer.getDescriptorText(getTree().getDebuggerContext(), descriptor, false);
   }
 
   public Icon getIcon() {
@@ -93,7 +92,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
       getTree().saveState(this);
 
       myIcon = DebuggerTreeRenderer.getDescriptorIcon(MessageDescriptor.EVALUATING);
-      myText = DebuggerTreeRenderer.getDescriptorText(MessageDescriptor.EVALUATING, false);
+      myText = DebuggerTreeRenderer.getDescriptorText(context, MessageDescriptor.EVALUATING, false);
 
       context.getDebugProcess().getManagerThread().invoke(new DebuggerContextCommandImpl(context) {
         public void threadAction() {

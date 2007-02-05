@@ -310,7 +310,7 @@ public class SetValueAction extends DebuggerAction {
     editorPanel.setLayout(new BoxLayout(editorPanel, BoxLayout.X_AXIS));
     SimpleColoredComponent label = new SimpleColoredComponent();
     label.setIcon(node.getIcon());
-    DebuggerTreeRenderer.getDescriptorTitle(node.getDescriptor()).appendToComponent(label);
+    DebuggerTreeRenderer.getDescriptorTitle(debuggerContext, node.getDescriptor()).appendToComponent(label);
     editorPanel.add(label);
 
     final DebuggerExpressionComboBox comboBox = new DebuggerExpressionComboBox(

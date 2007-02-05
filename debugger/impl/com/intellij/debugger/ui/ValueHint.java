@@ -178,7 +178,7 @@ public class ValueHint {
                 public void labelChanged() {
                   if(myCurrentRange != null) {
                     if( myType != MOUSE_OVER_HINT || descriptor.isValueValid()) {
-                      final SimpleColoredText simpleColoredText = DebuggerTreeRenderer.getDescriptorText(descriptor, true);
+                      final SimpleColoredText simpleColoredText = DebuggerTreeRenderer.getDescriptorText(debuggerContext, descriptor, true);
                       if (isActiveTootlipApplicable(value)){
                         simpleColoredText.append(" (" + DebuggerBundle.message("active.tooltip.suggestion") + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
                       }

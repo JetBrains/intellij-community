@@ -344,7 +344,10 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     final Value value = getValue();
     if (value instanceof ObjectReference) {
       final long id = ((ObjectReference)value).uniqueID();
-      return getMarkupMap(context).get(id);
+      final Map<Long, ValueMarkup> map = getMarkupMap(context);
+      if (map != null) {
+        return map.get(id);
+      }
     }
     return null;
   }
@@ -352,13 +355,19 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public void setMarkup(DebuggerContext context, @Nullable final ValueMarkup markup) {
     final Value value = getValue();
     if (value instanceof ObjectReference) {
-      final long id = ((ObjectReference)value).uniqueID();
-      getMarkupMap(context).put(id, markup);
+      final Map<Long, ValueMarkup> map = getMarkupMap(context);
+      if (map != null) {
+        final long id = ((ObjectReference)value).uniqueID();
+        map.put(id, markup);
+      }
     }
   }
   
-  private static Map<Long, ValueMarkup> getMarkupMap(DebuggerContext context) {
+  private static @Nullable Map<Long, ValueMarkup> getMarkupMap(DebuggerContext context) {
     final DebugProcess process = context.getDebugProcess();
+    if (process == null) {
+      return null;
+    }
     Map<Long, ValueMarkup> map = process.getUserData(MARKUP_MAP_KEY);
     if (map == null) {
       map = new HashMap<Long, ValueMarkup>();
