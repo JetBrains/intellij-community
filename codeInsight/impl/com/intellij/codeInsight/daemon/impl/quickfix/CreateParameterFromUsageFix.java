@@ -19,10 +19,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mike
  */
-public class CreateParameterFromUsageAction extends CreateVarFromUsageFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateParameterFromUsageAction");
+public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateParameterFromUsageFix");
 
-  public CreateParameterFromUsageAction(PsiReferenceExpression referenceElement) {
+  public CreateParameterFromUsageFix(PsiReferenceExpression referenceElement) {
     super(referenceElement);
   }
 

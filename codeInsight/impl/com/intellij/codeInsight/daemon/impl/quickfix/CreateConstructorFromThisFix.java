@@ -10,9 +10,9 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.PsiTreeUtil;
 
-public class CreateConstructorFromThisAction extends CreateConstructorFromThisOrSuperFix {
+public class CreateConstructorFromThisFix extends CreateConstructorFromThisOrSuperFix {
 
-  public CreateConstructorFromThisAction(PsiMethodCallExpression methodCall) {
+  public CreateConstructorFromThisFix(PsiMethodCallExpression methodCall) {
     super(methodCall);
   }
 

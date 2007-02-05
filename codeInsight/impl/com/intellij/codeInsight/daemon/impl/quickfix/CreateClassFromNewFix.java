@@ -18,11 +18,11 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author mike
  */
-public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateClassFromNewAction");
+public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateClassFromNewFix");
   private final SmartPsiElementPointer myNewExpression;
 
-  public CreateClassFromNewAction(PsiNewExpression newExpression) {
+  public CreateClassFromNewFix(PsiNewExpression newExpression) {
     myNewExpression = SmartPointerManager.getInstance(newExpression.getProject()).createSmartPsiElementPointer(newExpression);
   }
 

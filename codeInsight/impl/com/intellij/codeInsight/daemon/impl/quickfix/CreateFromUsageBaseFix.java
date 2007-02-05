@@ -31,10 +31,10 @@ import java.util.List;
 /**
  * @author Mike
  */
-public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseAction");
+public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix");
 
-  protected CreateFromUsageBaseAction() {
+  protected CreateFromUsageBaseFix() {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

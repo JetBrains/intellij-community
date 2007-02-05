@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author mike
  */
-public class CreateConstructorFromCallFix extends CreateFromUsageBaseAction {
+public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorFromCallFix");
 
   private final PsiConstructorCall myConstructorCall;
@@ -38,7 +38,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseAction {
       final PsiFile file = targetClass.getContainingFile();
       TemplateBuilder templateBuilder = new TemplateBuilder(constructor);
       CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, myConstructorCall.getArgumentList(), getTargetSubstitutor(myConstructorCall));
-      CreateClassFromNewAction.setupSuperCall(targetClass, constructor, templateBuilder);
+      CreateClassFromNewFix.setupSuperCall(targetClass, constructor, templateBuilder);
 
       constructor = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(constructor);
       Template template = templateBuilder.buildTemplate();

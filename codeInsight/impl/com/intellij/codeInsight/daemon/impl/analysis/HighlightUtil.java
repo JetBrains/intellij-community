@@ -1840,14 +1840,14 @@ public class HighlightUtil {
         if (ref instanceof PsiReferenceExpression) {
           TextRange fixRange = HighlightMethodUtil.getFixRange(ref);
           PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
-          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateEnumConstantFromUsageAction(refExpr), null, null);
-          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateConstantFieldFromUsageAction(refExpr), null, null);
-          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateFieldFromUsageAction(refExpr), null, null);
+          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateEnumConstantFromUsageFix(refExpr), null, null);
+          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateConstantFieldFromUsageFix(refExpr), null, null);
+          QuickFixAction.registerQuickFixAction(info, fixRange, new CreateFieldFromUsageFix(refExpr), null, null);
           QuickFixAction.registerQuickFixAction(info, new RenameWrongRefFix(refExpr));
           if (!ref.isQualified()) {
             QuickFixAction.registerQuickFixAction(info, fixRange, new BringVariableIntoScopeFix(refExpr), null, null);
-            QuickFixAction.registerQuickFixAction(info, fixRange, new CreateLocalFromUsageAction(refExpr), null, null);
-            QuickFixAction.registerQuickFixAction(info, fixRange, new CreateParameterFromUsageAction(refExpr), null, null);
+            QuickFixAction.registerQuickFixAction(info, fixRange, new CreateLocalFromUsageFix(refExpr), null, null);
+            QuickFixAction.registerQuickFixAction(info, fixRange, new CreateParameterFromUsageFix(refExpr), null, null);
           }
         }
         QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));
@@ -1856,7 +1856,7 @@ public class HighlightUtil {
         QuickFixAction.registerQuickFixAction(info, new CreateInnerClassFromUsageFix(ref, CreateClassKind.CLASS));
         PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
         if (parent instanceof PsiNewExpression) {
-          QuickFixAction.registerQuickFixAction(info, new CreateClassFromNewAction((PsiNewExpression)parent));
+          QuickFixAction.registerQuickFixAction(info, new CreateClassFromNewFix((PsiNewExpression)parent));
         }
         return info;
       }

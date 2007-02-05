@@ -12,7 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
 
-public abstract class CreateVarFromUsageFix extends CreateFromUsageBaseAction {
+public abstract class CreateVarFromUsageFix extends CreateFromUsageBaseFix {
   protected final PsiReferenceExpression myReferenceExpression;
 
   public CreateVarFromUsageFix(PsiReferenceExpression referenceElement) {

@@ -6,7 +6,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.psi.PsiReferenceExpression;
 
-public class CreateConstantFieldFromUsageAction extends CreateFieldFromUsageAction {
+public class CreateConstantFieldFromUsageFix extends CreateFieldFromUsageFix {
   protected boolean createConstantField() {
     return true;
   }
@@ -17,7 +17,7 @@ public class CreateConstantFieldFromUsageAction extends CreateFieldFromUsageActi
     return refName.toUpperCase().equals(refName);
   }
 
-  public CreateConstantFieldFromUsageAction(PsiReferenceExpression referenceElement) {
+  public CreateConstantFieldFromUsageFix(PsiReferenceExpression referenceElement) {
     super(referenceElement);
   }
 

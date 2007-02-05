@@ -16,10 +16,10 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author Mike
  */
-public class CreateFieldFromUsageAction extends CreateVarFromUsageFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageAction");
+public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageFix");
 
-  public CreateFieldFromUsageAction(PsiReferenceExpression referenceElement) {
+  public CreateFieldFromUsageFix(PsiReferenceExpression referenceElement) {
     super(referenceElement);
   }
 

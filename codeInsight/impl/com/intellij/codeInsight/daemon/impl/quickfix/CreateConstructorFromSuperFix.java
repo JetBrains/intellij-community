@@ -8,9 +8,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class CreateConstructorFromSuperAction extends CreateConstructorFromThisOrSuperFix {
+public class CreateConstructorFromSuperFix extends CreateConstructorFromThisOrSuperFix {
 
-  public CreateConstructorFromSuperAction(PsiMethodCallExpression methodCall) {
+  public CreateConstructorFromSuperFix(PsiMethodCallExpression methodCall) {
     super(methodCall);
   }
 

@@ -61,6 +61,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new THashMap<String, Pair<PsiImportStaticReferenceElement, PsiField>>();
   private final AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl();
 
+  @SuppressWarnings({"UnusedDeclaration"}) //in plugin.xml
   public HighlightVisitorImpl(PsiManager manager) {
     this(manager.getResolveHelper());
   }
@@ -691,7 +692,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void visitMethodCallExpression(PsiMethodCallExpression expression) {
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumSuperConstructorCall(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkSuperQualifierType(expression));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodCall(expression, myResolveHelper));
 
     if (!myHolder.hasErrorResults()) visitExpression(expression);
   }
@@ -863,6 +863,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     visitReferenceElement(expression);
     if (!myHolder.hasErrorResults()) {
       visitExpression(expression);
+      if (myHolder.hasErrorResults()) return;
     }
     JavaResolveResult result = expression.advancedResolve(false);
     PsiElement resolved = result.getElement();
@@ -879,11 +880,13 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         if (!myHolder.hasErrorResults()) myHolder.add(HighlightControlFlowUtil.checkFinalVariableInitalizedInLoop(expression, resolved));
       }
     }
-    ///
-    //else if (expression.getParent() instanceof PsiMethodCallExpression) {
-    //  myHolder.add(HighlightMethodUtil.checkMethodCall((PsiMethodCallExpression)expression.getParent(), myResolveHelper));
-    //}
-    ///
+    else {
+      PsiElement parent = expression.getParent();
+      if (parent instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)parent).getMethodExpression() == expression) {
+        myHolder.add(HighlightMethodUtil.checkMethodCall((PsiMethodCallExpression)parent, myResolveHelper));
+      }
+    }
+
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkExpressionRequired(expression));
     if (!myHolder.hasErrorResults() && resolved instanceof PsiField) {
       myHolder.add(HighlightUtil.checkIllegalForwardReferenceToField(expression, (PsiField)resolved));

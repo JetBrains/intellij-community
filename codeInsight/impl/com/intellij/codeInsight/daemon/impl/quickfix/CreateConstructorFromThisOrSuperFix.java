@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NonNls;
  * Time: 6:41:19 PM
  * To change this template use Options | File Templates.
  */
-public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsageBaseAction {
+public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsageBaseFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorFromThisOrSuperFix");
 
   protected PsiMethodCallExpression myMethodCall;
@@ -42,7 +42,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
 
     PsiMethod method = PsiTreeUtil.getParentOfType(myMethodCall, PsiMethod.class);
     if (method == null || !method.isConstructor()) return false;
-
+    if (CreateMethodFromUsageFix.hasErrorsInArgumentList(myMethodCall)) return false;
     PsiClass[] targetClasses = getTargetClasses(myMethodCall);
     LOG.assertTrue(targetClasses.length == 1);
 

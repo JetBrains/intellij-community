@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * @author ven
  */
-public class CreatePropertyFromUsageFix extends CreateFromUsageBaseAction {
+public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreatePropertyFromUsageFix");
   private static final @NonNls String FIELD_VARIABLE = "FIELD_NAME_VARIABLE";
   private static final @NonNls String TYPE_VARIABLE = "FIELD_TYPE_VARIABLE";
@@ -54,6 +54,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseAction {
   }
 
   protected boolean isAvailableImpl(int offset) {
+    if (CreateMethodFromUsageFix.hasErrorsInArgumentList(myMethodCall)) return false;
     PsiReferenceExpression ref = myMethodCall.getMethodExpression();
     String methodName = myMethodCall.getMethodExpression().getReferenceName();
     String propertyName = PropertyUtil.getPropertyName(methodName);
@@ -63,10 +64,12 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseAction {
     if (methodName.startsWith(GET_PREFIX) || methodName.startsWith(IS_PREFIX)) {
       if (myMethodCall.getArgumentList().getExpressions().length != 0) return false;
       getterOrSetter = QuickFixBundle.message("create.getter");
-    } else if (methodName.startsWith(SET_PREFIX)) {
+    }
+    else if (methodName.startsWith(SET_PREFIX)) {
       if (myMethodCall.getArgumentList().getExpressions().length != 1) return false;
       getterOrSetter = QuickFixBundle.message("create.setter");
-    } else {
+    }
+    else {
       LOG.error("Internal error in create property intention");
     }
 

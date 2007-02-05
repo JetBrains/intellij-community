@@ -18,13 +18,13 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author Mike
  */
-public class CreateLocalFromUsageAction extends CreateVarFromUsageFix {
+public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
-  public CreateLocalFromUsageAction(PsiReferenceExpression referenceExpression) {
+  public CreateLocalFromUsageFix(PsiReferenceExpression referenceExpression) {
     super(referenceExpression);
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalFromUsageAction");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalFromUsageFix");
 
   public String getText(String varName) {
     return QuickFixBundle.message("create.local.from.usage.text", varName);

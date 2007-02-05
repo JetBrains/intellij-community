@@ -59,7 +59,8 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     }
 
     GeneralHighlightingPass action1 = new GeneralHighlightingPass(getProject(), getFile(), document, 0, getFile().getTextLength(), true);
-    action1.doCollectInformation(new MockProgressIndicator());
+    action1.collectInformation(new MockProgressIndicator());
+    action1.applyInformationToEditor();
     Collection<HighlightInfo> highlights1 = action1.getHighlights();
 
     PostHighlightingPass action2 = new PostHighlightingPass(getProject(), getFile(), getEditor(), 0, getFile().getTextLength());

@@ -3,9 +3,12 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -21,12 +24,12 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Mike
  */
-public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageAction");
+public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageFix");
 
   private SmartPsiElementPointer myMethodCall;
 
-  public CreateMethodFromUsageAction(PsiMethodCallExpression methodCall) {
+  public CreateMethodFromUsageFix(PsiMethodCallExpression methodCall) {
     myMethodCall = SmartPointerManager.getInstance(methodCall.getProject()).createSmartPsiElementPointer(methodCall);
   }
 
@@ -37,9 +40,23 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
     String name = ref.getReferenceName();
 
     if (name == null || !ref.getManager().getNameHelper().isIdentifier(name)) return false;
-
+    if (hasErrorsInArgumentList(call)) return false;
     setText(QuickFixBundle.message("create.method.from.usage.text", name));
     return true;
+  }
+
+  static boolean hasErrorsInArgumentList(final PsiMethodCallExpression call) {
+    Project project = call.getProject();
+    Document document = PsiDocumentManager.getInstance(project).getDocument(call.getContainingFile());
+    if (document == null) return true;
+
+    PsiExpressionList argumentList = call.getArgumentList();
+    HighlightInfo[] errorsInArgList = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.ERROR, project,
+                                                                           //strictly inside arg list
+                                                                      argumentList.getTextRange().getStartOffset()+1,
+                                                                      argumentList.getTextRange().getEndOffset()-1);
+    if (errorsInArgList.length != 0) return true;
+    return false;
   }
 
   protected PsiElement getElement() {

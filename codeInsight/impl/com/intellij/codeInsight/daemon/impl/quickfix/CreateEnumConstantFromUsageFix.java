@@ -11,9 +11,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class CreateEnumConstantFromUsageAction extends CreateVarFromUsageFix {
-  private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.quickfix.CreateEnumConstantFromUsageAction");
-  public CreateEnumConstantFromUsageAction(final PsiReferenceExpression referenceElement) {
+public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix {
+  private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.quickfix.CreateEnumConstantFromUsageFix");
+  public CreateEnumConstantFromUsageFix(final PsiReferenceExpression referenceElement) {
     super(referenceElement);
   }
 

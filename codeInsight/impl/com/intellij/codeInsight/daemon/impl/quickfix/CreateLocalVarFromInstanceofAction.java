@@ -147,11 +147,11 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
 
       Template template = generateTemplate(project, localVariable.getInitializer(), localVariable.getType());
 
-      Editor newEditor = CreateFromUsageBaseAction.positionCursor(project, file, localVariable.getNameIdentifier());
+      Editor newEditor = CreateFromUsageBaseFix.positionCursor(project, file, localVariable.getNameIdentifier());
       TextRange range = localVariable.getNameIdentifier().getTextRange();
       newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
 
-      CreateFromUsageBaseAction.startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
+      CreateFromUsageBaseFix.startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
         public void templateFinished(Template template) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
