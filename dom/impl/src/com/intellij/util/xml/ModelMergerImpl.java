@@ -14,6 +14,7 @@ import com.intellij.util.xml.impl.AdvancedProxy;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NonNls;
@@ -208,7 +209,7 @@ public class ModelMergerImpl implements ModelMerger {
 
 
   private <T> T _mergeModels(final Class<? super T> aClass, final MergingInvocationHandler<T> handler, final T... implementations) {
-    final Set<Class> commonClasses = getCommonClasses(implementations);
+    final Set<Class> commonClasses = getCommonClasses(new THashSet<Class>(), implementations);
     commonClasses.add(MERGED_OBJECT_CLASS);
     commonClasses.add(aClass);
     final T t = AdvancedProxy.<T>createProxy(handler, null, commonClasses.toArray(new Class[commonClasses.size()]));
@@ -216,20 +217,16 @@ public class ModelMergerImpl implements ModelMerger {
     return t;
   }
 
-  private static Set<Class> getCommonClasses(final Object... implementations) {
+  private static <T extends Collection<Class>> T getCommonClasses(final T result, final Object... implementations) {
     if (implementations.length > 0) {
-      final HashSet<Class> set = new HashSet<Class>();
-      DomUtil.getAllInterfaces(implementations[0].getClass(), set);
+      DomUtil.getAllInterfaces(implementations[0].getClass(), result);
       for (int i = 1; i < implementations.length; i++) {
         final ArrayList<Class> list1 = new ArrayList<Class>();
         DomUtil.getAllInterfaces(implementations[i].getClass(), list1);
-        set.retainAll(list1);
+        result.retainAll(list1);
       }
-      return set;
     }
-    else {
-      return Collections.emptySet();
-    }
+    return result;
   }
 
 
