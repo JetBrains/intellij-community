@@ -173,7 +173,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
 
   }
 
-  private List<VcsFileRevision> createRevisions(final FilePath filePath) {
+  public List<VcsFileRevision> createRevisions(final FilePath filePath) {
     final ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
     final LocalPathIndifferentLogOperation logOperation =
       new LocalPathIndifferentLogOperation(filePath.getIOFile());

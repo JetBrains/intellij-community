@@ -31,19 +31,25 @@
  */
 package com.intellij.cvsSupport2.annotate;
 
-import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.AnnotateOperation;
+import com.intellij.CvsBundle;
+import com.intellij.peer.PeerFactory;
+import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
+import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.AnnotateOperation;
+import com.intellij.cvsSupport2.history.CvsHistoryProvider;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.annotate.AnnotationProvider;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
+import java.util.List;
 
 public class CvsAnnotationProvider implements AnnotationProvider{
   private final Project myProject;
@@ -55,10 +61,13 @@ public class CvsAnnotationProvider implements AnnotationProvider{
   public FileAnnotation annotate(VirtualFile file) throws VcsException {
     final AnnotateOperation operation = AnnotateOperation.createForFile(new File(file.getPath()));
     final CvsOperationExecutor executor = new CvsOperationExecutor(true, myProject, ModalityState.defaultModalityState());
-    executor.performActionSync(new CommandCvsHandler(com.intellij.CvsBundle.getAnnotateOperationName(), operation),
+    executor.performActionSync(new CommandCvsHandler(CvsBundle.getAnnotateOperationName(), operation),
                                CvsOperationExecutorCallback.EMPTY);
     if (executor.getResult().hasNoErrors()) {
-      return new CvsFileAnnotation(operation.getContent(), operation.getLineAnnotations(), file);
+      final CvsHistoryProvider historyProvider = (CvsHistoryProvider) CvsVcs2.getInstance(myProject).getVcsHistoryProvider();
+      final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file);
+      final List<VcsFileRevision> revisions = historyProvider.createRevisions(filePath);
+      return new CvsFileAnnotation(operation.getContent(), operation.getLineAnnotations(), revisions, file);
     } else {
       throw executor.getFirstError();
     }

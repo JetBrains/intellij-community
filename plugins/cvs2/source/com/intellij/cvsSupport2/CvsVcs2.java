@@ -2,6 +2,7 @@ package com.intellij.cvsSupport2;
 
 
 import com.intellij.CvsBundle;
+import com.intellij.peer.PeerFactory;
 import com.intellij.cvsSupport2.annotate.CvsAnnotationProvider;
 import com.intellij.cvsSupport2.annotate.CvsFileAnnotation;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
@@ -42,6 +43,7 @@ import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,6 +51,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * This class intended to be an adapter of  AbstractVcs and ProjectComponent interfaces for CVS
@@ -349,7 +352,10 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
                                CvsOperationExecutorCallback.EMPTY);
 
     if (executor.getResult().hasNoErrors()) {
-      return new CvsFileAnnotation(annotateOperation.getContent(), annotateOperation.getLineAnnotations(), cvsVirtualFile);
+      final CvsHistoryProvider historyProvider =  (CvsHistoryProvider)getVcsHistoryProvider();
+      final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(cvsVirtualFile);
+      final List<VcsFileRevision> revisions = historyProvider.createRevisions(filePath);
+      return new CvsFileAnnotation(annotateOperation.getContent(), annotateOperation.getLineAnnotations(), revisions, cvsVirtualFile);
     }
     else {
       throw executor.getResult().composeError();

@@ -37,15 +37,19 @@ import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
 import com.intellij.openapi.vcs.annotate.AnnotationListener;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 public class CvsFileAnnotation implements FileAnnotation{
   private final String myContent;
   private final Annotation[] myAnnotations;
   private final CvsEntriesListener myCvsEntriesListener;
+  private final Map<String, String> myRevisionComments = new HashMap<String, String>();
   private final VirtualFile myFile;
   private final List<AnnotationListener> myListeners = new ArrayList<AnnotationListener>();
 
@@ -83,10 +87,13 @@ public class CvsFileAnnotation implements FileAnnotation{
   };
 
 
-  public CvsFileAnnotation(final String content, final Annotation[] annotations, VirtualFile file) {
+  public CvsFileAnnotation(final String content, final Annotation[] annotations, final List<VcsFileRevision> revisions, VirtualFile file) {
     myContent = content;
     myAnnotations = annotations;
     myFile = file;
+    for(VcsFileRevision revision: revisions) {
+      myRevisionComments.put(revision.getRevisionNumber().toString(), revision.getCommitMessage());
+    }
 
     myCvsEntriesListener = new CvsEntriesListener() {
       public void entriesChanged(VirtualFile parent) {
@@ -129,7 +136,15 @@ public class CvsFileAnnotation implements FileAnnotation{
   }
 
   public String getToolTip(final int lineNumber) {
-    return "";  // TODO[yole]: return checkin comment
+    if (lineNumber < 0 || lineNumber >= myAnnotations.length)  {
+      return "";
+    }
+    final String revision = myAnnotations[lineNumber].getRevision();
+    final String comment = myRevisionComments.get(revision);
+    if (comment == null) {
+      return "";
+    }
+    return "Revision " + revision + ": " + comment;
   }
 
   public String getAnnotatedContent() {
