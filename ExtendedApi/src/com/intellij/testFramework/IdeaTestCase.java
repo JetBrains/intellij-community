@@ -44,8 +44,6 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.InvocationEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -525,23 +523,6 @@ import java.util.HashSet;
     }
     else {
       return null;
-    }
-  }
-
-  public static void dispatchAllInvocationEvents() {
-    final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    while (true) {
-      AWTEvent event = eventQueue.peekEvent();
-      if (event == null) break;
-      try {
-        AWTEvent event1 = eventQueue.getNextEvent();
-        if (event1 instanceof InvocationEvent) {
-          ((InvocationEvent)event1).dispatch();
-        }
-      }
-      catch (Exception e) {
-        LOG.error(e); //?
-      }
     }
   }
 

@@ -21,6 +21,7 @@ import com.intellij.usages.UsageViewPresentation;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
+import javax.swing.*;
 
 public class UsageViewTreeModelBuilder extends DefaultTreeModel {
   private final RootGroupNode myRootNode;
@@ -97,8 +98,12 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
       super(null, 0, UsageViewTreeModelBuilder.this);
     }
 
-    public void addNode(DefaultMutableTreeNode node) {
-      myTreeModel.insertNodeInto(node, this, getNodeInsertionIndex(node));
+    public void addNode(final DefaultMutableTreeNode node) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          myTreeModel.insertNodeInto(node, RootGroupNode.this, getNodeInsertionIndex(node));
+        }
+      });
     }
   }
 }

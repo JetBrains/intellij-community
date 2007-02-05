@@ -31,7 +31,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
-import com.intellij.util.text.CharArrayUtil;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -77,7 +76,7 @@ public class ChunkExtractor {
   }
 
   private static int getStartOffset(final List<RangeMarker> rangeMarkers) {
-    LOG.assertTrue(rangeMarkers.size() > 0);
+    LOG.assertTrue(!rangeMarkers.isEmpty());
     int minStart = Integer.MAX_VALUE;
     for (RangeMarker rangeMarker : rangeMarkers) {
       final int startOffset = rangeMarker.getStartOffset();
@@ -202,7 +201,7 @@ public class ChunkExtractor {
   }
 
   private void appendPrefix(List<TextChunk> result) {
-    StringBuffer buffer = new StringBuffer("(");
+    StringBuilder buffer = new StringBuilder("(");
     buffer.append(myLineNumber + 1);
     buffer.append(", ");
     buffer.append(myColumnNumber + 1);

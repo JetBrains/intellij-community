@@ -21,6 +21,7 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.rules.MergeableUsage;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -35,7 +36,7 @@ class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
   private final int myRuleIndex;
   private final Map<UsageGroup, GroupNode> mySubgroupNodes = new HashMap<UsageGroup, GroupNode>();
   private final List<UsageNode> myUsageNodes = new ArrayList<UsageNode>();
-  private int myRecursiveUsageCount = 0;
+  private volatile int myRecursiveUsageCount = 0;
 
   public GroupNode(UsageGroup group, int ruleIndex, DefaultTreeModel treeModel) {
     super(treeModel);
@@ -59,9 +60,15 @@ class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
     if (node == null) {
       node = new GroupNode(group, ruleIndex, myTreeModel);
       mySubgroupNodes.put(group, node);
-      myTreeModel.insertNodeInto(node, this, getNodeInsertionIndex(node));
-    }
+      final GroupNode node1 = node;
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          myTreeModel.insertNodeInto(node1, GroupNode.this, getNodeInsertionIndex(node1));
+        }
+      });
+      //UIUtil.pump();
 
+    }
     return node;
   }
 
@@ -116,21 +123,20 @@ class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
   }
 
   public UsageNode addUsage(Usage usage) {
-    try {
-      UsageNode mergedWith = tryMerge(usage);
-      if (mergedWith != null) {
-        return mergedWith;
-      }
-      else {
-        UsageNode node = new UsageNode(usage, myTreeModel);
-        myUsageNodes.add(node);
-        myTreeModel.insertNodeInto(node, this, getNodeIndex(node));
-        return node;
-      }
+    UsageNode mergedWith = tryMerge(usage);
+    if (mergedWith != null) {
+      return mergedWith;
     }
-    finally {
-      incrementUsageCount();
-    }
+    final UsageNode node = new UsageNode(usage, myTreeModel);
+    myUsageNodes.add(node);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        myTreeModel.insertNodeInto(node, GroupNode.this, getNodeIndex(node));
+        incrementUsageCount();
+      }
+    });
+    //UIUtil.pump();
+    return node;
   }
 
   private int getNodeIndex(final UsageNode node) {
@@ -143,7 +149,7 @@ class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
     int high = getChildCount() - 1;
 
     while (low <= high) {
-      int mid = (low + high) >> 1;
+      int mid = (low + high) / 2;
       TreeNode treeNode = getChildAt(mid);
       int cmp;
       if (treeNode instanceof UsageNode) {
@@ -171,7 +177,8 @@ class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
     GroupNode groupNode = this;
     while (true) {
       groupNode.myRecursiveUsageCount++;
-      myTreeModel.nodeChanged(groupNode);
+      final GroupNode node = groupNode;
+      myTreeModel.nodeChanged(node);
       TreeNode parent = groupNode.getParent();
       if (!(parent instanceof GroupNode)) return;
       groupNode = (GroupNode)parent;

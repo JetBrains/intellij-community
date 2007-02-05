@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.treetable.TreeTableCellRenderer;
 import org.jetbrains.annotations.NonNls;
@@ -26,14 +27,18 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.InvocationEvent;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author max
  */
 public class UIUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.UIUtil");
   public static final @NonNls String HTML_MIME = "text/html";
   public static final char MNEMONIC = 0x1B;
   @NonNls public static final String JSLIDER_ISFILLED = "JSlider.isFilled";
@@ -627,6 +632,39 @@ public class UIUtil {
     if (map != null) {
         ((Graphics2D) g).addRenderingHints(map);
     }
+  }
+
+  public static void dispatchAllInvocationEvents() {
+    final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+    while (true) {
+      AWTEvent event = eventQueue.peekEvent();
+      if (event == null) break;
+      try {
+        AWTEvent event1 = eventQueue.getNextEvent();
+        if (event1 instanceof InvocationEvent) {
+          ((InvocationEvent)event1).dispatch();
+        }
+      }
+      catch (Exception e) {
+        LOG.error(e); //?
+      }
+    }
+  }
+  public static void pump() {
+    assert !SwingUtilities.isEventDispatchThread();
+    final BlockingQueue queue = new LinkedBlockingQueue();
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        queue.offer(queue);
+      }
+    });
+    try {
+      queue.take();
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+    }
+
   }
 }
 

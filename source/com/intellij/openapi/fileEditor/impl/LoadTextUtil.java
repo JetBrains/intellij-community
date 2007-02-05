@@ -118,7 +118,6 @@ public final class LoadTextUtil {
 
   private static int skipBOM(final VirtualFile virtualFile, byte[] content) {
     if (Patches.SUN_BUG_ID_4508058) {
-      //noinspection HardCodedStringLiteral
       if (virtualFile.getCharset() != null && virtualFile.getCharset().name().contains(CharsetToolkit.UTF8) &&
           CharsetToolkit.hasUTF8Bom(content)) {
         virtualFile.setBOM(CharsetToolkit.UTF8_BOM);

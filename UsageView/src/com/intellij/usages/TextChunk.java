@@ -15,12 +15,9 @@
  */
 package com.intellij.usages;
 
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 
 public class TextChunk {
-  public static final TextAttributesKey USAGE_VIEW_OCCURENCE = TextAttributesKey.createTextAttributesKey("$OCCURENCE");
-
   private TextAttributes myAttributes;
   private String myText;
 

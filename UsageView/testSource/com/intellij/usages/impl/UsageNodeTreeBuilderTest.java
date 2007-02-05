@@ -8,6 +8,7 @@ import com.intellij.usages.UsagePresentation;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 
 import javax.swing.*;
@@ -30,6 +31,7 @@ public class UsageNodeTreeBuilderTest extends TestCase {
     GroupNode groupNode = buildUsageTree(new int[]{2, 3, 0}, new UsageGroupingRule[] {});
 
     assertNotNull(groupNode);
+    
     assertNull(groupNode.getParent());
 
     assertEquals("[2, 3, 0]", groupNode.toString());
@@ -83,7 +85,11 @@ public class UsageNodeTreeBuilderTest extends TestCase {
     GroupNode rootNode = new GroupNode(null, 0, model);
     model.setRoot(rootNode);
     UsageNodeTreeBuilder usageNodeTreeBuilder = new UsageNodeTreeBuilder(rules, UsageFilteringRule.EMPTY_ARRAY, rootNode);
-    usageNodeTreeBuilder.appendUsages(usages);
+    for (Usage usage : usages) {
+      usageNodeTreeBuilder.appendUsage(usage);
+      UIUtil.pump();
+    }
+
     return rootNode;
   }
 

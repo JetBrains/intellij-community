@@ -95,7 +95,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private ExporterToTextFile myTextFileExporter;
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private final Alarm myFlushAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myFlushAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private final UsageModelTracker myModelTracker;
   private final Set<Usage> myUsages = new ConcurrentHashSet<Usage>();
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<Usage, UsageNode>();
@@ -526,7 +526,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           flush();
         }
       },
-      300, indicator != null ? indicator.getModalityState() : ModalityState.defaultModalityState());
+      300);
 
 
     myUsagesToFlush.offer(usage);
@@ -673,9 +673,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   public void setSearchInProgress(boolean searchInProgress) {
     mySearchInProgress = searchInProgress;
+    flush();
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        flush();
         final UsageNode firstUsageNode = ((UsageViewTreeModelBuilder)myTree.getModel()).getFirstUsageNode();
         if (firstUsageNode != null) { //first usage;
           showNode(firstUsageNode);
