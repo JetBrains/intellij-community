@@ -11,11 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.intellij.execution.*;
-import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
-import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.junit.coverage.JUnitCoverageConfigurable;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
@@ -26,7 +23,6 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import org.jdom.Element;
@@ -39,6 +35,9 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
     protected transient Project project;
     public boolean ALTERNATIVE_JRE_PATH_ENABLED;
     public String ALTERNATIVE_JRE_PATH;
+
+    public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
+    public static final String DEFAULT_PACKAGE_CONFIGURATION_NAME = ExecutionBundle.message("default.package.configuration.name");
 
     public TestNGConfiguration(String s, Project project, ConfigurationFactory factory) {
         this(s, project, new TestData(), factory);
@@ -64,8 +63,8 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
     @NotNull
     public String getCoverageFileName() {
         final String name = getGeneratedName();
-        if (name.equals(JUnitConfiguration.DEFAULT_PACKAGE_NAME)) {
-            return JUnitConfiguration.DEFAULT_PACKAGE_CONFIGURATION_NAME;
+        if (name.equals(DEFAULT_PACKAGE_NAME)) {
+            return DEFAULT_PACKAGE_CONFIGURATION_NAME;
         }
         return name;
     }

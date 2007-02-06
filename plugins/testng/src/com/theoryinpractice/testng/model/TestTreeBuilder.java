@@ -1,8 +1,8 @@
 package com.theoryinpractice.testng.model;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 
 import com.intellij.ide.util.treeView.*;
 
@@ -13,7 +13,7 @@ public class TestTreeBuilder extends AbstractTreeBuilder
 {
     public TestTreeBuilder(JTree tree, AbstractTreeStructure structure) {
         super(tree, new DefaultTreeModel(new DefaultMutableTreeNode(structure.getRootElement())), structure, IndexComparator.INSTANCE);
-        tree.setModel(myTreeModel);
+        tree.setModel(getTreeModel());
         initRootNode();
     }
 
@@ -31,13 +31,13 @@ public class TestTreeBuilder extends AbstractTreeBuilder
         TestProxy current = proxy;
         do {
             DefaultMutableTreeNode node = getNodeForElement(current);
-            if(node != null) {
+            if (node != null) {
                 JTree tree = getTree();
-                ((DefaultTreeModel)tree.getModel()).nodeChanged(node);
+                ((DefaultTreeModel) tree.getModel()).nodeChanged(node);
             }
             current = current.getParent();
         }
-        while(current != null);
+        while (current != null);
     }
 
     @Override
@@ -48,21 +48,21 @@ public class TestTreeBuilder extends AbstractTreeBuilder
     public void addItem(TestProxy parent, TestProxy proxy) {
         parent.addResult(proxy);
         DefaultMutableTreeNode parentNode = getNodeForElement(parent);
-        if(parentNode != null)
+        if (parentNode != null)
             updateSubtree(parentNode);
     }
 
     public DefaultMutableTreeNode ensureTestVisible(TestProxy proxy) {
         DefaultMutableTreeNode node = getNodeForElement(proxy);
-        if(node != null) {
-            if(node.getParent() != null) {
-                expandNodeChildren((DefaultMutableTreeNode)node.getParent());
+        if (node != null) {
+            if (node.getParent() != null) {
+                expandNodeChildren((DefaultMutableTreeNode) node.getParent());
                 node = getNodeForElement(proxy);
             }
             return node;
         }
         TestProxy path[] = proxy.getPathFromRoot();
-        for(TestProxy item : path) {
+        for (TestProxy item : path) {
             buildNodeForElement(item);
             node = getNodeForElement(item);
             expandNodeChildren(node);
@@ -72,6 +72,6 @@ public class TestTreeBuilder extends AbstractTreeBuilder
     }
 
     public TestProxy getRoot() {
-        return (TestProxy)getTreeStructure().getRootElement();
+        return (TestProxy) getTreeStructure().getRootElement();
     }
 }

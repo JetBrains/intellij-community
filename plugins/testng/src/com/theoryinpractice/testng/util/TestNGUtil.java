@@ -5,6 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -25,6 +26,8 @@ import org.testng.annotations.*;
  */
 public class TestNGUtil
 {
+    private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
+
     private static final String TEST_ANNOTATION_FQN = Test.class.getName();
     private static final String[] CONFIG_ANNOTATIONS_FQN = {
             Configuration.class.getName(),
@@ -145,7 +148,13 @@ public class TestNGUtil
         for (PsiClass psiClass : classes) {
             //Ignore these, they cause an NPE inside of AnnotationUtil, at least up until IDEA 6.0.2
             if (psiClass == null || psiClass instanceof PsiAnonymousClass) continue;
-            PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiClass, test);
+            PsiAnnotation annotation;
+            try {
+                annotation = AnnotationUtil.findAnnotation(psiClass, test);
+            } catch (Exception e) {
+                LOGGER.error("Exception trying to findAnnotation on " + psiClass.getClass().getName() + ".\n\n" + e.getMessage());
+                annotation = null;
+            }
             if (annotation != null) {
                 PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
                 OUTER:
@@ -185,7 +194,8 @@ public class TestNGUtil
                                 Collection<String> matches = extractValuesFromParameter(aPair);
                                 for (String s : matches) {
                                     if (values.contains(s)) {
-                                        if (results.get(psiClass) == null) results.put(psiClass, new HashSet<PsiMethod>());
+                                        if (results.get(psiClass) == null)
+                                            results.put(psiClass, new HashSet<PsiMethod>());
                                         results.get(psiClass).add(method);
                                         break OUTER;
                                     }
