@@ -15,21 +15,18 @@
  */
 package com.siyeh.ig.performance;
 
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.igtest.performance.CollectionContainsUrl;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.net.URL;
-import java.net.MalformedURLException;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 public class CollectionContainsUrlInspection extends BaseInspection {
 
