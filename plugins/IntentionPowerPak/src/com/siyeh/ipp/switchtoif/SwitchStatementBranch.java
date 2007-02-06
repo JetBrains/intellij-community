@@ -15,6 +15,8 @@
  */
 package com.siyeh.ipp.switchtoif;
 
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 
@@ -54,7 +56,13 @@ class SwitchStatementBranch{
 
     public void addWhiteSpace(PsiElement statement){
         if(!m_bodyElements.isEmpty()){
+          // a whitespace after the END_OF_LINE comment should be added immediately (fixes IDEADEV-11421)  
+          final PsiElement lastElement = m_bodyElements.get(m_bodyElements.size() - 1);
+          if ( lastElement instanceof PsiComment && ((PsiComment)lastElement).getTokenType()== JavaTokenType.END_OF_LINE_COMMENT){
+            m_bodyElements.add(statement);
+          } else {
             m_pendingWhiteSpace.add(statement);
+          }
         }
     }
 
