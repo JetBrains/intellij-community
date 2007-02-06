@@ -25,7 +25,7 @@ import java.util.List;
  * @author max
  */
 public class CommittedChangesBrowser extends JPanel {
-  private final TableView myChangeListsView;
+  private final TableView<CommittedChangeList> myChangeListsView;
   private final ChangesBrowser myChangesView;
   private CommittedChangesTableModel myTableModel;
   private final JTextArea myCommitMessageArea;
@@ -37,7 +37,7 @@ public class CommittedChangesBrowser extends JPanel {
 
     myTableModel = tableModel;
     myTableModel.sortByChangesColumn(ChangeListColumn.DATE, SortableColumnModel.SORT_DESCENDING);
-    myChangeListsView = new TableView(myTableModel);
+    myChangeListsView = new TableView<CommittedChangeList>(myTableModel);
     myChangeListsView.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     myChangesView = new ChangesBrowser(project, tableModel.getItems(), Collections.<Change>emptyList(), null, false, false);
