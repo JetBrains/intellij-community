@@ -95,7 +95,7 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
         LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
       }
     });
-
+    getStateStorageManager().clearStateStorage(DEFAULT_STATE_STORAGE);
     getStateStorageManager().addMacro(MODULE_FILE_MACRO, path);
   }
 

@@ -26,10 +26,10 @@ import java.util.List;
 public class FileBasedStorage extends XmlElementStorage {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.FileBasedStorage");
 
-  private String myFilePath;
-  private String myRootElementName;
+  private final String myFilePath;
+  private final String myRootElementName;
   private Document myDocument;
-  private File myFile;
+  private final File myFile;
   private static final String UTF_8 = "utf-8";
 
   public FileBasedStorage(@Nullable PathMacroSubstitutor pathMacroManager, final String filePath, String rootElementName) {

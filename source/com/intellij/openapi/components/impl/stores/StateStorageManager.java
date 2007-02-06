@@ -37,6 +37,10 @@ class StateStorageManager {
     return myStorages.get(file);
   }
 
+  public void clearStateStorage(@NotNull final String file) {
+    myStorages.remove(file);
+  }
+
   @Nullable
   protected StateStorage createStateStorage(@NotNull final String file) {
     String actualFile = file;

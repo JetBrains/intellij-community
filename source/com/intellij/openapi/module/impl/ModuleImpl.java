@@ -7,8 +7,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
-import com.intellij.openapi.components.impl.stores.IModuleStore;
 import com.intellij.openapi.components.impl.stores.StoresFactory;
+import com.intellij.openapi.components.impl.stores.IModuleStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -23,10 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.openapi.vfs.*;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModule;
 import com.intellij.pom.core.impl.PomModuleImpl;
@@ -139,6 +136,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     try {
       if (file != null) {
         file.rename(MODULE_RENAMING_REQUESTOR, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+        getStateStore().setModuleFilePath(VfsUtil.virtualToIoFile(file).getCanonicalPath());
         return;
       }
 

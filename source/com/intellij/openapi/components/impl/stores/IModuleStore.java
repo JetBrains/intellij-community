@@ -9,7 +9,6 @@ public interface IModuleStore extends IComponentStore {
   boolean isSavePathsRelative();
 
   @SuppressWarnings({"EmptyMethod"})
-
   void setModuleFilePath(final String filePath);
 
   @Nullable

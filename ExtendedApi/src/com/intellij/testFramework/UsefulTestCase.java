@@ -72,6 +72,14 @@ public abstract class UsefulTestCase extends TestCase {
     assertNotNull(collection);
     assertOrderedCollection(Arrays.asList(collection), checkers);
   }
+
+  public static <T> void assertSameElements(T[] collection, T... expected) {
+    assertSameElements(Arrays.asList(collection), expected);
+  }
+  
+  public static <T> void assertSameElements(Collection<T> collection, T... expected) {
+    assertEquals(new HashSet<T>(Arrays.asList(expected)), new HashSet<T>(collection));
+  }
   
   public static <T> void assertOrderedCollection(Collection<T> collection, Consumer<T>... checkers) {
     assertNotNull(collection);

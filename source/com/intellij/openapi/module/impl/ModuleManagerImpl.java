@@ -721,7 +721,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     private void clearRenamingStuff() {
       myModuleToNewName.clear();
       myNewNameToModule.clear();
-      myNewNameToModule.clear();
     }
 
     public void dispose() {
