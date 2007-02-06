@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.tools.Tool;
 import com.intellij.tools.ToolManager;
 import com.intellij.util.containers.HashMap;
@@ -289,7 +290,7 @@ public class ActionsTreeUtil {
       if (filtered != null && filtered.value(ActionManagerEx.getInstanceEx().getAction(quickList.getActionId()))) {
         group.addQuickList(quickList);
       } else if (SearchUtil.isComponentHighlighted(quickList.getDisplayName(), filter, forceFiltering,
-                                                   ApplicationManager.getApplication().getComponent(KeymapConfigurable.class))) {
+                                                   ShowSettingsUtil.getInstance().findApplicationConfigurable(KeymapConfigurable.class))) {
         group.addQuickList(quickList);
       } else if (filtered == null && filter == null) {
         group.addQuickList(quickList);
@@ -485,9 +486,11 @@ public class ActionsTreeUtil {
         if (filter == null) return true;
         if (action == null) return false;
         final String text = action.getTemplatePresentation().getText();
+        final KeymapConfigurable keymapConfigurable =
+          ShowSettingsUtil.getInstance().findApplicationConfigurable(KeymapConfigurable.class);
         if (text != null) {
           if (SearchUtil
-            .isComponentHighlighted(text, filter, force, ApplicationManager.getApplication().getComponent(KeymapConfigurable.class))) {
+            .isComponentHighlighted(text, filter, force, keymapConfigurable)) {
             return true;
           }
           else if (text.indexOf(filter) != -1) {
@@ -497,8 +500,7 @@ public class ActionsTreeUtil {
         final String description = action.getTemplatePresentation().getDescription();
         if (description != null) {
           if (SearchUtil
-            .isComponentHighlighted(description, filter, force,
-                                    ApplicationManager.getApplication().getComponent(KeymapConfigurable.class))) {
+            .isComponentHighlighted(description, filter, force, keymapConfigurable)) {
             return true;
           }
           else if (description.indexOf(filter) != -1) {
