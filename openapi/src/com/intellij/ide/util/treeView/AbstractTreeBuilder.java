@@ -62,7 +62,11 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
   private boolean myDisposed = false;
   // used for searching only
-  private final AbstractTreeNodeWrapper TREE_NODE_WRAPPER = new AbstractTreeNodeWrapper(null);
+  private final AbstractTreeNode TREE_NODE_WRAPPER = createSearchingTreeNodeWrapper();
+
+  protected AbstractTreeNode createSearchingTreeNodeWrapper() {
+    return new AbstractTreeNodeWrapper(null);
+  }
 
   public AbstractTreeBuilder(JTree tree,
                              DefaultTreeModel treeModel,

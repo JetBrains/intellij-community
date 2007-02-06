@@ -1,15 +1,12 @@
 package com.intellij.ide.util.treeView.smartTree;
 
-import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.Navigatable;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<Value> {
   private List<CachingChildrenTreeNode> myChildren;
@@ -232,5 +229,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     }
   }
 
-
+  protected void resetChildren() {
+    myChildren = null;
+  }
 }

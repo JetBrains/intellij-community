@@ -200,7 +200,10 @@ public class TreeState implements JDOMExternalizable {
 
   private static String getDescriptorKey(final NodeDescriptor nodeDescriptor) {
     if (nodeDescriptor instanceof AbstractTreeNode) {
-      final Object value = ((AbstractTreeNode)nodeDescriptor).getValue();
+      Object value;
+      if (nodeDescriptor instanceof NodeDescriptorProvidingKey) value = ((NodeDescriptorProvidingKey)nodeDescriptor).getKey();
+      else value = ((AbstractTreeNode)nodeDescriptor).getValue();
+
       if (value instanceof PsiElement && ((PsiElement)value).isValid()) {
         // for PsiElements only since they define toString() correctly
         return value.toString();

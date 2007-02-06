@@ -8,12 +8,11 @@ import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.StructureViewState;
 import com.intellij.ide.structureView.impl.java.KindSorter;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.ide.util.treeView.*;
 import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.ide.util.treeView.smartTree.TreeModel;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -26,6 +25,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -35,6 +35,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -85,11 +86,16 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     myTreeModel = structureViewModel;
     myShowRootNode = showRootNode;
     myTreeModelWrapper = new TreeModelWrapper(myTreeModel, this);
+
     SmartTreeStructure treeStructure = new SmartTreeStructure(project, myTreeModelWrapper){
       public void rebuildTree() {
         storeState();
         super.rebuildTree();
         restoreState();
+      }
+
+      protected TreeElementWrapper createTree() {
+        return new StructureViewTreeElementWrapper(myProject, myModel.getRoot(), myModel);
       }
     };
 
@@ -264,13 +270,13 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     }
     else {
       expandStoredElements();
-      selectStoredElenents();
+      selectStoredElements();
       myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, null);
       myStructureViewState = null;
     }
   }
 
-  private void selectStoredElenents() {
+  private void selectStoredElements() {
     Object[] selectedPsiElements = null;
 
     if (myStructureViewState != null) {
@@ -368,7 +374,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   public DefaultMutableTreeNode expandPathToElement(Object element) {
     if (myAbstractTreeBuilder == null) return null;
-    
+
     ArrayList<AbstractTreeNode> pathToElement = getPathToElement(element);
 
     if (pathToElement.isEmpty()) return null;
@@ -695,5 +701,70 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   public boolean navigateToSelectedElement(boolean requestFocus) {
     return select(myTreeModel.getCurrentEditorElement(), requestFocus);
+  }
+  
+  public void doUpdate() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    ((StructureTreeBuilder)myAbstractTreeBuilder).addRootToUpdate();
+  }
+
+  static class StructureViewTreeElementWrapper extends TreeElementWrapper implements NodeDescriptorProvidingKey {
+    private long childrenStamp = -1;
+
+    public StructureViewTreeElementWrapper(Project project, TreeElement value, TreeModel treeModel) {
+      super(project, value, treeModel);
+    }
+
+    public Object getKey() {
+      return ((StructureViewTreeElement)getValue()).getValue();
+    }
+
+    @NotNull
+    public Collection<AbstractTreeNode> getChildren() {
+      final Object o = unwrapValue(getValue());
+      long currentStamp;
+      if (o instanceof PsiElement &&
+          ((PsiElement)o).getNode() instanceof CompositeElement &&
+          childrenStamp != (currentStamp = ((CompositeElement)((PsiElement)o).getNode()).getModificationCount())
+         ) {
+        resetChildren();
+        childrenStamp = currentStamp;
+      }
+      return super.getChildren();
+    }
+
+    protected TreeElementWrapper createChildNode(final TreeElement child) {
+      return new StructureViewTreeElementWrapper(myProject, child, myTreeModel);
+    }
+
+    public boolean equals(Object o) {
+      if (o instanceof StructureViewTreeElementWrapper) {
+        return Comparing.equal(
+          unwrapValue(getValue()),
+          unwrapValue(((StructureViewTreeElementWrapper)o).getValue())
+        );
+      } else if (o instanceof StructureViewTreeElement) {
+        return Comparing.equal(
+          unwrapValue(getValue()),
+          ((StructureViewTreeElement)o).getValue()
+        );
+      }
+      return false;
+    }
+
+    private static Object unwrapValue(Object o) {
+
+      if (o instanceof StructureViewTreeElement) {
+        return ((StructureViewTreeElement)o).getValue();
+      } else {
+        return o;
+      }
+    }
+
+    public int hashCode() {
+      final Object o = unwrapValue(getValue());
+
+      return o != null ? o.hashCode() : 0;
+    }
   }
 }

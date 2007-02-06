@@ -116,11 +116,11 @@ public abstract class AbstractTreeNode<T> extends NodeDescriptor implements Navi
     return getValue() != null ? this : null;
   }
 
-  public final boolean equals(Object object) {
+  public boolean equals(Object object) {
     return object instanceof AbstractTreeNode && Comparing.equal(getValue(), ((AbstractTreeNode)object).getValue());
   }
 
-  public final int hashCode() {
+  public int hashCode() {
     return getValue() == null ? 0 : getValue().hashCode();
   }
 

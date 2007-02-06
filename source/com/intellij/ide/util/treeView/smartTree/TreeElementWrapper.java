@@ -4,7 +4,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.openapi.project.Project;
 
-class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement>{
+public class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement>{
   public TreeElementWrapper(Project project, TreeElement value, TreeModel treeModel) {
     super(project, value, treeModel);
   }
@@ -21,11 +21,13 @@ class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement>{
     clearChildren();
     TreeElement[] children = getValue().getChildren();
     for (TreeElement child : children) {
-      TreeElementWrapper childNode = new TreeElementWrapper(getProject(), child, myTreeModel);
-      addSubElement(childNode);
+      addSubElement(createChildNode(child));
     }
   }
 
+  protected TreeElementWrapper createChildNode(final TreeElement child) {
+    return new TreeElementWrapper(getProject(), child, myTreeModel);
+  }
 
   protected void performTreeActions() {
     filterChildren(myTreeModel.getFilters());

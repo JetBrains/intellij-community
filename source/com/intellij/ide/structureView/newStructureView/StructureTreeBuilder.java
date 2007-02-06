@@ -165,8 +165,12 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     }, 300, ModalityState.stateForComponent(myTree));
   }
 
-  private void addRootToUpdate() {
+  void addRootToUpdate() {
     ((SmartTreeStructure)getTreeStructure()).rebuildTree();
     myUpdater.addSubtreeToUpdate(myRootNode);
+  }
+
+  protected AbstractTreeNode createSearchingTreeNodeWrapper() {
+    return new StructureViewComponent.StructureViewTreeElementWrapper(null,null, null);
   }
 }

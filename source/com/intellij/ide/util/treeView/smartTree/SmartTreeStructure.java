@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class SmartTreeStructure extends AbstractTreeStructure {
 
-  private final TreeModel myModel;
-  private final Project myProject;
+  protected final TreeModel myModel;
+  protected final Project myProject;
   private TreeElementWrapper myRootElementWrapper;
 
   private static Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.smartTree.SmartTreeStructure");
@@ -50,7 +50,7 @@ public class SmartTreeStructure extends AbstractTreeStructure {
     return myRootElementWrapper;
   }
 
-  private TreeElementWrapper createTree() {
+  protected TreeElementWrapper createTree() {
     return new TreeElementWrapper(myProject, myModel.getRoot(), myModel);
   }
 
