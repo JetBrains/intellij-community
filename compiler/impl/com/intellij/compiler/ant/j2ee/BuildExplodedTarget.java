@@ -23,7 +23,8 @@ public abstract class BuildExplodedTarget extends Target {
 
   public BuildExplodedTarget(final ModuleChunk chunk,
                              final GenerationOptions genOptions,
-                             @NotNull final ModuleBuildProperties moduleBuildProperties,
+                             final Module moduleToBuild,
+                             @NotNull final BuildConfiguration buildConfiguration,
                              final Function<String, String> explodedBuildTarget,
                              final String description) {
     super(explodedBuildTarget.fun(chunk.getName()), null, description, null);
@@ -32,7 +33,7 @@ public abstract class BuildExplodedTarget extends Target {
 
     final ArrayList<Tag> tags = new ArrayList<Tag>();
 
-    BuildRecipe buildRecipe = DeploymentUtil.getInstance().getModuleItems(moduleBuildProperties.getModule());
+    BuildRecipe buildRecipe = DeploymentUtil.getInstance().getModuleItems(moduleToBuild);
     // reverse order to get overwriting instructions later
     buildRecipe.visitInstructions(new BuildInstructionVisitor() {
       public boolean visitFileCopyInstruction(FileCopyInstruction instruction) throws RuntimeException {
@@ -70,7 +71,7 @@ public abstract class BuildExplodedTarget extends Target {
         if (instruction.isExternalDependencyInstruction()) return true;
         final String outputRelativePath = "/"+instruction.getOutputRelativePath();
         final String outputPath = BuildProperties.propertyRef(getExplodedBuildPathProperty())+outputRelativePath;
-        final String moduleName = instruction.getBuildProperties().getModule().getName();
+        final String moduleName = instruction.getModule().getName();
 
         final Tag tag;
         if (instruction.getBuildProperties().isExplodedEnabled()) {

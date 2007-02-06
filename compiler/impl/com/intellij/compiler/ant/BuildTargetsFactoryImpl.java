@@ -12,7 +12,7 @@ import com.intellij.compiler.ant.j2ee.BuildExplodedTarget;
 import com.intellij.compiler.ant.j2ee.BuildJarTarget;
 import com.intellij.compiler.ant.j2ee.CompositeBuildTarget;
 import com.intellij.compiler.ant.taskdefs.Target;
-import com.intellij.openapi.compiler.make.ModuleBuildProperties;
+import com.intellij.openapi.compiler.make.BuildConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -23,14 +23,16 @@ import org.jetbrains.annotations.NonNls;
 public class BuildTargetsFactoryImpl extends BuildTargetsFactory {
   private ModuleChunk myChunk;
   private GenerationOptions myGenOptions;
-  private ModuleBuildProperties myModuleBuildProperties;
+  private BuildConfiguration myBuildConfiguration;
   private String myExplodedPathProperty;
   private Function<String, String> myExplodedBuildTarget;
   private Function<String, String> myExplodedBuildPath;
   private String myJarPathProperty;
   private Function<String, String> myBuildJarTargetName;
+  private Module myModule;
 
   public void init(final ModuleChunk chunk,
+                   final BuildConfiguration buildConfiguration,
                    final GenerationOptions genOptions,
                    final String explodedPathProperty,
                    final Function<String, String> explodedBuildTarget,
@@ -44,12 +46,13 @@ public class BuildTargetsFactoryImpl extends BuildTargetsFactory {
     myExplodedBuildPath = explodedBuildPath;
     myJarPathProperty = jarPathProperty;
     myBuildJarTargetName = buildJarTargetName;
-    myModuleBuildProperties = ModuleBuildProperties.getInstance(myChunk.getModules()[0]);
+    myModule = myChunk.getModules()[0];
+    myBuildConfiguration = buildConfiguration;
   }
 
 
   public CompositeGenerator createCompositeBuildTarget(@NonNls final String name, final String description, final Function<Module, String> depends, final String jarPath) {
-    return new CompositeBuildTarget(myChunk, myGenOptions, myModuleBuildProperties, name, description) {
+    return new CompositeBuildTarget(myChunk, myGenOptions, myModule, myBuildConfiguration, name, description) {
       protected String getDepends(final Module module) {
         return depends.fun(module);
       }
@@ -75,15 +78,15 @@ public class BuildTargetsFactoryImpl extends BuildTargetsFactory {
       }
 
 
-      protected String getJarPath(final ModuleBuildProperties moduleBuildProperties) {
-        return jarPath != null ? jarPath : super.getJarPath(moduleBuildProperties);
+      protected String getJarPath(final BuildConfiguration buildConfiguration) {
+        return jarPath != null ? jarPath : super.getJarPath(buildConfiguration);
       }
 
     };
   }
 
   public Target createBuildExplodedTarget(final String description) {
-    return new BuildExplodedTarget(myChunk, myGenOptions, myModuleBuildProperties, myExplodedBuildTarget, description) {
+    return new BuildExplodedTarget(myChunk, myGenOptions, myModule, myBuildConfiguration, myExplodedBuildTarget, description) {
 
       protected String getExplodedBuildPathProperty(final String name) {
         return myExplodedBuildPath.fun(name);
@@ -96,7 +99,7 @@ public class BuildTargetsFactoryImpl extends BuildTargetsFactory {
   }
 
   public Target createBuildJarTarget(final String description) {
-    return new BuildJarTarget(myChunk, myGenOptions, myModuleBuildProperties, myJarPathProperty, myBuildJarTargetName, description);
+    return new BuildJarTarget(myChunk, myGenOptions, myModule, myBuildConfiguration, myJarPathProperty, myBuildJarTargetName, description);
   }
 
   public Generator createComment(final String comment) {
@@ -104,12 +107,12 @@ public class BuildTargetsFactoryImpl extends BuildTargetsFactory {
   }
 
   public String getModuleName() {
-    return ModuleUtil.getModuleNameInReadAction(myModuleBuildProperties.getModule());
+    return ModuleUtil.getModuleNameInReadAction(myModule);
   }
 
 
-  public ModuleBuildProperties getModuleBuildProperties() {
-    return myModuleBuildProperties;
+  public BuildConfiguration getModuleBuildProperties() {
+    return myBuildConfiguration;
   }
 
   //for test

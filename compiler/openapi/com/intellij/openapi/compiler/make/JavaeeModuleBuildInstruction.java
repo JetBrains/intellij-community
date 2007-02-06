@@ -20,7 +20,7 @@ import com.intellij.openapi.compiler.CompileContext;
 
 public interface JavaeeModuleBuildInstruction extends BuildInstruction {
   
-  ModuleBuildProperties getBuildProperties();
+  BuildConfiguration getBuildProperties();
 
   BuildRecipe getChildInstructions(CompileContext context);
 }

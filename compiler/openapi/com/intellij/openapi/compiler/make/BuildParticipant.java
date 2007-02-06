@@ -16,13 +16,28 @@
 package com.intellij.openapi.compiler.make;
 
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.extensions.ExtensionPointName;
 
 import java.io.File;
 
-public interface BuildParticipant {
-  void registerBuildInstructions(BuildRecipe buildRecipe, CompileContext context);
+public abstract class BuildParticipant {
+  public static final ExtensionPointName<BuildParticipant> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.compiler.buildParticipant");
 
-  void afterJarCreated(File jarFile, CompileContext context) throws Exception;
-  void afterExplodedCreated(File outputDir, CompileContext context) throws Exception;
-  void buildFinished(CompileContext context) throws Exception;
+
+  public abstract void registerBuildInstructions(Module module, BuildRecipe buildRecipe, CompileContext context);
+
+
+  public void afterJarCreated(File jarFile, Module module, CompileContext context) throws Exception {
+  }
+
+  public void afterExplodedCreated(File outputDir, Module module, CompileContext context) throws Exception {
+  }
+
+  public void buildFinished(Module module, CompileContext context) throws Exception {
+  }
+
+  public void runValidators(File output, final Module module, CompileContext context) throws Exception {
+  }
+
 }

@@ -44,9 +44,11 @@ import java.util.Arrays;
 public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
   private Project myProject;
   private ArrayList<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();
+  private FileChooserDescriptor myDescriptor;
   private ExcludedEntriesConfiguration myConfiguration;
 
-  public ExcludedEntriesConfigurable(Project project, final ExcludedEntriesConfiguration configuration) {
+  public ExcludedEntriesConfigurable(Project project, FileChooserDescriptor descriptor, final ExcludedEntriesConfiguration configuration) {
+    myDescriptor = descriptor;
     myConfiguration = configuration;
     myProject = project;
   }
@@ -104,7 +106,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
       addButton.addActionListener(
         new ActionListener() {
           public void actionPerformed(ActionEvent e){
-            addPath(myConfiguration.getFileChooserDescriptor());
+            addPath(myDescriptor);
           }
         }
       );

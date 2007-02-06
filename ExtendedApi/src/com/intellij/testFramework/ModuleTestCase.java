@@ -1,7 +1,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.make.ModuleBuildProperties;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -123,10 +122,12 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     final ModuleRootManagerImpl moduleRootManager = (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
     module.getStateStore().initComponent(moduleRootManager);
 
+    /*
     ModuleBuildProperties moduleBuildProperties = ModuleBuildProperties.getInstance(module);
     if (moduleBuildProperties != null) {
       module.getStateStore().initComponent(moduleBuildProperties);
     }
+    */
     project.setOptimiseTestLoadSpeed(true);
   }
 

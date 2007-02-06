@@ -23,12 +23,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.descriptors.ConfigFile;
+import com.intellij.javaee.facet.JavaeeFacetUtil;
+import com.intellij.javaee.facet.JavaeeFacet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -240,24 +242,6 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     return true;
   }
 
-  public Map<Module, BuildRecipe> computeModuleBuildInstructionMap(@NotNull final Module[] affectedModules, @NotNull final CompileContext context) {
-    // should obtain keys in the insertion order
-    final Map<Module, BuildRecipe> moduleItemsMap = new LinkedHashMap<Module, BuildRecipe>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        // affectedModules modules sorted by dependency
-        for (Module module : affectedModules) {
-          ModuleBuildProperties moduleBuildProperties = ModuleBuildProperties.getInstance(module);
-          if (moduleBuildProperties == null) continue;
-
-          final BuildRecipe buildRecipe = ModuleBuilder.getInstance(module).getModuleBuildInstructions(context);
-          moduleItemsMap.put(module, buildRecipe);
-        }
-      }
-    });
-    return moduleItemsMap;
-  }
-
   public void reportDeploymentDescriptorDoesNotExists(ConfigFile descriptor, CompileContext context, Module module) {
     final String description = module.getModuleType().getName() + " '" + module.getName() + '\'';
     String descriptorPath = VfsUtil.urlToPath(descriptor.getUrl());
@@ -266,10 +250,9 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     context.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
   }
 
-  public void addJ2EEModuleOutput(@NotNull BuildRecipe buildRecipe,
-                                  @NotNull ModuleBuildProperties moduleBuildProperties,
+  public void addJ2EEModuleOutput(@NotNull BuildRecipe buildRecipe, final Module module, @NotNull BuildConfiguration buildConfiguration,
                                   final String relativePath) {
-    buildRecipe.addInstruction(new JavaeeModuleBuildInstructionImpl(moduleBuildProperties, relativePath));
+    buildRecipe.addInstruction(new JavaeeModuleBuildInstructionImpl(module, buildConfiguration, relativePath));
   }
 
   public static boolean containsExternalDependencyInstruction(@NotNull ModuleContainer moduleProperties) {
@@ -468,9 +451,10 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     Module[] containingModules = getContainingModules(compileScope);
     final Collection<VirtualFile> j2eeSpecificFiles = new THashSet<VirtualFile>();
     final Collection<Module> affectedModules = new THashSet<Module>();
-    for (final Module module : containingModules) {
-      ModuleBuildProperties moduleBuildProperties = ModuleBuildProperties.getInstance(module);
-      if (moduleBuildProperties == null || !moduleBuildProperties.willBuildExploded()) {
+    for (final JavaeeFacet facet : JavaeeFacetUtil.getInstance().getAllJavaeeFacets(containingModules)) {
+      final Module module = facet.getModule();
+      BuildConfiguration buildConfiguration = facet.getBuildConfiguration().getBuildProperties();
+      if (buildConfiguration == null || !buildConfiguration.willBuildExploded()) {
         continue;
       }
       final ModuleCompileScope moduleCompileScope = new ModuleCompileScope(module, true);
@@ -564,12 +548,11 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     return Module.EMPTY_ARRAY;
   }
 
-  public static String getOrCreateExplodedDir(@NotNull ModuleBuildProperties moduleBuildProperties) {
-    if (moduleBuildProperties.isExplodedEnabled()) {
-      return moduleBuildProperties.getExplodedPath();
+  public static String getOrCreateExplodedDir(@NotNull BuildConfiguration buildConfiguration, final Module module) {
+    if (buildConfiguration.isExplodedEnabled()) {
+      return buildConfiguration.getExplodedPath();
     }
 
-    final Module module = moduleBuildProperties.getModule();
     final PropertiesComponent properties = PropertiesComponent.getInstance(module.getProject());
 
     try {
@@ -589,24 +572,14 @@ public class DeploymentUtilImpl extends DeploymentUtil {
   }
 
   @Nullable
-  public static String getDirectoryToBuildExploded(ModuleBuildProperties moduleBuildProperties) {
-    if (moduleBuildProperties.willBuildExploded()) {
-      return getOrCreateExplodedDir(moduleBuildProperties);
+  public static String getDirectoryToBuildExploded(BuildConfiguration buildConfiguration, final Module module) {
+    if (buildConfiguration.willBuildExploded()) {
+      return getOrCreateExplodedDir(buildConfiguration, module);
     }
     return null;
   }
 
-  public static BuildParticipant[] getBuildParticipants(Module module) {
-    BuildParticipant[] participants = module.getComponents(BuildParticipant.class);
-
-    final ModuleBuildProperties properties = ModuleBuildProperties.getInstance(module);
-    if (properties != null) {
-      final BuildParticipant participant = properties.getBuildParticipant();
-      if (participant != null) {
-        participants = ArrayUtil.append(participants, participant);
-      }
-    }
-
-    return participants;
+  public static BuildParticipant[] getBuildParticipants() {
+    return Extensions.getExtensions(BuildParticipant.EXTENSION_POINT_NAME);
   }
 }

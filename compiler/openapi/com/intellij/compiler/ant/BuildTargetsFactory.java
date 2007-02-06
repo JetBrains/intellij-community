@@ -9,7 +9,7 @@
 package com.intellij.compiler.ant;
 
 import com.intellij.compiler.ant.taskdefs.Target;
-import com.intellij.openapi.compiler.make.ModuleBuildProperties;
+import com.intellij.openapi.compiler.make.BuildConfiguration;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -22,6 +22,7 @@ public abstract class BuildTargetsFactory {
   }
 
   public abstract void init(ModuleChunk chunk,
+                            BuildConfiguration buildConfiguration,
                             GenerationOptions genOptions,
                             @NonNls String explodedPathProperty,
                             @NonNls Function<String, String> explodedBuildTarget,
@@ -39,7 +40,7 @@ public abstract class BuildTargetsFactory {
 
   public abstract String getModuleName();
 
-  public abstract ModuleBuildProperties getModuleBuildProperties();
+  public abstract BuildConfiguration getModuleBuildProperties();
 
   //for test
   public abstract GenerationOptions getDefaultOptions(Project project);

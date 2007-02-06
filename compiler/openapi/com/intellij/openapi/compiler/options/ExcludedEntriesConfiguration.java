@@ -16,8 +16,6 @@
 
 package com.intellij.openapi.compiler.options;
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,12 +35,6 @@ public class ExcludedEntriesConfiguration implements JDOMExternalizable {
   private static final @NonNls String INCLUDE_SUBDIRECTORIES = "includeSubdirectories";
   private List<ExcludeEntryDescription> myExcludeEntryDescriptions = new ArrayList<ExcludeEntryDescription>();
   private ExcludeEntryDescription[] myCachedDescriptions = null;
-  private Factory<FileChooserDescriptor> myFileChooserDescriptorFactory;
-
-
-  public ExcludedEntriesConfiguration(final Factory<FileChooserDescriptor> factory) {
-    myFileChooserDescriptorFactory = factory;
-  }
 
   public synchronized ExcludeEntryDescription[] getExcludeEntryDescriptions() {
     if (myCachedDescriptions == null) {
@@ -120,9 +112,5 @@ public class ExcludedEntriesConfiguration implements JDOMExternalizable {
       }
     }
     return false;
-  }
-
-  public FileChooserDescriptor getFileChooserDescriptor() {
-    return myFileChooserDescriptorFactory.create();
   }
 }

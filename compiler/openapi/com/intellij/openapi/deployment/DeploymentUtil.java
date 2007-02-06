@@ -20,7 +20,7 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.make.BuildRecipe;
-import com.intellij.openapi.compiler.make.ModuleBuildProperties;
+import com.intellij.openapi.compiler.make.BuildConfiguration;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.util.Map;
 import java.util.Set;
 import java.util.jar.Manifest;
 
@@ -94,12 +93,9 @@ public abstract class DeploymentUtil {
     return path.substring(0, l+1);
   }
 
-  public abstract Map<Module, BuildRecipe> computeModuleBuildInstructionMap(@NotNull Module[] affectedModules, @NotNull CompileContext context);
-
   public abstract void reportDeploymentDescriptorDoesNotExists(ConfigFile descriptor, CompileContext context, Module module);
 
-  public abstract void addJ2EEModuleOutput(@NotNull BuildRecipe buildRecipe,
-                                           @NotNull ModuleBuildProperties moduleBuildProperties,
+  public abstract void addJ2EEModuleOutput(@NotNull BuildRecipe buildRecipe, final Module module, @NotNull BuildConfiguration buildConfiguration,
                                            String relativePath);
 
   @Nullable public abstract Manifest createManifest(@NotNull BuildRecipe buildRecipe);

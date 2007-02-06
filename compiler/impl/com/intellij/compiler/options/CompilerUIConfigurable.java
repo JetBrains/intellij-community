@@ -8,9 +8,12 @@ import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.Options;
+import com.intellij.util.LogicalRoot;
+import com.intellij.util.LogicalRootsManager;
 import org.apache.oro.text.regex.MalformedPatternException;
 
 import javax.swing.*;
@@ -41,7 +44,12 @@ public class CompilerUIConfigurable implements Configurable {
     myProject = project;
 
     CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
-    myExcludedEntriesConfigurable = new ExcludedEntriesConfigurable(project, compilerConfiguration.getExcludedEntriesConfiguration()) {
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true);
+    for (LogicalRoot contentSourceRoot : LogicalRootsManager.getLogicalRootsManager(myProject).getLogicalRoots()) {
+      descriptor.addRoot(contentSourceRoot.getVirtualFile());
+    }
+
+    myExcludedEntriesConfigurable = new ExcludedEntriesConfigurable(project, descriptor, compilerConfiguration.getExcludedEntriesConfiguration()) {
       public void apply() {
         super.apply();
         FileStatusManager.getInstance(myProject).fileStatusesChanged(); // refresh exclude from compile status

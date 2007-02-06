@@ -13,7 +13,7 @@ import com.intellij.compiler.ant.taskdefs.AntCall;
 import com.intellij.compiler.ant.taskdefs.Param;
 import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.compiler.ant.taskdefs.Target;
-import com.intellij.openapi.compiler.make.ModuleBuildProperties;
+import com.intellij.openapi.compiler.make.BuildConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.Nullable;
@@ -24,17 +24,17 @@ import java.io.File;
 public abstract class CompositeBuildTarget extends CompositeGenerator {
   public CompositeBuildTarget(final ModuleChunk chunk,
                               final GenerationOptions genOptions,
-                              final ModuleBuildProperties moduleBuildProperties,
+                              final Module module,
+                              final BuildConfiguration buildConfiguration,
                               final String name,
                               final String description) {
 
     final File moduleBaseDir = chunk.getBaseDir();
-    final Module module = moduleBuildProperties.getModule();
     final String moduleName = module.getName();
     final Target buildTarget = new Target(name, getDepends(module), description, null);
 
-    if (moduleBuildProperties.isExplodedEnabled()) {
-      final String explodedPath = moduleBuildProperties.getExplodedPath();
+    if (buildConfiguration.isExplodedEnabled()) {
+      final String explodedPath = buildConfiguration.getExplodedPath();
 
       String location = GenerationUtils.toRelativePath(VirtualFileManager.extractPath(explodedPath), moduleBaseDir, BuildProperties.getModuleChunkBasedirProperty(chunk), genOptions, !module.isSavePathsRelative());
       add(new Property(getExplodedBuildPath(moduleName), location));
@@ -43,7 +43,7 @@ public abstract class CompositeBuildTarget extends CompositeGenerator {
       buildTarget.add(antCall);
       antCall.add(new Param(getExplodedPathProperty(), BuildProperties.propertyRef(getExplodedBuildPath(moduleName))));
     }
-    final String jarPath = getJarPath(moduleBuildProperties);
+    final String jarPath = getJarPath(buildConfiguration);
     if (jarPath != null) {
       String location = GenerationUtils.toRelativePath(VirtualFileManager.extractPath(jarPath), moduleBaseDir, BuildProperties.getModuleChunkBasedirProperty(chunk), genOptions, !module.isSavePathsRelative());
       add(new Property(BuildProperties.getJarPathProperty(moduleName), location));
@@ -56,8 +56,8 @@ public abstract class CompositeBuildTarget extends CompositeGenerator {
   }
 
   @Nullable
-  protected String getJarPath(ModuleBuildProperties moduleBuildProperties){
-    return moduleBuildProperties.isJarEnabled() ? moduleBuildProperties.getJarPath() : null;
+  protected String getJarPath(BuildConfiguration buildConfiguration){
+    return buildConfiguration.isJarEnabled() ? buildConfiguration.getJarPath() : null;
   }
 
   protected abstract String getDepends(Module module);

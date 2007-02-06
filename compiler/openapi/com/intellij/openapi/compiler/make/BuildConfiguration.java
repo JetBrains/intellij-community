@@ -15,56 +15,28 @@
  */
 package com.intellij.openapi.compiler.make;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleComponent;
-import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.compiler.CompileContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-
-public abstract class ModuleBuildProperties implements ModuleComponent {
-  @Nullable
-  public static ModuleBuildProperties getInstance(Module module) {
-    return module.getComponent(ModuleBuildProperties.class);
-  }
+public abstract class BuildConfiguration {
 
   @NonNls
   public abstract String getArchiveExtension();
 
+  @Nullable
   public abstract String getJarPath();
 
+  @Nullable
   public abstract String getExplodedPath();
-
-  @NotNull
-  public abstract Module getModule();
 
   public abstract boolean isJarEnabled();
 
   public abstract boolean isExplodedEnabled();
 
-  public abstract boolean isBuildOnFrameDeactivation();
-
-  public abstract boolean isSyncExplodedDir();
-
   public abstract boolean isBuildExternalDependencies();
-
-  @Nullable
-  public abstract BuildParticipant getBuildParticipant();
-
-  @Nullable
-  public abstract UnnamedConfigurable getBuildConfigurable(ModifiableRootModel rootModel);
-
-  public abstract void runValidators(File output, CompileContext context) throws Exception;
 
   public boolean willBuildExploded() {
     return isExplodedEnabled() && getExplodedPath() != null;
   }
 
-  public String getPresentableName() {
-    return getModule().getName();
-  }
 }

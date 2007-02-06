@@ -7,13 +7,14 @@ import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
 import com.intellij.openapi.compiler.make.JavaeeModuleBuildInstruction;
-import com.intellij.openapi.compiler.make.ModuleBuildProperties;
+import com.intellij.openapi.compiler.make.BuildConfiguration;
 import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.compiler.make.BuildInstruction;
 import com.intellij.openapi.compiler.make.FileCopyInstruction;
 import com.intellij.openapi.compiler.make.JarAndCopyBuildInstruction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
@@ -39,12 +40,12 @@ public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase imple
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.make.J2EEModuleBuildInstructionImpl");
 
-  private final ModuleBuildProperties myBuildProperties;
+  private final BuildConfiguration myBuildConfiguration;
   @NonNls protected static final String TMP_FILE_SUFFIX = ".tmp";
 
-  public JavaeeModuleBuildInstructionImpl(ModuleBuildProperties moduleToBuild, String outputRelativePath) {
-    super(outputRelativePath, moduleToBuild.getModule());
-    myBuildProperties = moduleToBuild;
+  public JavaeeModuleBuildInstructionImpl(Module module, BuildConfiguration toBuild, String outputRelativePath) {
+    super(outputRelativePath, module);
+    myBuildConfiguration = toBuild;
     LOG.assertTrue(!isExternalDependencyInstruction());
   }
 
@@ -57,10 +58,10 @@ public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase imple
     final Ref<Boolean> externalDependencyFound = new Ref<Boolean>(Boolean.FALSE);
     final BuildRecipe buildRecipe = getChildInstructions(context);
     try {
-      File fromFile = new File(DeploymentUtilImpl.getOrCreateExplodedDir(myBuildProperties));
-      boolean builtAlready = myBuildProperties.willBuildExploded();
+      File fromFile = new File(DeploymentUtilImpl.getOrCreateExplodedDir(myBuildConfiguration, getModule()));
+      boolean builtAlready = myBuildConfiguration.willBuildExploded();
       if (!builtAlready) {
-        ModuleBuilder.getInstance(getModule()).buildExploded(fromFile, context, new ArrayList<File>());
+        ModuleBuilder.getInstance(getModule()).buildExploded(myBuildConfiguration, fromFile, context, new ArrayList<File>());
       }
         DeploymentUtil.getInstance().copyFile(fromFile, target, context, writtenPaths, fileFilter);
         // copy dependencies
@@ -97,8 +98,8 @@ public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase imple
     // todo optimization: cache created jars
     final File tempFile;
     final BuildRecipe childDependencies = new BuildRecipeImpl();
-    if (myBuildProperties.isJarEnabled()) {
-      tempFile = new File(myBuildProperties.getJarPath());
+    if (myBuildConfiguration.isJarEnabled()) {
+      tempFile = new File(myBuildConfiguration.getJarPath());
       final BuildRecipe childModuleRecipe = getChildInstructions(context);
       childModuleRecipe.visitInstructions(new BuildInstructionVisitor() {
         public boolean visitInstruction(BuildInstruction instruction) throws RuntimeException {
@@ -205,13 +206,12 @@ public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase imple
     return ModuleBuilder.getInstance(getModule()).getModuleBuildInstructions(context);
   }
 
-  public ModuleBuildProperties getBuildProperties() {
-    return myBuildProperties;
+  public BuildConfiguration getBuildProperties() {
+    return myBuildConfiguration;
   }
 
   public String toString() {
-    return J2EEBundle
-      .message("j2ee.build.instruction.module.to.file.message", ModuleUtil.getModuleNameInReadAction(getModule()), getOutputRelativePath());
+    return J2EEBundle.message("j2ee.build.instruction.module.to.file.message", ModuleUtil.getModuleNameInReadAction(getModule()), getOutputRelativePath());
   }
 
   public File findFileByRelativePath(String relativePath) {

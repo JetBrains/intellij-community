@@ -24,35 +24,21 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.descriptors.ConfigFile;
 import com.intellij.util.descriptors.CustomConfigFile;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public abstract class BuildParticipantBase implements BuildParticipant {
-  @NotNull protected final Module myModule;
-
-  protected BuildParticipantBase(@NotNull Module module) {
-    myModule = module;
-  }
-
-  @NotNull
-  public Module getModule() {
-    return myModule;
-  }
-
-  public void registerBuildInstructions(final BuildRecipe instructions, final CompileContext context) {
-    final ConfigFile[] deploymentDescriptors = getDeploymentDescriptors();
+public abstract class BuildParticipantBase extends BuildParticipant {
+  public void registerBuildInstructions(final Module module, final BuildRecipe instructions, final CompileContext context) {
+    final ConfigFile[] deploymentDescriptors = getDeploymentDescriptors(module);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         for (ConfigFile descriptor : deploymentDescriptors) {
-          DeploymentUtil.getInstance().checkConfigFile(descriptor, context, myModule);
+          DeploymentUtil.getInstance().checkConfigFile(descriptor, context, module);
 
           VirtualFile virtualFile = descriptor.getVirtualFile();
           if (virtualFile != null) {
             final File file = VfsUtil.virtualToIoFile(virtualFile);
-            instructions.addFileCopyInstruction(file,
-                                                false,
-                                                myModule,
+            instructions.addFileCopyInstruction(file, false, module,
                                                 descriptor.getMetaData().getDirectoryPath() + "/" + virtualFile.getName(),
                                                 null);
           }
@@ -60,22 +46,22 @@ public abstract class BuildParticipantBase implements BuildParticipant {
         }
 
 
-        final CustomConfigFile[] customDescriptors = getCustomDescriptors();
+        final CustomConfigFile[] customDescriptors = getCustomDescriptors(module);
         for (CustomConfigFile descriptor : customDescriptors) {
           final String url = descriptor.getUrl();
           final VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(url);
           if (virtualFile != null) {
             File file = VfsUtil.virtualToIoFile(virtualFile);
-            instructions.addFileCopyInstruction(file, false, myModule, descriptor.getOutputDirectoryPath() + "/" + virtualFile.getName(), null);
+            instructions.addFileCopyInstruction(file, false, module, descriptor.getOutputDirectoryPath() + "/" + virtualFile.getName(), null);
           }
         }
       }
     });
   }
 
-  protected CustomConfigFile[] getCustomDescriptors() {
+  protected CustomConfigFile[] getCustomDescriptors(final Module module) {
     return CustomConfigFile.EMPTY_ARRAY;
   }
 
-  protected abstract ConfigFile[] getDeploymentDescriptors();
+  protected abstract ConfigFile[] getDeploymentDescriptors(final Module module);
 }

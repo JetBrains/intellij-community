@@ -24,7 +24,8 @@ public class BuildJarTarget extends Target {
 
   public BuildJarTarget(final ModuleChunk chunk,
                         final GenerationOptions genOptions,
-                        @NotNull final ModuleBuildProperties moduleBuildProperties,
+                        final Module moduleToBuild,
+                        @NotNull final BuildConfiguration buildConfiguration,
                         final String jarPathProperty,
                         final Function<String, String> buildTargetName,
                         final String description) {
@@ -34,12 +35,13 @@ public class BuildJarTarget extends Target {
     final String moduleName = module.getName();
 
     //noinspection HardCodedStringLiteral
-    final File jarDir = new File(moduleBuildProperties.isJarEnabled() ? new File(moduleBuildProperties.getJarPath()).getParentFile() : moduleBaseDir, "/temp");
+    final File jarDir = new File(
+      buildConfiguration.isJarEnabled() ? new File(buildConfiguration.getJarPath()).getParentFile() : moduleBaseDir, "/temp");
     String tempDir = GenerationUtils.toRelativePath(jarDir.getPath(), chunk, genOptions);
     final String tempDirProperty = BuildProperties.getTempDirForModuleProperty(moduleName);
     final boolean[] tempDirUsed = new boolean[] { false };
 
-    BuildRecipe buildRecipe = DeploymentUtil.getInstance().getModuleItems(moduleBuildProperties.getModule());
+    BuildRecipe buildRecipe = DeploymentUtil.getInstance().getModuleItems(moduleToBuild);
     final List<ZipFileSet> zipFileSetTags = new ArrayList<ZipFileSet>();
     final List<Tag> prepareTags = new ArrayList<Tag>();
     buildRecipe.visitInstructions(new BuildInstructionVisitor() {

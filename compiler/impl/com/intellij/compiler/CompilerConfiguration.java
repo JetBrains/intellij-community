@@ -24,9 +24,11 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.Module;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
 import com.intellij.util.Options;
+import com.intellij.util.NotNullFunction;
 import org.apache.oro.text.regex.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -67,16 +69,7 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
 
   public CompilerConfiguration(Project project) {
     myProject = project;
-    myExcludedEntriesConfiguration = new ExcludedEntriesConfiguration(new Factory<FileChooserDescriptor>() {
-      public FileChooserDescriptor create() {
-        final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true);
-
-        for (LogicalRoot contentSourceRoot : LogicalRootsManager.getLogicalRootsManager(myProject).getLogicalRoots()) {
-          descriptor.addRoot(contentSourceRoot.getVirtualFile());
-        }
-        return descriptor;
-      }
-    });
+    myExcludedEntriesConfiguration = new ExcludedEntriesConfiguration();
   }
 
   private void loadDefaultWildcardPatterns() {
