@@ -104,6 +104,11 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName));
       return null;
     }
+    final SVNStatus fileStatus = getFileStatus(srcFile);
+    if (fileStatus != null && fileStatus.getContentsStatus() == SVNStatusType.STATUS_ADDED) {
+      myAddedFiles.add(new AddedFileInfo(vcs.getProject(), toDir, copyName));
+      return null;
+    }
 
     SVNCopyClient client = new SVNCopyClient(null, vcs.getSvnOptions());
     try {
