@@ -19,6 +19,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.lang.reflect.Array;
 
 public abstract class PsiElementBase extends ElementBase implements PsiElement, NavigationItem {
 
@@ -197,5 +202,22 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement, 
     if (contFile == null) return FileStatus.NOT_CHANGED;
     VirtualFile vFile = contFile.getVirtualFile();
     return vFile != null ? FileStatusManager.getInstance(getProject()).getStatus(vFile) : FileStatus.NOT_CHANGED;
+  }
+
+  @NotNull
+  protected <T> T[] findChildrenByClass(Class<T> aClass) {
+    List<T> result = new ArrayList<T>();
+    for (PsiElement child : getChildren()) {
+      if (aClass.isInstance(child)) result.add((T)child);
+    }
+    return result.toArray((T[]) Array.newInstance(aClass, result.size()));
+  }
+
+  @Nullable
+  protected <T> T findChildByClass(Class<T> aClass) {
+    for (PsiElement child : getChildren()) {
+      if (aClass.isInstance(child)) return (T)child;
+    }
+    return null;
   }
 }

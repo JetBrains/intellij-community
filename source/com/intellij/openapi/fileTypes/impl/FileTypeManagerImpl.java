@@ -530,8 +530,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     try {
       for (final Field field : StdFileTypes.class.getDeclaredFields()) {
         if (FileType.class.isAssignableFrom(field.getType())) {
-          FileType fileType = (FileType)field.get(null);
-          registerFileTypeWithoutNotification(fileType, parse(factory.getDefaultExtensions(fileType)));
+          registerFileTypeWithoutNotification((FileType)field.get(null), parse(factory.getDefaultExtensions(field.getName())));
         }
       }
     }

@@ -29,6 +29,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
+import java.lang.reflect.Array;
 
 public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implements PsiFileEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileImpl");
@@ -375,5 +378,22 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   @NotNull
   public char[] textToCharArray() {
     return CharArrayUtil.fromSequenceStrict(getViewProvider().getContents());
+  }
+
+  @NotNull
+  protected <T> T[] findChildrenByClass(Class<T> aClass) {
+    List<T> result = new ArrayList<T>();
+    for (PsiElement child : getChildren()) {
+      if (aClass.isInstance(child)) result.add((T)child);
+    }
+    return result.toArray((T[]) Array.newInstance(aClass, result.size()));
+  }
+
+  @Nullable
+  protected <T> T findChildByClass(Class<T> aClass) {
+    for (PsiElement child : getChildren()) {
+      if (aClass.isInstance(child)) return (T)child;
+    }
+    return null;
   }
 }

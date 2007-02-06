@@ -13,7 +13,12 @@ import com.intellij.psi.impl.source.tree.ChameleonElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -145,4 +150,30 @@ public class ASTWrapperPsiElement extends PsiElementBase {
   public Language getLanguage() {
     return myNode.getElementType().getLanguage();
   }
+
+  @Nullable
+  protected PsiElement findChildByType(IElementType type) {
+    ASTNode node = getNode().findChildByType(type);
+    return node == null ? null : node.getPsi();
+  }
+
+  protected PsiElement findChildByType(TokenSet type) {
+    ASTNode node = com.intellij.psi.impl.source.tree.TreeUtil.findChild(getNode(), type);
+    return node == null ? null : node.getPsi();
+  }
+
+  @Nullable
+  protected PsiElement findChildByFilter(TokenSet tokenSet) {
+    ASTNode[] nodes = getNode().getChildren(tokenSet);
+    return nodes == null || nodes.length == 0 ? null : nodes[0].getPsi();
+  }
+
+  protected PsiElement[] findChildrenByType(IElementType elementType, Class<? extends PsiElement> arrayClass) {
+    return ContainerUtil.map2Array(getNode().getChildren(TokenSet.create(elementType)), arrayClass, new Function<ASTNode, PsiElement>() {
+      public PsiElement fun(final ASTNode s) {
+        return s.getPsi();
+      }
+    });
+  }
+
 }
