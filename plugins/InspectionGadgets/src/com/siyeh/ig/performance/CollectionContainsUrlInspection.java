@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -78,7 +79,8 @@ public class CollectionContainsUrlInspection extends BaseInspection {
             }
             final PsiReferenceParameterList parameterList =
                     referenceElement.getParameterList();
-            if (parameterList == null) {
+            if (parameterList == null ||
+                    parameterList.getTypeParameterElements().length == 0) {
                 final PsiMember member =
                         PsiTreeUtil.getParentOfType(variable, PsiMember.class);
                 if (member == null) {
@@ -106,12 +108,15 @@ public class CollectionContainsUrlInspection extends BaseInspection {
             registerVariableError(variable, collectionType);
         }
 
-        private static ClassType getClassType(PsiClass aClass) {
+        private static ClassType getClassType(@Nullable PsiClass aClass) {
             return isMapOrSet(aClass, new HashSet());
         }
 
         private static ClassType isMapOrSet(
-                PsiClass aClass, Set<PsiClass> visitedClasses){
+                @Nullable PsiClass aClass, Set<PsiClass> visitedClasses){
+            if (aClass == null) {
+                return ClassType.OTHER;
+            }
             if (!visitedClasses.add(aClass)){
                 return ClassType.OTHER;
             }
@@ -161,7 +166,6 @@ public class CollectionContainsUrlInspection extends BaseInspection {
             }
             final PsiReferenceExpression referenceExpression =
                     (PsiReferenceExpression) qualifierExpression;
-
             final String methodName = methodExpression.getReferenceName();
             if (collectionType == ClassType.SET &&
                     !"add".equals(methodName)) {
@@ -171,8 +175,7 @@ public class CollectionContainsUrlInspection extends BaseInspection {
                     !"put".equals(methodName)) {
                 return;
             }
-            final PsiExpressionList argumentList =
-                    expression.getArgumentList();
+            final PsiExpressionList argumentList = expression.getArgumentList();
             final PsiExpression[] arguments = argumentList.getExpressions();
             if (arguments.length != 1) {
                 return;
@@ -196,6 +199,12 @@ public class CollectionContainsUrlInspection extends BaseInspection {
     }
 
     enum ClassType {
-        SET, MAP, OTHER
+
+        SET, MAP, OTHER;
+
+        public String toString() {
+            final String string = super.toString();
+            return string.charAt(0) + string.substring(1).toLowerCase();
+        }
     }
 }
