@@ -23,10 +23,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.CommitSession;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.util.Icons;
 import org.jdom.Element;
@@ -126,6 +123,22 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
     }
 
     public void execute(Collection<Change> changes, String commitMessage) {
+      int binaryCount = 0;
+      for(Change change: changes) {
+        if (change.getBeforeRevision() instanceof BinaryContentRevision ||
+            change.getAfterRevision() instanceof BinaryContentRevision) {
+          binaryCount++;
+        }
+      }
+      if (binaryCount == changes.size()) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            Messages.showInfoMessage(myProject, VcsBundle.message("create.patch.all.binary"),
+                                     VcsBundle.message("create.patch.commit.action.text"));
+          }
+        });
+        return;
+      }
       try {
         final String fileName = myPanel.getFileName();
         final File file = new File(fileName).getAbsoluteFile();
@@ -138,12 +151,24 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
         finally {
           writer.close();
         }
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            Messages.showInfoMessage(myProject, VcsBundle.message("create.patch.success.confirmation", file.getPath()),
-                                     VcsBundle.message("create.patch.commit.action.text"));
-          }
-        });
+        if (binaryCount == 0) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              Messages.showInfoMessage(myProject, VcsBundle.message("create.patch.success.confirmation", file.getPath()),
+                                       VcsBundle.message("create.patch.commit.action.text"));
+            }
+          });
+        }
+        else {
+          final int binaryCount1 = binaryCount;
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              Messages.showInfoMessage(myProject, VcsBundle.message("create.patch.partial.success.confirmation", file.getPath(),
+                                                                    binaryCount1),
+                                       VcsBundle.message("create.patch.commit.action.text"));
+            }
+          });
+        }
       }
       catch (final Exception ex) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
