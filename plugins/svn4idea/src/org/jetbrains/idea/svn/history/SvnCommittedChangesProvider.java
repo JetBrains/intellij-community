@@ -43,10 +43,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Collections;
+import java.util.*;
 import java.io.File;
 
 public class SvnCommittedChangesProvider implements CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> {
@@ -71,7 +68,7 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
   }
 
   public List<SvnChangeList> getAllCommittedChanges(ChangeBrowserSettings settings, final int maxCount) throws VcsException {
-    ArrayList<SvnChangeList> result = new ArrayList<SvnChangeList>();
+    LinkedHashSet<SvnChangeList> result = new LinkedHashSet<SvnChangeList>();
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     VirtualFile[] roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(SvnVcs.getInstance(myProject));
     for(VirtualFile root: roots) {
@@ -83,7 +80,7 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
         }
       }
     }
-    return result;
+    return new ArrayList<SvnChangeList>(result);
   }
 
   public List<SvnChangeList> getCommittedChanges(ChangeBrowserSettings settings, VirtualFile root, final int maxCount) throws VcsException {

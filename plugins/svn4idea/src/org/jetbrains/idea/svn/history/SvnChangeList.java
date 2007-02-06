@@ -83,4 +83,19 @@ public class SvnChangeList implements CommittedChangeList {
   public long getNumber() {
     return myLogEntry.getRevision();
   }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final SvnChangeList that = (SvnChangeList)o;
+
+    if (!myLogEntry.equals(that.myLogEntry)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return myLogEntry.hashCode();
+  }
 }
