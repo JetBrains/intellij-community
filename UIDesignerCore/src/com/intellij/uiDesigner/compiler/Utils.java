@@ -44,7 +44,6 @@ import java.util.Set;
 public final class Utils {
   public static final String FORM_NAMESPACE = "http://www.intellij.com/uidesigner/form/";
   private static final SAXParser SAX_PARSER = createParser();
-  private static final SAXBuilder SAX_BUILDER = new SAXBuilder();
 
   private Utils() {
   }
@@ -66,7 +65,7 @@ public final class Utils {
       throw new AlienFormFileException();
     }
 
-    final Document document = SAX_BUILDER.build(new StringReader(formFileContent), "UTF-8");
+    final Document document = new SAXBuilder().build(new StringReader(formFileContent), "UTF-8");
 
     final LwRootContainer root = new LwRootContainer();
     root.read(document.getRootElement(), provider);
@@ -75,7 +74,7 @@ public final class Utils {
   }
 
   public static LwRootContainer getRootContainer(final InputStream stream, final PropertiesProvider provider) throws Exception {
-    final Document document = SAX_BUILDER.build(stream, "UTF-8");
+    final Document document = new SAXBuilder().build(stream, "UTF-8");
 
     final LwRootContainer root = new LwRootContainer();
     root.read(document.getRootElement(), provider);
