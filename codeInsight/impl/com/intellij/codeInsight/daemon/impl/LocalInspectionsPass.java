@@ -42,6 +42,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author max
@@ -108,12 +109,16 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final int chunkSize = Math.max(10, tools.length / Runtime.getRuntime().availableProcessors() / 10); //about 10 chunks per thread, in case some inspections are faster than others
     List<Callable<Boolean>> inspectionChunks = new ArrayList<Callable<Boolean>>();
     setProgressLimit(1L * tools.length * elements.length);
+    final AtomicBoolean canceled = new AtomicBoolean(false);
     for (int v = 0; v < tools.length; v+=chunkSize) {
       final int index = v;
       Callable<Boolean> chunk = new Callable<Boolean>() {
         public Boolean call() throws Exception {
           if (progress != null) {
-            if (progress.isCanceled()) return false;
+            if (progress.isCanceled()) {
+              canceled.set(true);
+              return false;
+            }
           }
           final ProgressManager progressManager = ProgressManager.getInstance();
           ((ProgressManagerImpl)progressManager).executeProcessUnderProgress(new Runnable(){
@@ -122,13 +127,16 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
               PassExecutorService.log(progress, "Started " , name);
               ProblemsHolder holder = new ProblemsHolder(iManager);
               try {
+                NextTool:
                 for (int i = index; i < index + chunkSize && i < tools.length; i++) {
+                  if (canceled.get()) break;
                   LocalInspectionTool tool = tools[i];
                   PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
                   if(elementVisitor == null) {
                     LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
                   }
                   for (PsiElement element : elements) {
+                    if (canceled.get()) break NextTool;
                     progressManager.checkCanceled();
                     element.accept(elementVisitor);
                   }
@@ -141,6 +149,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
               }
               catch (ProcessCanceledException e) {
                 PassExecutorService.log(progress, "Canceled " , name);
+                canceled.set(true);
               }
               PassExecutorService.log(progress, "Finished ", name);
             }
