@@ -181,7 +181,8 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
     @Override
     public void beforeFileDeletion(VirtualFileEvent event) {
-      fileDirty(event.getFile());
+      // need to keep track of whether the deleted file was a directory
+      fileDirty(new FilePathImpl(new File(event.getFile().getPath()), event.getFile().isDirectory()));
     }
 
     @Override
