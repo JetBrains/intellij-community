@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.PsiSearchHelperImpl");
@@ -549,12 +550,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       if (!application.isUnitTestMode() && !application.isWriteAccessAllowed() && POOL_SIZE > 0) {
         final int chunkSize = Math.max(10, files.length / POOL_SIZE / 20); // make at least 20 chunks per proc to balance load
         ArrayList<Callable<Boolean>> callables = new ArrayList<Callable<Boolean>>(files.length/chunkSize);
+        final AtomicBoolean result = new AtomicBoolean(true);
         final AtomicInteger counter = new AtomicInteger(0);
         for (int v = 0; v < files.length; v += chunkSize) {
           final int index = v;
           Callable<Boolean> runnable = new Callable<Boolean>() {
             public Boolean call() throws Exception {
-              final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
               ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
                 public void run() {
                   for (int i = index; i < index + chunkSize && i < files.length; i++) {
@@ -567,7 +568,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                         ProgressManager.getInstance().checkCanceled();
                         if (!processed.add(psiRoot)) continue;
                         if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher)) {
-                          result.set(Boolean.FALSE);
+                          result.set(false);
                           return;
                         }
                       }
@@ -578,7 +579,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                       myManager.dropResolveCaches();
                     }
                     catch (ProcessCanceledException e) {
-                      result.set(Boolean.FALSE);
+                      result.set(false);
                     }
                     if (!result.get()) return;
                   }
