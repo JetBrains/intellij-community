@@ -521,6 +521,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   public Object getData(String dataId) {
     if (dataId.equals(DataConstants.HELP_ID)) return HELP_ID;
     if (dataId.equals(DataConstantsEx.INSPECTION_VIEW)) return this;
+    if (myTree == null) return null;
     TreePath[] paths = myTree.getSelectionPaths();
 
     if (paths == null) return null;
