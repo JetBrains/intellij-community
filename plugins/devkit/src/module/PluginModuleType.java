@@ -19,7 +19,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.make.ModuleBuildProperties;
+import com.intellij.openapi.compiler.make.BuildConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -39,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.build.PluginBuildUtil;
-import org.jetbrains.idea.devkit.build.PluginModuleBuildProperties;
+import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 
 import javax.swing.*;
@@ -114,9 +114,9 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     if (module == null) return null;
     if (module.getModuleType() != ourInstance) return null;
 
-    final ModuleBuildProperties buildProperties = module.getComponent(ModuleBuildProperties.class);
-    if (!(buildProperties instanceof PluginModuleBuildProperties)) return null;
-    final VirtualFilePointer pluginXMLPointer = ((PluginModuleBuildProperties)buildProperties).getPluginXmlPointer();
+    final BuildConfiguration buildConfiguration = module.getComponent(BuildConfiguration.class);
+    if (!(buildConfiguration instanceof PluginBuildConfiguration)) return null;
+    final VirtualFilePointer pluginXMLPointer = ((PluginBuildConfiguration)buildConfiguration).getPluginXmlPointer();
     final VirtualFile vFile = pluginXMLPointer.getFile();
     if (vFile == null) return null;
     final PsiFile file = PsiManager.getInstance(module.getProject()).findFile(vFile);

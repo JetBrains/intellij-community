@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.startup.StartupManager;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.idea.devkit.build.PluginModuleBuildProperties;
+import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 
 public class PluginModuleBuilder extends JavaModuleBuilder{
   @NonNls private static final String META_INF = "META-INF";
@@ -43,7 +43,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
       final Module module = rootModel.getModule();
       StartupManager.getInstance(module.getProject()).runWhenProjectIsInitialized(new Runnable() {
         public void run() {
-          final PluginModuleBuildProperties moduleProperties = (PluginModuleBuildProperties)PluginModuleBuildProperties.getInstance(module);
+          final PluginBuildConfiguration moduleProperties = (PluginBuildConfiguration)PluginBuildConfiguration.getInstance(module);
           moduleProperties.getPluginXML(); //call to create if not exist
         }
       });

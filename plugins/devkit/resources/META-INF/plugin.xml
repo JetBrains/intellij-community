@@ -13,6 +13,7 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
     <antBuildGen implementation="org.jetbrains.idea.devkit.build.ant.ChunkBuildPluginExtension"/>
+    <compiler.buildParticipant implementation="org.jetbrains.idea.devkit.build.PluginBuildParticipant"/>
   </extensions>
 
   <application-components>
@@ -36,8 +37,7 @@
       <option name="type" value="PLUGIN_MODULE"/>
     </component>
     <component>
-      <interface-class>com.intellij.openapi.compiler.make.ModuleBuildProperties</interface-class>
-      <implementation-class>org.jetbrains.idea.devkit.build.PluginModuleBuildProperties</implementation-class>
+      <implementation-class>org.jetbrains.idea.devkit.build.PluginBuildConfiguration</implementation-class>
       <option name="type" value="PLUGIN_MODULE"/>
     </component>    
   </module-components>

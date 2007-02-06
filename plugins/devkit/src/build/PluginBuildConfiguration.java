@@ -16,14 +16,9 @@
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.make.BuildParticipant;
-import com.intellij.openapi.compiler.make.ModuleBuildProperties;
+import com.intellij.openapi.compiler.make.BuildConfiguration;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -45,11 +40,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginDescriptorConstants;
-import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 
 import java.io.File;
 
-public class PluginModuleBuildProperties extends ModuleBuildProperties implements JDOMExternalizable {
+public class PluginBuildConfiguration extends BuildConfiguration implements ModuleComponent, JDOMExternalizable {
   private Module myModule;
   private ConfigFileContainer myPluginXmlContainer;
   private VirtualFilePointer myPluginXmlPointer;
@@ -60,10 +54,15 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   @NonNls private static final String META_INF = "META-INF";
   @NonNls private static final String PLUGIN_XML = "plugin.xml";
 
-  public PluginModuleBuildProperties(Module module) {
+  public PluginBuildConfiguration(Module module) {
     myModule = module;
     myPluginXmlContainer = ConfigFileFactory.getInstance().createSingleFileContainer(myModule.getProject(), PluginDescriptorConstants.META_DATA);
     Disposer.register(module, myPluginXmlContainer);
+  }
+
+  @Nullable
+  public static PluginBuildConfiguration getInstance(Module module) {
+    return module.getComponent(PluginBuildConfiguration.class);
   }
 
   public String getArchiveExtension() {
@@ -76,11 +75,6 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
 
   public String getExplodedPath() {
     return PluginBuildUtil.getPluginExPath(myModule);
-  }
-
-  @NotNull
-  public Module getModule() {
-    return myModule;
   }
 
   public boolean isJarEnabled() {
@@ -96,28 +90,6 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   }
 
   public boolean isBuildExternalDependencies() {
-    return false;
-  }
-
-  @Nullable
-  public BuildParticipant getBuildParticipant() {
-    ProjectJdk jdk = ModuleRootManager.getInstance(myModule).getJdk();
-    jdk = IdeaJdk.findIdeaJdk(jdk);
-    if (jdk != null && IdeaJdk.isFromIDEAProject(jdk.getHomePath())) {
-      return null;
-    }
-    return new PluginBuildParticipant(myModule);
-  }
-
-  @Nullable
-  public UnnamedConfigurable getBuildConfigurable(ModifiableRootModel rootModel) {
-    return null;
-  }
-
-  public void runValidators(File output, CompileContext context) throws Exception {
-  }
-
-  public boolean isSyncExplodedDir() {
     return false;
   }
 

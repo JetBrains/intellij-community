@@ -22,7 +22,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.idea.devkit.build.PluginModuleBuildProperties;
+import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.build.ant.BuildJarTarget;
 
 import java.io.DataOutputStream;
@@ -50,7 +50,7 @@ public class GenerateAntTest extends IdeaTestCase {
         targetText.append((char)b);
       }
     });
-    new BuildJarTarget(chunk, BuildTargetsFactory.getInstance().getDefaultOptions(getProject()), new PluginModuleBuildProperties(getModule())).generate(dataOutput);
+    new BuildJarTarget(chunk, BuildTargetsFactory.getInstance().getDefaultOptions(getProject()), new PluginBuildConfiguration(getModule())).generate(dataOutput);
     final String expected = "<target name=\"plugin.build.jar."+ myModule.getName() +"\" description=\"Build plugin archive for module \'" + myModule.getName() + "\'\">\n" +
                             "  <jar destfile=\"${"+ myModule.getName() + ".path.jar}\" duplicate=\"preserve\">\n" +
                             "    <zipfileset dir=\"${module." + myModule.getName() + ".basedir}/classes\" prefix=\"\"/>\n" +

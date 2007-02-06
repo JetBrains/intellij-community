@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.build.PluginBuildUtil;
-import org.jetbrains.idea.devkit.build.PluginModuleBuildProperties;
+import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.util.HashSet;
@@ -41,7 +41,8 @@ public class ChunkBuildPluginExtension extends ChunkBuildExtension {
       final BuildTargetsFactory factory = BuildTargetsFactory.getInstance();
       final @NonNls String explodedPathProperty = "plugin.dir.exploded";
       final @NonNls String jarPathProperty = "plugin.path.jar";
-      factory.init(chunk, genOptions, explodedPathProperty, new Function<String, String>() {
+      PluginBuildConfiguration buildProperties = PluginBuildConfiguration.getInstance(modules[0]);
+      factory.init(chunk, buildProperties, genOptions, explodedPathProperty, new Function<String, String>() {
         @SuppressWarnings({"HardCodedStringLiteral"})
         public String fun(final String name) {
           return "plugin.build.exploded." + BuildProperties.convertName(name);
@@ -78,7 +79,7 @@ public class ChunkBuildPluginExtension extends ChunkBuildExtension {
       generator.add(factory.createBuildExplodedTarget(DevKitBundle.message("ant.exploded.description") + chunk.getName() + "\'"));
 
       generator.add(factory.createComment(DevKitBundle.message("ant.build.jar.comment", chunk.getName(), jarPathProperty)), 1);
-      generator.add(new BuildJarTarget(chunk, genOptions, (PluginModuleBuildProperties)factory.getModuleBuildProperties()));
+      generator.add(new BuildJarTarget(chunk, genOptions, (PluginBuildConfiguration)factory.getModuleBuildProperties()));
     }
   }
 

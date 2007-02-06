@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.build.PluginBuildUtil;
-import org.jetbrains.idea.devkit.build.PluginModuleBuildProperties;
+import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.build.PrepareToDeployAction;
 
 import java.io.File;
@@ -30,7 +30,7 @@ import java.util.HashSet;
 public class BuildJarTarget extends Target {
   public BuildJarTarget(final ModuleChunk chunk,
                         final GenerationOptions genOptions,
-                        final PluginModuleBuildProperties moduleBuildProperties) {
+                        final PluginBuildConfiguration moduleBuildProperties) {
     super("plugin.build.jar." + BuildProperties.convertName(chunk.getName()), null, DevKitBundle.message("ant.build.jar.description", chunk.getName()), null);
 
     final File moduleBaseDir = chunk.getBaseDir();
@@ -91,7 +91,7 @@ public class BuildJarTarget extends Target {
   private static Tag createPluginsJar(@NonNls final String jarPathProperty,
                                       final Module[] modules, final File moduleBaseDir,
                                       final GenerationOptions genOptions,
-                                      final PluginModuleBuildProperties moduleBuildProperties) {
+                                      final PluginBuildConfiguration moduleBuildProperties) {
     final Tag jarTag = new Jar(jarPathProperty, "preserve");
     for (Module m : modules) {
       final String path = VfsUtil.urlToPath(ModuleRootManager.getInstance(m).getCompilerOutputPathUrl());
