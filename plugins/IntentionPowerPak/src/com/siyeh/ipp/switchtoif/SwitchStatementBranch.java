@@ -56,7 +56,7 @@ class SwitchStatementBranch{
 
     public void addWhiteSpace(PsiElement statement){
         if(!m_bodyElements.isEmpty()){
-          // a whitespace after the END_OF_LINE comment should be added immediately (fixes IDEADEV-11421)  
+          // a whitespace after the END_OF_LINE comment should be added immediately (fixes IDEADEV-14143)  
           final PsiElement lastElement = m_bodyElements.get(m_bodyElements.size() - 1);
           if ( lastElement instanceof PsiComment && ((PsiComment)lastElement).getTokenType()== JavaTokenType.END_OF_LINE_COMMENT){
             m_bodyElements.add(statement);
