@@ -31,10 +31,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class CvsCommittedChangesProvider implements CommittedChangesProvider<CvsChangeList, ChangeBrowserSettings> {
   private final Project myProject;
@@ -54,12 +51,12 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
   }
 
   public List<CvsChangeList> getAllCommittedChanges(ChangeBrowserSettings settings, final int maxCount) throws VcsException {
-    List<CvsChangeList> result = new ArrayList<CvsChangeList>();
+    LinkedHashSet<CvsChangeList> result = new LinkedHashSet<CvsChangeList>();
     final VirtualFile[] files = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(CvsVcs2.getInstance(myProject));
     for(VirtualFile file: files) {
       result.addAll(getCommittedChanges(settings, file, 0));
     }
-    return result;
+    return new ArrayList<CvsChangeList>(result);
   }
 
   public ChangeListColumn[] getColumns() {

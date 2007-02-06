@@ -142,4 +142,19 @@ public class CvsChangeList implements CommittedChangeList {
   public static boolean isAncestor(final String parent, final String child) {
     return child.startsWith(parent + "/");
   }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final CvsChangeList that = (CvsChangeList)o;
+
+    if (!myRevisions.equals(that.myRevisions)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return myRevisions.hashCode();
+  }
 }

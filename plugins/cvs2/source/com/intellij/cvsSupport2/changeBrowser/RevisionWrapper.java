@@ -28,4 +28,26 @@ class RevisionWrapper implements Comparable<RevisionWrapper> {
   public long getTime() {
     return myTime;
   }
+
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final RevisionWrapper that = (RevisionWrapper)o;
+
+    if (myTime != that.myTime) return false;
+    if (!myFile.equals(that.myFile)) return false;
+    if (!myRevision.getNumber().equals(that.myRevision.getNumber())) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = myFile.hashCode();
+    result = 31 * result + myRevision.getNumber().hashCode();
+    result = 31 * result + (int)(myTime ^ (myTime >>> 32));
+    return result;
+  }
 }
