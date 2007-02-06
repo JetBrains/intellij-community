@@ -226,6 +226,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @param name  the file name to search by
    * @return the file if found any, <code>null</code> otherwise
    */
+  @Nullable
   public VirtualFile findChild(@NotNull @NonNls String name){
     VirtualFile[] children = getChildren();
     if (children == null) return null;
