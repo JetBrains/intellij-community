@@ -9,8 +9,8 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.*;
-import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
@@ -325,8 +325,8 @@ public class EnterHandler extends EditorWriteActionHandler {
         int endOffset = comment.getTextRange().getEndOffset();
 
         if (text.endsWith(expectedCommentEnd) &&
-            endOffset < containingFile.getTextLength()-1 &&
-            containingFile.getText().charAt(endOffset+1) == '\n') {
+            endOffset < containingFile.getTextLength() &&
+            containingFile.getText().charAt(endOffset) == '\n') {
           return true;
         }
       }
