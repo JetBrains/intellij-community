@@ -52,6 +52,10 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
 
   protected static void fillMap(Map<IElementType, TextAttributesKey> map, TokenSet keys, TextAttributesKey value) {
     IElementType[] types = keys.getTypes();
+    fillMap(map, value, types);
+  }
+
+  protected static void fillMap(final Map<IElementType, TextAttributesKey> map, final TextAttributesKey value, final IElementType... types) {
     for (int i = 0; i < types.length; i++) {
       map.put(types[i], value);
     }
