@@ -18,10 +18,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;
+import java.util.ArrayList;
 
 public class UnshelveChangesAction extends AnAction {
   private Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction");
@@ -48,14 +51,26 @@ public class UnshelveChangesAction extends AnAction {
     }
 
     FileDocumentManager.getInstance().saveAllDocuments();
-    changeListManager.setDefaultChangeList(chooser.getSelectedList());
-    try {
-      for(ShelvedChangeList changeList: changeLists) {
-        ShelveChangesManager.getInstance(project).unshelveChangeList(changeList, changes, binaryFiles);
+    List<VirtualFile> unshelvedFiles = new ArrayList<VirtualFile>();
+
+    for(ShelvedChangeList changeList: changeLists) {
+      final List<VirtualFile> result = ShelveChangesManager.getInstance(project).unshelveChangeList(changeList, changes, binaryFiles);
+      if (result == null) {
+        break;
       }
+      unshelvedFiles.addAll(result);
     }
-    finally {
-      changeListManager.setDefaultChangeList(defaultChangeList);
+
+    if (chooser.getSelectedList() != changeListManager.getDefaultChangeList()) {
+      changeListManager.ensureUpToDate(false);
+      List<Change> unshelvedChanges = new ArrayList<Change>();
+      for(VirtualFile file: unshelvedFiles) {
+        final Change change = changeListManager.getChange(file);
+        if (change != null) {
+          unshelvedChanges.add(change);
+        }
+      }
+      changeListManager.moveChangesTo(chooser.getSelectedList(), unshelvedChanges.toArray(new Change[unshelvedChanges.size()]));
     }
   }
 

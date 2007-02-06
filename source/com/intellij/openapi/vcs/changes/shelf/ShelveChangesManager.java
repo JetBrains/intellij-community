@@ -183,8 +183,9 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return FileUtil.findSequentNonexistentFile(file, defaultPath, PATCH_EXTENSION);
   }
 
-  public void unshelveChangeList(final ShelvedChangeList changeList, @Nullable final List<ShelvedChange> changes,
-                                 @Nullable final List<ShelvedBinaryFile> binaryFiles) {
+  public List<VirtualFile> unshelveChangeList(final ShelvedChangeList changeList, @Nullable final List<ShelvedChange> changes,
+                                              @Nullable final List<ShelvedBinaryFile> binaryFiles) {
+    List<VirtualFile> result = new ArrayList<VirtualFile>();
     List<FilePatch> remainingPatches = new ArrayList<FilePatch>();
     try {
       List<FilePatch> patches = loadPatches(changeList.PATH);
@@ -201,7 +202,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       List<VirtualFile> filesToMakeWritable = new ArrayList<VirtualFile>();
       VirtualFile baseDir = myProject.getBaseDir();
       if (!ApplyPatchAction.prepareFiles(myProject, patches, baseDir, 0, filesToMakeWritable)) {
-        return;
+        return null;
       }
 
       List<ShelvedBinaryFile> binaryFilesToUnshelve = getBinaryFilesToUnshelve(changeList, binaryFiles);
@@ -220,12 +221,13 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       final VirtualFile[] fileArray = filesToMakeWritable.toArray(new VirtualFile[filesToMakeWritable.size()]);
       final ReadonlyStatusHandler.OperationStatus readonlyStatus = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(fileArray);
       if (readonlyStatus.hasReadonlyFiles()) {
-        return;
+        return null;
       }
 
       if (ApplyPatchAction.applyFilePatches(myProject, patches, baseDir, 0, true, true) == ApplyPatchStatus.FAILURE) {
-        return;
+        return null;
       }
+      result.addAll(filesToMakeWritable);
       for(ShelvedBinaryFile file: binaryFilesToUnshelve) {
         boolean success = unshelveBinaryFile(file);
         if (!success) {
@@ -236,11 +238,11 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     }
     catch (IOException e) {
       LOG.error(e);
-      return;
+      return null;
     }
     catch (PatchSyntaxException e) {
       LOG.error(e);
-      return;
+      return null;
     }
     if (remainingPatches.size() == 0 && changeList.getBinaryFiles().size() == 0) {
       deleteChangeList(changeList);
@@ -248,6 +250,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     else {
       saveRemainingPatches(changeList, remainingPatches);
     }
+    return result;
   }
 
   private static List<ShelvedBinaryFile> getBinaryFilesToUnshelve(final ShelvedChangeList changeList, final List<ShelvedBinaryFile> binaryFiles) {
