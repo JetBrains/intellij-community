@@ -111,7 +111,7 @@ public class MoveChangesToAnotherListAction extends AnAction {
     final ChangeListManagerImpl listManager = ChangeListManagerImpl.getInstanceImpl(project);
     final List<LocalChangeList> lists = listManager.getChangeLists();
     ChangeListChooser chooser = new ChangeListChooser(project, getPreferredLists(lists, changes, true), guessPreferredList(lists, changes),
-                                                      VcsBundle.message("changes.changelist.chooser.title"));
+                                                      VcsBundle.message("changes.changelist.chooser.title"), null);
     chooser.show();
     LocalChangeList resultList = chooser.getSelectedList();
     if (resultList != null) {

@@ -32,7 +32,9 @@ public class ChangeListChooser extends DialogWrapper {
 
   public ChangeListChooser(@NotNull Project project,
                            @NotNull Collection<? extends ChangeList> changelists,
-                           @Nullable ChangeList defaultSelection, final String title) {
+                           @Nullable ChangeList defaultSelection,
+                           final String title,
+                           @Nullable final String defaultName) {
     super(project, false);
     myProject = project;
 
@@ -71,6 +73,9 @@ public class ChangeListChooser extends DialogWrapper {
     updateEnabledItems();
 
     setTitle(title);
+    if (defaultName != null) {
+      myNewListPanel.setName(defaultName);
+    }
 
     init();
   }
