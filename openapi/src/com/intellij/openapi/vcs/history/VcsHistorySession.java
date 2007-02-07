@@ -55,4 +55,8 @@ public abstract class VcsHistorySession {
     myCachedRevisionNumber = calcCurrentRevisionNumber();
     return !Comparing.equal(oldValue, myCachedRevisionNumber);
   }
+
+  public boolean isContentAvailable(VcsFileRevision revision) {
+    return true;
+  }
 }

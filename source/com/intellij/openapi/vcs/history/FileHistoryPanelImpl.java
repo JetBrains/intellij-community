@@ -561,6 +561,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
     public boolean isEnabled() {
       if (!super.isEnabled()) return false;
+      if (!myHistorySession.isContentAvailable((VcsFileRevision) getSelection().get(0)) ||
+          !myHistorySession.isContentAvailable((VcsFileRevision) getSelection().get(1))) {
+        return false;
+      }
       return true;
     }
   }
@@ -581,6 +585,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     public boolean isEnabled() {
       if (myHistorySession.getCurrentRevisionNumber() == null) return false;
       if (myFilePath.getVirtualFile() == null) return false;
+      if (!myHistorySession.isContentAvailable(getFirstSelectedRevision())) return false;
       if (!super.isEnabled()) return false;
       //if (CvsEntriesManager.getInstance().getEntryFor(myVirtualFile) == null) return false;
       return true;
@@ -601,6 +606,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       else {
         super.update(e);
       }
+    }
+
+    @Override
+    public boolean isEnabled() {
+      if (!super.isEnabled()) return false;
+      if (!myHistorySession.isContentAvailable(getFirstSelectedRevision())) return false;
+      return true;
     }
 
     protected void actionPerformed() {
