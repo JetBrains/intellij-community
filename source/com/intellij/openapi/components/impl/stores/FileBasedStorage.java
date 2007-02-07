@@ -122,7 +122,9 @@ public class FileBasedStorage extends XmlElementStorage {
 
   public List<VirtualFile> getAllStorageFiles() {
     final VirtualFile virtualFile = getVirtualFile(FILE_SYSTEM.createFile(myFilePath));
-    if (virtualFile != null && !virtualFile.isWritable()) return Collections.singletonList(virtualFile);
+    // TODO[mike]: why the isWritable() check?
+    // if (virtualFile != null && !virtualFile.isWritable()) return Collections.singletonList(virtualFile);
+    if (virtualFile != null) return Collections.singletonList(virtualFile);
     return Collections.emptyList();
   }
 
