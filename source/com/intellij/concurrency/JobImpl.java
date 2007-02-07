@@ -58,6 +58,16 @@ public class JobImpl<T> implements Job<T> {
   }
 
   public List<T> scheduleAndWaitForResults() throws Throwable {
+    // Don't bother scheduling if we only have one processor.
+    if (JobSchedulerImpl.CORES_COUNT < 2) {
+      List<T> results = new ArrayList<T>(myTasks.size());
+      for (Callable<T> task : myTasks) {
+        results.add(task.call());
+      }
+
+      return results;
+    }
+
     myLock.lock();
     try {
       final Application application = ApplicationManager.getApplication();

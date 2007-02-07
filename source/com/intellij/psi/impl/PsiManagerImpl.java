@@ -229,7 +229,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     if (externalResourceManager != null) {
       externalResourceManager.removeExternalResourceListener(myExternalResourceListener);
     }
-    mySearchHelper.dispose();
     myIsDisposed = true;
   }
 

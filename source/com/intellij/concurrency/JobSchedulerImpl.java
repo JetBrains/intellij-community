@@ -15,7 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @NonNls
 public class JobSchedulerImpl extends JobScheduler {
-  private final static int CORES_COUNT = Runtime.getRuntime().availableProcessors();
+  public final static int CORES_COUNT = Runtime.getRuntime().availableProcessors();
   @NonNls private static final String THREADS_NAME = "JobScheduler pool";
   private final static ThreadFactory WORKERS_FACTORY = new ThreadFactory() {
     public Thread newThread(final Runnable r) {
