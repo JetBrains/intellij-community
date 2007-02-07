@@ -752,10 +752,13 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             PsiTreeUtil.getParentOfType(reference.getElement(), PsiDocComment.class) != null) {
           return true;
         }
-        UsagesProcessor[] processorsArrayed = processors.toArray(new UsagesProcessor[processors.size()]);
-        for (UsagesProcessor processor : processorsArrayed) {
-          if (!processor.process(reference)) {
-            processors.remove(processor);
+
+        synchronized (processors) {
+          UsagesProcessor[] processorsArrayed = processors.toArray(new UsagesProcessor[processors.size()]);
+          for (UsagesProcessor processor : processorsArrayed) {
+            if (!processor.process(reference)) {
+              processors.remove(processor);
+            }
           }
         }
 
