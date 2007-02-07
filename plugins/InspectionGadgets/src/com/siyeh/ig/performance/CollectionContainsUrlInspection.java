@@ -73,6 +73,7 @@ public class CollectionContainsUrlInspection extends BaseInspection {
             }
             final PsiClassType classType = (PsiClassType) type;
             final PsiClass aClass = classType.resolve();
+
             final ClassType collectionType = getClassType(aClass);
             if (collectionType == ClassType.OTHER) {
                 return;

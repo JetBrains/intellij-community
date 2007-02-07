@@ -18,6 +18,7 @@ package com.siyeh.ig.bugs;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
@@ -39,7 +40,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
 
     @Nls @NotNull
     public String getGroupDisplayName() {
-        return GroupNames.PERFORMANCE_GROUP_NAME;
+        return GroupNames.BUGS_GROUP_NAME;
     }
 
     @NotNull
@@ -151,17 +152,14 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
                 final PsiReferenceExpression methodExpression =
                         methodCallExpression.getMethodExpression();
                 final String methodName = methodExpression.getReferenceName();
-                if (!"print".equals(methodName) ||
+                if (!"print".equals(methodName) &&
                         !"println".equals(methodName)) {
                     return;
                 }
-                final PsiMethod method = methodCallExpression.resolveMethod();
-                if (method == null) {
-                    return;
-                }
-                final PsiClass containingClass = method.getContainingClass();
-                final String qualifiedName = containingClass.getQualifiedName();
-                if (!"java.io.PrintStream".equals(qualifiedName)) {
+                final PsiExpression qualifier =
+                        methodExpression.getQualifierExpression();
+                if (!TypeUtils.expressionHasTypeOrSubtype("java.io.PrintStream",
+                        qualifier)) {
                     return;
                 }
                 registerError(expression);

@@ -490,6 +490,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ForLoopThatDoesntUseLoopVariableInspection.class);
         m_inspectionClasses.add(HashCodeUsesNonFinalVariableInspection.class);
         m_inspectionClasses.add(IgnoreResultOfCallInspection.class);
+        m_inspectionClasses.add(ImplicitArrayToStringInspection.class);
         m_inspectionClasses.add(InfiniteRecursionInspection.class);
         m_inspectionClasses.add(InstanceofIncompatibleInterfaceInspection.class);
         m_inspectionClasses.add(InstantiationOfUtilityClassInspection.class);
