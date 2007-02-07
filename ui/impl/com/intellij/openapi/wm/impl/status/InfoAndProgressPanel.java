@@ -2,8 +2,8 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.openapi.wm.ex.ProcessInfo;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.Wrapper;
@@ -30,7 +30,7 @@ public class InfoAndProgressPanel extends JPanel {
   private ProcessPopup myPopup;
 
   private final ArrayList<ProgressIndicatorEx> myOriginals = new ArrayList<ProgressIndicatorEx>();
-  private ArrayList<ProcessInfo> myInfos = new ArrayList<ProcessInfo>();
+  private ArrayList<TaskInfo> myInfos = new ArrayList<TaskInfo>();
   private Map<InlineProgressIndicator, ProgressIndicatorEx> myInline2Original = new HashMap<InlineProgressIndicator, ProgressIndicatorEx>();
   private MultiValuesMap<ProgressIndicatorEx, InlineProgressIndicator> myOriginal2Inlines =
     new MultiValuesMap<ProgressIndicatorEx, InlineProgressIndicator>();
@@ -67,7 +67,7 @@ public class InfoAndProgressPanel extends JPanel {
     restoreEmptyStatus();
   }
 
-  public void addProgress(final ProgressIndicatorEx original, ProcessInfo info) {
+  public void addProgress(final ProgressIndicatorEx original, TaskInfo info) {
     synchronized (myOriginals) {
       final boolean veryFirst = myOriginals.size() == 0;
 
@@ -206,7 +206,7 @@ public class InfoAndProgressPanel extends JPanel {
     inline.getComponent().setBorder(myCompoundBorder);
     inlinePanel.add(inline.getComponent(), BorderLayout.CENTER);
 
-    myProgressIcon.setBorder(myCompoundBorder);
+    myProgressIcon.setBorder(inline.getInfo().isCancellable() ? myCompoundBorder : myEmptyBorder);
     inlinePanel.add(myProgressIcon, BorderLayout.EAST);
 
     add(inlinePanel);
@@ -243,7 +243,7 @@ public class InfoAndProgressPanel extends JPanel {
   }
 
 
-  private InlineProgressIndicator createInlineDelegate(final ProcessInfo info, final ProgressIndicatorEx original, final boolean compact) {
+  private InlineProgressIndicator createInlineDelegate(final TaskInfo info, final ProgressIndicatorEx original, final boolean compact) {
     final Collection<InlineProgressIndicator> inlines = myOriginal2Inlines.get(original);
     if (inlines != null) {
       for (InlineProgressIndicator eachInline : inlines) {
@@ -302,7 +302,7 @@ public class InfoAndProgressPanel extends JPanel {
   private class MyInlineProgressIndicator extends InlineProgressIndicator {
     private final ProgressIndicatorEx myOriginal;
 
-    public MyInlineProgressIndicator(final boolean compact, final ProcessInfo info, final ProgressIndicatorEx original) {
+    public MyInlineProgressIndicator(final boolean compact, final TaskInfo info, final ProgressIndicatorEx original) {
       super(compact, info);
       myOriginal = original;
       original.addStateDelegate(this);

@@ -7,10 +7,11 @@
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.ProcessInfo;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -20,31 +21,48 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
 
-  protected final String myBackgroundStopButtonTooltip;
   private PerformInBackgroundOption myOption;
-  private ProcessInfo myProcessInfo;
+  private TaskInfo myInfo;
 
-  public BackgroundableProcessIndicator(Project project,
-                                        @Nls String progressTitle,
-                                        @NotNull PerformInBackgroundOption option,
-                                        @Nls String cancelButtonText,
-                                        @Nls String backgroundStopTooltip) {
-    super (true, true, project, cancelButtonText);
-    myProcessInfo = new ProcessInfo(progressTitle, cancelButtonText, backgroundStopTooltip);
-    myBackgroundStopButtonTooltip = backgroundStopTooltip;
+  public BackgroundableProcessIndicator(Task.Backgroundable task) {
+    this(task.getProject(), task, task);    
+  }
+
+  public BackgroundableProcessIndicator(Project project, TaskInfo info, PerformInBackgroundOption option) {
+    super(info.isCancellable(), true, project, info.getCancelText());
     myOption = option;
-    setTitle(progressTitle);
+    myInfo = info;
+    setTitle(info.getTitle());
     myStatusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(project);
     if (option.shouldStartInBackground()) {
       doBackground();
     }
-
   }
 
+  public BackgroundableProcessIndicator(Project project,
+                                        @Nls final String progressTitle,
+                                        @NotNull PerformInBackgroundOption option,
+                                        @Nls final String cancelButtonText,
+                                        @Nls final String backgroundStopTooltip, final boolean cancellable) {
+    this(project, new TaskInfo() {
+      public String getTitle() {
+        return progressTitle;
+      }
 
-  public String getBackgroundStopButtonTooltip() {
-    return myBackgroundStopButtonTooltip;
+      public String getCancelText() {
+        return cancelButtonText;
+      }
+
+      public String getCancelTooltipText() {
+        return backgroundStopTooltip;
+      }
+
+      public boolean isCancellable() {
+        return cancellable;
+      }
+    }, option);
   }
+
 
   protected void showDialog() {
     if (myOption.shouldStartInBackground()) {
@@ -61,6 +79,6 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   }
 
   private void doBackground() {
-    myStatusBar.add(this, myProcessInfo);
+    myStatusBar.add(this, myInfo);
   }
 }

@@ -2,8 +2,8 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.ex.ProcessInfo;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.ui.InplaceButton;
 import com.intellij.util.ui.UIUtil;
@@ -26,11 +26,13 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
   InplaceButton myCancelButton;
 
   private boolean myCompact;
+  private TaskInfo myInfo;
 
-  public InlineProgressIndicator(boolean compact, ProcessInfo processInfo) {
+  public InlineProgressIndicator(boolean compact, TaskInfo processInfo) {
     myCompact = compact;
+    myInfo = processInfo;
 
-    myCancelButton = new InplaceButton(new IconButton(processInfo.getCancelTooltip(),
+    myCancelButton = new InplaceButton(new IconButton(processInfo.getCancelTooltipText(),
                                                       IconLoader.getIcon("/process/stop.png"),
                                                       IconLoader.getIcon("/process/stopHovered.png")) {
     }, new ActionListener() {
@@ -39,9 +41,10 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
       }
     });
 
+    myCancelButton.setVisible(myInfo.isCancellable());
     myCancelButton.setBorder(new EmptyBorder(2, 2, 2, 2));
     myCancelButton.setOpaque(true);
-    myCancelButton.setToolTipText(processInfo.getCancelTooltip());
+    myCancelButton.setToolTipText(processInfo.getCancelTooltipText());
 
     if (myCompact) {
       myComponent.setLayout(new BorderLayout(2, 0));
@@ -51,7 +54,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
       textAndProgress.add(myProgress, BorderLayout.EAST);
       myComponent.add(textAndProgress, BorderLayout.CENTER);
       myComponent.add(myCancelButton, BorderLayout.EAST);
-      myComponent.setToolTipText(processInfo.getProcessTitle() + ". " + IdeBundle.message("progress.text.clickToViewProgressWindow"));
+      myComponent.setToolTipText(processInfo.getTitle() + ". " + IdeBundle.message("progress.text.clickToViewProgressWindow"));
       myProgress.setActive(false);
     } else {
       myComponent.setLayout(new BorderLayout());
@@ -152,6 +155,10 @@ public class InlineProgressIndicator extends ProgressIndicatorBase {
 
   public boolean isCompact() {
     return myCompact;
+  }
+
+  public TaskInfo getInfo() {
+    return myInfo;
   }
 
   private class FixedHeightLabel extends JLabel {

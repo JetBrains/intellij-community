@@ -1,0 +1,150 @@
+/*
+ * Copyright 2000-2005 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.openapi.progress;
+
+import com.intellij.openapi.project.Project;
+import com.intellij.CommonBundle;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public abstract class Task implements TaskInfo {
+
+  private Project myProject;
+  private String myTitle;
+  private boolean myCanBeCancelled;
+
+  private String myCancelText = CommonBundle.getCancelButtonText();
+  private String myCancelTooltipText = CommonBundle.getCancelButtonText();
+
+  public Task(@NotNull final Project project, @NotNull final String title, final boolean canBeCancelled) {
+    myProject = project;
+    myTitle = title;
+    myCanBeCancelled = canBeCancelled;
+  }
+
+  public abstract void run(ProgressIndicator indicator);
+
+  public void onCancel() {}
+
+  public void onSuccess() {}
+
+  public final Project getProject() {
+    return myProject;
+  }
+
+  public final void queue() {
+    ProgressManager.getInstance().run(this);
+  }
+
+  public final String getTitle() {
+    return myTitle;
+  }
+
+  public final Task setTitle(final String title) {
+    myTitle = title;
+    return this;
+  }
+
+  public final String getCancelText() {
+    return myCancelText;
+  }
+
+  public final Task setCancelText(final String cancelText) {
+    myCancelText = cancelText;
+    return this;
+  }
+
+  public final Task setCancelTooltipText(final String cancelTooltipText) {
+    myCancelTooltipText = cancelTooltipText;
+    return this;
+  }
+
+  public final String getCancelTooltipText() {
+    return myCancelTooltipText;
+  }
+
+  public final boolean isCancellable() {
+    return myCanBeCancelled;
+  }
+
+  public abstract boolean isModal();
+
+  public final Modal asModal() {
+    if (isModal()) {
+      return (Modal)this;
+    } else {
+      throw new IllegalStateException("Not a modal task");
+    }
+  }
+
+  public final Backgroundable asBackgroundable() {
+    if (!isModal()) {
+      return (Backgroundable)this;
+    } else {
+      throw new IllegalStateException("Not a backgroundable task");
+    }
+  }
+
+  public abstract static class Backgroundable extends Task implements PerformInBackgroundOption {
+
+    private PerformInBackgroundOption myBackgroundOption;
+
+    public Backgroundable(@NotNull final Project project, @NotNull final String title, final boolean canBeCancelled, @Nullable final PerformInBackgroundOption backgroundOption) {
+      super(project, title, canBeCancelled);
+      myBackgroundOption = backgroundOption;
+    }
+
+    public Backgroundable(@NotNull final Project project, @NotNull final String title, final boolean canBeCancelled) {
+      this(project, title, canBeCancelled, null);
+    }
+
+    public Backgroundable(@NotNull final Project project, @NotNull final String title) {
+      this(project, title, true);
+    }
+
+    public boolean shouldStartInBackground() {
+      return myBackgroundOption != null ? myBackgroundOption.shouldStartInBackground() : true;
+    }
+
+    public void processSentToBackground() {
+      if (myBackgroundOption != null) {
+        myBackgroundOption.processSentToBackground();
+      }
+    }
+
+    public void processRestoredToForeground() {
+      if (myBackgroundOption != null) {
+        myBackgroundOption.processRestoredToForeground();
+      }
+    }
+
+    public final boolean isModal() {
+      return false;
+    }
+  }
+
+  public abstract static class Modal extends Task {
+
+    public Modal(@NotNull final Project project, @NotNull String title, boolean canBeCancelled) {
+      super(project, title, canBeCancelled);
+    }
+
+
+    public final boolean isModal() {
+      return true;
+    }
+  }
+}

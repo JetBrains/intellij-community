@@ -12,6 +12,6 @@ public class FindProgressIndicator extends BackgroundableProcessIndicator {
          FindBundle.message("find.progress.searching.message", scopeString),
          new SearchInBackgroundOption(),
          FindBundle.message("find.progress.stop.title"),
-         FindBundle.message("find.progress.stop.background.button"));
+         FindBundle.message("find.progress.stop.background.button"), true);
   }
 }

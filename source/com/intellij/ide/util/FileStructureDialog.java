@@ -278,7 +278,7 @@ public class FileStructureDialog extends DialogWrapper {
 
   private class MyStructureTreeStructure extends SmartTreeStructure {
     public MyStructureTreeStructure() {
-      super(myProject, myTreeModel);
+      super(FileStructureDialog.this.myProject, myTreeModel);
     }
 
     public Object[] getChildElements(Object element){

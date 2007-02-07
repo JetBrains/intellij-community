@@ -58,6 +58,7 @@ public abstract class ProgressManager {
    * @param canBeCanceled whether "Cancel" button is shown on the progress window.
    * @param project       the project in the context of which the operation is executed.
    * @return true if the operation completed successfully, false if it was cancelled.
+   * @deprecated use {@link #run(com.intellij.openapi.progress.Task)}
    */
   public abstract boolean runProcessWithProgressSynchronously(Runnable process,
                                                               String progressTitle,
@@ -75,6 +76,7 @@ public abstract class ProgressManager {
    * @param process          the operation to execute.
    * @param successRunnable  a callback to be called in Swing UI thread upon normal termination of the process.
    * @param canceledRunnable a callback to be called in Swing UI thread if the process have been canceled by the user.
+   * @deprecated use {@link #run(com.intellij.openapi.progress.Task)}
    */
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
                                                             @NotNull @Nls String progressTitle,
@@ -93,6 +95,7 @@ public abstract class ProgressManager {
    * @param successRunnable  a callback to be called in Swing UI thread upon normal termination of the process.
    * @param canceledRunnable a callback to be called in Swing UI thread if the process have been canceled by the user.
    * @param option           progress indicator behavior controller.
+   * @deprecated use {@link #run(com.intellij.openapi.progress.Task)}
    */
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
                                                             @NotNull @Nls String progressTitle,
@@ -100,4 +103,11 @@ public abstract class ProgressManager {
                                                             @Nullable Runnable successRunnable,
                                                             @Nullable Runnable canceledRunnable,
                                                             @NotNull PerformInBackgroundOption option);
+
+  /**
+   * Runs a scpecified <code>task</code> in either background/foreground thread and shows a progress dialog.
+   * @param task          task to run (either {@link com.intellij.openapi.progress.Task.Modal} or {@link com.intellij.openapi.progress.Task.Backgroundable}).
+   */
+  public abstract void run(@NotNull Task task);
+
 }

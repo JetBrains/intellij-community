@@ -5,9 +5,9 @@ import com.intellij.diagnostic.MessagePool;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.ex.ProcessInfo;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ui.EmptyIcon;
@@ -109,7 +109,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     setBorder(new EmptyBorder(2, 0, 1, 0));
   }
 
-  public void add(final ProgressIndicatorEx indicator, ProcessInfo info) {
+  public void add(final ProgressIndicatorEx indicator, TaskInfo info) {
     myInfoAndProgressPanel.addProgress(indicator, info);
   }
 

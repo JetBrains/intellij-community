@@ -3,10 +3,10 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.ex.ProcessInfo;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.progress.TaskInfo;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,7 +57,7 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     public void cleanupCustomComponents() {
     }
 
-    public void add(ProgressIndicatorEx indicator, ProcessInfo processInfo) {
+    public void add(ProgressIndicatorEx indicator, TaskInfo info) {
 
     }
 

@@ -3,8 +3,8 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
@@ -15,24 +15,8 @@ public class AddTestProcessAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(DataKeys.PROJECT);
-    final BackgroundableProcessIndicator indicator =
-      new BackgroundableProcessIndicator(project, "Test process", new PerformInBackgroundOption() {
-        public boolean shouldStartInBackground() {
-          return true;
-        }
-
-        public void processSentToBackground() {
-
-        }
-
-        public void processRestoredToForeground() {
-
-        }
-      }, "Cancel", "Cancel");
-
-    indicator.start();
-    new Thread() {
-      public void run() {
+    new Task.Backgroundable(project, "Test Process", true) {
+      public void run(final ProgressIndicator indicator) {
         try {
           countTo(1000, new Count() {
             public void onCount(int each) throws InterruptedException {
@@ -41,7 +25,7 @@ public class AddTestProcessAction extends AnAction {
                 indicator.setText("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
               }
               indicator.setFraction(each / 1000.0);
-              sleep(100);
+              Thread.currentThread().sleep(100);
               indicator.checkCanceled();
               indicator.setText2("bla bla bla");
             }
@@ -53,8 +37,7 @@ public class AddTestProcessAction extends AnAction {
           return;
         }
       }
-    }.start();
-
+    }.queue();
   }
 
   private void countTo(int top, Count count) throws Exception {

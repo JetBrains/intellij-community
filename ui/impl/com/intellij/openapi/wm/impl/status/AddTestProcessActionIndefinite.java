@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.ProgressIndicator;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class AddTestProcessActionIndefinite extends AnAction {
@@ -15,24 +17,9 @@ public class AddTestProcessActionIndefinite extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(DataKeys.PROJECT);
-    final BackgroundableProcessIndicator indicator =
-      new BackgroundableProcessIndicator(project, "Test process", new PerformInBackgroundOption() {
-        public boolean shouldStartInBackground() {
-          return true;
-        }
 
-        public void processSentToBackground() {
-
-        }
-
-        public void processRestoredToForeground() {
-
-        }
-      }, "Cancel", "Cancel");
-
-    indicator.start();
-    new Thread() {
-      public void run() {
+    new Task.Backgroundable(project, "Test", false) {
+      public void run(final ProgressIndicator indicator) {
         try {
           countTo(900, new AddTestProcessActionIndefinite.Count() {
             public void onCount(int each) throws InterruptedException {
@@ -40,7 +27,7 @@ public class AddTestProcessActionIndefinite extends AnAction {
               if (each / 10.0 == Math.round(each / 10.0)) {
                 indicator.setText("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
               }
-              sleep(300);
+              Thread.currentThread().sleep(300);
               indicator.checkCanceled();
               indicator.setText2("bla bla bla");
             }
@@ -52,8 +39,7 @@ public class AddTestProcessActionIndefinite extends AnAction {
           return;
         }
       }
-    }.start();
-
+    }.queue();
   }
 
   private void countTo(int top, AddTestProcessActionIndefinite.Count count) throws Exception {
