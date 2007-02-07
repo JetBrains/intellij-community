@@ -429,6 +429,14 @@ public class StringUtil {
     return buffer.toString();
   }
 
+  @NotNull public static String unquoteString( @NotNull String s )
+  {
+    if( s.length() > 1 && s.charAt( 0 ) == '"' && s.charAt( s.length() - 1) == '"' )
+      return s.substring( 1, s.length() - 2 );
+    else
+    return s;
+  }
+
   private static void unescapeStringCharacters(int length, String s, StringBuffer buffer) {
     boolean escaped = false;
     for (int idx = 0; idx < length; idx++) {
