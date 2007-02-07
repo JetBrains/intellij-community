@@ -69,7 +69,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   private final StructureViewModel myTreeModel;
   private final boolean myShowRootNode;
   private boolean mySortByKind = true;
-
+  private static int ourSettingsModificationCount;
 
   public StructureViewComponent(FileEditor editor, StructureViewModel structureViewModel, Project project) {
     this(editor, structureViewModel, project, true);
@@ -539,6 +539,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   public void rebuild() {
     storeState();
+    ++ourSettingsModificationCount;
     ((SmartTreeStructure)myAbstractTreeBuilder.getTreeStructure()).rebuildTree();
     myAbstractTreeBuilder.updateFromRoot();
     restoreState();
@@ -710,6 +711,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   static class StructureViewTreeElementWrapper extends TreeElementWrapper implements NodeDescriptorProvidingKey {
     private long childrenStamp = -1;
+    private long modificationCountForChildren = ourSettingsModificationCount;
 
     public StructureViewTreeElementWrapper(Project project, TreeElement value, TreeModel treeModel) {
       super(project, value, treeModel);
@@ -721,6 +723,11 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
     @NotNull
     public Collection<AbstractTreeNode> getChildren() {
+      if (ourSettingsModificationCount != modificationCountForChildren) {
+        resetChildren();
+        modificationCountForChildren = ourSettingsModificationCount;
+      }
+
       final Object o = unwrapValue(getValue());
       long currentStamp;
       if (o instanceof PsiElement &&
@@ -752,7 +759,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       return false;
     }
 
-    private static Object unwrapValue(Object o) {
+    private Object unwrapValue(Object o) {
 
       if (o instanceof StructureViewTreeElement) {
         return ((StructureViewTreeElement)o).getValue();
