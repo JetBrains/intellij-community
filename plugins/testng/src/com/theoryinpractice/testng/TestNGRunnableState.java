@@ -167,10 +167,9 @@ public class TestNGRunnableState extends JavaCommandLineState
         }
 
         if (config.getPersistantData().getScope() == TestSearchScope.WHOLE_PROJECT) {
-            JavaParametersUtil.configureClassPath(
+            JavaParametersUtil.configureConfiguration(
                     javaParameters,
-                    project,
-                    config.ALTERNATIVE_JRE_PATH_ENABLED ? config.ALTERNATIVE_JRE_PATH : jdk.getHomePath());
+                    config);
         } else {
             JavaParametersUtil.configureModule(
                     config.getConfigurationModule(),
@@ -210,10 +209,16 @@ public class TestNGRunnableState extends JavaCommandLineState
         if (sources.length > 0) {
             StringBuffer sb = new StringBuffer();
             sb.append('\"');
-            for (VirtualFile file : sources) {
-                sb.append(file.getPath());
-                sb.append(';');
+
+            for (int i = 0; i < sources.length; i++) {
+                VirtualFile source = sources[i];
+                sb.append(source.getPath());
+                if (i < sources.length - 1) {
+                    sb.append(';');
+                }
+
             }
+            
             sb.append('\"');
             javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.SRC_COMMAND_OPT, sb.toString());
         }
