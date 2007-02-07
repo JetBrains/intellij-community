@@ -646,7 +646,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
 
     final ASTNode referenceNameElement = findChildByRole(ChildRole.REFERENCE_NAME);
-    if (referenceNameElement.getElementType() != IDENTIFIER) return false;
+    if (referenceNameElement == null || referenceNameElement.getElementType() != IDENTIFIER) return false;
     final String name = ((PsiClass)element).getName();
     if (name == null) return false;
     if (!referenceNameElement.getText().equals(name)) return false;
