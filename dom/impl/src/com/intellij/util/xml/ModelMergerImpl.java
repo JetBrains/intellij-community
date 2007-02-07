@@ -8,8 +8,8 @@ import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ConcurrentSoftArrayHashMap;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.SoftArrayHashMap;
 import com.intellij.util.xml.impl.AdvancedProxy;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomManagerImpl;
@@ -31,9 +31,9 @@ import java.util.*;
  */
 public class ModelMergerImpl implements ModelMerger {
   // [greg] the key should actually be the MergingStrategy class, but this will break the API
-  private final FactoryMap<Class, SoftArrayHashMap<Object, Object>> myMergedMap = new FactoryMap<Class, SoftArrayHashMap<Object, Object>>() {
-    protected SoftArrayHashMap<Object, Object> create(final Class key) {
-      return new SoftArrayHashMap<Object, Object>(TObjectHashingStrategy.IDENTITY);
+  private final ConcurrentFactoryMap<Class, ConcurrentSoftArrayHashMap<Object, Object>> myMergedMap = new ConcurrentFactoryMap<Class, ConcurrentSoftArrayHashMap<Object, Object>>() {
+    protected ConcurrentSoftArrayHashMap<Object, Object> create(final Class key) {
+      return new ConcurrentSoftArrayHashMap<Object, Object>(TObjectHashingStrategy.IDENTITY);
     }
   };
   private final List<Pair<InvocationStrategy,Class>> myInvocationStrategies = new ArrayList<Pair<InvocationStrategy,Class>>();

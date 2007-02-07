@@ -1,4 +1,20 @@
 /*
+ * Copyright 2000-2007 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * Created by IntelliJ IDEA.
  * User: Alexey
  * Date: 18.12.2006
@@ -9,38 +25,38 @@ package com.intellij.util.containers;
 import gnu.trove.TObjectHashingStrategy;
 
 import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
+import java.lang.ref.SoftReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Fully copied from java.util.WeakHashMap except "get" method optimization.
+ * Fully copied from java.util.SoftHashMap except "get" method optimization.
  */
-public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implements ConcurrentMap<K,V> {
+public final class ConcurrentSoftHashMap<K,V> extends AbstractMap<K,V> implements ConcurrentMap<K,V> {
 
   private static interface Key<K>{
     public K get();
   }
 
-  private static class WeakKey extends WeakReference implements Key{
+  private static class SoftKey extends SoftReference implements Key{
     private int myHash;	/* Hashcode of key, stored here since the key may be tossed by the GC */
 
-    private WeakKey(Object k) {
+    private SoftKey(Object k) {
       super(k);
       myHash = k.hashCode();
     }
 
-    public static WeakKey create(Object k) {
-      return k != null ? new WeakKey(k) : null;
+    public static SoftKey create(Object k) {
+      return k != null ? new SoftKey(k) : null;
     }
 
-    private WeakKey(Object k, ReferenceQueue q) {
+    private SoftKey(Object k, ReferenceQueue q) {
       super(k, q);
       myHash = k.hashCode();
     }
 
-    private static WeakKey create(Object k, ReferenceQueue q) {
-      return k != null ? new WeakKey(k, q) : null;
+    private static SoftKey create(Object k, ReferenceQueue q) {
+      return k != null ? new SoftKey(k, q) : null;
     }
 
     public boolean equals(Object o) {
@@ -92,30 +108,30 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
   private ReferenceQueue myReferenceQueue = new ReferenceQueue();
 
   private void processQueue() {
-    WeakKey wk;
-    while((wk = (WeakKey)myReferenceQueue.poll()) != null){
+    SoftKey wk;
+    while((wk = (SoftKey)myReferenceQueue.poll()) != null){
       myMap.remove(wk);
     }
   }
 
-  public ConcurrentWeakHashMap(int initialCapacity, float loadFactor) {
+  public ConcurrentSoftHashMap(int initialCapacity, float loadFactor) {
     myMap = new ConcurrentHashMap(initialCapacity, loadFactor, 4);
   }
 
-  public ConcurrentWeakHashMap(int initialCapacity) {
+  public ConcurrentSoftHashMap(int initialCapacity) {
     myMap = new ConcurrentHashMap(initialCapacity);
   }
 
-  public ConcurrentWeakHashMap() {
+  public ConcurrentSoftHashMap() {
     myMap = new ConcurrentHashMap();
   }
 
-  public ConcurrentWeakHashMap(Map t) {
+  public ConcurrentSoftHashMap(Map t) {
     this(Math.max(2 * t.size(), 11), 0.75f);
     putAll(t);
   }
 
-  public ConcurrentWeakHashMap(final TObjectHashingStrategy<K> hashingStrategy) {
+  public ConcurrentSoftHashMap(final TObjectHashingStrategy<K> hashingStrategy) {
     myMap = new ConcurrentHashMap<Key<K>, V>(new TObjectHashingStrategy<Key<K>>() {
       public int computeHashCode(final Key<K> object) {
         return hashingStrategy.computeHashCode(object.get());
@@ -146,11 +162,11 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
       boolean result = myMap.containsKey(hardKey);
       return result;
     }
-    //return myMap.containsKey(WeakKey.create(key));
+    //return myMap.containsKey(SoftKey.create(key));
   }
 
   public V get(Object key) {
-    //return myMap.get(WeakKey.create(key));
+    //return myMap.get(SoftKey.create(key));
     // optimization:
     if (key == null){
       return (V)myMap.get(NULL_KEY);
@@ -164,8 +180,8 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
 
   public V put(K key, V value) {
     processQueue();
-    WeakKey weakKey = WeakKey.create(key, myReferenceQueue);
-    return (V)myMap.put(weakKey == null ? NULL_KEY : weakKey, value);
+    SoftKey softKey = SoftKey.create(key, myReferenceQueue);
+    return (V)myMap.put(softKey == null ? NULL_KEY : softKey, value);
   }
 
   public V remove(Object key) {
@@ -180,7 +196,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
       Object result = myMap.remove(hardKey);
       return (V)result;
     }
-    //return myMap.remove(WeakKey.create(key));
+    //return myMap.remove(SoftKey.create(key));
   }
 
   public void clear() {
@@ -243,10 +259,10 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
         public boolean hasNext() {
           while(hashIterator.hasNext()){
             Map.Entry ent = (Map.Entry)hashIterator.next();
-            WeakKey wk = (WeakKey)ent.getKey();
+            SoftKey wk = (SoftKey)ent.getKey();
             Object k = null;
             if ((wk != null) && ((k = wk.get()) == null)){
-              /* Weak key has been cleared by GC */
+              /* Soft key has been cleared by GC */
               continue;
             }
             next = new Entry(ent, k);
@@ -288,7 +304,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
 
       // optimization:
       HardKey key = new HardKey(o);
-      //WeakKey key = WeakKey.create(e.getKey());
+      //SoftKey key = SoftKey.create(e.getKey());
 
       Object hv = myMap.get(key);
       boolean toRemove = hv == null ? (ev == null && myMap.containsKey(key)) : hv.equals(ev);
@@ -302,7 +318,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
       int h = 0;
       for(Iterator i = hashEntrySet.iterator(); i.hasNext();){
         Map.Entry ent = (Map.Entry)i.next();
-        WeakKey wk = (WeakKey)ent.getKey();
+        SoftKey wk = (SoftKey)ent.getKey();
         Object v;
         if (wk == null) continue;
         h += (wk.hashCode()
@@ -322,21 +338,21 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
 
   public V putIfAbsent(final K key, final V value) {
     processQueue();
-    return (V)myMap.putIfAbsent(WeakKey.create(key, myReferenceQueue), value);
+    return (V)myMap.putIfAbsent(SoftKey.create(key, myReferenceQueue), value);
   }
 
   public boolean remove(final Object key, final Object value) {
     processQueue();
-    return myMap.remove(WeakKey.create(key, myReferenceQueue), value);
+    return myMap.remove(SoftKey.create(key, myReferenceQueue), value);
   }
 
   public boolean replace(final K key, final V oldValue, final V newValue) {
     processQueue();
-    return myMap.replace(WeakKey.create(key, myReferenceQueue), oldValue,newValue);
+    return myMap.replace(SoftKey.create(key, myReferenceQueue), oldValue,newValue);
   }
 
   public V replace(final K key, final V value) {
     processQueue();
-    return (V)myMap.replace(WeakKey.create(key, myReferenceQueue), value);
+    return (V)myMap.replace(SoftKey.create(key, myReferenceQueue), value);
   }
 }
