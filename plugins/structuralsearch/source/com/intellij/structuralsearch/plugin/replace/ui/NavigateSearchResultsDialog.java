@@ -10,10 +10,10 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.ProcessInfo;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
@@ -135,7 +135,24 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
         matchingProcess.stop();
       }
     };
-    statusBar.add(myMatchingProcess, new ProcessInfo());
+//todo
+    statusBar.add(myMatchingProcess, new TaskInfo() {
+      public String getTitle() {
+        return null;
+      }
+
+      public String getCancelText() {
+        return null;
+      }
+
+      public String getCancelTooltipText() {
+        return null;
+      }
+
+      public boolean isCancellable() {
+        return false;
+      }
+    });
     init();
   }
 
