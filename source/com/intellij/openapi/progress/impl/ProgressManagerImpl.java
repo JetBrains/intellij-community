@@ -192,7 +192,7 @@ public class ProgressManagerImpl extends ProgressManager {
                                                    final @Nullable Runnable canceledRunnable,
                                                    final @NotNull PerformInBackgroundOption option) {
 
-    new Task.Backgroundable(project, progressTitle, true, option) {
+    runProcessWithProgressAsynchronously(new Task.Backgroundable(project, progressTitle, true, option) {
       public void run(final ProgressIndicator indicator) {
         process.run();
       }
@@ -209,7 +209,7 @@ public class ProgressManagerImpl extends ProgressManager {
           successRunnable.run();
         }
       }
-    };
+    });
 
   }
   public void runProcessWithProgressAsynchronously(final Task.Backgroundable task) {
