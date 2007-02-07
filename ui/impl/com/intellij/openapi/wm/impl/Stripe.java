@@ -31,7 +31,7 @@ final class Stripe extends JPanel{
   private ToolWindowManagerImpl myManager;
   private JComponent myDragButtonImage;
   private LayoutData myLastLayoutData;
-  private boolean myLayoutEnabled = true;
+  private boolean myFinishingDrop;
   static final int DROP_DISTANCE_SENSIVITY = 20;
 
   Stripe(final int anchor, ToolWindowManagerImpl manager){
@@ -85,7 +85,7 @@ final class Stripe extends JPanel{
   }
 
   public void doLayout() {
-    if (myLayoutEnabled) {
+    if (!myFinishingDrop) {
       myLastLayoutData = recomputeBounds(true, getSize());
     }
   }
@@ -242,7 +242,7 @@ final class Stripe extends JPanel{
     if (myLastLayoutData == null) return;
 
     final WindowInfo info = myDragButton.getDecorator().getWindowInfo();
-    myLayoutEnabled = false;
+    myFinishingDrop = true;
     myManager.setToolWindowAnchor(info.getId(), ToolWindowAnchor.get(myAnchor), myLastLayoutData.dragInsertPosition);
     myManager.invokeLater(new Runnable() {
       public void run() {
@@ -255,7 +255,7 @@ final class Stripe extends JPanel{
   public void resetDrop() {
     myDragButton = null;
     myDragButtonImage = null;
-    myLayoutEnabled = true;
+    myFinishingDrop = false;
     myPrefSize = null;
     revalidate();
     repaint();
@@ -323,7 +323,7 @@ final class Stripe extends JPanel{
 
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
-    if (isDroppingButton() && myDragButton.getParent() != this) {
+    if (!myFinishingDrop && isDroppingButton() && myDragButton.getParent() != this) {
       g.setColor(getBackground().brighter());
       g.fillRect(0, 0, getWidth(), getHeight());
     }
