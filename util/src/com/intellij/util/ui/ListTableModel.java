@@ -28,13 +28,13 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
 
   private boolean myIsSortable = true;
 
-  public ListTableModel(ColumnInfo[] columnInfos) {
+  public ListTableModel(ColumnInfo... columnInfos) {
     this(columnInfos, new ArrayList<Item>(), 0);
   }
 
-  public ListTableModel(ColumnInfo[] columnNames, List<Item> tests, int selectedColumn) {
+  public ListTableModel(ColumnInfo[] columnNames, List<Item> items, int selectedColumn) {
     myColumnInfos = columnNames;
-    myItems = tests;
+    myItems = items;
     mySortByColumn = selectedColumn;
     setSortable(true);
     resort();

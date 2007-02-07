@@ -40,12 +40,12 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
   public TableView(final ListTableModel<Item> model) {
     super(model);
     setModel(model);
-    setSizes();
   }
 
   public void setModel(final ListTableModel<Item> model) {
     super.setModel(model);
     getTableHeader().setDefaultRenderer(new TableHeaderRenderer(model));
+    setSizes();
   }
 
   public TableCellRenderer getCellRenderer(int row, int column) {

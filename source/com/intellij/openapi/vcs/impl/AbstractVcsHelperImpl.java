@@ -10,7 +10,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
@@ -37,6 +36,7 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.merge.AbstractMergeAction;
 import com.intellij.openapi.vcs.merge.MergeProvider;
+import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -51,17 +51,16 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.content.*;
 import com.intellij.util.ContentsUtil;
+import com.intellij.util.ui.ConfirmationDialog;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
-import com.intellij.util.ui.ConfirmationDialog;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.text.MessageFormat;
+import java.util.*;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl");
@@ -505,7 +504,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   public void showMergeDialog(List<VirtualFile> files, MergeProvider provider, final AnActionEvent e) {
     if (files.isEmpty()) return;
-    new AbstractMergeAction(myProject, files, provider).actionPerformed(e);
+    new MultipleFileMergeDialog(myProject, files, provider).show();
+    //new AbstractMergeAction(myProject, files, provider).actionPerformed(e);
   }
 
   public List<CodeSmellInfo> findCodeSmells(final List<VirtualFile> filesToCheck) throws ProcessCanceledException {
