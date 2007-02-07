@@ -9,15 +9,19 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.CharFilter;
-import com.intellij.psi.PsiFile;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.lang.StdLanguages;
-import com.intellij.lang.Language;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class DefaultCharFilter implements CharFilter {
   private final PsiFile myFile;
@@ -29,8 +33,9 @@ public class DefaultCharFilter implements CharFilter {
 
     PsiElement psiElement = file.findElementAt(offset);
     if (psiElement == null && offset > 0) psiElement = file.findElementAt(offset - 1);
+    if (psiElement != null) myDelegate = ourCharFilterRegistry.get(psiElement.getLanguage());
 
-    if (myFile instanceof XmlFile) {
+    if (myFile instanceof XmlFile && myDelegate == null) {
       boolean inJavaContext = false;
 
       if (psiElement != null) {
@@ -74,5 +79,11 @@ public class DefaultCharFilter implements CharFilter {
       default:
         return CharFilter.HIDE_LOOKUP;
     }
+  }
+
+  private static Map<Language,CharFilter> ourCharFilterRegistry = new HashMap<Language, CharFilter>();
+
+  public static void registerFilter(@NotNull Language language,@NotNull  CharFilter filter) {
+    ourCharFilterRegistry.put(language, filter);
   }
 }
