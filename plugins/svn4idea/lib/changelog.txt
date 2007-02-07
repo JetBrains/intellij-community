@@ -1,7 +1,38 @@
+= version 1.1.1
+
++ added support for svnlook features.
++ added support for svnadmin dump/verify/load/rmtxns/lstxns features.
++ svn, svnadmin, svnlook and svnsync scripts are 
+  renamed to jsvn, jsvnadmin, jsvnlook and jsvnsync to distinguish them 
+  from the native programs.
++ command line scripts supports OpenVMS.
++ bugfixes.
+
+= version 1.1.0
+
++ command line application and API to perform svnsync.
++ bugfixes.
+
+= version 1.1.0.beta5
+
++ support for Subversion 1.4 working copy and new fsfs repository format.
++ support for new features introduced by Subversion 1.4.
++ bugfixes.
+
+= version 1.1.0.beta4
+
++ bug introduced in beta3 version fixed: 
+  Eclipse keyring credentials storage support was broken.
+
+= version 1.1.0.beta3
+
++ Minor API improvements.
++ Minor bugfixes.
+
 = version 1.1.0.beta2
 
 + NTLM authentication method support.
-+ Javadoc updated to match new JavaSVN features.
++ Javadoc updated to match new SVNKit features.
 + Minor bugfixes.
 
 = version 1.1.0.beta
@@ -61,7 +92,7 @@
 
 = version 0.8.8.1
 
-+ critical bug in JavaSVN Eclipse plugin fixed.
++ critical bug in SVNKit Eclipse plugin fixed.
 
 = version 0.8.8
 
@@ -112,7 +143,7 @@
 + http: all DAV requests (including commit comments) are sent in UTF-8 encoding.
 + SvnClient: add and remove methods didn't work for directories, fixed.
 + SvnClient: commit of single file deletion didn't work, fixed.
-+ Eclipse: JavaSVN features installed from update site supports automatic update
++ Eclipse: SVNKit features installed from update site supports automatic update
 
 = version 0.8.2
 
@@ -126,7 +157,7 @@
 + SvnClient: copy and move methods fixed to work properly in Subclipse repository view.
 + SvnClient: setPrompt support, better notifications, "windows" paths are handled correctly.
 + logging: Pluggable loggers support and detailed http logging added (thanks to Marc Strapez). 
-+ logging: Eclipse JavaSVN version uses Eclipse logging facilities.
++ logging: Eclipse SVNKit version uses Eclipse logging facilities.
 
 = version 0.8.1
 
@@ -160,7 +191,7 @@
 
 + number of bugs in remote status implementation fixed
 + ISVNWorkspace.getFileContent method restored to keep binary compatibility 
-+ Diff generators framework added, now JavaSVN provides API for
++ Diff generators framework added, now SVNKit provides API for
   generating diff in different formats ('unified' and 'normal') for arbitrary
   input sources
 
@@ -168,7 +199,7 @@
 
 + svn+ssh authentication failed to work in some cases - fixed
 + revisions in working copy now updated correctly after update
-+ got rid of number of minor inconsistences between JavaSVN and native SVN
++ got rid of number of minor inconsistences between SVNKit and native SVN
 + http and https protocols supports compressed data (gzip)
 
 = build 20041223
@@ -177,11 +208,11 @@
 + bug fixed that prevented Subclipse committing single 
   file in non-windows systems
 + complete svn and svn+ssh protocol logging may be enabled 
-  with -Djavasvn.log.svn=true command line switch
+  with -Dsvnkit.log.svn=true command line switch
 
 = build 20041221
 
-+ when using svn+ssh JavaSVN takes private key path from the java property,
++ when using svn+ssh SVNKit takes private key path from the java property,
   if it is not defined explicitly
 + svn+ssh bugfixes
 + bugfixes
@@ -212,7 +243,7 @@
 = build 20041204
 
 + bugfixes
-+ JavaSVN works with Subclipse 0.9.24
++ SVNKit works with Subclipse 0.9.24
 
 = build 20041130
 

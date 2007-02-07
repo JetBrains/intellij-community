@@ -1,9 +1,9 @@
 The TMate License
 
-This license applies to all portions of TMate JavaSVN library, which 
+This license applies to all portions of TMate SVNKit library, which 
 are not externally-maintained libraries (e.g. Ganymed SSH library).
 
-All the source code and compiled classes in package org.trigris.subversion.javahl
+All the source code and compiled classes in package org.tigris.subversion.javahl
 except SvnClient class are covered by the license in JAVAHL-LICENSE file
 
 Copyright (c) 2004-2006 TMate Software. All rights reserved.
@@ -19,8 +19,8 @@ are permitted provided that the following conditions are met:
       and/or other materials provided with the distribution.
       
     * Redistributions in any form must be accompanied by information on how to 
-      obtain complete source code for the software that uses JavaSVN and any 
-      accompanying software that uses the software that uses JavaSVN. The source 
+      obtain complete source code for the software that uses SVNKit and any 
+      accompanying software that uses the software that uses SVNKit. The source 
       code must either be included in the distribution or be available for no 
       more than the cost of distribution plus a nominal fee, and must be freely 
       redistributable under reasonable conditions. For an executable file, complete 
@@ -29,8 +29,8 @@ are permitted provided that the following conditions are met:
       components of the operating system on which the executable file runs.
       
     * Redistribution in any form without redistributing source code for software 
-      that uses JavaSVN is possible only when such redistribution is explictly permitted 
-      by TMate Software. Please, contact TMate Software at support@tmatesoft.com to 
+      that uses SVNKit is possible only when such redistribution is explictly permitted 
+      by TMate Software. Please, contact TMate Software at support@svnkit.com to 
       get such permission.
 
 THIS SOFTWARE IS PROVIDED BY TMATE SOFTWARE ``AS IS'' AND ANY EXPRESS OR IMPLIED
