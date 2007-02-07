@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.wm.WindowManager;
@@ -88,8 +89,14 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
               }
 
             });
-            if (vf != null && !vf.getFileType().isBinary()) {
-              vfFiles.add(vf);
+            if (vf != null) {
+              // refresh base directory so that conflict files should be detected
+              vf.getParent().refresh(true, false);
+              VcsDirtyScopeManager.getInstance(myVcs.getProject()).fileDirty(vf);
+
+              if (!vf.getFileType().isBinary()) {
+                vfFiles.add(vf);
+              }
             }
           }
           if (!vfFiles.isEmpty()) {
