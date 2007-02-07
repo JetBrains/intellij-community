@@ -84,7 +84,8 @@ public class ShowDiffAction extends AnAction {
   @Nullable
   private static Change[] checkLoadFakeRevisions(final Project project, final Change[] changes) {
     for(Change change: changes) {
-      if (change.getBeforeRevision() instanceof ChangeListManagerImpl.FakeRevision) {
+      if (change.getBeforeRevision() instanceof ChangeListManagerImpl.FakeRevision ||
+          change.getAfterRevision() instanceof ChangeListManagerImpl.FakeRevision) {
         return loadFakeRevisions(project, changes);
       }
     }
@@ -93,6 +94,16 @@ public class ShowDiffAction extends AnAction {
 
   @Nullable
   private static Change[] loadFakeRevisions(final Project project, final Change[] changes) {
+    for(Change change: changes) {
+      final ContentRevision beforeRevision = change.getBeforeRevision();
+      final ContentRevision afterRevision = change.getAfterRevision();
+      if (beforeRevision instanceof ChangeListManagerImpl.FakeRevision) {
+        VcsDirtyScopeManager.getInstance(project).fileDirty(beforeRevision.getFile());
+      }
+      if (afterRevision instanceof ChangeListManagerImpl.FakeRevision) {
+        VcsDirtyScopeManager.getInstance(project).fileDirty(afterRevision.getFile());
+      }
+    }
     if (!ChangeListManager.getInstance(project).ensureUpToDate(true)) {
       return null;
     }
