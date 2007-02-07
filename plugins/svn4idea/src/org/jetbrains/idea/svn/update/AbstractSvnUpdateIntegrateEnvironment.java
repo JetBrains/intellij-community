@@ -93,10 +93,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
               // refresh base directory so that conflict files should be detected
               vf.getParent().refresh(true, false);
               VcsDirtyScopeManager.getInstance(myVcs.getProject()).fileDirty(vf);
-
-              if (!vf.getFileType().isBinary()) {
-                vfFiles.add(vf);
-              }
+              vfFiles.add(vf);
             }
           }
           if (!vfFiles.isEmpty()) {
