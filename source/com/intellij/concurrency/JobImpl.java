@@ -113,6 +113,12 @@ public class JobImpl<T> implements Job<T> {
       }
     }
 
+    // Future.get() exists when currently running is canceled, thus awaiter may get control before spawned tasks actually terminated,
+    // that's why additional join logic.
+    for (PrioritizedFutureTask<T> future : myFutures) {
+      future.awaitTermination();
+    }
+
     if (ex != null) throw ex;
 
     return results;

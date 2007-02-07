@@ -6,10 +6,7 @@ package com.intellij.concurrency;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -53,11 +50,11 @@ public class JobSchedulerImpl extends JobScheduler {
   private static final ThreadPoolExecutor ourExecutor = new ThreadPoolExecutor(CORES_COUNT, Integer.MAX_VALUE, 60 * 10, TimeUnit.SECONDS,
                                                                                ourQueue, WORKERS_FACTORY) {
     protected void beforeExecute(final Thread t, final Runnable r) {
-
       PrioritizedFutureTask task = (PrioritizedFutureTask)r;
       if (task.isParentThreadHasReadAccess()) {
         ApplicationImpl.setExceptionalThreadWithReadAccessFlag(true);
       }
+      task.signalStarted();
 
       // TODO: hook up JobMonitor into thread locals
       super.beforeExecute(t, r);
@@ -66,12 +63,16 @@ public class JobSchedulerImpl extends JobScheduler {
     protected void afterExecute(final Runnable r, final Throwable t) {
       super.afterExecute(r, t);
       ApplicationImpl.setExceptionalThreadWithReadAccessFlag(false);
-
+      PrioritizedFutureTask task = (PrioritizedFutureTask)r;
+      task.signalDone();
       // TODO: cleanup JobMonitor
     }
   };
 
   private static long ourJobsCounter = 0;
+
+  private static final ScheduledExecutorService ourScheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+
 
   public static void execute(PrioritizedFutureTask task) {
     ourExecutor.execute(task);
@@ -95,5 +96,17 @@ public class JobSchedulerImpl extends JobScheduler {
 
   public <T> Job<T> createJob(String titile, int priority) {
     return new JobImpl<T>(titile, priority);
+  }
+
+  public ScheduledFuture<?> schedule(final Runnable command, final long delay, final TimeUnit unit) {
+    return ourScheduledExecutorService.schedule(command, delay, unit);
+  }
+
+  public ScheduledFuture<?> scheduleAtFixedRate(final Runnable command, final long initialDelay, final long period, final TimeUnit unit) {
+    return ourScheduledExecutorService.scheduleAtFixedRate(command, initialDelay, period, unit);
+  }
+
+  public ScheduledFuture<?> scheduleWithFixedDelay(final Runnable command, final long initialDelay, final long delay, final TimeUnit unit) {
+    return ourScheduledExecutorService.scheduleWithFixedDelay(command, initialDelay, delay, unit);
   }
 }
