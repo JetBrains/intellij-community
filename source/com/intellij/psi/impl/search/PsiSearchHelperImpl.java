@@ -1,11 +1,12 @@
 package com.intellij.psi.impl.search;
 
+import com.intellij.concurrency.Job;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -36,9 +37,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.PsiSearchHelperImpl");
@@ -61,7 +65,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     ReferencesSearch.INSTANCE.registerExecutor(new PropertyReferenceSearcher());
 
     DirectClassInheritorsSearch.INSTANCE.registerExecutor(new JavaDirectInheritorsSearcher());
-           
+
     OverridingMethodsSearch.INSTANCE.registerExecutor(new JavaOverridingMethodsSearcher());
 
     AllOverridingMethodsSearch.INSTANCE.registerExecutor(new JavaAllOverridingMethodsSearcher());
@@ -548,59 +552,58 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       // if we are under write action, additional threads will never get read action
       if (!application.isUnitTestMode() && !application.isWriteAccessAllowed() && POOL_SIZE > 0) {
-        final int chunkSize = Math.max(10, files.length / POOL_SIZE / 20); // make at least 20 chunks per proc to balance load
-        ArrayList<Callable<Boolean>> callables = new ArrayList<Callable<Boolean>>(files.length/chunkSize);
-        final AtomicBoolean result = new AtomicBoolean(true);
         final AtomicInteger counter = new AtomicInteger(0);
-        for (int v = 0; v < files.length; v += chunkSize) {
-          final int index = v;
-          Callable<Boolean> runnable = new Callable<Boolean>() {
-            public Boolean call() throws Exception {
+        final AtomicBoolean canceled = new AtomicBoolean(false);
+        final Job<?> processFilesJob = JobScheduler.getInstance().createJob("Process usages in files", Job.DEFAULT_PRIORITY); // TODO: Better name
+        for (final PsiFile file : files) {
+          processFilesJob.addTask(new Runnable() {
+            public void run() {
               ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
                 public void run() {
-                  for (int i = index; i < index + chunkSize && i < files.length; i++) {
-                    final PsiFile file = files[i];
-                    files[i] = null; // prevent strong ref
-                    try {
-                      PsiElement[] psiRoots = file.getPsiRoots();
-                      Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
-                      for (PsiElement psiRoot : psiRoots) {
-                        ProgressManager.getInstance().checkCanceled();
-                        if (!processed.add(psiRoot)) continue;
-                        if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher)) {
-                          result.set(false);
-                          return;
+                  ApplicationManager.getApplication().runReadAction(new Runnable() {
+                    public void run() {
+                      try {
+                        PsiElement[] psiRoots = file.getPsiRoots();
+                        Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
+                        for (PsiElement psiRoot : psiRoots) {
+                          ProgressManager.getInstance().checkCanceled();
+                          if (!processed.add(psiRoot)) continue;
+                          if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher)) {
+                            processFilesJob.cancel();
+                            return;
+                          }
                         }
+                        if (progress != null) {
+                          double fraction = (double)counter.incrementAndGet() / files.length;
+                          progress.setFraction(fraction);
+                        }
+                        myManager.dropResolveCaches();
                       }
-                      if (progress != null) {
-                        double fraction = (double)counter.incrementAndGet() / files.length;
-                        progress.setFraction(fraction);
+                      catch (ProcessCanceledException e) {
+                        processFilesJob.cancel();
+                        canceled.set(true);
                       }
-                      myManager.dropResolveCaches();
                     }
-                    catch (ProcessCanceledException e) {
-                      result.set(false);
-                    }
-                    if (!result.get()) return;
-                  }
+                  });
                 }
               }, progress);
-              return result.get();
             }
-          };
-          callables.add(runnable);
+          });
         }
+
         try {
-          List<Future<Boolean>> futures = ApplicationManagerEx.getApplicationEx().invokeAllUnderReadAction(callables, myThreadPoolExecutor);
-          boolean success = true;
-          for (Future<Boolean> future : futures) {
-            if (!(success &= future.get())) break;
-          }
-          return success;
+          processFilesJob.scheduleAndWaitForResults();
         }
         catch (Throwable throwable) {
           LOG.error(throwable);
+          return false;
         }
+
+        if (canceled.get()) {
+          throw new ProcessCanceledException();
+        }
+
+        return !processFilesJob.isCanceled();
       }
       else {
         for (int i = 0; i < files.length; i++) {

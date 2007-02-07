@@ -2,6 +2,7 @@ package com.intellij.ide;
 
 
 import com.intellij.Patches;
+import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -325,12 +326,15 @@ public class IdeEventQueue extends EventQueue {
       (e instanceof InputEvent) || (e instanceof InputMethodEvent) || (e instanceof WindowEvent) || (e instanceof ActionEvent);
     AWTEvent oldEvent = myCurrentEvent;
     myCurrentEvent = e;
+
+    JobSchedulerImpl.suspend();
     try {
       _dispatchEvent(e);
     }
     finally {
       myIsInInputEvent = wasInputEvent;
       myCurrentEvent = oldEvent;
+      JobSchedulerImpl.resume();
     }
   }
 

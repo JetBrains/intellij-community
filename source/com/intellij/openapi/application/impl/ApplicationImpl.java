@@ -586,7 +586,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     Boolean flag = exceptionalThreadWithReadAccessFlag.get();
     return flag != null && flag.booleanValue();
   }
-  private static boolean setExceptionalThreadWithReadAccessFlag(boolean flag) {
+
+  public static boolean setExceptionalThreadWithReadAccessFlag(boolean flag) {
     boolean old = isExceptionalThreadWithReadAccess();
     if (flag) {
       exceptionalThreadWithReadAccessFlag.set(true);

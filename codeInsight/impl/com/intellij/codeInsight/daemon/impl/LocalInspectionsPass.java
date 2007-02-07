@@ -2,8 +2,8 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.DaemonBundle;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.actions.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -12,10 +12,11 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.concurrency.Job;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.injected.DocumentRange;
@@ -30,8 +31,8 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedPsiInspectionUtil;
 import com.intellij.util.SmartList;
-import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -40,9 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author max
@@ -52,7 +51,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private final PsiFile myFile;
   private final int myStartOffset;
   private final int myEndOffset;
-  private final ExecutorService myExecutorService;
   @NotNull private List<ProblemDescriptor> myDescriptors = Collections.emptyList();
   @NotNull private List<HighlightInfoType> myLevels = Collections.emptyList();
   @NotNull private List<LocalInspectionTool> myTools = Collections.emptyList();
@@ -64,7 +62,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     myFile = file;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
-    myExecutorService = executorService;
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
@@ -87,7 +84,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     myDescriptors = new ArrayList<ProblemDescriptor>();
     myLevels = new ArrayList<HighlightInfoType>();
     myTools = new ArrayList<LocalInspectionTool>();
-
+    
     Map<LocalInspectionTool, LocalInspectionToolWrapper> tool2Wrapper = new THashMap<LocalInspectionTool, LocalInspectionToolWrapper>(toolWrappers.length);
     for (InspectionTool toolWrapper : toolWrappers) {
       tool2Wrapper.put(((LocalInspectionToolWrapper)toolWrapper).getTool(), (LocalInspectionToolWrapper)toolWrapper);
@@ -106,65 +103,57 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   public void inspect(final LocalInspectionTool[] tools, final ProgressIndicator progress, final InspectionManagerEx iManager, final boolean isOnTheFly) {
     final PsiElement[] elements = getElementsIntersectingRange(myFile, myStartOffset, myEndOffset);
 
-    final int chunkSize = Math.max(10, tools.length / Runtime.getRuntime().availableProcessors() / 10); //about 10 chunks per thread, in case some inspections are faster than others
-    List<Callable<Boolean>> inspectionChunks = new ArrayList<Callable<Boolean>>();
-    setProgressLimit(1L * tools.length * elements.length);
-    final AtomicBoolean canceled = new AtomicBoolean(false);
-    for (int v = 0; v < tools.length; v+=chunkSize) {
-      final int index = v;
-      Callable<Boolean> chunk = new Callable<Boolean>() {
-        public Boolean call() throws Exception {
+    final Job<?> job = JobScheduler.getInstance().createJob("Inspection tools", Job.DEFAULT_PRIORITY - 1); // TODO: Better name, handle priority
+
+    for (final LocalInspectionTool tool : tools) {
+      job.addTask(new Runnable() {
+        public void run() {
           if (progress != null) {
             if (progress.isCanceled()) {
-              canceled.set(true);
-              return false;
+              job.cancel();
+              return;
             }
           }
+
           final ProgressManager progressManager = ProgressManager.getInstance();
           ((ProgressManagerImpl)progressManager).executeProcessUnderProgress(new Runnable(){
             public void run() {
-              @NonNls final String name = "LocalInspections from " + index + " to " + (index + chunkSize);
-              PassExecutorService.log(progress, "Started " , name);
+              ApplicationManager.getApplication().assertReadAccessAllowed();
+
               ProblemsHolder holder = new ProblemsHolder(iManager);
               try {
-                NextTool:
-                for (int i = index; i < index + chunkSize && i < tools.length; i++) {
-                  if (canceled.get()) break;
-                  LocalInspectionTool tool = tools[i];
-                  PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
-                  if(elementVisitor == null) {
-                    LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
-                  }
-                  for (PsiElement element : elements) {
-                    if (canceled.get()) break NextTool;
-                    progressManager.checkCanceled();
-                    element.accept(elementVisitor);
-                  }
-                  advanceProgress(elements.length);
+                progressManager.checkCanceled();
+                PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
+                if(elementVisitor == null) {
+                  LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
+                }
+                for (PsiElement element : elements) {
+                  progressManager.checkCanceled();
+                  element.accept(elementVisitor);
+                }
+                advanceProgress(elements.length);
 
-                  if (holder.hasResults()) {
-                    appendDescriptors(holder.getResults(), tool);
-                  }
+                if (holder.hasResults()) {
+                  appendDescriptors(holder.getResults(), tool);
                 }
               }
               catch (ProcessCanceledException e) {
-                PassExecutorService.log(progress, "Canceled " , name);
-                canceled.set(true);
+                job.cancel();
               }
-              PassExecutorService.log(progress, "Finished ", name);
             }
           },progress);
-          return true;
         }
-      };
-      inspectionChunks.add(chunk);
+      });
     }
 
+    setProgressLimit(1L * tools.length * elements.length);
+
     try {
-      ApplicationManagerEx.getApplicationEx().invokeAllUnderReadAction(inspectionChunks, myExecutorService);
+      job.scheduleAndWaitForResults();
+      if (job.isCanceled()) return;
     }
     catch (ProcessCanceledException e) {
-      //ignore
+      return;
     }
     catch (Throwable e) {
       LOG.error(e);
