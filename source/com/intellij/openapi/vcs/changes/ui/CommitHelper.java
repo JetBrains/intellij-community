@@ -55,13 +55,14 @@ public class CommitHelper {
     myForceSyncCommit = synchronously;
   }
 
-  public void doCommit() {
+  public boolean doCommit() {
     final List<VcsException> vcsExceptions = new ArrayList<VcsException>();
     final List<Change> changesFailedToCommit = new ArrayList<Change>();
 
     final Runnable action = checkinAction(vcsExceptions, changesFailedToCommit, myChangeList);
     if (myForceSyncCommit) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(action, myActionName, true, myProject);
+      return doesntContainErrors(vcsExceptions);
     }
     else {
       ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, myActionName,
@@ -77,7 +78,15 @@ public class CommitHelper {
             }
           }
         }, null, null, VcsConfiguration.getInstance(myProject).getCommitOption());
+      return false;
     }
+  }
+
+  private boolean doesntContainErrors(final List<VcsException> vcsExceptions) {
+    for (VcsException vcsException : vcsExceptions) {
+      if (!vcsException.isWarning()) return false;
+    }
+    return true;
   }
 
   private Runnable checkinAction(final List<VcsException> vcsExceptions, final List<Change> changesFailedToCommit, final ChangeList changeList) {
@@ -198,7 +207,7 @@ public class CommitHelper {
         handler.checkinFailed(errors);
       }
 
-      moveToFailedList(changeList, commitMessage, failedChanges, 
+      moveToFailedList(changeList, commitMessage, failedChanges,
                        VcsBundle.message("commit.dialog.failed.commit.template", changeList.getName()), myProject);
     }
 
