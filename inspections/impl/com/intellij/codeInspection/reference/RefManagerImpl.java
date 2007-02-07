@@ -407,33 +407,31 @@ public class RefManagerImpl extends RefManager {
           //LOG.assertTrue(true, "References may become invalid after process is finished");
           return null;
         }
-        ref = ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
+        return ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
           @Nullable
           public RefElementImpl compute() {
+            RefElementImpl refElement;
             if (elem instanceof PsiClass) {
-              return new RefClassImpl((PsiClass)elem, RefManagerImpl.this);
+              refElement = new RefClassImpl((PsiClass)elem, RefManagerImpl.this);
             }
             else if (elem instanceof PsiMethod) {
-              return new RefMethodImpl((PsiMethod)elem, RefManagerImpl.this);
+              refElement = new RefMethodImpl((PsiMethod)elem, RefManagerImpl.this);
             }
             else if (elem instanceof PsiField) {
-              return new RefFieldImpl((PsiField)elem, RefManagerImpl.this);
+              refElement = new RefFieldImpl((PsiField)elem, RefManagerImpl.this);
             }
             else if (elem instanceof PsiFile) {
-              return new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
+              refElement = new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
             }
             else {
               return null;
             }
+            getRefTable().put(elem, refElement);
+            refElement.initialize();
+            return refElement;
           }
         });
-
-        if (ref == null) return null;
-
-        getRefTable().put(elem, ref);
-        ((RefElementImpl)ref).initialize();
       }
-
       return ref;
     }
 

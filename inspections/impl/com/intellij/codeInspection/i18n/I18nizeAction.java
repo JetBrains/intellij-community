@@ -36,6 +36,7 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
     e.getPresentation().setEnabled(active);
   }
 
+  @Nullable
   public I18nQuickFixHandler getHandler(final AnActionEvent e) {
     final Editor editor = getEditor(e);
     if (editor == null) return null;

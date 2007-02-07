@@ -5,15 +5,14 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -78,7 +77,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
 
     return new I18nizeQuickFixDialog(project, context, literalExpression, value, true, true) {
       protected String getTemplateName() {
-        return FileTemplateManager.TEMPLATE_I18NIZED_CONCATENATION;
+        return myResourceBundleManager.getConcatenationTemplateName();
       }
 
       protected void addAdditionalAttributes(final Map<String, String> attributes) {

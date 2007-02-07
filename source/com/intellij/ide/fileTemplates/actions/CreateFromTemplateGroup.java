@@ -1,8 +1,9 @@
 package com.intellij.ide.fileTemplates.actions;
 
-import com.intellij.ide.IdeView;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.EditFileTemplatesAction;
+import com.intellij.ide.fileTemplates.CreateFromTemplateActionReplacer;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -11,6 +12,7 @@ import com.intellij.ide.fileTemplates.ui.SelectTemplateDialog;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
@@ -75,9 +77,20 @@ public class CreateFromTemplateGroup extends ActionGroup{
     });
     List<AnAction> result = new ArrayList<AnAction>();
 
+    final CreateFromTemplateActionReplacer[] actionFactories =
+      ApplicationManager.getApplication().getExtensions(CreateFromTemplateActionReplacer.CREATE_FROM_TEMPLATE_REPLACER);
     for (FileTemplate template : templates) {
       if (canCreateFromTemplate(e, template)) {
-        CreateFromTemplateAction action = new CreateFromTemplateAction(template);
+        AnAction action = null;
+        for (CreateFromTemplateActionReplacer actionFactory : actionFactories) {
+          action = actionFactory.replaceCreateFromFileTemplateAction(template);
+          if (action != null) {
+            break;
+          }
+        }
+        if (action == null) {
+          action = new CreateFromTemplateAction(template);
+        }
         result.add(action);
       }
     }

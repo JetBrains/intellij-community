@@ -98,6 +98,9 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
   private void doFix(final ProblemDescriptor descriptor, final Project project) {
     final PsiLiteralExpression literalExpression = (PsiLiteralExpression)descriptor.getPsiElement();
     final PsiFile psiFile = literalExpression.getContainingFile();
+    if (!I18nizeQuickFixDialog.isAvailable(psiFile)) {
+      return;
+    }
     final I18nizeQuickFixDialog dialog = createDialog(project, psiFile, literalExpression);
     dialog.show();
     if (!dialog.isOK()) return;

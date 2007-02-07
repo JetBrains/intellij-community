@@ -8,19 +8,18 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
+import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiDocumentManager;
 
 import java.util.Collection;
 
@@ -38,7 +37,11 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
     final StringDescriptor descriptor = getStringDescriptorValue();
     final Project project = myEditor.getProject();
 
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(myEditor.getFile());
+    PsiFile psiFile = myEditor.getPsiFile();
+
+    if (!I18nizeQuickFixDialog.isAvailable(myEditor.getPsiFile())) {
+      return;
+    }
     String initialValue = StringUtil.escapeStringCharacters(descriptor.getValue());
     final I18nizeQuickFixDialog dialog = new I18nizeQuickFixDialog(project, psiFile, null, initialValue, false, false){
       protected String getDimensionServiceKey() {

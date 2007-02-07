@@ -465,6 +465,9 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     FileTemplateImpl template = (FileTemplateImpl) myInternalTemplatesManager.getTemplate(actualTemplateName);
 
     if (template == null) {
+      template = (FileTemplateImpl)getTemplate(actualTemplateName);
+    }
+    if (template == null) {
       template = (FileTemplateImpl)getJ2eeTemplate(actualTemplateName); // Hack to be able to register class templates from the plugin.
       if (template != null) {
         template.setAdjust(true);

@@ -4,16 +4,17 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.macro.MacroUtil;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.lang.properties.PropertiesFilesManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -23,8 +24,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -37,9 +36,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.*;
+import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,8 +49,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -79,6 +78,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
   private final String myDefaultPropertyValue;
   private final boolean myShowJavaCodeInfo;
   private final boolean myShowPreview;
+  protected ResourceBundleManager myResourceBundleManager;
 
   @NonNls private static final String PROPERTY_KEY_OPTION_KEY = "PROPERTY_KEY";
   @NonNls private static final String RESOURCE_BUNDLE_OPTION_KEY = "RESOURCE_BUNDLE";
@@ -96,23 +96,26 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     myLiteralExpression = literalExpression;
 
     myDefaultPropertyValue = defaultPropertyValue;
-    myShowJavaCodeInfo = showJavaCodeInfo;
+
     myShowPreview = showPreview;
 
     setTitle(CodeInsightBundle.message("i18nize.dialog.title"));
 
     myResourceBundleSuggester.setLayout(new BorderLayout());
     PsiManager psiManager = PsiManager.getInstance(myProject);
-    PsiClass rbClass = psiManager.findClass("java.util.ResourceBundle", GlobalSearchScope.allScope(myProject));
-    if (rbClass == null) {
-      Messages.showErrorDialog(myProject,
-                               CodeInsightBundle.message("i18nize.dialog.error.jdk.message"),
-                               CodeInsightBundle.message("i18nize.dialog.error.jdk.title"));
-      return;
-    }
     PsiElementFactory factory = psiManager.getElementFactory();
-    myResourceBundleType = factory.createType(rbClass);
-
+    PsiClass resourceBundle = null;
+    try {
+      myResourceBundleManager = ResourceBundleManager.getManager(context);
+      LOG.assertTrue(myResourceBundleManager != null);
+      resourceBundle = myResourceBundleManager.getResourceBundle();
+    }
+    catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
+      //can't be
+    }
+    LOG.assertTrue(resourceBundle != null);
+    myResourceBundleType = factory.createType(resourceBundle);
+    myShowJavaCodeInfo = showJavaCodeInfo && myResourceBundleManager.canShowJavaCodeInfo();
     if (myShowJavaCodeInfo) {
       @NonNls String defaultVarName = "resourceBundle";
       PsiExpressionCodeFragment expressionCodeFragment = factory.createExpressionCodeFragment(defaultVarName, myLiteralExpression, myResourceBundleType, true);
@@ -204,12 +207,37 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     init();
   }
 
+  public static boolean isAvailable(PsiFile file) {
+    final Project project = file.getProject();
+    final String title = CodeInsightBundle.message("i18nize.dialog.error.jdk.title");
+    try {
+      return ResourceBundleManager.getManager(file) != null;      
+    }
+    catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
+      final IntentionAction fix = e.getFix();
+      if (fix != null) {
+        if (Messages.showOkCancelDialog(project, e.getMessage(), title, Messages.getErrorIcon()) ==
+            DialogWrapper.OK_EXIT_CODE) {
+          try {
+            fix.invoke(project, null, file);
+            return false;
+          }
+          catch (IncorrectOperationException e1) {
+            LOG.error(e1);
+          }
+        }
+      }
+      Messages.showErrorDialog(project, e.getMessage(), title);
+      return false;
+    }
+  }
+
   private JTextField getKeyTextField() {
     return (JTextField)myKey.getEditor().getEditorComponent();
   }
 
   protected String getTemplateName() {
-    return FileTemplateManager.TEMPLATE_I18NIZED_EXPRESSION;
+    return myResourceBundleManager.getTemplateName();
   }
 
   private void suggestAvailableResourceBundleExpressions() {
@@ -406,16 +434,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
   }
 
   protected List<String> suggestPropertiesFiles() {
-    Collection<VirtualFile> allPropertiesFiles = PropertiesFilesManager.getInstance().getAllPropertiesFiles();
-    List<String> paths = new ArrayList<String>();
-    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    for (VirtualFile virtualFile : allPropertiesFiles) {
-      if (projectFileIndex.isInContent(virtualFile)) {
-        String path = FileUtil.toSystemDependentName(virtualFile.getPath());
-        paths.add(path);
-      }
-    }
-    return paths;
+    return myResourceBundleManager.suggestPropertiesFiles();
   }
 
   private PropertiesFile getPropertiesFile() {
