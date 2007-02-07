@@ -369,10 +369,29 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return map.get(qname);
   }
 
-  public String getAttributeValue(String name, String namespace) {
-    final String prefix = getPrefixByNamespace(namespace);
-    if(prefix != null && prefix.length() > 0) name = prefix + ":" + name;
-    return getAttributeValue(name);
+  public String getAttributeValue(String _name, String namespace) {
+    XmlTagImpl current = this;
+    PsiElement parent = getParent();
+
+    while(current != null) {
+      BidirectionalMap<String, String> map = current.initNamespaceMaps(parent);
+      if(map != null){
+        List<String> keysByValue = map.getKeysByValue(namespace);
+        if (keysByValue != null && !keysByValue.isEmpty()) {
+          for(String prefix:keysByValue) {
+            if (prefix != null && prefix.length() > 0) {
+              final String value = getAttributeValue(prefix.concat(":").concat(_name));
+              if (value != null) return value;
+            }
+          }
+        }
+      }
+      
+      current = parent instanceof XmlTag ? (XmlTagImpl)parent:null;
+      parent = parent.getParent();
+    }
+
+    return getAttributeValue(_name);
   }
 
   public XmlTag[] getSubTags() {
