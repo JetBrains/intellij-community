@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 
 public class SetupJDKFix implements IntentionAction {
   private static final SetupJDKFix ourInstance = new SetupJDKFix();
@@ -31,10 +32,12 @@ public class SetupJDKFix implements IntentionAction {
   private SetupJDKFix() {
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("setup.jdk.location.text");
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("setup.jdk.location.family");
   }

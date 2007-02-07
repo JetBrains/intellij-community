@@ -87,9 +87,9 @@ public class GenericsHighlightUtil {
                                                              boolean registerIntentions) {
     if (referenceParameterList != null && PsiUtil.getLanguageLevel(referenceParameterList).compareTo(LanguageLevel.JDK_1_5) < 0) {
       if (referenceParameterList.getTypeParameterElements().length > 0) {
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                 referenceParameterList,
-                                                 GENERICS_ARE_NOT_SUPPORTED);
+        HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceParameterList, GENERICS_ARE_NOT_SUPPORTED);
+        QuickFixAction.registerQuickFixAction(info, new ShowModulePropertiesFix(referenceParameterList));
+        return info;
       }
     }
 
@@ -794,9 +794,9 @@ public class GenericsHighlightUtil {
     PsiTypeParameter[] typeParameters = parameterList.getTypeParameters();
     if (typeParameters.length == 0) return null;
     if (PsiUtil.getLanguageLevel(parameterList).compareTo(LanguageLevel.JDK_1_5) < 0) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                               parameterList,
-                                               GENERICS_ARE_NOT_SUPPORTED);
+      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameterList, GENERICS_ARE_NOT_SUPPORTED);
+      QuickFixAction.registerQuickFixAction(info, new ShowModulePropertiesFix(parameterList));
+      return info;
     }
     final PsiElement parent = parameterList.getParent();
     if (parent instanceof PsiClass && ((PsiClass)parent).isEnum()) {
