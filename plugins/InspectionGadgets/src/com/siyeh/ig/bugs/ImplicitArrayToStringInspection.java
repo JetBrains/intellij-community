@@ -15,18 +15,19 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.openapi.project.Project;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,45 +58,46 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
         if (type != null) {
             final PsiType componentType = type.getComponentType();
             if (componentType instanceof PsiArrayType) {
-                return new ImplicitArrayToStringFix("Arrays.deepToString()");
+                return new ImplicitArrayToStringFix(true);
             }
         }
-        return new ImplicitArrayToStringFix("Arrays.toString()");
+        return new ImplicitArrayToStringFix(false);
     }
 
     private static class ImplicitArrayToStringFix extends InspectionGadgetsFix {
 
-        private final String expression;
+        private final boolean deepString;
 
-        ImplicitArrayToStringFix(String expression) {
-            this.expression = expression;
+        ImplicitArrayToStringFix(boolean deepString) {
+            this.deepString = deepString;
         }
 
         @NotNull
         public String getName() {
+            @NonNls final String expressionText;
+            if (deepString) {
+                expressionText = "java.util.Arrays.deepToString()";
+            } else {
+                expressionText = "java.util.Arrays.toString()";
+            }
             return InspectionGadgetsBundle.message(
-                    "implicit.array.to.string.quickfix", expression);
+                    "implicit.array.to.string.quickfix", expressionText);
         }
 
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiReferenceExpression expression =
                     (PsiReferenceExpression) descriptor.getPsiElement();
-            final PsiArrayType type = (PsiArrayType) expression.getType();
-            if (type == null) {
-                return;
-            }
-            final PsiType componentType = type.getComponentType();
             final String expressionText = expression.getText();
-            final String newExpressionText;
-            if (componentType instanceof PsiArrayType) {
+            @NonNls final String newExpressionText;
+            if (deepString) {
                 newExpressionText =
                         "java.util.Arrays.deepToString(" + expressionText + ')';
             } else {
                 newExpressionText =
                         "java.util.Arrays.toString(" + expressionText + ')';
             }
-            replaceExpression(expression, newExpressionText);
+            replaceExpressionAndShorten(expression, newExpressionText);
         }
     }
 
@@ -151,7 +153,8 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
                         (PsiMethodCallExpression) grandParent;
                 final PsiReferenceExpression methodExpression =
                         methodCallExpression.getMethodExpression();
-                final String methodName = methodExpression.getReferenceName();
+                @NonNls final String methodName =
+                        methodExpression.getReferenceName();
                 if (!"print".equals(methodName) &&
                         !"println".equals(methodName)) {
                     return;
