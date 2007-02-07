@@ -224,7 +224,18 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
     else {
       SvnVcs vcs = getVCS(file);
       if (vcs != null) {
-        myDeletedFiles.add(new DeletedFileInfo(vcs.getProject(), ioFile));
+        if (status.getContentsStatus() == SVNStatusType.STATUS_ADDED) {
+          try {
+            final SVNWCClient wcClient = vcs.createWCClient();
+            wcClient.doRevert(ioFile, false);
+          }
+          catch (SVNException e) {
+            // ignore
+          }
+        }
+        else {
+          myDeletedFiles.add(new DeletedFileInfo(vcs.getProject(), ioFile));
+        }
       }
       return false;
     }
