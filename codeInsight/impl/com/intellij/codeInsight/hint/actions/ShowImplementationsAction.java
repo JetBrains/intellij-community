@@ -47,6 +47,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 
@@ -63,7 +66,7 @@ public class ShowImplementationsAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
 
     if (project == null || file == null) return;
@@ -82,6 +85,10 @@ public class ShowImplementationsAction extends AnAction {
     }
     else {
       element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+      final FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file.getVirtualFile());
+      if (fileEditor instanceof TextEditor) {
+        editor = ((TextEditor)fileEditor).getEditor();
+      } 
     }
 
     final PsiReference ref;
