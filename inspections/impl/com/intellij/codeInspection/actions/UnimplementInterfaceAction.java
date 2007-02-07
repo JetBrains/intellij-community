@@ -3,6 +3,7 @@ package com.intellij.codeInspection.actions;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -61,6 +62,9 @@ public class UnimplementInterfaceAction implements IntentionAction {
 
     final PsiElement target = psiReference.resolve();
     if (target == null || !(target instanceof PsiClass)) return;
+
+    if (ReadonlyStatusHandler.getInstance(project)
+      .ensureFilesWritable(file.getVirtualFile()).hasReadonlyFiles()) return;
 
     PsiClass targetClass = (PsiClass)target;
 
