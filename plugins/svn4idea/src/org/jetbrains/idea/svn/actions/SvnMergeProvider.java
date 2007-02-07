@@ -128,6 +128,11 @@ public class SvnMergeProvider implements MergeProvider {
     catch (SVNException e) {
       //
     }
+    // the .mine/.r## files have been deleted
+    final VirtualFile parent = file.getParent();
+    if (parent != null) {
+      parent.refresh(true, false);
+    }
   }
 
 }
