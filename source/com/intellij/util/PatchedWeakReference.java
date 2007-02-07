@@ -15,29 +15,26 @@
  */
 package com.intellij.util;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.diagnostic.Logger;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 public class PatchedWeakReference<T> extends WeakReference<T>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.PatchedWeakReference");
 
   private static ArrayList<PatchedWeakReference<?>> ourRefsList = new ArrayList<PatchedWeakReference<?>>();
   private static ReferenceQueue ourQueue = new ReferenceQueue();
-  private static Timer ourTimer = null;
-
 
   static {
-    ourTimer = new Timer();
-    ourTimer.schedule(new TimerTask() {
+    JobScheduler.getInstance().scheduleAtFixedRate(new Runnable() {
       public void run() {
         processQueue();
       }
-    }, 500, 500);
+    }, 500, 500, TimeUnit.MILLISECONDS);
   }
 
   public PatchedWeakReference(T referent) {

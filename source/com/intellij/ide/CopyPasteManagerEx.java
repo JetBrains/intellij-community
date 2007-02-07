@@ -30,10 +30,8 @@ import java.awt.datatransfer.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.CopyPasteManagerEx");
@@ -469,9 +467,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
       try {
         accessorFuture.get(DELAY_UNTIL_ABORT_CLIPBOARD_ACCESS, TimeUnit.MILLISECONDS);
       }
-      catch (InterruptedException e) { /* no luck */ }
-      catch (TimeoutException e) {}
-      catch (ExecutionException e) {}
+      catch (Exception e) { /* no luck */ }
 
       if (!success[0]) {
         showWorkaroundMessage();

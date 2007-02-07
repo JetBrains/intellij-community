@@ -4,10 +4,10 @@
  */
 package com.intellij.diagnostic;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
@@ -19,6 +19,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.concurrent.TimeUnit;
 
 public class IdeMessagePanel extends JPanel implements MessagePoolListener {
 
@@ -52,7 +53,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
     myMessagePool = messagePool;
     messagePool.addListener(this);
 
-    new Blinker().start();
+    JobScheduler.getInstance().scheduleAtFixedRate(new Blinker(), 1, 1, TimeUnit.SECONDS);
     updateFatalErrorsIcon();
   }
 
@@ -63,22 +64,23 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
 
     final Runnable task = new Runnable() {
       public void run() {
-        try {
-          while (isOtherModalWindowActive()) {
-            if (myDialog != null) return;
-            Thread.sleep(300);
+        if (isOtherModalWindowActive()) {
+          if (myDialog == null) {
+            JobScheduler.getInstance().schedule(this, 300, TimeUnit.MILLISECONDS);
           }
-
-          _openFatals();
+          return;
         }
-        catch (InterruptedException e) {
+
+        try {
+          _openFatals();
         }
         finally {
           myOpeningInProgress = false;
         }
       }
     };
-    ApplicationManager.getApplication().executeOnPooledThread(task);
+
+    task.run();
   }
 
   private void _openFatals() {
@@ -179,24 +181,12 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
     }
   }
 
-  private class Blinker extends Thread {
-    public Blinker() {
-      super("Error Icon Blinker");
-    }
+  private class Blinker implements Runnable {
+    boolean myVisible = false;
 
-    /** @noinspection BusyWait*/
     public void run() {
-      while(true) {
-        try {
-          sleep(1000);
-          setBlinkedIconsVisibilityTo(false);
-          sleep(1000);
-          setBlinkedIconsVisibilityTo(true);
-        }
-        catch (InterruptedException e) {
-          LOG.error(e);
-        }
-      }
+      myVisible = !myVisible;
+      setBlinkedIconsVisibilityTo(myVisible);
     }
 
     private void setBlinkedIconsVisibilityTo(boolean aVisible) {

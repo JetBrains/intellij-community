@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.config.execution;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionUtil;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 public final class ExecutionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ant.execution.ExecutionHandler");
@@ -150,7 +152,7 @@ public final class ExecutionHandler {
     WindowManager.getInstance().getStatusBar(project).setInfo(AntBundle.message("ant.build.started.status.message"));
 
     final CheckCancelThread checkThread = new CheckCancelThread(progress, handler);
-    ApplicationManager.getApplication().executeOnPooledThread(checkThread);
+    checkThread.start(0);
 
     final OutputParser parser = OutputParser2.attachParser(project, handler, errorView, progress, buildFile);
 
@@ -195,19 +197,16 @@ public final class ExecutionHandler {
     }
 
     public void run() {
-      while (true) {
-        if (myCanceled) return;
-        if (myProgressWindow != null && myProgressWindow.isCanceled()) {
-          myProcessHandler.destroyProcess();
-          return;
-        }
-        try {
-          Thread.sleep(50);
-        }
-        catch (InterruptedException e) {
-          // ignore
-        }
+      if (myCanceled) return;
+      if (myProgressWindow != null && myProgressWindow.isCanceled()) {
+        myProcessHandler.destroyProcess();
+        return;
       }
+      start(50);
+    }
+
+    public void start(final long delay) {
+      JobScheduler.getInstance().schedule(this, delay, TimeUnit.MILLISECONDS);
     }
   }
 

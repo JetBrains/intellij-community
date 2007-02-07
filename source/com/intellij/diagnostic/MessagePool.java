@@ -4,13 +4,17 @@
  */
 package com.intellij.diagnostic;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import org.apache.log4j.Category;
 import org.apache.log4j.Priority;
 import org.apache.log4j.spi.LoggingEvent;
-import org.jetbrains.annotations.NonNls;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public class MessagePool {
 
@@ -26,7 +30,8 @@ public class MessagePool {
   private boolean ourJvmIsShuttingDown = false;
 
   MessagePool(int maxGroupSize, int timeout) {
-    myFatalsGrouper = new MessageGrouper("Fatal Errors Grouper", timeout, maxGroupSize);
+    myFatalsGrouper = new MessageGrouper(timeout, maxGroupSize);
+    JobScheduler.getInstance().scheduleAtFixedRate(myFatalsGrouper, 300, 300, TimeUnit.MILLISECONDS);
   }
 
   public static MessagePool getInstance() {
@@ -112,7 +117,7 @@ public class MessagePool {
     ourJvmIsShuttingDown = true;
   }
 
-  private class MessageGrouper extends Thread {
+  private class MessageGrouper implements Runnable {
 
     private int myTimeOut;
     private int myMaxGroupSize;
@@ -120,28 +125,18 @@ public class MessagePool {
     private final List<AbstractMessage> myMessages = new ArrayList<AbstractMessage>();
     private int myAccumulatedTime;
 
-    public MessageGrouper(@NonNls String name, int timeout, int maxGroupSize) {
-      setName(name);
+    public MessageGrouper(int timeout, int maxGroupSize) {
       myTimeOut = timeout;
       myMaxGroupSize = maxGroupSize;
-      start();
     }
 
-    /** @noinspection BusyWait*/
     public void run() {
-      while (true) {
-        try {
-          sleep(50);
-          myAccumulatedTime += 50;
-          if (myAccumulatedTime > myTimeOut) {
-            synchronized(myMessages) {
-              if (myMessages.size() > 0) {
-                post();
-              }
-            }
+      myAccumulatedTime += 300;
+      if (myAccumulatedTime > myTimeOut) {
+        synchronized(myMessages) {
+          if (myMessages.size() > 0) {
+            post();
           }
-        } catch (InterruptedException e) {
-          return;
         }
       }
     }

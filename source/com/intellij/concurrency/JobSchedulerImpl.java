@@ -71,7 +71,11 @@ public class JobSchedulerImpl extends JobScheduler {
 
   private static long ourJobsCounter = 0;
 
-  private static final ScheduledExecutorService ourScheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+  private static final ScheduledExecutorService ourScheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+    public Thread newThread(final Runnable r) {
+      return new Thread(r, "Periodic tasks thread");
+    }
+  });
 
 
   public static void execute(PrioritizedFutureTask task) {
