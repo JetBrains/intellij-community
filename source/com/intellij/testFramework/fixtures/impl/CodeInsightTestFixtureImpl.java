@@ -310,7 +310,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
 
       public boolean isToolEnabled(HighlightDisplayKey key) {
-        return key != null && myAvailableTools.containsKey(key.toString());
+        return key != null && key.toString() != null && myAvailableTools != null && myAvailableTools.containsKey(key.toString());
       }
 
       public HighlightDisplayLevel getErrorLevel(HighlightDisplayKey key) {
