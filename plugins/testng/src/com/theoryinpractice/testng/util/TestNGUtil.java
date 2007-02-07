@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -136,6 +137,15 @@ public class TestNGUtil
     }
 
     /**
+     * Ignore these, they cause an NPE inside of AnnotationUtil
+     */
+    private static boolean isBrokenPsiClass(PsiClass psiClass) {
+        return (psiClass == null
+                || psiClass instanceof PsiAnonymousClass
+                || psiClass instanceof JspClass);
+    }
+
+    /**
      * Filter the specified collection of classes to return only ones that contain any of the specified values in the
      * specified annotation parameter. For example, this method can be used to return all classes that contain all tesng
      * annotations that are in the groups 'foo' or 'bar'.
@@ -146,8 +156,8 @@ public class TestNGUtil
         test.add(TEST_ANNOTATION_FQN);
         test.addAll(Arrays.asList(CONFIG_ANNOTATIONS_FQN));
         for (PsiClass psiClass : classes) {
-            //Ignore these, they cause an NPE inside of AnnotationUtil, at least up until IDEA 6.0.2
-            if (psiClass == null || psiClass instanceof PsiAnonymousClass) continue;
+            if (isBrokenPsiClass(psiClass)) continue;
+
             PsiAnnotation annotation;
             try {
                 annotation = AnnotationUtil.findAnnotation(psiClass, test);
