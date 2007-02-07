@@ -150,18 +150,20 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     final HashMap<VirtualFilePointerListener, ArrayList<VirtualFilePointer>> listenerToArrayOfPointers =
       new HashMap<VirtualFilePointerListener,ArrayList<VirtualFilePointer>>();
 
-    for(Map.Entry<VirtualFilePointerListener,THashSet<VirtualFilePointer>> entry:myListenerToPointersMap.entrySet()) {
-      ArrayList<VirtualFilePointer> list = null;
+    synchronized(this) {
+      for(Map.Entry<VirtualFilePointerListener,THashSet<VirtualFilePointer>> entry:myListenerToPointersMap.entrySet()) {
+        ArrayList<VirtualFilePointer> list = null;
+  
+        for(VirtualFilePointer _pointer:entry.getValue()) {
+          VirtualFilePointerImpl pointer = (VirtualFilePointerImpl)_pointer;
 
-      for(VirtualFilePointer _pointer:entry.getValue()) {
-        VirtualFilePointerImpl pointer = (VirtualFilePointerImpl)_pointer;
-
-        if (listenerNotifier.processPointer(pointer)) {
-          if (list == null) {
-            list = new ArrayList<VirtualFilePointer>();
-            listenerToArrayOfPointers.put(entry.getKey(), list);
+          if (listenerNotifier.processPointer(pointer)) {
+            if (list == null) {
+              list = new ArrayList<VirtualFilePointer>();
+              listenerToArrayOfPointers.put(entry.getKey(), list);
+            }
+            list.add(pointer);
           }
-          list.add(pointer);
         }
       }
     }
@@ -171,7 +173,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return listenerToArrayOfPointers;
   }
 
-  private void iterateMap(HashMap<VirtualFilePointerListener, ArrayList<VirtualFilePointer>> listenerToArrayOfPointers, PointerProcessor listenerCollector) {
+  private static void iterateMap(HashMap<VirtualFilePointerListener, ArrayList<VirtualFilePointer>> listenerToArrayOfPointers, PointerProcessor listenerCollector) {
     for (VirtualFilePointerListener listener : listenerToArrayOfPointers.keySet()) {
       ArrayList<VirtualFilePointer> list = listenerToArrayOfPointers.get(listener);
       final VirtualFilePointer[] pointers = list.toArray(new VirtualFilePointer[list.size()]);
@@ -181,10 +183,9 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   private void validate() {
     cleanContainerCaches();
-    synchronized(this) {
-      iteratePointers(PointerValidityChangeDetector.INSTANCE);
-      iteratePointers(PointerValidator.INSTANCE);
-    }
+
+    iteratePointers(PointerValidityChangeDetector.INSTANCE);
+    iteratePointers(PointerValidator.INSTANCE);
   }
 
   private void cleanContainerCaches() {
@@ -250,13 +251,12 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         }
       };
 
-      synchronized(VirtualFilePointerManagerImpl.this) {
-        HashMap<VirtualFilePointerListener,ArrayList<VirtualFilePointer>> fileDeletedNotificationMap = iteratePointers(listenerNotifier);
-        for (VirtualFilePointerImpl pointer : invalidatedPointers) {
-          pointer.invalidateByDeletion();
-        }
-        iterateMap(fileDeletedNotificationMap, PointerValidator.INSTANCE);
+
+      HashMap<VirtualFilePointerListener,ArrayList<VirtualFilePointer>> fileDeletedNotificationMap = iteratePointers(listenerNotifier);
+      for (VirtualFilePointerImpl pointer : invalidatedPointers) {
+        pointer.invalidateByDeletion();
       }
+      iterateMap(fileDeletedNotificationMap, PointerValidator.INSTANCE);
     }
 
     private void handleEvent() {
