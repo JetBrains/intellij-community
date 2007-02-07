@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -10,6 +11,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -22,12 +24,14 @@ public class RenamePublicClassFix implements IntentionAction {
     myClass = aClass;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("rename.public.class.text",
                                   myClass.getName(),
                                   myClass.getContainingFile().getVirtualFile().getNameWithoutExtension());
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("rename.public.class.family");
   }
@@ -39,7 +43,7 @@ public class RenamePublicClassFix implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     LOG.assertTrue (file == myClass.getContainingFile());
-
+    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     VirtualFile vFile = file.getVirtualFile();
     String newName = vFile.getNameWithoutExtension();
     RenameProcessor processor = new RenameProcessor(project, myClass, newName, false, false);
