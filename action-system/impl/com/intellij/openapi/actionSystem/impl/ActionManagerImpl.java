@@ -298,18 +298,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       LOG.debug("enter: processActionElement(" + element.getName() + ")");
     }
     if (!ACTION_ELEMENT_NAME.equals(element.getName())) {
-      LOG.error("unexpected name of element \"" + element.getName() + "\"");
+      reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return null;
     }
     String className = element.getAttributeValue(CLASS_ATTR_NAME);
     if (className == null || className.length() == 0) {
-      LOG.error("action element should have specified \"class\" attribute");
+      reportActionError(pluginId, "action element should have specified \"class\" attribute");
       return null;
     }
     // read ID and register loaded action
     String id = element.getAttributeValue(ID_ATTR_NAME);
     if (id == null || id.length() == 0) {
-      LOG.error("ID of the action cannot be an empty string");
+      reportActionError(pluginId, "ID of the action cannot be an empty string");
       return null;
     }
     if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
@@ -322,7 +322,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     if (text == null) {
       @NonNls String message = "'text' attribute is mandatory (action ID=" + id + ";" +
                                (plugin == null ? "" : " plugin path: "+plugin.getPath()) + ")";
-      LOG.error(message);
+      reportActionError(pluginId, message);
       return null;
     }
 
@@ -341,16 +341,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     for (final Object o : element.getChildren()) {
       Element e = (Element)o;
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(e.getName())) {
-        processAddToGroupNode(stub, e);
+        processAddToGroupNode(stub, e, pluginId);
       }
       else if (SHORTCUT_ELEMENT_NAME.equals(e.getName())) {
-        processKeyboardShortcutNode(e, id);
+        processKeyboardShortcutNode(e, id, pluginId);
       }
       else if (MOUSE_SHORTCUT_ELEMENT_NAME.equals(e.getName())) {
-        processMouseShortcutNode(e, id);
+        processMouseShortcutNode(e, id, pluginId);
       }
       else {
-        LOG.error("unexpected name of element \"" + e.getName() + "\"");
+        reportActionError(pluginId, "unexpected name of element \"" + e.getName() + "\"");
         return null;
       }
     }
@@ -406,7 +406,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       LOG.debug("enter: processGroupElement(" + element.getName() + ")");
     }
     if (!GROUP_ELEMENT_NAME.equals(element.getName())) {
-      LOG.error("unexpected name of element \"" + element.getName() + "\"");
+      reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return null;
     }
     String className = element.getAttributeValue(CLASS_ATTR_NAME);
@@ -418,13 +418,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       Object obj = new ConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(ApplicationManager.getApplication().getPicoContainer());
 
       if (!(obj instanceof ActionGroup)) {
-        LOG.error("class with name \"" + className + "\" should be instance of " + ActionGroup.class.getName());
+        reportActionError(pluginId, "class with name \"" + className + "\" should be instance of " + ActionGroup.class.getName());
         return null;
       }
       if (element.getChildren().size() != element.getChildren(ADD_TO_GROUP_ELEMENT_NAME).size() ) {  //
         if (!(obj instanceof DefaultActionGroup)) {
-          LOG.error("class with name \"" + className + "\" should be instance of " + DefaultActionGroup.class.getName() +
-                    " because there are children specified");
+          reportActionError(pluginId, "class with name \"" + className + "\" should be instance of " + DefaultActionGroup.class.getName() +
+                                      " because there are children specified");
           return null;
         }
       }
@@ -432,7 +432,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       // read ID and register loaded group
       String id = element.getAttributeValue(ID_ATTR_NAME);
       if (id != null && id.length() == 0) {
-        LOG.error("ID of the group cannot be an empty string");
+        reportActionError(pluginId, "ID of the group cannot be an empty string");
         return null;
       }
       if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
@@ -469,7 +469,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
           }
         }
         else if (SEPARATOR_ELEMENT_NAME.equals(name)) {
-          processSeparatorNode((DefaultActionGroup)group, child);
+          processSeparatorNode((DefaultActionGroup)group, child, pluginId);
         }
         else if (GROUP_ELEMENT_NAME.equals(name)) {
           AnAction action = processGroupElement(child, loader, pluginId);
@@ -478,35 +478,42 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
           }
         }
         else if (ADD_TO_GROUP_ELEMENT_NAME.equals(name)) {
-          processAddToGroupNode(group, child);
+          processAddToGroupNode(group, child, pluginId);
         }
         else if (REFERENCE_ELEMENT_NAME.equals(name)) {
-          AnAction action = processReferenceElement(child);
+          AnAction action = processReferenceElement(child, pluginId);
           if (action != null) {
             ((DefaultActionGroup)group).add(action, this);
           }
         }
         else {
-          LOG.error("unexpected name of element \"" + name + "\n");
+          reportActionError(pluginId, "unexpected name of element \"" + name + "\n");
           return null;
         }
       }
       return group;
     }
     catch (ClassNotFoundException e) {
-      LOG.error("class with name \"" + className + "\" not found");
+      reportActionError(pluginId, "class with name \"" + className + "\" not found");
       return null;
     }
     catch (Exception e) {
-      LOG.error("cannot create class \"" + className + "\"", e);
+      final String message = "cannot create class \"" + className + "\"";
+      if (pluginId == null) {
+        LOG.error(message, e);
+      }
+      else {
+        LOG.error(new PluginException(message, e, pluginId));
+      }
       return null;
     }
   }
 
   /**
    * @param element description of link
+   * @param pluginId
    */
-  private void processAddToGroupNode(AnAction action, Element element) {
+  private void processAddToGroupNode(AnAction action, Element element, final PluginId pluginId) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: processAddToGroupNode(" + action + "," + element.getName() + ")");
     }
@@ -519,26 +526,26 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     String actionName = action instanceof ActionStub ? ((ActionStub)action).getClassName() : action.getClass().getName();
 
     if (!ADD_TO_GROUP_ELEMENT_NAME.equals(element.getName())) {
-      LOG.error("unexpected name of element \"" + element.getName() + "\"");
+      reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return;
     }
     String groupId = element.getAttributeValue(GROUPID_ATTR_NAME);
     if (groupId == null || groupId.length() == 0) {
-      LOG.error(actionName + ": attribute \"group-id\" should be defined");
+      reportActionError(pluginId, actionName + ": attribute \"group-id\" should be defined");
       return;
     }
     AnAction parentGroup = getActionImpl(groupId, true);
     if (parentGroup == null) {
-      LOG.error(actionName + ": action with id \"" + groupId + "\" isn't registered; action will be added to the \"Other\" group");
+      reportActionError(pluginId, actionName + ": action with id \"" + groupId + "\" isn't registered; action will be added to the \"Other\" group");
       parentGroup = getActionImpl(IdeActions.GROUP_OTHER_MENU, true);
     }
     if (!(parentGroup instanceof DefaultActionGroup)) {
-      LOG.error(actionName + ": action with id \"" + groupId + "\" should be instance of " + DefaultActionGroup.class.getName());
+      reportActionError(pluginId, actionName + ": action with id \"" + groupId + "\" should be instance of " + DefaultActionGroup.class.getName());
       return;
     }
     String anchorStr = element.getAttributeValue(ANCHOR_ELEMENT_NAME);
     if (anchorStr == null) {
-      LOG.error(actionName + ": attribute \"anchor\" should be defined");
+      reportActionError(pluginId, actionName + ": attribute \"anchor\" should be defined");
       return;
     }
     Anchor anchor;
@@ -555,12 +562,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       anchor = Anchor.AFTER;
     }
     else {
-      LOG.error(actionName + ": anchor should be one of the following constants: \"first\", \"last\", \"before\" or \"after\"");
+      reportActionError(pluginId, actionName + ": anchor should be one of the following constants: \"first\", \"last\", \"before\" or \"after\"");
       return;
     }
     String relativeToActionId = element.getAttributeValue(RELATIVE_TO_ACTION_ATTR_NAME);
     if ((Anchor.BEFORE == anchor || Anchor.AFTER == anchor) && relativeToActionId == null) {
-      LOG.error(actionName + ": \"relative-to-action\" cannot be null if anchor is \"after\" or \"before\"");
+      reportActionError(pluginId, actionName + ": \"relative-to-action\" cannot be null if anchor is \"after\" or \"before\"");
       return;
     }
     ((DefaultActionGroup)parentGroup).add(action, new Constraints(anchor, relativeToActionId), this);
@@ -571,9 +578,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
    *                    case separator will be added to group described in the <add-to-group ....> subelement.
    * @param element     XML element which represent separator.
    */
-  private void processSeparatorNode(DefaultActionGroup parentGroup, Element element) {
+  private void processSeparatorNode(DefaultActionGroup parentGroup, Element element, PluginId pluginId) {
     if (!SEPARATOR_ELEMENT_NAME.equals(element.getName())) {
-      LOG.error("unexpected name of element \"" + element.getName() + "\"");
+      reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return;
     }
     Separator separator = Separator.getInstance();
@@ -584,24 +591,24 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     for (final Object o : element.getChildren()) {
       Element child = (Element)o;
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
-        processAddToGroupNode(separator, child);
+        processAddToGroupNode(separator, child, pluginId);
       }
     }
   }
 
-  private void processKeyboardShortcutNode(Element element, String actionId) {
+  private void processKeyboardShortcutNode(Element element, String actionId, PluginId pluginId) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: processKeyboardShortcutNode(" + element.getName() + ")");
     }
 
     String firstStrokeString = element.getAttributeValue(FIRST_KEYSTROKE_ATTR_NAME);
     if (firstStrokeString == null) {
-      LOG.error("\"first-keystroke\" attribute must be specified for action with id=" + actionId);
+      reportActionError(pluginId, "\"first-keystroke\" attribute must be specified for action with id=" + actionId);
       return;
     }
     KeyStroke firstKeyStroke = getKeyStroke(firstStrokeString);
     if (firstKeyStroke == null) {
-      LOG.error("\"first-keystroke\" attribute has invalid value for action with id=" + actionId);
+      reportActionError(pluginId, "\"first-keystroke\" attribute has invalid value for action with id=" + actionId);
       return;
     }
 
@@ -610,33 +617,33 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     if (secondStrokeString != null) {
       secondKeyStroke = getKeyStroke(secondStrokeString);
       if (secondKeyStroke == null) {
-        LOG.error("\"second-keystroke\" attribute has invalid value for action with id=" + actionId);
+        reportActionError(pluginId, "\"second-keystroke\" attribute has invalid value for action with id=" + actionId);
         return;
       }
     }
 
     String keymapName = element.getAttributeValue(KEYMAP_ATTR_NAME);
     if (keymapName == null || keymapName.trim().length() == 0) {
-      LOG.error("attribute \"keymap\" should be defined");
+      reportActionError(pluginId, "attribute \"keymap\" should be defined");
       return;
     }
     Keymap keymap = myKeymapManager.getKeymap(keymapName);
     if (keymap == null) {
-      LOG.error("keymap \"" + keymapName + "\" not found");
+      reportActionError(pluginId, "keymap \"" + keymapName + "\" not found");
       return;
     }
 
     keymap.addShortcut(actionId, new KeyboardShortcut(firstKeyStroke, secondKeyStroke));
   }
 
-  private static void processMouseShortcutNode(Element element, String actionId) {
+  private static void processMouseShortcutNode(Element element, String actionId, PluginId pluginId) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: processMouseShortcutNode(" + element.getName() + ")");
     }
 
     String keystrokeString = element.getAttributeValue(KEYSTROKE_ATTR_NAME);
     if (keystrokeString == null || keystrokeString.trim().length() == 0) {
-      LOG.error("\"keystroke\" attribute must be specified for action with id=" + actionId);
+      reportActionError(pluginId, "\"keystroke\" attribute must be specified for action with id=" + actionId);
       return;
     }
     MouseShortcut shortcut;
@@ -644,18 +651,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       shortcut = KeymapUtil.parseMouseShortcut(keystrokeString);
     }
     catch (Exception ex) {
-      LOG.error("\"keystroke\" attribute has invalid value for action with id=" + actionId);
+      reportActionError(pluginId, "\"keystroke\" attribute has invalid value for action with id=" + actionId);
       return;
     }
 
     String keymapName = element.getAttributeValue(KEYMAP_ATTR_NAME);
     if (keymapName == null || keymapName.length() == 0) {
-      LOG.error("attribute \"keymap\" should be defined");
+      reportActionError(pluginId, "attribute \"keymap\" should be defined");
       return;
     }
     Keymap keymap = KeymapManager.getInstance().getKeymap(keymapName);
     if (keymap == null) {
-      LOG.error("keymap \"" + keymapName + "\" not found");
+      reportActionError(pluginId, "keymap \"" + keymapName + "\" not found");
       return;
     }
 
@@ -663,12 +670,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   @Nullable
-  private AnAction processReferenceElement(Element element) {
+  private AnAction processReferenceElement(Element element, PluginId pluginId) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: processReferenceElement(" + element.getName() + ")");
     }
     if (!REFERENCE_ELEMENT_NAME.equals(element.getName())) {
-      LOG.error("unexpected name of element \"" + element.getName() + "\"");
+      reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return null;
     }
     String ref = element.getAttributeValue(REF_ATTR_NAME);
@@ -682,7 +689,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       LOG.debug("ref=\"" + ref + "\"");
     }
     if (ref == null || ref.length() == 0) {
-      LOG.error("ID of reference element should be defined");
+      reportActionError(pluginId, "ID of reference element should be defined");
       return null;
     }
 
@@ -690,7 +697,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
     if (action == null) {
       if (!myNotRegisteredInternalActionIds.contains(ref)) {
-        LOG.error("action specified by reference isn't registered (ID=" + ref + ")");
+        reportActionError(pluginId, "action specified by reference isn't registered (ID=" + ref + ")");
       }
       return null;
     }
@@ -703,7 +710,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       LOG.debug("enter: processActionsNode(" + element.getName() + ")");
     }
     if (!ACTIONS_ELEMENT_NAME.equals(element.getName())) {
-      LOG.error("unexpected name of element \"" + element.getName() + "\"");
+      reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return;
     }
     synchronized (myLock) {
@@ -720,10 +727,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
           processGroupElement(child, loader, pluginId);
         }
         else if (SEPARATOR_ELEMENT_NAME.equals(name)) {
-          processSeparatorNode(null, child);
+          processSeparatorNode(null, child, pluginId);
         }
         else {
-          LOG.error("unexpected name of element \"" + name + "\n");
+          reportActionError(pluginId, "unexpected name of element \"" + name + "\n");
         }
       }
     }
@@ -741,11 +748,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     }
     synchronized (myLock) {
       if (myId2Action.containsKey(actionId)) {
-        LOG.error("action with the ID \"" + actionId + "\" was already registered. Registered action is " + myId2Action.get(actionId) + getPluginInfo(pluginId));
+        reportActionError(pluginId, "action with the ID \"" + actionId + "\" was already registered. Registered action is " +
+                                       myId2Action.get(actionId) + getPluginInfo(pluginId));
         return;
       }
       if (myAction2Id.containsKey(action)) {
-        LOG.error("action was already registered for another ID. ID is " + myAction2Id.get(action) + getPluginInfo(pluginId));
+        reportActionError(pluginId, "action was already registered for another ID. ID is " + myAction2Id.get(action) +
+                                    getPluginInfo(pluginId));
         return;
       }
       myId2Action.put(actionId, action);
@@ -760,6 +769,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
         pluginActionIds.add(actionId);
       }
       action.registerCustomShortcutSet(new ProxyShortcutSet(actionId, myKeymapManager), null);
+    }
+  }
+
+  private static void reportActionError(final PluginId pluginId, @NonNls final String message) {
+    if (pluginId == null) {
+      LOG.error(message);
+    }
+    else {
+      LOG.error(new PluginException(message, null, pluginId));
     }
   }
 
