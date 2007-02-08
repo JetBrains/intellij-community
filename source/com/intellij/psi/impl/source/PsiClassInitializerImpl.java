@@ -1,7 +1,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
@@ -13,11 +13,11 @@ import org.jetbrains.annotations.NotNull;
 public class PsiClassInitializerImpl extends NonSlaveRepositoryPsiElement implements PsiClassInitializer {
   private PsiModifierListImpl myRepositoryModifierList = null;
 
-  public PsiClassInitializerImpl(PsiManagerImpl manager, long repositoryId) {
+  public PsiClassInitializerImpl(PsiManagerEx manager, long repositoryId) {
     super(manager, repositoryId);
   }
 
-  public PsiClassInitializerImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiClassInitializerImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 

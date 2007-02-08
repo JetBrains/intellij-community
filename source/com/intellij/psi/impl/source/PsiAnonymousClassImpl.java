@@ -4,6 +4,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -14,11 +15,11 @@ import java.util.Collection;
 public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousClass {
   private PsiClassType myCachedBaseType = null;
 
-  public PsiAnonymousClassImpl(PsiManagerImpl manager, long repositoryId) {
+  public PsiAnonymousClassImpl(PsiManagerEx manager, long repositoryId) {
     super(manager, repositoryId);
   }
 
-  public PsiAnonymousClassImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiAnonymousClassImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 

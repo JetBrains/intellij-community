@@ -63,7 +63,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertNotNull(expected);
     final List<T> expectedList = Arrays.asList(expected);
     if (!new ArrayList<T>(actual).equals(expectedList)) {
-      assertEquals(toString(actual), toString(expectedList));
+      assertEquals(toString(expectedList), toString(actual));
       fail();
     }
   }
@@ -165,6 +165,10 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  public static void assertEmpty(final Object[] array) {
+    assertOrderedEquals(array);
+  }
+  
   public static void assertEmpty(final Collection collection) {
     assertOrderedEquals(collection);
   }

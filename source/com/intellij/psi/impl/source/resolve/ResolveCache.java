@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.resolve;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Function;
@@ -26,7 +25,7 @@ public class ResolveCache {
 
   private static final Object NULL = Key.create("NULL");
 
-  private final PsiManagerImpl myManager;
+  private final PsiManagerEx myManager;
 
   private final Map<PsiVariable,Object> myVarToConstValueMap1;
   private final Map<PsiVariable,Object> myVarToConstValueMap2;
@@ -44,7 +43,7 @@ public class ResolveCache {
     PsiElement resolve(PsiReference ref, boolean incompleteCode);
   }
 
-  public ResolveCache(PsiManagerImpl manager) {
+  public ResolveCache(PsiManagerEx manager) {
     myManager = manager;
 
     myVarToConstValueMap1 = Collections.synchronizedMap(getOrCreateWeakMap(myManager, VAR_TO_CONST_VALUE_MAP_KEY, true));

@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -15,11 +16,11 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiEnumConstantInitializerImpl");
   private PsiClassType myCachedBaseType = null;
 
-  public PsiEnumConstantInitializerImpl(PsiManagerImpl manager, long repositoryId) {
+  public PsiEnumConstantInitializerImpl(PsiManagerEx manager, long repositoryId) {
     super(manager, repositoryId);
   }
 
-  public PsiEnumConstantInitializerImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiEnumConstantInitializerImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 

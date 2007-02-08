@@ -1,21 +1,24 @@
 package com.intellij.psi.impl.source;
 
-import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
-import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiAnnotationMethod;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
  */
 public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotationMethod {
-  public PsiAnnotationMethodImpl(PsiManagerImpl manager, long repositoryId) {
+  public PsiAnnotationMethodImpl(PsiManagerEx manager, long repositoryId) {
     super(manager, repositoryId);
   }
 
-  public PsiAnnotationMethodImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiAnnotationMethodImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 

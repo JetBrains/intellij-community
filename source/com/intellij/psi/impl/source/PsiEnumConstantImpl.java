@@ -8,6 +8,7 @@ import com.intellij.pom.java.PomField;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.FieldView;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
@@ -29,7 +30,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   private Boolean myCachedIsDeprecated;
   private Ref<PsiEnumConstantInitializer> myCachedInitializingClass = null;
 
-  public PsiEnumConstantImpl(PsiManagerImpl manager, long repositoryId) {
+  public PsiEnumConstantImpl(PsiManagerEx manager, long repositoryId) {
     super(manager, repositoryId);
   }
 
@@ -37,7 +38,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
     return "PsiEnumConstant:" + getName();
   }
 
-  public PsiEnumConstantImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiEnumConstantImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 

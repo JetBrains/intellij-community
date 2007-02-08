@@ -36,11 +36,11 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
   private String myCachedInitializerText = null;
   private Object myCachedInitializerValue = null; // PsiExpression on constant value for literal
 
-  public PsiFieldImpl(PsiManagerImpl manager, long repositoryId) {
+  public PsiFieldImpl(PsiManagerEx manager, long repositoryId) {
     super(manager, repositoryId);
   }
 
-  public PsiFieldImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiFieldImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 

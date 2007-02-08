@@ -157,7 +157,7 @@ public class ContainerUtil {
   }
 
   @Nullable
-  public static <T> T find(Iterable<? extends T> iterable, Condition<T> condition) {
+  public static <T,V extends T> V find(Iterable<V> iterable, Condition<T> condition) {
     return find(iterable.iterator(), condition);
   }
 
@@ -171,9 +171,9 @@ public class ContainerUtil {
   }
 
   @Nullable
-  public static <T> T find(Iterator<? extends T> iterator, Condition<T> condition) {
+  public static <T,V extends T> V find(Iterator<V> iterator, Condition<T> condition) {
     while (iterator.hasNext()) {
-      T value = iterator.next();
+      V value = iterator.next();
       if (condition.value(value)) return value;
     }
     return null;

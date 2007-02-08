@@ -4,10 +4,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.PsiSuperMethodImplUtil;
-import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.MethodView;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.*;
@@ -38,11 +35,11 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   private Boolean myCachedIsVarargs = null;
   private PatchedSoftReference<PsiType> myCachedType = null;
 
-  public PsiMethodImpl(PsiManagerImpl manager, long repositoryId) {
+  public PsiMethodImpl(PsiManagerEx manager, long repositoryId) {
     super(manager, repositoryId);
   }
 
-  public PsiMethodImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiMethodImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 

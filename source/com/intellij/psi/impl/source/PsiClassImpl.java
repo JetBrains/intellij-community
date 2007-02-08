@@ -66,11 +66,11 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   private static final @NonNls String VALUES_METHOD = "values";
   private static final @NonNls String VALUE_OF_METHOD = "valueOf";
 
-  public PsiClassImpl(PsiManagerImpl manager, long repositoryId) {
+  public PsiClassImpl(PsiManagerEx manager, long repositoryId) {
     super(manager, repositoryId);
   }
 
-  public PsiClassImpl(PsiManagerImpl manager, RepositoryTreeElement treeElement) {
+  public PsiClassImpl(PsiManagerEx manager, RepositoryTreeElement treeElement) {
     super(manager, treeElement);
   }
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -24,6 +25,8 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +34,22 @@ import java.util.Collections;
 import java.util.List;
 
 public class MockPsiManager extends PsiManagerEx {
+  private final List<PsiClass> myClasses = new SmartList<PsiClass>();
+  private final List<PsiPackage> myPackages = new SmartList<PsiPackage>();
+  private Project myProject;
+  private ResolveCache myResolveCache;
+  private MockPsiElementFactory myElementFactory;
+
+  public MockPsiManager() {
+    this(null);
+  }
+
+  public MockPsiManager(final Project project) {
+    myProject = project;
+  }
+
   public Project getProject() {
-    return null;
+    return myProject;
   }
 
   public PsiDirectory[] getRootDirectories(int rootType) {
@@ -65,20 +82,36 @@ public class MockPsiManager extends PsiManagerEx {
     return null;
   }
 
-  public PsiClass findClass(String qualifiedName) {
-    return null;
+  public PsiClass findClass(@NotNull final String qualifiedName) {
+    return ContainerUtil.find(myClasses, new Condition<PsiClass>() {
+      public boolean value(final PsiClass psiClass) {
+        return psiClass.getQualifiedName().equals(qualifiedName);
+      }
+    });
+  }
+
+  public void addClass(PsiClass psiClass) {
+    myClasses.add(psiClass);
+  }
+
+  public void addPackage(PsiPackage psiPackage) {
+    myPackages.add(psiPackage);
   }
 
   public PsiClass findClass(String qualifiedName, GlobalSearchScope scope) {
-    return null;
+    return findClass(qualifiedName);
   }
 
   public PsiClass[] findClasses(String qualifiedName, GlobalSearchScope scope) {
     return PsiClass.EMPTY_ARRAY;
   }
 
-  public PsiPackage findPackage(String qualifiedName) {
-    return null;
+  public PsiPackage findPackage(final String qualifiedName) {
+    return ContainerUtil.find(myPackages, new Condition<PsiPackage>() {
+      public boolean value(final PsiPackage psiPackage) {
+        return psiPackage.getQualifiedName().equals(qualifiedName);
+      }
+    });
   }
 
   public boolean areElementsEquivalent(PsiElement element1, PsiElement element2) {
@@ -124,8 +157,16 @@ public class MockPsiManager extends PsiManagerEx {
     return null;
   }
 
+  @NotNull
   public PsiElementFactory getElementFactory() {
-    return null;
+    if (myElementFactory == null) {
+      myElementFactory = new MockPsiElementFactory(this);
+    }
+    return myElementFactory;
+  }
+
+  public void setElementFactory(final MockPsiElementFactory elementFactory) {
+    myElementFactory = elementFactory;
   }
 
   @NotNull
@@ -252,7 +293,7 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public boolean isBatchFilesProcessingMode() {
-    throw new UnsupportedOperationException("Method isBatchFilesProcessingMode is not yet implemented in " + getClass().getName());
+    return false;
   }
 
   public RepositoryManager getRepositoryManager() {
@@ -272,11 +313,13 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public ResolveCache getResolveCache() {
-    throw new UnsupportedOperationException("Method getResolveCache is not yet implemented in " + getClass().getName());
+    if (myResolveCache == null) {
+      myResolveCache = new ResolveCache(this);
+    }
+    return myResolveCache;
   }
 
   public void registerRunnableToRunOnChange(Runnable runnable) {
-    throw new UnsupportedOperationException("Method registerRunnableToRunOnChange is not yet implemented in " + getClass().getName());
   }
 
   public void registerWeakRunnableToRunOnChange(Runnable runnable) {
@@ -284,7 +327,6 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public void registerRunnableToRunOnAnyChange(Runnable runnable) {
-    throw new UnsupportedOperationException("Method registerRunnableToRunOnAnyChange is not yet implemented in " + getClass().getName());
   }
 
   public void registerRunnableToRunAfterAnyChange(Runnable runnable) {

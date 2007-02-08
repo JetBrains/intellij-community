@@ -7,7 +7,6 @@ import com.intellij.lang.PsiParser;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -63,13 +62,16 @@ public class JavaParserDefinition implements ParserDefinition {
   }
 
   public PsiFile createFile(FileViewProvider viewProvider) {
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(viewProvider.getManager().getProject()).getFileIndex();
-    if (!viewProvider.isPhysical() || fileIndex.isInSource(viewProvider.getVirtualFile())) {
+    if (!viewProvider.isPhysical() || isInSource(viewProvider)) {
       return new PsiJavaFileImpl(viewProvider);
     }
     else {
       return new PsiPlainTextFileImpl(viewProvider);
     }
+  }
+
+  private static boolean isInSource(final FileViewProvider viewProvider) {
+    return ProjectRootManager.getInstance(viewProvider.getManager().getProject()).getFileIndex().isInSource(viewProvider.getVirtualFile());
   }
 
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
