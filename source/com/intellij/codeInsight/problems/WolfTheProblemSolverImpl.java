@@ -184,7 +184,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   }
 
-  public void startCheckingIfVincentSolvedProblemsYet(final ProgressIndicator progress, ProgressableTextEditorHighlightingPass progressablePass) {
+  public void startCheckingIfVincentSolvedProblemsYet(final ProgressIndicator progress, ProgressableTextEditorHighlightingPass progressablePass) throws ProcessCanceledException{
     if (!myProject.isOpen()) return;
     long psiModificationCount = PsiManager.getInstance(myProject).getModificationTracker().getOutOfCodeBlockModificationCount();
     if (psiModificationCount == myPsiModificationCount) return; //optimization
@@ -208,9 +208,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         progressablePass.advanceProgress(1);
       }
       myPsiModificationCount = psiModificationCount;
-    }
-    catch (ProcessCanceledException e) {
-      // ignore
     }
     finally {
       restoreStatusBar(statusBar, oldInfo);
