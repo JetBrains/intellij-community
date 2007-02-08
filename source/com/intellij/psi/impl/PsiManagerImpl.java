@@ -61,7 +61,9 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,6 +71,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
@@ -90,7 +93,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private final ResolveCache myResolveCache;
   private final CachedValuesManager myCachedValuesManager;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
-  private final Map<String, PsiPackage> myPackageCache = new HashMap<String, PsiPackage>();
+  private final ConcurrentMap<String, PsiPackage> myPackageCache = new ConcurrentHashMap<String, PsiPackage>();
 
   private final List<PsiTreeChangeListener> myTreeChangeListeners = new CopyOnWriteArrayList<PsiTreeChangeListener>();
   private boolean myTreeChangeEventIsFiring = false;
@@ -639,7 +642,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       for (PsiElementFinder finder : myElementFinders) {
         aPackage = finder.findPackage(qualifiedName);
         if (aPackage != null) {
-          myPackageCache.put(qualifiedName, aPackage);
+          aPackage = ConcurrencyUtil.cacheOrGet(myPackageCache, qualifiedName, aPackage);
           break;
         }
       }
