@@ -22,6 +22,9 @@ import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -217,14 +220,25 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   private void showMergeDialog() {
     final Collection<VirtualFile> files = myTable.getSelection();
     for(final VirtualFile file: files) {
-      final MergeData mergeData;
-      try {
-        mergeData = myProvider.loadRevisions(file);
-      }
-      catch (VcsException e) {
-        Messages.showErrorDialog(myRootPanel, "Error loading revisions to merge: " + e.getMessage());
+      final Ref<MergeData> mergeDataRef = new Ref<MergeData>();
+      final Ref<VcsException> exRef = new Ref<VcsException>();
+      Task task = new Task.Modal(myProject, VcsBundle.message("multiple.file.merge.loading.progress.title"), false) {
+        public void run(ProgressIndicator indicator) {
+          try {
+            mergeDataRef.set(myProvider.loadRevisions(file));
+          }
+          catch (VcsException e) {
+            exRef.set(e);
+          }
+        }
+      };
+      ProgressManager.getInstance().run(task);
+      if (!exRef.isNull()) {
+        Messages.showErrorDialog(myRootPanel, "Error loading revisions to merge: " + exRef.get().getMessage());
         break;
       }
+
+      final MergeData mergeData = mergeDataRef.get();
       if (mergeData.CURRENT == null || mergeData.LAST == null || mergeData.ORIGINAL == null) {
         Messages.showErrorDialog(myRootPanel, "Error loading revisions to merge");
         break;
