@@ -15,37 +15,42 @@
  */
 package com.intellij.util;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.LongArrayList;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.*;
 
 public class Alarm implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.Alarm");
 
-  private final Object LOCK = new Object();
-
-  private final MyThread myThread;
-  private HashMap<Runnable, Runnable> myOriginalToThreadRequestMap = new HashMap<Runnable, Runnable>();
-
-  private static MyThread ourThreadNormal = new MyThread(false);
-  private static MyThread ourThreadUseSwing = new MyThread(true);
   private boolean myDisposed;
+  private List<Request> myRequests = new ArrayList<Request>();
+  private final ExecutorService myExecutorService;
+
+  @NonNls private static final String THREADS_NAME = "Alarm pool";
+  private static final ThreadFactory THREAD_FACTORY = new ThreadFactory() {
+    public Thread newThread(final Runnable r) {
+      return new Thread(r, THREADS_NAME);
+    }
+  };
+  private static final ExecutorService ourSharedExecutorService = Executors.newSingleThreadExecutor(THREAD_FACTORY);
+
+  private final Object LOCK = new Object();
+  private ThreadToUse myThreadToUse;
 
   public void dispose() {
     myDisposed = true;
     cancelAllRequests();
-  }
-
-  static {
-    ourThreadNormal.start();
-    ourThreadUseSwing.start();
+    if (myThreadToUse == ThreadToUse.OWN_THREAD) {
+      myExecutorService.shutdown();
+    }
   }
 
   public enum ThreadToUse {
@@ -69,16 +74,8 @@ public class Alarm implements Disposable {
     this(threadToUse, null);
   }
   public Alarm(ThreadToUse threadToUse, Disposable parentDisposable) {
-    if (threadToUse == ThreadToUse.SWING_THREAD) {
-      myThread = ourThreadUseSwing;
-    }
-    else if (threadToUse == ThreadToUse.SHARED_THREAD) {
-      myThread = ourThreadNormal;
-    }
-    else {
-      myThread = new MyThread(false);
-      myThread.start();
-    }
+    myThreadToUse = threadToUse;
+    myExecutorService = (threadToUse == ThreadToUse.OWN_THREAD) ? Executors.newSingleThreadExecutor(THREAD_FACTORY) : ourSharedExecutorService;
 
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, this);
@@ -86,202 +83,96 @@ public class Alarm implements Disposable {
   }
 
   public void addRequest(final Runnable request, int delay) {
-    _addRequest(request, delay, myThread == ourThreadUseSwing ? ModalityState.current() : null);
+    _addRequest(request, delay, myThreadToUse == ThreadToUse.SWING_THREAD ? ModalityState.current() : null);
   }
 
   public void addRequest(final Runnable request, int delay, ModalityState modalityState) {
-    LOG.assertTrue(myThread == ourThreadUseSwing);
+    LOG.assertTrue(myThreadToUse == ThreadToUse.SWING_THREAD);
     _addRequest(request, delay, modalityState);
   }
 
   private void _addRequest(final Runnable request, int delay, ModalityState modalityState) {
     synchronized (LOCK) {
-      Runnable request1 = new Runnable() {
-        public void run() {
-          synchronized (LOCK) {
-            myOriginalToThreadRequestMap.remove(request);
-          }
-          try {
-            if (!myDisposed) {
-              request.run();
-            }
-          }
-          catch (Throwable e) {
-            LOG.error(e);
-          }
-        }
-      };
-      myOriginalToThreadRequestMap.put(request, request1);
-      myThread.addRequest(request1, delay, modalityState);
+      final Request requestToSchedule = new Request(request, modalityState);
+      final ScheduledFuture<?> future = JobScheduler.getScheduler().schedule(requestToSchedule, delay, TimeUnit.MILLISECONDS);
+      requestToSchedule.setFuture(future);
+      myRequests.add(requestToSchedule);
     }
   }
 
   public boolean cancelRequest(Runnable request) {
     synchronized (LOCK) {
-      Runnable request1 = myOriginalToThreadRequestMap.get(request);
-      if (request1 == null) return false;
-      boolean success = myThread.cancelRequest(request1);
-      if (success) {
-        myOriginalToThreadRequestMap.remove(request);
+      for (Request r : myRequests) {
+        if (r.getTask() == request) {
+          r.getFuture().cancel(false);
+        }
       }
-      return success;
+
+      return true;
     }
   }
 
   public int cancelAllRequests() {
     synchronized (LOCK) {
       int count = 0;
-      Iterator<Runnable> iterator = myOriginalToThreadRequestMap.values().iterator();
-      while (iterator.hasNext()) {
-        Runnable request = iterator.next();
-        if (myThread.cancelRequest(request)) {
-          count++;
-        }
+      for (Request request : myRequests) {
+        count++;
+        request.getFuture().cancel(false);
       }
-      myOriginalToThreadRequestMap.clear();
       return count;
     }
   }
 
   public int getActiveRequestCount() {
     synchronized (LOCK) {
-      return myOriginalToThreadRequestMap.size();
+      return myRequests.size();
     }
   }
 
-  private static class MyThread extends Thread {
-    private int myIdCounter = 0;
+  private class Request implements Runnable {
+    private final Runnable myTask;
+    private final ModalityState myModalityState;
+    private ScheduledFuture<?> myFuture;
 
-    private final Object LOCK = new Object();
-
-    private final boolean myUseSwingThread;
-
-    private LongArrayList myRequestIds = new LongArrayList();
-    private ArrayList<Runnable> myRequests = new ArrayList<Runnable>(); // ArrayList of Runnable
-    private LongArrayList myRequestTimes = new LongArrayList();
-    private ArrayList<Boolean> myRequestEnqueuedFlags = new ArrayList<Boolean>();
-    private ArrayList<ModalityState> myRequestModalityStates = new ArrayList<ModalityState>();
-
-    public MyThread(boolean useSwingThread) {
-      //noinspection HardCodedStringLiteral
-      super("AlarmThread");
-      myUseSwingThread = useSwingThread;
-    }
-
-    public void addRequest(Runnable request, int delay, ModalityState modalityState) {
-      synchronized (LOCK) {
-        myRequestIds.add(myIdCounter++);
-        myRequests.add(request);
-        myRequestTimes.add(System.currentTimeMillis() + delay);
-        myRequestEnqueuedFlags.add(Boolean.FALSE);
-        myRequestModalityStates.add(modalityState);
-        if (myUseSwingThread){
-          LOG.assertTrue(modalityState != null);
-        }
-        LOCK.notifyAll();
-      }
-    }
-
-    public boolean cancelRequest(Runnable request) {
-      synchronized (LOCK) {
-        int index = myRequests.indexOf(request);
-        if (index < 0) return false;
-        myRequestIds.remove(index);
-        myRequests.remove(index);
-        myRequestTimes.remove(index);
-        myRequestEnqueuedFlags.remove(index);
-        myRequestModalityStates.remove(index);
-        return true;
-      }
+    public Request(final Runnable task, final ModalityState modalityState) {
+      myTask = task;
+      myModalityState = modalityState;
     }
 
     public void run() {
-      while (true) {
-        long delay;
-        long requestId = -1;
-        synchronized (LOCK) {
-          long minTime = Long.MAX_VALUE;
-          long minRequestId = -1;
-          for (int i = 0; i < myRequests.size(); i++) {
-            Boolean isEnqueued = myRequestEnqueuedFlags.get(i);
-            if (isEnqueued.booleanValue()) continue;
-            long time = myRequestTimes.get(i);
-            if (time < minTime) {
-              minTime = time;
-              minRequestId = myRequestIds.get(i);
-            }
-          }
+      synchronized (LOCK) {
+         myRequests.remove(this);
+      }
 
-          if (minTime == Long.MAX_VALUE) {
-            try {
-              LOCK.wait();
-            }
-            catch (InterruptedException e) {
-            }
-            continue;
-          }
-
-          long time = System.currentTimeMillis();
-          delay = minTime - time;
-          if (delay <= 0) {
-            requestId = minRequestId;
-          }
-        }
-
-        if (requestId >= 0) {
-          final long _requestId = requestId;
-          Runnable runnable = new Runnable() {
-            public void run() {
-              boolean isCanceled;
-              Runnable request = null;
-              synchronized (LOCK) {
-                int index = myRequestIds.indexOf(_requestId);
-                isCanceled = index < 0;
-                if (!isCanceled) {
-                  myRequestIds.remove(index);
-                  request = myRequests.remove(index);
-                  myRequestTimes.remove(index);
-                  myRequestEnqueuedFlags.remove(index);
-                  myRequestModalityStates.remove(index);
-                }
-              }
-              if (!isCanceled) {
-                try {
-                  request.run();
-                }
-                catch (Throwable e) {
-                  LOG.error(e);
-                }
-              }
-            }
-          };
-
-          if (myUseSwingThread) {
-            synchronized (LOCK) {
-              int index = myRequestIds.indexOf(requestId);
-              if (index >= 0) {
-                ModalityState modalityState = myRequestModalityStates.get(index);
-                myRequestEnqueuedFlags.set(index, Boolean.TRUE);
-                ApplicationManager.getApplication().invokeLater(runnable, modalityState);
-              }
-            }
+      try {
+        if (!myDisposed) {
+          if (myModalityState != null) {
+            ApplicationManager.getApplication().invokeLater(myTask, myModalityState);
           }
           else {
-            runnable.run();
-          }
-        }
-        else {
-          if (delay > 0) {
-            synchronized (LOCK) {
-              try {
-                LOCK.wait(delay);
-              }
-              catch (InterruptedException e) {
-              }
-            }
+            myExecutorService.submit(myTask);
           }
         }
       }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
+
+    public Runnable getTask() {
+      return myTask;
+    }
+
+    public ScheduledFuture<?> getFuture() {
+      return myFuture;
+    }
+
+    public void setFuture(final ScheduledFuture<?> future) {
+      myFuture = future;
+    }
+
+    public ModalityState getModalityState() {
+      return myModalityState;
     }
   }
 }

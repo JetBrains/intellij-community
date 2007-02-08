@@ -30,11 +30,11 @@ public class PatchedWeakReference<T> extends WeakReference<T>{
   private static ReferenceQueue ourQueue = new ReferenceQueue();
 
   static {
-    JobScheduler.getInstance().scheduleAtFixedRate(new Runnable() {
+    JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
       public void run() {
         processQueue();
       }
-    }, 500, 500, TimeUnit.MILLISECONDS);
+    }, (long)500, (long)500, TimeUnit.MILLISECONDS);
   }
 
   public PatchedWeakReference(T referent) {

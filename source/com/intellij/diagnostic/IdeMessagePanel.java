@@ -53,7 +53,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
     myMessagePool = messagePool;
     messagePool.addListener(this);
 
-    JobScheduler.getInstance().scheduleAtFixedRate(new Blinker(), 1, 1, TimeUnit.SECONDS);
+    JobScheduler.getScheduler().scheduleAtFixedRate(new Blinker(), (long)1, (long)1, TimeUnit.SECONDS);
     updateFatalErrorsIcon();
   }
 
@@ -66,7 +66,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
       public void run() {
         if (isOtherModalWindowActive()) {
           if (myDialog == null) {
-            JobScheduler.getInstance().schedule(this, 300, TimeUnit.MILLISECONDS);
+            JobScheduler.getScheduler().schedule(this, (long)300, TimeUnit.MILLISECONDS);
           }
           return;
         }

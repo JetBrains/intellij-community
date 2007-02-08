@@ -2607,7 +2607,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (mySchedulerHandle != null) {
         mySchedulerHandle.cancel(false);
       }
-      mySchedulerHandle = JobScheduler.getInstance().scheduleAtFixedRate(this, mySleepTime, mySleepTime, TimeUnit.MILLISECONDS);
+      mySchedulerHandle = JobScheduler.getScheduler().scheduleAtFixedRate(this, mySleepTime, mySleepTime, TimeUnit.MILLISECONDS);
     }
 
     private void setBlinkPeriod(int blinkPeriod) {

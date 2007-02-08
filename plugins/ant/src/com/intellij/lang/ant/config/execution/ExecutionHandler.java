@@ -206,7 +206,7 @@ public final class ExecutionHandler {
     }
 
     public void start(final long delay) {
-      JobScheduler.getInstance().schedule(this, delay, TimeUnit.MILLISECONDS);
+      JobScheduler.getScheduler().schedule(this, delay, TimeUnit.MILLISECONDS);
     }
   }
 

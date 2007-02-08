@@ -4,10 +4,12 @@
 package com.intellij.concurrency;
 
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.concurrent.*;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -72,8 +74,6 @@ public class JobSchedulerImpl extends JobScheduler {
 
   private static long ourJobsCounter = 0;
 
-  private static final ScheduledExecutorService ourScheduledExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("Periodic tasks thread");
-
   public static void execute(Runnable task) {
     ourExecutor.execute(task);
   }
@@ -97,17 +97,5 @@ public class JobSchedulerImpl extends JobScheduler {
 
   public <T> Job<T> createJob(String title, int priority) {
     return new JobImpl<T>(title, priority);
-  }
-
-  public ScheduledFuture<?> schedule(final Runnable command, final long delay, final TimeUnit unit) {
-    return ourScheduledExecutorService.schedule(command, delay, unit);
-  }
-
-  public ScheduledFuture<?> scheduleAtFixedRate(final Runnable command, final long initialDelay, final long period, final TimeUnit unit) {
-    return ourScheduledExecutorService.scheduleAtFixedRate(command, initialDelay, period, unit);
-  }
-
-  public ScheduledFuture<?> scheduleWithFixedDelay(final Runnable command, final long initialDelay, final long delay, final TimeUnit unit) {
-    return ourScheduledExecutorService.scheduleWithFixedDelay(command, initialDelay, delay, unit);
   }
 }
