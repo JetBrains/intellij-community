@@ -41,10 +41,12 @@ public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase imple
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.make.J2EEModuleBuildInstructionImpl");
 
   private final BuildConfiguration myBuildConfiguration;
+  private final BuildRecipe myBuildRecipe;
   @NonNls protected static final String TMP_FILE_SUFFIX = ".tmp";
 
-  public JavaeeModuleBuildInstructionImpl(Module module, BuildConfiguration toBuild, String outputRelativePath) {
+  public JavaeeModuleBuildInstructionImpl(Module module, @Nullable BuildRecipe buildRecipe, BuildConfiguration toBuild, String outputRelativePath) {
     super(outputRelativePath, module);
+    myBuildRecipe = buildRecipe;
     myBuildConfiguration = toBuild;
     LOG.assertTrue(!isExternalDependencyInstruction());
   }
@@ -203,6 +205,9 @@ public class JavaeeModuleBuildInstructionImpl extends BuildInstructionBase imple
   }
 
   public BuildRecipe getChildInstructions(CompileContext context) {
+    if (myBuildRecipe != null) {
+      return myBuildRecipe;
+    }
     return ModuleBuilder.getInstance(getModule()).getModuleBuildInstructions(context);
   }
 

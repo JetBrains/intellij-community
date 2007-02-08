@@ -4,6 +4,7 @@ import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.CompositeScope;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.impl.OneProjectItemCompileScope;
+import com.intellij.compiler.impl.make.IncrementalPackagingCompiler;
 import com.intellij.compiler.impl.javaCompiler.JavaCompiler;
 import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
 import com.intellij.compiler.impl.rmiCompiler.RmicCompiler;
@@ -40,6 +41,7 @@ public class CompilerManagerImpl extends CompilerManager {
     addCompiler(new NotNullVerifyingCompiler(myProject));
     addCompiler(new ResourceCompiler(myProject, compilerConfiguration));
     addCompiler(new RmicCompiler(myProject));
+    addCompiler(new IncrementalPackagingCompiler());
 
     addCompilableFileType(StdFileTypes.JAVA);
     //

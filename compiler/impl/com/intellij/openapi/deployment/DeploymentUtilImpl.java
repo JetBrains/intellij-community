@@ -252,7 +252,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
 
   public void addJ2EEModuleOutput(@NotNull BuildRecipe buildRecipe, final Module module, @NotNull BuildConfiguration buildConfiguration,
                                   final String relativePath) {
-    buildRecipe.addInstruction(new JavaeeModuleBuildInstructionImpl(module, buildConfiguration, relativePath));
+    buildRecipe.addInstruction(new JavaeeModuleBuildInstructionImpl(module, null, buildConfiguration, relativePath));
   }
 
   public static boolean containsExternalDependencyInstruction(@NotNull ModuleContainer moduleProperties) {
@@ -579,7 +579,15 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     return null;
   }
 
-  public static BuildParticipant[] getBuildParticipants() {
-    return Extensions.getExtensions(BuildParticipant.EXTENSION_POINT_NAME);
+  public static BuildParticipantProvider[] getBuildParticipantProviders() {
+    return Extensions.getExtensions(BuildParticipantProvider.EXTENSION_POINT_NAME);
+  }
+
+  public static BuildParticipant[] getAllBuildParticipants(@NotNull Module module) {
+    List<BuildParticipant> participants = new ArrayList<BuildParticipant>();
+    for (BuildParticipantProvider participantProvider : getBuildParticipantProviders()) {
+      participants.addAll(Arrays.asList(participantProvider.getParticipants(module)));
+    }
+    return participants.toArray(new BuildParticipant[participants.size()]);
   }
 }
