@@ -76,7 +76,7 @@ public class UpdatedFilesProcessor  extends CvsMessagesAdapter {
           Entry entry = CvsEntriesManager.getInstance().getEntryFor(vFile);
           if (entry == null) return myUpdatedFiles.getGroupById(FileGroup.MERGED_ID);
           if (entry.isBinary()) {
-            return myUpdatedFiles.getGroupById(CvsUpdatePolicy.BYNARY_MERGED_ID);
+            return myUpdatedFiles.getGroupById(CvsUpdatePolicy.BINARY_MERGED_ID);
           }
           return myUpdatedFiles.getGroupById(FileGroup.MERGED_ID);
         }
@@ -85,7 +85,7 @@ public class UpdatedFilesProcessor  extends CvsMessagesAdapter {
           Entry entry = CvsEntriesManager.getInstance().getEntryFor(vFile);
           if (entry == null) return myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
           if (entry.isBinary()) {
-            return myUpdatedFiles.getGroupById(CvsUpdatePolicy.BYNARY_MERGED_ID);
+            return myUpdatedFiles.getGroupById(CvsUpdatePolicy.BINARY_MERGED_ID);
           }
           return myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
         }
