@@ -9,6 +9,7 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -20,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -53,6 +55,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   private final List<VirtualFile> myFiles;
   private final ListTableModel<VirtualFile> myModel;
   private Project myProject;
+  private ProjectManagerEx myProjectManager;
 
   private VirtualFileRenderer myVirtualFileRenderer = new VirtualFileRenderer();
 
@@ -88,6 +91,8 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   public MultipleFileMergeDialog(Project project, final List<VirtualFile> files, final MergeProvider provider) {
     super(project, false);
     myProject = project;
+    myProjectManager = ProjectManagerEx.getInstanceEx();
+    myProjectManager.blockReloadingProjectOnExternalChanges();
     myFiles = new ArrayList<VirtualFile>(files);
     myProvider = provider;
     myModel = new ListTableModel<VirtualFile>(NAME_COLUMN, TYPE_COLUMN);
@@ -151,6 +156,12 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     return action;
   }
 
+  @Override
+  protected void dispose() {
+    myProjectManager.unblockReloadingProjectOnExternalChanges();
+    super.dispose();
+  }
+
   @Override @NonNls
   protected String getDimensionServiceKey() {
     return "MultipleFileMergeDialog";
@@ -170,6 +181,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
             }
             else {
               file.setBinaryContent(data.LAST);
+              checkMarkModifiedProject(file);
             }
             myProvider.conflictResolvedForFile(file);
           }
@@ -243,12 +255,21 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       if (request.getResult() == DialogWrapper.OK_EXIT_CODE) {
         myFiles.remove(file);
         myProvider.conflictResolvedForFile(file);
+        checkMarkModifiedProject(file);
       }
       else {
         restoreOriginalContent(file, contentWithMergeMarkers);
       }
     }
     updateModelFromFiles();
+  }
+
+  private void checkMarkModifiedProject(final VirtualFile file) {
+    if (file.getFileType() == StdFileTypes.IDEA_MODULE ||
+        file.getFileType() == StdFileTypes.IDEA_PROJECT ||
+        file.getFileType() == StdFileTypes.IDEA_WORKSPACE) {
+      myProjectManager.saveChangedProjectFile(file);
+    }
   }
 
   private void restoreOriginalContent(final VirtualFile file, final String contentWithMergeMarkers) {
