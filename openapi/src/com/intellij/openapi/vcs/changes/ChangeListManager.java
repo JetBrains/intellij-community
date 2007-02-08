@@ -70,7 +70,15 @@ public abstract class ChangeListManager {
    * @param changes
    * @return if commit successful
    */
-  public abstract boolean commitChangesSynchronously(LocalChangeList changeList, List<Change> changes);
+  public abstract void commitChangesSynchronously(LocalChangeList changeList, List<Change> changes);
+
+  /**
+   *
+   * @param changeList
+   * @param changes
+   * @return if commit successful
+   */
+  public abstract boolean commitChangesSynchronouslyWithResult(LocalChangeList changeList, List<Change> changes);
 
   public abstract void reopenFiles(List<FilePath> paths);
 

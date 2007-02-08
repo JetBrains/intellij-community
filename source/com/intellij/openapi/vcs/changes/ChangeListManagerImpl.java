@@ -755,7 +755,11 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                      changeList.getComment(), new ArrayList<CheckinHandler>(), false, synchronously).doCommit();
   }
 
-  public boolean commitChangesSynchronously(LocalChangeList changeList, List<Change> changes) {
+  public void commitChangesSynchronously(LocalChangeList changeList, List<Change> changes) {
+    doCommit(changeList, changes, true);
+  }
+
+  public boolean commitChangesSynchronouslyWithResult(final LocalChangeList changeList, final List<Change> changes) {
     return doCommit(changeList, changes, true);
   }
 
