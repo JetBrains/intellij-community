@@ -299,7 +299,10 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   public void addSelectionPathTo(final Object element) {
     DefaultMutableTreeNode node = myAbstractTreeBuilder.getNodeForElement(element);
     if (node != null) {
-      getTree().addSelectionPath(new TreePath(node.getPath()));
+      final JTree tree = getTree();
+      final TreePath path = new TreePath(node.getPath());
+      if (node == tree.getModel().getRoot() && !tree.isExpanded(path)) tree.expandPath(path);
+      tree.addSelectionPath(path);
     }
   }
 
