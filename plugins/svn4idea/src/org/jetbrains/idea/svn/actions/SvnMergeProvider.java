@@ -15,20 +15,23 @@
  */
 package org.jetbrains.idea.svn.actions;
 
-import com.intellij.openapi.vcs.merge.MergeProvider;
-import com.intellij.openapi.vcs.merge.MergeData;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ArrayUtil;
-import org.jetbrains.idea.svn.SvnVcs;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.merge.MergeData;
+import com.intellij.openapi.vcs.merge.MergeProvider;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnRevisionNumber;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -60,6 +63,7 @@ public class SvnMergeProvider implements MergeProvider {
         oldFile = info.getConflictOldFile();
         newFile = info.getConflictNewFile();
         workingFile = info.getConflictWrkFile();
+        data.LAST_REVISION_NUMBER = new SvnRevisionNumber(info.getRevision());
       }
     }
     catch (SVNException e) {
@@ -86,37 +90,13 @@ public class SvnMergeProvider implements MergeProvider {
     return data;
   }
 
-  private byte[] readFile(File workingFile) {
-    if (workingFile == null) {
-      return ArrayUtil.EMPTY_BYTE_ARRAY;
-    }
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    InputStream is = null;
+  private static byte[] readFile(File workingFile) throws VcsException {
     try {
-      is = new BufferedInputStream(new FileInputStream(workingFile));
-      int r;
-      while ((r = is.read()) >= 0) {
-        bos.write(r);
-      }
-      bos.close();
-    }
-    catch (FileNotFoundException e) {
-      return ArrayUtil.EMPTY_BYTE_ARRAY;
+      return FileUtil.loadFileBytes(workingFile);
     }
     catch (IOException e) {
-      return ArrayUtil.EMPTY_BYTE_ARRAY;
+      throw new VcsException(e);
     }
-    finally {
-      if (is != null) {
-        try {
-          is.close();
-        }
-        catch (IOException e) {
-          //
-        }
-      }
-    }
-    return bos.toByteArray();
   }
 
   public void conflictResolvedForFile(VirtualFile file) {
