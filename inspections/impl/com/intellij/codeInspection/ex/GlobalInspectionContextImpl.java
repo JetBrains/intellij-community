@@ -971,6 +971,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   private void processProfileTools(final InspectionProfileWrapper inspectionProfile,
                                    final Map<String, Set<InspectionTool>> tools,
                                    final Map<String, Set<InspectionTool>> localTools) {
+    inspectionProfile.getInspectionProfile().cleanup();
     final InspectionTool[] usedTools = inspectionProfile.getInspectionTools();
     final Set<InspectionTool> profileTools = new TreeSet<InspectionTool>(new Comparator<InspectionTool>() {
       public int compare(final InspectionTool tool1, final InspectionTool tool2) {
