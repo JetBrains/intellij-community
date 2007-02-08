@@ -53,7 +53,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   public <T extends Configurable> T findApplicationConfigurable(final Class<T> confClass) {
-    return selectConfigurable(confClass, ApplicationManager.getApplication().getExtensions(Configurable.PROJECT_CONFIGURABLES));
+    return selectConfigurable(confClass, ApplicationManager.getApplication().getExtensions(Configurable.APPLICATION_CONFIGURABLES));
   }
 
   public <T extends Configurable> T findProjectConfigurable(final Project project, final Class<T> confClass) {
