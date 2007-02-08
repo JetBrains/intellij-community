@@ -40,6 +40,7 @@ import com.intellij.ui.popup.JBPopupImpl;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -774,8 +775,8 @@ public class JavaDocManager implements ProjectComponent {
     }
   }
 
-  public Project getProject(final PsiElement element) {
-    assert myProject == element.getProject();
-    return element.getProject();
+  public Project getProject(final @Nullable PsiElement element) {
+    assert element == null || myProject == element.getProject();
+    return myProject;
   }
 }
