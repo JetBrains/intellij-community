@@ -7,7 +7,6 @@ package com.intellij.codeInspection.ex;
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInspection.*;
@@ -902,7 +901,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         public void visitReferenceExpression(PsiReferenceExpression expression) {
         }
 
-        @Override               
+        @Override
         public void visitFile(PsiFile file) {
           InspectionProfile profile;
           if (RUN_WITH_EDITOR_PROFILE) {
@@ -927,8 +926,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           final LocalInspectionsPass pass =
             new LocalInspectionsPass(file, document,
                                      0,
-                                     file.getTextLength(),
-                                     DaemonCodeAnalyzer.getInstance(myProject).getDaemonExecutorService());
+                                     file.getTextLength());
           try {
             pass.doInspectInBatch(((InspectionManagerEx)manager), tools.toArray(new InspectionTool[tools.size()]), myProgressIndicator);
           }

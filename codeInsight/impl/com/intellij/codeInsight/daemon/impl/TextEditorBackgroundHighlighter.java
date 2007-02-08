@@ -116,6 +116,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     }
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
+
     TextEditorHighlightingPassRegistrarEx passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject);
 
     List<TextEditorHighlightingPass> createdPasses = passRegistrar.instantiatePasses(myFile, myEditor, passesToIgnore);

@@ -14,7 +14,6 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 public abstract class DaemonCodeAnalyzer implements ProjectComponent {
   public static DaemonCodeAnalyzer getInstance(Project project) {
@@ -42,7 +41,6 @@ public abstract class DaemonCodeAnalyzer implements ProjectComponent {
 
   public abstract FileStatusMap getFileStatusMap();
   public abstract List<Pair<NamedScope, NamedScopesHolder>> getScopeBasedHighlightingCachedScopes();
-  public abstract ExecutorService getDaemonExecutorService();
 
   @Nullable
   public abstract HighlightInfo findHighlightByOffset(Document document, int offset, boolean includeFixRange);

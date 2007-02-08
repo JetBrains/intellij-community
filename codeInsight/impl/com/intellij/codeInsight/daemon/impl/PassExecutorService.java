@@ -16,6 +16,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.concurrency.JobScheduler;
+import com.intellij.concurrency.Job;
+import com.intellij.psi.PsiManager;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -31,36 +34,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public abstract class PassExecutorService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PassExecutorService");
-  public static int PROCESSORS = /*10;//*/Runtime.getRuntime().availableProcessors();
-  private final ThreadPoolExecutor myExecutorService = new ThreadPoolExecutor(PROCESSORS, Integer.MAX_VALUE, 30*60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),new ThreadFactory() {
-    public Thread newThread(Runnable r) {
-      Thread t = new Thread(r, "Highlighting thread");
-      t.setPriority(Thread.MIN_PRIORITY);
-      return t;
-    }
-  }){
-    public Future<?> submit(final Runnable runnable) {
-      final Runnable toSubmit = new Runnable() {
-        public void run() {
-          //allow exceptions to manifest themselves
-          try {
-            runnable.run();
-          }
-          catch (CancellationException e) {
-            //ok
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
-        }
-      };
-      FutureTask task = new FutureTask<Void>(toSubmit, null);
-      execute(task);
-      return task;
-    }
-  };
 
-  private final Map<ScheduledPass, Future<?>> mySubmittedPasses = new ConcurrentHashMap<ScheduledPass, Future<?>>();
+  private final Map<ScheduledPass, Job<Void>> mySubmittedPasses = new ConcurrentHashMap<ScheduledPass, Job<Void>>();
   private final Project myProject;
 
   public PassExecutorService(Project project) {
@@ -69,17 +44,17 @@ public abstract class PassExecutorService {
 
   public void dispose() {
     cancelAll();
-    myExecutorService.shutdownNow();
   }
 
   public void cancelAll() {
-    for (Future<?> submittedPass : mySubmittedPasses.values()) {
-      submittedPass.cancel(false);
+    for (Job<Void> submittedPass : mySubmittedPasses.values()) {
+      submittedPass.cancel();
     }
     mySubmittedPasses.clear();
   }
 
-  public void submitPasses(final Map<FileEditor, HighlightingPass[]> passesMap, final DaemonProgressIndicator updateProgress) {
+  public void submitPasses(final Map<FileEditor, HighlightingPass[]> passesMap, final DaemonProgressIndicator updateProgress,
+                           final long modificationCount) {
     final AtomicInteger threadsToStartCountdown = new AtomicInteger(0);
     int id = 1;
 
@@ -120,7 +95,7 @@ public abstract class PassExecutorService {
       }
       threadsToStartCountdown.addAndGet(passesToAdd.length);
       for (final TextEditorHighlightingPass pass : passesToAdd) {
-        createScheduledPass(fileEditor, pass, toBeSubmitted, passesToAdd, freePasses, updateProgress, threadsToStartCountdown);
+        createScheduledPass(fileEditor, pass, toBeSubmitted, passesToAdd, freePasses, updateProgress, threadsToStartCountdown, modificationCount);
       }
     }
     for (ScheduledPass freePass : freePasses) {
@@ -134,13 +109,13 @@ public abstract class PassExecutorService {
                                             final TextEditorHighlightingPass[] textEditorHighlightingPasses,
                                             final List<ScheduledPass> freePasses,
                                             final DaemonProgressIndicator updateProgress,
-                                            final AtomicInteger myThreadsToStartCountdown) {
+                                            final AtomicInteger myThreadsToStartCountdown, final long modificationCount) {
     int passId = pass.getId();
     Pair<FileEditor, Integer> key = Pair.create(fileEditor, passId);
     ScheduledPass scheduledPass = toBeSubmitted.get(key);
     if (scheduledPass != null) return scheduledPass;
     int[] completionPredecessorIds = pass.getCompletionPredecessorIds();
-    scheduledPass = new ScheduledPass(fileEditor, pass, updateProgress, myThreadsToStartCountdown);
+    scheduledPass = new ScheduledPass(fileEditor, pass, updateProgress, myThreadsToStartCountdown, modificationCount);
     toBeSubmitted.put(key, scheduledPass);
     for (int predecessorId : completionPredecessorIds) {
       Pair<FileEditor, Integer> predkey = Pair.create(fileEditor, predecessorId);
@@ -148,7 +123,7 @@ public abstract class PassExecutorService {
       if (predecessor == null) {
         TextEditorHighlightingPass textEditorPass = findPassById(predecessorId, textEditorHighlightingPasses);
         predecessor = textEditorPass == null ? null : createScheduledPass(fileEditor, textEditorPass, toBeSubmitted, textEditorHighlightingPasses,freePasses,
-                                                                          updateProgress, myThreadsToStartCountdown);
+                                                                          updateProgress, myThreadsToStartCountdown, modificationCount);
       }
       if (predecessor != null) {
         predecessor.mySuccessorsOnCompletion.add(scheduledPass);
@@ -162,7 +137,7 @@ public abstract class PassExecutorService {
       if (predecessor == null) {
         TextEditorHighlightingPass textEditorPass = findPassById(predecessorId, textEditorHighlightingPasses);
         predecessor = textEditorPass == null ? null : createScheduledPass(fileEditor, textEditorPass, toBeSubmitted, textEditorHighlightingPasses,freePasses,
-                                                                          updateProgress, myThreadsToStartCountdown);
+                                                                          updateProgress, myThreadsToStartCountdown, modificationCount);
       }
       if (predecessor != null) {
         predecessor.mySuccessorsOnSubmit.add(scheduledPass);
@@ -188,19 +163,18 @@ public abstract class PassExecutorService {
 
   private void submit(ScheduledPass pass) {
     if (!pass.myUpdateProgress.isCanceled()) {
-      Future<?> future = myExecutorService.submit(pass);
-      mySubmittedPasses.put(pass, future);
+      Job<Void> job = JobScheduler.getInstance().createJob(pass.myPass.toString(), Job.DEFAULT_PRIORITY);
+      job.addTask(pass);
+      job.schedule();
+      mySubmittedPasses.put(pass, job);
     }
-  }
-
-  public ExecutorService getDaemonExecutorService() {
-    return myExecutorService;
   }
 
   private class ScheduledPass implements Runnable {
     private final FileEditor myFileEditor;
     private final TextEditorHighlightingPass myPass;
     private final AtomicInteger myThreadsToStartCountdown;
+    private final long myModificationCount;
     private final AtomicInteger myRunningPredecessorsCount;
     private final Collection<ScheduledPass> mySuccessorsOnCompletion = new ArrayList<ScheduledPass>();
     private final Collection<ScheduledPass> mySuccessorsOnSubmit = new ArrayList<ScheduledPass>();
@@ -209,10 +183,11 @@ public abstract class PassExecutorService {
     public ScheduledPass(final FileEditor fileEditor,
                          TextEditorHighlightingPass pass,
                          final DaemonProgressIndicator progressIndicator,
-                         final AtomicInteger myThreadsToStartCountdown) {
+                         final AtomicInteger myThreadsToStartCountdown, final long modificationCount) {
       myFileEditor = fileEditor;
       myPass = pass;
       this.myThreadsToStartCountdown = myThreadsToStartCountdown;
+      myModificationCount = modificationCount;
       myRunningPredecessorsCount = new AtomicInteger(0);
       myUpdateProgress = progressIndicator;
     }
@@ -235,13 +210,15 @@ public abstract class PassExecutorService {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               try {
-                if (myUpdateProgress.isCanceled()) { // IMPORTANT: to check here directly: to verify that nothing has changed before getting read lock!
+                long modificationCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
+                if (myUpdateProgress.isCanceled() || myModificationCount != modificationCount) {
                   throw new ProcessCanceledException();
                 }
                 myPass.doCollectInformation(myUpdateProgress);
               }
               catch (ProcessCanceledException e) {
                 log(myUpdateProgress, "Canceled ",myPass);
+                cancelAll();
               }
             }
           });
@@ -311,6 +288,4 @@ public abstract class PassExecutorService {
       }
     }
   }
-
-
 }

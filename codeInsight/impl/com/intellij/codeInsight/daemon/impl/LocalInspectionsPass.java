@@ -41,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 
 /**
  * @author max
@@ -57,7 +56,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   @NotNull private List<InjectedPsiInspectionUtil.InjectedPsiInspectionResult> myInjectedPsiInspectionResults = Collections.emptyList();
   static final String PRESENTABLE_NAME = DaemonBundle.message("pass.inspection");
 
-  public LocalInspectionsPass(@NotNull PsiFile file, @Nullable Document document, int startOffset, int endOffset, @Nullable ExecutorService executorService) {
+  public LocalInspectionsPass(@NotNull PsiFile file, @Nullable Document document, int startOffset, int endOffset) {
     super(file.getProject(), document, IN_PROGRESS_ICON, PRESENTABLE_NAME);
     myFile = file;
     myStartOffset = startOffset;

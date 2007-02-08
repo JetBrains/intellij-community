@@ -28,10 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiCompiledElement;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.Alarm;
@@ -44,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 
 /**
  * This class also controls the auto-reparse and auto-hints.
@@ -186,10 +182,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return myScopes;
   }
 
-  public ExecutorService getDaemonExecutorService() {
-    return myPassExecutorService.getDaemonExecutorService();
-  }
-
   private void dispose() {
     if (myDisposed) return;
     if (myInitialized) {
@@ -227,7 +219,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     renewUpdateProgress(true);
 
-    myPassExecutorService.submitPasses(new THashMap<FileEditor, HighlightingPass[]>(){{put(textEditor, highlightingPasses);}}, myUpdateProgress);
+    THashMap<FileEditor, HighlightingPass[]> passes = new THashMap<FileEditor, HighlightingPass[]>() {
+      {
+        put(textEditor, highlightingPasses);
+      }
+    };
+    long modificationCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
+    myPassExecutorService.submitPasses(passes, myUpdateProgress, modificationCount);
   }
 
   public void setUpdateByTimerEnabled(boolean value) {
@@ -550,8 +548,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           }
         }
         // cancel all after calling createPasses() since there are perverts {@link com.intellij.util.xml.ui.DomUIFactoryImpl} who are changing PSI there
+        long modificationCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
         renewUpdateProgress(true);
-        myPassExecutorService.submitPasses(passes, myUpdateProgress);
+        myPassExecutorService.submitPasses(passes, myUpdateProgress, modificationCount);
       }
     };
   }

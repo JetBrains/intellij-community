@@ -22,8 +22,8 @@ public class JobImpl<T> implements Job<T> {
 
   private final Lock myLock = new ReentrantLock();
 
-  public JobImpl(String jobTitle, int priority) {
-    myTitle = jobTitle;
+  public JobImpl(String title, int priority) {
+    myTitle = title;
     myPriority = priority;
   }
 
@@ -76,7 +76,7 @@ public class JobImpl<T> implements Job<T> {
       myFutures = new ArrayList<PrioritizedFutureTask<T>>(myTasks.size());
 
       int startTaskIndex = JobSchedulerImpl.currentTaskIndex();
-      for (Callable<T> task : myTasks) {
+      for (final Callable<T> task : myTasks) {
         final PrioritizedFutureTask<T> future = new PrioritizedFutureTask<T>(task, myJobIndex, startTaskIndex++, myPriority, callerHasReadAccess);
         myFutures.add(future);
       }
@@ -113,7 +113,7 @@ public class JobImpl<T> implements Job<T> {
       }
     }
 
-    // Future.get() exists when currently running is canceled, thus awaiter may get control before spawned tasks actually terminated,
+    // Future.get() exits when currently running is canceled, thus awaiter may get control before spawned tasks actually terminated,
     // that's why additional join logic.
     for (PrioritizedFutureTask<T> future : myFutures) {
       future.awaitTermination();
@@ -148,7 +148,23 @@ public class JobImpl<T> implements Job<T> {
   }
 
   public void schedule() {
-    throw new UnsupportedOperationException("Not yet implemented");
+    myLock.lock();
+    try {
+      myFutures = new ArrayList<PrioritizedFutureTask<T>>(myTasks.size());
+
+      int startTaskIndex = JobSchedulerImpl.currentTaskIndex();
+      for (final Callable<T> task : myTasks) {
+        final PrioritizedFutureTask<T> future = new PrioritizedFutureTask<T>(task, myJobIndex, startTaskIndex++, myPriority, false);
+        myFutures.add(future);
+      }
+
+      for (PrioritizedFutureTask<T> future : myFutures) {
+        JobSchedulerImpl.execute(future);
+      }
+    }
+    finally {
+      myLock.unlock();
+    }
   }
 
   public boolean isDone() {

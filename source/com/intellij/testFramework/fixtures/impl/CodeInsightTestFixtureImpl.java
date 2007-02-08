@@ -465,7 +465,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     Collection<HighlightInfo> highlights3 = null;
     if (myAvailableTools.size() > 0) {
-      LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(myFile, myEditor.getDocument(), 0, myFile.getTextLength(),null);
+      LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(myFile, myEditor.getDocument(), 0, myFile.getTextLength());
       inspectionsPass.doCollectInformation(new MockProgressIndicator());
       highlights3 = inspectionsPass.getHighlights();
     }

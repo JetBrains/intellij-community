@@ -13,7 +13,7 @@ public abstract class JobScheduler {
     return ServiceManager.getService(JobScheduler.class);
   }
 
-  public abstract <T> Job<T> createJob(String titile, int priority);
+  public abstract <T> Job<T> createJob(String title, int priority);
 
 
   public abstract ScheduledFuture<?> schedule(Runnable command, long delay,  TimeUnit unit);

@@ -5,7 +5,6 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.openapi.editor.Document;
@@ -141,7 +140,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
 
         final List<HighlightingPass> result = new SmartList<HighlightingPass>();
         result.add(new GeneralHighlightingPass(project, psiFile, document, 0, document.getTextLength(), true));
-        result.add(new LocalInspectionsPass(psiFile, document, 0, document.getTextLength(), DaemonCodeAnalyzer.getInstance(project).getDaemonExecutorService()));
+        result.add(new LocalInspectionsPass(psiFile, document, 0, document.getTextLength()));
         return result.toArray(new HighlightingPass[result.size()]);
       }
 

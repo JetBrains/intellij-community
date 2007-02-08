@@ -4,6 +4,7 @@
 package com.intellij.concurrency;
 
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.concurrent.*;
@@ -71,14 +72,9 @@ public class JobSchedulerImpl extends JobScheduler {
 
   private static long ourJobsCounter = 0;
 
-  private static final ScheduledExecutorService ourScheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-    public Thread newThread(final Runnable r) {
-      return new Thread(r, "Periodic tasks thread");
-    }
-  });
+  private static final ScheduledExecutorService ourScheduledExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("Periodic tasks thread");
 
-
-  public static void execute(PrioritizedFutureTask task) {
+  public static void execute(Runnable task) {
     ourExecutor.execute(task);
   }
 
@@ -99,8 +95,8 @@ public class JobSchedulerImpl extends JobScheduler {
     ourSuspensionLock.unlock();
   }
 
-  public <T> Job<T> createJob(String titile, int priority) {
-    return new JobImpl<T>(titile, priority);
+  public <T> Job<T> createJob(String title, int priority) {
+    return new JobImpl<T>(title, priority);
   }
 
   public ScheduledFuture<?> schedule(final Runnable command, final long delay, final TimeUnit unit) {

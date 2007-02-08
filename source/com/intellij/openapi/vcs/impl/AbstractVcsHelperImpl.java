@@ -559,7 +559,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
     collectErrorsAndWarnings(action2.getHighlights(), result, document);
 
-    LocalInspectionsPass action3 = new LocalInspectionsPass(psiFile, document, 0, psiFile.getTextLength(),null);
+    LocalInspectionsPass action3 = new LocalInspectionsPass(psiFile, document, 0, psiFile.getTextLength());
     action3.doCollectInformation(progress);
 
     collectErrorsAndWarnings(action3.getHighlights(), result, document);

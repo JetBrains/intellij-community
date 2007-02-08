@@ -17,8 +17,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.ExecutorService;
-
 /**
  * @author cdr
 */
@@ -41,9 +39,7 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
     TextRange textRange = calculateRangeToProcess(editor);
     if (textRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument(), LocalInspectionsPass.IN_PROGRESS_ICON,
                                                                              LocalInspectionsPass.PRESENTABLE_NAME);
-    DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    ExecutorService executorService = daemonCodeAnalyzer.getDaemonExecutorService();
-    return new LocalInspectionsPass(file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(),executorService);
+    return new LocalInspectionsPass(file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset());
   }
 
   private static TextRange calculateRangeToProcess(Editor editor) {
