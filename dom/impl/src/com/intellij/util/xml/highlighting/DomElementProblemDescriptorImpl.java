@@ -17,10 +17,11 @@ import java.util.List;
 public class DomElementProblemDescriptorImpl implements DomElementProblemDescriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementProblemDescriptorImpl");
   private final DomElement myDomElement;
-  private final HighlightSeverity myType;
+  private final HighlightSeverity mySeverity;
   private final String myMessage;
   private final LocalQuickFix[] myFixes;
   private List<Annotation> myAnnotations;
+  private HighlightingType myHighlightingType = HighlightingType.START_TAG_NAME;
 
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,  final String message, final HighlightSeverity type) {
     this(domElement, message, type, new LocalQuickFix[0]);
@@ -32,7 +33,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     if (element != null) {
       LOG.assertTrue(element.isPhysical(), "Problems may not be created for non-physical DOM elements");
     }
-    myType = type;
+    mySeverity = type;
     myMessage = message;
     myFixes = fixes;
   }
@@ -44,7 +45,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
 
   @NotNull
   public HighlightSeverity getHighlightSeverity() {
-    return myType;
+    return mySeverity;
   }
 
   @NotNull
@@ -65,6 +66,14 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     return myAnnotations;
   }
 
+  public void setHighlightingType(HighlightingType highlightingType) {
+    myHighlightingType = highlightingType;
+  }
+
+  public HighlightingType getHighlightingType() {
+    return myHighlightingType;
+  }
+
   public String toString() {
     return myDomElement + "; " + myMessage;
   }
@@ -77,7 +86,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
 
     if (myDomElement != null ? !myDomElement.equals(that.myDomElement) : that.myDomElement != null) return false;
     if (!myMessage.equals(that.myMessage)) return false;
-    if (!myType.equals(that.myType)) return false;
+    if (!mySeverity.equals(that.mySeverity)) return false;
 
     return true;
   }
@@ -85,7 +94,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   public int hashCode() {
     int result;
     result = (myDomElement != null ? myDomElement.hashCode() : 0);
-    result = 31 * result + myType.hashCode();
+    result = 31 * result + mySeverity.hashCode();
     result = 31 * result + myMessage.hashCode();
     return result;
   }

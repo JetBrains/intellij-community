@@ -27,6 +27,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public interface DomElementProblemDescriptor extends CommonProblemDescriptor {
+
+  enum HighlightingType { START_TAG_NAME, ALL_TAG }
+
   @NotNull
   DomElement getDomElement();
   @NotNull
@@ -35,4 +38,8 @@ public interface DomElementProblemDescriptor extends CommonProblemDescriptor {
   LocalQuickFix[] getFixes();
   @NotNull
   List<Annotation> getAnnotations();
+
+  void setHighlightingType(HighlightingType highlightingType);
+
+  HighlightingType getHighlightingType();
 }

@@ -35,11 +35,15 @@ import java.util.List;
  * User: Sergey.Vasiliev
  */
 public class DomElementsHighlightingUtil {
+  
   private static final AnnotationHolderImpl EMPTY_ANNOTATION_HOLDER = new AnnotationHolderImpl() {
     public boolean add(final Annotation annotation) {
       return false;
     }
   };
+
+  private DomElementsHighlightingUtil() {
+  }
 
   public static List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, final DomElementProblemDescriptor problemDescriptor) {
     final ProblemHighlightType type = getProblemHighlightType(problemDescriptor);
@@ -115,8 +119,16 @@ public class DomElementsHighlightingUtil {
     if (psiElement != null && StringUtil.isNotEmpty(psiElement.getText())) {
       if (psiElement instanceof XmlTag) {
         final XmlTag tag = (XmlTag)psiElement;
-          addDescriptionsToTagEnds(tag, descritors, creator);
-          return descritors;
+        switch (problemDescriptor.getHighlightingType()) {
+          case ALL_TAG:
+            descritors.add(creator.fun(Pair.create(new TextRange(0, tag.getTextLength()), (PsiElement)tag)));
+            break;
+          case START_TAG_NAME:
+            addDescriptionsToTagEnds(tag, descritors, creator);
+            break;
+        }
+
+        return descritors;
       }
       int start = 0;
       int length = psiElement.getTextRange().getLength();

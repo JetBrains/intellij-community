@@ -24,7 +24,7 @@ public interface DomElementAnnotationHolder extends Iterable<DomElementProblemDe
   @NotNull
   DomElementProblemDescriptor createProblem(DomElement domElement, HighlightSeverity highlightType, String message);
 
-  DomElementProblemDescriptor createProblem(DomElement domElement, HighlightSeverity highlightType, String message, LocalQuickFix[] fixes);
+  DomElementProblemDescriptor createProblem(DomElement domElement, HighlightSeverity highlightType, String message, LocalQuickFix... fixes);
 
   @NotNull
   DomElementResolveProblemDescriptor createResolveProblem(@NotNull GenericDomValue element, @NotNull PsiReference reference);
