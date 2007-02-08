@@ -312,13 +312,21 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
 
   private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
     @Override
-    public void problemsAppeared(VirtualFile file) {
-      refreshChangesViewNode(file);
+    public void problemsAppeared(final VirtualFile file) {
+      refreshChangesViewNodeAsync(file);
     }
 
     @Override
     public void problemsDisappeared(VirtualFile file) {
-      refreshChangesViewNode(file);
+      refreshChangesViewNodeAsync(file);
+    }
+
+    private void refreshChangesViewNodeAsync(final VirtualFile file) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          refreshChangesViewNode(file);
+        }
+      });
     }
 
     private void refreshChangesViewNode(final VirtualFile file) {
