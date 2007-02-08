@@ -5,11 +5,20 @@ import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.ex.OrdersMerger;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TObjectHashingStrategy;
+
+import java.util.*;
 
 /**
  * User: lex
@@ -66,9 +75,19 @@ public class JavaParametersUtil {
     return jdk;
   }
 
-// TODO delete below code if IDEADEV-13910 fix works out well
-  /*
-  private static void configureClassPath(final JavaParameters parameters, final ProjectJdk jdk, final List<CommandLineEntry> common) {
+  @Deprecated
+  public static void configureClassPath(final JavaParameters parameters, Project project, final String jreHome) throws CantRunException {
+    final List<CommandLineEntry> common = getClassPath(project);
+
+    final ProjectJdk jdk;
+    if (jreHome == null) {
+      jdk = PathUtilEx.getAnyJdk(project);
+      if (jdk == null) throw CantRunException.noJdkConfigured();
+    } else {
+      jdk = JavaSdk.getInstance().createJdk("", jreHome);
+      if (jdk == null) throw CantRunException.noJdkConfigured();
+    }
+
     parameters.setJdk(jdk);
     for (final CommandLineEntry entry : common) {
       entry.addPath(parameters, jdk);
@@ -166,5 +185,4 @@ public class JavaParametersUtil {
       parameters.getClassPath().add(myClassPath);
     }
   }
-  */
 }
