@@ -7,6 +7,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
@@ -62,6 +63,13 @@ public class JobImpl<T> implements Job<T> {
     if (JobSchedulerImpl.CORES_COUNT < 2) {
       List<T> results = new ArrayList<T>(myTasks.size());
       for (Callable<T> task : myTasks) {
+        myLock.lock();
+        try {
+          if (myCanceled) return Collections.emptyList();
+        }
+        finally {
+          myLock.unlock();
+        }
         results.add(task.call());
       }
 
@@ -127,12 +135,13 @@ public class JobImpl<T> implements Job<T> {
   public void cancel() {
     myLock.lock();
     try {
-      if (myFutures == null) {
-        throw new IllegalStateException("Canceling a job, that haven't been scheduled");
-      }
-
       if (myCanceled) return;
       myCanceled = true;
+
+      if (myFutures == null) {
+        if (JobSchedulerImpl.CORES_COUNT < 2) return; // Futures are not created for single core.
+        throw new IllegalStateException("Canceling a job, that haven't been scheduled");
+      }
 
       for (Future<T> future : myFutures) {
         future.cancel(false);
