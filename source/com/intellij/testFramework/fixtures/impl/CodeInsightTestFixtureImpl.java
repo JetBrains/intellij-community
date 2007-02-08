@@ -67,10 +67,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -106,6 +103,23 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public void enableInspections(LocalInspectionTool... inspections) {
     myInspections = inspections;
+  }
+
+  public void disableInspections(LocalInspectionTool... inspections) {
+    myAvailableTools.clear();
+    myAvailableLocalTools.clear();
+    final ArrayList<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>(Arrays.asList(myInspections));
+    for (Iterator<LocalInspectionTool> i = tools.iterator(); i.hasNext();) {
+      final LocalInspectionTool tool = i.next();
+      for (LocalInspectionTool toRemove: inspections) {
+        if (tool.getShortName().equals(toRemove.getShortName())) {
+          i.remove();
+          break;
+        }
+      }
+    }
+    myInspections = tools.toArray(new LocalInspectionTool[tools.size()]);
+    configureInspections(myInspections);
   }
 
   public void enableInspections(InspectionToolProvider... providers) {

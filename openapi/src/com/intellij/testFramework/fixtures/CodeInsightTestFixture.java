@@ -69,6 +69,8 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    */
   void enableInspections(LocalInspectionTool... inspections);
 
+  void disableInspections(LocalInspectionTool... inspections);
+
   /**
    * Enable all inspections provided by given providers.
    *
