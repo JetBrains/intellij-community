@@ -1,14 +1,11 @@
 package org.apache.xmlrpc;
 
-import org.apache.commons.codec.binary.Base64;
-
-import java.net.*;
-import java.util.Vector;
-import java.util.Stack;
-import java.util.EmptyStackException;
-import java.util.StringTokenizer;
-import java.io.*;
-import java.lang.reflect.Method;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * A minimal web server that uses IDEA built-in pool
@@ -17,7 +14,13 @@ import java.lang.reflect.Method;
  */
 public class IdeaAwareWebServer extends WebServer
 {
-    /**
+    private static ExecutorService threadPool = Executors.newFixedThreadPool(2, new ThreadFactory() {
+      public Thread newThread(final Runnable r) {
+        return new Thread(r, "WebServer thread pool");
+      }
+    });
+
+  /**
      * Creates a web server at the specified port number and IP
      * address.
      */
@@ -60,12 +63,7 @@ public class IdeaAwareWebServer extends WebServer
             count = 0;
 
             try {
-                  // Attempt to execute on pooled thread
-                  final Class<?> aClass = Class.forName("com.intellij.openapi.application.ApplicationManager");
-                  final Method getApplicationMethod = aClass.getMethod("getApplication");
-                  final Object application = getApplicationMethod.invoke(null);
-                  final Method executeOnPooledThreadMethod = application.getClass().getMethod("executeOnPooledThread", Runnable.class);
-                  executeOnPooledThreadMethod.invoke(application, this);
+                  threadPool.submit(this);
             }
             catch (Exception e) {
               e.printStackTrace();

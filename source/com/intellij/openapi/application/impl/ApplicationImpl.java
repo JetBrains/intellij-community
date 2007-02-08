@@ -80,7 +80,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @NonNls private static final String NULL_STR = "null";
 
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
-    5,
+    3,
     Integer.MAX_VALUE,
     30 * 60L,
     TimeUnit.SECONDS,
