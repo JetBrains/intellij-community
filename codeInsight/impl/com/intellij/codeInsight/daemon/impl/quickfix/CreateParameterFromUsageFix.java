@@ -63,7 +63,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     PsiParameter param;
     try {
       param = factory.createParameter(varName, type);
-      final PsiReferenceExpression[] expressionOccurences = CreateFromUsageUtils.collectExpressions(myReferenceExpression, true, PsiMethod.class);
+      final PsiReferenceExpression[] expressionOccurences = CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMethod.class);
       param.getModifierList().setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_PARAMETERS &&
                                                                      !CreateFromUsageUtils.isAccessedForWriting(expressionOccurences));
 

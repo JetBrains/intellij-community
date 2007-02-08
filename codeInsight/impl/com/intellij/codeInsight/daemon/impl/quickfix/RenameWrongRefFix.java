@@ -153,7 +153,7 @@ public class RenameWrongRefFix implements IntentionAction {
 
   public void invoke(Project project, final Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
-    PsiReferenceExpression[] refs = CreateFromUsageUtils.collectExpressions(myRefExpr, true, PsiMember.class, PsiFile.class);
+    PsiReferenceExpression[] refs = CreateFromUsageUtils.collectExpressions(myRefExpr, PsiMember.class, PsiFile.class);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       PsiElement element = PsiTreeUtil.getParentOfType(myRefExpr, PsiMember.class, PsiFile.class);
       LookupItem[] items = collectItems();

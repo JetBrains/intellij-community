@@ -20,9 +20,11 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -63,9 +65,7 @@ public class CreateFromUsageUtils {
     try {
       JavaResolveResult candidate = ((PsiJavaReference) reference).advancedResolve(true);
       PsiElement result = candidate.getElement();
-      if (!(result instanceof PsiMethod)) return false;
-      return PsiUtil.isApplicable((PsiMethod) result, candidate.getSubstitutor(),
-                                  call.getArgumentList());
+      return result instanceof PsiMethod && PsiUtil.isApplicable((PsiMethod)result, candidate.getSubstitutor(), call.getArgumentList());
     }
     catch (ClassCastException cce) {
       // rear case
@@ -76,8 +76,8 @@ public class CreateFromUsageUtils {
   public static boolean shouldCreateConstructor(PsiClass targetClass, PsiExpressionList argList, PsiMethod candidate) {
     if (argList == null) return false;
     if (candidate == null) {
-      if (targetClass == null || targetClass.isInterface() || targetClass instanceof PsiTypeParameter) return false;
-      return !(argList.getExpressions().length == 0 && targetClass.getConstructors().length == 0);
+      return targetClass != null && !targetClass.isInterface() && !(targetClass instanceof PsiTypeParameter) &&
+             !(argList.getExpressions().length == 0 && targetClass.getConstructors().length == 0);
     }
     else {
       return !PsiUtil.isApplicable(candidate, PsiSubstitutor.EMPTY, argList);
@@ -121,6 +121,9 @@ public class CreateFromUsageUtils {
       methodText = returnType.getPresentableText() + " foo () {\n" + bodyText + "}";
       methodText = FileTemplateUtil.indent(methodText, method.getProject(), fileType);
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (Exception e) {
       throw new IncorrectOperationException("Failed to parse file template",e);
     }
@@ -154,8 +157,8 @@ public class CreateFromUsageUtils {
   public static void setupEditor(PsiMethod method, Editor newEditor) {
     PsiCodeBlock body = method.getBody();
     if (body != null) {
-      PsiElement l = PsiTreeUtil.skipSiblingsForward(body.getLBrace(), new Class[] {PsiWhiteSpace.class});
-      PsiElement r = PsiTreeUtil.skipSiblingsBackward(body.getRBrace(), new Class[] {PsiWhiteSpace.class});
+      PsiElement l = PsiTreeUtil.skipSiblingsForward(body.getLBrace(), PsiWhiteSpace.class);
+      PsiElement r = PsiTreeUtil.skipSiblingsBackward(body.getRBrace(), PsiWhiteSpace.class);
       if (l != null && r != null) {
         int start = l.getTextRange().getStartOffset(),
             end   = r.getTextRange().getEndOffset();
@@ -262,7 +265,7 @@ public class CreateFromUsageUtils {
                                                        aPackage != null ? aPackage.getQualifiedName() : "",
                                                        classKind, false, ModuleUtil.findModuleForPsiElement(sourceFile));
       dialog.show();
-      if (dialog.getExitCode() != CreateClassDialog.OK_EXIT_CODE) return null;
+      if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return null;
 
       targetDirectory = dialog.getTargetDirectory();
       if (targetDirectory == null) return null;
@@ -349,10 +352,7 @@ public class CreateFromUsageUtils {
       });
   }
 
-  public static PsiReferenceExpression[] collectExpressions(final PsiExpression expression,
-                                                            final boolean includeInvalidResolved,
-                                                            Class<? extends PsiElement>... scopes
-  ) {
+  public static PsiReferenceExpression[] collectExpressions(final PsiExpression expression, Class<? extends PsiElement>... scopes) {
     PsiElement parent = PsiTreeUtil.getParentOfType(expression, scopes);
 
     final List<PsiReferenceExpression> result = new ArrayList<PsiReferenceExpression>();
@@ -444,7 +444,7 @@ public class CreateFromUsageUtils {
   private static void getExpectedInformation (PsiExpression expression, List<ExpectedTypeInfo[]> types,
                                               List<String> expectedMethodNames,
                                               List<String> expectedFieldNames) {
-    PsiExpression[] expressions = collectExpressions(expression, false, PsiMember.class, PsiFile.class);
+    PsiExpression[] expressions = collectExpressions(expression, PsiMember.class, PsiFile.class);
 
     for (PsiExpression expr : expressions) {
       PsiElement parent = expr.getParent();
@@ -484,7 +484,7 @@ public class CreateFromUsageUtils {
 
     getExpectedInformation(expression, typesList, expectedMethodNames, expectedFieldNames);
 
-    if (typesList.size() == 1 && (expectedFieldNames.size() > 0 || expectedMethodNames.size() > 0)) {
+    if (typesList.size() == 1 && (!expectedFieldNames.isEmpty() || !expectedMethodNames.isEmpty())) {
       ExpectedTypeInfo[] infos = typesList.get(0);
       if (infos.length == 1 && infos[0].getKind() == ExpectedTypeInfo.TYPE_OR_SUBTYPE &&
           infos[0].getType().equals(PsiType.getJavaLangObject(manager, resolveScope))) {
@@ -492,7 +492,7 @@ public class CreateFromUsageUtils {
       }
     }
 
-    if (typesList.size() == 0) {
+    if (typesList.isEmpty()) {
       PsiElementFactory factory = manager.getElementFactory();
       for (String fieldName : expectedFieldNames) {
         PsiField[] fields = manager.getShortNamesCache().getFieldsByName(fieldName, resolveScope);
@@ -533,7 +533,7 @@ public class CreateFromUsageUtils {
 
     getExpectedInformation(expression, typesList, expectedMethodNames, expectedFieldNames);
 
-    if (typesList.size() == 1 && (expectedFieldNames.size() > 0 || expectedMethodNames.size() > 0)) {
+    if (typesList.size() == 1 && (!expectedFieldNames.isEmpty() || !expectedMethodNames.isEmpty())) {
       ExpectedTypeInfo[] infos = typesList.get(0);
       if (infos.length == 1 && infos[0].getKind() == ExpectedTypeInfo.TYPE_OR_SUBTYPE &&
           infos[0].getType().equals(PsiType.getJavaLangObject(manager, resolveScope))) {
@@ -541,7 +541,7 @@ public class CreateFromUsageUtils {
       }
     }
 
-    if (typesList.size() == 0) {
+    if (typesList.isEmpty()) {
       PsiElementFactory factory = manager.getElementFactory();
       for (String fieldName : expectedFieldNames) {
         PsiField[] fields = manager.getShortNamesCache().getFieldsByName(fieldName, resolveScope);
@@ -580,7 +580,7 @@ public class CreateFromUsageUtils {
           }
 
           if (!typesSet.contains(type)) {
-            if (type instanceof PsiClassType && (expectedFieldNames.size() > 0 || expectedMethodNames.size() > 0)) {
+            if (type instanceof PsiClassType && (!expectedFieldNames.isEmpty() || !expectedMethodNames.isEmpty())) {
               PsiClass aClass = ((PsiClassType) type).resolve();
               if (aClass != null) {
                 for (String fieldName : expectedFieldNames) {
@@ -661,7 +661,7 @@ public class CreateFromUsageUtils {
       }
     }
 
-    if (l.size() > 0) {
+    if (!l.isEmpty()) {
       types.add(l.toArray(new ExpectedTypeInfo[l.size()]));
     }
   }

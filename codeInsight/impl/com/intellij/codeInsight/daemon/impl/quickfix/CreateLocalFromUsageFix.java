@@ -57,7 +57,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       PsiDeclarationStatement decl;
       PsiExpression initializer = null;
       boolean isInline = false;
-      PsiExpression[] expressions = CreateFromUsageUtils.collectExpressions(myReferenceExpression, false, PsiMember.class, PsiFile.class);
+      PsiExpression[] expressions = CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMember.class, PsiFile.class);
       PsiStatement anchor = getAnchor(expressions);
       if (anchor instanceof PsiExpressionStatement && ((PsiExpressionStatement) anchor).getExpression() instanceof PsiAssignmentExpression) {
         PsiAssignmentExpression assignment = (PsiAssignmentExpression) ((PsiExpressionStatement) anchor).getExpression();
