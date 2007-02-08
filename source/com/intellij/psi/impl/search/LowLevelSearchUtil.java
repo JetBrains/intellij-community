@@ -1,10 +1,8 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -36,11 +34,7 @@ public class LowLevelSearchUtil {
     if (list == null) return null;
     for (Pair<PsiElement, TextRange> pair : list) {
       final PsiElement injected = pair.getFirst();
-      if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        public Boolean compute() {
-          return processElementsContainingWordInElement(processor, injected, searcher);
-        }
-      })) return Boolean.FALSE;
+      if (!processElementsContainingWordInElement(processor, injected, searcher)) return Boolean.FALSE;
     }
     return Boolean.TRUE;
   }
@@ -65,7 +59,7 @@ public class LowLevelSearchUtil {
           int start = i - leafNode.getStartOffset() + scopeStartOffset;
           LOG.assertTrue(start >= 0);
           boolean contains = leafNode.getTextLength() - start >= patternLength;
-          if (contains && !executeInReadAction(processor, start, leafNode.getPsi())) return false;
+          if (contains && !processor.execute(leafNode.getPsi(), start)) return false;
           Boolean result = processInjectedFile(leafNode.getPsi(), processor, searcher);
           if (result != null && !result.booleanValue()) return false;
           boolean injectedFound = result != null;
@@ -74,7 +68,7 @@ public class LowLevelSearchUtil {
           while (run != null) {
             start += prev.getStartOffsetInParent();
             contains |= run.getTextLength() - start >= patternLength;  //do not compute if already contains
-            if (contains && !executeInReadAction(processor, start, run.getPsi())) return false;
+            if (contains && !processor.execute(run.getPsi(), start)) return false;
             if (!injectedFound) {
               result = processInjectedFile(run.getPsi(), processor, searcher);
               if (result != null && !result.booleanValue()) return false;
@@ -101,7 +95,7 @@ public class LowLevelSearchUtil {
                                        leafElement.getTextRange().getStartOffset() + " scope=" + scope.toString());
           }
           boolean contains = leafElement.getTextLength() - start >= patternLength;
-          if (contains && !executeInReadAction(processor, start, leafElement)) return false;
+          if (contains && !processor.execute(leafElement, start)) return false;
           Boolean result = processInjectedFile(leafElement, processor, searcher);
           if (result != null && !result.booleanValue()) return false;
           boolean injectedFound = result != null;
@@ -110,7 +104,7 @@ public class LowLevelSearchUtil {
           while (run != null) {
             start += prev.getStartOffsetInParent();
             contains |= run.getTextLength() - start >= patternLength;  //do not compute if already contains
-            if (contains && !executeInReadAction(processor, start, run)) return false;
+            if (contains && !processor.execute(run, start)) return false;
             if (!injectedFound) {
               result = processInjectedFile(run, processor, searcher);
               if (result != null && !result.booleanValue()) return false;
@@ -133,17 +127,9 @@ public class LowLevelSearchUtil {
     return true;
   }
 
-  private static boolean executeInReadAction(final TextOccurenceProcessor processor, final int start, final PsiElement run) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      public Boolean compute() {
-        return processor.execute(run, start);
-      }
-    });
-  }
-
-  @SuppressWarnings({"AssignmentToForLoopParameter"})
   public static int searchWord(CharSequence text, int startOffset, int endOffset, StringSearcher searcher) {
     for (int index = startOffset; index < endOffset; index++) {
+      //noinspection AssignmentToForLoopParameter
       index = searcher.scan(text, index, endOffset);
       if (index < 0) return -1;
 
