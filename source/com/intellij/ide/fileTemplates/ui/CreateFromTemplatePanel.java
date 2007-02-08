@@ -1,17 +1,15 @@
 package com.intellij.ide.fileTemplates.ui;
 
-import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.ArrayUtil;
-import org.apache.velocity.runtime.parser.ParseException;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Properties;
 
 /*
@@ -21,33 +19,29 @@ import java.util.Properties;
 public class CreateFromTemplatePanel{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.ui.CreateFromTemplatePanel");
 
-  private FileTemplate myTemplate;
   private JPanel myMainPanel;
   private JPanel myAttrPanel;
-  private JLabel myFilenameLabel = new JLabel(IdeBundle.message("label.file.name"));
-  private JTextField myFilenameField = new JTextField();
-  private Properties myPredefinedProperties = new Properties();
+  private JTextField myFilenameField;
+  private String[] myUnsetAttributes;
   private ArrayList<Pair<String, JTextField>> myAttributes = new ArrayList<Pair<String,JTextField>>();
 
   private int myLastRow = 0;
 
   private int myHorisontalMargin = -1;
   private int myVerticalMargin = -1;
+  private boolean mustEnterName;
 
-  public CreateFromTemplatePanel(FileTemplate template, Properties predefinedProperties){
-    myTemplate = template;
-    myPredefinedProperties = predefinedProperties;
+  public CreateFromTemplatePanel(final String[] unsetAttributes, final boolean mustEnterName){
+    this.mustEnterName = mustEnterName;
+    myUnsetAttributes = unsetAttributes;
+    Arrays.sort(myUnsetAttributes);
   }
 
-/*
-  public void disposeUIResources(){
-    myMainPanel = null;
-    myAttrPanel = null;
-    myAttributes = null;
+  public boolean hasSomethingToAsk() {
+    return mustEnterName || myUnsetAttributes.length != 0;
   }
-*/
 
-  public JComponent getComponent() throws ParseException {
+  public JComponent getComponent() {
     if (myMainPanel == null){
       myMainPanel = new JPanel(new GridBagLayout()){
         public Dimension getPreferredSize(){
@@ -92,56 +86,48 @@ public class CreateFromTemplatePanel{
     }
   }
 
-  private void updateShown() throws ParseException{
-    String[] attributes = ArrayUtil.EMPTY_STRING_ARRAY;
-    ParseException thrownException = null;
-
-    try {
-      attributes = myTemplate.getUnsetAttributes(myPredefinedProperties);
-      Arrays.sort(attributes);
-    }
-    catch (ParseException e) {
-      thrownException = e;
-    }
-
+  private void updateShown() {
     Insets insets = new Insets(2, 2, 2, 2);
     myAttrPanel.add(Box.createHorizontalStrut(200), new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0, 0));
-    if(!myTemplate.isJavaClassTemplate()){
-      myAttrPanel.add(myFilenameLabel, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, insets, 0, 0));
+    if(mustEnterName || Arrays.asList(myUnsetAttributes).contains(FileTemplateUtil.NAME_ATTR)){
+      final JLabel filenameLabel = new JLabel(IdeBundle.message("label.file.name"));
+      myAttrPanel.add(filenameLabel, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, insets, 0, 0));
+      myFilenameField = new JTextField();
       myAttrPanel.add(myFilenameField, new GridBagConstraints(0, 2, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, insets, 0, 0));
     }
-    else{
-      myAttrPanel.remove(myFilenameLabel);
-      myAttrPanel.remove(myFilenameField);
-    }
 
-    for (int i = 0; i < attributes.length; i++){
-      String attribute = attributes[i];
+    for (String attribute : myUnsetAttributes) {
+      if (attribute.equals(FileTemplateUtil.NAME_ATTR)) { // already asked above
+        continue;
+      }
       JLabel label = new JLabel(attribute.replace('_', ' ') + ":");
       JTextField field = new JTextField();
-      myAttributes.add(new Pair<String,JTextField> (attribute, field));
-      myAttrPanel.add(label,     new GridBagConstraints(0, myLastRow*2+3, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, insets, 0, 0));
-      myAttrPanel.add(field, new GridBagConstraints(0, myLastRow*2+4, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, insets, 0, 0));
+      myAttributes.add(new Pair<String, JTextField>(attribute, field));
+      myAttrPanel.add(label, new GridBagConstraints(0, myLastRow * 2 + 3, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                                    insets, 0, 0));
+      myAttrPanel.add(field, new GridBagConstraints(0, myLastRow * 2 + 4, 1, 1, 1.0, 0.0, GridBagConstraints.WEST,
+                                                    GridBagConstraints.HORIZONTAL, insets, 0, 0));
       myLastRow++;
     }
 
     myAttrPanel.repaint();
     myAttrPanel.revalidate();
     myMainPanel.revalidate();
-    if(thrownException != null){
-      throw thrownException;
+  }
+
+  @Nullable
+  public String getFileName(){
+    if (myFilenameField!=null) {
+      String fileName = myFilenameField.getText();
+      return fileName == null ? "" : fileName;
+    } else {
+      return null;
     }
   }
 
-  public String getFileName(){
-    String fileName = myFilenameField.getText();
-    return fileName == null ? "" : fileName;
-  }
-
-  public Properties getProperties(){
-    Properties result = (Properties) myPredefinedProperties.clone();
-    for (Iterator<Pair<String,JTextField>> i = myAttributes.iterator(); i.hasNext();) {
-      Pair<String,JTextField> pair = i.next();
+  public Properties getProperties(Properties predefinedProperties){
+    Properties result = (Properties) predefinedProperties.clone();
+    for (Pair<String, JTextField> pair : myAttributes) {
       result.put(pair.first, pair.second.getText());
     }
     return result;

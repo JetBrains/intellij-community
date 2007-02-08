@@ -44,6 +44,7 @@ public class FileTemplateUtil{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.FileTemplateUtil");
   private static boolean ourVelocityInitialized = false;
   @NonNls public static final String PACKAGE_ATTR = "PACKAGE_NAME";
+  @NonNls public static final String NAME_ATTR = "NAME";
 
   public static String[] calculateAttributes(String templateContent, Properties properties, boolean includeDummies) throws ParseException {
     initVelocity();
@@ -202,16 +203,15 @@ public class FileTemplateUtil{
   }
 
   public static PsiElement createFromTemplate(final FileTemplate template, @NonNls final String fileName, Properties props, final Project project, final PsiDirectory directory) throws Exception{
-    PsiElement[] result = new PsiElement[1];
-    createFromTemplate(result, template, fileName, props, project, directory);
-    return result[0];
-  }
-
-  public static void createFromTemplate(final PsiElement[] myCreatedElement, @NotNull final FileTemplate template, final String fileName, Properties props, final Project project, final PsiDirectory directory) throws Exception{
+    final PsiElement[] result = new PsiElement[1];
     if (props == null) {
       props = FileTemplateManager.getInstance().getDefaultProperties();
     }
     FileTemplateManager.getInstance().addRecentName(template.getName());
+
+    if ( fileName != null ) {
+      props.setProperty(NAME_ATTR, fileName);
+    }
 
     //Set escaped references to dummy values to remove leading "\" (if not already explicitely set)
     String[] dummyRefs = calculateAttributes(template.getText(), props, true);
@@ -243,10 +243,10 @@ public class FileTemplateUtil{
               FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
               if (fileType.equals(StdFileTypes.JAVA)) {
                 String extension = template.getExtension();
-                myCreatedElement[0] = createClassOrInterface(project, directory, templateText, template.isAdjust(), extension);
+                result[0] = createClassOrInterface(project, directory, templateText, template.isAdjust(), extension);
               }
               else{
-                myCreatedElement[0] = createPsiFile(project, directory, templateText, fileName, template.getExtension());
+                result[0] = createPsiFile(project, directory, templateText, fileName, template.getExtension());
               }
             }
             catch (Exception ex){
@@ -262,6 +262,7 @@ public class FileTemplateUtil{
     if(commandException[0] != null){
       throw commandException[0];
     }
+    return result[0];
   }
 
   public static PsiClass createClassOrInterface(Project project,

@@ -16,12 +16,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import org.apache.velocity.runtime.parser.ParseException;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 public class CreateFromTemplateGroup extends ActionGroup{
@@ -77,17 +76,9 @@ public class CreateFromTemplateGroup extends ActionGroup{
     });
     List<AnAction> result = new ArrayList<AnAction>();
 
-    final CreateFromTemplateActionReplacer[] actionFactories =
-      ApplicationManager.getApplication().getExtensions(CreateFromTemplateActionReplacer.CREATE_FROM_TEMPLATE_REPLACER);
     for (FileTemplate template : templates) {
       if (canCreateFromTemplate(e, template)) {
-        AnAction action = null;
-        for (CreateFromTemplateActionReplacer actionFactory : actionFactories) {
-          action = actionFactory.replaceCreateFromFileTemplateAction(template);
-          if (action != null) {
-            break;
-          }
-        }
+        AnAction action = replaceAction(template);
         if (action == null) {
           action = new CreateFromTemplateAction(template);
         }
@@ -107,6 +98,18 @@ public class CreateFromTemplateGroup extends ActionGroup{
     return result.toArray(new AnAction[result.size()]);
 }
 
+  private static AnAction replaceAction(final FileTemplate template) {
+    final CreateFromTemplateActionReplacer[] actionFactories =
+      ApplicationManager.getApplication().getExtensions(CreateFromTemplateActionReplacer.CREATE_FROM_TEMPLATE_REPLACER);
+    for (CreateFromTemplateActionReplacer actionFactory : actionFactories) {
+      AnAction action = actionFactory.replaceCreateFromFileTemplateAction(template);
+      if (action != null) {
+        return action;
+      }
+    }
+    return null;
+  }
+
   private static boolean canCreateFromTemplate(AnActionEvent e, FileTemplate template){
     if (e == null) return false;
     DataContext dataContext = e.getDataContext();
@@ -119,10 +122,10 @@ public class CreateFromTemplateGroup extends ActionGroup{
     return FileTemplateUtil.canCreateFromTemplate(dirs, template);
   }
 
-  private static class CreateFromTemplatesAction extends AnAction{
+  private static abstract class CreateFromTemplateActionBase extends AnAction{
 
-    public CreateFromTemplatesAction(String title){
-      super(title);
+    public CreateFromTemplateActionBase(final String title, final String description, final Icon icon) {
+      super (title,description,icon);
     }
 
     public final void actionPerformed(AnActionEvent e){
@@ -137,76 +140,47 @@ public class CreateFromTemplateGroup extends ActionGroup{
       PsiDirectory dir = PackageUtil.getOrChooseDirectory(view);
       if (dir == null) return;
 
-      SelectTemplateDialog dialog = new SelectTemplateDialog(project, dir);
-      dialog.show();
-      FileTemplate selectedTemplate = dialog.getSelectedTemplate();
+      FileTemplate selectedTemplate = getTemplate(project, dir);
       if(selectedTemplate != null){
-        PsiElement createdElement = showCreateFromTemplateDialog(project, dir, selectedTemplate);
-        if (createdElement != null){
-          view.selectElement(createdElement);
+        AnAction action = getReplacedAction(selectedTemplate);
+        if (action != null) {
+          action.actionPerformed(e);
+        }
+        else {
+          FileTemplateManager.getInstance().addRecentName(selectedTemplate.getName());
+          PsiElement createdElement = new CreateFromTemplateDialog(project, dir, selectedTemplate).create();
+          if (createdElement != null) {
+            view.selectElement(createdElement);
+          }
         }
       }
     }
 
+    @Nullable
+    protected abstract AnAction getReplacedAction(final FileTemplate selectedTemplate);
+
+    protected abstract FileTemplate getTemplate(final Project project, final PsiDirectory dir);
   }
 
-  private static PsiElement showCreateFromTemplateDialog(Project project, PsiDirectory directory, FileTemplate template){
-    CreateFromTemplateDialog dialog;
-    try{
-      dialog = new CreateFromTemplateDialog(project, directory, template);
+  private static class CreateFromTemplatesAction extends CreateFromTemplateActionBase{
+
+    public CreateFromTemplatesAction(String title){
+      super(title,null,null);
     }
-    catch (ParseException ex){
-      String message = IdeBundle.message("error.unable.to.parse.template.message", template.getName(), ex.getMessage());
-      Messages.showMessageDialog(project, message, IdeBundle.message("error.invalid.template"), Messages.getErrorIcon());
-      LOG.debug(message);
-      LOG.debug(ex);
-      return null;
+
+    protected AnAction getReplacedAction(final FileTemplate template) {
+      return replaceAction(template);
     }
-    if(needToShowDialog(template)){
+
+    protected FileTemplate getTemplate(final Project project, final PsiDirectory dir) {
+      SelectTemplateDialog dialog = new SelectTemplateDialog(project, dir);
       dialog.show();
-      return dialog.getCreatedElement();
-    }
-    else{
-      Properties defaultProperties = FileTemplateManager.getInstance().getDefaultProperties();
-      Properties properties = new Properties(defaultProperties);
-      LOG.assertTrue(template.isJavaClassTemplate());
-      if(template.isJavaClassTemplate()){
-        String packageName = directory.getPackage().getQualifiedName();
-        properties.setProperty(FileTemplateUtil.PACKAGE_ATTR, packageName);
-      }
-      PsiElement[] element = new PsiElement[1];
-      try{
-        String fileName = null;
-        FileTemplateUtil.createFromTemplate(element, template, fileName, properties, project, directory);
-      }
-      catch (Exception e){
-        Messages.showMessageDialog(project, e.getMessage(), template.isJavaClassTemplate()
-                                                            ? IdeBundle.message("title.cannot.create.class")
-                                                            : IdeBundle.message("title.cannot.create.file"), Messages.getErrorIcon());
-      }
-      return element[0];
+      return dialog.getSelectedTemplate();
     }
   }
 
-  /**
-   * @return false if all template attributes can be defined.
-   */
-  private static boolean needToShowDialog(FileTemplate template){
-    if(template == null) return false;
-    if(!template.isJavaClassTemplate()) return true;  //Will show filename attribute
+  private static class CreateFromTemplateAction extends CreateFromTemplateActionBase{
 
-    Properties defaultProperties = FileTemplateManager.getInstance().getDefaultProperties();
-    defaultProperties.put(FileTemplateUtil.PACKAGE_ATTR, FileTemplateUtil.PACKAGE_ATTR);
-
-    try {
-      return template.getUnsetAttributes(defaultProperties).length > 0;
-    } catch (ParseException e) {
-      throw new RuntimeException(IdeBundle.message("error.unable.to.parse.template", template.getName()), e);
-    }
-  }
-
-
-  private static class CreateFromTemplateAction extends AnAction{
     private FileTemplate myTemplate;
 
     public CreateFromTemplateAction(FileTemplate template){
@@ -214,22 +188,13 @@ public class CreateFromTemplateGroup extends ActionGroup{
       myTemplate = template;
     }
 
-    public final void actionPerformed(AnActionEvent e){
-      DataContext dataContext = e.getDataContext();
+    @Nullable
+    protected AnAction getReplacedAction(final FileTemplate template) {
+      return null;
+    }
 
-      IdeView view = (IdeView)dataContext.getData(DataConstantsEx.IDE_VIEW);
-      if (view == null) {
-        return;
-      }
-      Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-
-      FileTemplateManager.getInstance().addRecentName(myTemplate.getName());
-      PsiDirectory dir = PackageUtil.getOrChooseDirectory(view);
-      if (dir == null) return;
-      PsiElement createdElement = showCreateFromTemplateDialog(project, dir, myTemplate);
-      if (createdElement != null){
-        view.selectElement(createdElement);
-      }
+    protected FileTemplate getTemplate(final Project project, final PsiDirectory dir) {
+      return myTemplate;
     }
 
     public void update(AnActionEvent e){
