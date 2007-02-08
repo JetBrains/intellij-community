@@ -194,7 +194,6 @@ public abstract class PassExecutorService {
 
     public void run() {
       log(myUpdateProgress, "Started " , myPass);
-      Thread.currentThread().setName("Highlighting pass " + myPass);
 
       if (myUpdateProgress.isCanceled()) return;
 
