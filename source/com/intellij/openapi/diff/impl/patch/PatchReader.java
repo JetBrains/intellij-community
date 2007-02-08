@@ -32,7 +32,7 @@ public class PatchReader {
   private DiffFormat myDiffFormat = null;
   @NonNls private static final String CONTEXT_HUNK_PREFIX = "***************";
   @NonNls private static final String CONTEXT_FILE_PREFIX = "*** ";
-  @NonNls private static final Pattern ourUnifiedHunkStartPattern = Pattern.compile("@@ -(\\d+),(\\d+) \\+(\\d+),(\\d+) @@.*");
+  @NonNls private static final Pattern ourUnifiedHunkStartPattern = Pattern.compile("@@ -(\\d+)(,(\\d+))? \\+(\\d+)(,(\\d+))? @@.*");
   @NonNls private static final Pattern ourContextBeforeHunkStartPattern = Pattern.compile("\\*\\*\\* (\\d+),(\\d+) \\*\\*\\*\\*");
   @NonNls private static final Pattern ourContextAfterHunkStartPattern = Pattern.compile("--- (\\d+),(\\d+) ----");
 
@@ -120,9 +120,11 @@ public class PatchReader {
       throw new PatchSyntaxException(myLineIndex, "Unknown hunk start syntax");
     }
     int startLineBefore = Integer.parseInt(m.group(1));
-    int linesBefore = Integer.parseInt(m.group(2));
-    int startLineAfter = Integer.parseInt(m.group(3));
-    int linesAfter = Integer.parseInt(m.group(4));
+    final String linesBeforeText = m.group(3);
+    int linesBefore = linesBeforeText == null ? 1 : Integer.parseInt(linesBeforeText);
+    int startLineAfter = Integer.parseInt(m.group(4));
+    final String linesAfterText = m.group(6);
+    int linesAfter = linesAfterText == null ? 1 : Integer.parseInt(linesAfterText);
     PatchHunk hunk = new PatchHunk(startLineBefore-1, startLineBefore+linesBefore-1, startLineAfter-1, startLineAfter+linesAfter-1);
     myLineIndex++;
     PatchLine lastLine = null;
