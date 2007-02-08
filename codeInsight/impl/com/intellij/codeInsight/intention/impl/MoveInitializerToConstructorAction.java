@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -36,7 +37,6 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
 
   public boolean isAvailable(Project project, Editor editor, @Nullable PsiElement element) {
     if (element == null) return false;
-    int offset = editor.getCaretModel().getOffset();
     if (element instanceof PsiCompiledElement) return false;
     final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false, PsiMember.class, PsiCodeBlock.class, PsiDocComment.class);
     if (field == null || field.hasModifierProperty(PsiModifier.STATIC)) return false;
@@ -77,6 +77,10 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
     PsiElement toMove = null;
     for (PsiMethod constructor : constructorsToAddInitialization) {
       PsiCodeBlock codeBlock = constructor.getBody();
+      if (codeBlock == null) {
+        CreateFromUsageUtils.setupMethodBody(constructor);
+        codeBlock = constructor.getBody();
+      }
       PsiElement added = addAssignment(codeBlock, field);
       if (toMove == null) toMove = added;
     }
@@ -87,7 +91,7 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
     }
   }
 
-  private static PsiElement addAssignment(final PsiCodeBlock codeBlock, final PsiField field) throws IncorrectOperationException {
+  private static PsiElement addAssignment(@NotNull PsiCodeBlock codeBlock, @NotNull PsiField field) throws IncorrectOperationException {
     PsiElementFactory factory = codeBlock.getManager().getElementFactory();
     PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(field.getName()+" = y;", codeBlock);
     PsiAssignmentExpression expression = (PsiAssignmentExpression)statement.getExpression();

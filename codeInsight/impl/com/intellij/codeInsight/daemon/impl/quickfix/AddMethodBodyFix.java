@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class AddMethodBodyFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddMethodBodyFix");
@@ -20,10 +21,12 @@ public class AddMethodBodyFix implements IntentionAction {
     myMethod = method;
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("add.method.body.text");
   }
 
+  @NotNull
   public String getFamilyName() {
     return getText();
   }
