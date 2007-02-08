@@ -43,7 +43,7 @@ import java.util.Set;
 public class PsiDocumentManagerImpl extends PsiDocumentManager implements ProjectComponent, DocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   private static final Key<PsiFile> HARD_REF_TO_PSI = new Key<PsiFile>("HARD_REFERENCE_TO_PSI");
-  static final Key<Boolean> KEY_COMMITING = new Key<Boolean>("Commiting");
+  private static final Key<Boolean> KEY_COMMITING = new Key<Boolean>("Commiting");
 
   private final Project myProject;
   private final PsiManager myPsiManager;
@@ -232,7 +232,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
   }  
 
-  public <T> T commitAndRunReadAction(final Computable<T> computation) {
+  public <T> T commitAndRunReadAction(@NotNull final Computable<T> computation) {
     final Ref<T> ref = Ref.create(null);
     commitAndRunReadAction(new Runnable() {
       public void run() {
@@ -242,7 +242,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     return ref.get();
   }
 
-  public void commitAndRunReadAction(final Runnable runnable) {
+  public void commitAndRunReadAction(@NotNull final Runnable runnable) {
     final Application application = ApplicationManager.getApplication();
     if (SwingUtilities.isEventDispatchThread()){
       commitAllDocuments();
@@ -307,26 +307,26 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
   }
 
-  public void addListener(Listener listener) {
+  public void addListener(@NotNull Listener listener) {
     synchronized (myListeners) {
       myListeners.add(listener);
       myCachedListeners = null;
     }
   }
 
-  public void removeListener(Listener listener) {
+  public void removeListener(@NotNull Listener listener) {
     synchronized (myListeners) {
       myListeners.remove(listener);
       myCachedListeners = null;
     }
   }
 
-  public boolean isDocumentBlockedByPsi(Document doc) {
+  public boolean isDocumentBlockedByPsi(@NotNull Document doc) {
     final FileViewProvider viewProvider = getCachedViewProvider(doc);
     return viewProvider != null && viewProvider.isLockedByPsiOperations();
   }
 
-  public void doPostponedOperationsAndUnblockDocument(Document doc) {
+  public void doPostponedOperationsAndUnblockDocument(@NotNull Document doc) {
     final PostprocessReformattingAspect component = myProject.getComponent(PostprocessReformattingAspect.class);
     final FileViewProvider viewProvider = getCachedViewProvider(doc);
     if(viewProvider != null) component.doPostponedFormatting(viewProvider);

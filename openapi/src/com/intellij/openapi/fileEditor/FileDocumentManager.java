@@ -28,40 +28,40 @@ public abstract class FileDocumentManager {
     return ApplicationManager.getApplication().getComponent(FileDocumentManager.class);
   }
 
-  public abstract Document getDocument(VirtualFile file);
+  public abstract Document getDocument(@NotNull VirtualFile file);
 
   @Nullable
-  public abstract Document getCachedDocument(VirtualFile file);
+  public abstract Document getCachedDocument(@NotNull VirtualFile file);
 
-  public abstract VirtualFile getFile(Document document);
+  public abstract VirtualFile getFile(@NotNull Document document);
 
   public abstract void saveAllDocuments();
-  public abstract void saveDocument(Document document);
-  public abstract Document[] getUnsavedDocuments();
-  public abstract boolean isDocumentUnsaved(Document document);
-  public abstract boolean isFileModified(VirtualFile file);
+  public abstract void saveDocument(@NotNull Document document);
+  public abstract @NotNull Document[] getUnsavedDocuments();
+  public abstract boolean isDocumentUnsaved(@NotNull Document document);
+  public abstract boolean isFileModified(@NotNull VirtualFile file);
 
-  public abstract void addFileDocumentSynchronizationVetoer(FileDocumentSynchronizationVetoListener vetoer);
-  public abstract void removeFileDocumentSynchronizationVetoer(FileDocumentSynchronizationVetoListener vetoer);
-
-  /**
-   * @deprecated Subscribe to {@link com.intellij.AppTopics#FILE_DOCUMENT_SYNC} on any level bus.
-   */
-  public abstract void addFileDocumentManagerListener(FileDocumentManagerListener listener);
+  public abstract void addFileDocumentSynchronizationVetoer(@NotNull FileDocumentSynchronizationVetoListener vetoer);
+  public abstract void removeFileDocumentSynchronizationVetoer(@NotNull FileDocumentSynchronizationVetoListener vetoer);
 
   /**
    * @deprecated Subscribe to {@link com.intellij.AppTopics#FILE_DOCUMENT_SYNC} on any level bus.
    */
-  public abstract void removeFileDocumentManagerListener(FileDocumentManagerListener listener);
+  public abstract void addFileDocumentManagerListener(@NotNull FileDocumentManagerListener listener);
 
-  public abstract void reloadFromDisk(Document document);
+  /**
+   * @deprecated Subscribe to {@link com.intellij.AppTopics#FILE_DOCUMENT_SYNC} on any level bus.
+   */
+  public abstract void removeFileDocumentManagerListener(@NotNull FileDocumentManagerListener listener);
+
+  public abstract void reloadFromDisk(@NotNull Document document);
 
   @NotNull
   public abstract String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project);
 
-  public static boolean fileForDocumentCheckedOutSuccessfully(final Document document, final Project project) {
+  public static boolean fileForDocumentCheckedOutSuccessfully(@NotNull Document document, Project project) {
     if (project != null) {
-      final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      final VirtualFile file = getInstance().getFile(document);
       if (file != null) {
         final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file);
         return !operationStatus.hasReadonlyFiles();

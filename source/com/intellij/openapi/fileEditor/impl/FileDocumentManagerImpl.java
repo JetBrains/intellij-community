@@ -22,7 +22,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -33,7 +32,6 @@ import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
 import com.intellij.psi.PsiExternalChangeAction;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.EventDispatcher;
@@ -63,17 +61,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   private EventDispatcher<FileDocumentSynchronizationVetoListener> myVetoDispatcher = EventDispatcher.create(FileDocumentSynchronizationVetoListener.class);
 
-  private final PsiManagerConfiguration myPsiManagerConfiguration;
-  private final ProjectManagerEx myProjectManagerEx;
   private VirtualFileManager myVirtualFileManager;
   private MessageBus myBus;
 
 
-  public FileDocumentManagerImpl(VirtualFileManager virtualFileManager,
-                                 PsiManagerConfiguration psiManagerConfiguration,
-                                 ProjectManagerEx projectManagerEx) {
-    myPsiManagerConfiguration = psiManagerConfiguration;
-    myProjectManagerEx = projectManagerEx;
+  public FileDocumentManagerImpl(VirtualFileManager virtualFileManager) {
     myVirtualFileManager = virtualFileManager;
 
     myVirtualFileManager.addVirtualFileListener(this);
@@ -93,7 +85,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   public void disposeComponent() {
   }
 
-  public Document getDocument(VirtualFile file) {
+  public Document getDocument(@NotNull VirtualFile file) {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document == null){
       if (file.isDirectory() || file.getFileType().isBinary() && file.getFileType() != StdFileTypes.CLASS) return null;
@@ -137,7 +129,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   @Nullable
-  public Document getCachedDocument(VirtualFile file) {
+  public Document getCachedDocument(@NotNull VirtualFile file) {
     Reference<Document> reference = file.getUserData(DOCUMENT_KEY);
     Document document = reference != null ? reference.get() : null;
 
@@ -164,7 +156,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return fileType.isBinary() && !fileType.equals(StdFileTypes.CLASS);
   }
 
-  public VirtualFile getFile(Document document) {
+  public VirtualFile getFile(@NotNull Document document) {
     return document.getUserData(FILE_KEY);
   }
 
@@ -197,7 +189,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
-  public void saveDocument(final Document document) {
+  public void saveDocument(@NotNull final Document document) {
     if (!myUnsavedDocuments.contains(document)) return;
 
     ApplicationManager.getApplication().runWriteAction(
@@ -301,35 +293,36 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
+  @NotNull
   public Document[] getUnsavedDocuments() {
     return myUnsavedDocuments.toArray(new Document[myUnsavedDocuments.size()]);
   }
 
-  public boolean isDocumentUnsaved(Document document) {
+  public boolean isDocumentUnsaved(@NotNull Document document) {
     return myUnsavedDocuments.contains(document);
   }
 
-  public boolean isFileModified(VirtualFile file) {
+  public boolean isFileModified(@NotNull VirtualFile file) {
     final Document doc = getCachedDocument(file);
     return doc != null && doc.getModificationStamp() != file.getModificationStamp();
   }
 
-  public void addFileDocumentSynchronizationVetoer(FileDocumentSynchronizationVetoListener vetoer) {
+  public void addFileDocumentSynchronizationVetoer(@NotNull FileDocumentSynchronizationVetoListener vetoer) {
     myVetoDispatcher.addListener(vetoer);
   }
 
-  public void removeFileDocumentSynchronizationVetoer(FileDocumentSynchronizationVetoListener vetoer) {
+  public void removeFileDocumentSynchronizationVetoer(@NotNull FileDocumentSynchronizationVetoListener vetoer) {
     myVetoDispatcher.removeListener(vetoer);
   }
 
   private Map<FileDocumentManagerListener, MessageBusConnection> myAdapters = new HashMap<FileDocumentManagerListener, MessageBusConnection>();
-  public void addFileDocumentManagerListener(FileDocumentManagerListener listener) {
+  public void addFileDocumentManagerListener(@NotNull FileDocumentManagerListener listener) {
     final MessageBusConnection connection = myBus.connect();
     myAdapters.put(listener, connection);
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, listener);
   }
 
-  public void removeFileDocumentManagerListener(FileDocumentManagerListener listener) {
+  public void removeFileDocumentManagerListener(@NotNull FileDocumentManagerListener listener) {
     final MessageBusConnection connection = myAdapters.remove(listener);
     if (connection != null) {
       connection.disconnect();
@@ -390,7 +383,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
-  public void reloadFromDisk(final Document document) {
+  public void reloadFromDisk(@NotNull final Document document) {
     final VirtualFile file = getFile(document);
     try {
       fireBeforeFileContentReload(file, document);

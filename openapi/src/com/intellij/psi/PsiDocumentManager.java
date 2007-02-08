@@ -119,7 +119,7 @@ public abstract class PsiDocumentManager {
    *
    * @param runnable the operation to execute.
    */
-  public abstract void commitAndRunReadAction(Runnable runnable);
+  public abstract void commitAndRunReadAction(@NotNull Runnable runnable);
 
   /**
    * Commits the documents and runs the specified operation, which returns a value, in a read action.
@@ -128,7 +128,7 @@ public abstract class PsiDocumentManager {
    * @param computation the operation to execute.
    * @return the value returned by the operation.
    */
-  public abstract <T> T commitAndRunReadAction(final Computable<T> computation);
+  public abstract <T> T commitAndRunReadAction(@NotNull Computable<T> computation);
 
   /**
    * Listener for receiving notifications about creation of {@link Document} and {@link PsiFile} instances.
@@ -158,16 +158,16 @@ public abstract class PsiDocumentManager {
    *
    * @param listener the listener to add.
    */
-  public abstract void addListener(Listener listener);
+  public abstract void addListener(@NotNull Listener listener);
 
   /**
    * Removes a listener for receiving notifications about creation of {@link Document} and {@link PsiFile} instances.
    *
    * @param listener the listener to add.
    */
-  public abstract void removeListener(Listener listener);
+  public abstract void removeListener(@NotNull Listener listener);
 
-  public abstract boolean isDocumentBlockedByPsi(Document doc);
+  public abstract boolean isDocumentBlockedByPsi(@NotNull Document doc);
 
-  public abstract void doPostponedOperationsAndUnblockDocument(Document doc);
+  public abstract void doPostponedOperationsAndUnblockDocument(@NotNull Document doc);
 }
