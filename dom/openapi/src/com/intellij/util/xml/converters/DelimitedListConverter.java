@@ -155,9 +155,9 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     return new MyPsiReference(element, new TextRange(start, end), context, genericDomValue);
   }
 
-  private class MyPsiReference extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
-    private final ConvertContext myContext;
-    private final GenericDomValue<List<T>> myGenericDomValue;
+  protected class MyPsiReference extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
+    protected final ConvertContext myContext;
+    protected final GenericDomValue<List<T>> myGenericDomValue;
 
     public MyPsiReference(final PsiElement element, final TextRange range, final ConvertContext context, final GenericDomValue<List<T>> genericDomValue) {
       super(element, range);
