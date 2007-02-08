@@ -83,7 +83,8 @@ public class JobSchedulerImpl extends JobScheduler {
   }
 
   public static int currentTaskIndex() {
-    return ourQueue.isEmpty() ? 0 : ((PrioritizedFutureTask)ourQueue.peek()).getTaskIndex();
+    final PrioritizedFutureTask topTask = (PrioritizedFutureTask)ourQueue.peek();
+    return topTask == null ? 0 : topTask.getTaskIndex();
   }
 
   public static long currentJobIndex() {
