@@ -9,6 +9,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.ui.DomUIFactory;
+import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
@@ -20,7 +21,7 @@ import java.util.Map;
  */
 public class InvocationCache {
   private static final Map<JavaMethodSignature, Invocation> ourCoreInvocations = new HashMap<JavaMethodSignature, Invocation>();
-  private final Map<JavaMethodSignature, Invocation> myInvocations = new HashMap<JavaMethodSignature, Invocation>();
+  private final Map<JavaMethodSignature, Invocation> myInvocations = new ConcurrentHashMap<JavaMethodSignature, Invocation>();
 
   static {
     addCoreInvocations(DomElement.class);
