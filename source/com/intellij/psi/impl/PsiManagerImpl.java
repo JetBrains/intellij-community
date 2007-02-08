@@ -69,6 +69,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
@@ -104,7 +105,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   private VirtualFileFilter myAssertOnFileLoadingFilter = VirtualFileFilter.NONE;
 
-  private int myBatchFilesProcessingModeCount = 0;
+  private AtomicInteger myBatchFilesProcessingModeCount = new AtomicInteger(0);
 
   private static final Key<PsiFile> CACHED_PSI_FILE_COPY_IN_FILECONTENT = Key.create("CACHED_PSI_FILE_COPY_IN_FILECONTENT");
   public static final int BEFORE_CHILD_ADDITION = 0;
@@ -1085,16 +1086,16 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void startBatchFilesProcessingMode() {
-    myBatchFilesProcessingModeCount++;
+    myBatchFilesProcessingModeCount.incrementAndGet();
   }
 
   public void finishBatchFilesProcessingMode() {
-    myBatchFilesProcessingModeCount--;
-    LOG.assertTrue(myBatchFilesProcessingModeCount >= 0);
+    myBatchFilesProcessingModeCount.decrementAndGet();
+    LOG.assertTrue(myBatchFilesProcessingModeCount.get() >= 0);
   }
 
   public boolean isBatchFilesProcessingMode() {
-    return myBatchFilesProcessingModeCount > 0;
+    return myBatchFilesProcessingModeCount.get() > 0;
   }
 
   @NotNull
