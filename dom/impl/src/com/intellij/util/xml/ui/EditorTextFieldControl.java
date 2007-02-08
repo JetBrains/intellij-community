@@ -48,10 +48,12 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
     }
   };
   private final EditorTextFieldControlHighlighter myHighlighter;
+  private final PsiDocumentManager myPsiDocumentManager;
 
   protected EditorTextFieldControl(final DomWrapper<String> domWrapper, final boolean commitOnEveryChange) {
     super(domWrapper);
     myHighlighter = EditorTextFieldControlHighlighter.getEditorTextFieldControlHighlighter(getProject());
+    myPsiDocumentManager = PsiDocumentManager.getInstance(getProject());
     myCommitOnEveryChange = commitOnEveryChange;
   }
 
@@ -112,7 +114,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
   }
 
   private PsiCodeFragment getPsiFile(@NotNull final T boundedComponent) {
-    return (PsiCodeFragment)PsiDocumentManager.getInstance(getProject()).getPsiFile(getEditorTextField(boundedComponent).getDocument());
+    return (PsiCodeFragment)myPsiDocumentManager.getPsiFile(getEditorTextField(boundedComponent).getDocument());
   }
 
   protected abstract T createMainComponent(T boundedComponent, Project project);
