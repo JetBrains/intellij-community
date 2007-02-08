@@ -5,20 +5,11 @@ import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.projectRoots.ex.OrdersMerger;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectHashingStrategy;
-
-import java.util.*;
 
 /**
  * User: lex
@@ -77,6 +68,9 @@ public class JavaParametersUtil {
 
   @Deprecated
   public static void configureClassPath(final JavaParameters parameters, Project project, final String jreHome) throws CantRunException {
+    configureProject(project, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
+  }
+  /*
     final List<CommandLineEntry> common = getClassPath(project);
 
     final ProjectJdk jdk;
@@ -185,4 +179,5 @@ public class JavaParametersUtil {
       parameters.getClassPath().add(myClassPath);
     }
   }
+  */
 }
