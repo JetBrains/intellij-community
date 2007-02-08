@@ -103,8 +103,13 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
       final CvsResult result = cvsOperationExecutor.getResult();
       return new UpdateSessionAdapter(result.getErrorsAndWarnings(), result.isCanceled() || !result.isLoggedIn()) {
         public void onRefreshFilesCompleted() {
-          if (!updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty()) {
-            invokeManualMerging(updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID), myProject);
+          if (!updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty() ||
+              !updatedFiles.getGroupById(CvsUpdatePolicy.BINARY_MERGED_ID).isEmpty()) {
+            Collection<String> paths = new ArrayList<String>();
+            paths.addAll(updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles());
+            paths.addAll(updatedFiles.getGroupById(CvsUpdatePolicy.BINARY_MERGED_ID).getFiles());
+
+            invokeManualMerging(paths, myProject);
           }
         }
       };
@@ -115,8 +120,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
     }
   }
 
-  private static void invokeManualMerging(FileGroup mergedWithConflict, Project project) {
-    Collection<String> paths = mergedWithConflict.getFiles();
+  private static void invokeManualMerging(Collection<String> paths, Project project) {
     Map<VirtualFile, List<String>> fileToRevisions = new LinkedHashMap<VirtualFile, List<String>>();
     final List<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
     for (final String path : paths) {
