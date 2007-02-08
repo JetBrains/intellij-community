@@ -18,17 +18,12 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
-import com.intellij.util.LogicalRoot;
-import com.intellij.util.LogicalRootsManager;
 import com.intellij.util.Options;
-import com.intellij.util.NotNullFunction;
 import org.apache.oro.text.regex.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -256,7 +251,10 @@ public class CompilerConfiguration implements JDOMExternalizable, ProjectCompone
       Pattern pattern = myWildcardCompiledPatterns.get(i);
       final String wildcard = myWildcardPatterns.get(i);
       try {
-        final boolean matches = myPatternMatcher.matches(name, pattern);
+        final boolean matches;
+        synchronized (myPatternMatcher) {
+          matches = myPatternMatcher.matches(name, pattern);
+        }
         if (isPatternNegated(wildcard) ? !matches : matches) {
           return true;
         }
