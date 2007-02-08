@@ -8,6 +8,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.make.BuildParticipantBase;
 import com.intellij.openapi.compiler.make.BuildRecipe;
+import com.intellij.openapi.compiler.make.BuildConfiguration;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.deployment.LibraryLink;
 import com.intellij.openapi.deployment.ModuleLink;
@@ -39,33 +40,33 @@ public class PluginBuildParticipant extends BuildParticipantBase {
   @NonNls private static final String LIB = "/lib/";
   @NonNls private static final String LIB_DIRECTORY = "lib";
 
+  public PluginBuildParticipant(final Module module) {
+    super(module);
+  }
 
-  public void registerBuildInstructions(final Module module, final BuildRecipe instructions, final CompileContext context) {
-    if (module.getModuleType() != PluginModuleType.getInstance()) {
-      return;
-    }
-    ProjectJdk jdk = IdeaJdk.findIdeaJdk(ModuleRootManager.getInstance(module).getJdk());
+  public void registerBuildInstructions(final BuildRecipe instructions, final CompileContext context) {
+    ProjectJdk jdk = IdeaJdk.findIdeaJdk(ModuleRootManager.getInstance(getModule()).getJdk());
     if (jdk != null && IdeaJdk.isFromIDEAProject(jdk.getHomePath())) {
       return;
     }
 
-    super.registerBuildInstructions(module, instructions, context);
+    super.registerBuildInstructions(instructions, context);
 
     if (jdk == null) {
-      context.addMessage(CompilerMessageCategory.ERROR, DevKitBundle.message("jdk.type.incorrect", module.getName()), null, -1, -1);
+      context.addMessage(CompilerMessageCategory.ERROR, DevKitBundle.message("jdk.type.incorrect", getModule().getName()), null, -1, -1);
       return;
     }
 
-    final Module[] wrongSetDependencies = PluginBuildUtil.getWrongSetDependencies(module);
+    final Module[] wrongSetDependencies = PluginBuildUtil.getWrongSetDependencies(getModule());
     if (wrongSetDependencies.length != 0) {
       boolean realProblems = false;
-      final String pluginId = DescriptorUtil.getPluginId(module);
+      final String pluginId = DescriptorUtil.getPluginId(getModule());
 
       for (Module dependency : wrongSetDependencies) {
         if (!PluginModuleType.isOfType(dependency)) {
           realProblems = true;
           context.addMessage(CompilerMessageCategory.ERROR,
-                             DevKitBundle.message("incorrect.dependency.non-plugin-module", dependency.getName(), module.getName()), null,
+                             DevKitBundle.message("incorrect.dependency.non-plugin-module", dependency.getName(), getModule().getName()), null,
                              -1, -1);
         }
         else {
@@ -85,7 +86,7 @@ public class PluginBuildParticipant extends BuildParticipantBase {
             // make this a warning instead?
             realProblems = true;
             context.addMessage(CompilerMessageCategory.ERROR,
-                               DevKitBundle.message("incorrect.dependency.not-declared", dependency.getName(), module.getName()), null, -1,
+                               DevKitBundle.message("incorrect.dependency.not-declared", dependency.getName(), getModule().getName()), null, -1,
                                -1);
           }
         }
@@ -93,30 +94,30 @@ public class PluginBuildParticipant extends BuildParticipantBase {
       if (realProblems) return;
     }
 
-    final PluginBuildConfiguration moduleBuild = PluginBuildConfiguration.getInstance(module);
+    final PluginBuildConfiguration moduleBuild = PluginBuildConfiguration.getInstance(getModule());
     final String explodedPath = moduleBuild.getExplodedPath();
     if (explodedPath == null) return; //where to put everything?
     HashSet<Module> modules = new HashSet<Module>();
-    PluginBuildUtil.getDependencies(module, modules);
+    PluginBuildUtil.getDependencies(getModule(), modules);
 
     ModuleLink[] containingModules = new ModuleLink[modules.size()];
     int i = 0;
     final DeploymentUtil makeUtil = DeploymentUtil.getInstance();
     for (Module dep : modules) {
-      ModuleLink link = makeUtil.createModuleLink(dep, module);
+      ModuleLink link = makeUtil.createModuleLink(dep, getModule());
       containingModules[i++] = link;
       link.setPackagingMethod(PackagingMethod.COPY_FILES);
       link.setURI(CLASSES);
     }
 
     // output may be excluded, copy it nevertheless
-    makeUtil.addModuleOutputContents(context, instructions, module, module, CLASSES, explodedPath, null);
+    makeUtil.addModuleOutputContents(context, instructions, getModule(), getModule(), CLASSES, explodedPath, null);
 
     // child Java utility modules
-    makeUtil.addJavaModuleOutputs(module, containingModules, instructions, context, explodedPath);
+    makeUtil.addJavaModuleOutputs(getModule(), containingModules, instructions, context, explodedPath);
 
     HashSet<Library> libs = new HashSet<Library>();
-    PluginBuildUtil.getLibraries(module, libs);
+    PluginBuildUtil.getLibraries(getModule(), libs);
     for (Module dependentModule : modules) {
       PluginBuildUtil.getLibraries(dependentModule, libs);
     }
@@ -124,7 +125,7 @@ public class PluginBuildParticipant extends BuildParticipantBase {
     final LibraryLink[] libraryLinks = new LibraryLink[libs.size()];
     i = 0;
     for (Library library : libs) {
-      LibraryLink link = makeUtil.createLibraryLink(library, module);
+      LibraryLink link = makeUtil.createLibraryLink(library, getModule());
       libraryLinks[i++] = link;
       link.setPackagingMethod(PackagingMethod.COPY_FILES);
       final String singleFileName = link.getSingleFileName();
@@ -156,16 +157,19 @@ public class PluginBuildParticipant extends BuildParticipantBase {
                              -1, -1);
         }
       }
-      makeUtil.addLibraryLink(context, instructions, libraryLink, module, explodedPath);
+      makeUtil.addLibraryLink(context, instructions, libraryLink, getModule(), explodedPath);
     }
   }
 
-  protected ConfigFile[] getDeploymentDescriptors(final Module module) {
-    final PluginBuildConfiguration moduleBuildProperties = (PluginBuildConfiguration)PluginBuildConfiguration.getInstance(module);
+  protected ConfigFile[] getDeploymentDescriptors() {
+    final PluginBuildConfiguration moduleBuildProperties = PluginBuildConfiguration.getInstance(getModule());
     if (moduleBuildProperties == null) {
       return ConfigFile.EMPTY_ARRAY;
     }
     return new ConfigFile[]{moduleBuildProperties.getPluginXML()};
   }
 
+  public BuildConfiguration getBuildConfiguration() {
+    return PluginBuildConfiguration.getInstance(getModule());
+  }
 }

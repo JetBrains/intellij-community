@@ -13,7 +13,7 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
     <antBuildGen implementation="org.jetbrains.idea.devkit.build.ant.ChunkBuildPluginExtension"/>
-    <compiler.buildParticipant implementation="org.jetbrains.idea.devkit.build.PluginBuildParticipant"/>
+    <compiler.buildParticipantProvider implementation="org.jetbrains.idea.devkit.build.PluginBuildParticipantProvider"/>
   </extensions>
 
   <application-components>
