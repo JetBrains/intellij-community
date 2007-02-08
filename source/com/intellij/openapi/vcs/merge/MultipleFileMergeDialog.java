@@ -117,6 +117,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
         updateButtonState();
       }
     });
+    myTable.getSelectionModel().setSelectionInterval(0, 0);
   }
 
   private void updateButtonState() {
@@ -227,9 +228,16 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       DiffRequestFactory diffRequestFactory = PeerFactory.getInstance().getDiffRequestFactory();
       MergeRequest request = diffRequestFactory.createMergeRequest(leftText, rightText, originalText, file, myProject,
                                                                    ActionButtonPresentation.createApplyButton());
+      String lastVersionTitle;
+      if (mergeData.LAST_REVISION_NUMBER != null) {
+        lastVersionTitle = VcsBundle.message("merge.version.title.last.version.number", mergeData.LAST_REVISION_NUMBER.asString());
+      }
+      else {
+        lastVersionTitle = VcsBundle.message("merge.version.title.last.version");
+      }
       request.setVersionTitles(new String[]{VcsBundle.message("merge.version.title.local.changes"),
         VcsBundle.message("merge.version.title.merge.result"),
-        VcsBundle.message("merge.version.title.last.version")});
+        lastVersionTitle});
       request.setWindowTitle(VcsBundle.message("multiple.file.merge.request.title"));
       DiffManager.getInstance().getDiffTool().show(request);
       if (request.getResult() == DialogWrapper.OK_EXIT_CODE) {

@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.vcs.merge;
 
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Created by IntelliJ IDEA.
  * User: lesya
@@ -26,4 +29,6 @@ public class MergeData {
   public byte[] ORIGINAL;
   public byte[] LAST;
   public byte[] CURRENT;
+
+  @Nullable public VcsRevisionNumber LAST_REVISION_NUMBER;
 }
