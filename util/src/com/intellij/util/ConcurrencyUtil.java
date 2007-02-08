@@ -76,12 +76,10 @@ public class ConcurrencyUtil {
     });
   }
   public static ScheduledExecutorService newSingleScheduledThreadExecutor(@NonNls final String threadFactoryName) {
-    ScheduledThreadPoolExecutor threadPoolExecutor = new ScheduledThreadPoolExecutor(1);
-    threadPoolExecutor.setThreadFactory(new ThreadFactory() {
+    return new ScheduledThreadPoolExecutor(1,new ThreadFactory() {
       public Thread newThread(final Runnable r) {
         return new Thread(r, threadFactoryName);
       }
     });
-    return threadPoolExecutor;
   }
 }
