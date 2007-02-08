@@ -131,6 +131,9 @@ public class ShowDiffAction extends AnAction {
                                        final boolean showFrame) {
     Change selectedChange = changes [index];
     changes = filterDirectoryChanges(changes);
+    if (changes.length == 0) {
+      return;
+    }
     index = 0;
     for(int i=0; i<changes.length; i++) {
       if (changes [i] == selectedChange) {
