@@ -84,6 +84,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private boolean myRerun = false;
 
   private InspectionRVContentProvider myProvider;
+  private AnAction myIncludeAction;
+  private AnAction myExcludeAction;
 
   public InspectionResultsView(final Project project,
                                final InspectionProfile inspectionProfile,
@@ -228,7 +230,40 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     add(westPanel, BorderLayout.WEST);
   }
 
+  @SuppressWarnings({"NonStaticInitializer"})
   private JComponent createRightActionsToolbar() {
+    myIncludeAction = new AnAction(InspectionsBundle.message("inspections.result.view.include.action.text")){
+      {
+        registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
+      }
+
+      public void actionPerformed(AnActionEvent e) {
+        ((InspectionTreeNode)myTree.getSelectionPath().getLastPathComponent()).amnesty();
+        updateView(false);
+      }
+
+      public void update(final AnActionEvent e) {
+        final TreePath path = myTree.getSelectionPath();
+        e.getPresentation().setEnabled(path != null && !myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS);
+      }
+    };
+                                             
+    myExcludeAction = new AnAction(InspectionsBundle.message("inspections.result.view.exclude.action.text")) {
+      {
+        registerCustomShortcutSet(CommonShortcuts.DELETE, myTree);
+      }
+
+      public void actionPerformed(final AnActionEvent e) {
+        ((InspectionTreeNode)myTree.getSelectionPath().getLastPathComponent()).ignoreElement();
+        updateView(false);
+      }
+
+      public void update(final AnActionEvent e) {
+        final TreePath path = myTree.getSelectionPath();
+        e.getPresentation().setEnabled(path != null);
+      }
+    };
+
     DefaultActionGroup specialGroup = new DefaultActionGroup();
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupBySeverityAction(this));
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupByDirectoryAction(this));
@@ -615,7 +650,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return psiElements.toArray(new PsiElement[psiElements.size()]);
   }
 
-  @SuppressWarnings({"NonStaticInitializer"})
   private void popupInvoked(Component component, int x, int y) {
     final TreePath path;
     if (myTree.hasFocus()) {
@@ -632,31 +666,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     actions.add(actionManager.getAction(IdeActions.ACTION_EDIT_SOURCE));
     actions.add(actionManager.getAction(IdeActions.ACTION_FIND_USAGES));
 
-    actions.add(new AnAction(InspectionsBundle.message("inspections.result.view.include.action.text")){
-      {
-        registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
-      }
-
-      public void actionPerformed(AnActionEvent e) {
-        ((InspectionTreeNode)path.getLastPathComponent()).amnesty();
-        updateView(false);
-      }
-
-      public void update(final AnActionEvent e) {
-        e.getPresentation().setEnabled(!myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS);
-      }
-    });
-
-    actions.add(new AnAction(InspectionsBundle.message("inspections.result.view.exclude.action.text")) {
-      {
-        registerCustomShortcutSet(CommonShortcuts.DELETE, myTree);
-      }
-
-      public void actionPerformed(final AnActionEvent e) {
-        ((InspectionTreeNode)path.getLastPathComponent()).ignoreElement();
-        updateView(false);
-      }
-    });
+    actions.add(myIncludeAction);
+    actions.add(myExcludeAction);
 
     actions.addSeparator();
 
