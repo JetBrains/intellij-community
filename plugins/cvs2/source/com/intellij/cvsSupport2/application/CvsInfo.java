@@ -96,7 +96,7 @@ public class CvsInfo {
       loadCvsRoot();
       loadEntries();
       loadRepository();
-      loadStikyTag();
+      loadStickyTag();
 
       if (myRepository != null && myConnectionSettings != null && myConnectionSettings.REPOSITORY != null) {
         myRepository = CvsUtil.getRelativeRepositoryPath(myRepository, myConnectionSettings.REPOSITORY);
@@ -109,7 +109,7 @@ public class CvsInfo {
     }
   }
 
-  private void loadStikyTag() {
+  private void loadStickyTag() {
     myStickyTag = CvsUtil.loadStickyTagFrom(getParentFile());
   }
 
@@ -233,7 +233,7 @@ public class CvsInfo {
 
   private void checkStickyTagIsLoaded() {
     if (!myStickyTagIsLoaded){
-      loadStikyTag();
+      loadStickyTag();
       myStickyTagIsLoaded = true;
     }
   }
