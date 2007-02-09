@@ -65,10 +65,11 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention
                     ParenthesesUtils.getPrecedenceForBinaryOperator(javaToken);
             final int precedence2 =
                     ParenthesesUtils.getPrecedenceForBinaryOperator(newOperand);
-            if (precedence2 > precedence1) {
+            if (precedence1 > precedence2) {
                 final String expString = lhsText + '=' + lhsText + newOperand
                         + '(' + rhsText + ')';
                 replaceExpression(expString, assignmentExpression);
+                return;
             }
         }
         final String expString = lhsText + '=' + lhsText + newOperand + rhsText;

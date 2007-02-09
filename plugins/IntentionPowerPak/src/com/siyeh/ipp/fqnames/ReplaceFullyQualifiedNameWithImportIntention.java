@@ -129,7 +129,8 @@ public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
             extends PsiRecursiveElementVisitor {
 
         private final String fullyQualifiedText;
-        private final List shortenedElements = new ArrayList();
+        private final List<PsiJavaCodeReferenceElement> shortenedElements =
+                new ArrayList();
 
         QualificationRemover(String fullyQualifiedText) {
             this.fullyQualifiedText = fullyQualifiedText;
