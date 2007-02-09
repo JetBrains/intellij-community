@@ -393,39 +393,37 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     return myDisabledCounter > 0;
   }
 
+  private CodeFormatterFacade getFormatterFacade(final FileViewProvider viewProvider) {
+    final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myPsiManager.getProject());
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myPsiManager.getProject());
+    final Document document = viewProvider.getDocument();
+    final FileType fileType = viewProvider.getVirtualFile().getFileType();
+    final Helper helper = new Helper(fileType, myPsiManager.getProject());
+    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(styleSettings, helper);
+
+    documentManager.commitDocument(document);
+    return codeFormatter;
+  }
+
   private interface PostponedAction {
     void processRange(RangeMarker marker, final FileViewProvider viewProvider);
   }
 
   private class ReformatAction implements PostponedAction {
     public void processRange(RangeMarker marker, final FileViewProvider viewProvider) {
-      final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myPsiManager.getProject());
-      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myPsiManager.getProject());
-      final Document document = viewProvider.getDocument();
-      final FileType fileType = viewProvider.getVirtualFile().getFileType();
-      final Helper helper = new Helper(fileType, myPsiManager.getProject());
-      final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(styleSettings, helper);
-
-      documentManager.commitDocument(document);
+      final CodeFormatterFacade codeFormatter = getFormatterFacade(viewProvider);
       codeFormatter.processTextWithoutHeadWhitespace(viewProvider.getPsi(viewProvider.getBaseLanguage()),
                                                      marker.getStartOffset(), marker.getEndOffset());
     }
-
   }
 
   private class ReformatWithHeadingWhitespaceAction extends ReformatAction{
     public void processRange(RangeMarker marker, final FileViewProvider viewProvider) {
-      final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myPsiManager.getProject());
-      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myPsiManager.getProject());
-      final Document document = viewProvider.getDocument();
-      final FileType fileType = viewProvider.getVirtualFile().getFileType();
-      final Helper helper = new Helper(fileType, myPsiManager.getProject());
-      final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(styleSettings, helper);
-
-      documentManager.commitDocument(document);
+      final CodeFormatterFacade codeFormatter = getFormatterFacade(viewProvider);
       codeFormatter.processText(viewProvider.getPsi(viewProvider.getBaseLanguage()), marker.getStartOffset(),
                                 marker.getStartOffset() == marker.getEndOffset() ? marker.getEndOffset() + 1: marker.getEndOffset());
     }
+
   }
 
 

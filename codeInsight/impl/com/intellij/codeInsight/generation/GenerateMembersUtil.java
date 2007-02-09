@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.generation;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -7,8 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -45,7 +46,13 @@ public class GenerateMembersUtil {
     }
 
     if (anchor instanceof PsiWhiteSpace) {
+      final ASTNode spaceNode = anchor.getNode();
       anchor = anchor.getNextSibling();
+
+      if (spaceNode.getStartOffset() <= offset && spaceNode.getStartOffset() + spaceNode.getTextLength() >= offset) {
+        final ASTNode singleNewLineWhitespace = file.getManager().getElementFactory().createWhiteSpaceFromText(spaceNode.getText().substring(0, offset - spaceNode.getStartOffset())).getNode();
+        spaceNode.getTreeParent().replaceChild(spaceNode, singleNewLineWhitespace); // See http://jetbrains.net/jira/browse/IDEADEV-12837
+      }
     }
 
     // Q: shouldn't it be somewhere in PSI?
