@@ -58,7 +58,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
   }
 
   @NotNull
-  public PsiElement[] searchImplementations(final Editor editor,
+  public PsiElement[] searchImplementations(@Nullable Editor editor,
                                             final PsiFile file,
                                             final PsiElement element,
                                             int offset,
@@ -97,7 +97,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
   }
 
   protected ResultsFilter createFilter(Project project, final Editor editor, final PsiFile file, PsiElement element, final int offset) {
-    final PsiElement element1 = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, offset);
+    final PsiElement element1 = editor == null ? null : TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, offset);
 
     return new ResultsFilter() {
       public boolean acceptClass(PsiClass aClass) {
@@ -116,7 +116,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     }
   }
 
-  protected PsiElement[] filterElements(Editor editor, PsiFile file, PsiElement element, PsiElement[] targetElements, final int offset) {
+  protected PsiElement[] filterElements(@Nullable Editor editor, PsiFile file, PsiElement element, PsiElement[] targetElements, final int offset) {
     if (targetElements.length <= 1) return targetElements;
     Project project = file.getProject();
     ResultsFilter filter = createFilter(project, editor, file, element, offset);

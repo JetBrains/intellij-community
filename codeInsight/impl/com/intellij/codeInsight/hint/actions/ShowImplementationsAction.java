@@ -206,7 +206,8 @@ public class ShowImplementationsAction extends AnAction {
       }
     };
 
-    final PsiElement[] handlerImplementations = handler.searchImplementations(editor, file, element, editor.getCaretModel().getOffset(), true, true);
+    int offset = editor == null ? 0 : editor.getCaretModel().getOffset();
+    final PsiElement[] handlerImplementations = handler.searchImplementations(editor, file, element, offset, true, true);
     if (handlerImplementations.length > 0) return handlerImplementations;
 
     PsiFile psiFile = element.getContainingFile();
