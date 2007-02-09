@@ -50,6 +50,8 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNException;
 
 import java.io.File;
 import java.util.*;
@@ -216,7 +218,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
     }
   }
 
-  public Collection getCheckoutURLs() {
+  public Collection<String> getCheckoutURLs() {
     if (myCheckoutURLs == null) {
       myCheckoutURLs = new LinkedList<String>();
     }
@@ -235,7 +237,18 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
 
   public void removeCheckoutURL(String url) {
     if (myCheckoutURLs != null) {
-      myCheckoutURLs.remove(url);
+      // 'url' is not necessary an exact match for some of the urls in collection - it has been parsed and then converted back to string
+      for(String oldUrl: myCheckoutURLs) {
+        try {
+          if (url.equals(oldUrl) || SVNURL.parseURIEncoded(url).equals(SVNURL.parseURIEncoded(oldUrl))) {
+            myCheckoutURLs.remove(oldUrl);
+            break;
+          }
+        }
+        catch (SVNException e) {
+          // ignore
+        }
+      }
     }
   }
 

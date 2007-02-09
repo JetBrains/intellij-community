@@ -228,7 +228,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     panel.add(new JLabel(), gc);
 
     SvnConfiguration config = SvnConfiguration.getInstance(myProject);
-    Collection urls = config == null ? Collections.EMPTY_LIST : config.getCheckoutURLs();
+    Collection<String> urls = config == null ? Collections.EMPTY_LIST : config.getCheckoutURLs();
     SVNURL[] svnURLs = new SVNURL[urls.size()];
     int i = 0;
     for (Iterator iterator = urls.iterator(); iterator.hasNext();) {
