@@ -30,6 +30,7 @@ import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
@@ -89,6 +90,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
     SmartTreeStructure treeStructure = new SmartTreeStructure(project, myTreeModelWrapper){
       public void rebuildTree() {
+        if (isDisposed()) return;
         storeState();
         super.rebuildTree();
         restoreState();
@@ -169,7 +171,8 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   private Object[] getSelectedElements() {
-    return convertPathsToValues(getTree().getSelectionPaths());
+    final JTree tree = getTree();
+    return tree != null ? convertPathsToValues(tree.getSelectionPaths()): ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   private Object[] getSelectedTreeElements() {
@@ -257,7 +260,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   private Object[] getExpandedElements() {
     final JTree tree = getTree();
-    if (tree == null) return new Object[0];
+    if (tree == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
     final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(tree);
     return convertPathsToValues(expandedPaths.toArray(new TreePath[expandedPaths.size()]));
   }
