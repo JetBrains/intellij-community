@@ -52,7 +52,9 @@ public class CommittedChangesPanel extends JPanel {
 
     JPanel toolbarPanel = new JPanel(new BorderLayout());
     DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
-    toolbarActionGroup.add(new RefreshAction());
+    final RefreshAction refreshAction = new RefreshAction();
+    toolbarActionGroup.add(refreshAction);
+    refreshAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
     toolbarActionGroup.add(new FilterAction());
     ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActionGroup, true);
     toolbarPanel.add(toolBar.getComponent(), BorderLayout.WEST);
