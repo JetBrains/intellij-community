@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -397,5 +398,10 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     StringBuffer buffer = new StringBuffer();
     psiFile.appendMirrorText(0, buffer);
     return buffer.toString();
+  }
+
+  @Nullable
+  public LanguageDialect getLanguageDialect() {
+    return null;
   }
 }

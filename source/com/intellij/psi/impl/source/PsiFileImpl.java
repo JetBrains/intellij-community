@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageDialect;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -400,7 +401,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   @NonNls
   @Nullable
-  public String getLanguageDialect() {
+  public LanguageDialect getLanguageDialect() {
     return getUserData(PsiManagerImpl.LANGUAGE_DIALECT);
   }
 }
