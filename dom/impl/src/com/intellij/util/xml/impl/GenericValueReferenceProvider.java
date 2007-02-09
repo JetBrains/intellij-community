@@ -119,7 +119,9 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     if (converter instanceof PsiReferenceConverter) {
       return ((PsiReferenceConverter)converter).createReferences(psiElement, true);
     }
-    final boolean isResolvingConverter = converter instanceof ResolvingConverter;
+    if (converter instanceof ResolvingConverter) {
+      return new PsiReference[] {new GenericDomValueReference(domValue)};
+    }
 
     final DomInvocationHandler invocationHandler = getInvocationHandler(domValue);
     assert invocationHandler != null;
@@ -131,7 +133,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     }
     if (ReflectionCache.isAssignable(PsiClass.class, clazz)) {
       ExtendClass extendClass = invocationHandler.getAnnotation(ExtendClass.class);
-      JavaClassReferenceProvider provider;
+      final JavaClassReferenceProvider provider;
       if (extendClass == null) {
         provider = new JavaClassReferenceProvider();
       }
@@ -139,18 +141,21 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
         provider = new JavaClassReferenceProvider(extendClass.value(), extendClass.instantiatable());
       }
       provider.setSoft(true);
-      final PsiReference[] references = provider.getReferencesByElement(psiElement);
-      return isResolvingConverter ? ArrayUtil.append(references, new GenericDomValueReference(domValue), PsiReference.class)
-        : references;
+      return provider.getReferencesByElement(psiElement);
     }
-    if (!isResolvingConverter && ReflectionCache.isAssignable(Integer.class, clazz)) {
+    if (ReflectionCache.isAssignable(PsiPackage.class, clazz)) {
+      final JavaClassReferenceProvider provider = new JavaClassReferenceProvider();
+      provider.setSoft(true);
+      return provider.getReferencesByElement(psiElement, new ReferenceType(ReferenceType.JAVA_PACKAGE));
+    }
+    if (ReflectionCache.isAssignable(Integer.class, clazz)) {
       return new PsiReference[]{new GenericDomValueReference<Integer>((GenericDomValue<Integer>)domValue) {
         public Object[] getVariants() {
           return new Object[]{"0"};
         }
       }};
     }
-    if (!isResolvingConverter && ReflectionCache.isAssignable(String.class, clazz)) {
+    if (ReflectionCache.isAssignable(String.class, clazz)) {
       return PsiReference.EMPTY_ARRAY;
     }
     PsiReferenceFactory provider = myProviders.get(clazz);

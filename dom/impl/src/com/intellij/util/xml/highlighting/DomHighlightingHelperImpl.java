@@ -60,20 +60,22 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
         }
       }
     }
-
-    final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
-    final DomGenericInfo info = element.getGenericInfo();
-    for (final DomChildrenDescription description : info.getChildrenDescriptions()) {
-      if (description instanceof DomCollectionChildDescription && description.getValues(element).isEmpty()) {
-        final DomCollectionChildDescription childDescription = (DomCollectionChildDescription)description;
-        final Required annotation = description.getAnnotation(Required.class);
-        if (annotation != null && annotation.value()) {
-          list.add(holder.createProblem(element, childDescription,
-                                        IdeBundle.message("child.tag.0.should.be.defined", description.getXmlElementName())));
+    if (element.getXmlElement() != null) {
+      final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
+      final DomGenericInfo info = element.getGenericInfo();
+      for (final DomChildrenDescription description : info.getChildrenDescriptions()) {
+        if (description instanceof DomCollectionChildDescription && description.getValues(element).isEmpty()) {
+          final DomCollectionChildDescription childDescription = (DomCollectionChildDescription)description;
+          final Required annotation = description.getAnnotation(Required.class);
+          if (annotation != null && annotation.value()) {
+            list.add(holder.createProblem(element, childDescription,
+                                          IdeBundle.message("child.tag.0.should.be.defined", description.getXmlElementName())));
+          }
         }
       }
+      return list;
     }
-    return list;
+    return Collections.emptyList();
   }
 
   @NotNull

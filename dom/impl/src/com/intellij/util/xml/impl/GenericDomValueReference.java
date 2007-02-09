@@ -6,6 +6,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceBase;
@@ -17,6 +18,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -146,7 +148,9 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
       for (T variant: resolvingConverter.getVariants(convertContext)) {
         String name = converter.toString(variant, convertContext);
         if (name != null) {
-          result.add(LookupValueFactory.createLookupValue(name, ElementPresentationManager.getIcon(variant)));
+          final Icon presentationIcon = ElementPresentationManager.getIcon(variant);
+          final Icon icon = presentationIcon == null && variant instanceof Iconable? ((Iconable)variant).getIcon(Iconable.ICON_FLAG_READ_STATUS) : presentationIcon;
+          result.add(LookupValueFactory.createLookupValue(name, icon));
         }
       }
       for (final String string : resolvingConverter.getAdditionalVariants()) {

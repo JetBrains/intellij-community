@@ -18,7 +18,10 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
+import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyMemberType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,6 +84,14 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   public IntentionAction createRemoveUnusedParameterFix(PsiParameter parameter) {
     return new RemoveUnusedParameterFix(parameter);
+  }
+
+  public IntentionAction createCreateClassOrPackageFix(final PsiElement context, final String qualifiedName, final boolean createClass, final String superClass) {
+    return new CreateClassOrPackageFix(context, qualifiedName, createClass, superClass);
+  }
+
+  public IntentionAction createCreateFieldOrPropertyFix(final PsiClass aClass, final String name, final PsiType type, final PropertyMemberType targetMember, final PsiAnnotation... annotations) {
+    return new CreateFieldOrPropertyFix(aClass, name, type, targetMember, annotations);
   }
 
   @NonNls

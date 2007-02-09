@@ -305,14 +305,7 @@ public class CreateFromUsageUtils {
                 }
               }
               catch (final IncorrectOperationException e) {
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                              public void run() {
-                                Messages.showErrorDialog(QuickFixBundle.message("cannot.create.java.file.error.text", name,
-                                                                                directory.getVirtualFile().getName(),
-                                                                                e.getLocalizedMessage()),
-                                                         QuickFixBundle.message("cannot.create.java.file.error.title"));
-                              }
-                            });
+                scheduleFileOrPackageCreationFailedMessageBox(e, name, directory, false);
                 return null;
               }
               if (!manager.getResolveHelper().isAccessible(targetClass, contextElement, null)) {
@@ -350,6 +343,18 @@ public class CreateFromUsageUtils {
           }
         }
       });
+  }
+
+  public static void scheduleFileOrPackageCreationFailedMessageBox(final IncorrectOperationException e, final String name, final PsiDirectory directory,
+                                                      final boolean isPackage) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        Messages.showErrorDialog(QuickFixBundle.message(
+          isPackage ? "cannot.create.java.package.error.text" : "cannot.create.java.file.error.text", name, directory.getVirtualFile().getName(), e.getLocalizedMessage()),
+                                 QuickFixBundle.message(
+                                   isPackage ? "cannot.create.java.package.error.title" : "cannot.create.java.file.error.title"));
+      }
+    });
   }
 
   public static PsiReferenceExpression[] collectExpressions(final PsiExpression expression, Class<? extends PsiElement>... scopes) {

@@ -172,7 +172,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
                                                                                final VirtualFile toDir,
                                                                                final String... relativePaths) throws IOException {
     if (!testDataFromDir.startsWith("/")) testDataFromDir = "/" + testDataFromDir;
-    return copyFilesFillingEditorInfos(LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + testDataFromDir), toDir, relativePaths);
+    return copyFilesFillingEditorInfos(LocalFileSystem.getInstance().refreshAndFindFileByPath(getTestDataPath() + testDataFromDir), toDir, relativePaths);
   }
 
   protected LinkedHashMap<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(final VirtualFile fromDir, final VirtualFile toDir, final String... relativePaths) throws IOException {

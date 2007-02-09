@@ -3,32 +3,32 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * @author peter
@@ -38,17 +38,26 @@ public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
   @Nullable private final String mySuperClass;
   private PsiDirectory myDirectory;
   private final List<PsiDirectory> myWritableDirectoryList;
-  private final PsiReference myReference;
+  private final PsiElement myContext;
   private final String myCanonicalText;
 
   public CreateClassOrPackageFix(final List<PsiDirectory> writableDirectoryList, final GenericReference reference, boolean createClass,
                                              @Nullable String superClass) {
-    myDirectory = writableDirectoryList.get(0);
+    this(writableDirectoryList, reference.getElement(), reference.getCanonicalText(), createClass, superClass);
+  }
+
+  public CreateClassOrPackageFix(final PsiElement context, final String qualifiedName, final boolean createClass, final String superClass) {
+    this(getWritableDirectoryListDefault(context, context.getManager()), context, qualifiedName, createClass, superClass);
+  }
+
+  public CreateClassOrPackageFix(final List<PsiDirectory> writableDirectoryList, final PsiElement context, final String canonicalText, boolean createClass,
+                                 @Nullable String superClass) {
+    myDirectory = writableDirectoryList.isEmpty()? null : writableDirectoryList.get(0);
     myWritableDirectoryList = writableDirectoryList;
-    myReference = reference;
+    myContext = context;
     myCreateClass = createClass;
     mySuperClass = superClass;
-    myCanonicalText = myReference.getCanonicalText();
+    myCanonicalText = canonicalText;
   }
 
   @NotNull
@@ -108,35 +117,76 @@ public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
     if (myDirectory == null) return;
 
     final PsiManager manager = myDirectory.getManager();
-
-    if (myCreateClass) {
-      if (unitTestMode) {
+    PsiDirectory directory = myDirectory;
+    String lastName;
+    for (StringTokenizer st = new StringTokenizer(myCanonicalText, "."); ;) {
+      lastName = st.nextToken();
+      if (st.hasMoreTokens()) {
         try {
-          myDirectory.createClass(myCanonicalText);
-          return;
-        } catch(IncorrectOperationException ex) {
+          directory = directory.findSubdirectory(lastName) != null?
+                      directory.findSubdirectory(lastName) : directory.createSubdirectory(lastName);
+        }
+        catch (IncorrectOperationException e) {
+          CreateFromUsageUtils.scheduleFileOrPackageCreationFailedMessageBox(e, lastName, directory, true);
           return;
         }
       }
-
-      CreateFromUsageUtils.createClass(
-        CreateClassKind.CLASS,
-        myDirectory,
-        myCanonicalText,
-        manager,
-        myReference.getElement(),
-        null,
-        mySuperClass
-      );
-    } else {
+      else {
+        break;
+      }
+    }
+    if (myCreateClass) {
+      if (unitTestMode) {
+        try {
+          directory.createClass(lastName);
+        }
+        catch (IncorrectOperationException e) {
+          CreateFromUsageUtils.scheduleFileOrPackageCreationFailedMessageBox(e, lastName, directory, false);
+        }
+      }
+      else {
+        CreateFromUsageUtils.createClass(
+          CreateClassKind.CLASS,
+          directory,
+          lastName,
+          manager,
+          myContext,
+          null,
+          mySuperClass
+        );
+      }
+    }
+    else {
       try {
-        myDirectory.createSubdirectory(myCanonicalText);
-      } catch(IncorrectOperationException ex) {
+        directory.createSubdirectory(lastName);
+      }
+      catch (IncorrectOperationException e) {
+        CreateFromUsageUtils.scheduleFileOrPackageCreationFailedMessageBox(e, lastName, directory, true);
       }
     }
   }
 
   public boolean startInWriteAction() {
     return true;
+  }
+
+  public static List<PsiDirectory> getWritableDirectoryListDefault(final PsiElement context, final PsiManager psiManager) {
+    final List<PsiDirectory> writableDirectoryList = new ArrayList<PsiDirectory>();
+    if (context instanceof PsiPackage) {
+      for (PsiDirectory directory : ((PsiPackage)context).getDirectories()) {
+        if (directory.isWritable()) {
+          writableDirectoryList.add(directory);
+        }
+      }
+    }
+    else {
+      for (VirtualFile root : ProjectRootManager.getInstance(psiManager.getProject()).getContentSourceRoots()) {
+        PsiDirectory directory = psiManager.findDirectory(root);
+        if (directory != null && directory.isWritable()) {
+          writableDirectoryList.add(directory);
+        }
+      }
+    }
+    return writableDirectoryList;
   }
 }

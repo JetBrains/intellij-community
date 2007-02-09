@@ -191,4 +191,14 @@ public class DomUtil {
     }
     return result;
   }
+
+  @Nullable
+  public static <T> T getParentOfType(final DomElement element, final Class<T> requiredClass) {
+    for (DomElement curElement = element; curElement != null; curElement = curElement.getParent()) {
+      if (requiredClass.isInstance(curElement)) {
+        return (T)curElement;
+      }
+    }
+    return null;
+  }
 }

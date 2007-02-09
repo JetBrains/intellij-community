@@ -13,10 +13,8 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -402,23 +400,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   protected List<PsiDirectory> getWritableDirectoryList(final PsiElement context) {
-    final List<PsiDirectory> writableDirectoryList = new ArrayList<PsiDirectory>();
-    if (context instanceof PsiPackage) {
-      for (PsiDirectory directory : ((PsiPackage)context).getDirectories()) {
-        if (directory.isWritable()) {
-          writableDirectoryList.add(directory);
-        }
-      }
-    } else if (context == null) {
-      PsiManager manager = getElement().getManager();
-      for (VirtualFile root : ProjectRootManager.getInstance(manager.getProject()).getContentSourceRoots()) {
-        PsiDirectory directory = manager.findDirectory(root);
-        if (directory != null && directory.isWritable()) {
-          writableDirectoryList.add(directory);
-        }
-      }
-    }
-    return writableDirectoryList;
+    return CreateClassOrPackageFix.getWritableDirectoryListDefault(context, getElement().getManager());
   }
 
   @Nullable

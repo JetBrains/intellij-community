@@ -113,6 +113,7 @@ public class InjectedLanguageUtil {
 
     SmartPsiElementPointer<T> pointer = createHostSmartPointer(host);
     psiFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, pointer);
+    psiFile.putUserData(PsiManager.LANGUAGE_DIALECT,host.getUserData(PsiManager.LANGUAGE_DIALECT));
 
     final ASTNode parsedNode = psiFile.getNode();
     if (!(parsedNode instanceof FileElement)) return null;
