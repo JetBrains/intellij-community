@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
  * @author cdr
 */
 public class ExternalToolPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.ExternalToolPassFactory");
 
   public ExternalToolPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
@@ -34,6 +33,6 @@ public class ExternalToolPassFactory extends AbstractProjectComponent implements
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = GeneralHighlightingPassFactory.calculateRangeToProcessForSyntaxPass(editor);
-    return new ExternalToolPass(file, editor, textRange.getStartOffset(), textRange.getEndOffset());
+    return textRange == null ? null : new ExternalToolPass(file, editor, textRange.getStartOffset(), textRange.getEndOffset());
   }
 }
