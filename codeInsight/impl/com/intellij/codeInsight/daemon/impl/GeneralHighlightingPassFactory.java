@@ -38,13 +38,13 @@ public class GeneralHighlightingPassFactory extends AbstractProjectComponent imp
 
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    TextRange textRange = calculateRangeToProcess(editor);
+    TextRange textRange = calculateRangeToProcessForSyntaxPass(editor);
     if (textRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument(), GeneralHighlightingPass.IN_PROGRESS_ICON,
                                                                              GeneralHighlightingPass.PRESENTABLE_NAME);
     return new GeneralHighlightingPass(myProject, file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true);
   }
 
-  private static TextRange calculateRangeToProcess(Editor editor) {
+  static TextRange calculateRangeToProcessForSyntaxPass(Editor editor) {
     Document document = editor.getDocument();
 
     PsiElement dirtyScope = DaemonCodeAnalyzer.getInstance(editor.getProject()).getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
