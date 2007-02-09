@@ -17,9 +17,10 @@ package com.siyeh.ipp.opassign;
 
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceOperatorAssignmentWithAssignmentIntention
@@ -48,13 +49,27 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention
         final PsiExpression lhs = assignmentExpression.getLExpression();
         final PsiExpression rhs = assignmentExpression.getRExpression();
         final String operand = sign.getText();
-        final String newOperand = operand.substring(0, operand.length() - 2);
+        final String newOperand = operand.substring(0, operand.length() - 1);
         final String lhsText = lhs.getText();
         final String rhsText;
         if (rhs == null) {
             rhsText = "";
         } else {
             rhsText = rhs.getText();
+        }
+        if (rhs instanceof PsiBinaryExpression) {
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression)rhs;
+            final PsiJavaToken javaToken = binaryExpression.getOperationSign();
+            final int precedence1 =
+                    ParenthesesUtils.getPrecedenceForBinaryOperator(javaToken);
+            final int precedence2 =
+                    ParenthesesUtils.getPrecedenceForBinaryOperator(newOperand);
+            if (precedence2 > precedence1) {
+                final String expString = lhsText + '=' + lhsText + newOperand
+                        + '(' + rhsText + ')';
+                replaceExpression(expString, assignmentExpression);
+            }
         }
         final String expString = lhsText + '=' + lhsText + newOperand + rhsText;
         replaceExpression(expString, assignmentExpression);
