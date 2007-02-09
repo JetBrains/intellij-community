@@ -34,11 +34,13 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsDataConstants;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
@@ -48,9 +50,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 
 public class VcsContextWrapper implements VcsContext {
   protected final DataContext myContext;
@@ -155,13 +155,13 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   public FilePath[] getSelectedFilePaths() {
-    ArrayList<FilePath> result = new ArrayList<FilePath>();
-    FilePath path = (FilePath)myContext.getData(VcsDataConstants.FILE_PATH);
+    Set<FilePath> result = new HashSet<FilePath>();
+    FilePath path = VcsDataKeys.FILE_PATH.getData(myContext);
     if (path != null) {
       result.add(path);
     }
 
-    FilePath[] paths = (FilePath[])myContext.getData(VcsDataConstants.FILE_PATH_ARRAY);
+    FilePath[] paths = VcsDataKeys.FILE_PATH_ARRAY.getData(myContext);
     if (paths != null) {
       for (FilePath filePath : paths) {
         if (!result.contains(filePath)) {
@@ -174,9 +174,7 @@ public class VcsContextWrapper implements VcsContext {
     if (selectedFiles != null) {
       for (VirtualFile selectedFile : selectedFiles) {
         FilePathImpl filePath = new FilePathImpl(selectedFile);
-        if (!result.contains(filePath)) {
-          result.add(filePath);
-        }
+        result.add(filePath);
       }
     }
 
@@ -184,7 +182,7 @@ public class VcsContextWrapper implements VcsContext {
     if (selectedIOFiles != null){
       for (File selectedFile : selectedIOFiles) {
         FilePathImpl filePath = FilePathImpl.create(selectedFile);
-        if ((filePath != null) && !result.contains(filePath)) {
+        if (filePath != null) {
           result.add(filePath);
         }
       }
@@ -195,6 +193,7 @@ public class VcsContextWrapper implements VcsContext {
 
   }
 
+  @Nullable
   public FilePath getSelectedFilePath() {
     FilePath[] selectedFilePaths = getSelectedFilePaths();
     if (selectedFilePaths.length == 0) {
@@ -207,11 +206,11 @@ public class VcsContextWrapper implements VcsContext {
 
   @Nullable
   public ChangeList[] getSelectedChangeLists() {
-    return (ChangeList[]) myContext.getData(DataConstants.CHANGE_LISTS);
+    return DataKeys.CHANGE_LISTS.getData(myContext);
   }
 
   @Nullable
   public Change[] getSelectedChanges() {
-    return (Change[]) myContext.getData(DataConstants.CHANGES);
+    return DataKeys.CHANGES.getData(myContext);
   }
 }

@@ -54,6 +54,7 @@ public interface VcsContext {
 
   FilePath[] getSelectedFilePaths();
   
+  @Nullable
   FilePath getSelectedFilePath();
 
   @Nullable

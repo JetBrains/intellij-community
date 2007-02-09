@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
+@Deprecated
 public interface VcsDataConstants {
   String IO_FILE_ARRAY = "IO_FILE_ARRAY";
   String IO_FILE = "IO_FILE";
