@@ -119,7 +119,8 @@ public class CommittedChangesPanel extends JPanel {
   private static boolean changeListMatches(final CommittedChangeList changeList, final String[] filterWords) {
     for(String word: filterWords) {
       if (changeList.getComment().toLowerCase().indexOf(word) >= 0 ||
-          changeList.getCommitterName().toLowerCase().indexOf(word) >= 0) {
+          changeList.getCommitterName().toLowerCase().indexOf(word) >= 0 ||
+          Long.toString(changeList.getNumber()).indexOf(word) >= 0) {
         return true;
       }
     }
