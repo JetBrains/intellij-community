@@ -23,12 +23,12 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 class ConvertCatchtoThrowsPredicate implements PsiElementPredicate {
 
     public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiJavaToken)) {
+        if (!(element instanceof PsiKeyword)) {
             return false;
         }
         final PsiJavaToken javaToken = (PsiJavaToken) element;
         final IElementType tokenType = javaToken.getTokenType();
-        if (tokenType.equals(JavaTokenType.CATCH_KEYWORD)) {
+        if (!tokenType.equals(JavaTokenType.CATCH_KEYWORD)) {
             return false;
         }
         final PsiElement parent = javaToken.getParent();

@@ -71,10 +71,4 @@ public class ConvertCatchToThrowsIntention extends Intention {
             tryStatement.delete();
         }
     }
-
-    public static void main(String[] args) {
-        int i =9;
-        i = i * 1 + 2;
-        System.out.println(i);
-    }
 }
