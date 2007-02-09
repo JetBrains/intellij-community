@@ -1,26 +1,25 @@
 package com.intellij.xml.impl.dtd;
 
-import com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl;
+import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.xml.util.XmlUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -104,46 +103,57 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return descriptor;
   }
 
-  private XmlElementDescriptor[] myElementDescriptors = null;
+  private volatile XmlElementDescriptor[] myElementDescriptors = null;
+
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
-    if(myElementDescriptors != null) return myElementDescriptors;
-    final List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
+    XmlElementDescriptor[] elementDescriptors = myElementDescriptors;
 
-    final XmlElementContentSpec contentSpecElement = myElementDecl.getContentSpecElement();
-    final XmlNSDescriptor nsDescriptor = getNSDescriptor();
-    final XmlNSDescriptor NSDescriptor = nsDescriptor != null? nsDescriptor:getNsDescriptorFrom(context);
+    if (elementDescriptors == null) {
+      synchronized(PsiLock.LOCK) {
+        elementDescriptors = myElementDescriptors;
 
-    contentSpecElement.processElements(new PsiElementProcessor(){
-      public boolean execute(PsiElement child){
-        if (child instanceof XmlToken) {
-          final XmlToken token = (XmlToken)child;
+        if (elementDescriptors == null) {
+          final List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
+          final XmlElementContentSpec contentSpecElement = myElementDecl.getContentSpecElement();
+          final XmlNSDescriptor nsDescriptor = getNSDescriptor();
+          final XmlNSDescriptor NSDescriptor = nsDescriptor != null? nsDescriptor:getNsDescriptorFrom(context);
 
-          if (token.getTokenType() == XmlTokenType.XML_NAME) {
-            final String text = child.getText();
-            XmlElementDescriptor element = getElementDescriptor(text, NSDescriptor);
+          contentSpecElement.processElements(new PsiElementProcessor(){
+            public boolean execute(PsiElement child){
+              if (child instanceof XmlToken) {
+                final XmlToken token = (XmlToken)child;
 
-            if (element != null) {
-              result.add(element);
-            }
-          }
-          else if (token.getTokenType() == XmlTokenType.XML_CONTENT_ANY) {
-            if (NSDescriptor instanceof XmlNSDescriptorImpl) {
-              result.addAll(Arrays.asList(((XmlNSDescriptorImpl) NSDescriptor).getElements()));
-            } else if (NSDescriptor instanceof XmlNSDescriptorSequence) {
+                if (token.getTokenType() == XmlTokenType.XML_NAME) {
+                  final String text = child.getText();
+                  XmlElementDescriptor element = getElementDescriptor(text, NSDescriptor);
 
-              for (XmlNSDescriptor xmlNSDescriptor : ((XmlNSDescriptorSequence)NSDescriptor).getSequence()) {
-                if (xmlNSDescriptor instanceof XmlNSDescriptorImpl) {
-                  result.addAll(Arrays.asList(((XmlNSDescriptorImpl) xmlNSDescriptor).getElements()));
+                  if (element != null) {
+                    result.add(element);
+                  }
+                }
+                else if (token.getTokenType() == XmlTokenType.XML_CONTENT_ANY) {
+                  if (NSDescriptor instanceof XmlNSDescriptorImpl) {
+                    result.addAll(Arrays.asList(((XmlNSDescriptorImpl) NSDescriptor).getElements()));
+                  } else if (NSDescriptor instanceof XmlNSDescriptorSequence) {
+
+                    for (XmlNSDescriptor xmlNSDescriptor : ((XmlNSDescriptorSequence)NSDescriptor).getSequence()) {
+                      if (xmlNSDescriptor instanceof XmlNSDescriptorImpl) {
+                        result.addAll(Arrays.asList(((XmlNSDescriptorImpl) xmlNSDescriptor).getElements()));
+                      }
+                    }
+                  }
                 }
               }
+              return true;
             }
-          }
-        }
-        return true;
-      }
-    }, getDeclaration());
+          }, getDeclaration());
 
-    return myElementDescriptors = result.toArray(new XmlElementDescriptor[result.size()]);
+          myElementDescriptors = elementDescriptors = result.toArray(new XmlElementDescriptor[result.size()]);
+        }
+      }
+    }
+
+    return elementDescriptors;
   }
 
   private static XmlElementDescriptor getElementDescriptor(final String text, final XmlNSDescriptor NSDescriptor) {
@@ -166,35 +176,52 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return element;
   }
 
-  private XmlAttributeDescriptor[] myAttributeDescriptors;
+  private volatile XmlAttributeDescriptor[] myAttributeDescriptors;
 
   public XmlAttributeDescriptor[] getAttributesDescriptors() {
-    if (myAttributeDescriptors!=null) return myAttributeDescriptors;
+    XmlAttributeDescriptor[] attrDescrs = myAttributeDescriptors;
 
-    final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
-    for (XmlAttlistDecl attlistDecl : findAttlistDecls(getName())) {
-      for (XmlAttributeDecl attributeDecl : attlistDecl.getAttributeDecls()) {
-        result.add((XmlAttributeDescriptor)attributeDecl.getMetaData());
+    if (attrDescrs == null) {
+      synchronized(PsiLock.LOCK) {
+        attrDescrs = myAttributeDescriptors;
+        if (attrDescrs == null) {
+          final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
+          for (XmlAttlistDecl attlistDecl : findAttlistDecls(getName())) {
+            for (XmlAttributeDecl attributeDecl : attlistDecl.getAttributeDecls()) {
+              result.add((XmlAttributeDescriptor)attributeDecl.getMetaData());
+            }
+          }
+
+          myAttributeDescriptors = attrDescrs = result.toArray(new XmlAttributeDescriptor[result.size()]);
+        }
       }
     }
-
-    myAttributeDescriptors = result.toArray(new XmlAttributeDescriptor[result.size()]);
-    return myAttributeDescriptors;
+    return attrDescrs;
   }
 
-  private HashMap<String,XmlAttributeDescriptor> attributeDescriptorsMap;
+  private volatile HashMap<String,XmlAttributeDescriptor> attributeDescriptorsMap;
 
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName) {
-    if (attributeDescriptorsMap==null) {
-      final XmlAttributeDescriptor[] xmlAttributeDescriptors = getAttributesDescriptors();
-      attributeDescriptorsMap = new HashMap<String, XmlAttributeDescriptor>(xmlAttributeDescriptors.length);
+    HashMap<String, XmlAttributeDescriptor> localADM = attributeDescriptorsMap;
 
-      for (final XmlAttributeDescriptor xmlAttributeDescriptor : xmlAttributeDescriptors) {
-        attributeDescriptorsMap.put(xmlAttributeDescriptor.getName(), xmlAttributeDescriptor);
+    if (localADM == null) {
+      synchronized(PsiLock.LOCK) {
+        localADM = attributeDescriptorsMap;
+
+        if (localADM == null) {
+          final XmlAttributeDescriptor[] xmlAttributeDescriptors = getAttributesDescriptors();
+          localADM = new HashMap<String, XmlAttributeDescriptor>(xmlAttributeDescriptors.length);
+
+          for (final XmlAttributeDescriptor xmlAttributeDescriptor : xmlAttributeDescriptors) {
+            localADM.put(xmlAttributeDescriptor.getName(), xmlAttributeDescriptor);
+          }
+
+          attributeDescriptorsMap = localADM;
+        }
       }
     }
 
-    return attributeDescriptorsMap.get(attributeName);
+    return localADM.get(attributeName);
   }
 
   public XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attr){
@@ -248,21 +275,28 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return CONTENT_TYPE_ANY;
   }
 
-  private HashMap<String,XmlElementDescriptor> elementDescriptorsMap;
+  private volatile HashMap<String,XmlElementDescriptor> myElementDescriptorsMap;
 
   public XmlElementDescriptor getElementDescriptor(XmlTag element){
-    String name = element.getName();
+    HashMap<String,XmlElementDescriptor> elementDescriptorsMap = myElementDescriptorsMap;
 
-    if (elementDescriptorsMap==null) {
-      final XmlElementDescriptor[] descriptors = getElementsDescriptors(element);
-      elementDescriptorsMap = new HashMap<String, XmlElementDescriptor>(descriptors.length);
+    if (elementDescriptorsMap == null) {
+      synchronized(PsiLock.LOCK) {
+        elementDescriptorsMap = myElementDescriptorsMap;
 
-      for (final XmlElementDescriptor descriptor : descriptors) {
-        elementDescriptorsMap.put(descriptor.getName(), descriptor);
+        if (elementDescriptorsMap == null) {
+          final XmlElementDescriptor[] descriptors = getElementsDescriptors(element);
+          elementDescriptorsMap = new HashMap<String, XmlElementDescriptor>(descriptors.length);
+
+          for (final XmlElementDescriptor descriptor : descriptors) {
+            elementDescriptorsMap.put(descriptor.getName(), descriptor);
+          }
+          myElementDescriptorsMap = elementDescriptorsMap;
+        }
       }
     }
 
-    return elementDescriptorsMap.get(name);
+    return elementDescriptorsMap.get(element.getName());
   }
 
   public String getQualifiedName() {
