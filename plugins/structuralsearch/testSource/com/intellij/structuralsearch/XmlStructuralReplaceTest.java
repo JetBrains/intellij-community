@@ -86,8 +86,8 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
     xmlOptions.getMatchOptions().setFileType(StdFileTypes.HTML);
     
     String content = TestUtils.loadFile("in1.html");
-    String pattern = TestUtils.loadFile("pattern2.html");
-    String replacement = TestUtils.loadFile("replacement2.html");
+    String pattern = TestUtils.loadFile("pattern1_2.html");
+    String replacement = TestUtils.loadFile("replacement1_2.html");
     String expectedResult = TestUtils.loadFile("out1.html");
 
     actualResult = replacer.testReplace(content,pattern,replacement,xmlOptions);
@@ -96,6 +96,23 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
                  actualResult
     );
     
+    xmlOptions.getMatchOptions().setFileType(StdFileTypes.XML);
+  }
+
+  public void testHtmlReplacement2() throws IOException {
+    xmlOptions.getMatchOptions().setFileType(StdFileTypes.HTML);
+
+    String content = TestUtils.loadFile("in2.html");
+    String pattern = TestUtils.loadFile("pattern2.html");
+    String replacement = TestUtils.loadFile("replacement2.html");
+    String expectedResult = TestUtils.loadFile("out2.html");
+
+    actualResult = replacer.testReplace(content,pattern,replacement,xmlOptions,true);
+    assertEquals("Large html replacement 2",
+                 expectedResult,
+                 actualResult
+    );
+
     xmlOptions.getMatchOptions().setFileType(StdFileTypes.XML);
   }
 }

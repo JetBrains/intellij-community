@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.Matcher;
 import com.intellij.structuralsearch.SSRBundle;
@@ -388,8 +389,11 @@ public class ReplacerImpl {
     }
 
     if (listContext) {
-      for (SmartPsiElementPointer aMatchesPtrList : info.matchesPtrList) {
+      final int matchSize = info.matchesPtrList.size();
+
+      for (int i = 0; i < matchSize; ++i) {
         try {
+          SmartPsiElementPointer aMatchesPtrList = info.matchesPtrList.get(i);
           PsiElement element = findRealSubstitutionElement(
             aMatchesPtrList.getElement()
           );
@@ -405,6 +409,13 @@ public class ReplacerImpl {
             prevSibling = prevSibling != null ? prevSibling.getPrevSibling(): null;
           } else if (prevSibling == null && nextSibling instanceof PsiWhiteSpace) {
             lastToDelete = nextSibling;
+          }
+
+          if (nextSibling instanceof XmlText && i + 1 < matchSize) {
+            final PsiElement next = info.matchesPtrList.get(i + 1).getElement();
+            if (next != null && next == nextSibling.getNextSibling()) {
+              lastToDelete = nextSibling;
+            }
           }
 
           if (element instanceof PsiExpression) {
@@ -797,7 +808,7 @@ public class ReplacerImpl {
   }
 
   protected ReplacementInfo buildReplacement(MatchResult result) {
-    List<SmartPsiElementPointer> l = new LinkedList<SmartPsiElementPointer>();
+    List<SmartPsiElementPointer> l = new ArrayList<SmartPsiElementPointer>();
     SmartPointerManager manager = SmartPointerManager.getInstance(project);
 
     if (MatchResult.MULTI_LINE_MATCH.equals(result.getName())) {

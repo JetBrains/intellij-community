@@ -1,20 +1,19 @@
 package com.intellij.structuralsearch.impl.matcher;
 
-import com.intellij.structuralsearch.MatchOptions;
-import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
-import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.HtmlUtil;
 
-import java.util.List;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -38,11 +37,18 @@ public class MatcherImplUtil {
   public static PsiElement[] createTreeFromText(String text, TreeContext context, FileType fileType, Project project) throws IncorrectOperationException {
     PsiElementFactory elementFactory = PsiManager.getInstance(project).getElementFactory();
     if (fileType != StdFileTypes.JAVA) {
-      final PsiFile fileFromText = elementFactory.createFileFromText("dummy." + fileType.getDefaultExtension(), "<QQQ>\n" + text + "\n</QQQ>");
+      final PsiFile fileFromText = elementFactory.createFileFromText(
+        "dummy." + fileType.getDefaultExtension(),
+        context == TreeContext.File ? text:"<QQQ>\n" + text + "\n</QQQ>"
+      );
 
-      return HtmlUtil.getRealXmlDocument(((XmlFile)fileFromText).getDocument()).getRootTag().getSubTags();
+      final XmlDocument document = HtmlUtil.getRealXmlDocument(((XmlFile)fileFromText).getDocument());
+      if (context == TreeContext.File) {
+        return new PsiElement[] {document};
+      }
+      return document.getRootTag().getSubTags();
     } else if (fileType == StdFileTypes.JAVA) {
-      PsiElement[] result = PsiElement.EMPTY_ARRAY;
+      PsiElement[] result;
 
       if (context == TreeContext.Block) {
         PsiElement element = elementFactory.createStatementFromText("{\n"+ text + "\n}", null);
