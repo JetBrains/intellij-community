@@ -268,14 +268,6 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
     });
   }
 
-  public synchronized void restart() {
-    if (myRunning) {
-      myRunning = false;
-      exitModality();
-    }
-    start();
-  }
-
   public final void addStateDelegate(ProgressIndicatorEx delegate) {
     synchronized(myStateDelegates) {
       delegate.initStateFrom(this);

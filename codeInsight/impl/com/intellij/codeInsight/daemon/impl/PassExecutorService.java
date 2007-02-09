@@ -2,6 +2,8 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.concurrency.Job;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -16,9 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.concurrency.JobScheduler;
-import com.intellij.concurrency.Job;
-import com.intellij.psi.PsiManager;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -26,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -53,8 +52,7 @@ public abstract class PassExecutorService {
     mySubmittedPasses.clear();
   }
 
-  public void submitPasses(final Map<FileEditor, HighlightingPass[]> passesMap, final DaemonProgressIndicator updateProgress,
-                           final long modificationCount) {
+  public void submitPasses(Map<FileEditor, HighlightingPass[]> passesMap, DaemonProgressIndicator updateProgress) {
     final AtomicInteger threadsToStartCountdown = new AtomicInteger(0);
     int id = 1;
 
@@ -79,7 +77,7 @@ public abstract class PassExecutorService {
           // run all passes in sequence
           textEditorHighlightingPass = new TextEditorHighlightingPass(myProject, document) {
             public void doCollectInformation(ProgressIndicator progress) {
-              pass.collectInformation(updateProgress);
+              pass.collectInformation(progress);
             }
 
             public void doApplyInformationToEditor() {
@@ -95,7 +93,7 @@ public abstract class PassExecutorService {
       }
       threadsToStartCountdown.addAndGet(passesToAdd.length);
       for (final TextEditorHighlightingPass pass : passesToAdd) {
-        createScheduledPass(fileEditor, pass, toBeSubmitted, passesToAdd, freePasses, updateProgress, threadsToStartCountdown, modificationCount);
+        createScheduledPass(fileEditor, pass, toBeSubmitted, passesToAdd, freePasses, updateProgress, threadsToStartCountdown);
       }
     }
     for (ScheduledPass freePass : freePasses) {
@@ -103,19 +101,20 @@ public abstract class PassExecutorService {
     }
   }
 
-  private ScheduledPass createScheduledPass(final FileEditor fileEditor,
+  private ScheduledPass
+  createScheduledPass(final FileEditor fileEditor,
                                             final TextEditorHighlightingPass pass,
                                             final Map<Pair<FileEditor, Integer>, ScheduledPass> toBeSubmitted,
                                             final TextEditorHighlightingPass[] textEditorHighlightingPasses,
                                             final List<ScheduledPass> freePasses,
                                             final DaemonProgressIndicator updateProgress,
-                                            final AtomicInteger myThreadsToStartCountdown, final long modificationCount) {
+                                            final AtomicInteger myThreadsToStartCountdown) {
     int passId = pass.getId();
     Pair<FileEditor, Integer> key = Pair.create(fileEditor, passId);
     ScheduledPass scheduledPass = toBeSubmitted.get(key);
     if (scheduledPass != null) return scheduledPass;
     int[] completionPredecessorIds = pass.getCompletionPredecessorIds();
-    scheduledPass = new ScheduledPass(fileEditor, pass, updateProgress, myThreadsToStartCountdown, modificationCount);
+    scheduledPass = new ScheduledPass(fileEditor, pass, updateProgress, myThreadsToStartCountdown);
     toBeSubmitted.put(key, scheduledPass);
     for (int predecessorId : completionPredecessorIds) {
       Pair<FileEditor, Integer> predkey = Pair.create(fileEditor, predecessorId);
@@ -123,7 +122,7 @@ public abstract class PassExecutorService {
       if (predecessor == null) {
         TextEditorHighlightingPass textEditorPass = findPassById(predecessorId, textEditorHighlightingPasses);
         predecessor = textEditorPass == null ? null : createScheduledPass(fileEditor, textEditorPass, toBeSubmitted, textEditorHighlightingPasses,freePasses,
-                                                                          updateProgress, myThreadsToStartCountdown, modificationCount);
+                                                                          updateProgress, myThreadsToStartCountdown);
       }
       if (predecessor != null) {
         predecessor.mySuccessorsOnCompletion.add(scheduledPass);
@@ -137,7 +136,7 @@ public abstract class PassExecutorService {
       if (predecessor == null) {
         TextEditorHighlightingPass textEditorPass = findPassById(predecessorId, textEditorHighlightingPasses);
         predecessor = textEditorPass == null ? null : createScheduledPass(fileEditor, textEditorPass, toBeSubmitted, textEditorHighlightingPasses,freePasses,
-                                                                          updateProgress, myThreadsToStartCountdown, modificationCount);
+                                                                          updateProgress, myThreadsToStartCountdown);
       }
       if (predecessor != null) {
         predecessor.mySuccessorsOnSubmit.add(scheduledPass);
@@ -170,11 +169,25 @@ public abstract class PassExecutorService {
     }
   }
 
+  public void renewVisiblePasses(final TextEditor textEditor, final HighlightingPass[] highlightingPasses,
+                          final DaemonProgressIndicator visibleProgress) {
+    for (ScheduledPass pass : mySubmittedPasses.keySet()) {
+      if (pass.myUpdateProgress == visibleProgress) {
+        return; //already scheduled. whenever something changes, it will be rescheduled anyway
+      }
+    }
+    THashMap<FileEditor, HighlightingPass[]> passes = new THashMap<FileEditor, HighlightingPass[]>() {
+      {
+        put(textEditor, highlightingPasses);
+      }
+    };
+    submitPasses(passes, visibleProgress);
+  }
+
   private class ScheduledPass implements Runnable {
     private final FileEditor myFileEditor;
     private final TextEditorHighlightingPass myPass;
     private final AtomicInteger myThreadsToStartCountdown;
-    private final long myModificationCount;
     private final AtomicInteger myRunningPredecessorsCount;
     private final Collection<ScheduledPass> mySuccessorsOnCompletion = new ArrayList<ScheduledPass>();
     private final Collection<ScheduledPass> mySuccessorsOnSubmit = new ArrayList<ScheduledPass>();
@@ -183,11 +196,10 @@ public abstract class PassExecutorService {
     public ScheduledPass(final FileEditor fileEditor,
                          TextEditorHighlightingPass pass,
                          final DaemonProgressIndicator progressIndicator,
-                         final AtomicInteger myThreadsToStartCountdown, final long modificationCount) {
+                         final AtomicInteger myThreadsToStartCountdown) {
       myFileEditor = fileEditor;
       myPass = pass;
       this.myThreadsToStartCountdown = myThreadsToStartCountdown;
-      myModificationCount = modificationCount;
       myRunningPredecessorsCount = new AtomicInteger(0);
       myUpdateProgress = progressIndicator;
     }
@@ -209,15 +221,13 @@ public abstract class PassExecutorService {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               try {
-                long modificationCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
-                if (myUpdateProgress.isCanceled() || myModificationCount != modificationCount) {
+                if (myUpdateProgress.isCanceled()) {
                   throw new ProcessCanceledException();
                 }
-                myPass.doCollectInformation(myUpdateProgress);
+                myPass.collectInformation(myUpdateProgress);
               }
               catch (ProcessCanceledException e) {
                 log(myUpdateProgress, "Canceled ",myPass);
-                cancelAll();
               }
             }
           });

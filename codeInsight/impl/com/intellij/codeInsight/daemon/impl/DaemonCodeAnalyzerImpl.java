@@ -54,7 +54,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
   private EditorTracker myEditorTracker;
-  private volatile DaemonProgressIndicator myUpdateProgress = new DaemonProgressIndicator();
+  private DaemonProgressIndicator myUpdateProgress = new DaemonProgressIndicator();
+  private DaemonProgressIndicator myUpdateVisibleProgress = new DaemonProgressIndicator();
 
   private final Runnable myUpdateRunnable = createUpdateRunnable();
 
@@ -143,7 +144,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       }
     };
     reloadScopes();
-    createProgressIndicatorForTests(stoppedNotify);
+    myUpdateProgress = new MockDaemonProgressIndicator(stoppedNotify);
 
     myInitialized = true;
     myDisposed = false;
@@ -151,10 +152,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myAlarm.cancelAllRequests();
     myPassExecutorService.cancelAll();
     myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
-  }
-
-  private void createProgressIndicatorForTests(final Object stoppedNotify) {
-    myUpdateProgress = new MockDaemonProgressIndicator(stoppedNotify);
   }
 
   void repaintErrorStripeRenderer(Editor editor) {
@@ -207,7 +204,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myLastSettings = (DaemonCodeAnalyzerSettings)settings.clone();
   }
 
-  public void updateVisibleHighlighters(Editor editor) {
+  public void updateVisibleHighlighters(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
@@ -217,15 +214,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     final HighlightingPass[] highlightingPasses = highlighter.createPassesForVisibleArea();
     setLastIntentionHint(null);
 
-    renewUpdateProgress(true);
+    myPassExecutorService.renewVisiblePasses(textEditor, highlightingPasses, myUpdateVisibleProgress);
+  }
 
-    THashMap<FileEditor, HighlightingPass[]> passes = new THashMap<FileEditor, HighlightingPass[]>() {
-      {
-        put(textEditor, highlightingPasses);
-      }
-    };
-    long modificationCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
-    myPassExecutorService.submitPasses(passes, myUpdateProgress, modificationCount);
+  private void renewUpdateVisibleProgress() {
+    myUpdateVisibleProgress.cancel();
+    myUpdateVisibleProgress = new DaemonProgressIndicator();
+    myUpdateVisibleProgress.start();
   }
 
   public void setUpdateByTimerEnabled(boolean value) {
@@ -341,6 +336,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private synchronized void renewUpdateProgress(final boolean start) {
     myUpdateProgress.cancel();
     myPassExecutorService.cancelAll();
+    renewUpdateVisibleProgress();
     if (myUpdateProgress instanceof MockDaemonProgressIndicator) {
       myUpdateProgress = new MockDaemonProgressIndicator(((MockDaemonProgressIndicator)myUpdateProgress).myStoppedNotify);
     }
@@ -348,8 +344,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       DaemonProgressIndicator indicator = new DaemonProgressIndicator();
       myUpdateProgress = indicator;
       if (start) {
-        indicator.restart();
+        indicator.start();
       }
+
     }
   }
 
@@ -548,9 +545,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           }
         }
         // cancel all after calling createPasses() since there are perverts {@link com.intellij.util.xml.ui.DomUIFactoryImpl} who are changing PSI there
-        long modificationCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
         renewUpdateProgress(true);
-        myPassExecutorService.submitPasses(passes, myUpdateProgress, modificationCount);
+        myPassExecutorService.submitPasses(passes, myUpdateProgress);
       }
     };
   }

@@ -39,6 +39,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public static final TextEditorHighlightingPass[] EMPTY_ARRAY = new TextEditorHighlightingPass[0];
@@ -115,5 +116,10 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
 
   public final void setStartingPredecessorIds(@NotNull final int[] startingPredecessorIds) {
     myStartingPredecessorIds = startingPredecessorIds;
+  }
+
+  @NonNls
+  public String toString() {
+    return getClass() + "; id=" + getId();
   }
 }

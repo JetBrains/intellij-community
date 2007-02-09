@@ -376,4 +376,5 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     // do not show progress of visible highlighters update
     return myUpdateAll ? super.getProgress() : -1;
   }
+
 }
