@@ -79,6 +79,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   @NonNls public static final String COPY_OF_PREFIX = "CopyOf";
   @NonNls public static final String NEW_FOLDER_POSTFIX = "NewFolder";
 
+  private RepositoryBrowserDialog.DeleteAction myDeleteAction = new DeleteAction();
+
   public RepositoryBrowserDialog(Project project) {
     super(project, true);
     myProject = project;
@@ -105,9 +107,15 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   public JComponent createToolbar(boolean horizontal) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new AddLocationAction());
+    group.add(new DiscardLocationAction());
     group.add(new DetailsAction());
     group.addSeparator();
-    group.add(new RefreshAction());
+    final RefreshAction refreshAction = new RefreshAction();
+    refreshAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), getRepositoryBrowser());
+    group.add(refreshAction);
+
+    myDeleteAction.registerCustomShortcutSet(CommonShortcuts.DELETE, getRepositoryBrowser());
+
     AnAction action = CommonActionsManager.getInstance().createCollapseAllAction(new TreeExpander() {
       public void expandAll() {
       }
@@ -170,7 +178,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     group.addSeparator();
     group.add(new CopyAction());
     group.add(new MoveAction());
-    group.add(new DeleteAction());
+    group.add(myDeleteAction);
     group.addSeparator();
     group.add(new RefreshAction());
     group.add(new DiscardLocationAction());
@@ -351,6 +359,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public void update(AnActionEvent e) {
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       e.getPresentation().setText("Discard _Location", true);
+      e.getPresentation().setIcon(IconLoader.findIcon("/general/remove.png"));
       e.getPresentation().setEnabled(node != null && node.getParent() instanceof RepositoryTreeRootNode);
     }
 
@@ -358,6 +367,12 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       SVNURL url = node.getURL();
       if (url != null) {
+        Project project = e.getData(DataKeys.PROJECT);
+        int rc = Messages.showYesNoDialog(project, "Would you like to discard the location '" + url.toString() + "'?",
+                                          "Discard Location", Messages.getQuestionIcon());
+        if (rc == 1) {
+          return;
+        }
         SvnConfiguration config = SvnConfiguration.getInstance(myVCS.getProject());
         config.removeCheckoutURL(url.toString());
         getRepositoryBrowser().removeURL(url.toString());
