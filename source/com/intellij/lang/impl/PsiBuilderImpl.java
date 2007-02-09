@@ -1,9 +1,6 @@
 package com.intellij.lang.impl;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -54,6 +51,7 @@ import java.util.ArrayList;
 public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.impl.PsiBuilderImpl");
 
+  private Language myLanguage;
   private int[] myLexStarts;
   private int[] myLexEnds;
   private IElementType[] myLexTypes;
@@ -99,6 +97,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   public PsiBuilderImpl(Language lang, Lexer lexer, final ASTNode chameleon, Project project, CharSequence text) {
     myText = text;
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
+    myLanguage = lang;
     ParserDefinition parserDefinition = lang.getParserDefinition();
     assert parserDefinition != null;
     myLexer = lexer != null ? lexer : parserDefinition.createLexer(project);
@@ -142,6 +141,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   public void enforceCommentTokens(TokenSet tokens) {
     myComments = tokens;
+  }
+
+  @Nullable
+  public LanguageDialect getLanguageDialect() {
+    return myLanguage instanceof LanguageDialect ? (LanguageDialect)myLanguage:null;
   }
 
   private static abstract class Node {

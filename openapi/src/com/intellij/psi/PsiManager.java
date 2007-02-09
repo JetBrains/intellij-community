@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -39,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
  * The main entry point for accessing the PSI services for a project.
  */
 public abstract class PsiManager extends UserDataHolderBase {
-  public static final Key<String> LANGUAGE_DIALECT = Key.create("language.dialect");
 
   /**
    * Returns the PSI manager instance for the specified project.

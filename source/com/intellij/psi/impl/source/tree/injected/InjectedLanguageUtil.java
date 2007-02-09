@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -113,7 +114,7 @@ public class InjectedLanguageUtil {
 
     SmartPsiElementPointer<T> pointer = createHostSmartPointer(host);
     psiFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, pointer);
-    psiFile.putUserData(PsiManager.LANGUAGE_DIALECT,host.getUserData(PsiManager.LANGUAGE_DIALECT));
+    psiFile.putUserData(PsiManagerImpl.LANGUAGE_DIALECT,language instanceof LanguageDialect ? (LanguageDialect)language:null);
 
     final ASTNode parsedNode = psiFile.getNode();
     if (!(parsedNode instanceof FileElement)) return null;

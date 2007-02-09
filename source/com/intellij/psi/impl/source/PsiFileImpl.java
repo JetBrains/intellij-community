@@ -26,6 +26,7 @@ import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Map;
 import java.util.Set;
@@ -395,5 +396,11 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
       if (aClass.isInstance(child)) return (T)child;
     }
     return null;
+  }
+
+  @NonNls
+  @Nullable
+  public String getLanguageDialect() {
+    return getUserData(PsiManagerImpl.LANGUAGE_DIALECT);
   }
 }

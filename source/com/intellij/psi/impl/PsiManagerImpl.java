@@ -64,6 +64,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.lang.LanguageDialect;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,6 +112,8 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private AtomicInteger myBatchFilesProcessingModeCount = new AtomicInteger(0);
 
   private static final Key<PsiFile> CACHED_PSI_FILE_COPY_IN_FILECONTENT = Key.create("CACHED_PSI_FILE_COPY_IN_FILECONTENT");
+  public static final Key<LanguageDialect> LANGUAGE_DIALECT = Key.create("language.dialect");
+  
   public static final int BEFORE_CHILD_ADDITION = 0;
   public static final int BEFORE_CHILD_REMOVAL = 1;
   public static final int BEFORE_CHILD_REPLACEMENT = 2;

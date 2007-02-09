@@ -161,4 +161,7 @@ public interface PsiBuilder extends UserDataHolder {
   void setDebugMode(boolean dbgMode);
 
   void enforceCommentTokens(TokenSet tokens);
+
+  @Nullable
+  LanguageDialect getLanguageDialect();
 }
