@@ -321,7 +321,6 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   @Nullable
   public VirtualFile refreshAndFindFileByPath(String path) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    final VirtualFile file = findFileByPath(path, true, true);
     String canonicalPath = getVfsCanonicalPath(path);
     if (canonicalPath == null) return null;
     return findFileByPath(canonicalPath, true, true);
@@ -732,12 +731,15 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
   @Nullable
   private static String getVfsCanonicalPath(String path) {
-    if (SystemInfo.isWindows && path.contains("~")) {
-      try {
-        return new File(path.replace('/', File.separatorChar)).getCanonicalPath().replace(File.separatorChar, '/');
-      }
-      catch (IOException e) {
-        return null;
+    if (SystemInfo.isWindows) {
+      if (path.charAt(0) == '/') path = path.substring(1); //hack over new File(path).toUrl().getFile()
+      if (path.contains("~")) {
+        try {
+          return new File(path.replace('/', File.separatorChar)).getCanonicalPath().replace(File.separatorChar, '/');
+        }
+        catch (IOException e) {
+          return null;
+        }
       }
     }
     return path.replace(File.separatorChar, '/');
