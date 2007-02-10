@@ -731,6 +731,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
   @Nullable
   private static String getVfsCanonicalPath(String path) {
+    if (path.length() == 0) return path;
     if (SystemInfo.isWindows) {
       if (path.charAt(0) == '/') path = path.substring(1); //hack over new File(path).toUrl().getFile()
       if (path.contains("~")) {
