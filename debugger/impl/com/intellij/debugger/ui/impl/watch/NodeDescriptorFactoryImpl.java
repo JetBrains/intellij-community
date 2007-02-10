@@ -16,6 +16,7 @@ import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 
@@ -45,16 +46,16 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     myDisplayDescriptorSearcher.clear();
   }
 
-  private <T extends NodeDescriptor> T getDescriptor(NodeDescriptor parent, DescriptorData<T> data) {
-    T descriptor = data.createDescriptor(myProject);
+  private <T extends NodeDescriptor> T getDescriptor(NodeDescriptor parent, DescriptorData<T> key) {
+    final T descriptor = key.createDescriptor(myProject);
 
-    T oldDescriptor = findDescriptor(parent, descriptor, data);
+    final T oldDescriptor = findDescriptor(parent, descriptor, key);
 
     if(oldDescriptor != null && oldDescriptor.getClass() == descriptor.getClass()) {
       descriptor.setAncestor(oldDescriptor);
     }
     else {
-      T displayDescriptor = findDisplayDescriptor(parent, descriptor, data.getDisplayKey());
+      T displayDescriptor = findDisplayDescriptor(parent, descriptor, key.getDisplayKey());
       if(displayDescriptor != null) {
         descriptor.displayAs(displayDescriptor);
       }
@@ -65,12 +66,14 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return descriptor;
   }
 
+  @Nullable
   protected <T extends NodeDescriptor>T findDisplayDescriptor(NodeDescriptor parent, T descriptor, DisplayKey<T> key) {
     return myDisplayDescriptorSearcher.search(parent, descriptor, key);
   }
 
-  protected <T extends NodeDescriptor> T findDescriptor(NodeDescriptor parent, T descriptor, DescriptorData<T> data) {
-    return myDescriptorSearcher.search(parent, descriptor, data);
+  @Nullable
+  protected <T extends NodeDescriptor> T findDescriptor(NodeDescriptor parent, T descriptor, DescriptorData<T> key) {
+    return myDescriptorSearcher.search(parent, descriptor, key);
   }
 
   public DescriptorTree getCurrentHistoryTree() {
@@ -175,22 +178,20 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
       myDescriportTree = descriportTree;
     }
 
+    @Nullable
     public <T extends NodeDescriptor> T search(NodeDescriptor parent, T descriptor, DescriptorKey<T> key) {
-      T result = searchImpl(parent, key);
+      final T result;
+      if(parent == null) {
+        result = myDescriportTree.getChild(null, key);
+      }
+      else {
+        final NodeDescriptor parentDescriptor = getSearched(parent);
+        result = parentDescriptor != null ? myDescriportTree.getChild(parentDescriptor, key) : null;
+      }
       if(result != null) {
         mySearchedDescriptors.put(descriptor, result);
       }
       return result;
-    }
-
-    private <T extends NodeDescriptor> T searchImpl(NodeDescriptor parent, DescriptorKey<T> key) {
-      if(parent == null) {
-        return myDescriportTree.getChild(null, key);
-      }
-      else {
-        NodeDescriptor parentDescriptor = getSearched(parent);
-        return parentDescriptor != null ? myDescriportTree.getChild(parentDescriptor, key) : null;
-      }
     }
 
     protected NodeDescriptor getSearched(NodeDescriptor parent) {
@@ -199,6 +200,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
 
     public void clear() {
       mySearchedDescriptors.clear();
+      myDescriportTree.clear();
     }
   }
 

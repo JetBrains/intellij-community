@@ -8,7 +8,7 @@ import com.intellij.debugger.ui.tree.NodeDescriptor;
  */
 
 public interface DisplayKey <T extends NodeDescriptor> extends DescriptorKey<T>{
-  public abstract boolean equals(Object object);
+  boolean equals(Object object);
 
-  public abstract int hashCode();
+  int hashCode();
 }

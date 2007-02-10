@@ -23,10 +23,8 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.DebuggerSmoothManager;
-import com.intellij.debugger.ui.DescriptorHistoryManagerImpl;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.RunToCursorBreakpoint;
-import com.intellij.debugger.ui.impl.watch.DescriptorHistoryManager;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.execution.CantRunException;
@@ -106,8 +104,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private LinkedList<String> myStatusStack = new LinkedList<String>();
   private String myStatusText;
 
-  private final DescriptorHistoryManager myDescriptorHistoryManager;
-
   private final List<NodeRenderer> myRenderers = new ArrayList<NodeRenderer>();
   private final Map<Type, NodeRenderer>  myNodeRederersMap = new com.intellij.util.containers.HashMap<Type, NodeRenderer>();
   private final NodeRendererSettingsListener  mySettingsListener = new NodeRendererSettingsListener() {
@@ -134,7 +130,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
   protected DebugProcessImpl(Project project) {
     myProject = project;
     myRequestManager = new RequestManagerImpl(this);
-    myDescriptorHistoryManager = new DescriptorHistoryManagerImpl(project);
     NodeRendererSettings.getInstance().addListener(mySettingsListener);
     loadRenderers();
   }
@@ -816,13 +811,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return message;
   }
 
-  public DescriptorHistoryManager getDescriptorHistoryManager() {
-    return myDescriptorHistoryManager;
-  }
-
   public void dispose() {
     NodeRendererSettings.getInstance().removeListener(mySettingsListener);
-    myDescriptorHistoryManager.dispose();
   }
 
   public DebuggerManagerThreadImpl getManagerThread() {

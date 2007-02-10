@@ -1,24 +1,17 @@
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.nodes.NodeComparator;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import com.sun.jdi.event.Event;
+import com.intellij.util.containers.HashMap;
 
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
+import java.util.Map;
 
 /**
  ** finds correspondence between new descriptor and one created on the previous steps
@@ -30,7 +23,8 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
   private static Comparator<DebuggerTreeNode> ourNodeComparator = new NodeComparator();
 
   private final DebuggerTree myDebuggerTree;
-  private List<Breakpoint> myBreakpoints = Collections.emptyList();
+  private Long myThreadId = new Long(-1);
+  private Map<Long, DescriptorTree> myHistories = new HashMap<Long, DescriptorTree>();
 
   public NodeManagerImpl(Project project, DebuggerTree tree) {
     super(project);
@@ -59,21 +53,19 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
   }
 
   public void setHistoryByContext(final DebuggerContextImpl context) {
-    final DebugProcessImpl debugProcess = context.getDebugProcess();
-    final DescriptorHistoryManager descriptorHistoryManager = debugProcess.getDescriptorHistoryManager();
-    descriptorHistoryManager.storeHistory(new DescriptorHistory(getCurrentHistoryTree(), myBreakpoints));
+    myHistories.put(myThreadId, getCurrentHistoryTree());
 
-    final DescriptorHistory history = descriptorHistoryManager.restoreHistory(context);
-    final DescriptorTree descriptorTree = (history != null)? history.getDescriptorTree() : new DescriptorTree(true);
+    final long contextThreadId = context.getThreadProxy().uniqueID();
+    final DescriptorTree historyTree = myHistories.get(contextThreadId);
+    final DescriptorTree descriptorTree = (historyTree != null)? historyTree : new DescriptorTree(true);
 
     deriveHistoryTree(descriptorTree, context);
+    myThreadId = contextThreadId;
+  }
 
-    List<Pair<Breakpoint, Event>> eventDescriptors = DebuggerUtilsEx.getEventDescriptors(context.getSuspendContext());
-    myBreakpoints = ContainerUtil.map(eventDescriptors, new Function<Pair<Breakpoint, Event>, Breakpoint>() {
-      public Breakpoint fun(Pair<Breakpoint, Event> o) {
-        return o.getFirst();
-      }
-    });
+  public void dispose() {
+    myHistories.clear();
+    super.dispose();
   }
 
   private DebuggerTree getTree() {

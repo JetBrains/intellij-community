@@ -145,7 +145,8 @@ public class DebuggerSessionTab implements LogConsoleManager {
     }
 
     myWatchPanel = new MainWatchPanel(getProject(), getContextManager(), WATCHES_ICON);
-
+    myWatchPanel.setUpdateEnabled(debuggerSettings.WATCHES_VISIBLE);
+    
     myFramePanel = new FramePanel(getProject(), getContextManager()) {
       protected boolean isUpdateEnabled() {
         return myViewsContentManager.getSelectedContent().getComponent() == this;

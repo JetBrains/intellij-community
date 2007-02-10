@@ -12,11 +12,11 @@ import java.util.Map;
  */
 
 public class MarkedDescriptorTree {
-  private HashMap<NodeDescriptor, Map<DescriptorKey, NodeDescriptor>> myChildrenMap = new HashMap<NodeDescriptor, Map<DescriptorKey, NodeDescriptor>>();
-  private Map<DescriptorKey, NodeDescriptor> myRootChildren = new com.intellij.util.containers.HashMap<DescriptorKey, NodeDescriptor>();
+  private HashMap<NodeDescriptor, Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor>> myChildrenMap = new HashMap<NodeDescriptor, Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor>>();
+  private Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor> myRootChildren = new com.intellij.util.containers.HashMap<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor>();
 
   public <T extends NodeDescriptor> void addChild(NodeDescriptor parent, T child, DescriptorKey<T> key) {
-    Map<DescriptorKey, NodeDescriptor> children;
+    Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor> children;
 
     if(parent == null) {
       children = myRootChildren;
@@ -24,7 +24,7 @@ public class MarkedDescriptorTree {
     else {
       children = myChildrenMap.get(parent);
       if(children == null) {
-        children = new com.intellij.util.containers.HashMap<DescriptorKey, NodeDescriptor>();
+        children = new com.intellij.util.containers.HashMap<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor>();
         myChildrenMap.put(parent, children);
       }
     }
@@ -35,11 +35,12 @@ public class MarkedDescriptorTree {
     if(parent == null) {
       return (T)myRootChildren.get(key);
     }
-    final Map<DescriptorKey, NodeDescriptor> map = myChildrenMap.get(parent);
+    final Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor> map = myChildrenMap.get(parent);
     return (T)(map != null ? map.get(key) : null);
   }
 
   public void clear() {
     myChildrenMap.clear();
+    myRootChildren.clear();
   }
 }

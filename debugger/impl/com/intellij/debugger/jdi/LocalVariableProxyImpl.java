@@ -4,7 +4,10 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.jdi.LocalVariableProxy;
 import com.intellij.openapi.util.Comparing;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.LocalVariable;
+import com.sun.jdi.Type;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -63,7 +66,7 @@ public class LocalVariableProxyImpl extends JdiProxy implements LocalVariablePro
   }
 
   public int hashCode() {
-    return myFrame.hashCode();
+    return 31 * myFrame.hashCode() + myVariableName.hashCode();
   }
 
   public boolean equals(Object o) {

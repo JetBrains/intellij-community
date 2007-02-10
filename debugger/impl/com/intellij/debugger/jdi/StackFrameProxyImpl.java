@@ -276,7 +276,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   }
 
   public int hashCode() {
-    return myThreadProxy.hashCode() + myFrameFromBottomIndex;
+    return 31 * myThreadProxy.hashCode() + myFrameFromBottomIndex;
   }
 
 
@@ -312,5 +312,8 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     return myFrameFromBottomIndex == 1;
   }
 
+  public int getIndexFromBottom() {
+    return myFrameFromBottomIndex;
+  }
 }
 

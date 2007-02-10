@@ -4,7 +4,6 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.watch.MethodsTracker;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -12,14 +11,16 @@ import com.intellij.openapi.util.Key;
  */
 
 public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
-  private static final Key STACK_FRAME = new Key("STACK_FRAME");
   private final StackFrameProxyImpl myFrame;
+  private final FrameDisplayKey myDisplayKey;
   private MethodsTracker myMethodsTracker;
 
   public StackFrameData(StackFrameProxyImpl frame) {
     super();
     myFrame = frame;
+    myDisplayKey = new FrameDisplayKey(frame.threadProxy().uniqueID(), frame.getIndexFromBottom());
     myMethodsTracker = new MethodsTracker();
+    
   }
 
   protected StackFrameDescriptorImpl createDescriptorImpl(Project project) {
@@ -37,7 +38,36 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
   }
 
   public DisplayKey<StackFrameDescriptorImpl> getDisplayKey() {
-    return new SimpleDisplayKey<StackFrameDescriptorImpl>(STACK_FRAME);
+    return myDisplayKey;
   }
 
+  private static class FrameDisplayKey implements DisplayKey<StackFrameDescriptorImpl>{
+    private final long myThreadId;
+    private final int myFrameIndex;
+    
+    public FrameDisplayKey(final long threadId, final int frameIndex) {
+      myThreadId = threadId;
+      myFrameIndex = frameIndex;
+    }
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final FrameDisplayKey that = (FrameDisplayKey)o;
+
+      if (myFrameIndex != that.myFrameIndex) return false;
+      if (myThreadId != that.myThreadId) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      int result;
+      result = (int)(myThreadId ^ (myThreadId >>> 32));
+      result = 31 * result + myFrameIndex;
+      return result;
+    }
+  } 
+  
 }
