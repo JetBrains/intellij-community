@@ -16,16 +16,17 @@ import com.sun.jdi.Type;
 
 public class LocalVariableProxyImpl extends JdiProxy implements LocalVariableProxy {
   private final StackFrameProxyImpl myFrame;
-  private final String              myVariableName;
+  private final String myVariableName;
 
   private LocalVariable myVariable;
   private Type myVariableType;
+  private String myTypeName;
 
   public LocalVariableProxyImpl(StackFrameProxyImpl frame, LocalVariable variable) {
     super(frame.myTimer);
     myFrame = frame;
     myVariableName = variable.name();
-
+    myTypeName = variable.typeName();
     myVariable = variable;
     try {
       myVariableType = variable.type();
@@ -79,5 +80,9 @@ public class LocalVariableProxyImpl extends JdiProxy implements LocalVariablePro
 
   public String name() {
     return myVariableName;
+  }
+
+  public String typeName() {
+    return myTypeName;
   }
 }

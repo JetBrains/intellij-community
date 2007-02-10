@@ -3,6 +3,7 @@ package com.intellij.debugger.impl.descriptors.data;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.StringBuilderSpinAllocator;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -32,6 +33,12 @@ public class LocalData extends DescriptorData<LocalVariableDescriptorImpl>{
   }
 
   public DisplayKey<LocalVariableDescriptorImpl> getDisplayKey() {
-    return new SimpleDisplayKey<LocalVariableDescriptorImpl>(myLocalVariable);
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      return new SimpleDisplayKey<LocalVariableDescriptorImpl>(builder.append(myLocalVariable.typeName()).append("#").append(myLocalVariable.name()).toString());
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
   }
 }

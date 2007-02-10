@@ -22,6 +22,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.Nullable;
 
 
 public final class DebuggerContextImpl implements DebuggerContext {
@@ -73,6 +74,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
     return myDebugProcess != null ? myDebugProcess.getProject() : null;
   }
 
+  @Nullable
   public StackFrameProxyImpl getFrameProxy() {
     LOG.assertTrue(myInitialized);
     return myFrameProxy;

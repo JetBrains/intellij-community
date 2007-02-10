@@ -18,7 +18,7 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
   public StackFrameData(StackFrameProxyImpl frame) {
     super();
     myFrame = frame;
-    myDisplayKey = new FrameDisplayKey(frame.threadProxy().uniqueID(), frame.getIndexFromBottom());
+    myDisplayKey = new FrameDisplayKey(frame.getIndexFromBottom());
     myMethodsTracker = new MethodsTracker();
     
   }
@@ -42,11 +42,9 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
   }
 
   private static class FrameDisplayKey implements DisplayKey<StackFrameDescriptorImpl>{
-    private final long myThreadId;
     private final int myFrameIndex;
     
-    public FrameDisplayKey(final long threadId, final int frameIndex) {
-      myThreadId = threadId;
+    public FrameDisplayKey(final int frameIndex) {
       myFrameIndex = frameIndex;
     }
 
@@ -57,16 +55,12 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
       final FrameDisplayKey that = (FrameDisplayKey)o;
 
       if (myFrameIndex != that.myFrameIndex) return false;
-      if (myThreadId != that.myThreadId) return false;
 
       return true;
     }
 
     public int hashCode() {
-      int result;
-      result = (int)(myThreadId ^ (myThreadId >>> 32));
-      result = 31 * result + myFrameIndex;
-      return result;
+      return myFrameIndex;
     }
   } 
   

@@ -1,14 +1,21 @@
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.nodes.NodeComparator;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ReferenceType;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.Map;
@@ -23,8 +30,8 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
   private static Comparator<DebuggerTreeNode> ourNodeComparator = new NodeComparator();
 
   private final DebuggerTree myDebuggerTree;
-  private Long myThreadId = new Long(-1);
-  private Map<Long, DescriptorTree> myHistories = new HashMap<Long, DescriptorTree>();
+  private String myHistoryKey = null;
+  private Map<String, DescriptorTree> myHistories = new HashMap<String, DescriptorTree>();
 
   public NodeManagerImpl(Project project, DebuggerTree tree) {
     super(project);
@@ -53,14 +60,45 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
   }
 
   public void setHistoryByContext(final DebuggerContextImpl context) {
-    myHistories.put(myThreadId, getCurrentHistoryTree());
+    if (myHistoryKey != null) {
+      myHistories.put(myHistoryKey, getCurrentHistoryTree());
+    }
 
-    final long contextThreadId = context.getThreadProxy().uniqueID();
-    final DescriptorTree historyTree = myHistories.get(contextThreadId);
-    final DescriptorTree descriptorTree = (historyTree != null)? historyTree : new DescriptorTree(true);
+    final String historyKey = getHistoryKey(context);
+    final DescriptorTree descriptorTree;
+    if (historyKey != null) {
+      final DescriptorTree historyTree = myHistories.get(historyKey);
+      descriptorTree = (historyTree != null)? historyTree : new DescriptorTree(true);
+    }
+    else {
+      descriptorTree = new DescriptorTree(true);
+    }
 
     deriveHistoryTree(descriptorTree, context);
-    myThreadId = contextThreadId;
+    myHistoryKey = historyKey;
+  }
+  
+  @Nullable
+  private static String getHistoryKey(DebuggerContextImpl context) {
+    final StackFrameProxyImpl frame = context.getFrameProxy();
+    if (frame == null) {
+      return null;
+    }
+    try {
+      final Location location = frame.location();
+      final Method method = location.method();
+      final ReferenceType referenceType = location.declaringType();
+      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+      try {
+        return builder.append(referenceType.signature()).append("#").append(method.name()).append(method.signature()).toString();
+      }
+      finally {
+        StringBuilderSpinAllocator.dispose(builder);
+      }
+    }
+    catch (EvaluateException e) {
+      return null;
+    }
   }
 
   public void dispose() {
