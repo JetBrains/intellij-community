@@ -125,7 +125,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
       final File[] files = File.listRoots();
       for (File file : files) {
-        String path = getCanonicalPath(file);
+        String path = file.getPath();
         if (path != null) {
           path = path.replace(File.separatorChar, '/');
           final VirtualFileImpl root = new VirtualFileImpl(path);
@@ -146,7 +146,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       synchronized (LOCK) {
         Set<String> newRootPaths= new HashSet<String>();
         for (File file : files) {
-          String path = getCanonicalPath(file);
+          String path = file.getPath();
           if (path != null) {
             path = path.replace(File.separatorChar, '/');
             final List<VirtualFile> roots = myFSRootsToPaths.getKeysByValue(path);
@@ -227,16 +227,9 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       if (path.indexOf('\\') >= 0) return null;
     }
 
-    VirtualFile file = findFileByPath(path, true, false);
-    if (file == null){
-      String canonicalPath = getCanonicalPath(new File(path.replace('/', File.separatorChar)));
-      if (canonicalPath == null) return null;
-      String path1 = canonicalPath.replace(File.separatorChar, '/');
-      if (!path.equals(path1)){
-        return findFileByPath(path1, true, false);
-      }
-    }
-    return file;
+    String canonicalPath = getVfsCanonicalPath(path);
+    if (canonicalPath == null) return null;
+    return findFileByPath(canonicalPath, true, false);
   }
 
   private VirtualFile findFileByPath(String path, boolean createIfNoCache, final boolean refreshIfNotFound) {
@@ -329,15 +322,9 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   public VirtualFile refreshAndFindFileByPath(String path) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     final VirtualFile file = findFileByPath(path, true, true);
-    if (file == null){
-      String canonicalPath = getCanonicalPath(new File(path.replace('/', File.separatorChar)));
-      if (canonicalPath == null) return null;
-      String path1 = canonicalPath.replace(File.separatorChar, '/');
-      if (!path.equals(path1)){
-        return findFileByPath(path1, true, true);
-      }
-    }
-    return file;
+    String canonicalPath = getVfsCanonicalPath(path);
+    if (canonicalPath == null) return null;
+    return findFileByPath(canonicalPath, true, true);
   }
 
   public VirtualFile findFileByIoFile(File file) {
@@ -744,18 +731,16 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   @Nullable
-  private static String getCanonicalPath(File file) {
-    if (SystemInfo.isFileSystemCaseSensitive) {
-      return file.getAbsolutePath(); // fixes problem with symlinks under Unix (however does not under Windows!)
-    }
-    else {
+  private static String getVfsCanonicalPath(String path) {
+    if (SystemInfo.isWindows && path.contains("~")) {
       try {
-        return file.getCanonicalPath();
+        return new File(path.replace('/', File.separatorChar)).getCanonicalPath().replace(File.separatorChar, '/');
       }
       catch (IOException e) {
         return null;
       }
     }
+    return path.replace(File.separatorChar, '/');
   }
 
   private class WatchForChangesThread extends Thread {
