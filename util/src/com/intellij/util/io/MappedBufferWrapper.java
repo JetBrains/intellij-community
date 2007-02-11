@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
@@ -31,7 +30,7 @@ public abstract class MappedBufferWrapper {
   protected File myFile;
   protected long myPosition;
   protected long myLength;
-  private SoftReference<ByteBuffer> myBufferRef;
+  private ByteBuffer myBuffer;
 
   public MappedBufferWrapper(final File file, final long pos, final long length) {
     myFile = file;
@@ -51,7 +50,7 @@ public abstract class MappedBufferWrapper {
     ByteBuffer buffer = _buf();
     if (buffer == null) {
       buffer = map();
-      myBufferRef = new SoftReference<ByteBuffer>(buffer);
+      myBuffer = buffer;
     }
 
     return buffer;
@@ -59,7 +58,7 @@ public abstract class MappedBufferWrapper {
 
   @Nullable
   private ByteBuffer _buf() {
-    return myBufferRef != null ? myBufferRef.get() : null;
+    return myBuffer;
   }
 
 
@@ -67,7 +66,7 @@ public abstract class MappedBufferWrapper {
     ByteBuffer buffer = holder._buf();
 
     unmapBuffer(buffer);
-    holder.myBufferRef = null;
+    holder.myBuffer = null;
 
     boolean needGC = SystemInfo.JAVA_VERSION.startsWith("1.4.0");
 
@@ -95,7 +94,7 @@ public abstract class MappedBufferWrapper {
 
   private static boolean unmapMappedByteBuffer142b19(MappedBufferWrapper holder) {
     if (clean(holder._buf())) {
-      holder.myBufferRef = null;
+      holder.myBuffer = null;
       return true;
     }
 
