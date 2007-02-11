@@ -6,8 +6,11 @@ import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
 import java.io.*;
+import java.lang.ref.SoftReference;
 import java.net.URL;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -15,7 +18,7 @@ class JarLoader extends Loader {
   private URL myURL;
   private final boolean myCanLockJar;
   private final boolean myUseCache;
-  private ZipFile myZipFile;
+  private SoftReference<ZipFile> myZipFileRef;
   private Map<String,Boolean> myDirectories = null;
   @NonNls private static final String JAR_PROTOCOL = "jar";
   @NonNls private static final String FILE_PROTOCOL = "file";
@@ -29,10 +32,12 @@ class JarLoader extends Loader {
 
   @Nullable
   private ZipFile getZipFile() throws IOException {
-    if (myZipFile != null) return myZipFile;
+    ZipFile zipFile = myZipFileRef != null ? myZipFileRef.get() : null;
+    if (zipFile != null) return zipFile;
     if (myCanLockJar) {
-      myZipFile = _getZipFile();
-      return myZipFile;
+      zipFile = _getZipFile();
+      myZipFileRef = new SoftReference<ZipFile>(zipFile);
+      return zipFile;
     }
 
     return _getZipFile();

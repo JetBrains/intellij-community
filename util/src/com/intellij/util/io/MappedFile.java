@@ -3,18 +3,20 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
 
 /**
  * @author max
  */
 public class MappedFile {
-  private ByteBufferUtil.ByteBufferHolder myHolder;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.MappedFile");
+
+  private MappedBufferWrapper myHolder;
   private final File myFile;
 
   private long myRealSize;
@@ -37,29 +39,10 @@ public class MappedFile {
   }
 
   private void map() throws IOException {
-    RandomAccessFile raf = new RandomAccessFile(myFile, RW);
-    final FileChannel channel = raf.getChannel();
-    MappedByteBuffer buf = null;
-    try {
-      buf = channel.map(FileChannel.MapMode.READ_WRITE, 0, raf.length());
-    }
-    catch (IOException e) {
-      throw new RuntimeException("Mapping failed: " + myFile.getAbsolutePath(), e);
-    }
-    finally {
-      channel.close();
-      raf.close();
-    }
-
-    if (buf == null) {
-      throw new RuntimeException("Mapping failed: " + myFile.getAbsolutePath());
-    }
-
-    myHolder = new ByteBufferUtil.ByteBufferHolder(buf, myFile);
+    myHolder = new ReadWriteMappedBufferWrapper(myFile);
     myRealSize = myFile.length();
-    buf.position((int)myPosition);
+    myHolder.buf().position((int)myPosition);
   }
-
 
   public short getShort(int index) throws IOException {
     seek(index);
@@ -115,7 +98,7 @@ public class MappedFile {
       throw new EOFException();
     }
 
-    myHolder.getBuffer().get(dst, offset, length);
+    buf().get(dst, offset, length);
     myPosition += length;
   }
 
@@ -126,11 +109,24 @@ public class MappedFile {
 
   public void seek(long pos) throws IOException {
     ensureSize(pos);
-    myHolder.getBuffer().position((int)pos);
+    buf().position((int)pos);
     myPosition = pos;
     if (pos > mySize) {
       mySize = pos;
     }
+  }
+
+  private ByteBuffer buf() {
+    if (!isMapped()) {
+      try {
+        map();
+      }
+      catch (IOException e) {
+        LOG.error(e); // TODO: rethrow?
+      }
+    }
+
+    return myHolder.buf();
   }
 
   private void ensureSize(final long pos) throws IOException {
@@ -146,7 +142,7 @@ public class MappedFile {
   public void put(final byte[] src, final int offset, final int length) throws IOException {
     ensureSize(myPosition + length);
 
-    myHolder.getBuffer().put(src, offset, length);
+    buf().put(src, offset, length);
     myPosition += length;
     if (myPosition > mySize) {
       mySize = myPosition;
@@ -154,7 +150,7 @@ public class MappedFile {
   }
 
   public void flush() {
-    final ByteBuffer buf = myHolder.getBuffer();
+    final ByteBuffer buf = buf();
     if (buf instanceof MappedByteBuffer) {
       ((MappedByteBuffer)buf).force();
     }
@@ -268,11 +264,11 @@ public class MappedFile {
   private void unmap() {
     if (myHolder != null) {
       flush();
-      ByteBufferUtil.unmapMappedByteBuffer(myHolder);
+      myHolder.unmap();
     }
   }
 
   public boolean isMapped() {
-    return myHolder.getBuffer() != null;
+    return myHolder.isMapped();
   }
 }

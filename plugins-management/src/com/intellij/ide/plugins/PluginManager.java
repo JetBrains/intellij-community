@@ -99,6 +99,7 @@ public class PluginManager {
   public synchronized static IdeaPluginDescriptor[] getPlugins() {
     if (ourPlugins == null) {
       initializePlugins();
+      clearJarURLCache();
     }
     return ourPlugins;
   }
@@ -244,6 +245,34 @@ public class PluginManager {
     return classLoaders.toArray(new ClassLoader[classLoaders.size()]);
   }
 
+  // See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4167874
+  private static void clearJarURLCache() {
+    try {
+      /*
+      new URLConnection(null) {
+        public void connect() throws IOException {
+          throw new UnsupportedOperationException();
+        }
+      }.setDefaultUseCaches(false);
+      */
+
+      Class jarFileFactory = Class.forName("sun.net.www.protocol.jar.JarFileFactory");
+
+      Field fileCache = jarFileFactory.getDeclaredField("fileCache");
+      Field urlCache = jarFileFactory.getDeclaredField("urlCache");
+
+      fileCache.setAccessible(true);
+      fileCache.set(null, new HashMap());
+
+      urlCache.setAccessible(true);
+      urlCache.set(null, new HashMap());
+    }
+    catch (Exception e) {
+      System.out.println("Failed to clear URL cache");
+      // Do nothing.
+    }
+  }
+
   /**
    * Called via reflection
    */
@@ -260,6 +289,8 @@ public class PluginManager {
       Runnable runnable = new Runnable() {
         public void run() {
           try {
+            clearJarURLCache();
+
             //noinspection AssignmentToStaticFieldFromInstanceMethod
             PluginsFacade.INSTANCE = new Facade();
 

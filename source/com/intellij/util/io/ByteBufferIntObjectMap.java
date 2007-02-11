@@ -15,20 +15,20 @@ public class ByteBufferIntObjectMap<V> {
   private int myMod;
   private final int myEndOffset;
 
-  public ByteBufferIntObjectMap(@NotNull RandomAccessDataInput buffer,
+  public ByteBufferIntObjectMap(@NotNull MappedBufferWrapper buffer,
                        int startOffset,
                        int endOffset,
                        @NotNull ByteBufferMap.ValueProvider<V> valueProvider) {
     assert startOffset < endOffset;
 
-    myBuffer = buffer;
+    myBuffer = new ByteBufferRADataInput(buffer);
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myValueProvider = valueProvider;
 
-    buffer.setPosition(startOffset);
+    myBuffer.setPosition(startOffset);
     try {
-      myMod = buffer.readInt();
+      myMod = myBuffer.readInt();
     }
     catch (IOException e) {
       LOG.error(e);

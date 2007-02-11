@@ -12,26 +12,26 @@ import java.nio.ByteBuffer;
 public class ByteBufferRADataInput implements RandomAccessDataInput {
   private static final Logger LOG = Logger.getInstance("com.intellij.util.io.ByteBufferRADataInput");
 
-  private ByteBuffer myBuffer;
+  private MappedBufferWrapper myBuffer;
 
-  public ByteBufferRADataInput(ByteBuffer buffer) {
+  public ByteBufferRADataInput(MappedBufferWrapper buffer) {
     myBuffer = buffer;
   }
 
   public void setPosition(int pos) {
-    myBuffer.position(pos);
+    getBuffer().position(pos);
   }
 
   public int getPosition() {
-    return myBuffer.position();
+    return getBuffer().position();
   }
 
-  public void readFully(byte b[]) throws IOException {
-    myBuffer.get(b);
+  public void readFully(byte[] b) throws IOException {
+    getBuffer().get(b);
   }
 
-  public void readFully(byte b[], int off, int len) throws IOException {
-    myBuffer.get(b, off, len);
+  public void readFully(byte[] b, int off, int len) throws IOException {
+    getBuffer().get(b, off, len);
   }
 
   public int skipBytes(int n) throws IOException {
@@ -41,43 +41,43 @@ public class ByteBufferRADataInput implements RandomAccessDataInput {
   }
 
   public boolean readBoolean() throws IOException {
-    return myBuffer.get() == 1;
+    return getBuffer().get() == 1;
   }
 
   public byte readByte() throws IOException {
-    return myBuffer.get();
+    return getBuffer().get();
   }
 
   public int readUnsignedByte() throws IOException {
-    return 0xFF & ((int)myBuffer.get());
+    return 0xFF & ((int)getBuffer().get());
   }
 
   public short readShort() throws IOException {
-    return myBuffer.getShort();
+    return getBuffer().getShort();
   }
 
   public int readUnsignedShort() throws IOException {
-    return 0xFFFF & ((int)myBuffer.getShort());
+    return 0xFFFF & ((int)getBuffer().getShort());
   }
 
   public char readChar() throws IOException {
-    return myBuffer.getChar();
+    return getBuffer().getChar();
   }
 
   public int readInt() throws IOException {
-    return myBuffer.getInt();
+    return getBuffer().getInt();
   }
 
   public long readLong() throws IOException {
-    return myBuffer.getLong();
+    return getBuffer().getLong();
   }
 
   public float readFloat() throws IOException {
-    return myBuffer.getFloat();
+    return getBuffer().getFloat();
   }
 
   public double readDouble() throws IOException {
-    return myBuffer.getDouble();
+    return getBuffer().getDouble();
   }
 
   public String readLine() throws IOException {
@@ -87,5 +87,9 @@ public class ByteBufferRADataInput implements RandomAccessDataInput {
 
   public String readUTF() throws IOException {
     return DataInputStream.readUTF(this);
+  }
+
+  public ByteBuffer getBuffer() {
+    return myBuffer.buf();
   }
 }

@@ -56,6 +56,14 @@ public class ByteBufferMap<K,V> {
     return new ByteBufferMapWriteHandler<V>(null, valueProvider, map, searchFactor).calcLength();
   }
 
+  public ByteBufferMap(@NotNull MappedBufferWrapper holder,
+                       int startOffset,
+                       int endOffset,
+                       @NotNull KeyProvider<K> keyProvider,
+                       @NotNull ValueProvider<V> valueProvider) {
+    this(new ByteBufferRADataInput(holder), startOffset, endOffset, keyProvider, valueProvider);
+  }
+
   public ByteBufferMap(@NotNull RandomAccessDataInput buffer,
                        int startOffset,
                        int endOffset,
