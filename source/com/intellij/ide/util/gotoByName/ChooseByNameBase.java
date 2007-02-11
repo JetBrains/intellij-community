@@ -1005,16 +1005,18 @@ public abstract class ChooseByNameBase{
 
 patterns:
     for (String pattern : patterns) {
-      int j;
-      for (j = matchPosition; j < suspects.size() - 1; j++) {
-        String suspect = suspects.get(j);
-        if (StringUtil.startsWithIgnoreCase(suspect, pattern)) {
-          matchPosition = j + 1;
-          continue patterns;
+      if (pattern.length() > 0) {
+        int j;
+        for (j = matchPosition; j < suspects.size() - 1; j++) {
+          String suspect = suspects.get(j);
+          if (StringUtil.startsWithIgnoreCase(suspect, pattern)) {
+            matchPosition = j + 1;
+            continue patterns;
+          }
         }
-      }
 
-      return false;
+        return false;
+      }
     }
 
     return true;

@@ -156,6 +156,9 @@ public class NameUtil {
         if (!firstIdentifierLetter) {
           buffer.append("[A-Za-z0-9\\$]*\\.");
         }
+        else {
+          buffer.append("\\.");
+        }
         firstIdentifierLetter = true;
       }
       else {
