@@ -1113,8 +1113,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
       // Idea project only.
       if (qualifierExpression != null) {
-        @NonNls final String text = qualifierExpression.getText();
-        if ("LOG".equals(text)) {
+        if (qualifierExpression.textMatches("LOG")) {
           final PsiType qualifierType = qualifierExpression.getType();
           if (qualifierType != null && qualifierType.equalsToText("com.intellij.openapi.diagnostic.Logger")) {
             if ("error".equals(methodName)) {

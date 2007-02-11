@@ -207,7 +207,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @param text the character sequence to compare with.
    * @return true if the text is equal, false otherwise.
    */
-  boolean textMatches(@NotNull CharSequence text);
+  boolean textMatches(@NotNull @NonNls CharSequence text);
 
   /**
    * Checks if the text of this PSI element is equal to the text of the specified PSI element.
