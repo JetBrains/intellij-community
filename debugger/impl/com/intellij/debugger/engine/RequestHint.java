@@ -24,6 +24,7 @@ import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.request.StepRequest;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,9 +48,9 @@ public class RequestHint {
     public SmartStepFilter(PsiMethod psiMethod, final DebugProcessImpl debugProcess) throws EvaluateException {
       myDeclaringClassName = JVMNameUtil.getJVMQualifiedName(psiMethod.getContainingClass()).getName(debugProcess);
       final JVMName methodSignature = JVMNameUtil.getJVMSignature(psiMethod);
-      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+      @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
       try {
-        builder.append(psiMethod.getName());
+        builder.append(psiMethod.isConstructor()? "<init>" : psiMethod.getName());
         builder.append(methodSignature.getName(debugProcess));
         myTargetMethodSignature = builder.toString();
       }

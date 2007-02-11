@@ -124,12 +124,12 @@ public class SmartStepIntoAction extends AnAction {
           }
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitCallExpression(final PsiCallExpression expression) {
           final PsiMethod psiMethod = expression.resolveMethod();
           if (psiMethod != null) {
             methods.add(psiMethod);
           }
-          super.visitMethodCallExpression(expression);
+          super.visitCallExpression(expression);
         }
       };
       element.accept(methodCollector);
