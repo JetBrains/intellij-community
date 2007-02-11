@@ -7,7 +7,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +53,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     return pane.getPresentableSubIdName(subId);
   }
 
-  public final void select(PsiElement element, final boolean requestFocus) {
+  public void select(PsiElement element, final boolean requestFocus) {
     while (true) {
       if (element instanceof PsiFile) {
         break;
