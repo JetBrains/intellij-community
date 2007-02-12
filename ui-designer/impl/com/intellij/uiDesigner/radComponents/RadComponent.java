@@ -684,7 +684,7 @@ public abstract class RadComponent implements IComponent {
     if (componentClass.isAnonymousClass()) {
       componentClass = componentClass.getSuperclass();
     }
-    if (component instanceof JPanel) {
+    if (component instanceof JPanel && !isCompositeComponent(component)) {
       RadContainer container = new RadContainer(componentClass, id, context.getPalette());
       final RadLayoutManager manager = LayoutManagerRegistry.createFromLayout(component.getLayout());
       if (manager == null) {
@@ -744,6 +744,21 @@ public abstract class RadComponent implements IComponent {
     }
 
     return result;
+  }
+
+  private static boolean isCompositeComponent(final JComponent component) {
+    if (component.getComponentCount() == 0) {
+      return false;
+    }
+    
+    JComponent instance;
+    try {
+      instance = component.getClass().newInstance();
+    }
+    catch(Exception ex) {
+      return false;
+    }
+    return instance.getComponentCount() == component.getComponentCount();
   }
 
   protected void importSnapshotComponent(final SnapshotContext context, final JComponent component) {
