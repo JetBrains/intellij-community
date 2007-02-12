@@ -158,17 +158,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   }
 
   public String getVcsName() {
-    return "_SVN";
-  }
-
-  public String getComponentName() {
-    return "SvnCheckoutProvider";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
+    return "_Subversion";
   }
 
   private static class CheckoutEventHandler implements ISVNEventHandler {

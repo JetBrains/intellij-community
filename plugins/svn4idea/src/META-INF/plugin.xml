@@ -38,9 +38,7 @@
 
     <group id="SubversionFileGroup">
       <separator/>
-      <action id="Subversion.ImportToSVNRepository" class="org.jetbrains.idea.svn.actions.ImportToRepositoryAction"
-              text="I_mport into SVN..."
-        />
+      <action id="Subversion.ImportToSVNRepository" class="org.jetbrains.idea.svn.actions.ImportToRepositoryAction"/>
       <action id="Subversion.BrowseSVNRepository" class="org.jetbrains.idea.svn.actions.BrowseRepositoryAction"
         />
       <separator/>
@@ -53,7 +51,7 @@
     </group>
 
     <group id="SubversionGroup">
-      <action id="Subversion.Share" class="org.jetbrains.idea.svn.actions.ShareProjectAction" text="_Share Directory..."/>
+      <action id="Subversion.Share" class="org.jetbrains.idea.svn.actions.ShareProjectAction"/>
       <separator/>
       <action id="Subversion.Add" class="org.jetbrains.idea.svn.actions.AddAction"/>
       <reference id="CheckinFiles"/>
@@ -61,7 +59,7 @@
       <reference id="IntegrateFiles"/>
       <reference id="CheckStatusForFiles"/>
       <separator/>
-      <action id="Subversion.ShowProperties" class="org.jetbrains.idea.svn.actions.ShowPropertiesAction" text="Edit _Properties"/>
+      <action id="Subversion.ShowProperties" class="org.jetbrains.idea.svn.actions.ShowPropertiesAction"/>
       <action id="Subversion.SetProperty" class="org.jetbrains.idea.svn.actions.SetPropertyAction"/>
       <action id="Subversion.Revert" class="org.jetbrains.idea.svn.actions.RevertAction"/>
       <action id="Subversion.Resolve" class="org.jetbrains.idea.svn.actions.ResolveAction"/>
