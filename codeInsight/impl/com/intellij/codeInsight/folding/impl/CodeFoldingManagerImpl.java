@@ -38,6 +38,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   private WeakList<Document> myDocumentsWithFoldingInfo = new WeakList<Document>();
 
   private final Key<DocumentFoldingInfo> FOLDING_INFO_IN_DOCUMENT_KEY = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
+  private static final Key<Boolean> FOLDING_STATE_INFO_IN_DOCUMENT_KEY = Key.create("FOLDING_STATE_IN_DOCUMENT");
 
   CodeFoldingManagerImpl(Project project) {
     myProject = project;
@@ -212,6 +213,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   private Runnable updateFoldRegions(Editor editor, boolean applyDefaultState) {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
     if (file != null) {
+      editor.getDocument().putUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY, Boolean.TRUE);
       return FoldingUpdate.updateFoldRegions(editor, file, applyDefaultState);
     }
     else {
@@ -247,5 +249,16 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
       myDocumentsWithFoldingInfo.add(document);
     }
     return info;
+  }
+
+  public static void resetFoldingInfo(final @NotNull Document document) {
+    final Boolean foldingInfoStatus = document.getUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY);
+    if (Boolean.TRUE.equals(foldingInfoStatus)) {
+      final Editor[] editors = EditorFactory.getInstance().getEditors(document);
+      for(Editor editor:editors) {
+        EditorFoldingInfo.resetInfo(editor);
+      }
+      document.putUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY, null);
+    }
   }
 }

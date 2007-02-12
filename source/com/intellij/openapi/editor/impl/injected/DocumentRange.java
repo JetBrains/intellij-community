@@ -4,10 +4,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditReadOnlyListener;
-import com.intellij.openapi.editor.ex.LineIterator;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
@@ -249,6 +246,14 @@ public class DocumentRange extends UserDataHolderBase implements DocumentEx {
   }
 
   public void clearLineModificationFlags() {
+  }
+
+  public void removeRangeMarker(RangeMarkerEx rangeMarker) {
+    myDelegate.removeRangeMarker(rangeMarker);
+  }
+
+  public void addRangeMarker(RangeMarkerEx rangeMarker) {
+    myDelegate.addRangeMarker(rangeMarker);
   }
 
   public boolean isInBulkUpdate() {

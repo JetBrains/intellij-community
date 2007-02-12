@@ -15,14 +15,17 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 
 public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
@@ -312,7 +315,15 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     private ArrayList<FoldRegion> myRegions;  //sorted in tree left-to-right topdown traversal order
 
     public FoldRegionsTree() {
+      clear();
+    }
+
+    private void clear() {
       myCachedVisible = null;
+      myCachedTopLevelRegions = null;
+      myCachedEndOffsets = null;
+      myCachedStartOffsets = null;
+      myCachedFoldedLines = null;
       myRegions = new ArrayList<FoldRegion>();
     }
 
@@ -375,7 +386,12 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     }
 
     public void updateCachedOffsets() {
-      if (isFoldingEnabled()) {
+      if (FoldingModelImpl.this.isFoldingEnabled()) {
+        if (myCachedVisible == null) {
+          rebuild();
+          return;
+        }
+
         for (FoldRegion foldRegion : myCachedVisible) {
           if (!foldRegion.isValid()) {
             rebuild();
@@ -569,7 +585,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public void documentChanged(DocumentEvent event) {
-    updateCachedOffsets();
+    if (((DocumentEx)event.getDocument()).isInBulkUpdate()) {
+      myFoldTree.clear();
+    } else {
+      updateCachedOffsets();
+    }
   }
 
   public int getPriority() {

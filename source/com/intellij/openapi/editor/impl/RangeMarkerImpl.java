@@ -2,14 +2,14 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Key;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
-public class RangeMarkerImpl extends DocumentAdapter implements RangeMarker {
+public class RangeMarkerImpl extends DocumentAdapter implements RangeMarkerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerImpl");
 
   protected Document myDocument;

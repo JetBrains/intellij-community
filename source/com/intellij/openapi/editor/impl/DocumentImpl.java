@@ -1,5 +1,6 @@
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,12 +15,10 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.Key;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.containers.CoModifiableList;
-import com.intellij.util.containers.WeakList;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +30,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
 
   private ArrayList<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
-  private CoModifiableList<RangeMarkerImpl> myRangeMarkers = new CoModifiableList<RangeMarkerImpl>(new WeakList<RangeMarkerImpl>());
+  private final WeakHashMap<RangeMarkerEx,String> myRangeMarkers = new WeakHashMap<RangeMarkerEx, String>();
   private List<RangeMarker> myGuardedBlocks = new ArrayList<RangeMarker>();
 
   private LineSet myLineSet = new LineSet();
@@ -166,9 +165,18 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return !myIsReadOnly;
   }
 
-  void addRangeMarker(RangeMarkerImpl rangeMarker) {
+  public void removeRangeMarker(RangeMarkerEx rangeMarker) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
-    myRangeMarkers.add(rangeMarker);
+    synchronized(myRangeMarkers) {
+      myRangeMarkers.remove(rangeMarker);
+    }
+  }
+
+  public void addRangeMarker(RangeMarkerEx rangeMarker) {
+    ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
+    synchronized(myRangeMarkers) {
+      myRangeMarkers.put(rangeMarker, null);
+    }
   }
 
   public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
@@ -441,29 +449,37 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private void updateRangeMarkers(final DocumentEvent event) {
     try {
-      myRangeMarkers.forEach(new CoModifiableList.InnerIterator<RangeMarkerImpl>() {
-        public void process(RangeMarkerImpl rangeMarker, Iterator<RangeMarkerImpl> iterator) {
+      synchronized(myRangeMarkers) {
+        for(Iterator<RangeMarkerEx> rangeMarkerIterator = myRangeMarkers.keySet().iterator(); rangeMarkerIterator.hasNext();) {
           try {
-            if (rangeMarker.isValid()) {
+            final RangeMarkerEx rangeMarker = rangeMarkerIterator.next();
+
+            if (rangeMarker != null && rangeMarker.isValid()) {
               rangeMarker.documentChanged(event);
               if (!rangeMarker.isValid() && myGuardedBlocks.remove(rangeMarker)) {
                 LOG.error("Guarded blocks should stay valid");
               }
             }
             else {
-              iterator.remove();
+              rangeMarkerIterator.remove();
             }
           }
           catch (Exception e) {
             LOG.error(e);
           }
         }
-      });
-    }
-    catch (Exception e) {
+      }
+    } catch(Exception e) {
       LOG.error(e);
     }
   }
+
+  //private void flushReferenceMarkersQueue() {
+  //  WeakReference<RangeMarkerImpl> weakRef;
+  //  while((weakRef = (WeakReference<RangeMarkerImpl>)myRangeMarkerWeaksQueue.poll()) != null) {
+  //    myRangeMarkers.remove(weakRef);
+  //  }
+  //}
 
   public String getText() {
     assertReadAccessToDocumentsAllowed();
@@ -686,6 +702,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public final void setInBulkUpdate(boolean value) {
     putUserData(DOING_BULK_UPDATE,value ? Boolean.TRUE : null);
+    if (value) CodeFoldingManagerImpl.resetFoldingInfo(this);
   }
 }
 

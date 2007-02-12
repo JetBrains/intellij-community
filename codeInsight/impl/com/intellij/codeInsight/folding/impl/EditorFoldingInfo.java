@@ -2,6 +2,8 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashMap;
@@ -41,5 +43,16 @@ class EditorFoldingInfo {
 
   public void dispose() {
     myFoldRegionToSmartPointerMap.clear();
+  }
+
+  public static void resetInfo(final Editor editor) {
+    EditorFoldingInfo info = editor.getUserData(KEY);
+    if (info != null) {
+      final DocumentEx document = (DocumentEx)editor.getDocument();
+      for(FoldRegion region:info.myFoldRegionToSmartPointerMap.keySet()) {
+        document.removeRangeMarker((RangeMarkerEx)region);
+      }
+    }
+    editor.putUserData(KEY, null);
   }
 }

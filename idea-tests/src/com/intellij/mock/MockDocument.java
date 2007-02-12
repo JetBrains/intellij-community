@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.EmptyMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
@@ -203,6 +204,10 @@ public class MockDocument implements DocumentEx {
 
   public void clearLineModificationFlags() {
   }
+
+  public void removeRangeMarker(RangeMarkerEx rangeMarker) {}
+
+  public void addRangeMarker(RangeMarkerEx rangeMarker) {}
 
   public boolean isInBulkUpdate() {
     return false;

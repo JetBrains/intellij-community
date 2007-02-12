@@ -28,6 +28,10 @@ public interface DocumentEx extends Document {
 
   void clearLineModificationFlags();
 
+
+  void removeRangeMarker(RangeMarkerEx rangeMarker);
+  void addRangeMarker(RangeMarkerEx rangeMarker);
+
   boolean isInBulkUpdate();
 
   void setInBulkUpdate(boolean value);
