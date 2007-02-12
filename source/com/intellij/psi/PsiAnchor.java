@@ -1,8 +1,11 @@
 package com.intellij.psi;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.util.PsiTreeUtil;
+
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,7 +20,7 @@ public class PsiAnchor {
   private int myStartOffset;
   private int myEndOffset;
   private PsiFile myFile;
-  private int myRootIndex = -1;
+  private Language myLanguage = null;
   private PsiElement myElement;
 
   public PsiAnchor(PsiElement element) {
@@ -35,16 +38,16 @@ public class PsiAnchor {
         return;
       }
 
-      final PsiFile[] psiRoots = myFile.getPsiRoots();
-      for (int i = 0; i < psiRoots.length; i++) {
-        PsiFile root = psiRoots[i];
-        if (PsiTreeUtil.isAncestor(root, element,false)) {
-          myRootIndex = i;
+      final FileViewProvider viewProvider = myFile.getViewProvider();
+      final Set<Language> languages = viewProvider.getRelevantLanguages();
+      for (Language language : languages) {
+        if (PsiTreeUtil.isAncestor(viewProvider.getPsi(language), element, false)) {
+          myLanguage = language;
           break;
         }
       }
-      LOG.assertTrue(myRootIndex >= 0);
 
+      LOG.assertTrue(myLanguage != null);
       myClass = element.getClass();
 
       TextRange textRange = element.getTextRange();
@@ -59,7 +62,7 @@ public class PsiAnchor {
   public PsiElement retrieve() {
     if (myElement != null) return myElement;
 
-    PsiElement element = myFile.getPsiRoots()[myRootIndex].findElementAt(myStartOffset);
+    PsiElement element = myFile.getViewProvider().findElementAt(myStartOffset, myLanguage);
     if (element == null) return null;
 
     while  (!element.getClass().equals(myClass) ||
