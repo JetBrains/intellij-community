@@ -32,12 +32,14 @@ public class FileStatusMap {
     private PsiElement overridenDirtyScope;
     private PsiElement localInspectionsDirtyScope;
     public boolean defensivelyMarked; // file marked dirty without knowlesdge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
-    public boolean wolfPassFinfished;
+    private boolean wolfPassFinfished;
+    private PsiElement externalDirtyScope;
 
-    private FileStatus(PsiElement dirtyScope, PsiElement overridenDirtyScope, PsiElement inspectionDirtyScope) {
+    private FileStatus(PsiElement dirtyScope) {
       this.dirtyScope = dirtyScope;
-      this.overridenDirtyScope = overridenDirtyScope;
-      localInspectionsDirtyScope = inspectionDirtyScope;
+      overridenDirtyScope = dirtyScope;
+      localInspectionsDirtyScope = dirtyScope;
+      externalDirtyScope = dirtyScope;
     }
   }
 
@@ -63,7 +65,7 @@ public class FileStatusMap {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
         PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        status = new FileStatus(file, file, file);
+        status = new FileStatus(file);
         myDocumentToStatusMap.put(document, status);
       }
       status.defensivelyMarked=false;
@@ -80,6 +82,9 @@ public class FileStatusMap {
           break;
         case WolfPassFactory.PASS_ID:
           status.wolfPassFinfished = true;
+          break;
+        case Pass.EXTERNAL_TOOLS:
+          status.externalDirtyScope = null;
           break;
         default:
           //LOG.error("unknown id "+passId);
@@ -105,6 +110,8 @@ public class FileStatusMap {
           return status.overridenDirtyScope;
         case Pass.LOCAL_INSPECTIONS:
           return status.localInspectionsDirtyScope;
+        case Pass.EXTERNAL_TOOLS:
+          return status.externalDirtyScope;
         default:
           LOG.assertTrue(false);
           return null;
@@ -168,6 +175,7 @@ public class FileStatusMap {
              && status.dirtyScope == null
              && status.overridenDirtyScope == null
              && status.localInspectionsDirtyScope == null
+             && status.externalDirtyScope == null
              && status.wolfPassFinfished
         ;
     }

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.ExternalAnnotator;
@@ -63,8 +64,9 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     List<HighlightInfo> infos = getHighlights();
 
     // This should be done for any result for removing old highlights
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset,
-                                                   infos, Pass.EXTERNAL_TOOLS);
+    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, infos, Pass.EXTERNAL_TOOLS);
+    DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
+    daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
     HighlightUtil.addErrorsToWolf(infos, myFile);
   }
 
