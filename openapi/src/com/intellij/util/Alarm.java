@@ -102,9 +102,11 @@ public class Alarm implements Disposable {
 
   public boolean cancelRequest(Runnable request) {
     synchronized (LOCK) {
-      for (Request r : myRequests) {
+      for (int i = myRequests.size()-1; i>=0; i--) {
+        Request r = myRequests.get(i);
         if (r.getTask() == request) {
           r.getFuture().cancel(false);
+          myRequests.remove(i);
         }
       }
 
@@ -119,6 +121,7 @@ public class Alarm implements Disposable {
         count++;
         request.getFuture().cancel(false);
       }
+      myRequests.clear();
       return count;
     }
   }
