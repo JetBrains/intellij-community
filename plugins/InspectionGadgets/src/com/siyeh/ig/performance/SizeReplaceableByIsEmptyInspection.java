@@ -16,10 +16,10 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.openapi.project.Project;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -27,11 +27,17 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
-import org.jetbrains.annotations.Nullable;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
 
 public class SizeReplaceableByIsEmptyInspection extends ExpressionInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreNegations = false;
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -46,6 +52,13 @@ public class SizeReplaceableByIsEmptyInspection extends ExpressionInspection {
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "size.replaceable.by.isempty.problem.descriptor", infos[0]);
+    }
+
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "size.replaceable.by.isempty.negation.ignore.option"), this, 
+                "ignoreNegations");
     }
 
     @Nullable
@@ -96,7 +109,7 @@ public class SizeReplaceableByIsEmptyInspection extends ExpressionInspection {
         return new SizeReplaceableByIsEmptyVisitor();
     }
 
-    private static class SizeReplaceableByIsEmptyVisitor
+    private class SizeReplaceableByIsEmptyVisitor
             extends BaseInspectionVisitor {
 
         @NonNls private String isEmptyCall = "";
@@ -148,6 +161,9 @@ public class SizeReplaceableByIsEmptyInspection extends ExpressionInspection {
             final IElementType tokenType = sign.getTokenType();
             if (JavaTokenType.EQEQ.equals(tokenType)) {
                 return true;
+            }
+            if (ignoreNegations) {
+                return false;
             }
             isEmptyCall = '!' + isEmptyCall;
             if (JavaTokenType.NE.equals(tokenType)) {
