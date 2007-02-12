@@ -861,18 +861,45 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return result.toArray(new FileEditor[result.size()]);
   }
 
-  public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
+  public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
     final EditorComposite composite = getEditorComposite(editor);
     if (composite != null) {
-      composite.getPane(editor).addInfo(annotationComoponent);
+      composite.getPane(editor).addInfo(annotationComponent);
     }
   }
 
-
-  public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
+  public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
     final EditorComposite composite = getEditorComposite(editor);
     if (composite != null) {
-      composite.getPane(editor).removeInfo(annotationComoponent);
+      composite.getPane(editor).removeInfo(annotationComponent);
+    }
+  }
+
+  public void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    final EditorComposite composite = getEditorComposite(editor);
+    if (composite != null) {
+      composite.addTopComponent(editor, component);
+    }
+  }
+
+  public void removeTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    final EditorComposite composite = getEditorComposite(editor);
+    if (composite != null) {
+      composite.removeTopComponent(editor, component);
+    }
+  }
+
+  public void addBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    final EditorComposite composite = getEditorComposite(editor);
+    if (composite != null) {
+      composite.addBottomComponent(editor, component);
+    }
+  }
+
+  public void removeBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    final EditorComposite composite = getEditorComposite(editor);
+    if (composite != null) {
+      composite.removeBottomComponent(editor, component);
     }
   }
 

@@ -57,6 +57,8 @@ public abstract class EditorComposite{
   private final FileEditorManagerEx myFileEditorManager;
   private final long myInitialFileModificationStamp;
   private Map<FileEditor, FileEditorInfoPane> myInfoPanes = new HashMap<FileEditor, FileEditorInfoPane>();
+  private Map<FileEditor, JComponent> myTopComponents = new HashMap<FileEditor, JComponent>();
+  private Map<FileEditor, JComponent> myBottomComponents = new HashMap<FileEditor, JComponent>();
 
   /**
    * @param file <code>file</code> for which composite is being constructed
@@ -132,9 +134,19 @@ public abstract class EditorComposite{
     JPanel component = new JPanel(new BorderLayout());
     component.add(editor.getComponent(), BorderLayout.CENTER);
 
+    final JPanel topPanel = new JPanel();
+    topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
+    myTopComponents.put(editor, topPanel);
+    component.add(topPanel, BorderLayout.NORTH);
+
+    final JPanel bottomPanel = new JPanel();
+    bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.Y_AXIS));
+    myBottomComponents.put(editor, bottomPanel);
+    component.add(bottomPanel, BorderLayout.SOUTH);
+
     FileEditorInfoPane infoPane = new FileEditorInfoPane();
-    component.add(infoPane, BorderLayout.NORTH);
     myInfoPanes.put(editor, infoPane);
+    addTopComponent(editor, infoPane);
 
     return component;
   }
@@ -208,6 +220,33 @@ public abstract class EditorComposite{
    */
   public FileEditor[] getEditors() {
     return myEditors;
+  }
+
+  public void addTopComponent(FileEditor editor, JComponent component) {
+    manageTopOrBottomComponent(editor, component, true, false);
+  }
+
+  public void removeTopComponent(FileEditor editor, JComponent component) {
+    manageTopOrBottomComponent(editor, component, true, true);
+  }
+
+  public void addBottomComponent(FileEditor editor, JComponent component) {
+    manageTopOrBottomComponent(editor, component, false, false);
+  }
+
+  public void removeBottomComponent(FileEditor editor, JComponent component) {
+    manageTopOrBottomComponent(editor, component, false, true);
+  }
+
+  private void manageTopOrBottomComponent(FileEditor editor, JComponent component, boolean top, boolean remove) {
+    final JComponent container = top ? myTopComponents.get(editor) : myBottomComponents.get(editor);
+    assert container != null;
+
+    if (remove) {
+      container.remove(component);
+    } else {
+      container.add(component);
+    }
   }
 
   public FileEditorInfoPane getPane(FileEditor editor) {

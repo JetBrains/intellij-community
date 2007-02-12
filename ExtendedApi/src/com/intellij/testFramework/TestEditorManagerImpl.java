@@ -94,6 +94,18 @@ import java.util.Map;
     return null;
   }
 
+  public void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+  }
+
+  public void removeTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+  }
+
+  public void addBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+  }
+
+  public void removeBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+  }
+
   public void closeAllFiles() {
     final EditorFactory editorFactory = EditorFactory.getInstance();
     for (VirtualFile file : myVirtualFile2Editor.keySet()) {

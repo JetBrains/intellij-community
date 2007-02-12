@@ -104,6 +104,11 @@ public abstract class FileEditorManager {
   public abstract void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent);
   public abstract void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent);
 
+  public abstract void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
+  public abstract void removeTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
+  public abstract void addBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
+  public abstract void removeBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
+
 
   /**
    * @Deprecated Use MessageBus instead
