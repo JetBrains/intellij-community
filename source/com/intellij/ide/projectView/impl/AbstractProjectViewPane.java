@@ -3,7 +3,9 @@
  */
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
@@ -15,6 +17,7 @@ import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -35,8 +38,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -257,20 +264,29 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   public final PsiElement[] getSelectedPSIElements() {
     List<PsiElement> psiElements = new ArrayList<PsiElement>();
     for (Object element : getSelectedElements()) {
-      if (element instanceof PsiElement) {
-        PsiElement psiElement = (PsiElement)element;
-        if (psiElement.isValid()) {
-          psiElements.add(psiElement);
-        }
-      }
-      else if (element instanceof PackageElement) {
-        PsiPackage aPackage = ((PackageElement)element).getPackage();
-        if (aPackage != null && aPackage.isValid()) {
-          psiElements.add(aPackage);
-        }
+      final PsiElement psiElement = getPSIElement(element);
+      if ( psiElement != null ) {
+        psiElements.add (psiElement);
       }
     }
     return psiElements.toArray(new PsiElement[psiElements.size()]);
+  }
+
+  @Nullable
+  public static PsiElement getPSIElement(@Nullable final Object element) {
+    if (element instanceof PsiElement) {
+      PsiElement psiElement = (PsiElement)element;
+      if (psiElement.isValid()) {
+        return psiElement;
+      }
+    }
+    else if (element instanceof PackageElement) {
+      PsiPackage aPackage = ((PackageElement)element).getPackage();
+      if (aPackage != null && aPackage.isValid()) {
+        return aPackage;
+      }
+    }
+    return null;
   }
 
   public final Object[] getSelectedElements() {
@@ -279,9 +295,8 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     ArrayList<Object> list = new ArrayList<Object>(paths.length);
     for (TreePath path : paths) {
       Object lastPathComponent = path.getLastPathComponent();
-      if (lastPathComponent instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
-        Object element = exhumeElementFromNode(node);
+      if (lastPathComponent instanceof TreeNode) {
+        Object element = getElement((TreeNode)lastPathComponent);
         if (element != null) {
           list.add(element);
         }
@@ -289,6 +304,29 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     }
     return list.toArray(new Object[list.size()]);
   }
+
+  @Nullable
+  public Object getElement(@Nullable final TreeNode treeNode) {
+    if (treeNode instanceof DefaultMutableTreeNode) {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)treeNode;
+      return exhumeElementFromNode(node);
+    }
+    return null;
+  }
+
+  public TreeNode[] getSelectedTreeNodes(){
+    TreePath[] paths = getSelectionPaths();
+    if (paths == null) return null;
+    final List<TreeNode> result = new ArrayList<TreeNode>();
+    for (TreePath path : paths) {
+      Object lastPathComponent = path.getLastPathComponent();
+      if (lastPathComponent instanceof DefaultMutableTreeNode) {
+        result.add ( (TreeNode) lastPathComponent);
+      }
+    }
+    return result.toArray(new TreeNode[result.size()]);
+  }
+
 
   protected Object exhumeElementFromNode(final DefaultMutableTreeNode node) {
     Object userObject = node.getUserObject();
@@ -378,5 +416,115 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
 
   public JTree getTree() {
     return myTree;
+  }
+
+  // Drag'n'Drop stuff
+
+  public static final DataFlavor[] FLAVORS;
+  private static final Logger LOG = Logger.getInstance("com.intellij.ide.projectView.ProjectViewImpl");
+
+  static {
+    DataFlavor[] flavors;
+    try {
+      final Class aClass = MyTransferable.class;
+      //noinspection HardCodedStringLiteral
+      flavors = new DataFlavor[]{new DataFlavor(
+                      DataFlavor.javaJVMLocalObjectMimeType + ";class=" + aClass.getName(),
+                      FavoritesTreeViewPanel.ABSTRACT_TREE_NODE_TRANSFERABLE,
+                      aClass.getClassLoader()
+                    )};
+    }
+    catch (ClassNotFoundException e) {
+      LOG.error(e);  // should not happen
+      flavors = new DataFlavor[0];
+    }
+    FLAVORS = flavors;
+  }
+
+  protected void enableDnD() {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_MOVE, new MyDragGestureListener());
+      new DropTarget(myTree, new MoveDropTargetListener(new MoveDropTargetListener.PsiRetriever() {
+        @Nullable
+        public PsiElement getPsiElement(@Nullable final TreeNode node) {
+          return getPSIElement(getElement(node));
+        }
+      }, myTree, myProject, FLAVORS[0]));
+    }
+  }
+
+  private static class MyTransferable implements Transferable {
+    private final Object myTransferable;
+
+    public MyTransferable(Object transferable) {
+      myTransferable = transferable;
+    }
+
+    public DataFlavor[] getTransferDataFlavors() {
+      return FLAVORS;
+    }
+
+    public boolean isDataFlavorSupported(DataFlavor flavor) {
+      DataFlavor[] flavors = getTransferDataFlavors();
+      return ArrayUtil.find(flavors, flavor) != -1;
+    }
+
+    public Object getTransferData(DataFlavor flavor) {
+      return myTransferable;
+    }
+  }
+
+  public interface TransferableWrapper {
+    TreeNode[] getTreeNodes ();
+    PsiElement[] getPsiElements ();
+  }
+
+  private static class MyDragGestureListener implements DragGestureListener {
+    public void dragGestureRecognized(DragGestureEvent dge) {
+      if ((dge.getDragAction() & DnDConstants.ACTION_MOVE) == 0) return;
+      DataContext dataContext = DataManager.getInstance().getDataContext();
+      ProjectView projectView = (ProjectView)dataContext.getData(ProjectViewImpl.PROJECT_VIEW_DATA_CONSTANT);
+      if (projectView == null) return;
+
+      final TreeNode[] nodes = projectView.getCurrentProjectViewPane().getSelectedTreeNodes();
+      if (nodes != null ) {
+        final PsiElement [] elements = projectView.getCurrentProjectViewPane().getSelectedPSIElements();
+        try {
+          Object transferableWrapper = new TransferableWrapper() {
+            public TreeNode[] getTreeNodes() {
+              return nodes;
+            }
+            public PsiElement[] getPsiElements() {
+              return elements;
+            }
+          };
+
+          //FavoritesManager.getInstance(myProject).getCurrentTreeViewPanel().setDraggableObject(draggableObject.getClass(), draggableObject.getValue());
+          final MyDragSourceListener dragSourceListener = new MyDragSourceListener();
+          dge.startDrag(DragSource.DefaultMoveNoDrop, new MyTransferable(transferableWrapper), dragSourceListener);
+        }
+        catch (InvalidDnDOperationException idoe) {
+          // ignore
+        }
+      }
+    }
+
+  }
+
+  private static class MyDragSourceListener implements DragSourceListener {
+    public void dragEnter(DragSourceDragEvent dsde) {
+      dsde.getDragSourceContext().setCursor(null);
+    }
+
+    public void dragOver(DragSourceDragEvent dsde) {
+    }
+
+    public void dropActionChanged(DragSourceDragEvent dsde) {
+      dsde.getDragSourceContext().setCursor(null);
+    }
+
+    public void dragDropEnd(DragSourceDropEvent dsde) { }
+
+    public void dragExit(DragSourceEvent dse) { }
   }
 }

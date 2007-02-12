@@ -5,7 +5,6 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
@@ -15,15 +14,12 @@ import com.intellij.ide.util.treeView.TreeBuilderUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.UIUtil;
@@ -39,9 +35,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.dnd.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -58,10 +51,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(null);
     DefaultTreeModel treeModel = new DefaultTreeModel(rootNode);
     myTree = createTree(treeModel);
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_MOVE, new MyDragGestureListener());
-      new DropTarget(myTree, new MoveDropTargetListener(this));
-    }
+    enableDnD();
     myComponent = new JScrollPane(myTree);
     myTreeStructure = createStructure();
     myTreeBuilder = createBuilder(treeModel);
@@ -229,88 +219,4 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       }
     }
   }
-
-  // big fat todo - have to figure out the way to drag something into favorites
-  //------------- DnD for Favorites View -------------------
-  public static final DataFlavor[] FLAVORS;
-  private static final Logger LOG = Logger.getInstance("com.intellij.ide.projectView.ProjectViewImpl");
-
-  static {
-    DataFlavor[] flavors;
-    try {
-      final Class aClass = MyTransferable.class;
-      //noinspection HardCodedStringLiteral
-      flavors = new DataFlavor[]{new DataFlavor(
-                      DataFlavor.javaJVMLocalObjectMimeType + ";class=" + aClass.getName(),
-                      FavoritesTreeViewPanel.ABSTRACT_TREE_NODE_TRANSFERABLE,
-                      aClass.getClassLoader()
-                    )};
-    }
-    catch (ClassNotFoundException e) {
-      LOG.error(e);  // should not happen
-      flavors = new DataFlavor[0];
-    }
-    FLAVORS = flavors;
-  }
-
-  private static class MyTransferable implements Transferable {
-    private final Object myTransferable;
-
-    public MyTransferable(Object transferable) {
-      myTransferable = transferable;
-    }
-
-    public DataFlavor[] getTransferDataFlavors() {
-      return FLAVORS;
-    }
-
-    public boolean isDataFlavorSupported(DataFlavor flavor) {
-      DataFlavor[] flavors = getTransferDataFlavors();
-      return ArrayUtil.find(flavors, flavor) != -1;
-    }
-
-    public Object getTransferData(DataFlavor flavor) {
-      return myTransferable;
-    }
-  }
-
-  private static class MyDragGestureListener implements DragGestureListener {
-    public void dragGestureRecognized(DragGestureEvent dge) {
-      if ((dge.getDragAction() & DnDConstants.ACTION_MOVE) == 0) return;
-      DataContext dataContext = DataManager.getInstance().getDataContext();
-      ProjectView projectView = (ProjectView)dataContext.getData(ProjectViewImpl.PROJECT_VIEW_DATA_CONSTANT);
-      if (projectView == null) return;
-      Object[] draggableObject = projectView.getCurrentProjectViewPane().getSelectedElements();
-
-      if (draggableObject != null) {
-        try {
-          //FavoritesManager.getInstance(myProject).getCurrentTreeViewPanel().setDraggableObject(draggableObject.getClass(), draggableObject.getValue());
-          final MyDragSourceListener dragSourceListener = new MyDragSourceListener();
-          dge.startDrag(DragSource.DefaultMoveNoDrop, new MyTransferable(draggableObject), dragSourceListener);
-        }
-        catch (InvalidDnDOperationException idoe) {
-          // ignore
-        }
-      }
-    }
-
-  }
-
-  private static class MyDragSourceListener implements DragSourceListener {
-    public void dragEnter(DragSourceDragEvent dsde) {
-      dsde.getDragSourceContext().setCursor(null);
-    }
-
-    public void dragOver(DragSourceDragEvent dsde) {
-    }
-
-    public void dropActionChanged(DragSourceDragEvent dsde) {
-      dsde.getDragSourceContext().setCursor(null);
-    }
-
-    public void dragDropEnd(DragSourceDropEvent dsde) { }
-
-    public void dragExit(DragSourceEvent dse) { }
-  }
-
 }

@@ -91,6 +91,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
 
     myTree = myViewPanel.getTree();
     installTreePopupHandler(ActionPlaces.SCOPE_VIEW_POPUP, IdeActions.GROUP_SCOPE_VIEW_POPUP);
+    enableDnD();
 
     return myViewPanel.getPanel();
   }

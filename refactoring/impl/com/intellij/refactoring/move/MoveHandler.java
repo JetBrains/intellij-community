@@ -259,7 +259,7 @@ public class MoveHandler implements RefactoringActionHandler {
   /**
    * Must be invoked in AtomicAction
    */
-  private static int getMoveType(@NotNull PsiElement[] elements) {
+  public static int getMoveType(@NotNull PsiElement[] elements) {
     for (PsiElement element : elements) {
       if (element instanceof JspClass || element instanceof JspHolderMethod) return NOT_SUPPORTED;
     }
