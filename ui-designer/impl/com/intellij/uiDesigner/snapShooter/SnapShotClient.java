@@ -90,7 +90,7 @@ public class SnapShotClient {
       if (result.length() == 0 && line.startsWith("E:")) {
         throw new Exception(line.substring(2));
       }
-      result.append(line);
+      result.append(line).append("\n");
       if (line.trim().endsWith(FORM_POSTFIX)) {
         break;
       }
