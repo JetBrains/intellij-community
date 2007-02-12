@@ -212,7 +212,11 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     ProgressManager progressManager = ProgressManager.getInstance();
     setProgressLimit((long)elements.size() * visitors.size());
 
-    for (PsiElement element : elements) {
+    int chunkSize = Math.max(1, elements.size() / 100); // one percent precision is enough
+    int nextLimit = chunkSize;
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < elements.size(); i++) {
+      PsiElement element = elements.get(i);
       progressManager.checkCanceled();
 
       if (element != myFile && skipParentsSet.contains(element)) {
@@ -226,18 +230,23 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       try {
         holder.setWritable(true);
         holder.clear();
-        for (HighlightVisitor visitor : visitors) {
+        //noinspection ForLoopReplaceableByForEach
+        for (int j = 0; j < visitors.size(); j++) {
+          HighlightVisitor visitor = visitors.get(j);
           visitor.visit(element, holder);
         }
-        advanceProgress(visitors.size());
+        if (i == nextLimit) {
+          advanceProgress(chunkSize * visitors.size());
+          nextLimit = i + chunkSize;
+        }
       }
       finally {
         holder.setWritable(false);
       }
 
       //noinspection ForLoopReplaceableByForEach
-      for (int i = 0; i < holder.size(); i++) {
-        HighlightInfo info = holder.get(i);
+      for (int j = 0; j < holder.size(); j++) {
+        HighlightInfo info = holder.get(j);
         // have to filter out already obtained highlights
         if (!gotHighlights.add(info)) continue;
         if (!isAntFile && info.getSeverity() == HighlightSeverity.ERROR) {
@@ -245,14 +254,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
       }
     }
-
-    //if (LOG.isDebugEnabled()) {
-    //if(maxVisitElement != null){
-    //  LOG.debug("maxVisitTime = " + maxVisitTime);
-    //  LOG.debug("maxVisitElement = " + maxVisitElement+ " ");
-    //}
-    //LOG.debug("totalTime = " + (System.currentTimeMillis() - totalTime) / (double)1000 + "s for " + elements.length + " elements");
-    //}
 
     return gotHighlights;
   }
