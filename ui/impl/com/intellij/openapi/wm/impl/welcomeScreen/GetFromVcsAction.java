@@ -17,7 +17,7 @@ import java.awt.event.InputEvent;
 public class GetFromVcsAction{
 
   protected void fillActions(Project project, DefaultActionGroup group) {
-    final CheckoutProvider[] providers = (CheckoutProvider[])Extensions.getExtensions(CheckoutProvider.EXTENSION_POINT_NAME);
+    final CheckoutProvider[] providers = Extensions.getExtensions(CheckoutProvider.EXTENSION_POINT_NAME);
     for (CheckoutProvider provider : providers) {
       group.add(new CheckoutAction(provider));
     }

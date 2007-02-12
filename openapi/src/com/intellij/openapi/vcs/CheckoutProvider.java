@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,8 +25,8 @@ import java.io.File;
  * Implement this interface and register it as extension to checkoutProvider extension point in order to provide checkout
  */
 
-public interface CheckoutProvider extends ApplicationComponent {
-  @NonNls String EXTENSION_POINT_NAME = "com.intellij.checkoutProvider";
+public interface CheckoutProvider {
+  @NonNls ExtensionPointName<CheckoutProvider> EXTENSION_POINT_NAME = new ExtensionPointName<CheckoutProvider>("com.intellij.checkoutProvider");
 
   void doCheckout(@Nullable Listener listener);
   @NonNls String getVcsName();

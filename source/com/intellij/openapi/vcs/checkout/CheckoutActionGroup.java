@@ -13,7 +13,7 @@ public class CheckoutActionGroup extends ActionGroup {
 
   public void update(AnActionEvent e) {
     super.update(e);
-    final CheckoutProvider[] providers = (CheckoutProvider[])Extensions.getExtensions(CheckoutProvider.EXTENSION_POINT_NAME); 
+    final CheckoutProvider[] providers = Extensions.getExtensions(CheckoutProvider.EXTENSION_POINT_NAME);
     if (providers.length == 0) {
       e.getPresentation().setVisible(false);
     }
@@ -21,7 +21,7 @@ public class CheckoutActionGroup extends ActionGroup {
 
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (myChildren == null) {
-      final CheckoutProvider[] providers = (CheckoutProvider[])Extensions.getExtensions(CheckoutProvider.EXTENSION_POINT_NAME);
+      final CheckoutProvider[] providers = Extensions.getExtensions(CheckoutProvider.EXTENSION_POINT_NAME);
       myChildren = new AnAction[providers.length];
       for (int i = 0; i < providers.length; i++) {
         CheckoutProvider provider = providers[i];

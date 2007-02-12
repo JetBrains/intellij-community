@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.checkout;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
@@ -10,8 +11,6 @@ import com.intellij.cvsSupport2.ui.experts.checkout.CheckoutWizard;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.CvsBundle;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -66,16 +65,5 @@ public class CvsCheckoutProvider implements CheckoutProvider {
 
   public String getVcsName() {
     return "_CVS";
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "CvsCheckoutProvider";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }
