@@ -196,7 +196,8 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
 
     protected JavaParameters createJavaParameters() throws ExecutionException {
       final JavaParameters params = new JavaParameters();
-      JavaParametersUtil.configureModule(getConfigurationModule(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, ALTERNATIVE_JRE_PATH_ENABLED ? ALTERNATIVE_JRE_PATH : null);
+      final int classPathType = JavaParametersUtil.getClasspathType(getConfigurationModule(), MAIN_CLASS_NAME, false);
+      JavaParametersUtil.configureModule(getConfigurationModule(), params, classPathType, ALTERNATIVE_JRE_PATH_ENABLED ? ALTERNATIVE_JRE_PATH : null);
       JavaParametersUtil.configureConfiguration(params, ApplicationConfiguration.this);
 
       params.setMainClass(MAIN_CLASS_NAME);

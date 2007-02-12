@@ -73,7 +73,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration implements Sin
         final JavaParameters params = new JavaParameters();
         myHtmlURL = getHtmlURL();
         if (myHtmlURL != null) {
-          final int classPathType = myHtmlURL.isHttp() ? JavaParameters.JDK_ONLY : JavaParameters.JDK_AND_CLASSES_AND_TESTS;
+          final int classPathType = myHtmlURL.isHttp() ? JavaParameters.JDK_ONLY : JavaParameters.JDK_AND_CLASSES;
           final RunConfigurationModule runConfigurationModule = getConfigurationModule();
           JavaParametersUtil.configureModule(runConfigurationModule, params, classPathType, ALTERNATIVE_JRE_PATH_ENABLED ? ALTERNATIVE_JRE_PATH : null);
           final String policyFileParameter = getPolicyFileParameter();

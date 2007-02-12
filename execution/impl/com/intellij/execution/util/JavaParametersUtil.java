@@ -1,14 +1,20 @@
 package com.intellij.execution.util;
 
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationModule;
+import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.PathUtil;
 
 /**
@@ -27,7 +33,24 @@ public class JavaParametersUtil {
     parameters.setWorkingDirectory(workingDirectory);
   }
 
-  static final boolean newWay = true;
+  public static int getClasspathType(final RunConfigurationModule configurationModule, final String mainClassName,
+                                     final boolean classMustHaveSource) throws CantRunException {
+    final Module module = configurationModule.getModule();
+    if (module == null) throw CantRunException.noModuleConfigured(configurationModule.getModuleName());
+    final PsiClass psiClass = ExecutionUtil.findMainClass(module, mainClassName);
+    if (psiClass == null)  {
+      if ( ! classMustHaveSource ) return JavaParameters.JDK_AND_CLASSES_AND_TESTS;
+      throw CantRunException.classNotFound(mainClassName, module);
+    }
+    final PsiFile psiFile = psiClass.getContainingFile();
+    if (psiFile == null) throw CantRunException.classNotFound(mainClassName, module);
+    final VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) throw CantRunException.classNotFound(mainClassName, module);
+    Module classModule = new JUnitUtil.ModuleOfClass().convert(psiClass);
+    if (classModule == null) classModule = module;
+    return ModuleRootManager.getInstance(classModule).getFileIndex().
+      isInTestSourceContent(virtualFile) ? JavaParameters.JDK_AND_CLASSES_AND_TESTS : JavaParameters.JDK_AND_CLASSES;
+  }
 
   public static void configureModule(final RunConfigurationModule runConfigurationModule,
                                      final JavaParameters parameters,
