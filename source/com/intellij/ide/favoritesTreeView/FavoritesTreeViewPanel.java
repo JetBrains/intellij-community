@@ -15,7 +15,6 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
@@ -26,6 +25,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.ui.*;
@@ -42,8 +42,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.dnd.DropTarget;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -169,6 +167,11 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
   public void selectElement(final Object selector, final VirtualFile file) {
     myBuilder.select(selector, file, true);
+  }
+
+  public void dispose() {
+    Disposer.dispose(myBuilder);
+    myBuilder = null;
   }
 
   public Tree getTree() {
