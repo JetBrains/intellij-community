@@ -50,11 +50,12 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNException;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
 
 public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnConfiguration");
@@ -69,9 +70,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
   private String myConfigurationDirectory;
   private boolean myIsUseDefaultConfiguration;
   private ISVNOptions myOptions;
-  private List<String> myCheckoutURLs;
   private boolean myIsKeepLocks;
-  private String myLastSelectedCheckoutURL;
   private boolean myRemoteStatus;
   private ISVNAuthenticationManager myAuthManager;
   private String myUpgradeMode;
@@ -167,13 +166,13 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
     else {
       myIsUseDefaultConfiguration = true;
     }
+    // compatibility: this setting was moved from .iws to global settings
     List urls = element.getChildren("checkoutURL");
-    myCheckoutURLs = new LinkedList<String>();
     for (Object url1 : urls) {
       Element child = (Element)url1;
       String url = child.getText();
       if (url != null) {
-        myCheckoutURLs.add(url);
+        SvnApplicationSettings.getInstance().addCheckoutURL(url);
       }
     }
     myIsKeepLocks = element.getChild("keepLocks") != null;
@@ -197,16 +196,6 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
       configurationDirectory.setAttribute("useDefault", myIsUseDefaultConfiguration ? "true" : "false");
       element.addContent(configurationDirectory);
     }
-    if (myCheckoutURLs != null) {
-      for (final String url : myCheckoutURLs) {
-        Element urlElement = new Element("checkoutURL");
-        urlElement.setText(url);
-        if (url.equals(myLastSelectedCheckoutURL)) {
-          urlElement.setAttribute("active", "true");
-        }
-        element.addContent(urlElement);
-      }
-    }
     if (myIsKeepLocks) {
       element.addContent(new Element("keepLocks"));
     }
@@ -215,40 +204,6 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable{
     }
     if (myUpgradeMode != null) {
       element.addContent(new Element("upgradeMode").setText(myUpgradeMode));
-    }
-  }
-
-  public Collection<String> getCheckoutURLs() {
-    if (myCheckoutURLs == null) {
-      myCheckoutURLs = new LinkedList<String>();
-    }
-    return myCheckoutURLs;
-  }
-
-  public void addCheckoutURL(String url) {
-    if (myCheckoutURLs == null) {
-      myCheckoutURLs = new LinkedList<String>();
-    }
-    if (myCheckoutURLs.contains(url)) {
-      return;
-    }
-    myCheckoutURLs.add(0, url);
-  }
-
-  public void removeCheckoutURL(String url) {
-    if (myCheckoutURLs != null) {
-      // 'url' is not necessary an exact match for some of the urls in collection - it has been parsed and then converted back to string
-      for(String oldUrl: myCheckoutURLs) {
-        try {
-          if (url.equals(oldUrl) || SVNURL.parseURIEncoded(url).equals(SVNURL.parseURIEncoded(oldUrl))) {
-            myCheckoutURLs.remove(oldUrl);
-            break;
-          }
-        }
-        catch (SVNException e) {
-          // ignore
-        }
-      }
     }
   }
 

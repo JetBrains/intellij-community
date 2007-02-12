@@ -42,8 +42,8 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.browser.*;
@@ -67,7 +67,9 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
 
 public class RepositoryBrowserDialog extends DialogWrapper {
 
@@ -227,15 +229,14 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
     panel.add(new JLabel(), gc);
 
-    SvnConfiguration config = SvnConfiguration.getInstance(myProject);
-    Collection<String> urls = config == null ? Collections.EMPTY_LIST : config.getCheckoutURLs();
+    Collection<String> urls = SvnApplicationSettings.getInstance().getCheckoutURLs();
     SVNURL[] svnURLs = new SVNURL[urls.size()];
     int i = 0;
-    for (Iterator iterator = urls.iterator(); iterator.hasNext();) {
-      String url = (String) iterator.next();
+    for (final String url : urls) {
       try {
         svnURLs[i++] = SVNURL.parseURIEncoded(url);
-      } catch (SVNException e) {
+      }
+      catch (SVNException e) {
         //
       }
     }
@@ -348,8 +349,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         }
       });
       if (url != null) {
-        SvnConfiguration config = SvnConfiguration.getInstance(myVCS.getProject());
-        config.addCheckoutURL(url);
+        SvnApplicationSettings.getInstance().addCheckoutURL(url);
         getRepositoryBrowser().addURL(url);
       }
     }
@@ -373,8 +373,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         if (rc == 1) {
           return;
         }
-        SvnConfiguration config = SvnConfiguration.getInstance(myVCS.getProject());
-        config.removeCheckoutURL(url.toString());
+        SvnApplicationSettings.getInstance().removeCheckoutURL(url.toString());
         getRepositoryBrowser().removeURL(url.toString());
       }
     }
@@ -472,7 +471,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       e.getPresentation().setEnabled(node != null && node.getSVNDirEntry() != null);
     }
     public void actionPerformed(AnActionEvent e) {
-      Project p = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+      Project p = e.getData(DataKeys.PROJECT);
       SVNURL root;
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       while (node.getSVNDirEntry() != null) {
@@ -499,7 +498,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Project p = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+      Project p = e.getData(DataKeys.PROJECT);
       SVNURL root;
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       while (node.getSVNDirEntry() != null) {
@@ -527,7 +526,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Project p = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+      Project p = e.getData(DataKeys.PROJECT);
       DeleteOptionsDialog dialog = new DeleteOptionsDialog(p);
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       dialog.show();

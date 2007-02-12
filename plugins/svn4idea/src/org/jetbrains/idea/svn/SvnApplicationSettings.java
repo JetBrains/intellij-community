@@ -30,20 +30,20 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.tmatesoft.svn.core.internal.io.svn.SVNGanymedSession;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 public class SvnApplicationSettings implements ApplicationComponent, JDOMExternalizable {
 
   private SvnFileSystemListener myVFSHandler;
   private Map<String, Map<String, Map<String, String>>> myAuthenticationInfo;
+  private List<String> myCheckoutURLs;
   private int mySvnProjectCount;
 
   public static SvnApplicationSettings getInstance() {
@@ -81,98 +81,122 @@ public class SvnApplicationSettings implements ApplicationComponent, JDOMExterna
   }
 
   public void readExternal(Element element) throws InvalidDataException {
+    readCredentials();
 
-      File file = getCredentialsFile();
-      if (!file.exists() || !file.canRead() || !file.isFile()) {
-          return;
+    List urls = element.getChildren("checkoutURL");
+    for (Object url1 : urls) {
+      Element child = (Element)url1;
+      String url = child.getText();
+      if (url != null) {
+        myCheckoutURLs.add(url);
       }
-      Document document;
-      try {
-          document = JDOMUtil.loadDocument(file);
-      } catch (JDOMException e) {
-          return;
-      } catch (IOException e) {
-          return;
-      }
-      if (document == null || document.getRootElement() == null) {
-          return;
-      }
-      Element authElement = document.getRootElement().getChild("kinds");
+    }
+  }
 
-      if (authElement == null) {
-          return;
-      }
-      myAuthenticationInfo = new HashMap<String, Map<String, Map<String, String>>>();
-      List groupsList = authElement.getChildren();
-      for (Iterator groups = groupsList.iterator(); groups.hasNext();) {
-        Element groupElement = (Element) groups.next();
-        String kind = groupElement.getName();
-        if ("realm".equals(kind)) {
-          // old version.
-          continue;
-        }
-        Map<String, Map<String, String>> groupMap = new HashMap<String, Map<String, String>>();
-        myAuthenticationInfo.put(kind, groupMap);
-        List realmsList = groupElement.getChildren("realm");
-        for (Iterator realms = realmsList.iterator(); realms.hasNext();) {
-            Element realmElement = (Element) realms.next();
-            String realmName = realmElement.getAttributeValue("name");
-            StringBuffer sb = new StringBuffer(realmName);
+  private void readCredentials() {
+    File file = getCredentialsFile();
+    if (!file.exists() || !file.canRead() || !file.isFile()) {
+      return;
+    }
+    Document document;
+    try {
+        document = JDOMUtil.loadDocument(file);
+    } catch (JDOMException e) {
+      return;
+    } catch (IOException e) {
+      return;
+    }
+    if (document == null || document.getRootElement() == null) {
+      return;
+    }
+    Element authElement = document.getRootElement().getChild("kinds");
 
-            byte[] buffer = new byte[sb.length()];
-            int length = SVNBase64.base64ToByteArray(sb, buffer);
-            realmName = new String(buffer, 0, length);
-            Map<String, String> infoMap = new HashMap<String, String>();
-            List attrsList = realmElement.getAttributes();
-            for (Iterator attrs = attrsList.iterator(); attrs.hasNext();) {
-                Attribute attr = (Attribute) attrs.next();
-                if ("name".equals(attr.getName())) {
-                    continue;
-                }
-                String key = attr.getName();
-                String value = attr.getValue();
-                infoMap.put(key, value);
-            }
-            groupMap.put(realmName, infoMap);
-        }
+    if (authElement == null) {
+      return;
+    }
+    myAuthenticationInfo = new HashMap<String, Map<String, Map<String, String>>>();
+    List groupsList = authElement.getChildren();
+    for (Iterator groups = groupsList.iterator(); groups.hasNext();) {
+      Element groupElement = (Element) groups.next();
+      String kind = groupElement.getName();
+      if ("realm".equals(kind)) {
+        // old version.
+        continue;
       }
+      Map<String, Map<String, String>> groupMap = new HashMap<String, Map<String, String>>();
+      myAuthenticationInfo.put(kind, groupMap);
+      List realmsList = groupElement.getChildren("realm");
+      for (Iterator realms = realmsList.iterator(); realms.hasNext();) {
+          Element realmElement = (Element) realms.next();
+          String realmName = realmElement.getAttributeValue("name");
+          StringBuffer sb = new StringBuffer(realmName);
+
+          byte[] buffer = new byte[sb.length()];
+          int length = SVNBase64.base64ToByteArray(sb, buffer);
+          realmName = new String(buffer, 0, length);
+          Map<String, String> infoMap = new HashMap<String, String>();
+          List attrsList = realmElement.getAttributes();
+          for (Iterator attrs = attrsList.iterator(); attrs.hasNext();) {
+              Attribute attr = (Attribute) attrs.next();
+              if ("name".equals(attr.getName())) {
+                  continue;
+              }
+              String key = attr.getName();
+              String value = attr.getValue();
+              infoMap.put(key, value);
+          }
+          groupMap.put(realmName, infoMap);
+      }
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-      if (myAuthenticationInfo == null) {
-          return;
-      }
-      Document document = new Document();
-      Element authElement = new Element("kinds");
-      for (Iterator<String> groups = myAuthenticationInfo.keySet().iterator(); groups.hasNext();) {
-          String kind = groups.next();
-          Element groupElement = new Element(kind);
-          Map<String, Map<String, String>> groupsMap = myAuthenticationInfo.get(kind);
+    writeCredentials();
 
-          for (Iterator<String> realms = groupsMap.keySet().iterator(); realms.hasNext();) {
-            String realm = realms.next();
-            Element realmElement = new Element("realm");
-            realmElement.setAttribute("name", SVNBase64.byteArrayToBase64(realm.getBytes()));
-            Map<String, String> info = groupsMap.get(realm);
-            for (Iterator<String> keys = info.keySet().iterator(); keys.hasNext();) {
-                String key = keys.next();
-                String value = info.get(key);
-                realmElement.setAttribute(key, value);
-            }
-            groupElement.addContent(realmElement);
+    if (myCheckoutURLs != null) {
+      for (final String url : myCheckoutURLs) {
+        Element urlElement = new Element("checkoutURL");
+        urlElement.setText(url);
+        element.addContent(urlElement);
+      }
+    }
+  }
+
+  private void writeCredentials() {
+    if (myAuthenticationInfo == null) {
+        return;
+    }
+    Document document = new Document();
+    Element authElement = new Element("kinds");
+    for (Iterator<String> groups = myAuthenticationInfo.keySet().iterator(); groups.hasNext();) {
+        String kind = groups.next();
+        Element groupElement = new Element(kind);
+        Map<String, Map<String, String>> groupsMap = myAuthenticationInfo.get(kind);
+
+        for (Iterator<String> realms = groupsMap.keySet().iterator(); realms.hasNext();) {
+          String realm = realms.next();
+          Element realmElement = new Element("realm");
+          realmElement.setAttribute("name", SVNBase64.byteArrayToBase64(realm.getBytes()));
+          Map<String, String> info = groupsMap.get(realm);
+          for (Iterator<String> keys = info.keySet().iterator(); keys.hasNext();) {
+              String key = keys.next();
+              String value = info.get(key);
+              realmElement.setAttribute(key, value);
           }
-          authElement.addContent(groupElement);
-      }
-      document.setRootElement(new Element("svn4idea"));
-      document.getRootElement().addContent(authElement);
+          groupElement.addContent(realmElement);
+        }
+        authElement.addContent(groupElement);
+    }
+    document.setRootElement(new Element("svn4idea"));
+    document.getRootElement().addContent(authElement);
 
-      File file = getCredentialsFile();
-      file.getParentFile().mkdirs();
-      try {
-          JDOMUtil.writeDocument(document, file, System.getProperty("line.separator"));
-      } catch (IOException e) {
-          //
-      }
+    File file = getCredentialsFile();
+    file.getParentFile().mkdirs();
+    try {
+        JDOMUtil.writeDocument(document, file, System.getProperty("line.separator"));
+    } catch (IOException e) {
+        //
+    }
   }
 
   public Map<String, String> getAuthenticationInfo(String realm, String kind) {
@@ -247,5 +271,39 @@ public class SvnApplicationSettings implements ApplicationComponent, JDOMExterna
     file = new File(file, "svn4idea");
     file.mkdirs();
     return new File(file, "credentials.xml");
+  }
+
+  public Collection<String> getCheckoutURLs() {
+    if (myCheckoutURLs == null) {
+      myCheckoutURLs = new LinkedList<String>();
+    }
+    return myCheckoutURLs;
+  }
+
+  public void addCheckoutURL(String url) {
+    if (myCheckoutURLs == null) {
+      myCheckoutURLs = new LinkedList<String>();
+    }
+    if (myCheckoutURLs.contains(url)) {
+      return;
+    }
+    myCheckoutURLs.add(0, url);
+  }
+
+  public void removeCheckoutURL(String url) {
+    if (myCheckoutURLs != null) {
+      // 'url' is not necessary an exact match for some of the urls in collection - it has been parsed and then converted back to string
+      for(String oldUrl: myCheckoutURLs) {
+        try {
+          if (url.equals(oldUrl) || SVNURL.parseURIEncoded(url).equals(SVNURL.parseURIEncoded(oldUrl))) {
+            myCheckoutURLs.remove(oldUrl);
+            break;
+          }
+        }
+        catch (SVNException e) {
+          // ignore
+        }
+      }
+    }
   }
 }
