@@ -31,6 +31,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.PsiLock;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
@@ -563,6 +564,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     boolean mustAcquire = !isReadAccessAllowed();
 
     if (mustAcquire) {
+      LOG.assertTrue(!Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing readAction");
       try {
         myActionsLock.readLock().acquire();
       }
