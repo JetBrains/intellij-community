@@ -11,11 +11,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
+import com.intellij.util.xml.impl.ConvertContextImpl;
+import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.impl.GenericValueReferenceProvider;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
@@ -137,10 +139,16 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     final XmlElement valueElement = DomUtil.getValueElement(element);
     if (valueElement != null && !isSoftReference(element)) {
       final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
-      for (final PsiReference reference : myProvider.getReferencesByElement(valueElement)) {
+      final PsiReference[] psiReferences = myProvider.getReferencesByElement(valueElement);
+      for (final PsiReference reference : psiReferences) {
         if (hasBadResolve(element, reference)) {
           list.add(holder.createResolveProblem(element, reference));
         }
+      }
+      if (psiReferences.length == 0 && element.getValue() == null) {
+        final String errorMessage = element.getConverter()
+          .getErrorMessage(element.getStringValue(), new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element)));
+        list.add(holder.createProblem(element, errorMessage));
       }
       return list;
     }
