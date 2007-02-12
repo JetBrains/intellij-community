@@ -45,12 +45,12 @@ import java.io.StringReader;
 
   private void init() {
     try {
-      System.setProperty("log4j.defaultInitOverride", "true");
       String fileName = PathManager.getBinPath() + File.separator + "log.xml";
       File logXmlFile = new File(fileName);
       if (!logXmlFile.exists()) {
-        throw new RuntimeException("log.xml file does not exist! Path: [" + fileName + "]");
+        return;
       }
+      System.setProperty("log4j.defaultInitOverride", "true");
       String text = new String(FileUtil.loadFileText(logXmlFile));
       text = StringUtil.replace(text, SYSTEM_MACRO, StringUtil.replace(PathManager.getSystemPath(), "\\", "\\\\"));
       text = StringUtil.replace(text, APPLICATION_MACRO, StringUtil.replace(PathManager.getHomePath(), "\\", "\\\\"));
