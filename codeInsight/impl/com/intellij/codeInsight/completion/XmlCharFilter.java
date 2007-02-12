@@ -29,11 +29,13 @@ public class XmlCharFilter implements CharFilter {
       case '=':
       case '(':
 
+      case '/':
+        return myWithinTag && prefix != null && prefix.length() > 0 ? CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP:CharFilter.ADD_TO_PREFIX;
+        
       case '>': if (prefix != null && prefix.length() > 0) {
         return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
-      case '/':
-        return myWithinTag ? CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP:CharFilter.ADD_TO_PREFIX;
+
       default:
         return CharFilter.HIDE_LOOKUP;
       case ' ':
