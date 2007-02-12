@@ -369,7 +369,9 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   public PsiPackageStatement createPackageStatement(@NotNull String name) throws IncorrectOperationException {
     final PsiJavaFile javaFile = (PsiJavaFile)createFileFromText("dummy.java", "package " + name + ";");
-    return javaFile.getPackageStatement();
+    final PsiPackageStatement stmt = javaFile.getPackageStatement();
+    if (stmt == null) throw new IncorrectOperationException("Incorrect package name: " + name);
+    return stmt;
   }
 
   @NotNull
