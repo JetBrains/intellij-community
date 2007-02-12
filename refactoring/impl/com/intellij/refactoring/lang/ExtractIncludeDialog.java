@@ -7,8 +7,10 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.HelpID;
@@ -18,6 +20,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -101,16 +104,27 @@ public class ExtractIncludeDialog extends DialogWrapper {
                        fileName.length() > 0 && fileName.indexOf(File.separatorChar) < 0);
   }
 
+  private static boolean isFileExist(@NotNull final String directory, @NotNull final String fileName) {
+    return LocalFileSystem.getInstance().findFileByIoFile(new File(directory, fileName)) != null;
+  }
+
   protected void doOKAction() {
     final Project project = myCurrentDirectory.getProject();
+
+    final String directoryName = myTargetDirectoryField.getText().replace(File.separatorChar, '/');
+    final String targetFileName = getTargetFileName();
+
+    if (isFileExist(directoryName, targetFileName)) {
+      Messages.showErrorDialog(project, RefactoringBundle.message("file.already.exist", targetFileName), RefactoringBundle.message("file.already.exist.title"));
+      return;
+    }
+
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
         final Runnable action = new Runnable() {
           public void run() {
-            String directoryName = myTargetDirectoryField.getText().replace(File.separatorChar, '/');
             try {
               PsiDirectory targetDirectory = DirectoryUtil.mkdirs(PsiManager.getInstance(project), directoryName);
-              String targetFileName = getTargetFileName() + "." + myExtension;
               targetDirectory.checkCreateFile(targetFileName);
               final String webPath = ExtractJspIncludeFileHandler.getWebPath(myCurrentDirectory, targetDirectory);
               myTargetDirectory = webPath == null ? null : targetDirectory;
