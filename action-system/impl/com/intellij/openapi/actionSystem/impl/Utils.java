@@ -1,6 +1,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 
@@ -90,6 +91,8 @@ public class Utils{
 
   // returns false if exception was thrown and handled
   private static boolean doUpdate(final AnAction group, final AnActionEvent e, final Presentation presentation) throws ProcessCanceledException {
+    if (ApplicationManager.getApplication().isDisposed()) return false;
+    
     try {
       group.update(e);
     }
