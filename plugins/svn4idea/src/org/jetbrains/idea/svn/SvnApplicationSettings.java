@@ -43,7 +43,7 @@ import java.util.Map;
 public class SvnApplicationSettings implements ApplicationComponent, JDOMExternalizable {
 
   private SvnFileSystemListener myVFSHandler;
-  private Map myAuthenticationInfo;
+  private Map<String, Map<String, Map<String, String>>> myAuthenticationInfo;
   private int mySvnProjectCount;
 
   public static SvnApplicationSettings getInstance() {
@@ -102,7 +102,7 @@ public class SvnApplicationSettings implements ApplicationComponent, JDOMExterna
       if (authElement == null) {
           return;
       }
-      myAuthenticationInfo = new HashMap();
+      myAuthenticationInfo = new HashMap<String, Map<String, Map<String, String>>>();
       List groupsList = authElement.getChildren();
       for (Iterator groups = groupsList.iterator(); groups.hasNext();) {
         Element groupElement = (Element) groups.next();
@@ -111,7 +111,7 @@ public class SvnApplicationSettings implements ApplicationComponent, JDOMExterna
           // old version.
           continue;
         }
-        Map groupMap = new HashMap();
+        Map<String, Map<String, String>> groupMap = new HashMap<String, Map<String, String>>();
         myAuthenticationInfo.put(kind, groupMap);
         List realmsList = groupElement.getChildren("realm");
         for (Iterator realms = realmsList.iterator(); realms.hasNext();) {
@@ -122,7 +122,7 @@ public class SvnApplicationSettings implements ApplicationComponent, JDOMExterna
             byte[] buffer = new byte[sb.length()];
             int length = SVNBase64.base64ToByteArray(sb, buffer);
             realmName = new String(buffer, 0, length);
-            Map infoMap = new HashMap();
+            Map<String, String> infoMap = new HashMap<String, String>();
             List attrsList = realmElement.getAttributes();
             for (Iterator attrs = attrsList.iterator(); attrs.hasNext();) {
                 Attribute attr = (Attribute) attrs.next();
@@ -144,19 +144,19 @@ public class SvnApplicationSettings implements ApplicationComponent, JDOMExterna
       }
       Document document = new Document();
       Element authElement = new Element("kinds");
-      for (Iterator groups = myAuthenticationInfo.keySet().iterator(); groups.hasNext();) {
-          String kind = (String) groups.next();
+      for (Iterator<String> groups = myAuthenticationInfo.keySet().iterator(); groups.hasNext();) {
+          String kind = groups.next();
           Element groupElement = new Element(kind);
-          Map groupsMap = (Map) myAuthenticationInfo.get(kind);
+          Map<String, Map<String, String>> groupsMap = myAuthenticationInfo.get(kind);
 
-          for (Iterator realms = groupsMap.keySet().iterator(); realms.hasNext();) {
-            String realm = (String) realms.next();
+          for (Iterator<String> realms = groupsMap.keySet().iterator(); realms.hasNext();) {
+            String realm = realms.next();
             Element realmElement = new Element("realm");
             realmElement.setAttribute("name", SVNBase64.byteArrayToBase64(realm.getBytes()));
-            Map info = (Map) groupsMap.get(realm);
-            for (Iterator keys = info.keySet().iterator(); keys.hasNext();) {
-                String key = (String) keys.next();
-                String value = (String) info.get(key);
+            Map<String, String> info = groupsMap.get(realm);
+            for (Iterator<String> keys = info.keySet().iterator(); keys.hasNext();) {
+                String key = keys.next();
+                String value = info.get(key);
                 realmElement.setAttribute(key, value);
             }
             groupElement.addContent(realmElement);
@@ -175,12 +175,12 @@ public class SvnApplicationSettings implements ApplicationComponent, JDOMExterna
       }
   }
 
-  public Map getAuthenticationInfo(String realm, String kind) {
+  public Map<String, String> getAuthenticationInfo(String realm, String kind) {
     synchronized(this) {
         if (myAuthenticationInfo != null) {
-            Map group = (Map) myAuthenticationInfo.get(kind);
+            Map<String, Map<String, String>> group = myAuthenticationInfo.get(kind);
             if (group != null) {
-                Map info = (Map) group.get(realm);
+                Map<String, String> info = group.get(realm);
                 if (info != null) {
                   return decodeData(info);
                 }
@@ -190,18 +190,18 @@ public class SvnApplicationSettings implements ApplicationComponent, JDOMExterna
     return null;
   }
 
-  public void saveAuthenticationInfo(String realm, String kind, Map info) {
+  public void saveAuthenticationInfo(String realm, String kind, Map<String, String> info) {
       synchronized(this) {
         if (info == null) {
             return;
         }
         realm = realm == null ? "default" : realm;
         if (myAuthenticationInfo == null) {
-            myAuthenticationInfo = new HashMap();
+            myAuthenticationInfo = new HashMap<String, Map<String, Map<String, String>>>();
         }
-        Map group = (Map) myAuthenticationInfo.get(kind);
+        Map<String, Map<String, String>> group = myAuthenticationInfo.get(kind);
         if (group == null) {
-          group = new HashMap();
+          group = new HashMap<String, Map<String, String>>();
           myAuthenticationInfo.put(kind, group);
         }
         group.put(realm, encodeData(info));
@@ -217,30 +217,28 @@ public class SvnApplicationSettings implements ApplicationComponent, JDOMExterna
       }
   }
 
-  private static Map encodeData(Map source) {
-      Map dst = new HashMap();
-      for (Iterator keys = source.keySet().iterator(); keys.hasNext();) {
-          String key = (String) keys.next();
-          String value = (String) source.get(key);
-          if (key != null && value != null) {
-              dst.put(key, SVNBase64.byteArrayToBase64(value.getBytes()));
-          }
+  private static Map<String, String> encodeData(Map<String, String> source) {
+    Map<String, String> dst = new HashMap<String, String>();
+    for (final String key : source.keySet()) {
+      String value = source.get(key);
+      if (key != null && value != null) {
+        dst.put(key, SVNBase64.byteArrayToBase64(value.getBytes()));
       }
-      return dst;
+    }
+    return dst;
   }
-  private static Map decodeData(Map source) {
-      Map dst = new HashMap();
-      for (Iterator keys = source.keySet().iterator(); keys.hasNext();) {
-          String key = (String) keys.next();
-          String value = (String) source.get(key);
-          if (key != null && value != null) {
-            StringBuffer sb = new StringBuffer(value);
-            byte[] buffer = new byte[sb.length()];
-            int length = SVNBase64.base64ToByteArray(sb, buffer);
-            dst.put(key, new String(buffer, 0, length));
-          }
+  private static Map<String, String> decodeData(Map<String, String> source) {
+    Map<String, String> dst = new HashMap<String, String>();
+    for (String key : source.keySet()) {
+      String value = source.get(key);
+      if (key != null && value != null) {
+        StringBuffer sb = new StringBuffer(value);
+        byte[] buffer = new byte[sb.length()];
+        int length = SVNBase64.base64ToByteArray(sb, buffer);
+        dst.put(key, new String(buffer, 0, length));
       }
-      return dst;
+    }
+    return dst;
   }
 
   public static File getCredentialsFile() {

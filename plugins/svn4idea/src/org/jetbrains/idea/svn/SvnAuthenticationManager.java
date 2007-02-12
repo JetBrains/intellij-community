@@ -75,7 +75,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
             if (auth.getUserName() == null || "".equals(auth.getUserName())) {
                 return;
             }
-            Map info = new HashMap();
+            Map<String, String> info = new HashMap<String, String>();
             info.put("kind", kind);
             // convert info to SVNAuthentication.
             info.put("username", auth.getUserName());
