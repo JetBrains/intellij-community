@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.vfs.local.win32.FileWatcher;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -677,11 +676,6 @@ public class VirtualFileImpl extends VirtualFile {
         }
       }
     }
-  }
-
-  @NonNls
-  public String toString() {
-    return "VirtualFile: " + getPresentableUrl();
   }
 
   void setName(String name) {

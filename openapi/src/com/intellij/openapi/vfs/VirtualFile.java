@@ -37,7 +37,7 @@ import java.nio.charset.Charset;
  * Represents a file in <code>{@link VirtualFileSystem}</code>. A particular file is represented by the same
  * <code>VirtualFile</code> instance for the entire lifetime of the IntelliJ IDEA process, unless the file
  * is deleted, in which case {@link #isValid()} for the instance will return <code>false</code>.
- *
+ * <p/>
  * If an in-memory implementation of VirtualFile is required, LightVirtualFile from the com.intellij.testFramework
  * package (Extended API) can be used.
  *
@@ -47,7 +47,7 @@ import java.nio.charset.Charset;
 public abstract class VirtualFile implements UserDataHolder, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VirtualFile");
   public static final Key<Object> REQUESTOR_MARKER = new Key<Object>("REQUESTOR_MARKER");
-  
+
   public static final VirtualFile[] EMPTY_ARRAY = new VirtualFile[0];
 
   private Charset myCharset = null;
@@ -63,13 +63,14 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    *
    * @return file name
    */
-  @NotNull @NonNls
+  @NotNull
+  @NonNls
   public abstract String getName();
 
   /**
    * Gets the {@link VirtualFileSystem} this file belongs to.
    *
-   * @return  the {@link VirtualFileSystem}
+   * @return the {@link VirtualFileSystem}
    */
   @NotNull
   public abstract VirtualFileSystem getFileSystem();
@@ -87,7 +88,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
   /**
    * Gets the URL of this file. The URL is a string which uniquely identifies file in all file systems.
    * It has the following format: <code>&lt;protocol&gt;://&lt;path&gt;</code>.
-   * <p>
+   * <p/>
    * File can be found by its URL using {@link VirtualFileManager#findFileByUrl} method.
    *
    * @return the URL consisting of protocol and path
@@ -96,7 +97,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @see VirtualFileSystem#getProtocol
    */
   @NotNull
-  public String getUrl(){
+  public String getUrl() {
     return VirtualFileManager.constructUrl(getFileSystem().getProtocol(), getPath());
   }
 
@@ -107,7 +108,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @return the presentable URL.
    * @see VirtualFileSystem#extractPresentableUrl
    */
-  public final String getPresentableUrl(){
+  public final String getPresentableUrl() {
     return getFileSystem().extractPresentableUrl(getPath());
   }
 
@@ -136,7 +137,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @return the extension or null if file name doesn't contain '.'
    */
   @Nullable
-  public String getExtension(){
+  public String getExtension() {
     String name = getName();
     int index = name.lastIndexOf('.');
     if (index < 0) return null;
@@ -148,10 +149,10 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * Otherwise the same value as <code>{@link #getName}</code> method returns is returned.
    *
    * @return the name without extension
-   * if there is no '.' in it
+   *         if there is no '.' in it
    */
   @NotNull
-  public String getNameWithoutExtension(){
+  public String getNameWithoutExtension() {
     String name = getName();
     int index = name.lastIndexOf('.');
     if (index < 0) return name;
@@ -165,9 +166,9 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * See {@link Application#runWriteAction}.
    *
    * @param requestor any object to control who called this method. Note that
-   * it is considered to be an external change if <code>requestor</code> is <code>null</code>.
-   * See {@link VirtualFileEvent#getRequestor}
-   * @param newName the new file name
+   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                  See {@link VirtualFileEvent#getRequestor}
+   * @param newName   the new file name
    * @throws IOException if file failed to be renamed
    */
   public void rename(Object requestor, @NotNull @NonNls String newName) throws IOException {
@@ -223,11 +224,11 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
   /**
    * Finds child of this file with the given name.
    *
-   * @param name  the file name to search by
+   * @param name the file name to search by
    * @return the file if found any, <code>null</code> otherwise
    */
   @Nullable
-  public VirtualFile findChild(@NotNull @NonNls String name){
+  public VirtualFile findChild(@NotNull @NonNls String name) {
     VirtualFile[] children = getChildren();
     if (children == null) return null;
     for (VirtualFile child : children) {
@@ -244,8 +245,8 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
 
   /**
    * @return the {@link FileType} of this file.
-   * When IDEA has no idea what the file type is (i.e. file type is not registered via {@link FileTypeManager}),
-   * it returns {@link com.intellij.openapi.fileTypes.StdFileTypes#UNKNOWN}
+   *         When IDEA has no idea what the file type is (i.e. file type is not registered via {@link FileTypeManager}),
+   *         it returns {@link com.intellij.openapi.fileTypes.StdFileTypes#UNKNOWN}
    */
   @NotNull
   public FileType getFileType() {
@@ -254,31 +255,32 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
 
   /**
    * Finds file by path relative to this file.
+   *
    * @param relPath the relative path to search by
    * @return the file if found any, <code>null</code> otherwise
    */
   @Nullable
-  public VirtualFile findFileByRelativePath(String relPath){
+  public VirtualFile findFileByRelativePath(String relPath) {
     int index = relPath.indexOf('/');
     if (index < 0) index = relPath.length();
     String name = relPath.substring(0, index);
 
     VirtualFile child;
-    if (name.equals(".")){
+    if (name.equals(".")) {
       child = this;
     }
-    else if (name.equals("..")){
+    else if (name.equals("..")) {
       child = getParent();
     }
-    else{
+    else {
       child = findChild(name);
     }
     if (child == null) return null;
 
-    if (index < relPath.length()){
+    if (index < relPath.length()) {
       return child.findFileByRelativePath(relPath.substring(index + 1));
     }
-    else{
+    else {
       return child;
     }
   }
@@ -288,9 +290,9 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * See {@link com.intellij.openapi.application.Application#runWriteAction}.
    *
    * @param requestor any object to control who called this method. Note that
-   * it is considered to be an external change if <code>requestor</code> is <code>null</code>.
-   * See {@link VirtualFileEvent#getRequestor}
-   * @param name directory name
+   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                  See {@link VirtualFileEvent#getRequestor}
+   * @param name      directory name
    * @return <code>VirtualFile</code> representing the created directory
    * @throws java.io.IOException if directory failed to be created
    */
@@ -307,7 +309,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
       throw new IOException(VfsBundle.message("directory.invalid.name.error", name));
     }
 
-    if (findChild(name) != null){
+    if (findChild(name) != null) {
       throw new IOException(VfsBundle.message("file.create.already.exists.error", getUrl(), name));
     }
 
@@ -319,8 +321,8 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * See {@link com.intellij.openapi.application.Application#runWriteAction}.
    *
    * @param requestor any object to control who called this method. Note that
-   * it is considered to be an external change if <code>requestor</code> is <code>null</code>.
-   * See {@link VirtualFileEvent#getRequestor}
+   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                  See {@link VirtualFileEvent#getRequestor}
    * @return <code>VirtualFile</code> representing the created file
    * @throws IOException if file failed to be created
    */
@@ -337,7 +339,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
       throw new IOException(VfsBundle.message("file.invalid.name.error", name));
     }
 
-    if (findChild(name) != null){
+    if (findChild(name) != null) {
       throw new IOException(VfsBundle.message("file.create.already.exists.error", getUrl(), name));
     }
 
@@ -349,8 +351,8 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * See {@link com.intellij.openapi.application.Application#runWriteAction}.
    *
    * @param requestor any object to control who called this method. Note that
-   * it is considered to be an external change if <code>requestor</code> is <code>null</code>.
-   * See {@link VirtualFileEvent#getRequestor}
+   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                  See {@link VirtualFileEvent#getRequestor}
    * @throws IOException if file failed to be deleted
    */
   public void delete(Object requestor) throws IOException {
@@ -363,8 +365,8 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * See {@link com.intellij.openapi.application.Application#runWriteAction}.
    *
    * @param requestor any object to control who called this method. Note that
-   * it is considered to be an external change if <code>requestor</code> is <code>null</code>.
-   * See {@link VirtualFileEvent#getRequestor}
+   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                  See {@link VirtualFileEvent#getRequestor}
    * @param newParent the directory to move this file to
    * @throws IOException if file failed to be moved
    */
@@ -389,7 +391,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
   }
 
 
-  public final void setBinaryContent(byte[] content) throws IOException{
+  public final void setBinaryContent(byte[] content) throws IOException {
     setBinaryContent(content, -1, -1);
   }
 
@@ -411,15 +413,15 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
     return myCharset != null;
   }
 
-  public void setBinaryContent(final byte[] content, long newModificationStamp, long newTimeStamp) throws IOException{
+  public void setBinaryContent(final byte[] content, long newModificationStamp, long newTimeStamp) throws IOException {
     OutputStream outputStream = null;
-    try{
+    try {
       outputStream = getOutputStream(this, newModificationStamp, newTimeStamp);
       outputStream.write(content);
       outputStream.flush();
     }
-    finally{
-      if(outputStream != null) outputStream.close();
+    finally {
+      if (outputStream != null) outputStream.close();
     }
   }
 
@@ -427,26 +429,26 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * Gets the <code>OutputStream</code> for this file.
    *
    * @param requestor any object to control who called this method. Note that
-   * it is considered to be an external change if <code>requestor</code> is <code>null</code>.
-   * See {@link VirtualFileEvent#getRequestor}
+   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                  See {@link VirtualFileEvent#getRequestor}
    * @return <code>OutputStream</code>
    * @throws IOException if an I/O error occurs
    */
-  public final OutputStream getOutputStream(Object requestor) throws IOException{
+  public final OutputStream getOutputStream(Object requestor) throws IOException {
     return getOutputStream(requestor, -1, -1);
   }
 
   /**
    * Gets the <code>OutputStream</code> for this file and sets modification stamp and time stamp to the specified values
    * after closing the stream.<p>
-   *
+   * <p/>
    * Normally you should not use this method.
    *
-   * @param requestor any object to control who called this method. Note that
-   * it is considered to be an external change if <code>requestor</code> is <code>null</code>.
-   * See {@link VirtualFileEvent#getRequestor}
+   * @param requestor            any object to control who called this method. Note that
+   *                             it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                             See {@link VirtualFileEvent#getRequestor}
    * @param newModificationStamp new modification stamp or -1 if no special value should be set
-   * @param newTimeStamp new time stamp or -1 if no special value should be set
+   * @param newTimeStamp         new time stamp or -1 if no special value should be set
    * @return <code>OutputStream</code>
    * @throws IOException if an I/O error occurs
    * @see #getModificationStamp()
@@ -457,7 +459,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * Returns file content as an array of bytes.
    *
    * @return file content
-   * @throws IOException  if an I/O error occurs
+   * @throws IOException if an I/O error occurs
    * @see #getInputStream()
    */
   public abstract byte[] contentsToByteArray() throws IOException;
@@ -495,47 +497,46 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * the timestamp value is refreshed and <code>contentsChanged</code> event is fired if it is changed.<p>
    * If this file is a directory the set of its children is refreshed. If recursive value is <code>true</code> all
    * children are refreshed recursively.
-   * <p>
+   * <p/>
    * This method should be only called within write-action.
    * See {@link com.intellij.openapi.application.Application#runWriteAction}.
    *
    * @param asynchronous if <code>true</code> then the operation will be performed in a separate thread,
-   * otherwise will be performed immediately
-   * @param recursive whether to refresh all the files in this directory recursively
+   *                     otherwise will be performed immediately
+   * @param recursive    whether to refresh all the files in this directory recursively
    */
-  public void refresh(boolean asynchronous, boolean recursive){
+  public void refresh(boolean asynchronous, boolean recursive) {
     refresh(asynchronous, recursive, null);
   }
 
   /**
-   * The same as {@link #refresh(boolean asynchronous, boolean recursive)} but also runs <code>postRunnable</code>
+   * The same as {@link #refresh(booleanasynchronous,booleanrecursive)} but also runs <code>postRunnable</code>
    * after the operation is completed.
-   *
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable);
 
   @Nullable
-  public <T> T getUserData(Key<T> key){
-    synchronized(this){
+  public <T> T getUserData(Key<T> key) {
+    synchronized (this) {
       if (myUserMap == null) return null;
       //noinspection unchecked
       return (T)myUserMap.get(key);
     }
   }
 
-  public <T> void putUserData(Key<T> key, T value){
-    synchronized(this){
-      if (myUserMap == null){
+  public <T> void putUserData(Key<T> key, T value) {
+    synchronized (this) {
+      if (myUserMap == null) {
         if (value == null) return;
         myUserMap = new THashMap();
       }
-      if (value != null){
+      if (value != null) {
         //noinspection unchecked
         myUserMap.put(key, value);
       }
-      else{
+      else {
         myUserMap.remove(key);
-        if (myUserMap.isEmpty()){
+        if (myUserMap.isEmpty()) {
           myUserMap = null;
         }
       }
@@ -551,7 +552,6 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
   }
 
   /**
-   *
    * @param name
    * @return whether file name equals to this name
    *         result depends on the filesystem specifics
@@ -575,5 +575,10 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
 
   public void setBOM(final byte[] BOM) {
     myBOM = BOM;
+  }
+
+  @NonNls
+  public String toString() {
+    return "VirtualFile: " + getPresentableUrl();
   }
 }

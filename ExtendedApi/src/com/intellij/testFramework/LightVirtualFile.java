@@ -59,16 +59,16 @@ public class LightVirtualFile extends VirtualFile {
     myName = name;
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (final FileType fileType : fileTypes) {
-      if(fileType instanceof LanguageFileType){
+      if (fileType instanceof LanguageFileType) {
         final LanguageFileType languageFileType = (LanguageFileType)fileType;
-        if(languageFileType.getLanguage() == language){
+        if (languageFileType.getLanguage() == language) {
           myFileType = languageFileType;
           break;
         }
       }
     }
-    if(myFileType == null) myFileType = language.getAssociatedFileType();
-    if(myFileType == null) myFileType = FileTypeManager.getInstance().getFileTypeByFileName(name);
+    if (myFileType == null) myFileType = language.getAssociatedFileType();
+    if (myFileType == null) myFileType = FileTypeManager.getInstance().getFileTypeByFileName(name);
     myContent = text;
     myModStamp = LocalTimeCounter.currentTime();
   }
@@ -85,24 +85,29 @@ public class LightVirtualFile extends VirtualFile {
       return null;
     }
 
-    public void refresh(boolean asynchronous) {}
+    public void refresh(boolean asynchronous) {
+    }
 
     @Nullable
     public VirtualFile refreshAndFindFileByPath(String path) {
       return null;
     }
 
-    public void forceRefreshFiles(final boolean asynchronous, @NotNull VirtualFile... files) {}
+    public void forceRefreshFiles(final boolean asynchronous, @NotNull VirtualFile... files) {
+    }
 
-    protected void deleteFile(Object requestor, VirtualFile vFile) throws IOException {}
+    protected void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
+    }
 
-    protected void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {}
+    protected void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {
+    }
 
     protected VirtualFile copyFile(Object requestor, VirtualFile vFile, VirtualFile newParent, final String copyName) throws IOException {
       throw new IOException("Cannot copy files");
     }
 
-    protected void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException {}
+    protected void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException {
+    }
 
     protected VirtualFile createChildFile(Object requestor, VirtualFile vDir, String fileName) throws IOException {
       throw new IOException("Cannot create files");
@@ -212,10 +217,5 @@ public class LightVirtualFile extends VirtualFile {
 
   public CharSequence getContent() {
     return myContent;
-  }
-
-  @NonNls
-  public String toString() {
-    return "LightVirtualFile "+getName();
   }
 }

@@ -115,9 +115,4 @@ public class TestVirtualFile extends VirtualFile {
   public InputStream getInputStream() throws IOException {
     throw new UnsupportedOperationException();
   }
-
-  @Override
-  public String toString() {
-    return getPath();
-  }
 }

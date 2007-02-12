@@ -64,7 +64,7 @@ public class MockFileSystem extends VirtualFileSystem {
   }
 
   public class MyVirtualFile extends LightVirtualFile {
-    private final HashMap<String, MyVirtualFile> myChildren = new HashMap<String,MyVirtualFile>();
+    private final HashMap<String, MyVirtualFile> myChildren = new HashMap<String, MyVirtualFile>();
     private final MyVirtualFile myParent;
 
     public MyVirtualFile(String name, MyVirtualFile parent) {
@@ -95,15 +95,13 @@ public class MockFileSystem extends VirtualFileSystem {
       return parent == null ? getName() : parent.getPath() + "/" + getName();
     }
 
-    public MyVirtualFile getParent() { return myParent; }
+    public MyVirtualFile getParent() {
+      return myParent;
+    }
 
     public VirtualFile[] getChildren() {
       Collection<MyVirtualFile> children = myChildren.values();
       return children.toArray(new MyVirtualFile[children.size()]);
-    }
-
-    public String toString() {
-      return getUrl();
     }
   }
 }

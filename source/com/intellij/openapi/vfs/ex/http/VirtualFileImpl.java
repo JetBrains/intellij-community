@@ -1,4 +1,3 @@
-
 package com.intellij.openapi.vfs.ex.http;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,17 +20,17 @@ class VirtualFileImpl extends VirtualFile {
     myFileSystem = fileSystem;
     myPath = path;
     int lastSlash = path.lastIndexOf('/');
-    if (lastSlash == path.length() - 1){
+    if (lastSlash == path.length() - 1) {
       myParentPath = null;
       myName = path;
     }
-    else{
+    else {
       int prevSlash = path.lastIndexOf('/', lastSlash - 1);
-      if (prevSlash < 0){
+      if (prevSlash < 0) {
         myParentPath = path.substring(0, lastSlash + 1);
         myName = path.substring(lastSlash + 1);
       }
-      else{
+      else {
         myParentPath = path.substring(0, lastSlash);
         myName = path.substring(lastSlash + 1);
       }
@@ -95,9 +94,7 @@ class VirtualFileImpl extends VirtualFile {
 
   public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
     throw new UnsupportedOperationException();
-  };
-
-  public String toString() {
-    return getPath();
   }
+
+  ;
 }
