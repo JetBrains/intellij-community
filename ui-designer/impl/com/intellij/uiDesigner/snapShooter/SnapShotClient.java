@@ -5,17 +5,17 @@
 package com.intellij.uiDesigner.snapShooter;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.Socket;
+import java.io.OutputStreamWriter;
 import java.net.InetAddress;
-import java.util.List;
+import java.net.Socket;
 import java.util.ArrayList;
-import java.nio.charset.Charset;
+import java.util.List;
 
 /**
  * @author yole
@@ -32,9 +32,8 @@ public class SnapShotClient {
   public void connect(int port) throws IOException {
     mySocket = new Socket(InetAddress.getLocalHost(), port);
     mySocket.setSoTimeout(10000);
-    final Charset utf8Charset = Charset.forName("UTF-8");
-    myReader = new BufferedReader(new InputStreamReader(mySocket.getInputStream(), utf8Charset));
-    myWriter = new OutputStreamWriter(mySocket.getOutputStream(), utf8Charset);
+    myReader = new BufferedReader(new InputStreamReader(mySocket.getInputStream(), CharsetToolkit.UTF8_CHARSET));
+    myWriter = new OutputStreamWriter(mySocket.getOutputStream(), CharsetToolkit.UTF8_CHARSET);
   }
 
   public void dispose() {

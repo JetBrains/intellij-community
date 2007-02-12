@@ -219,8 +219,8 @@ public class XmlUtil {
       if (jspManager != null) {
         if (jspFile != null) {
           result = jspManager.getTldFileByUri(uri, jspFile);
-          if (result == null && XmlUtil.JSTL_CORE_URI2.equals(uri)) {
-            result = jspManager.getTldFileByUri(XmlUtil.JSTL_CORE_URI, jspFile);
+          if (result == null && JSTL_CORE_URI2.equals(uri)) {
+            result = jspManager.getTldFileByUri(JSTL_CORE_URI, jspFile);
           }
         } else {
           // check facelets file
@@ -1178,10 +1178,9 @@ public class XmlUtil {
     }
   }
 
-  @NonNls private static final byte[] ENCODING_XML_PROLOG_BYTES = "<?xml".getBytes();
-  @NonNls private static final byte[] ENCODING_BYTES = "encoding".getBytes();
-  private static final byte[] XML_PROLOG_END_BYTES = "?>".getBytes();
-
+  @NonNls private static final byte[] XML_PROLOG_START_BYTES = CharsetToolkit.getUtf8Bytes("<?xml");
+  @NonNls private static final byte[] ENCODING_BYTES = CharsetToolkit.getUtf8Bytes("encoding");
+  @NonNls private static final byte[] XML_PROLOG_END_BYTES = CharsetToolkit.getUtf8Bytes("?>");
 
   @Nullable
   public static String extractXmlEncodingFromProlog(VirtualFile file) {
@@ -1201,8 +1200,8 @@ public class XmlUtil {
     }
 
     start = skipWhiteSpace(start, bytes);
-    if (!ArrayUtil.startsWith(bytes, start, ENCODING_XML_PROLOG_BYTES)) return null;
-    start += ENCODING_XML_PROLOG_BYTES.length;
+    if (!ArrayUtil.startsWith(bytes, start, XML_PROLOG_START_BYTES)) return null;
+    start += XML_PROLOG_START_BYTES.length;
     while (start < bytes.length) {
       start = skipWhiteSpace(start, bytes);
       if (ArrayUtil.startsWith(bytes, start, XML_PROLOG_END_BYTES)) return null;
@@ -1234,14 +1233,9 @@ public class XmlUtil {
     }
     return start;
   }
-
+    
   @Nullable
   public static String extractXmlEncodingFromProlog(String text) {
-    try {
-      return detect(text.getBytes("UTF-8"));
-    }
-    catch (IOException e) {
-      return null;
-    }
+    return detect(CharsetToolkit.getUtf8Bytes(text));
   }
 }

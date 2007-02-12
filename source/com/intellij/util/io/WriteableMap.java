@@ -13,5 +13,5 @@ public interface WriteableMap<V> {
   int[] getHashCodesArray(); // Returns array of all key hash codes in the map
   V getValue( int pos );
   void writeKey( DataOutput stream, int pos ) throws IOException;
-  int getKeyLength( int pos ) throws UnsupportedEncodingException;
+  int getKeyLength( int pos );
 }

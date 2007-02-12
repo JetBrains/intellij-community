@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.util.containers.HashMap;
 
@@ -198,15 +199,8 @@ class ExportToHTMLManager {
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static void generateIndexHtml(final PsiDirectory psiDirectory, final boolean recursive, final String outputDirectoryName)
     throws FileNotFoundException {
-    OutputStreamWriter writer;
     String indexHtmlName = constructOutputDirectory(psiDirectory, outputDirectoryName) + File.separator + "index.html";
-    try {
-      writer = new OutputStreamWriter(new FileOutputStream(indexHtmlName), "UTF-8");
-    }
-    catch (UnsupportedEncodingException e) {
-      LOG.error(e);
-      return;
-    }
+    OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(indexHtmlName), CharsetToolkit.UTF8_CHARSET);
     final PsiPackage aPackage = psiDirectory.getPackage();
     try {
       writer.write("<html><head><title>" + (aPackage != null ? aPackage.getQualifiedName() : psiDirectory.getName()) + "</title></head><body>");

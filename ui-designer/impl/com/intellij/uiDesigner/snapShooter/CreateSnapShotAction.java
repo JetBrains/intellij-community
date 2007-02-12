@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -217,7 +218,7 @@ public class CreateSnapShotAction extends AnAction {
                 try {
                   PsiFile formFile = dir.getManager().getElementFactory().createFileFromText(dlg.getFormName() + FORM_EXTENSION, snapshot1);
                   formFile = (PsiFile)dir.add(formFile);
-                  formFile.getVirtualFile().setCharset(Charset.forName("UTF-8"));
+                  formFile.getVirtualFile().setCharset(CharsetToolkit.UTF8_CHARSET);
                   formFile.getViewProvider().getDocument().setText(snapshot1);
                   view.selectElement(formFile);
                 }

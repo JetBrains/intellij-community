@@ -3,6 +3,7 @@ package com.intellij.cvsSupport2.javacvsImpl.io;
 import com.intellij.cvsSupport2.cvsoperations.common.ReceivedFileProcessor;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.LineReader;
@@ -28,7 +29,6 @@ public class ReceiveTextFilePreprocessor implements IReceiveTextFilePreprocessor
   }
 
   public void copyTextFileToLocation(File textFileSource, File targetFile, IReaderFactory readerFactory, Charset charSet) throws IOException {
-    Charset utf8Charset = Charset.forName("UTF-8");
     VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(targetFile);
     if (myReceivedFileProcessor.shouldProcess(virtualFile, targetFile)) {
       PrintStream target = new PrintStream(new BufferedOutputStream(new FileOutputStream(targetFile)));
@@ -47,7 +47,7 @@ public class ReceiveTextFilePreprocessor implements IReceiveTextFilePreprocessor
               target.write(bytes);
             }
             else {
-              target.write(charSet.encode(utf8Charset.decode(ByteBuffer.wrap(bytes))).array());
+              target.write(charSet.encode(CharsetToolkit.UTF8_CHARSET.decode(ByteBuffer.wrap(bytes))).array());
             }
             if (each.hasNext()) {
               if (charSet == null)

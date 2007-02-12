@@ -67,6 +67,7 @@ import java.util.Collection;
  */
 public class CharsetToolkit {
   public static final @NonNls String UTF8 = "UTF-8";
+  public static final Charset UTF8_CHARSET = Charset.forName(UTF8);
 
   private byte[] buffer;
   private Charset defaultCharset;
@@ -168,7 +169,7 @@ public class CharsetToolkit {
   public Charset guessEncoding( int guess_length ) {
     // if the file has a Byte Order Marker, we can assume the file is in UTF-xx
     // otherwise, the file would not be human readable
-    if (hasUTF8Bom(buffer)) return Charset.forName(UTF8);
+    if (hasUTF8Bom(buffer)) return UTF8_CHARSET;
     if (hasUTF16LEBom(buffer)) return Charset.forName("UTF-16LE");
     if (hasUTF16BEBom(buffer)) return Charset.forName("UTF-16BE");
 
@@ -256,7 +257,7 @@ public class CharsetToolkit {
     }
     // if no invalid UTF-8 were encountered, we can assume the encoding is UTF-8,
     // otherwise the file would not be human readable
-    if (validU8Char) return Charset.forName(UTF8);
+    if (validU8Char) return UTF8_CHARSET;
     // finally, if it's not UTF-8 nor US-ASCII, let's assume the encoding is the default encoding
     return defaultCharset;
   }
@@ -410,5 +411,13 @@ public class CharsetToolkit {
   public static Charset[] getAvailableCharsets() {
     Collection<Charset> collection = Charset.availableCharsets().values();
     return collection.toArray(new Charset[collection.size()]);
+  }
+  public static byte[] getUtf8Bytes(String s) {
+    try {
+      return s.getBytes(UTF8);
+    }
+    catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

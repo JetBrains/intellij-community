@@ -16,9 +16,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 
 /**
  * A TestCase for single PsiFile being opened in Editor conversion. See configureXXX and checkResultXXX method docs.
@@ -147,7 +146,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
   private static void setupFileEditorAndDocument(final String fileName, String fileText) throws IOException {
     deleteVFile();
     myVFile = getSourceRoot().createChildData(null, fileName);
-    myVFile.setCharset(Charset.forName(CharsetToolkit.UTF8));
+    myVFile.setCharset(CharsetToolkit.UTF8_CHARSET);
     VfsUtil.saveText(myVFile, fileText);
     final FileDocumentManager manager = FileDocumentManager.getInstance();
     manager.reloadFromDisk(manager.getDocument(myVFile));
@@ -225,7 +224,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     assertTrue(getMessage("Cannot find file " + fullPath, message), ioFile.exists());
     String fileText = null;
     try {
-      fileText = new String(FileUtil.loadFileText(ioFile, "UTF-8"));
+      fileText = new String(FileUtil.loadFileText(ioFile, CharsetToolkit.UTF8));
     } catch (IOException e) {
       LOG.error(e);
     }

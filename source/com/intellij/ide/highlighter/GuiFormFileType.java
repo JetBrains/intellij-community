@@ -37,6 +37,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,7 +73,7 @@ public class GuiFormFileType implements FileType {
   }
 
   public String getCharset(@NotNull VirtualFile file) {
-    return "UTF-8";
+    return CharsetToolkit.UTF8;
   }
 
   public SyntaxHighlighter getHighlighter(Project project, final VirtualFile virtualFile) {

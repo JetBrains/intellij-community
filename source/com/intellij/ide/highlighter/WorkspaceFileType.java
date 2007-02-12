@@ -31,18 +31,18 @@
  */
 package com.intellij.ide.highlighter;
 
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class WorkspaceFileType implements FileType {
   private static final Icon ICON = IconLoader.getIcon("/nodes/ideaWorkspace.png");
@@ -75,7 +75,7 @@ public class WorkspaceFileType implements FileType {
   }
 
   public String getCharset(VirtualFile file) {
-    return "UTF-8";
+    return CharsetToolkit.UTF8;
   }
 
   public SyntaxHighlighter getHighlighter(Project project, final VirtualFile virtualFile) {

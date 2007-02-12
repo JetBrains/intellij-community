@@ -5,6 +5,7 @@ import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.DOMUtil;
@@ -30,7 +31,6 @@ public class FileBasedStorage extends XmlElementStorage {
   private final String myRootElementName;
   private Document myDocument;
   private final File myFile;
-  private static final String UTF_8 = "utf-8";
 
   public FileBasedStorage(@Nullable PathMacroSubstitutor pathMacroManager, final String filePath, String rootElementName) {
     super(pathMacroManager);
@@ -112,7 +112,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
   private byte[] printDocument() throws StateStorageException {
     try {
-      return DOMUtil.print(getDocument()).getBytes(UTF_8);
+      return DOMUtil.print(getDocument()).getBytes(CharsetToolkit.UTF8);
     }
     catch (UnsupportedEncodingException e) {
       LOG.error(e);

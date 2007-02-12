@@ -163,7 +163,7 @@ public final class LoadTextUtil {
     FileType fileType = virtualFile.getFileType();
     Charset charset = virtualFile.getCharset();
     if (fileType instanceof XmlFileType) {
-      charset = Charset.forName(CharsetToolkit.UTF8);
+      charset = CharsetToolkit.UTF8_CHARSET;
       String name = XmlUtil.extractXmlEncodingFromProlog(text);
       if (name != null) {
         try {

@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NonNls;
@@ -93,14 +94,7 @@ class HTMLTextPainter {
   public void paint(TreeMap refMap, FileType fileType) throws FileNotFoundException {
     HighlighterIterator hIterator = myHighlighter.createIterator(myOffset);
     if(hIterator.atEnd()) return;
-    OutputStreamWriter writer;
-    try {
-      writer = new OutputStreamWriter(new FileOutputStream(myHTMLFileName), "UTF-8");
-    }
-    catch (UnsupportedEncodingException e) {
-      LOG.error(e);
-      return;
-    }
+    OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(myHTMLFileName), CharsetToolkit.UTF8_CHARSET);
     lineCount = myFirstLineNumber;
     TextAttributes prevAttributes = null;
     Iterator refKeys = null;

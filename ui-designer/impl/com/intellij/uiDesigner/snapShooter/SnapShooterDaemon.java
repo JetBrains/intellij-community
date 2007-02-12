@@ -4,6 +4,7 @@
 
 package com.intellij.uiDesigner.snapShooter;
 
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
@@ -23,7 +24,6 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.nio.charset.Charset;
 
 /**
  * @author yole
@@ -62,10 +62,9 @@ public class SnapShooterDaemon implements Runnable {
     try {
       clientSocket = serverSocket.accept();
       System.out.println("SnapShooter connection accepted");
-      final Charset utf8Charset = Charset.forName("UTF-8");
-      InputStreamReader reader = new InputStreamReader(clientSocket.getInputStream(), utf8Charset);
+      InputStreamReader reader = new InputStreamReader(clientSocket.getInputStream(), CharsetToolkit.UTF8_CHARSET);
       BufferedReader bufferedReader = new BufferedReader(reader);
-      OutputStreamWriter writer = new OutputStreamWriter(clientSocket.getOutputStream(), utf8Charset);
+      OutputStreamWriter writer = new OutputStreamWriter(clientSocket.getOutputStream(), CharsetToolkit.UTF8_CHARSET);
       while(true) {
         String command;
         try {

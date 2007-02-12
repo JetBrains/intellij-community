@@ -1,5 +1,6 @@
 package com.intellij.ide.fileTemplates;
 
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.jetbrains.annotations.NonNls;
 
@@ -20,7 +21,7 @@ public interface FileTemplate{
   @NonNls String ATTRIBUTE_DEFAULT_RETURN_VALUE = "DEFAULT_RETURN_VALUE";
   @NonNls String ATTRIBUTE_CALL_SUPER = "CALL_SUPER";
 
-  @NonNls String ourEncoding = "UTF-8";
+  @NonNls String ourEncoding = CharsetToolkit.UTF8;
   @NonNls String ATTRIBUTE_CLASS_NAME = "CLASS_NAME";
   @NonNls String ATTRIBUTE_METHOD_NAME = "METHOD_NAME";
   @NonNls String ATTRIBUTE_PACKAGE_NAME = "PACKAGE_NAME";

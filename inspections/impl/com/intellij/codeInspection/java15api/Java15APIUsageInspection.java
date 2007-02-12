@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import gnu.trove.THashSet;
@@ -28,7 +29,7 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
     BufferedReader reader = null;
     try {
       final InputStream stream = Java15APIUsageInspection.class.getResourceAsStream("apiList.txt");
-      reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
+      reader = new BufferedReader(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET));
 
       do {
         String line = reader.readLine();
