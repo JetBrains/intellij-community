@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckoutProvider;
+import org.jetbrains.idea.svn.SvnBundle;
 
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -31,8 +32,8 @@ public class CheckoutDialog extends RepositoryBrowserDialog {
 
   public void init() {
     super.init();
-    setTitle("Checkout from Subversion");
-    setOKButtonText("Checkout");
+    setTitle(SvnBundle.message("checkout.dialog.title"));
+    setOKButtonText(SvnBundle.message("checkout.dialog.button"));
     getRepositoryBrowser().addChangeListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
         if (getOKAction() != null) {
