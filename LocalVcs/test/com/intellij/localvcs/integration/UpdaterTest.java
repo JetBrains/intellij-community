@@ -4,6 +4,8 @@ import com.intellij.localvcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 
+import java.util.List;
+
 public class UpdaterTest extends LocalVcsTestCase {
   LocalVcs vcs = new TestLocalVcs();
   TestFileFilter filter = new TestFileFilter();
@@ -12,6 +14,30 @@ public class UpdaterTest extends LocalVcsTestCase {
   public void testAddingRoots() {
     updateWith(new TestVirtualFile("root", null));
     assertTrue(vcs.hasEntry("root"));
+  }
+
+  @Test
+  public void testAddingSortedRoots() {
+    TestVirtualFile root1 = new TestVirtualFile("root1", null);
+    TestVirtualFile dir1 = new TestVirtualFile("dir1", null);
+    TestVirtualFile root2 = new TestVirtualFile("root2", null);
+    TestVirtualFile dir2 = new TestVirtualFile("dir2", null);
+    TestVirtualFile root3 = new TestVirtualFile("root3", null);
+
+    root1.addChild(dir1);
+    dir1.addChild(root2);
+    root2.addChild(dir2);
+    dir2.addChild(root3);
+
+    filter.setFilesNotUnderContentRoot(dir1, dir2);
+
+    updateWith(root3, root2, root1);
+
+    List<Entry> rr = vcs.getRoots();
+    assertEquals(3, rr.size());
+    assertEquals("root1", rr.get(0).getPath());
+    assertEquals("root1/dir1/root2", rr.get(1).getPath());
+    assertEquals("root1/dir1/root2/dir2/root3", rr.get(2).getPath());
   }
 
   @Test
@@ -54,6 +80,30 @@ public class UpdaterTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testExcludingInnerRootParentWhenRootsAreInReverseOrder() {
+    vcs.createDirectory("outer", null);
+    vcs.createDirectory("outer/dir", null);
+    vcs.createDirectory("outer/dir/inner", null);
+    vcs.apply();
+
+    TestVirtualFile outer = new TestVirtualFile("outer", null);
+    TestVirtualFile dir = new TestVirtualFile("dir", null);
+    TestVirtualFile inner = new TestVirtualFile("inner", null);
+
+    outer.addChild(dir);
+    dir.addChild(inner);
+
+    filter.setFilesNotUnderContentRoot(dir);
+    updateWith(inner, outer);
+
+    assertEquals(2, vcs.getRoots().size());
+    assertEquals("outer", vcs.getRoots().get(0).getPath());
+    assertEquals("outer/dir/inner", vcs.getRoots().get(1).getPath());
+
+    assertFalse(vcs.hasEntry("outer/dir"));
+  }
+
+  @Test
   public void testDeletingObsoleteRoots() {
     vcs.createDirectory("root", null);
     vcs.apply();
@@ -68,9 +118,9 @@ public class UpdaterTest extends LocalVcsTestCase {
     vcs.createDirectory("outer/inner", null);
     vcs.apply();
 
-    TestVirtualFile root = new TestVirtualFile("outer/inner", null);
-    root.addChild(new TestVirtualFile("file", null, null));
-    updateWith(root);
+    TestVirtualFile inner = new TestVirtualFile("outer/inner", null);
+    inner.addChild(new TestVirtualFile("file", null, null));
+    updateWith(inner);
 
     assertFalse(vcs.hasEntry("outer"));
     assertTrue(vcs.hasEntry("outer/inner"));

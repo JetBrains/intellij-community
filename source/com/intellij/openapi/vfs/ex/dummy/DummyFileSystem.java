@@ -1,4 +1,3 @@
-
 package com.intellij.openapi.vfs.ex.dummy;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,7 +26,8 @@ public class DummyFileSystem extends VirtualFileSystem implements ApplicationCom
   public void disposeComponent() {
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+  }
 
   public VirtualFile createRoot(String name) {
     final VirtualFileDirectoryImpl root = new VirtualFileDirectoryImpl(this, null, name);
@@ -66,11 +66,12 @@ public class DummyFileSystem extends VirtualFileSystem implements ApplicationCom
   public void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
     fireBeforeFileDeletion(requestor, vFile);
     final VirtualFileDirectoryImpl parent = (VirtualFileDirectoryImpl)vFile.getParent();
-    if (parent == null){
+    if (parent == null) {
       throw new IOException(VfsBundle.message("file.delete.root.error", vFile.getPresentableUrl()));
     }
 
     parent.removeChild((VirtualFileImpl)vFile);
+    fireFileDeleted(requestor, vFile, vFile.getName(), parent);
   }
 
   public void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException {

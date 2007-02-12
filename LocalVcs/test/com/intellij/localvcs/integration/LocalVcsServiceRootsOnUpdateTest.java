@@ -1,8 +1,6 @@
 package com.intellij.localvcs.integration;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import org.junit.Test;
 
 public class LocalVcsServiceRootsOnUpdateTest extends LocalVcsServiceTestCase {
@@ -51,9 +49,11 @@ public class LocalVcsServiceRootsOnUpdateTest extends LocalVcsServiceTestCase {
     vcs.createFile("c:/dir/root/file", null, null);
     vcs.apply();
 
-    root = new TestVirtualFile("c:/dir/root", null);
+    TestVirtualFile dir = new TestVirtualFile("c:/dir", null);
+    root = new TestVirtualFile("newName", null);
+    dir.addChild(root);
 
-    fileManager.fireBeforePropertyChange(new VirtualFilePropertyEvent(null, root, VirtualFile.PROP_NAME, null, "newName"));
+    fileManager.firePropertyChanged(root, VirtualFile.PROP_NAME, "root");
 
     assertFalse(vcs.hasEntry("c:/dir/root"));
     assertTrue(vcs.hasEntry("c:/dir/newName"));
@@ -67,7 +67,7 @@ public class LocalVcsServiceRootsOnUpdateTest extends LocalVcsServiceTestCase {
 
     root = new TestVirtualFile("root", null);
 
-    fileManager.fireBeforeFileDeletion(new VirtualFileEvent(null, root, null, null));
+    fileManager.fireFileDeletion(root);
     assertFalse(vcs.hasEntry("root"));
   }
 

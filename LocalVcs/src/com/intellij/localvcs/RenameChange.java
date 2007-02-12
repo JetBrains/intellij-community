@@ -36,7 +36,9 @@ public class RenameChange extends Change {
   public void applyTo(RootEntry root) {
     Entry e = root.getEntry(myPath);
 
-    myOldName = e.getName();
+    // todo one more hack to support roots...
+    // todo i defitilety have to do something with it...
+    myOldName = Paths.getNameOf(e.getName());
     setAffectedIdPath(e.getIdPath());
 
     root.rename(getAffectedIdPath(), myNewName);

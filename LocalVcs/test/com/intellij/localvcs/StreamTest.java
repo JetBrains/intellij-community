@@ -315,7 +315,8 @@ public class StreamTest extends LocalVcsTestCase {
 
   @Test
   public void testChangeSet() throws IOException {
-    ChangeSet c = cs(new CreateFileChange(1, "file", null, null));
+    ChangeSet c = cs(123, new CreateFileChange(1, "file", null, null));
+
     c.applyTo(new RootEntry());
     c.setLabel("label");
 
@@ -323,6 +324,7 @@ public class StreamTest extends LocalVcsTestCase {
     ChangeSet result = is.readChangeSet();
 
     assertEquals("label", result.getLabel());
+    assertEquals(123L, result.getTimestamp());
     assertEquals(1, result.getChanges().size());
     assertEquals(CreateFileChange.class, result.getChanges().get(0).getClass());
   }

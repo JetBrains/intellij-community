@@ -40,8 +40,10 @@ public class DeleteChange extends Change {
   private void restoreEntryRecursively(RootEntry root, Entry e, IdPath parentPath) {
     if (e.isDirectory()) {
       root.createDirectory(e.getId(), parentPath, e.getName(), e.getTimestamp());
+      // todo could parentPath be null????
+      parentPath = parentPath == null ? e.getIdPath() : parentPath.appendedWith(e.getId());
+
       for (Entry child : e.getChildren()) {
-        parentPath = parentPath == null ? e.getIdPath() : parentPath.appendedWith(e.getId());
         restoreEntryRecursively(root, child, parentPath);
       }
     }

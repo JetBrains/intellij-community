@@ -69,7 +69,8 @@ public class LocalVcsServiceRootsOnStartupTest extends LocalVcsServiceTestCase {
 
   @Test
   @Ignore
-  public void testDoesNotTrackChangesBeforeStartup() {
+  public void testDoesNotTrackRootChangesBeforeStartup() {
+    // todo are we sure?
     roots.add(new TestVirtualFile("c:/root", null));
     rootManager.updateRoots();
 

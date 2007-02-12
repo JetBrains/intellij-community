@@ -103,6 +103,22 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testRenamingRoot() {
+    root.createDirectory(1, "c:/dir/root", null);
+
+    Change c = new RenameChange("c:/dir/root", "newRoot");
+    c.applyTo(root);
+
+    assertTrue(root.hasEntry("c:/dir/newRoot"));
+    assertFalse(root.hasEntry("c:/dir/root"));
+
+    c.revertOn(root);
+
+    assertTrue(root.hasEntry("c:/dir/root"));
+    assertFalse(root.hasEntry("c:/dir/newRoot"));
+  }
+
+  @Test
   public void testMovingFileFromOneDirectoryToAnother() {
     root.createDirectory(1, "dir1", null);
     root.createDirectory(2, "dir2", null);
@@ -195,6 +211,26 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
     assertTrue(root.hasEntry("dir1/dir2/file"));
 
     assertEquals(c("content"), root.getEntry("dir1/dir2/file").getContent());
+  }
+
+
+  @Test
+  public void testDeletionOfDirectoryWithSeveralSubdirectoriesWithContent() {
+    root.createDirectory(1, "dir", null);
+    root.createDirectory(2, "dir/sub1", null);
+    root.createDirectory(3, "dir/sub2", null);
+    root.createFile(4, "dir/sub1/file", c(""), null);
+    root.createFile(5, "dir/sub2/file", c(""), null);
+
+    Change c = new DeleteChange("dir");
+    c.applyTo(root);
+    c.revertOn(root);
+
+    assertTrue(root.hasEntry("dir"));
+    assertTrue(root.hasEntry("dir/sub1"));
+    assertTrue(root.hasEntry("dir/sub1/file"));
+    assertTrue(root.hasEntry("dir/sub2"));
+    assertTrue(root.hasEntry("dir/sub2/file"));
   }
 
   @Test

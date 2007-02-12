@@ -7,7 +7,8 @@ import java.util.List;
 public class ChangeList {
   private List<ChangeSet> myChangeSets = new ArrayList<ChangeSet>();
 
-  public ChangeList() { }
+  public ChangeList() {
+  }
 
   public ChangeList(Stream s) throws IOException {
     Integer count = s.readInteger();
@@ -54,5 +55,14 @@ public class ChangeList {
 
     ChangeSet last = myChangeSets.get(myChangeSets.size() - 1);
     last.setLabel(label);
+  }
+
+  public void purgeUpTo(long timestamp) {
+    List<ChangeSet> newList = new ArrayList<ChangeSet>();
+    for (ChangeSet cs : myChangeSets) {
+      if (cs.getTimestamp() < timestamp) continue;
+      newList.add(cs);
+    }
+    myChangeSets = newList;
   }
 }

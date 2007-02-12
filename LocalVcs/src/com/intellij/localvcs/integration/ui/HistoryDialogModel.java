@@ -1,8 +1,8 @@
 package com.intellij.localvcs.integration.ui;
 
-import com.intellij.localvcs.Label;
-import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.ILocalVcs;
+import com.intellij.localvcs.Label;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.ArrayList;
@@ -45,6 +45,10 @@ public abstract class HistoryDialogModel {
 
   protected Label getRightLabel() {
     return getVcsLabels().get(myRightLabel);
+  }
+
+  protected Entry getLeftEntry() {
+    return getLeftLabel().getEntry();
   }
 
   public void selectLabels(int first, int second) {

@@ -8,6 +8,7 @@ import com.intellij.localvcs.integration.stubs.StubFileDocumentManager;
 import com.intellij.mock.MockDocument;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
+import static org.easymock.classextension.EasyMock.*;
 import org.junit.Test;
 
 import java.util.List;
@@ -80,12 +81,12 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testContentForCurrentUnsavedSavedVersion() {
+  public void testContentForCurrentUnsavedVersion() {
     vcs.createFile("f", b("old"), null);
     vcs.apply();
 
     dm.setCurrentContent("new");
-    m = new FileHistoryDialogModel(f("f"), vcs, dm);
+    initModelFor("f");
 
     m.selectLabels(0, 1);
 
@@ -93,13 +94,30 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
     assertEquals(c("new"), m.getRightContent());
   }
 
+  @Test
+  public void testRevertion() throws Exception {
+    vcs.createFile("file", b("old"), 1L);
+    vcs.apply();
+    vcs.changeFileContent("file", b("new"), null);
+    vcs.apply();
+
+    VirtualFile f = createMock(VirtualFile.class);
+    expect(f.getPath()).andStubReturn("file");
+    expect(f.getName()).andStubReturn("file");
+    expect(f.getTimeStamp()).andStubReturn(2L);
+    f.setBinaryContent(aryEq(b("old")), eq(-1L), eq(1L));
+    replay(f);
+
+    m = new FileHistoryDialogModel(f, vcs, dm);
+    m.selectLabels(1, 1);
+
+    m.revert();
+    verify(f);
+  }
+
   private void initModelFor(String path) {
     TestVirtualFile f = new TestVirtualFile(path, null, null);
     m = new FileHistoryDialogModel(f, vcs, dm);
-  }
-
-  private TestVirtualFile f(String name) {
-    return new TestVirtualFile(name, null, null);
   }
 
   private class MyFileDocumentManager extends StubFileDocumentManager {

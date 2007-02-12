@@ -31,11 +31,11 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   protected JComponent createDiffPanel() {
     TreeNode root = new DifferenceNode(myModel.getDifference());
     myDiffPanel = CheckinPanelTreeTable.createOn(myProject, root);
-    addPopupHandlerToDiffPanel();
+    addPopupMenuToDiffPanel();
     return myDiffPanel;
   }
 
-  private void addPopupHandlerToDiffPanel() {
+  private void addPopupMenuToDiffPanel() {
     myDiffPanel.addMouseListener(new PopupHandler() {
       public void invokePopup(Component c, int x, int y) {
         ActionPopupMenu m = createPopupMenu();

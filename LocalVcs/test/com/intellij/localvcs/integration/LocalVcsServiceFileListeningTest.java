@@ -3,10 +3,7 @@ package com.intellij.localvcs.integration;
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileMoveEvent;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import org.easymock.classextension.EasyMock;
+import static org.easymock.classextension.EasyMock.*;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -18,7 +15,7 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
     initWithoutStartup(createLocalVcs());
 
     VirtualFile f = new TestVirtualFile("file", null);
-    fileManager.fireFileCreated(new VirtualFileEvent(null, f, null, null));
+    fileManager.fireFileCreated(f);
 
     assertFalse(vcs.hasEntry("file"));
   }
@@ -26,7 +23,7 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
   @Test
   public void testCreatingFiles() {
     VirtualFile f = new TestVirtualFile("file", "content", 123L);
-    fileManager.fireFileCreated(new VirtualFileEvent(null, f, null, null));
+    fileManager.fireFileCreated(f);
 
     Entry e = vcs.findEntry("file");
     assertNotNull(e);
@@ -42,7 +39,7 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
     configureLocalFileSystemToReturnPhysicalContent("physical");
 
     VirtualFile f = new TestVirtualFile("f", "memory", null);
-    fileManager.fireFileCreated(new VirtualFileEvent(null, f, null, null));
+    fileManager.fireFileCreated(f);
 
     assertEquals(c("physical"), vcs.getEntry("f").getContent());
   }
@@ -50,7 +47,7 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
   @Test
   public void testCreatingDirectories() {
     VirtualFile f = new TestVirtualFile("dir", 345L);
-    fileManager.fireFileCreated(new VirtualFileEvent(null, f, null, null));
+    fileManager.fireFileCreated(f);
 
     Entry e = vcs.findEntry("dir");
     assertNotNull(e);
@@ -67,7 +64,7 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
 
     dir1.addChild(dir2);
     dir2.addChild(file);
-    fileManager.fireFileCreated(new VirtualFileEvent(null, dir1, null, null));
+    fileManager.fireFileCreated(dir1);
 
     assertTrue(vcs.hasEntry("dir1"));
     assertTrue(vcs.hasEntry("dir1/dir2"));
@@ -80,7 +77,7 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
     vcs.apply();
 
     VirtualFile f = new TestVirtualFile("file", "new content", 505L);
-    fileManager.fireContentChanged(new VirtualFileEvent(null, f, null, null));
+    fileManager.fireContentChanged(f);
 
     Entry e = vcs.getEntry("file");
     assertEquals(c("new content"), e.getContent());
@@ -95,20 +92,9 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
     vcs.apply();
 
     VirtualFile f = new TestVirtualFile("f", "memory", null);
-    fileManager.fireContentChanged(new VirtualFileEvent(null, f, null, null));
+    fileManager.fireContentChanged(f);
 
     assertEquals(c("physical"), vcs.getEntry("f").getContent());
-  }
-
-  @Test
-  public void testDeletion() {
-    vcs.createFile("file", null, null);
-    vcs.apply();
-
-    VirtualFile f = new TestVirtualFile("file", null, null);
-    fileManager.fireBeforeFileDeletion(new VirtualFileEvent(null, f, null, null));
-
-    assertFalse(vcs.hasEntry("file"));
   }
 
   @Test
@@ -116,8 +102,8 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
     vcs.createFile("old name", b("old content"), null);
     vcs.apply();
 
-    VirtualFile f = new TestVirtualFile("old name", null, null);
-    fileManager.fireBeforePropertyChange(new VirtualFilePropertyEvent(null, f, VirtualFile.PROP_NAME, null, "new name"));
+    VirtualFile f = new TestVirtualFile("new name", null, null);
+    fileManager.firePropertyChanged(f, VirtualFile.PROP_NAME, "old name");
 
     assertFalse(vcs.hasEntry("old name"));
 
@@ -132,7 +118,7 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
     try {
       // we just shouldn't throw any exception here to meake test pass
       VirtualFile f = new TestVirtualFile(null, null, null);
-      fileManager.fireBeforePropertyChange(new VirtualFilePropertyEvent(null, f, "another property", null, null));
+      fileManager.firePropertyChanged(f, "another property", null);
     }
     catch (Exception e) {
       // test failed, lets see what's happened
@@ -151,7 +137,7 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
     TestVirtualFile newParent = new TestVirtualFile("dir2", null);
     TestVirtualFile f = new TestVirtualFile("file", null, null);
     newParent.addChild(f);
-    fileManager.fireFileMoved(new VirtualFileMoveEvent(null, f, oldParent, newParent));
+    fileManager.fireFileMoved(f, oldParent, newParent);
 
     assertFalse(vcs.hasEntry("dir1/file"));
 
@@ -173,7 +159,7 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
     newParent.addChild(f);
     fileFilter.setFilesNotUnderContentRoot(oldParent);
 
-    fileManager.fireFileMoved(new VirtualFileMoveEvent(null, f, oldParent, newParent));
+    fileManager.fireFileMoved(f, oldParent, newParent);
 
     Entry e = vcs.findEntry("myRoot/file");
     assertNotNull(e);
@@ -193,7 +179,7 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
     fileFilter.setFilesNotUnderContentRoot(oldParent);
     fileFilter.setNotAllowedFiles(f);
 
-    fileManager.fireFileMoved(new VirtualFileMoveEvent(null, f, oldParent, newParent));
+    fileManager.fireFileMoved(f, oldParent, newParent);
 
     assertFalse(vcs.hasEntry("myRoot/file"));
   }
@@ -211,7 +197,7 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
     newParent.addChild(f);
     fileFilter.setFilesNotUnderContentRoot(newParent);
 
-    fileManager.fireFileMoved(new VirtualFileMoveEvent(null, f, oldParent, newParent));
+    fileManager.fireFileMoved(f, oldParent, newParent);
 
     assertFalse(vcs.hasEntry("myRoot/file"));
     assertFalse(vcs.hasEntry("anotherRoot/file"));
@@ -226,7 +212,7 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
     newParent.addChild(f);
     fileFilter.setFilesNotUnderContentRoot(oldParent, newParent);
 
-    fileManager.fireFileMoved(new VirtualFileMoveEvent(null, f, oldParent, newParent));
+    fileManager.fireFileMoved(f, oldParent, newParent);
 
     assertFalse(vcs.hasEntry("root1/file"));
     assertFalse(vcs.hasEntry("root2/file"));
@@ -234,31 +220,57 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
 
   @Test
   public void testFilteringFiles() {
-    vcs = EasyMock.createMock(LocalVcs.class);
-    EasyMock.expect(vcs.getRoots()).andReturn(Collections.<Entry>emptyList());
+    vcs = createMock(LocalVcs.class);
+    expect(vcs.getRoots()).andReturn(Collections.<Entry>emptyList());
     vcs.apply();
-    EasyMock.replay(vcs);
+    replay(vcs);
 
     initAndStartup(vcs);
 
-    VirtualFile f = new TestVirtualFile(null, null, null);
+    reset(vcs);
+    expect(vcs.hasEntry((String)anyObject())).andStubReturn(false);
+    replay(vcs);
+
+    VirtualFile f = new TestVirtualFile("file", null, null);
     fileFilter.setFilesNotUnderContentRoot(f);
 
-    fileManager.fireFileCreated(new VirtualFileEvent(null, f, null, null));
-    fileManager.fireContentChanged(new VirtualFileEvent(null, f, null, null));
-    fileManager.fireBeforePropertyChange(new VirtualFilePropertyEvent(null, f, VirtualFile.PROP_NAME, null, null));
-    fileManager.fireFileMoved(new VirtualFileMoveEvent(null, f, f, f));
-    fileManager.fireBeforeFileDeletion(new VirtualFileEvent(null, f, null, null));
+    fileManager.fireFileCreated(f);
+    fileManager.fireContentChanged(f);
+    fileManager.firePropertyChanged(f, VirtualFile.PROP_NAME, "oldName");
+    fileManager.fireFileMoved(f, f, f);
+    fileManager.fireFileDeletion(f);
 
-    EasyMock.verify(vcs);
+    verify(vcs);
+  }
+
+  // todo what about refreshing order?
+  // todo make integrational tests
+  @Test
+  public void testTreatingAllEventsDuringRefreshAsOne() {
+    vcs.createDirectory("root", null);
+    vcs.apply();
+
+    fileManager.fireBeforeRefreshStart(false);
+    fileManager.fireFileCreated(new TestVirtualFile("root/one", null, null));
+    fileManager.fireFileCreated(new TestVirtualFile("root/two", null, null));
+    fileManager.fireAfterRefreshFinish(false);
+
+    assertEquals(2, vcs.getLabelsFor("root").size());
+  }
+
+  @Test
+  public void testUnsubscribingFromFileRefreshEventsOnShutdown() {
+    assertTrue(fileManager.hasVirtualFileManagerListener());
+    service.shutdown();
+    assertFalse(fileManager.hasVirtualFileManagerListener());
   }
 
   @Test
   public void testUnsubscribingFromFileManagerOnShutdown() {
     service.shutdown();
 
-    VirtualFile f = new TestVirtualFile("file", "content", 123L);
-    fileManager.fireFileCreated(new VirtualFileEvent(null, f, null, null));
+    VirtualFile f = new TestVirtualFile("file", null, null);
+    fileManager.fireFileCreated(f);
 
     assertFalse(vcs.hasEntry("file"));
   }

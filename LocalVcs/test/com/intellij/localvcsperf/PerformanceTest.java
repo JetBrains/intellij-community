@@ -1,5 +1,6 @@
 package com.intellij.localvcsperf;
 
+import com.intellij.localvcs.Label;
 import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.Storage;
 import com.intellij.localvcs.TempDirTestCase;
@@ -15,8 +16,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Random;
-
 
 // todo it's time to refactor 8)))
 public class PerformanceTest extends TempDirTestCase {
@@ -112,17 +113,17 @@ public class PerformanceTest extends TempDirTestCase {
     measureUpdateTime(1000, buildVFSTree(VCS_TIMESTAMP + 1));
   }
 
-  //@Test
-  //public void testBuildingDifference() {
-  //  buildChangesList();
-  //  final List<Label> labels = vcs.getLabelsFor("root");
-  //
-  //  measureExecutionTime(new Task() {
-  //    public void execute() {
-  //      labels.get(0).getDifferenceWith(labels.get(0));
-  //    }
-  //  });
-  //}
+  @Test
+  public void testBuildingDifference() {
+    buildTree();
+    final List<Label> labels = vcs.getLabelsFor("root");
+
+    assertExecutionTime(1, new Task() {
+      public void execute() {
+        labels.get(0).getDifferenceWith(labels.get(0));
+      }
+    });
+  }
 
   private void measureUpdateTime(int expected, final TestVirtualFile root) throws IOException {
     final LocalFileSystem fs = createMock(LocalFileSystem.class);

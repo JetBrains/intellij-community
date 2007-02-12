@@ -2,6 +2,7 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.Paths;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -11,49 +12,63 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class FileListener extends VirtualFileAdapter {
-  private FileFilter myFileFilter;
-  private ILocalVcs myVcs;
-  private LocalFileSystem myFileSystem;
+public class FileListener extends VirtualFileAdapter implements VirtualFileManagerListener {
+  protected static final Key<String> DELETED_FILE_PATH_KEY = new Key<String>("deleted.file.path");
 
-  public FileListener(ILocalVcs vcs, FileFilter f, LocalFileSystem fs) {
+  private ILocalVcs myVcs;
+  private FileFilter myFileFilter;
+  private FileListenerState myState;
+
+  public FileListener(ILocalVcs vcs, LocalFileSystem fs, FileFilter f) {
     myVcs = vcs;
     myFileFilter = f;
-    myFileSystem = fs;
+    myState = new FileListenerState(vcs, fs);
+  }
+
+  public void beforeRefreshStart(boolean asynchonous) {
+    myState.enterRefreshingState();
+  }
+
+  public void afterRefreshFinish(boolean asynchonous) {
+    myState.leaveRefreshingState();
+  }
+
+  public boolean isFileContentChangedByRefresh(VirtualFile f) {
+    return myState.isFileContentChangedByRefresh(f);
   }
 
   @Override
   public void fileCreated(VirtualFileEvent e) {
     if (notAllowedOrNotUnderContentRoot(e)) return;
-    create(e.getFile());
+    myState.create(e.getFile());
   }
 
   @Override
   public void contentsChanged(VirtualFileEvent e) {
     if (notAllowedOrNotUnderContentRoot(e)) return;
-    changeFileContent(e.getFile());
+    myState.changeFileContent(e.getFile());
   }
 
   @Override
-  public void beforePropertyChange(VirtualFilePropertyEvent e) {
+  public void propertyChanged(VirtualFilePropertyEvent e) {
     if (!e.getPropertyName().equals(VirtualFile.PROP_NAME)) return;
 
-    if (!myFileFilter.isUnderContentRoot(e.getFile())) return;
-
-    VirtualFile newFile = new RenamedVirtualFile(e.getFile(), (String)e.getNewValue());
+    VirtualFile newFile = e.getFile();
+    VirtualFile oldFile = new RenamedVirtualFile(e.getFile(), (String)e.getOldValue());
+    boolean wasInContent = myVcs.hasEntry(oldFile.getPath());
 
     // todo try make it more clear... and refactor
-    if (!myFileFilter.isAllowed(newFile)) {
-      if (myFileFilter.isAllowed(e.getFile())) delete(e.getFile());
+    if (!myFileFilter.isAllowedAndUnderContentRoot(newFile)) {
+      if (wasInContent) myState.delete(oldFile);
       return;
     }
 
-    if (!myFileFilter.isAllowed(e.getFile())) {
-      create(newFile);
+    if (!wasInContent) {
+      myState.create(newFile);
       return;
     }
 
-    rename(e.getFile(), (String)e.getNewValue());
+    myState.rename(oldFile, e.getFile().getName());
   }
 
   @Override
@@ -63,24 +78,31 @@ public class FileListener extends VirtualFileAdapter {
 
     if (isMovedFromOutside(e)) {
       if (notAllowedOrNotUnderContentRoot(e)) return;
-      create(e.getFile());
+      myState.create(e.getFile());
     }
     else {
       VirtualFile f = new ReparentedVirtualFile(e.getOldParent(), e.getFile());
       if (isMovedToOutside(e)) {
-        delete(f);
+        myState.delete(f);
       }
       else {
-        move(f, e.getNewParent());
+        myState.move(f, e.getNewParent());
       }
     }
   }
 
   @Override
-  public void beforeFileDeletion(VirtualFileEvent e) {
-    if (!myFileFilter.isUnderContentRoot(e.getFile())) return;
-    if (!myVcs.hasEntry(e.getFile().getPath())) return;
-    delete(e.getFile());
+  public void fileDeleted(VirtualFileEvent e) {
+    VirtualFile f;
+    if (e.getParent() == null) {
+      f = e.getFile();
+    }
+    else {
+      f = new ReparentedVirtualFile(e.getParent(), e.getFile());
+    }
+
+    if (!myVcs.hasEntry(f.getPath())) return;
+    myState.delete(f);
   }
 
   private boolean notAllowedOrNotUnderContentRoot(VirtualFileEvent e) {
@@ -95,52 +117,6 @@ public class FileListener extends VirtualFileAdapter {
     return !myFileFilter.isUnderContentRoot(e.getNewParent());
   }
 
-  private void create(VirtualFile f) {
-    try {
-      // todo apply all changes at once
-      if (f.isDirectory()) {
-        myVcs.createDirectory(f.getPath(), f.getTimeStamp());
-        for (VirtualFile ch : f.getChildren()) create(ch);
-      }
-      else {
-        myVcs.createFile(f.getPath(), physicalContentOf(f), f.getTimeStamp());
-      }
-      myVcs.apply();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private void changeFileContent(VirtualFile f) {
-    try {
-      myVcs.changeFileContent(f.getPath(), physicalContentOf(f), f.getTimeStamp());
-      myVcs.apply();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private byte[] physicalContentOf(VirtualFile f) throws IOException {
-    return myFileSystem.physicalContentsToByteArray(f);
-  }
-
-  private void rename(VirtualFile f, String newName) {
-    myVcs.rename(f.getPath(), newName);
-    myVcs.apply();
-  }
-
-  private void move(VirtualFile file, VirtualFile newParent) {
-    myVcs.move(file.getPath(), newParent.getPath());
-    myVcs.apply();
-  }
-
-  private void delete(VirtualFile f) {
-    myVcs.delete(f.getPath());
-    myVcs.apply();
-  }
-
   private class ReparentedVirtualFile extends NullVirtualFile {
     private VirtualFile myParent;
     private VirtualFile myChild;
@@ -150,6 +126,7 @@ public class FileListener extends VirtualFileAdapter {
       myParent = newParent;
     }
 
+    @Override
     public String getPath() {
       return Paths.appended(myParent.getPath(), myChild.getName());
     }
@@ -165,30 +142,23 @@ public class FileListener extends VirtualFileAdapter {
     }
 
     @Override
-    @NotNull
-    @NonNls
     public String getName() {
       return myNewName;
     }
 
+    @Override
     public String getPath() {
       return Paths.renamed(myFile.getPath(), myNewName);
     }
 
-    public long getTimeStamp() {
-      return myFile.getTimeStamp();
+    @Override
+    public VirtualFile getParent() {
+      return myFile.getParent();
     }
 
+    @Override
     public boolean isDirectory() {
       return myFile.isDirectory();
-    }
-
-    public byte[] contentsToByteArray() throws IOException {
-      return myFile.contentsToByteArray();
-    }
-
-    public long getLength() {
-      return myFile.getLength();
     }
   }
 

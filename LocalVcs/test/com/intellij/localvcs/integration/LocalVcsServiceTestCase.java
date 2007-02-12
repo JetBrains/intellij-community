@@ -101,30 +101,63 @@ public class LocalVcsServiceTestCase extends MockedLocalFileSystemTestCase {
   }
 
   protected class MyVirtualFileManagerEx extends StubVirtualFileManagerEx {
+    private VirtualFileManagerListener myFileManagerListener;
     private FileContentProvider myProvider;
 
-    public void fireFileCreated(VirtualFileEvent e) {
-      if (getListener() != null) getListener().fileCreated(e);
+    public void fireBeforeRefreshStart(boolean async) {
+      myFileManagerListener.beforeRefreshStart(async);
     }
 
-    public void fireContentChanged(VirtualFileEvent e) {
-      if (getListener() != null) getListener().contentsChanged(e);
+    public void fireAfterRefreshFinish(boolean async) {
+      myFileManagerListener.afterRefreshFinish(async);
     }
 
-    public void fireBeforeFileDeletion(VirtualFileEvent e) {
-      if (getListener() != null) getListener().beforeFileDeletion(e);
+    public void fireFileCreated(VirtualFile f) {
+      if (getListener() != null) {
+        getListener().fileCreated(new VirtualFileEvent(null, f, null, null));
+      }
     }
 
-    public void fireBeforePropertyChange(VirtualFilePropertyEvent e) {
-      if (getListener() != null) getListener().beforePropertyChange(e);
+    public void fireContentChanged(VirtualFile f) {
+      if (getListener() != null) {
+        getListener().contentsChanged(new VirtualFileEvent(null, f, null, null));
+      }
     }
 
-    public void fireFileMoved(VirtualFileMoveEvent e) {
-      if (getListener() != null) getListener().fileMoved(e);
+    public void firePropertyChanged(VirtualFile f, String property, String oldValue) {
+      if (getListener() != null) {
+        getListener().propertyChanged(new VirtualFilePropertyEvent(null, f, property, oldValue, null));
+      }
+    }
+
+    public void fireFileMoved(VirtualFile f, VirtualFile oldParent, VirtualFile newParent) {
+      if (getListener() != null) {
+        getListener().fileMoved(new VirtualFileMoveEvent(null, f, oldParent, newParent));
+      }
+    }
+
+    public void fireFileDeletion(VirtualFile f) {
+      if (getListener() != null) {
+        getListener().fileDeleted(new VirtualFileEvent(null, f, null, null));
+      }
     }
 
     private VirtualFileListener getListener() {
       return myProvider == null ? null : myProvider.getVirtualFileListener();
+    }
+
+    @Override
+    public void addVirtualFileManagerListener(VirtualFileManagerListener l) {
+      myFileManagerListener = l;
+    }
+
+    @Override
+    public void removeVirtualFileManagerListener(VirtualFileManagerListener l) {
+      if (myFileManagerListener == l) myFileManagerListener = null;
+    }
+
+    public boolean hasVirtualFileManagerListener() {
+      return myFileManagerListener != null;
     }
 
     @Override

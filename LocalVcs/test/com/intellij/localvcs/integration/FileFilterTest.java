@@ -20,27 +20,48 @@ public class FileFilterTest {
   private FileTypeManager tm = createMock(FileTypeManager.class);
 
   @Test
+  public void testIsAllowedAndUnderContentRoot() {
+    final boolean[] values = new boolean[2];
+    FileFilter f = new FileFilter(null, null) {
+      @Override
+      public boolean isUnderContentRoot(VirtualFile f) {
+        return values[0];
+      }
+
+      @Override
+      public boolean isAllowed(VirtualFile f) {
+        return values[1];
+      }
+    };
+
+    values[0] = true;
+    values[1] = true;
+    assertTrue(f.isAllowedAndUnderContentRoot(null));
+
+    values[0] = false;
+    values[1] = true;
+    assertFalse(f.isAllowedAndUnderContentRoot(null));
+
+    values[0] = true;
+    values[1] = false;
+    assertFalse(f.isAllowedAndUnderContentRoot(null));
+  }
+
+  @Test
   public void testFilteringFileFromAnotherProject() {
     expect(fi.isInContent(f1)).andReturn(true);
     expect(fi.isInContent(f2)).andReturn(false);
     replay(fi);
 
-    expect(tm.getFileTypeByFile((VirtualFile)anyObject())).andStubReturn(nonBinary);
-    replay(tm);
-
     FileFilter f = new FileFilter(fi, tm);
 
-    assertTrue(f.isAllowedAndUnderContentRoot(f1));
-    assertFalse(f.isAllowedAndUnderContentRoot(f2));
-
-    assertTrue(f.isAllowed(f1));
-    assertTrue(f.isAllowed(f2));
+    assertTrue(f.isUnderContentRoot(f1));
+    assertFalse(f.isUnderContentRoot(f2));
   }
 
   @Test
   public void testFilteringFileOfUndesiredType() {
-    expect(fi.isInContent((VirtualFile)anyObject())).andStubReturn(true);
-    replay(fi);
+    expect(tm.isFileIgnored((String)anyObject())).andStubReturn(false);
 
     expect(tm.getFileTypeByFile(f1)).andStubReturn(nonBinary);
     expect(tm.getFileTypeByFile(f2)).andStubReturn(binary);
@@ -48,20 +69,51 @@ public class FileFilterTest {
 
     FileFilter f = new FileFilter(fi, tm);
 
-    assertTrue(f.isAllowedAndUnderContentRoot(f1));
-    assertFalse(f.isAllowedAndUnderContentRoot(f2));
-
-    assertTrue(f.isUnderContentRoot(f1));
-    assertTrue(f.isUnderContentRoot(f2));
+    assertTrue(f.isAllowed(f1));
+    assertFalse(f.isAllowed(f2));
   }
 
   @Test
-  public void testFilteringDirectories() {
-    f1 = new TestVirtualFile(null, null);
+  public void testFilteringIgnoredFiles() {
+    f1 = new TestVirtualFile("allowed", null, null);
+    f2 = new TestVirtualFile("filtered", null, null);
+
+    expect(tm.isFileIgnored("allowed")).andReturn(false);
+    expect(tm.isFileIgnored("filtered")).andReturn(true);
+    expect(tm.getFileTypeByFile((VirtualFile)anyObject())).andStubReturn(nonBinary);
+    replay(tm);
 
     FileFilter f = new FileFilter(fi, tm);
 
     assertTrue(f.isAllowed(f1));
+    assertFalse(f.isAllowed(f2));
+  }
+
+  @Test
+  public void testFilteringIgnoredDirectories() {
+    f1 = new TestVirtualFile("allowed", null);
+    f2 = new TestVirtualFile("filtered", null);
+
+    expect(tm.isFileIgnored("allowed")).andReturn(false);
+    expect(tm.isFileIgnored("filtered")).andReturn(true);
+    replay(tm);
+
+    FileFilter f = new FileFilter(fi, tm);
+
+    assertTrue(f.isAllowed(f1));
+    assertFalse(f.isAllowed(f2));
+  }
+
+  @Test
+  public void testDoesNotCheckFileTypeForDirectories() {
+    f1 = new TestVirtualFile("dir", null);
+
+    expect(tm.isFileIgnored("dir")).andReturn(false);
+    replay(tm);
+    FileFilter f = new FileFilter(fi, tm);
+
+    assertTrue(f.isAllowed(f1));
+    verify(tm);
   }
 
   private FileType createFileType(boolean isBinary) {

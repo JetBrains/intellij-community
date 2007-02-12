@@ -28,7 +28,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 public final class LocalFileSystemImpl extends LocalFileSystem implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl");
@@ -45,17 +47,17 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   private final Set<String> myDeletedFiles = new HashSet<String>();
 
   private final ExecutorService mySynchronizeExecutor = ConcurrencyUtil.newSingleThreadExecutor("File System Synchronize Executor");
+  private List<Future<?>> myFutures;
 
-  private final Map<VirtualFile,Key> myRefreshStatusMap = new WeakHashMap<VirtualFile, Key>(); // VirtualFile --> 'status'
+  private final Map<VirtualFile, Key> myRefreshStatusMap = new WeakHashMap<VirtualFile, Key>(); // VirtualFile --> 'status'
   private static final Key DIRTY_STATUS = Key.create("DIRTY_STATUS");
   private static final Key DELETED_STATUS = Key.create("DELETED_STATUS");
 
   private List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
   public final Map<String, VirtualFileImpl> myUnaccountedFiles = SystemInfo.isFileSystemCaseSensitive
-                                                           ? new THashMap<String, VirtualFileImpl>()
-                                                           : new THashMap<String, VirtualFileImpl>(
-                                                               new CaseInsensitiveStringHashingStrategy()
-                                                             );
+                                                                 ? new THashMap<String, VirtualFileImpl>()
+                                                                 : new THashMap<String, VirtualFileImpl>(
+                                                                   new CaseInsensitiveStringHashingStrategy());
 
   private static class WatchRequestImpl implements WatchRequest {
     public String myRootPath;
@@ -88,17 +90,26 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         }
 
         myRootPath = myFSRootPath.replace(File.separatorChar, '/');
-      } else {
+      }
+      else {
         myRootPath = rootPath.replace(File.separatorChar, '/');
         myFSRootPath = rootPath.replace('/', File.separatorChar);
       }
     }
 
-    @NotNull public String getRootPath() { return myRootPath; }
+    @NotNull
+    public String getRootPath() {
+      return myRootPath;
+    }
 
-    @NotNull public String getFileSystemRootPath() { return myFSRootPath; }
+    @NotNull
+    public String getFileSystemRootPath() {
+      return myFSRootPath;
+    }
 
-    public boolean isToWatchRecursively() { return myToWatchRecursively; }
+    public boolean isToWatchRecursively() {
+      return myToWatchRecursively;
+    }
 
     public boolean dominates(WatchRequest other) {
       if (myToWatchRecursively) {
@@ -144,7 +155,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       final File[] files = File.listRoots();
 
       synchronized (LOCK) {
-        Set<String> newRootPaths= new HashSet<String>();
+        Set<String> newRootPaths = new HashSet<String>();
         for (File file : files) {
           String path = file.getPath();
           if (path != null) {
@@ -159,8 +170,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
           }
         }
 
-        for (Iterator<Map.Entry<VirtualFile,String>> iterator = myFSRootsToPaths.entrySet().iterator(); iterator.hasNext();) {
-          Map.Entry<VirtualFile,String> entry = iterator.next();
+        for (Iterator<Map.Entry<VirtualFile, String>> iterator = myFSRootsToPaths.entrySet().iterator(); iterator.hasNext();) {
+          Map.Entry<VirtualFile, String> entry = iterator.next();
           if (!newRootPaths.contains(entry.getValue())) {
             iterator.remove();
           }
@@ -177,13 +188,11 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public void cleanupForNextTest() throws IOException {
-    ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        public void run() {
-          refresh(false);
-        }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        refresh(false);
       }
-    );
+    });
 
     myRootsToWatch.clear();
     myUnaccountedFiles.clear();
@@ -264,7 +273,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
           final int index = runPath.lastIndexOf("/");
           if (index >= 0) {
             runPath = runPath.substring(0, index);
-          } else {
+          }
+          else {
             return null;
           }
           root = root.getParent();
@@ -284,14 +294,17 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                   //need to fire event here since refresh did not fire, because children are not cached
                   fireFileCreated(null, child);
                   root = child;
-                } else {
+                }
+                else {
                   return null;
                 }
-              } else {
+              }
+              else {
                 root = ((VirtualFileImpl)root).findSingleChild(name);
                 if (root == null) return null;
               }
-            } else {
+            }
+            else {
               root = child;
             }
           }
@@ -372,7 +385,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public byte[] physicalContentsToByteArray(final VirtualFile virtualFile) throws IOException {
-    if(!(virtualFile instanceof VirtualFileImpl)) return virtualFile.contentsToByteArray();
+    if (!(virtualFile instanceof VirtualFileImpl)) return virtualFile.contentsToByteArray();
     VirtualFileImpl virtualFileImpl = (VirtualFileImpl)virtualFile;
     InputStream inputStream = virtualFileImpl.getPhysicalFileInputStream();
     try {
@@ -445,14 +458,16 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                 }
               }
             }
-          } else {
+          }
+          else {
             final String fileSystemPath = request.getFileSystemRootPath();
             checkFileCreated(fileSystemPath, runPath, asynchronous, modalityState);
           }
         }
 
-        final Set<Map.Entry<String, VirtualFileImpl>> entries = new HashSet<Map.Entry<String, VirtualFileImpl>>(myUnaccountedFiles.entrySet());
-        for (final Map.Entry<String,VirtualFileImpl> entry : entries) {
+        final Set<Map.Entry<String, VirtualFileImpl>> entries =
+          new HashSet<Map.Entry<String, VirtualFileImpl>>(myUnaccountedFiles.entrySet());
+        for (final Map.Entry<String, VirtualFileImpl> entry : entries) {
           final VirtualFileImpl file = entry.getValue();
           if (file != null && file.isValid()) {
             if (!file.getPhysicalFile().exists()) {
@@ -469,10 +484,12 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
               };
               getManager().addEventToFireByRefresh(action, asynchronous, modalityState);
 
-            } else {
+            }
+            else {
               refresh(file, true, false, modalityState, asynchronous, false);
             }
-          } else {
+          }
+          else {
             final String vfsPath = entry.getKey();
             final String fsPath = vfsPath.replace('/', File.separatorChar);
             checkFileCreated(fsPath, vfsPath, asynchronous, modalityState);
@@ -486,7 +503,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     };
 
     if (asynchronous) {
-      getSynchronizeExecutor().submit(new Runnable() {
+      submitAsynchronousTask(new Runnable() {
         public void run() {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Executing request:" + this);
@@ -507,7 +524,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     final boolean physicalExists = new File(fileSystemPath).exists();
     if (physicalExists) {
       int index = vfsPath.lastIndexOf('/');
-      while(index >= 0) {
+      while (index >= 0) {
         String parentPath = vfsPath.substring(0, index);
         final VirtualFileImpl vParent = (VirtualFileImpl)findFileByPath(parentPath, true, false);
         if (vParent != null) {
@@ -577,14 +594,41 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       }
     };
     if (asynchronous) {
-      getSynchronizeExecutor().submit(new Runnable() {
-        public void run() {
-          runnable.run();
-        }
-      });
+      submitAsynchronousTask(runnable);
     }
     else {
       runnable.run();
+    }
+  }
+
+  void submitAsynchronousTask(final Runnable task) {
+    Future<?> future = mySynchronizeExecutor.submit(task);
+    if (myFutures != null) {
+      myFutures.add(future);
+    }
+  }
+
+  //for use in tests only
+  public void startAsynchronousTasksMonitoring() {
+    myFutures = new ArrayList<Future<?>>();
+  }
+
+  //for use in tests only
+  public void waitForAsynchronousTasksCompletion() {
+    LOG.assertTrue(myFutures != null, "tasks monitoring should have been started");
+
+    for (Future<?> future : myFutures) {
+      try {
+        future.get();
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+      catch (ExecutionException e) {
+        throw new RuntimeException(e);
+      }
+
+      myFutures = null;
     }
   }
 
@@ -619,7 +663,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   void refreshInner(VirtualFileImpl file, boolean recursive, ModalityState modalityState, boolean asynchronous, final boolean noWatcher) {
-    if (noWatcher || !FileWatcher.isAvailable() || !recursive && !asynchronous) { // We're unable to definitely refresh synchronously by means of file watcher.
+    if (noWatcher || !FileWatcher.isAvailable() ||
+        !recursive && !asynchronous) { // We're unable to definitely refresh synchronously by means of file watcher.
       file.refreshInternal(recursive, modalityState, false, asynchronous, noWatcher);
     }
     else {
@@ -636,7 +681,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         if (status == DIRTY_STATUS) {
           file.refreshInternal(false, modalityState, false, asynchronous, noWatcher);
         }
-        if (recursive && file.areChildrenCached()) { //here above refresh was not recursive, so in case of recursive we need to trigger it here
+        if (recursive &&
+            file.areChildrenCached()) { //here above refresh was not recursive, so in case of recursive we need to trigger it here
           for (VirtualFileImpl child : file.getChildren()) {
             if (status == DIRTY_STATUS && !child.getPhysicalFile().exists()) {
               continue; // should be already handled above (see SCR6145)
@@ -705,19 +751,11 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     super.fireFileDeleted(requestor, file, fileName, parent);
   }
 
-  protected void fireBeforePropertyChange(Object requestor,
-                                          VirtualFile file,
-                                          String propertyName,
-                                          Object oldValue,
-                                          Object newValue) {
+  protected void fireBeforePropertyChange(Object requestor, VirtualFile file, String propertyName, Object oldValue, Object newValue) {
     super.fireBeforePropertyChange(requestor, file, propertyName, oldValue, newValue);
   }
 
-  protected void firePropertyChanged(Object requestor,
-                                     VirtualFile file,
-                                     String propertyName,
-                                     Object oldValue,
-                                     Object newValue) {
+  protected void firePropertyChanged(Object requestor, VirtualFile file, String propertyName, Object oldValue, Object newValue) {
     super.firePropertyChanged(requestor, file, propertyName, oldValue, newValue);
   }
 
@@ -761,7 +799,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
           if (infos == null) {
             setUpFileWatcher();
-          } else {
+          }
+          else {
             for (FileWatcher.ChangeInfo info : infos) {
               if (info == null) continue;
 
@@ -797,39 +836,37 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
   private void setUpFileWatcher() {
     if (FileWatcher.isAvailable()) {
-      ApplicationManager.getApplication().runReadAction(
-        new Runnable() {
-          public void run() {
-            synchronized (LOCK) {
-              final WatchRequest[] watchRequests = normalizeRootsForRefresh();
-              String[] dirPaths = new String[watchRequests.length];
-              boolean[] toWatchRecursively = new boolean[watchRequests.length];
-              int cnt = 0;
-              for (WatchRequest root : watchRequests) {
-                dirPaths[cnt] = root.getFileSystemRootPath();
-                toWatchRecursively[cnt] = root.isToWatchRecursively();
-                cnt++;
-              }
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          synchronized (LOCK) {
+            final WatchRequest[] watchRequests = normalizeRootsForRefresh();
+            String[] dirPaths = new String[watchRequests.length];
+            boolean[] toWatchRecursively = new boolean[watchRequests.length];
+            int cnt = 0;
+            for (WatchRequest root : watchRequests) {
+              dirPaths[cnt] = root.getFileSystemRootPath();
+              toWatchRecursively[cnt] = root.isToWatchRecursively();
+              cnt++;
+            }
 
-              final Vector<String> watchManual = new Vector<String>();
+            final Vector<String> watchManual = new Vector<String>();
 
-              FileWatcher.setup(dirPaths, toWatchRecursively, watchManual);
-              /*
-              if (numDir == 0) {
-                FileWatcher.setup(new String[]{PathManager.getBinPath()}, new boolean[] {false}, new Vector());
-              }
-              */
+            FileWatcher.setup(dirPaths, toWatchRecursively, watchManual);
+            /*
+            if (numDir == 0) {
+              FileWatcher.setup(new String[]{PathManager.getBinPath()}, new boolean[] {false}, new Vector());
+            }
+            */
 
-              myFilePathsToWatchManual.clear();
-              for (int i = 0; i < watchManual.size(); i++) {
-                String path = watchManual.elementAt(i);
-                path = path.replace(File.separatorChar, '/');
-                myFilePathsToWatchManual.add(path);
-              }
+            myFilePathsToWatchManual.clear();
+            for (int i = 0; i < watchManual.size(); i++) {
+              String path = watchManual.elementAt(i);
+              path = path.replace(File.separatorChar, '/');
+              myFilePathsToWatchManual.add(path);
             }
           }
         }
-      );
+      });
     }
   }
 
@@ -922,7 +959,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
           for (final VirtualFile child : file.getChildren()) {
             ((VirtualFileImpl)child).refresh(true, false, true, null);
           }
-        } else {
+        }
+        else {
           for (final VirtualFileImpl unaccounted : myUnaccountedFiles.values()) {
             if (unaccounted != null && file.equals(unaccounted.getParent())) {
               unaccounted.refresh(true, false, true, null);
@@ -1036,7 +1074,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     }
   }
 
-  protected VirtualFile copyFile(final Object requestor, final VirtualFile vFile, final VirtualFile newParent, final String copyName) throws IOException {
+  protected VirtualFile copyFile(final Object requestor, final VirtualFile vFile, final VirtualFile newParent, final String copyName)
+    throws IOException {
     final VirtualFileImpl file = (VirtualFileImpl)vFile;
     File physicalCopy = auxCopy(vFile, newParent, copyName);
 
@@ -1044,12 +1083,13 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       File physicalFile = file.getPhysicalFile();
 
       File newPhysicalParent = ((VirtualFileImpl)newParent).getPhysicalFile();
-      physicalCopy = new File (newPhysicalParent, copyName);
+      physicalCopy = new File(newPhysicalParent, copyName);
 
       try {
         if (physicalFile.isDirectory()) {
           FileUtil.copyDir(physicalFile, physicalCopy);
-        } else {
+        }
+        else {
           physicalCopy.createNewFile();
           FileUtil.copy(physicalFile, physicalCopy);
         }
@@ -1081,7 +1121,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
     if (!handled) {
       File newPhysicalParent = ((VirtualFileImpl)newParent).getPhysicalFile();
-      File newPhysicalFile = new File (newPhysicalParent, name);
+      File newPhysicalFile = new File(newPhysicalParent, name);
       if (!physicalFile.renameTo(newPhysicalFile)) {
         throw new IOException(VfsBundle.message("file.move.to.error", physicalFile.getPath(), newPhysicalParent.getPath()));
       }
@@ -1179,7 +1219,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
     final boolean auxCommand = auxCreateDirectory(vDir, dirName);
 
-    File physicalFile = new File (dir.getPhysicalFile(), dirName);
+    File physicalFile = new File(dir.getPhysicalFile(), dirName);
 
     if (!auxCommand) {
       if (existingFile != null || physicalFile.exists()) {

@@ -5,7 +5,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.io.*;
 
 public class Storage {
-  private static final int VERSION = 4;
+  private static final int VERSION = 5;
 
   private File myDir;
   private IContentStorage myContentStorage;

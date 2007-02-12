@@ -24,7 +24,11 @@ public abstract class LocalVcsTestCase extends Assert {
   }
 
   protected static ChangeSet cs(Change... changes) {
-    return new ChangeSet(Arrays.asList(changes));
+    return cs(0, changes);
+  }
+
+  protected static ChangeSet cs(long timestamp, Change... changes) {
+    return new ChangeSet(timestamp, Arrays.asList(changes));
   }
 
   @SuppressWarnings("unchecked")

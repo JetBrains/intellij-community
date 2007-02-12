@@ -24,6 +24,7 @@ public class FileFilter {
   }
 
   public boolean isAllowed(VirtualFile f) {
+    if (myTypeManager.isFileIgnored(f.getName())) return false;
     if (f.isDirectory()) return true;
     return !myTypeManager.getFileTypeByFile(f).isBinary();
   }

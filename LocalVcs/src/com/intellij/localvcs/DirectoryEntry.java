@@ -18,7 +18,7 @@ public class DirectoryEntry extends Entry {
     super(s);
     int count = s.readInteger();
     while (count-- > 0) {
-      addChild(s.readEntry());
+      unsafeAddChild(s.readEntry());
     }
   }
 
@@ -47,6 +47,10 @@ public class DirectoryEntry extends Entry {
   @Override
   public void addChild(Entry child) {
     checkDoesNotExist(child);
+    unsafeAddChild(child);
+  }
+
+  private void unsafeAddChild(Entry child) {
     myChildren.add(child);
     child.setParent(this);
   }
@@ -74,7 +78,7 @@ public class DirectoryEntry extends Entry {
   public DirectoryEntry copy() {
     DirectoryEntry result = copyEntry();
     for (Entry child : myChildren) {
-      result.addChild(child.copy());
+      result.unsafeAddChild(child.copy());
     }
     return result;
   }

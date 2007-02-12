@@ -1,9 +1,11 @@
 package com.intellij.localvcs.integration.ui;
 
 import com.intellij.localvcs.*;
+import com.intellij.localvcs.integration.FileReverter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.io.IOException;
 import java.util.List;
 
 public class FileHistoryDialogModel extends HistoryDialogModel {
@@ -42,6 +44,10 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
     return getRightLabel().getEntry().getContent();
   }
 
+  public void revert() throws IOException {
+    FileReverter.revert(myFile, getLeftEntry());
+  }
+
   private class CurrentLabel extends Label {
     public CurrentLabel() {
       super(null, null, null, null);
@@ -56,7 +62,7 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
     public Entry getEntry() {
       // todo what about timestamp?
       // todo review content stuff
-      
+
       // todo test copying
       // todo it seems ugly
       Entry e = getVcsEntry().copy();

@@ -27,7 +27,7 @@ public class LocalVcsService {
   private LocalFileSystem myFileSystem;
   private FileDocumentManager myDocumentManager;
   private FileFilter myFileFilter;
-  private VirtualFileListener myFileListener;
+  private FileListener myFileListener;
   private CacheUpdater myCacheUpdater;
   private FileContentProvider myFileContentProvider;
 
@@ -51,6 +51,7 @@ public class LocalVcsService {
   }
 
   public void shutdown() {
+    myFileManager.removeVirtualFileManagerListener(myFileListener);
     myFileManager.unregisterFileContentProvider(myFileContentProvider);
     myRootManager.unregisterChangeUpdater(myCacheUpdater);
   }
@@ -66,12 +67,12 @@ public class LocalVcsService {
 
   private void subscribeForRootChanges() {
     myCacheUpdater = new CacheUpdaterAdaptor(null);
+    myFileManager.removeVirtualFileManagerListener(myFileListener);
     myRootManager.registerChangeUpdater(myCacheUpdater);
   }
 
   private void registerFileListenerAndContentProvider() {
-    myFileListener = new FileListener(myVcs, myFileFilter, myFileSystem);
-
+    myFileListener = new FileListener(myVcs, myFileSystem, myFileFilter);
     myFileContentProvider = new FileContentProvider() {
       public VirtualFile[] getCoveredDirectories() {
         return myRootManager.getContentRoots();
@@ -79,17 +80,27 @@ public class LocalVcsService {
 
       @Nullable
       public ProvidedContent getProvidedContent(VirtualFile f) {
-        Entry e = myVcs.findEntry(f.getPath());
-        if (e == null) return null;
-        if (e.getContent().isTooLong()) return null;
-        return new EntryProvidedContent(e);
+        return getProvidedContentFor(f);
       }
 
       public VirtualFileListener getVirtualFileListener() {
         return myFileListener;
       }
     };
+
+    // todo check the order of vfm-listener
+    myFileManager.addVirtualFileManagerListener(myFileListener);
     myFileManager.registerFileContentProvider(myFileContentProvider);
+  }
+
+  private ProvidedContent getProvidedContentFor(VirtualFile f) {
+    Entry e = myVcs.findEntry(f.getPath());
+
+    if (myFileListener.isFileContentChangedByRefresh(f)) return null;
+    if (e == null) return null;
+    if (e.getContent().isTooLong()) return null;
+
+    return new EntryProvidedContent(e);
   }
 
   public LocalVcsAction startAction(String label) {

@@ -100,7 +100,7 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void apply() {
-    ChangeSet cs = new ChangeSet(myPendingChanges);
+    ChangeSet cs = new ChangeSet(0, myPendingChanges);
 
     myChangeList.applyChangeSetTo(myRoot, cs);
     clearPendingChanges();

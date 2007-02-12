@@ -6,14 +6,17 @@ import java.util.List;
 
 public class ChangeSet {
   private String myLabel;
+  private long myTimestamp;
   private List<Change> myChanges = new ArrayList<Change>();
 
-  public ChangeSet(List<Change> changes) {
+  public ChangeSet(long timestamp, List<Change> changes) {
+    myTimestamp = timestamp;
     myChanges = changes;
   }
 
   public ChangeSet(Stream s) throws IOException {
     myLabel = s.readString();
+    myTimestamp = s.readLong();
 
     Integer count = s.readInteger();
     while (count-- > 0) {
@@ -23,6 +26,7 @@ public class ChangeSet {
 
   public void write(Stream s) throws IOException {
     s.writeString(myLabel);
+    s.writeLong(myTimestamp);
 
     s.writeInteger(myChanges.size());
     for (Change c : myChanges) {
@@ -32,6 +36,10 @@ public class ChangeSet {
 
   public String getLabel() {
     return myLabel;
+  }
+
+  public long getTimestamp() {
+    return myTimestamp;
   }
 
   public void setLabel(String label) {

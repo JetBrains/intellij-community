@@ -4,13 +4,11 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.ILocalVcs;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 // todo no need to be CacheUpdater
 public class Updater implements CacheUpdater {
@@ -23,15 +21,25 @@ public class Updater implements CacheUpdater {
   public Updater(ILocalVcs vcs, FileFilter filter, VirtualFile... roots) {
     myVcs = vcs;
     myFilter = filter;
-    myVfsRoots = selectNonNestedRoots(roots);
+    myVfsRoots = selectSortParentlessRoots(roots);
   }
 
-  private VirtualFile[] selectNonNestedRoots(VirtualFile... roots) {
+  private VirtualFile[] selectSortParentlessRoots(VirtualFile... roots) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (VirtualFile r : roots) {
       if (parentIsNotUnderContentRoot(r)) result.add(r);
     }
+    sortRoots(result);
     return result.toArray(new VirtualFile[0]);
+  }
+
+  private void sortRoots(List<VirtualFile> roots) {
+    Collections.sort(roots, new Comparator<VirtualFile>() {
+      public int compare(VirtualFile a, VirtualFile b) {
+        boolean ancestor = VfsUtil.isAncestor(a, b, false);
+        return ancestor ? -1 : 1;
+      }
+    });
   }
 
   private boolean parentIsNotUnderContentRoot(VirtualFile r) {
