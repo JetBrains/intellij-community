@@ -770,6 +770,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     if (DataConstants.NAVIGATABLE.equals(dataId)) {
       List selectedItems = getSelection();
       if (selectedItems.size() != 1) return null;
+      if (!myHistorySession.isContentAvailable(firstSelectedRevision)) {
+        return null;
+      }
       VirtualFile virtualFileForRevision = createVirtualFileForRevision(firstSelectedRevision);
       if (virtualFileForRevision != null) {
         return new OpenFileDescriptor(myProject, virtualFileForRevision);
