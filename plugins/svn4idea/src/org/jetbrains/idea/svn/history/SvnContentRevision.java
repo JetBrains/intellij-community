@@ -22,26 +22,25 @@
  */
 package org.jetbrains.idea.svn.history;
 
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.peer.PeerFactory;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
-import java.io.OutputStream;
-import java.io.File;
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 
 public class SvnContentRevision implements ContentRevision {
   private SVNRepository myRepository;
@@ -79,7 +78,7 @@ public class SvnContentRevision implements ContentRevision {
 
   @NotNull
   public FilePath getFile() {
-    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(new File(myLogEntryPath.getPath()));
+    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOnNonLocal(myLogEntryPath.getPath(), false);
   }
 
   @NotNull
