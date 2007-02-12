@@ -150,7 +150,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         }
 
         public void actionPerformed(AnActionEvent e) {
-          Project p = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+          Project p = e.getData(DataKeys.PROJECT);
           ToolWindowManager.getInstance(p).unregisterToolWindow("SVN Repositories");
 
         }
@@ -298,7 +298,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       e.getPresentation().setEnabled(getRepositoryBrowser().getSelectedNode() != null && getRepositoryBrowser().getSelectedNode().getURL() != null);
     }
     public void actionPerformed(AnActionEvent e) {
-      Project p = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+      Project p = e.getData(DataKeys.PROJECT);
       AbstractVcsHelper.getInstance(p).showFileHistory(
               new SvnHistoryProvider(myVCS, getRepositoryBrowser().getSelectedNode().getURL(), SVNRevision.HEAD),
               VcsUtil.getFilePath(getRepositoryBrowser().getSelectedNode().getURL().toString()));
@@ -393,7 +393,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public void actionPerformed(AnActionEvent e) {
       // show dialog for comment and folder name, then create folder
       // then refresh selected node.
-      Project p = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+      Project p = e.getData(DataKeys.PROJECT);
       MkdirOptionsDialog dialog = new MkdirOptionsDialog(p, getRepositoryBrowser().getSelectedNode().getURL());
       dialog.show();
       if (dialog.isOK()) {
@@ -419,7 +419,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public void actionPerformed(AnActionEvent e) {
       // show dialog for comment and folder name, then create folder
       // then refresh selected node.
-      Project p = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+      Project p = e.getData(DataKeys.PROJECT);
       SVNURL root;
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       while (node.getSVNDirEntry() != null) {
@@ -737,8 +737,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
     Project p = myProject;
     CheckoutOptionsDialog dialog = new CheckoutOptionsDialog(p, url, dir);
-    dir = dialog.getTarget();
     dialog.show();
+    dir = dialog.getTarget();
     if (dialog.isOK()) {
       SvnCheckoutProvider.doCheckout(myVCS.getProject(), dir, url.toString(), dialog.isRecursive(), dialog.isIgnoreExternals(), listener);
     }
