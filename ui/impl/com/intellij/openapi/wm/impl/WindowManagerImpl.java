@@ -20,11 +20,13 @@ import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.Alarm;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -270,6 +272,24 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     final IdeFrameImpl frame = getFrame(project);
     LOG.assertTrue(frame != null);
     return frame.getStatusBar();
+  }
+
+  public IdeFrame findFrameFor(@Nullable final Project project) {
+    IdeFrameImpl frame = null;
+    if (project != null) {
+      frame =  getFrame(project);
+    } else {
+      Container eachParent = getMostRecentFocusedWindow();
+      while(eachParent != null) {
+        if (eachParent instanceof IdeFrame) {
+          frame = (IdeFrameImpl)eachParent;
+          break;
+        }
+        eachParent = eachParent.getParent();
+      }
+    }
+    LOG.assertTrue(frame != null);
+    return frame;
   }
 
   public final IdeFrameImpl getFrame(final Project project) {

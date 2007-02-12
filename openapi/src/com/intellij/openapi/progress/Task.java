@@ -20,6 +20,20 @@ import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Intended to run tasks, both modal and non-modal (backgroundable)
+ * Example of use:
+ * <pre>
+ * new Task.Backgroundable(project, "Synchronizing data", true) {
+ *  public void run(ProgressIndicator indicator) {
+ *    indicator.setText("Loading changes");
+ *    indicator.setFraction(0.0);
+ * // some code
+ *    indicator.setFraction(1.0);
+ *  }
+ * }.setCancelText("Stop loading").queue();
+ * </pre>
+ */
 public abstract class Task implements TaskInfo {
 
   private Project myProject;
@@ -29,7 +43,7 @@ public abstract class Task implements TaskInfo {
   private String myCancelText = CommonBundle.getCancelButtonText();
   private String myCancelTooltipText = CommonBundle.getCancelButtonText();
 
-  public Task(@NotNull final Project project, @NotNull final String title, final boolean canBeCancelled) {
+  public Task(@Nullable final Project project, @NotNull final String title, final boolean canBeCancelled) {
     myProject = project;
     myTitle = title;
     myCanBeCancelled = canBeCancelled;
@@ -102,16 +116,16 @@ public abstract class Task implements TaskInfo {
 
     private PerformInBackgroundOption myBackgroundOption;
 
-    public Backgroundable(@NotNull final Project project, @NotNull final String title, final boolean canBeCancelled, @Nullable final PerformInBackgroundOption backgroundOption) {
+    public Backgroundable(@Nullable final Project project, @NotNull final String title, final boolean canBeCancelled, @Nullable final PerformInBackgroundOption backgroundOption) {
       super(project, title, canBeCancelled);
       myBackgroundOption = backgroundOption;
     }
 
-    public Backgroundable(@NotNull final Project project, @NotNull final String title, final boolean canBeCancelled) {
+    public Backgroundable(@Nullable final Project project, @NotNull final String title, final boolean canBeCancelled) {
       this(project, title, canBeCancelled, null);
     }
 
-    public Backgroundable(@NotNull final Project project, @NotNull final String title) {
+    public Backgroundable(@Nullable final Project project, @NotNull final String title) {
       this(project, title, true);
     }
 
@@ -138,7 +152,7 @@ public abstract class Task implements TaskInfo {
 
   public abstract static class Modal extends Task {
 
-    public Modal(@NotNull final Project project, @NotNull String title, boolean canBeCancelled) {
+    public Modal(@Nullable final Project project, @NotNull String title, boolean canBeCancelled) {
       super(project, title, canBeCancelled);
     }
 

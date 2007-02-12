@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -11,6 +12,8 @@ import com.intellij.openapi.progress.TaskInfo;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
+
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -96,6 +99,10 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
 
   public final Window getMostRecentFocusedWindow() {
     return null;
+  }
+
+  public IdeFrame findFrameFor(@Nullable Project project) {
+    throw new UnsupportedOperationException();
   }
 
   public final CommandProcessor getCommandProcessor() {

@@ -2,10 +2,12 @@ package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.CommandProcessor;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,6 +46,8 @@ public abstract class WindowManagerEx extends WindowManager {
   public abstract Component getFocusedComponent(Project project);
 
   public abstract Window getMostRecentFocusedWindow();
+
+  public abstract IdeFrame findFrameFor(@Nullable Project project);
 
   public abstract CommandProcessor getCommandProcessor();
 

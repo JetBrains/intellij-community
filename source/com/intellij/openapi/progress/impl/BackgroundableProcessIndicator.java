@@ -12,9 +12,15 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
 
 public class BackgroundableProcessIndicator extends ProgressWindow {
   protected final StatusBarEx myStatusBar;
@@ -28,12 +34,13 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     this(task.getProject(), task, task);    
   }
 
-  public BackgroundableProcessIndicator(Project project, TaskInfo info, PerformInBackgroundOption option) {
+  public BackgroundableProcessIndicator(@Nullable Project project, TaskInfo info, PerformInBackgroundOption option) {
     super(info.isCancellable(), true, project, info.getCancelText());
     myOption = option;
     myInfo = info;
     setTitle(info.getTitle());
-    myStatusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(project);
+    final IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(project);
+    myStatusBar = (StatusBarEx)frame.getStatusBar();
     if (option.shouldStartInBackground()) {
       doBackground();
     }

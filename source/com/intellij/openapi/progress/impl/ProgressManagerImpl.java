@@ -175,8 +175,6 @@ public class ProgressManagerImpl extends ProgressManager {
       }, task.getTitle(), task.isCancellable(), task.getProject());
   }
 
-
-
   public void runProcessWithProgressAsynchronously(@NotNull Project project,
                                                    @NotNull String progressTitle,
                                                    @NotNull final Runnable process,

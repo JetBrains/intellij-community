@@ -51,22 +51,28 @@ public class ProgressWindow extends BlockingProgressIndicator {
     this(shouldShowCancel, false, project);
   }
 
-  public ProgressWindow(boolean shouldShowCancel, boolean shouldShowBackground, Project project) {
+  public ProgressWindow(boolean shouldShowCancel, boolean shouldShowBackground, @Nullable Project project) {
     this(shouldShowCancel, shouldShowBackground, project, null);
   }
 
-  public ProgressWindow(boolean shouldShowCancel, boolean shouldShowBackground, Project project, String cancelText) {
+  public ProgressWindow(boolean shouldShowCancel, boolean shouldShowBackground, @Nullable Project project, String cancelText) {
     this(shouldShowCancel, shouldShowBackground, project, null, cancelText);
   }
 
-  public ProgressWindow(boolean shouldShowCancel, boolean shouldShowBackground, Project project, JComponent parentComponent, String cancelText) {
+  public ProgressWindow(boolean shouldShowCancel, boolean shouldShowBackground, @Nullable Project project, JComponent parentComponent, String cancelText) {
     myProject = project;
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;
     setModalityProgress(shouldShowBackground ? null : this);
     myFocusTrackback = new FocusTrackback(this, WindowManager.getInstance().suggestParentWindow(project));
-    if (parentComponent != null) {
-      myDialog = new MyDialog(myShouldShowCancel, shouldShowBackground, parentComponent, myCancelText);
+
+    Component parent = parentComponent;
+    if (parent == null && project == null) {
+      parent = JOptionPane.getRootFrame();
+    }
+
+    if (parent != null) {
+      myDialog = new MyDialog(myShouldShowCancel, shouldShowBackground, parent, myCancelText);
     }
     else {
       myDialog = new MyDialog(myShouldShowCancel, shouldShowBackground, myProject, myCancelText);
