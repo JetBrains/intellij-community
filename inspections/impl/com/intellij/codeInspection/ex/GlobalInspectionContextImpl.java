@@ -29,7 +29,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -915,18 +914,10 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             incrementJobDoneAmount(LOCAL_ANALYSIS, VfsUtil.calcRelativeToProjectPath(virtualFile, myProject));
           }
           final Set<InspectionTool> tools = localTools.get(profile.getName());
-          final com.intellij.openapi.editor.Document document = ApplicationManager.getApplication().runReadAction(new Computable<com.intellij.openapi.editor.Document>() {
-            @Nullable
-            public com.intellij.openapi.editor.Document compute() {
-              final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
-              return viewProvider != null ? viewProvider.getDocument() : null;
-            }
-          });
+          final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
+          final com.intellij.openapi.editor.Document document = viewProvider != null ? viewProvider.getDocument() : null;
           if (document == null) return; //do not inspect binary files
-          final LocalInspectionsPass pass =
-            new LocalInspectionsPass(file, document,
-                                     0,
-                                     file.getTextLength());
+          final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, 0, file.getTextLength());
           try {
             pass.doInspectInBatch(((InspectionManagerEx)manager), tools.toArray(new InspectionTool[tools.size()]), myProgressIndicator);
           }
@@ -938,7 +929,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           }
           psiManager.dropResolveCaches();
         }
-      }, false);
+      }, true);
     }
   }
 
@@ -951,15 +942,24 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         InspectionProfileWrapper inspectionProfile = profileManager.getProfileWrapper(profile);
         if (inspectionProfile == null){
           inspectionProfile = new InspectionProfileWrapper((InspectionProfile)profileManager.getProfile(profile));
-          inspectionProfile.init(getProject()); //offline inspections only
+          final InspectionProfileWrapper profileWrapper = inspectionProfile;
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              profileWrapper.init(getProject()); //offline inspections only
+            }
+          });
         }
         processProfileTools(inspectionProfile, tools, localTools);
       }
     }
     else {
-      InspectionProfileWrapper profile = new InspectionProfileWrapper(getCurrentProfile());
+      final InspectionProfileWrapper profile = new InspectionProfileWrapper(getCurrentProfile());
       processProfileTools(profile, tools, localTools);
-      profile.init(getProject());  //offline inspections only
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          profile.init(getProject());  //offline inspections only
+        }
+      });
     }
 
     BUILD_GRAPH.setTotalAmount(scope.getFileCount());
