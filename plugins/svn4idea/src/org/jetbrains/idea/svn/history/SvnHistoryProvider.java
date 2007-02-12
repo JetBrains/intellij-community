@@ -44,15 +44,17 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
   private final SvnVcs myVcs;
   private SVNURL myURL;
   private SVNRevision myRevision;
+  private boolean myDirectory;
 
   public SvnHistoryProvider(SvnVcs vcs) {
-    this(vcs, null, null);
+    this(vcs, null, null, false);
   }
 
-  public SvnHistoryProvider(SvnVcs vcs, SVNURL url, SVNRevision revision) {
+  public SvnHistoryProvider(SvnVcs vcs, SVNURL url, SVNRevision revision, boolean isDirectory) {
     myVcs = vcs;
     myURL = url;
     myRevision = revision;
+    myDirectory = isDirectory;
   }
 
   public HistoryAsTreeProvider getTreeHistoryProvider() {
@@ -68,6 +70,11 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
       @Nullable
       public VcsRevisionNumber calcCurrentRevisionNumber() {
         return getCurrentRevision(filePath);
+      }
+
+      @Override
+      public boolean isContentAvailable(final VcsFileRevision revision) {
+        return !myDirectory;
       }
     };
   }
@@ -86,7 +93,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
           if (myURL == null) {
             collectLogEntries(indicator, file, exception, result);
           } else {
-            collectLogEntries2(indicator, result);
+            collectLogEntriesForRepository(indicator, result);
           }
         }
         catch (SVNException e) {
@@ -137,7 +144,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
                  });
   }
 
-  private void collectLogEntries2(final ProgressIndicator indicator, final ArrayList<VcsFileRevision> result) throws SVNException {
+  private void collectLogEntriesForRepository(final ProgressIndicator indicator, final ArrayList<VcsFileRevision> result) throws SVNException {
     if (indicator != null) {
       indicator.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myURL.toString()));
     }

@@ -300,10 +300,13 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
     public void actionPerformed(AnActionEvent e) {
       Project p = e.getData(DataKeys.PROJECT);
+      final RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
+      boolean isDirectory = node.getUserObject() instanceof SVNURL ||
+                            (node.getSVNDirEntry() != null && node.getSVNDirEntry().getKind() == SVNNodeKind.DIR);
       AbstractVcsHelper.getInstance(p).showFileHistory(
-              new SvnHistoryProvider(myVCS, getRepositoryBrowser().getSelectedNode().getURL(), SVNRevision.HEAD),
-              VcsUtil.getFilePath(getRepositoryBrowser().getSelectedNode().getURL().toString()));
-      getRepositoryBrowser().getSelectedNode().reload();
+              new SvnHistoryProvider(myVCS, node.getURL(), SVNRevision.HEAD, isDirectory),
+              VcsUtil.getFilePath(node.getURL().toString()));
+      node.reload();
     }
   }
 
