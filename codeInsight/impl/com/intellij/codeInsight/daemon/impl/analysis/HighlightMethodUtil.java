@@ -131,10 +131,8 @@ public class HighlightMethodUtil {
     }
 
     if (returnType.equals(substitutedSuperReturnType)) return null;
-    if (returnType.getDeepComponentType() instanceof PsiClassType &&
-        substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType) {
-      if (isJdk15 &&
-          TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType)) {
+    if (!(returnType instanceof PsiPrimitiveType) && substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType) {
+      if (isJdk15 && TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType)) {
         return null;
       }
     }
