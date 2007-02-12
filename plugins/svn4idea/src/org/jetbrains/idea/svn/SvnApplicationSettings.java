@@ -83,6 +83,7 @@ public class SvnApplicationSettings implements ApplicationComponent, JDOMExterna
   public void readExternal(Element element) throws InvalidDataException {
     readCredentials();
 
+    myCheckoutURLs = new ArrayList<String>();
     List urls = element.getChildren("checkoutURL");
     for (Object url1 : urls) {
       Element child = (Element)url1;
