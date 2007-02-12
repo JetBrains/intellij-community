@@ -1,6 +1,8 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.SwingProperties;
+import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.Property;
@@ -10,6 +12,7 @@ import com.intellij.uiDesigner.propertyInspector.editors.IntRegexEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.DimensionRenderer;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.Dimension;
 import java.lang.reflect.Method;
 
@@ -32,7 +35,8 @@ public final class IntroDimensionProperty extends IntrospectedProperty<Dimension
     myEditor = new IntRegexEditor<Dimension>(Dimension.class, myRenderer, new int[] { -1, -1 });
   }
 
-  public void write(final Dimension value, final XmlWriter writer) {
+  @Override
+  public void write(@NotNull final Dimension value, final XmlWriter writer) {
     writer.addAttribute("width", value.width);
     writer.addAttribute("height", value.height);
   }
@@ -49,5 +53,15 @@ public final class IntroDimensionProperty extends IntrospectedProperty<Dimension
 
   public PropertyEditor<Dimension> getEditor() {
     return myEditor;
+  }
+
+  @Override
+  public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
+    if (getName().equals(SwingProperties.MINIMUM_SIZE) ||
+        getName().equals(SwingProperties.MAXIMUM_SIZE) ||
+        getName().equals(SwingProperties.PREFERRED_SIZE)) {
+      return;
+    }
+    super.importSnapshotValue(context, component, radComponent);
   }
 }

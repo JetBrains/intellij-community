@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.propertyInspector;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadGridLayoutManager;
@@ -139,7 +140,9 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
   public boolean appliesTo(final RadComponent component) {
     @NonNls String name = getName();
     //noinspection SimplifiableIfStatement
-    if (name.equals("preferredSize") || name.equals("minimumSize") || name.equals("maximumSize")) {
+    if (name.equals(SwingProperties.PREFERRED_SIZE) ||
+        name.equals(SwingProperties.MINIMUM_SIZE) ||
+        name.equals(SwingProperties.MAXIMUM_SIZE)) {
       // our own properties must be used instead
       final RadContainer parent = component.getParent();
       return parent != null && !(parent.getLayoutManager() instanceof RadGridLayoutManager);

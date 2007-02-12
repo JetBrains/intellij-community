@@ -13,6 +13,9 @@ public class SwingProperties {
   @NonNls public static final String MODEL = "model";
   @NonNls public static final String LABEL = "label";
   @NonNls public static final String ACTION_COMMAND = "actionCommand";
+  @NonNls public static final String PREFERRED_SIZE = "preferredSize";
+  @NonNls public static final String MINIMUM_SIZE = "minimumSize";
+  @NonNls public static final String MAXIMUM_SIZE = "maximumSize";
 
   private SwingProperties() {
   }
