@@ -64,8 +64,8 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> {
       appendCount(renderer);
     }
 
-    if (filePath.isDirectory()) {
-      renderer.setIcon(Icons.DIRECTORY_CLOSED_ICON);
+    if (filePath.isDirectory() || !isLeaf()) {
+      renderer.setIcon(expanded ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON);
     }
     else {
       renderer.setIcon(filePath.getFileType().getIcon());

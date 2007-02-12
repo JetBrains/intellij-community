@@ -1,4 +1,4 @@
-package com.intellij.openapi.vcs;
+package com.intellij.openapi.vcs;                             
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.lang.reflect.Constructor;
 
 public class FilePathImpl implements FilePath {
   private VirtualFile myVirtualFile;
@@ -23,6 +24,7 @@ public class FilePathImpl implements FilePath {
   private final String myName;
   @NotNull private final File myFile;
   private boolean myIsDirectory;
+  private boolean myNonLocal;
 
   private FilePathImpl(VirtualFile virtualParent, String name, final boolean isDirectory, VirtualFile child) {
     myVirtualParent = virtualParent;
@@ -71,13 +73,14 @@ public class FilePathImpl implements FilePath {
   }
 
   public void refresh() {
-    if (myVirtualParent == null) {
-      myVirtualFile = LocalFileSystem.getInstance().findFileByPath(myName);
+    if (!myNonLocal) {
+      if (myVirtualParent == null) {
+        myVirtualFile = LocalFileSystem.getInstance().findFileByPath(myName);
+      }
+      else {
+        myVirtualFile = myVirtualParent.findChild(myName);
+      }
     }
-    else {
-      myVirtualFile = myVirtualParent.findChild(myName);
-    }
-
   }
 
   public String getPath() {
@@ -228,6 +231,24 @@ public class FilePathImpl implements FilePath {
         return null;
       }
     }
+  }
+
+  public static FilePath createNonLocal(String path, final boolean directory) {
+    path = path.replace('/', File.separatorChar);
+    // avoid filename normalization (IDEADEV-10458)
+    File file;
+    try {
+      final Constructor<File> constructor = File.class.getDeclaredConstructor(String.class, int.class);
+      constructor.setAccessible(true);
+      file = constructor.newInstance(path, 1);
+    }
+    catch(Exception ex) {
+      // reflection call failed, try regular call
+      file = new File(path);
+    }
+    FilePathImpl result = new FilePathImpl(file, directory);
+    result.myNonLocal = true;
+    return result;
   }
 
   @Override @NonNls
