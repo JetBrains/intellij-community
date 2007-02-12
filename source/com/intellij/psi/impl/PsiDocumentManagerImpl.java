@@ -420,6 +420,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     final List<PsiFile> files = provider.getAllFiles();
     boolean hasLockedBlocks = false;
     for (PsiFile file : files) {
+      if (file == null) continue;
       final TextBlock textBlock = getTextBlock(document, file);
       if (textBlock.isLocked()) {
         hasLockedBlocks = true;
