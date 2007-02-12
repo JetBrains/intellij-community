@@ -7,8 +7,8 @@ import com.intellij.uiDesigner.lw.FontDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
-import com.intellij.uiDesigner.propertyInspector.renderers.FontRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.FontEditor;
+import com.intellij.uiDesigner.propertyInspector.renderers.FontRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import org.jetbrains.annotations.NonNls;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.Font;
+import java.awt.*;
 import java.lang.reflect.Method;
 
 /**
@@ -107,7 +107,10 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
         Font componentFont = (Font) myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
         Font parentFont = (Font) myReadMethod.invoke(component.getParent(), EMPTY_OBJECT_ARRAY);
         if (!Comparing.equal(componentFont, parentFont)) {
-          setValue(radComponent, new FontDescriptor(componentFont.getName(), componentFont.getStyle(), componentFont.getSize()));
+          String fontName = componentFont.getName().equals(parentFont.getName()) ? null : componentFont.getName();
+          int fontStyle = componentFont.getStyle() == parentFont.getStyle() ? -1 : componentFont.getStyle();
+          int fontSize = componentFont.getSize() == parentFont.getSize() ? -1 : componentFont.getSize();
+          setValue(radComponent, new FontDescriptor(fontName, fontStyle, fontSize));
         }
       }
     }
