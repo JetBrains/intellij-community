@@ -18,18 +18,22 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+
 public class CompositeElement extends TreeElement implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositeElement");
 
-  public TreeElement firstChild = null; // might be modified by transforming chameleons
-  public TreeElement lastChild = null; // might be modified by transforming chameleons
+  public volatile TreeElement firstChild = null; // might be modified by transforming chameleons
+  public volatile TreeElement lastChild = null; // might be modified by transforming chameleons
   private final IElementType type;
   private int myParentModifications = -1;
   private int myStartOffset = 0;
   private int myModificationsCount = 0;
-  private PsiElement myWrapper = null;
   private int myCachedLength = -1;
   private int myHC = -1;
+  // care with renaming myWrapper field
+  private static final AtomicReferenceFieldUpdater<CompositeElement, PsiElement> psiFieldUpdater = AtomicReferenceFieldUpdater.newUpdater(CompositeElement.class, PsiElement.class, "myWrapper");
+  private volatile PsiElement myWrapper = null;
 
   public CompositeElement(@NotNull IElementType type) {
     this.type = type;
@@ -58,28 +62,26 @@ public class CompositeElement extends TreeElement implements Cloneable {
   private void recalcStartOffset(final int parentModificationsCount) {
     if(parentModificationsCount == myParentModifications || parent == null) return;
 
-    { // recalc on parent if needed
+      // recalc on parent if needed
       final int parentParentModificationsCount = parentModificationsCount - parent.getModificationCount();
       parent.recalcStartOffset(parentParentModificationsCount);
-    }
 
     CompositeElement lastKnownStart = null;
 
     TreeElement treePrev = prev;
     TreeElement last = this;
-    TreeElement current;
-    { // Step 1: trying to find known startOffset in previous composites (getTreePrev for composite is cheap)
-      while(treePrev instanceof CompositeElement){
-        final CompositeElement compositeElement = (CompositeElement)treePrev;
-        if(compositeElement.myParentModifications == parentModificationsCount) {
-          lastKnownStart = compositeElement;
-          break;
-        }
-        last = treePrev;
-        treePrev = treePrev.getTreePrev();
+    // Step 1: trying to find known startOffset in previous composites (getTreePrev for composite is cheap)
+    while (treePrev instanceof CompositeElement) {
+      final CompositeElement compositeElement = (CompositeElement)treePrev;
+      if (compositeElement.myParentModifications == parentModificationsCount) {
+        lastKnownStart = compositeElement;
+        break;
       }
+      last = treePrev;
+      treePrev = treePrev.getTreePrev();
     }
 
+    TreeElement current;
     if(lastKnownStart == null){
       // Step 2: if leaf found cheaper to start from begining to find known startOffset composite
       lastKnownStart = parent;
@@ -114,16 +116,14 @@ public class CompositeElement extends TreeElement implements Cloneable {
   public Object clone() {
     CompositeElement clone = (CompositeElement)super.clone();
 
-    synchronized (PsiLock.LOCK) {
-      clone.clearCaches();
-      clone.firstChild = null;
-      clone.lastChild = null;
-      clone.myModificationsCount = 0;
-      clone.myParentModifications = -1;
-      clone.myWrapper = null;
-      for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        TreeUtil.addChildren(clone, (TreeElement)child.clone());
-      }
+    clone.clearCaches();
+    clone.firstChild = null;
+    clone.lastChild = null;
+    clone.myModificationsCount = 0;
+    clone.myParentModifications = -1;
+    clone.myWrapper = null;
+    for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      TreeUtil.addChildren(clone, (TreeElement)child.clone());
     }
     return clone;
   }
@@ -158,22 +158,20 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public LeafElement findLeafElementAt(int offset) {
-    synchronized (PsiLock.LOCK) {
-      TreeElement child = firstChild;
-      while (child != null) {
-        final int textLength = child.getTextLength();
-        if (textLength > offset) {
-          if (child instanceof LeafElement && ((LeafElement)child).isChameleon()) {
-            child = (TreeElement)ChameleonTransforming.transform((LeafElement)child);
-            continue;
-          }
-          return child.findLeafElementAt(offset);
+    TreeElement child = firstChild;
+    while (child != null) {
+      final int textLength = child.getTextLength();
+      if (textLength > offset) {
+        if (child instanceof LeafElement && ((LeafElement)child).isChameleon()) {
+          child = (TreeElement)ChameleonTransforming.transform((LeafElement)child);
+          continue;
         }
-        offset -= textLength;
-        child = child.getTreeNext();
+        return child.findLeafElementAt(offset);
       }
-      return null;
+      offset -= textLength;
+      child = child.getTreeNext();
     }
+    return null;
   }
 
   public ASTNode findChildByType(IElementType type) {
@@ -191,56 +189,46 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public String getText() {
-    synchronized (PsiLock.LOCK) {
-      // check if all elements are laid out consequently in the same buffer (optimization):
-      char[] buffer = new char[getTextLength()];
-      SourceUtil.toBuffer(this, buffer, 0);
-      //return StringFactory.createStringFromConstantArray(buffer);
-      return new String(buffer);
-    }
+    // check if all elements are laid out consequently in the same buffer (optimization):
+    char[] buffer = new char[getTextLength()];
+    SourceUtil.toBuffer(this, buffer, 0);
+    //return StringFactory.createStringFromConstantArray(buffer);
+    return new String(buffer);
   }
 
   @NotNull
   public char[] textToCharArray() {
-    synchronized (PsiLock.LOCK) {
-      char[] buffer = new char[getTextLength()];
-      SourceUtil.toBuffer(this, buffer, 0);
-      return buffer;
-    }
+    char[] buffer = new char[getTextLength()];
+    SourceUtil.toBuffer(this, buffer, 0);
+    return buffer;
   }
 
   public boolean textContains(char c) {
-    synchronized (PsiLock.LOCK) {
-      for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        if (child.textContains(c)) return true;
-      }
-      return false;
+    for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      if (child.textContains(c)) return true;
     }
+    return false;
   }
 
   public final PsiElement findChildByRoleAsPsiElement(int role) {
-    synchronized (PsiLock.LOCK) {
-      ASTNode element = findChildByRole(role);
-      if (element == null) return null;
-      if (element instanceof LeafElement && ((LeafElement)element).isChameleon()) {
-        element = ChameleonTransforming.transform((LeafElement)element);
-      }
-      return SourceTreeToPsiMap.treeElementToPsi(element);
+    ASTNode element = findChildByRole(role);
+    if (element == null) return null;
+    if (element instanceof LeafElement && ((LeafElement)element).isChameleon()) {
+      element = ChameleonTransforming.transform((LeafElement)element);
     }
+    return SourceTreeToPsiMap.treeElementToPsi(element);
   }
 
   public ASTNode findChildByRole(int role) {
-    assert (ChildRole.isUnique(role));
-    synchronized (PsiLock.LOCK) {
-      for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        if (getChildRole(child) == role) return child;
-      }
+    assert ChildRole.isUnique(role);
+    for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      if (getChildRole(child) == role) return child;
     }
     return null;
   }
 
   public int getChildRole(ASTNode child) {
-    assert (child.getTreeParent() == this);
+    assert child.getTreeParent() == this;
     return ChildRole.NONE;
   }
 
@@ -284,7 +272,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
     for (ASTNode child = getFirstChildNode(); child != null && idx < count; child = child.getTreeNext()) {
       if (filter == null || filter.contains(child.getElementType())) {
         T element = (T)SourceTreeToPsiMap.treeElementToPsi(child);
-        assert (element != null);
+        assert element != null;
         result[idx++] = element;
       }
     }
@@ -352,11 +340,6 @@ public class CompositeElement extends TreeElement implements Cloneable {
     return myCachedLength;
   }
 
-  public int getCachedLength() {
-    return myCachedLength;
-  }
-
-
   public int hc() {
     if (myHC == -1) {
       int hc = 0;
@@ -372,13 +355,11 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   protected int getLengthInner() {
-    synchronized (PsiLock.LOCK) {
-      int length = 0;
-      for (TreeElement child = firstChild; child != null; child = child.getTreeNext()) {
-        length += child.getTextLength();
-      }
-      return length;
+    int length = 0;
+    for (TreeElement child = firstChild; child != null; child = child.getTreeNext()) {
+      length += child.getTextLength();
     }
+    return length;
   }
 
   public void setCachedLength(int length) {
@@ -422,16 +403,16 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public PsiElement getPsi() {
-    synchronized (PsiLock.LOCK) {
-      if (myWrapper != null) return myWrapper;
-      final Language lang = getElementType().getLanguage();
-      final ParserDefinition parserDefinition = lang.getParserDefinition();
-      if (parserDefinition != null) {
-        myWrapper = parserDefinition.createElement(this);
-        //noinspection ConstantConditions
-        LOG.assertTrue(myWrapper != null, "ParserDefinition.createElement() may not return null");
-      }
-      return myWrapper;
+    if (myWrapper != null) return myWrapper;
+    final Language lang = getElementType().getLanguage();
+    final ParserDefinition parserDefinition = lang.getParserDefinition();
+    if (parserDefinition != null) {
+      PsiElement psi = parserDefinition.createElement(this);
+      //noinspection ConstantConditions
+      LOG.assertTrue(psi != null, "ParserDefinition.createElement() may not return null");
+      psiFieldUpdater.compareAndSet(this, null, psi);
+      LOG.assertTrue(myWrapper != null);
     }
+    return myWrapper;
   }
 }

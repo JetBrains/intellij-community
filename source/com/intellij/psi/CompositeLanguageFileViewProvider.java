@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +23,7 @@ import java.util.*;
 
 public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.CompositeLanguageFileViewProvider");
-  private final Map<Language, PsiFile> myRoots = new HashMap<Language, PsiFile>();
+  private final ConcurrentHashMap<Language, PsiFile> myRoots = new ConcurrentHashMap<Language, PsiFile>(1, ConcurrentHashMap.DEFAULT_LOAD_FACTOR, 1);
   private Set<Language> myRelevantLanguages;
 
   public Set<Language> getRelevantLanguages() {
@@ -86,15 +87,14 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     if (file != null) return file;
     file = myRoots.get(target);
     if (file == null) {
-      synchronized (PsiLock.LOCK) {
-        file = createFile(target);
-        myRoots.put(target, file);
-      }
+      file = createFile(target);
+      if (file == null) return null;
+      file = myRoots.cacheOrGet(target, file);
     }
     return file;
   }
 
-  public synchronized PsiFile getCachedPsi(Language target) {
+  public PsiFile getCachedPsi(Language target) {
     if (target == getBaseLanguage()) return super.getCachedPsi(target);
     return myRoots.get(target);
   }

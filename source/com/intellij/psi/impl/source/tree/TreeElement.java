@@ -4,7 +4,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.ElementBase;
@@ -16,9 +15,9 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class TreeElement extends ElementBase implements ASTNode, Constants, Cloneable {
   public static final TreeElement[] EMPTY_ARRAY = new TreeElement[0];
-  public TreeElement next = null;
-  public TreeElement prev = null;
-  public CompositeElement parent = null;
+  public volatile TreeElement next = null;
+  public volatile TreeElement prev = null;
+  public volatile CompositeElement parent = null;
 
   public static final Key<PsiManager> MANAGER_KEY = Key.create("Element.MANAGER_KEY");
   public static final Key<PsiElement> PSI_ELEMENT_KEY = Key.create("Element.PsiElement");
@@ -73,21 +72,17 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   public abstract TreeElement getLastChildNode();
 
   public TextRange getTextRange() {
-  synchronized (PsiLock.LOCK) {
     int start = getStartOffset();
     return new TextRange(start, start + getTextLength());
   }
-  }
 
   public int getStartOffset() {
-    synchronized (PsiLock.LOCK) {
-      if (parent == null) return 0;
-      int offset = parent.getStartOffset();
-      for (TreeElement element1 = parent.firstChild; element1 != this; element1 = element1.next) {
-        offset += element1.getTextLength();
-      }
-      return offset;
+    if (parent == null) return 0;
+    int offset = parent.getStartOffset();
+    for (TreeElement element1 = parent.firstChild; element1 != this; element1 = element1.next) {
+      offset += element1.getTextLength();
     }
+    return offset;
   }
 
   public final int getStartOffsetInParent() {
@@ -104,9 +99,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   }
 
   public boolean textMatches(CharSequence buffer, int startOffset, int endOffset) {
-    synchronized (PsiLock.LOCK) {
-      return textMatches(this, buffer, startOffset) == endOffset;
-    }
+    return textMatches(this, buffer, startOffset) == endOffset;
   }
 
   private static int textMatches(ASTNode element, CharSequence buffer, int startOffset) {

@@ -12,15 +12,14 @@ import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class MultiplePsiFilesPerDocumentFileViewProvider extends SingleRootFileViewProvider {
-  private final Map<Language, PsiFile> myRoots = new HashMap<Language, PsiFile>();
+  private final ConcurrentHashMap<Language, PsiFile> myRoots = new ConcurrentHashMap<Language, PsiFile>(1, ConcurrentHashMap.DEFAULT_LOAD_FACTOR, 1);
   private MultiplePsiFilesPerDocumentFileViewProvider myOriginal = null;
 
   public MultiplePsiFilesPerDocumentFileViewProvider(PsiManager manager, VirtualFile file) {
@@ -35,7 +34,7 @@ public class MultiplePsiFilesPerDocumentFileViewProvider extends SingleRootFileV
   public List<PsiFile> getAllFiles() {
     final ArrayList<PsiFile> roots = new ArrayList<PsiFile>(myRoots.values());
     final PsiFile base = myRoots.get(getBaseLanguage());
-    if (roots.size() > 0 && roots.get(0) != base) {
+    if (!roots.isEmpty() && roots.get(0) != base) {
       roots.remove(base);
       roots.add(0, base);
     }
@@ -49,20 +48,18 @@ public class MultiplePsiFilesPerDocumentFileViewProvider extends SingleRootFileV
   }
 
   protected PsiFile getPsiInner(final Language target) {
-    synchronized (PsiLock.LOCK) {
-      PsiFile file = myRoots.get(target);
-      if (file == null) {
-        file = createFile(target);
-        if (file == null) return null;
-        /*
+    PsiFile file = myRoots.get(target);
+    if (file == null) {
+      file = createFile(target);
+      if (file == null) return null;
+      /*
         if (myOriginal != null) {
           ((PsiFileImpl)file).myOriginalFile = myOriginal.getPsi(target);
         }
         */
-        myRoots.put(target, file);
-      }
-      return file;
+      file = myRoots.cacheOrGet(target, file);
     }
+    return file;
   }
 
 

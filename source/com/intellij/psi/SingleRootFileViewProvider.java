@@ -17,6 +17,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -42,6 +43,7 @@ import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class SingleRootFileViewProvider extends UserDataHolderBase implements FileViewProvider {
   private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
@@ -49,7 +51,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   private VirtualFile myFile;
   private final boolean myEventSystemEnabled;
   private boolean myPhysical;
-  private PsiFile myPsiFile = null;
+  private final AtomicReference<PsiFile> myPsiFile = new AtomicReference<PsiFile>();
   private Content myContent;
   private SoftReference<Document> myDocument;
   private Language myBaseLanguage;
@@ -75,7 +77,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     final FileType fileType = file.getFileType();
     if (fileType instanceof LanguageFileType) {
       if (isTooLarge(file)) return StdLanguages.TEXT;
-      
+
       final LanguageFileType languageFileType = (LanguageFileType)fileType;
       return languageFileType.getLanguage();
     }
@@ -98,12 +100,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public final PsiFile getPsi(Language target) {
-    synchronized (PsiLock.LOCK) {
-      if (!isPhysical()) {
-        ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
-      }
-      return getPsiInner(target);
+    if (!isPhysical()) {
+      ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
     }
+    return getPsiInner(target);
   }
 
   public List<PsiFile> getAllFiles() {
@@ -115,9 +115,13 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     if (target != getBaseLanguage()) {
       return null;
     }
-    synchronized (PsiLock.LOCK) {
-      return myPsiFile != null ? myPsiFile : (myPsiFile = createFile());
+    PsiFile psiFile = myPsiFile.get();
+    if (psiFile == null) {
+      psiFile = createFile();
+      myPsiFile.compareAndSet(null, psiFile);
+      psiFile = myPsiFile.get();
     }
+    return psiFile;
   }
 
   public void beforeContentsSynchronized() {
@@ -175,16 +179,14 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
 
   public PsiFile getCachedPsi(Language target) {
-    synchronized (PsiLock.LOCK) {
-      return myPsiFile;
-    }
+    return myPsiFile.get();
   }
 
   public FileElement[] getKnownTreeRoots() {
-    synchronized (PsiLock.LOCK) {
-      if (myPsiFile == null || ((PsiFileImpl)myPsiFile).getTreeElement() == null) return new FileElement[0];
-      return new FileElement[]{(FileElement)myPsiFile.getNode()};
-    }
+    PsiFile psiFile = myPsiFile.get();
+    if (psiFile == null) return new FileElement[0];
+    if (((PsiFileImpl)psiFile).getTreeElement() == null) return new FileElement[0];
+    return new FileElement[]{(FileElement)psiFile.getNode()};
   }
 
   private PsiFile createFile() {
@@ -233,6 +235,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
         return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
       }
       return new PsiPlainTextFileImpl(this);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Throwable e) {
       LOG.error(e);
@@ -299,9 +304,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   @NotNull
   public CharSequence getContents() {
-    synchronized (PsiLock.LOCK) {
-      return getContent().getText();
-    }
+    return getContent().getText();
   }
 
   @NotNull
@@ -312,7 +315,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   public void setVirtualFile(final VirtualFile file) {
     myFile = file;
     myDocument.clear();
-    myPsiFile = null;
+    myPsiFile.set(null);
     myBaseLanguage = calcBaseLanguage(file);
     calcPhysical();
   }
@@ -412,11 +415,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return null;
   }
 
-  public void forceCachedPsi(final PsiFile psiCodeFragment) {
-    synchronized (PsiLock.LOCK) {
-      myPsiFile = psiCodeFragment;
-      ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
-    }
+  public void forceCachedPsi(final PsiFile psiFile) {
+    myPsiFile.set(psiFile);
+    ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
   }
 
   private Content getContent() {

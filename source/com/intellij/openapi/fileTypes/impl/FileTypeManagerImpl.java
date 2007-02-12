@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.UniqueFileNamesProvider;
+import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
@@ -50,8 +51,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private FileTypeAssocTable myPaternsTable = new FileTypeAssocTable();
   private final Set<String> myIgnoredFileMasksSet = new LinkedHashSet<String>();
-  private final Set<String> myNotIgnoredFiles = Collections.synchronizedSet(new THashSet<String>());
-  private final Set<String> myIgnoredFiles = Collections.synchronizedSet(new THashSet<String>());
+  private final Set<String> myNotIgnoredFiles = new ConcurrentHashSet<String>();
+  private final Set<String> myIgnoredFiles = new ConcurrentHashSet<String>();
   private final Map<FileType, SyntaxTable> myDefaultTables = new THashMap<FileType, SyntaxTable>();
   private final FileTypeAssocTable myInitialAssociations = new FileTypeAssocTable();
   private Map<FileNameMatcher, String> myUnresolvedMappings = new THashMap<FileNameMatcher, String>();

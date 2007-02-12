@@ -26,18 +26,16 @@ public class SourceUtil implements Constants {
   }
 
   private static int toBuffer(ASTNode element, char[] buffer, int offset, TokenSet skipTypes) {
-    synchronized (PsiLock.LOCK) {
-      if (skipTypes != null && skipTypes.contains(element.getElementType())) return offset;
-      if (element instanceof LeafElement) {
-        return ((LeafElement)element).copyTo(buffer, offset);
+    if (skipTypes != null && skipTypes.contains(element.getElementType())) return offset;
+    if (element instanceof LeafElement) {
+      return ((LeafElement)element).copyTo(buffer, offset);
+    }
+    else {
+      int curOffset = offset;
+      for (TreeElement child = (TreeElement)element.getFirstChildNode(); child != null; child = child.next) {
+        curOffset = toBuffer(child, buffer, curOffset, skipTypes);
       }
-      else {
-        int curOffset = offset;
-        for (TreeElement child = (TreeElement)element.getFirstChildNode(); child != null; child = child.next) {
-          curOffset = toBuffer(child, buffer, curOffset, skipTypes);
-        }
-        return curOffset;
-      }
+      return curOffset;
     }
   }
 

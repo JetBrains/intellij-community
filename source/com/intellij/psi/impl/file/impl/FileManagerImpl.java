@@ -30,8 +30,9 @@ import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Query;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.WeakValueHashMap;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.ConcurrentWeakValueHashMap;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 public class FileManagerImpl implements FileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.FileManagerImpl");
@@ -54,17 +56,17 @@ public class FileManagerImpl implements FileManager {
   private ProjectFileIndex myProjectFileIndex = null;
   private RootManager myRootManager = null;
 
-  private HashMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = new HashMap<VirtualFile, PsiDirectory>();
-  private WeakValueHashMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = new WeakValueHashMap<VirtualFile, FileViewProvider>();
+  private final ConcurrentHashMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = new ConcurrentHashMap<VirtualFile, PsiDirectory>();
+  private final ConcurrentMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = new ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider>();
 
   private VirtualFileListener myVirtualFileListener = null;
   private boolean myInitialized = false;
   private boolean myDisposed = false;
   private boolean myUseRepository = true;
 
-  private HashMap<GlobalSearchScope, PsiClass> myCachedObjectClassMap = null;
+  private final ConcurrentHashMap<GlobalSearchScope, PsiClass> myCachedObjectClassMap = new ConcurrentHashMap<GlobalSearchScope, PsiClass>();
 
-  private Map<String,PsiClass> myNameToClassMap = new HashMap<String, PsiClass>(); // used only in mode without repository
+  private final Map<String,PsiClass> myNameToClassMap = new ConcurrentHashMap<String, PsiClass>(); // used only in mode without repository
   private Set<String> myNontrivialPackagePrefixes = null;
   private final VirtualFileManager myVirtualFileManager;
   private final FileDocumentManager myFileDocumentManager;
@@ -93,9 +95,7 @@ public class FileManagerImpl implements FileManager {
       myConnection.disconnect();
 
       myVirtualFileManager.removeVirtualFileListener(myVirtualFileListener);
-      synchronized (PsiLock.LOCK) {
-        myCachedObjectClassMap = null;
-      }
+      myCachedObjectClassMap.clear();
     }
     myDisposed = true;
   }
@@ -111,13 +111,9 @@ public class FileManagerImpl implements FileManager {
   }
 
   public FileViewProvider findViewProvider(final VirtualFile file) {
-    FileViewProvider viewProvider;
-    synchronized (PsiLock.LOCK) {
-      viewProvider = myVFileToViewProviderMap.get(file);
-      if(viewProvider == null){
-        viewProvider = createFileViewProvider(file);
-        myVFileToViewProviderMap.put(file, viewProvider);
-      }
+    FileViewProvider viewProvider = myVFileToViewProviderMap.get(file);
+    if(viewProvider == null) {
+      viewProvider = ConcurrencyUtil.cacheOrGet(myVFileToViewProviderMap, file, createFileViewProvider(file));
     }
     return viewProvider;
   }
@@ -155,9 +151,7 @@ public class FileManagerImpl implements FileManager {
 
     Runnable runnable = new Runnable() {
       public void run() {
-        synchronized (PsiLock.LOCK) {
-          myCachedObjectClassMap = null;
-        }
+        myCachedObjectClassMap.clear();
       }
     };
     myManager.registerRunnableToRunOnChange(runnable);
@@ -209,21 +203,21 @@ public class FileManagerImpl implements FileManager {
 
   // for tests
   public void checkConsistency() {
-    Map<VirtualFile, FileViewProvider> fileToViewProvider = myVFileToViewProviderMap;
-    myVFileToViewProviderMap = new WeakValueHashMap<VirtualFile, FileViewProvider>();
+    ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider> fileToViewProvider = new ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
+    myVFileToViewProviderMap.clear();
     for (VirtualFile vFile : fileToViewProvider.keySet()) {
       final FileViewProvider fileViewProvider = fileToViewProvider.get(vFile);
 
       LOG.assertTrue(vFile.isValid());
       PsiFile psiFile1 = findFile(vFile);
-      //LOG.assertTrue(psiFile1 != null, vFile.toString());
       if (psiFile1 != null && fileViewProvider != null) { // might get collected
         LOG.assertTrue(psiFile1.getClass().equals(fileViewProvider.getPsi(fileViewProvider.getBaseLanguage()).getClass()));
       }
     }
 
-    HashMap<VirtualFile, PsiDirectory> fileToPsiDirMap = myVFileToPsiDirMap;
-    myVFileToPsiDirMap = new HashMap<VirtualFile, PsiDirectory>();
+    ConcurrentHashMap<VirtualFile, PsiDirectory> fileToPsiDirMap = new ConcurrentHashMap<VirtualFile, PsiDirectory>((Map<? extends VirtualFile,? extends PsiDirectory>)myVFileToPsiDirMap);
+    myVFileToPsiDirMap.clear();
+
     for (VirtualFile vFile : fileToPsiDirMap.keySet()) {
       LOG.assertTrue(vFile.isValid());
       PsiDirectory psiDir1 = findDirectory(vFile);
@@ -262,9 +256,7 @@ public class FileManagerImpl implements FileManager {
 
     dispatchPendingEvents();
 
-    synchronized (PsiLock.LOCK) {
-      return getCachedPsiFileInner(vFile);
-    }
+    return getCachedPsiFileInner(vFile);
   }
 
   @NotNull
@@ -407,20 +399,17 @@ public class FileManagerImpl implements FileManager {
 
     dispatchPendingEvents();
 
-    synchronized (PsiLock.LOCK) {
-      PsiDirectory psiDir = myVFileToPsiDirMap.get(vFile);
-      if (psiDir != null) return psiDir;
+    PsiDirectory psiDir = myVFileToPsiDirMap.get(vFile);
+    if (psiDir != null) return psiDir;
 
-      if (myProjectRootManager.getFileIndex().isIgnored(vFile)) return null;
+    if (myProjectRootManager.getFileIndex().isIgnored(vFile)) return null;
 
-      VirtualFile parent = vFile.getParent();
-      if (parent != null) { //?
-        findDirectory(parent);// need to cache parent directory - used for firing events
-      }
-      psiDir = new PsiDirectoryImpl(myManager, vFile);
-      myVFileToPsiDirMap.put(vFile, psiDir);
-      return psiDir;
+    VirtualFile parent = vFile.getParent();
+    if (parent != null) { //?
+      findDirectory(parent);// need to cache parent directory - used for firing events
     }
+    psiDir = new PsiDirectoryImpl(myManager, vFile);
+    return myVFileToPsiDirMap.cacheOrGet(vFile, psiDir);
   }
 
   @Nullable
@@ -467,19 +456,15 @@ public class FileManagerImpl implements FileManager {
     LOG.assertTrue(!myDisposed);
 
     if ("java.lang.Object".equals(qName)) { // optimization
-      synchronized (PsiLock.LOCK) {
-        if (myCachedObjectClassMap == null) {
-          myCachedObjectClassMap = new HashMap<GlobalSearchScope, PsiClass>();
+      PsiClass cached = myCachedObjectClassMap.get(scope);
+      if (cached == null) {
+        cached = _findClass(qName, scope);
+        if (cached != null) {
+          cached = myCachedObjectClassMap.cacheOrGet(scope, cached);
         }
-
-        PsiClass cached = myCachedObjectClassMap.get(scope);
-        if (cached == null) {
-          cached = _findClass(qName, scope);
-          myCachedObjectClassMap.put(scope, cached);
-        }
-
-        return cached;
       }
+
+      return cached;
     }
 
     return _findClass(qName, scope);
@@ -487,20 +472,18 @@ public class FileManagerImpl implements FileManager {
 
   @Nullable
   private PsiClass findClassWithoutRepository(String qName) {
-    synchronized (PsiLock.LOCK) {
-      if (myNameToClassMap.containsKey(qName)) return myNameToClassMap.get(qName);
-
-      PsiClass aClass = _findClassWithoutRepository(qName);
-      myNameToClassMap.put(qName, aClass);
+    PsiClass aClass = myNameToClassMap.get(qName);
+    if (aClass != null) {
       return aClass;
     }
+
+    aClass = _findClassWithoutRepository(qName);
+    myNameToClassMap.put(qName, aClass);
+    return aClass;
   }
 
   @Nullable
   private PsiClass _findClassWithoutRepository(String qName) {
-    PsiClass aClass = myNameToClassMap.get(qName);
-    if (aClass != null) return aClass;
-
     VirtualFile[] sourcePath = myRootManager.getSourceRootsCopy();
     VirtualFile[] classPath = myRootManager.getClassRootsCopy();
 
@@ -525,7 +508,7 @@ public class FileManagerImpl implements FileManager {
             if (vChild != null) {
               PsiFile file = findFile(vChild);
               if (file instanceof PsiJavaFile) {
-                aClass = findClassByName((PsiJavaFile)file, name);
+                PsiClass aClass = findClassByName((PsiJavaFile)file, name);
                 if (aClass != null) {
                   index = index1 + 1;
                   while (index < qName.length()) {
@@ -646,7 +629,7 @@ public class FileManagerImpl implements FileManager {
   @Nullable
   private PsiFile getCachedPsiFileInner(VirtualFile file) {
     final FileViewProvider fileViewProvider = myVFileToViewProviderMap.get(file);
-    return fileViewProvider != null ? ((SingleRootFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage()) : null;
+    return fileViewProvider == null ? null : ((SingleRootFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage());
   }
 
   public List<PsiFile> getAllCachedFiles() {
@@ -660,27 +643,29 @@ public class FileManagerImpl implements FileManager {
   }
 
   private void removeInvalidFilesAndDirs(boolean useFind) {
-    HashMap<VirtualFile, PsiDirectory> fileToPsiDirMap = myVFileToPsiDirMap;
+    ConcurrentHashMap<VirtualFile, PsiDirectory> fileToPsiDirMap = new ConcurrentHashMap<VirtualFile, PsiDirectory>((Map<? extends VirtualFile,? extends PsiDirectory>)myVFileToPsiDirMap);
     if (useFind) {
-      myVFileToPsiDirMap = new HashMap<VirtualFile, PsiDirectory>();
+      myVFileToPsiDirMap.clear();
     }
     for (Iterator<VirtualFile> iterator = fileToPsiDirMap.keySet().iterator(); iterator.hasNext();) {
       VirtualFile vFile = iterator.next();
       if (!vFile.isValid()) {
         iterator.remove();
-      } else {
+      }
+      else {
         PsiDirectory psiDir = findDirectory(vFile);
         if (psiDir == null) {
           iterator.remove();
         }
       }
     }
-    myVFileToPsiDirMap = fileToPsiDirMap;
+    myVFileToPsiDirMap.clear();
+    myVFileToPsiDirMap.putAll(fileToPsiDirMap);
 
     // note: important to update directories map first - findFile uses findDirectory!
-    WeakValueHashMap<VirtualFile, FileViewProvider> fileToPsiFileMap = myVFileToViewProviderMap;
+    ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider> fileToPsiFileMap = new ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
     if (useFind) {
-      myVFileToViewProviderMap = new WeakValueHashMap<VirtualFile, FileViewProvider>();
+      myVFileToViewProviderMap.clear();
     }
     for (Iterator<VirtualFile> iterator = fileToPsiFileMap.keySet().iterator(); iterator.hasNext();) {
       VirtualFile vFile = iterator.next();
@@ -709,7 +694,8 @@ public class FileManagerImpl implements FileManager {
         }
       }
     }
-    myVFileToViewProviderMap = fileToPsiFileMap;
+    myVFileToViewProviderMap.clear();
+    myVFileToViewProviderMap.putAll(fileToPsiFileMap);
   }
 
   public void reloadFromDisk(@NotNull PsiFile file) {
@@ -759,7 +745,6 @@ public class FileManagerImpl implements FileManager {
   }
 
   private class MyVirtualFileListener extends VirtualFileAdapter {
-    @SuppressWarnings({"EmptyMethod"})
     public void contentsChanged(final VirtualFileEvent event) {
       // handled by FileDocumentManagerListener
     }
@@ -774,7 +759,8 @@ public class FileManagerImpl implements FileManager {
       ApplicationManager.getApplication().runWriteAction(
         new PsiExternalChangeAction() {
           public void run() {
-            PsiDirectory parentDir = myVFileToPsiDirMap.get(vFile.getParent());
+            VirtualFile parent = vFile.getParent();
+            PsiDirectory parentDir = parent == null ? null : myVFileToPsiDirMap.get(parent);
             if (parentDir == null) return; // do not notifyListeners event if parent directory was never accessed via PSI
 
             if (!vFile.isDirectory()) {
@@ -809,7 +795,8 @@ public class FileManagerImpl implements FileManager {
 
       final VirtualFile vFile = event.getFile();
 
-      final PsiDirectory parentDir = myVFileToPsiDirMap.get(vFile.getParent());
+      VirtualFile parent = vFile.getParent();
+      final PsiDirectory parentDir = parent == null ? null : myVFileToPsiDirMap.get(parent);
       if (parentDir == null) return; // do not notify listeners if parent directory was never accessed via PSI
 
       ApplicationManager.getApplication().runWriteAction(
@@ -845,7 +832,8 @@ public class FileManagerImpl implements FileManager {
 
       final VirtualFile vFile = event.getFile();
 
-      final PsiDirectory parentDir = myVFileToPsiDirMap.get(event.getParent());
+      VirtualFile parent = event.getParent();
+      final PsiDirectory parentDir = parent == null ? null : myVFileToPsiDirMap.get(parent);
 
       final PsiFile psiFile = getCachedPsiFileInner(vFile);
       if (psiFile != null) {
@@ -889,7 +877,8 @@ public class FileManagerImpl implements FileManager {
       final VirtualFile vFile = event.getFile();
       final String propertyName = event.getPropertyName();
 
-      final PsiDirectory parentDir = myVFileToPsiDirMap.get(vFile.getParent());
+      VirtualFile parent = vFile.getParent();
+      final PsiDirectory parentDir = parent == null ? null : myVFileToPsiDirMap.get(parent);
       if (parentDir == null) return; // do not notifyListeners event if parent directory was never accessed via PSI
 
       ApplicationManager.getApplication().runWriteAction(
@@ -994,7 +983,8 @@ public class FileManagerImpl implements FileManager {
       }
       else oldPsiFile = null;
 
-      final PsiDirectory parentDir = myVFileToPsiDirMap.get(vFile.getParent());
+      VirtualFile parent = vFile.getParent();
+      final PsiDirectory parentDir = parent == null ? null : myVFileToPsiDirMap.get(parent);
       if (parentDir == null) {
         boolean fire = VirtualFile.PROP_NAME.equals(propertyName) &&
                        vFile.isDirectory();
