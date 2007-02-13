@@ -239,6 +239,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       final List<VirtualFilePointerImpl> invalidatedPointers = new ArrayList<VirtualFilePointerImpl>();
       PointerProcessor listenerNotifier = new PointerProcessor() {
         public boolean processPointer(VirtualFilePointerImpl pointer) {
+          if (invalidatedPointers.contains(pointer)) return true; // See http://www.jetbrains.net/jira/browse/IDEADEV-14363
+
           final boolean invalidated = isInvalidatedByDeletion(pointer, event);
           if (invalidated) {
             invalidatedPointers.add(pointer);
