@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.svn.dialogs.CopyDialog">
+  <grid id="9287c" binding="myTopPanel" layout-manager="GridBagLayout">
+    <constraints>
+      <xy x="10" y="10" width="479" height="286"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="bf7b" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <labelFor value="40b51"/>
+          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.copy.from"/>
+        </properties>
+      </component>
+      <component id="40b51" class="javax.swing.JTextField" binding="myFromURLText">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <editable value="false"/>
+          <text value=""/>
+        </properties>
+      </component>
+      <component id="2130d" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <labelFor value="f1672"/>
+          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.copy.to"/>
+        </properties>
+      </component>
+      <component id="f1672" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myToURLText">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <editable value="false"/>
+        </properties>
+      </component>
+      <component id="acab1" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.copy.from.revision"/>
+        </properties>
+      </component>
+      <component id="7c7ec" class="javax.swing.JRadioButton" binding="myWorkingRevisionButton">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <selected value="true"/>
+          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="radio.copy.working.copy"/>
+        </properties>
+      </component>
+      <component id="9b927" class="javax.swing.JRadioButton" binding="myHEADRevisionButton">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="radio.copy.head"/>
+        </properties>
+      </component>
+      <component id="19731" class="javax.swing.JRadioButton" binding="mySpecificRevisionButton">
+        <constraints>
+          <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="radio.copy.specific"/>
+        </properties>
+      </component>
+      <component id="c21bd" class="javax.swing.JTextField" binding="myRevisionText">
+        <constraints>
+          <grid row="5" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <columns value="8"/>
+          <enabled value="false"/>
+        </properties>
+      </component>
+      <component id="c02e9" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="6" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <labelFor value="cdd55"/>
+          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.copy.comment"/>
+        </properties>
+      </component>
+      <scrollpane id="57f3f">
+        <constraints>
+          <grid row="7" column="0" row-span="1" col-span="3" vsize-policy="6" hsize-policy="6" anchor="8" fill="3" indent="0" use-parent-layout="false"/>
+          <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="1.0"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="cdd55" class="javax.swing.JTextArea" binding="myCommentText">
+            <constraints/>
+            <properties>
+              <columns value="25"/>
+              <rows value="7"/>
+            </properties>
+          </component>
+        </children>
+      </scrollpane>
+    </children>
+  </grid>
+  <buttonGroups>
+    <group name="buttonGroup1">
+      <member id="7c7ec"/>
+      <member id="9b927"/>
+      <member id="19731"/>
+    </group>
+  </buttonGroups>
+</form>

@@ -32,7 +32,6 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -56,6 +55,7 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
   private JRadioButton mySpecificRevisionButton;
   private JTextField myRevisionText;
   private JTextArea myCommentText;
+  private JPanel myTopPanel;
   private String mySrcURL;
 
   @NonNls private static final String HELP_ID = "vcs.subversion.branch";
@@ -67,6 +67,27 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
     setResizable(true);
     setTitle(SvnBundle.message("dialog.title.branch"));
     getHelpAction().setEnabled(true);
+
+    myToURLText.addActionListener(this);
+    myWorkingRevisionButton.addActionListener(this);
+    myHEADRevisionButton.addActionListener(this);
+    mySpecificRevisionButton.addActionListener(this);
+
+    myRevisionText.setMinimumSize(myRevisionText.getPreferredSize());
+    myRevisionText.getDocument().addDocumentListener(new DocumentListener() {
+      public void insertUpdate(DocumentEvent e) {
+        getOKAction().setEnabled(isOKActionEnabled());
+      }
+
+      public void removeUpdate(DocumentEvent e) {
+        getOKAction().setEnabled(isOKActionEnabled());
+      }
+
+      public void changedUpdate(DocumentEvent e) {
+        getOKAction().setEnabled(isOKActionEnabled());
+      }
+    });
+
     init();
   }
 
@@ -87,7 +108,7 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
       SVNInfo info = client.doInfo(mySrcFile, SVNRevision.WORKING);
       if (info != null) {
         mySrcURL = info.getURL() == null ? null : info.getURL().toString();
-        revStr = info.getRevision() + "";
+        revStr = String.valueOf(info.getRevision());
         myURL = mySrcURL;
         if (myURL != null) {
           @NonNls String dstName = "CopyOf" + SVNPathUtil.tail(myURL);
@@ -139,115 +160,7 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
   }
 
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel();
-    panel.setLayout(new GridBagLayout());
-
-    GridBagConstraints gc = createGridBagConstraints();
-
-    JLabel fromLabel = new JLabel(SvnBundle.message("label.copy.from"));
-    panel.add(fromLabel, gc);
-
-    gc.gridx += 1;
-    gc.weightx = 1;
-    gc.gridwidth = 2;
-    gc.fill = GridBagConstraints.HORIZONTAL;
-
-    myFromURLText = new JTextField();
-    myFromURLText.setEditable(false);
-
-    panel.add(myFromURLText, gc);
-    fromLabel.setLabelFor(myFromURLText);
-
-    JLabel toLabel = new JLabel(SvnBundle.message("label.copy.to"));
-    gc.gridy += 1;
-    gc.gridx = 0;
-    gc.gridwidth = 1;
-    gc.weightx = 0;
-    gc.fill = GridBagConstraints.NONE;
-
-    panel.add(toLabel, gc);
-
-    gc.gridx += 1;
-    gc.gridwidth = 2;
-    gc.weightx = 1;
-    gc.fill = GridBagConstraints.HORIZONTAL;
-
-    myToURLText = new TextFieldWithBrowseButton(this);
-    myToURLText.setEditable(false);
-    panel.add(myToURLText, gc);
-
-    toLabel.setLabelFor(myToURLText);
-
-    gc.gridy += 1;
-    gc.gridx = 0;
-    gc.gridwidth = 2;
-    gc.weightx = 1;
-    gc.fill = GridBagConstraints.NONE;
-
-    panel.add(new JLabel(SvnBundle.message("label.copy.from.revision")), gc);
-
-    myWorkingRevisionButton = new JRadioButton(SvnBundle.message("radio.copy.working.copy"));
-    myHEADRevisionButton = new JRadioButton(SvnBundle.message("radio.copy.head"));
-    mySpecificRevisionButton = new JRadioButton(SvnBundle.message("radio.copy.specific"));
-
-    myWorkingRevisionButton.addActionListener(this);
-    myHEADRevisionButton.addActionListener(this);
-    mySpecificRevisionButton.addActionListener(this);
-
-    ButtonGroup group = new ButtonGroup();
-    group.add(myWorkingRevisionButton);
-    group.add(myHEADRevisionButton);
-    group.add(mySpecificRevisionButton);
-    myWorkingRevisionButton.setSelected(true);
-
-    gc.gridy += 1;
-    panel.add(myWorkingRevisionButton, gc);
-    gc.gridy += 1;
-    panel.add(myHEADRevisionButton, gc);
-    gc.gridy += 1;
-    gc.gridwidth = 2;
-    panel.add(mySpecificRevisionButton, gc);
-
-    gc.gridx = 2;
-    gc.weightx = 0;
-    gc.anchor = GridBagConstraints.WEST;
-    gc.fill = GridBagConstraints.NONE;
-
-    myRevisionText = new JTextField(8);
-    myRevisionText.setMinimumSize(myRevisionText.getPreferredSize());
-    panel.add(myRevisionText, gc);
-
-    myRevisionText.getDocument().addDocumentListener(new DocumentListener() {
-      public void insertUpdate(DocumentEvent e) {
-        getOKAction().setEnabled(isOKActionEnabled());
-      }
-
-      public void removeUpdate(DocumentEvent e) {
-        getOKAction().setEnabled(isOKActionEnabled());
-      }
-
-      public void changedUpdate(DocumentEvent e) {
-        getOKAction().setEnabled(isOKActionEnabled());
-      }
-    });
-
-    gc.gridy += 1;
-    gc.gridx = 0;
-    gc.gridwidth = 3;
-    JLabel commentLabel = new JLabel(SvnBundle.message("label.copy.comment"));
-    panel.add(commentLabel, gc);
-
-    gc.gridy += 1;
-    gc.weightx = 1;
-    gc.weighty = 1;
-    gc.fill = GridBagConstraints.BOTH;
-
-    myCommentText = new JTextArea(7, 25);
-    panel.add(new JScrollPane(myCommentText), gc);
-
-    commentLabel.setLabelFor(myCommentText);
-
-    return panel;
+    return myTopPanel;
   }
 
   public void actionPerformed(ActionEvent e) {
@@ -309,17 +222,4 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
     return false;
   }
 
-  private static GridBagConstraints createGridBagConstraints() {
-    GridBagConstraints gc = new GridBagConstraints();
-    gc.insets = new Insets(2, 2, 2, 2);
-    gc.gridwidth = 1;
-    gc.gridheight = 1;
-    gc.gridx = 0;
-    gc.gridy = 0;
-    gc.anchor = GridBagConstraints.WEST;
-    gc.fill = GridBagConstraints.NONE;
-    gc.weightx = 0;
-    gc.weighty = 0;
-    return gc;
-  }
 }
