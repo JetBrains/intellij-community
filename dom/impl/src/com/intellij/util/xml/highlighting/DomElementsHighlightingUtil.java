@@ -93,7 +93,7 @@ public class DomElementsHighlightingUtil {
   }
 
   private static <T> List<T> createProblemDescriptors(final DomElementProblemDescriptor problemDescriptor, final Function<Pair<TextRange, PsiElement>, T> creator) {
-    final List<T> descritors = new SmartList<T>();
+    final List<T> descriptors = new SmartList<T>();
 
     if (problemDescriptor instanceof DomElementResolveProblemDescriptor) {
       final PsiReference reference = ((DomElementResolveProblemDescriptor)problemDescriptor).getPsiReference();
@@ -110,25 +110,33 @@ public class DomElementsHighlightingUtil {
       } else {
         errorRange = referenceRange;
       }
-      descritors.add(creator.fun(Pair.create(errorRange, element)));
-      return descritors;
+      descriptors.add(creator.fun(Pair.create(errorRange, element)));
+      return descriptors;
     }
 
     final DomElement domElement = problemDescriptor.getDomElement();
     final PsiElement psiElement = getPsiElement(domElement);
+    final DomElementProblemDescriptor.HighlightingType highlightingType = problemDescriptor.getHighlightingType();
+
+    if (highlightingType == DomElementProblemDescriptor.HighlightingType.ALL_TAG) {
+      final XmlTag tag = (XmlTag)(psiElement instanceof XmlTag ? psiElement : psiElement.getParent());
+      descriptors.add(creator.fun(Pair.create(new TextRange(0, tag.getTextLength()), (PsiElement)tag)));
+      return descriptors;
+    }
+    
     if (psiElement != null && StringUtil.isNotEmpty(psiElement.getText())) {
       if (psiElement instanceof XmlTag) {
         final XmlTag tag = (XmlTag)psiElement;
-        switch (problemDescriptor.getHighlightingType()) {
+        switch (highlightingType) {
           case ALL_TAG:
-            descritors.add(creator.fun(Pair.create(new TextRange(0, tag.getTextLength()), (PsiElement)tag)));
+            descriptors.add(creator.fun(Pair.create(new TextRange(0, tag.getTextLength()), (PsiElement)tag)));
             break;
           case START_TAG_NAME:
-            addDescriptionsToTagEnds(tag, descritors, creator);
+            addDescriptionsToTagEnds(tag, descriptors, creator);
             break;
         }
 
-        return descritors;
+        return descriptors;
       }
       int start = 0;
       int length = psiElement.getTextRange().getLength();
@@ -144,18 +152,19 @@ public class DomElementsHighlightingUtil {
 
     final XmlTag tag = getParentXmlTag(domElement);
     if (tag != null) {
-      addDescriptionsToTagEnds(tag, descritors, creator);
+      addDescriptionsToTagEnds(tag, descriptors, creator);
     }
-    return descritors;
+    return descriptors;
   }
 
-  private static <T> void addDescriptionsToTagEnds(final XmlTag tag, final List<T> descritors, Function<Pair<TextRange, PsiElement>, T> creator) {
+  private static <T> void addDescriptionsToTagEnds(final XmlTag tag, final List<T> descriptors, Function<Pair<TextRange, PsiElement>, T> creator) {
     final ASTNode node = tag.getNode();
     assert node != null;
     final ASTNode startNode = XmlChildRole.START_TAG_NAME_FINDER.findChild(node);
 
     final int startOffset = tag.getTextRange().getStartOffset();
-    descritors.add(creator.fun(Pair.create(startNode.getTextRange().shiftRight(-startOffset), (PsiElement)tag)));
+    assert startNode != null;
+    descriptors.add(creator.fun(Pair.create(startNode.getTextRange().shiftRight(-startOffset), (PsiElement)tag)));
   }
 
   @Nullable
