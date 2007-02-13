@@ -101,6 +101,8 @@ class MapBinding implements Binding {
 
 
     for (Node childNode : childNodes) {
+      if (XmlSerializerImpl.isIgnoredNode(childNode)) continue;
+      
       Element entry = (Element)childNode;
 
       Object k;
@@ -118,10 +120,10 @@ class MapBinding implements Binding {
 
       Attr valueAttr = entry.getAttributeNode(getValueAttributeName());
       if (valueAttr != null) {
-        v = myKeyBinding.deserialize(o, valueAttr);
+        v = myValueBinding.deserialize(o, valueAttr);
       }
       else {
-        v = myKeyBinding.deserialize(o, entry.getElementsByTagName(getValueAttributeName()).item(0));
+        v = myValueBinding.deserialize(o, entry.getElementsByTagName(getValueAttributeName()).item(0));
       }
 
       //noinspection unchecked
