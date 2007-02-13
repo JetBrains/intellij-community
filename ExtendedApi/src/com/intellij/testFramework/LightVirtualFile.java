@@ -1,6 +1,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -57,11 +58,12 @@ public class LightVirtualFile extends VirtualFile {
 
   public LightVirtualFile(final String name, final Language language, final String text) {
     myName = name;
+    final Language typeLanguage = language instanceof LanguageDialect? ((LanguageDialect)language).getBaseLanguage() : language;
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (final FileType fileType : fileTypes) {
       if (fileType instanceof LanguageFileType) {
         final LanguageFileType languageFileType = (LanguageFileType)fileType;
-        if (languageFileType.getLanguage() == language) {
+        if (languageFileType.getLanguage() == typeLanguage) {
           myFileType = languageFileType;
           break;
         }
