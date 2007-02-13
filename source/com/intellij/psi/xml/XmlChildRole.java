@@ -7,6 +7,7 @@ import com.intellij.psi.tree.DefaultRoleFinder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.RoleFinder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface XmlChildRole {
   RoleFinder START_TAG_NAME_FINDER = new RoleFinder() {
@@ -24,7 +25,8 @@ public interface XmlChildRole {
   };
 
   RoleFinder CLOSING_TAG_NAME_FINDER = new RoleFinder() {
-    public ASTNode findChild(ASTNode parent) {
+    @Nullable
+    public ASTNode findChild(@NotNull ASTNode parent) {
       //LOG.assertTrue(parent.getElementType() == XmlElementType.XML_TAG);
       ASTNode current = parent.getFirstChildNode();
       int state = 0;
@@ -45,7 +47,7 @@ public interface XmlChildRole {
   };
 
   RoleFinder DOCUMENT_FINDER = new RoleFinder() {
-    public ASTNode findChild(ASTNode parent) {
+    public ASTNode findChild(@NotNull ASTNode parent) {
       ASTNode oldDocument = TreeUtil.findChild(parent, XmlElementType.XML_DOCUMENT);
       if(oldDocument == null) oldDocument = TreeUtil.findChild(parent, XmlElementType.HTML_DOCUMENT);
       return oldDocument;

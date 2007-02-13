@@ -110,18 +110,48 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     final CachedValue<XmlNSDescriptor> descriptor = map.get(namespace);
     if(descriptor != null) return descriptor.getValue();
 
-    final XmlTag parent = getParentTag();
-    if(parent == null){
+    final XmlTag parentTag = getParentTag();
+    if(parentTag == null){
       final XmlDocument parentOfType = PsiTreeUtil.getParentOfType(this, XmlDocument.class);
       if(parentOfType == null) return null;
       return parentOfType.getDefaultNSDescriptor(namespace, strict);
     }
 
-    return parent.getNSDescriptor(namespace, strict);
+    return parentTag.getNSDescriptor(namespace, strict);
   }
 
   public boolean isEmpty() {
     return XmlChildRole.CLOSING_TAG_START_FINDER.findChild(this) == null;
+  }
+
+  public void collapseIfEmpty() {
+    final XmlTag[] tags = getSubTags();
+    if (tags == null || tags.length > 0) {
+      return;
+    }
+    final ASTNode closingName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(this);
+    final ASTNode startTagEnd = XmlChildRole.START_TAG_END_FINDER.findChild(this);
+    if (closingName == null || startTagEnd == null) {
+      return;
+    }
+
+    final PomModel pomModel = getProject().getModel();
+    final PomTransactionBase transaction = new PomTransactionBase(this, pomModel.getModelAspect(XmlAspect.class)) {
+
+      @Nullable
+      public PomModelEvent runInner() throws IncorrectOperationException {
+        final ASTNode closingBracket = closingName.getTreeNext();
+        removeRange(startTagEnd, closingBracket);
+        final LeafElement emptyTagEnd = Factory.createSingleLeafElement(XmlTokenType.XML_EMPTY_ELEMENT_END, "/>", 0, 2, null, getManager());
+        replaceChild(closingBracket, emptyTagEnd);
+        return null;
+      }
+    };
+    try {
+      pomModel.runTransaction(transaction);
+    } catch(IncorrectOperationException e) {
+      LOG.error(e);
+    }
   }
 
   @Nullable

@@ -70,6 +70,8 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
 
   boolean isEmpty();
 
+  void collapseIfEmpty();
+
   @Nullable @NonNls
   String getSubTagText(@NonNls String qname);
 }
