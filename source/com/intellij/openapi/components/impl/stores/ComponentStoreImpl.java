@@ -159,7 +159,15 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   void initJdomExternalizable(JDOMExternalizable component) {
-    final String componentName = ((BaseComponent)component).getComponentName();
+    final String componentName;
+
+    if (!(component instanceof BaseComponent)) {
+      componentName = component.getClass().getName();
+    }
+    else {
+      componentName = ((BaseComponent)component).getComponentName();
+    }
+
     myComponents.put(componentName, component);
 
     if (optimizeTestLoading()) return;
