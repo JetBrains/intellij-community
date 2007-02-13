@@ -88,7 +88,7 @@ public class RepositoryHelper {
 
     //noinspection HardCodedStringLiteral
     String url = DOWNLOAD_URL +
-                 URLEncoder.encode(pluginNode.getName(), "UTF8") +
+                 URLEncoder.encode(pluginNode.getPluginId().getIdString(), "UTF8") +
                  "&build=" + buildNumber;
     HttpURLConnection connection = (HttpURLConnection)new URL (url).openConnection();
     try
@@ -158,7 +158,7 @@ public class RepositoryHelper {
         int startPos = usedURL.lastIndexOf("/");
 
         fileName = usedURL.substring(startPos + 1);
-        if (fileName.length() == 0) {
+        if (fileName.length() == 0 || fileName.contains("?")) {
           throw new IOException("No filename returned by server");
         }
       } 
