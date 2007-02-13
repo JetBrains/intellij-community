@@ -497,6 +497,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       reportActionError(pluginId, "class with name \"" + className + "\" not found");
       return null;
     }
+    catch (NoClassDefFoundError e) {
+      reportActionError(pluginId, "class with name \"" + e.getMessage() + "\" not found");
+      return null;
+    }
     catch (Exception e) {
       final String message = "cannot create class \"" + className + "\"";
       if (pluginId == null) {
