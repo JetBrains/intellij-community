@@ -1946,7 +1946,11 @@ public class HighlightUtil {
     if ((fileIndex.isInLibrarySource(virtualFile) || fileIndex.isInLibraryClasses(virtualFile)) && !fileIndex.isInContent(virtualFile)) {
       return false;
     }
-    return true;
+    final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(project);
+    if (component == null) return true;
+
+    final FileHighlighingSetting settingForRoot = component.getHighlightingSettingForRoot(psiRoot);
+    return settingForRoot != FileHighlighingSetting.SKIP_INSPECTION;
   }
 
   public static void forceRootInspection(final PsiElement root, final boolean inspectionFlag) {
