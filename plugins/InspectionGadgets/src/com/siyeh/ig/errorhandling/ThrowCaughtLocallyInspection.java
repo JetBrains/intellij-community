@@ -97,8 +97,14 @@ public class ThrowCaughtLocallyInspection extends BaseInspection {
                                 return;
                             }
                         }
-                        registerStatementError(statement);
-                        return;
+                        final PsiClass containingClass =
+                                PsiTreeUtil.getParentOfType(statement,
+                                        PsiClass.class);
+                        if (PsiTreeUtil.isAncestor(containingClass,
+                                containingTryStatement, true)) {
+                            registerStatementError(statement);
+                            return;
+                        }
                     }
                 }
                 containingTryStatement =
