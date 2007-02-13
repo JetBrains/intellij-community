@@ -206,8 +206,31 @@ public class XmlSerializerTest extends TestCase {
       bean);
   }
 
-  public static class BeanWithProperty {
+
+  public static class BeanWithMapWithBeanValue {
+    public Map<String, BeanWithProperty> VALUES = new HashMap<String, BeanWithProperty>();
+
+  }
+  public void testMapWithBeanValue() throws Exception {
+    BeanWithMapWithBeanValue bean = new BeanWithMapWithBeanValue();
+
+    bean.VALUES.put("a", new BeanWithProperty("James"));
+    bean.VALUES.put("b", new BeanWithProperty("Bond"));
+    bean.VALUES.put("c", new BeanWithProperty("Bill"));
+
+    doSerializerTest(
+      "<BeanWithMapWithBeanValue><option name=\"VALUES\"><map><entry key=\"a\"><value><BeanWithProperty><option name=\"name\" value=\"James\"/></BeanWithProperty></value></entry><entry key=\"c\"><value><BeanWithProperty><option name=\"name\" value=\"Bill\"/></BeanWithProperty></value></entry><entry key=\"b\"><value><BeanWithProperty><option name=\"name\" value=\"Bond\"/></BeanWithProperty></value></entry></map></option></BeanWithMapWithBeanValue>",
+      bean);
+  }
+  public static class BeanWithProperty {                                
     private String name = "James";
+
+    public BeanWithProperty() {
+    }
+
+    public BeanWithProperty(final String name) {
+      this.name = name;
+    }
 
     public String getName() {
       return name;

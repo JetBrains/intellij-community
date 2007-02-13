@@ -115,7 +115,8 @@ class MapBinding implements Binding {
         k = myKeyBinding.deserialize(o, keyAttr);
       }
       else {
-        k = myKeyBinding.deserialize(o, entry.getElementsByTagName(getKeyAttributeValue()).item(0));
+        final Node keyNode = entry.getElementsByTagName(getKeyAttributeValue()).item(0);
+        k = myKeyBinding.deserialize(o, DOMUtil.getChildNodes(keyNode));
       }
 
       Attr valueAttr = entry.getAttributeNode(getValueAttributeName());
@@ -123,7 +124,8 @@ class MapBinding implements Binding {
         v = myValueBinding.deserialize(o, valueAttr);
       }
       else {
-        v = myValueBinding.deserialize(o, entry.getElementsByTagName(getValueAttributeName()).item(0));
+        final Node valueNode = entry.getElementsByTagName(getValueAttributeName()).item(0);
+        v = myValueBinding.deserialize(o, DOMUtil.getChildNodes(valueNode));
       }
 
       //noinspection unchecked
