@@ -73,6 +73,7 @@
       <reference id="Vcs.ShowHistoryForBlock"/>
       <reference id="Annotate"/>
       <action id="Subversion.Copy" class="org.jetbrains.idea.svn.actions.CopyAction"/>
+      <action id="Subversion.ConfigureBranches" class="org.jetbrains.idea.svn.actions.ConfigureBranchesAction"/>
       <separator/>
       <action id="Subversion.Lock" class="org.jetbrains.idea.svn.actions.LockAction"/>
       <action id="Subversion.Unlock" class="org.jetbrains.idea.svn.actions.UnlockAction"/>
@@ -89,5 +90,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <checkoutProvider implementation="org.jetbrains.idea.svn.checkout.SvnCheckoutProvider"/>
+    <projectService serviceInterface="org.jetbrains.idea.svn.SvnBranchConfigurationManager"
+                    serviceImplementation="org.jetbrains.idea.svn.SvnBranchConfigurationManager"/>
   </extensions>
 </idea-plugin>

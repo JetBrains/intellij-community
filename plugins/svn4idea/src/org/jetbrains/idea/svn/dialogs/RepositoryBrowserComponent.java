@@ -95,6 +95,12 @@ public class RepositoryBrowserComponent extends JPanel {
 
   @Nullable
   public String getSelectedURL() {
+    SVNURL selectedUrl = getSelectedSVNURL();
+    return selectedUrl == null ? null : selectedUrl.toString();
+  }
+
+  @Nullable
+  public SVNURL getSelectedSVNURL() {
     TreePath selection = myRepositoryTree.getSelectionPath();
     if (selection == null) {
       return null;
@@ -102,7 +108,7 @@ public class RepositoryBrowserComponent extends JPanel {
     Object element = selection.getLastPathComponent();
     if (element instanceof RepositoryTreeNode) {
       RepositoryTreeNode node = (RepositoryTreeNode) element;
-      return node.getURL().toString();
+      return node.getURL();
     }
     return null;
   }

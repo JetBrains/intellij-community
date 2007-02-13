@@ -15,16 +15,15 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.help.HelpManager;
-import com.intellij.util.ui.DialogUtil;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.annotations.NonNls;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.SVNURL;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 import javax.swing.*;
@@ -186,5 +185,9 @@ public class SelectLocationDialog extends DialogWrapper {
 
   public String getSelectedURL() {
     return myRepositoryBrowser.getSelectedURL();
+  }
+
+  public SVNURL getSelectedSVNURL() {
+    return myRepositoryBrowser.getSelectedSVNURL();
   }
 }
