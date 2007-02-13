@@ -13,11 +13,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.tools.Tool;
 import com.intellij.tools.ToolManager;
 import com.intellij.util.containers.HashMap;
@@ -83,27 +83,6 @@ public class ActionsTreeUtil {
 
   private static Group createBookmarksActionsGroup(Condition<AnAction> filtered) {
     return createGroup((ActionGroup)ActionManager.getInstance().getActionOrStub(IdeActions.GROUP_BOOKMARKS), true, filtered);
-  }
-
-  private static Group createGuiDesignerActionsGroup(Condition<AnAction> filtered, Group mainGroup) {
-    mainGroup.initIds();
-    Group group = new Group(KeyMapBundle.message("gui.designer.group.title"), IdeActions.GROUP_GUI_DESIGNER_EDITOR_POPUP, null, null);
-    ActionManager actionManager = ActionManager.getInstance();
-    DefaultActionGroup uiGroup = (DefaultActionGroup)actionManager.getActionOrStub(IdeActions.GROUP_GUI_DESIGNER_EDITOR_POPUP);
-    AnAction[] actions = uiGroup.getChildActionsOrStubs(null);
-    for (AnAction action : actions) {
-      String actionId = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
-      if (actionId == null || mainGroup.containsId(actionId)) continue;
-      if (filtered == null || filtered.value(action)) {
-        if (action instanceof ActionGroup) {
-          group.addGroup(createGroup((ActionGroup)action, false, filtered));
-        }
-        else {
-          group.addActionId(actionId);
-        }
-      }
-    }
-    return group;
   }
 
   private static Group createVcsGroup(Condition<AnAction> filtered) {
@@ -458,7 +437,6 @@ public class ActionsTreeUtil {
     mainGroup.addGroup(createVcsGroup(filtered));
     mainGroup.addGroup(createAntGroup(filtered, project));
     mainGroup.addGroup(createDebuggerActionsGroup(filtered));
-    mainGroup.addGroup(createGuiDesignerActionsGroup(filtered, mainGroup));
     mainGroup.addGroup(createBookmarksActionsGroup(filtered));
     mainGroup.addGroup(createExternalToolsGroup(filtered));
     mainGroup.addGroup(createMacrosGroup(filtered));

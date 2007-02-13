@@ -190,12 +190,6 @@ public interface IdeActions {
   String GROUP_GUI_DESIGNER_EDITOR_POPUP = "GuiDesigner.EditorPopupMenu";
   String GROUP_GUI_DESIGNER_COMPONENT_TREE_POPUP = "GuiDesigner.ComponentTreePopupMenu";
   String GROUP_GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP = "GuiDesigner.PropertyInspectorPopupMenu";
-  String ACTION_LAY_OUT_HORIZONTALLY = "GuiDesigner.LayOutHorizontally";
-  String ACTION_LAY_OUT_VERTICALLY = "GuiDesigner.LayOutVertically";
-  String ACTION_LAY_OUT_IN_GRID = "GuiDesigner.LayOutInGrid";
-  String ACTION_BREAK_LAYOUT = "GuiDesigner.BreakLayout";
-  String ACTION_PREVIEW_FORM = "GuiDesigner.PreviewForm";
-  String ACTION_DATA_BINDING_WIZARD = "GuiDesigner.DataBindingWizard";
 
   String ACTION_GOTO_BACK    = "Back";
   String ACTION_GOTO_FORWARD = "Forward";
