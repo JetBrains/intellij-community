@@ -4,6 +4,7 @@
 package com.intellij.codeInspection.unnecessaryModuleDependency;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
@@ -51,7 +52,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
 
   @NotNull
   public String getGroupDisplayName() {
-    return "";
+    return GroupNames.DECLARATION_REDUNDANCY;
   }
 
   @NotNull

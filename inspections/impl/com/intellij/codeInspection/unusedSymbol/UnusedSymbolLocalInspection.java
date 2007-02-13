@@ -5,6 +5,7 @@
 package com.intellij.codeInspection.unusedSymbol;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,20 +45,24 @@ public class UnusedSymbolLocalInspection extends UnfairLocalInspectionTool {
   public boolean PARAMETER = true;
   public JDOMExternalizableStringList INJECTION_ANNOS = new JDOMExternalizableStringList();
 
+  @NotNull
   public String getGroupDisplayName() {
-    return "";
+    return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return SHORT_NAME;
   }
 
 
+  @NotNull
   @NonNls
   public String getID() {
     return ID;

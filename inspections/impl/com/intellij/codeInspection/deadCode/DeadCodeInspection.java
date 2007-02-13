@@ -12,6 +12,7 @@ package com.intellij.codeInspection.deadCode;
 import com.intellij.ExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
@@ -205,7 +206,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   @NotNull
   public String getGroupDisplayName() {
-    return "";
+    return GroupNames.DECLARATION_REDUNDANCY;
   }
 
   @NotNull

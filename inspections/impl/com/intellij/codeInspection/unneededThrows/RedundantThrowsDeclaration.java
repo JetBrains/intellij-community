@@ -17,12 +17,14 @@ package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,14 +36,17 @@ import java.util.Set;
  * Date: 15-Nov-2005
  */
 public class RedundantThrowsDeclaration extends LocalInspectionTool {
+  @NotNull
   public String getGroupDisplayName() {
-    return "";
+    return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("redundant.throws.declaration");
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return "RedundantThrowsDeclaration";

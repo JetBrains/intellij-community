@@ -35,7 +35,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
 
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.GENERAL_GROUP_NAME;
+    return GroupNames.DECLARATION_REDUNDANCY;
   }
 
   @NotNull
