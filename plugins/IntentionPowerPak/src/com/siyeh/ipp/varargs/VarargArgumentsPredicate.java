@@ -35,19 +35,22 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
         if (!(grandParent instanceof PsiMethodCallExpression)) {
             return false;
         }
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression) grandParent;
+        final PsiMethodCallExpression methodCallExpression =
+                (PsiMethodCallExpression) grandParent;
         final PsiMethod method = methodCallExpression.resolveMethod();
         if (method == null || !method.isVarArgs()) {
             return false;
         }
-        final int index = indexOfExpressionInExpressionList(expression, expressionList);
+        final int index = indexOfExpressionInExpressionList(expression, 
+                expressionList);
         final PsiParameterList parameterList = method.getParameterList();
         final int parametersCount = parameterList.getParametersCount();
-        return index == parametersCount - 1;
+        return index >= parametersCount - 1;
     }
 
     private static int indexOfExpressionInExpressionList(
-            @NotNull PsiExpression expression, @NotNull PsiExpressionList expressionList) {
+            @NotNull PsiExpression expression,
+            @NotNull PsiExpressionList expressionList) {
         final PsiExpression[] expressions = expressionList.getExpressions();
         for (int i = 0; i < expressions.length; i++) {
             final PsiExpression listExpression = expressions[i];
