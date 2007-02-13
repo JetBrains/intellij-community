@@ -1,5 +1,6 @@
 package com.intellij.ide.util;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -7,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.project.Project;
@@ -14,22 +16,21 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
-import com.intellij.CommonBundle;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import org.jetbrains.annotations.Nullable;
 
 public class DeleteHandler {
   public static class DefaultDeleteProvider implements DeleteProvider {
@@ -201,7 +202,7 @@ public class DeleteHandler {
           }
         }
       },
-      IdeBundle.message("command.delete"),
+      RefactoringBundle.message("safe.delete.command", RefactoringUtil.calculatePsiElementDescriptionList(elements)),
       null
     );
   }
