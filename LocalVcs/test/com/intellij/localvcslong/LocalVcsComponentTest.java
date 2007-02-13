@@ -329,16 +329,24 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     final VirtualFile f = root.createChildData(null, "file.java");
     f.setBinaryContent("before".getBytes());
 
+    performAllPendingJobs();
+
     ContentChangesListener l = new ContentChangesListener(f);
     addFileListenerDuring(l, new Callable() {
       public Object call() throws Exception {
         changeContentExternally(f.getPath(), "after");
-        VirtualFileManager.getInstance().refresh(false);
+        forceRefreshVFS(false);
         return null;
       }
     });
+
+    // todo unrelyable test because content recorder before LvcsFileListener do it's job
     assertEquals("before", l.getContentBefore());
     assertEquals("after", l.getContentAfter());
+  }
+
+  private void performAllPendingJobs() {
+    forceRefreshVFS(false);
   }
 
   public void testContentOfFileCreatedDuringRefresh() throws Exception {

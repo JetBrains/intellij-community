@@ -1,7 +1,22 @@
 package com.intellij.localvcs;
 
 public class TestLocalVcs extends LocalVcs {
+  private long myTimestamp;
+
   public TestLocalVcs() {
-    super(new TestStorage());
+    this(new TestStorage());
+  }
+
+  public TestLocalVcs(Storage s) {
+    super(s);
+  }
+
+  @Override
+  public long getTimestamp() {
+    return myTimestamp;
+  }
+
+  public void setTimestamp(long t) {
+    myTimestamp = t;
   }
 }

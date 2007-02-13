@@ -12,4 +12,6 @@ public interface IContentStorage {
   byte[] load(int id) throws IOException;
 
   void remove(int id) throws IOException;
+
+  boolean has(int id) throws IOException;
 }

@@ -3,11 +3,12 @@ package com.intellij.localvcs;
 import static com.intellij.localvcs.Difference.Kind.*;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class LocalVcsHistoryTest extends LocalVcsTestCase {
+public class LocalVcsLabelsTest extends LocalVcsTestCase {
   // todo difference on root does not work!!!
-  private LocalVcs vcs = new TestLocalVcs();
+  private TestLocalVcs vcs = new TestLocalVcs();
 
   @Test
   public void testLabelingEmptyLocalVcsThrowsException() {
@@ -34,6 +35,62 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
     assertNull(labels.get(0).getName());
     assertEquals("label", labels.get(1).getName());
+  }
+
+  @Test
+  public void testLabelsTimestamp() {
+    vcs.setTimestamp(10);
+    vcs.createFile("file", null, null);
+    vcs.apply();
+
+    vcs.setTimestamp(20);
+    vcs.changeFileContent("file", null, null);
+    vcs.apply();
+
+    List<Label> labels = vcs.getLabelsFor("file");
+    assertEquals(20L, labels.get(0).getTimestamp());
+    assertEquals(10L, labels.get(1).getTimestamp());
+  }
+
+  @Test
+  public void testPurging() {
+    vcs.setTimestamp(10);
+    vcs.createFile("file", null, null);
+    vcs.apply();
+
+    vcs.setTimestamp(20);
+    vcs.changeFileContent("file", null, null);
+    vcs.apply();
+
+    vcs.purgeUpTo(15);
+
+    List<Label> labels = vcs.getLabelsFor("file");
+    assertEquals(1, labels.size());
+    assertEquals(20L, labels.get(0).getTimestamp());
+  }
+
+  @Test
+  public void testPurgingContents() {
+    final List<List<Content>> invocationParam = new ArrayList<List<Content>>();
+    vcs = new TestLocalVcs(new TestStorage() {
+      @Override
+      public void purgeContents(List<Content> contents) {
+        invocationParam.add(contents);
+      }
+    });
+
+    vcs.setTimestamp(10);
+    vcs.createFile("file", b("content"), null);
+    vcs.apply();
+
+    vcs.delete("file");
+    vcs.apply();
+
+    vcs.purgeUpTo(20);
+
+    assertEquals(1, invocationParam.size());
+    assertEquals(1, invocationParam.get(0).size());
+    assertEquals(c("content"), invocationParam.get(0).get(0));
   }
 
   @Test

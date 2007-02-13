@@ -17,6 +17,10 @@ public class Label {
     return myChangeSet.getLabel();
   }
 
+  public long getTimestamp() {
+    return myChangeSet.getTimestamp();
+  }
+
   public Entry getEntry() {
     RootEntry copy = myRoot.copy();
     myChangeList.revertEntryUpToChangeSet(copy, myChangeSet);

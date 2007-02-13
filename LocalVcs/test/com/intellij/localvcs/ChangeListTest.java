@@ -1,19 +1,12 @@
 package com.intellij.localvcs;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
 
 public class ChangeListTest extends LocalVcsTestCase {
-  private RootEntry r;
-  private ChangeList cl;
-
-  @Before
-  public void setUp() {
-    r = new RootEntry();
-    cl = new ChangeList();
-  }
+  private RootEntry r = new RootEntry();
+  private ChangeList cl = new ChangeList();
 
   @Test
   public void testRevertion() {
@@ -175,37 +168,6 @@ public class ChangeListTest extends LocalVcsTestCase {
     assertEquals(2, getChangeSetsFor("dir").size());
     assertEquals(cs2, getChangeSetsFor("dir").get(0));
     assertEquals(cs3, getChangeSetsFor("dir").get(1));
-  }
-
-  @Test
-  public void testPurge() {
-    ChangeSet cs1 = cs(1, new CreateFileChange(1, "f1", null, null));
-    ChangeSet cs2 = cs(2, new CreateFileChange(2, "f2", null, null));
-    ChangeSet cs3 = cs(3, new CreateFileChange(3, "f3", null, null));
-    ChangeSet cs4 = cs(4, new CreateFileChange(4, "f4", null, null));
-    cl.applyChangeSetTo(r, cs1);
-    cl.applyChangeSetTo(r, cs2);
-    cl.applyChangeSetTo(r, cs3);
-    cl.applyChangeSetTo(r, cs4);
-
-    cl.purgeUpTo(3);
-
-    assertEquals(2, cl.getChangeSets().size());
-    assertSame(cs3, cl.getChangeSets().get(0));
-    assertSame(cs4, cl.getChangeSets().get(1));
-  }
-
-  @Test
-  public void testPurgeUpToNearestUpperChangeSet() {
-    ChangeSet cs1 = cs(1, new CreateFileChange(1, "f1", null, null));
-    ChangeSet cs2 = cs(5, new CreateFileChange(2, "f2", null, null));
-    cl.applyChangeSetTo(r, cs1);
-    cl.applyChangeSetTo(r, cs2);
-
-    cl.purgeUpTo(3);
-
-    assertEquals(1, cl.getChangeSets().size());
-    assertSame(cs2, cl.getChangeSets().get(0));
   }
 
   private List<ChangeSet> getChangeSetsFor(String path) {

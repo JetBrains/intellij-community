@@ -4,6 +4,7 @@ import org.junit.After;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Arrays;
 
 public class StorageTest extends TempDirTestCase {
   private Storage s;
@@ -92,5 +93,18 @@ public class StorageTest extends TempDirTestCase {
 
     Content c = s.createContent(new byte[LongContent.MAX_LENGTH + 1]);
     assertEquals(LongContent.class, c.getClass());
+  }
+
+  @Test
+  public void testPurgingContents() {
+    s = new Storage(tempDir);
+    Content c1 = s.createContent(b("1"));
+    Content c2 = s.createContent(b("2"));
+    Content c3 = s.createContent(b("3"));
+    s.purgeContents(Arrays.asList(c1, c3));
+
+    assertFalse(s.hasContent(c1));
+    assertTrue(s.hasContent(c2));
+    assertFalse(s.hasContent(c3));
   }
 }

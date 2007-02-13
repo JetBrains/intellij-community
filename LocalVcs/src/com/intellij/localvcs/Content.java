@@ -23,7 +23,7 @@ public class Content {
   }
 
   public byte[] getBytes() {
-    return myStorage.loadContent(myId);
+    return myStorage.loadContentData(myId);
   }
 
   public int getLength() {
@@ -38,6 +38,10 @@ public class Content {
 
   public boolean isTooLong() {
     return false;
+  }
+
+  public int getId() {
+    return myId;
   }
 
   @Override

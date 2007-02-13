@@ -72,11 +72,6 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testRevertingClearsAllPendingChanges() {
-    // todo reimplement this test
-  }
-
-  @Test
   public void testCreatingFile() {
     vcs.createFile("file", b("content"), 123L);
     vcs.apply();

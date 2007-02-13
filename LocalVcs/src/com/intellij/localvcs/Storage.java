@@ -3,7 +3,9 @@ package com.intellij.localvcs;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.*;
+import java.util.List;
 
+// todo catch exceptions...
 public class Storage {
   private static final int VERSION = 5;
 
@@ -165,9 +167,29 @@ public class Storage {
     }
   }
 
-  protected byte[] loadContent(int id) {
+  protected byte[] loadContentData(int id) {
     try {
       return myContentStorage.load(id);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public void purgeContents(List<Content> contents) {
+    try {
+      for (Content c : contents) {
+        myContentStorage.remove(c.getId());
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public boolean hasContent(Content c) {
+    try {
+      return myContentStorage.has(c.getId());
     }
     catch (IOException e) {
       throw new RuntimeException(e);

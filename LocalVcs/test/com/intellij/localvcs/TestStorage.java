@@ -37,7 +37,7 @@ public class TestStorage extends Storage {
   }
 
   @Override
-  protected byte[] loadContent(int id) {
+  protected byte[] loadContentData(int id) {
     return myContents.get(id);
   }
 }

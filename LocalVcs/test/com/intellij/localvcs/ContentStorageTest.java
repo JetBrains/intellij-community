@@ -70,10 +70,10 @@ public class ContentStorageTest extends TempDirTestCase {
   @Test
   public void testRemoving() throws Exception {
     int id = s.store(new byte[]{1});
-    assertTrue(s.hasContent(id));
+    assertTrue(s.has(id));
 
     s.remove(id);
-    assertFalse(s.hasContent(id));
+    assertFalse(s.has(id));
   }
 
   @Test(expected = AssertionError.class)
@@ -91,6 +91,6 @@ public class ContentStorageTest extends TempDirTestCase {
     s.close();
 
     s = createStorage();
-    assertFalse(s.hasContent(id));
+    assertFalse(s.has(id));
   }
 }

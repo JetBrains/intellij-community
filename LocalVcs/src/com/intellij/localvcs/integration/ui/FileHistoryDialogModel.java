@@ -59,6 +59,11 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
     }
 
     @Override
+    public long getTimestamp() {
+      throw new RuntimeException("not yet implemented");
+    }
+
+    @Override
     public Entry getEntry() {
       // todo what about timestamp?
       // todo review content stuff

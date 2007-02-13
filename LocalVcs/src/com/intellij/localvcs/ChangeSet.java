@@ -70,4 +70,12 @@ public class ChangeSet {
       change.revertOn(e);
     }
   }
+
+  public List<Content> getContentsToPurge() {
+    List<Content> result = new ArrayList<Content>();
+    for (Change c : myChanges) {
+      result.addAll(c.getContentsToPurge());
+    }
+    return result;
+  }
 }

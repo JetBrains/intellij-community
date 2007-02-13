@@ -1,6 +1,8 @@
 package com.intellij.localvcs;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 public class ChangeFileContentChange extends Change {
   private Content myNewContent;
@@ -61,5 +63,10 @@ public class ChangeFileContentChange extends Change {
   @Override
   public void revertOn(RootEntry root) {
     root.changeFileContent(getAffectedIdPath(), myOldContent, myOldTimestamp);
+  }
+
+  @Override
+  public List<Content> getContentsToPurge() {
+    return Collections.singletonList(myOldContent);
   }
 }

@@ -1,6 +1,8 @@
 package com.intellij.localvcs;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DeleteChange extends Change {
   private Entry myAffectedEntry;
@@ -38,6 +40,7 @@ public class DeleteChange extends Change {
   }
 
   private void restoreEntryRecursively(RootEntry root, Entry e, IdPath parentPath) {
+    // todo try to cleanup this mess
     if (e.isDirectory()) {
       root.createDirectory(e.getId(), parentPath, e.getName(), e.getTimestamp());
       // todo could parentPath be null????
@@ -49,6 +52,24 @@ public class DeleteChange extends Change {
     }
     else {
       root.createFile(e.getId(), parentPath, e.getName(), e.getContent(), e.getTimestamp());
+    }
+  }
+
+  @Override
+  public List<Content> getContentsToPurge() {
+    List<Content> result = new ArrayList<Content>();
+    collectContentsRecursively(myAffectedEntry, result);
+    return result;
+  }
+
+  private void collectContentsRecursively(Entry e, List<Content> result) {
+    if (e.isDirectory()) {
+      for (Entry child : e.getChildren()) {
+        collectContentsRecursively(child, result);
+      }
+    }
+    else {
+      result.add(e.getContent());
     }
   }
 }

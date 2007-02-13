@@ -82,12 +82,16 @@ public class ContentStorage implements IContentStorage {
     myIds2Offsets.remove(id);
   }
 
-  private long getOffsetFor(int id) {
-    assert hasContent(id);
+  private long getOffsetFor(int id) throws IOException {
+    assert has(id);
     return myIds2Offsets.get(id);
   }
 
-  public boolean hasContent(int id) {
+  public boolean has(int id) throws IOException {
+    //myStore.seek(id);
+    //return new ContentDescriptor(myStore, true).isRemoved();
+
+
     return myIds2Offsets.containsKey(id);
   }
 

@@ -44,4 +44,8 @@ public class CachingContentStorage implements IContentStorage {
     mySubject.remove(id);
     myCache.remove(id);
   }
+
+  public boolean has(int id) throws IOException {
+    return mySubject.has(id);
+  }
 }

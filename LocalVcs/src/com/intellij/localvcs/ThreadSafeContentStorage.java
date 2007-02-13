@@ -1,7 +1,5 @@
 package com.intellij.localvcs;
 
-import com.intellij.localvcs.IContentStorage;
-
 import java.io.IOException;
 
 public class ThreadSafeContentStorage implements IContentStorage {
@@ -29,5 +27,9 @@ public class ThreadSafeContentStorage implements IContentStorage {
 
   public synchronized void remove(int id) throws IOException {
     mySubject.remove(id);
+  }
+
+  public synchronized boolean has(int id) throws IOException {
+    return mySubject.has(id);
   }
 }

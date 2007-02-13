@@ -1,6 +1,8 @@
 package com.intellij.localvcs;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class Change {
   protected String myPath;
@@ -32,5 +34,9 @@ public abstract class Change {
 
   protected IdPath getAffectedIdPath() {
     return myAffectedIdPath;
+  }
+
+  public List<Content> getContentsToPurge() {
+    return Collections.emptyList();
   }
 }

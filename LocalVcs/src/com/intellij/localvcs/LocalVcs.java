@@ -100,10 +100,14 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void apply() {
-    ChangeSet cs = new ChangeSet(0, myPendingChanges);
+    ChangeSet cs = new ChangeSet(getTimestamp(), myPendingChanges);
 
     myChangeList.applyChangeSetTo(myRoot, cs);
     clearPendingChanges();
+  }
+
+  protected long getTimestamp() {
+    return System.currentTimeMillis();
   }
 
   public void putLabel(String label) {
@@ -122,5 +126,10 @@ public class LocalVcs implements ILocalVcs {
 
     Collections.reverse(result);
     return result;
+  }
+
+  public void purgeUpTo(long timestamp) {
+    List<Content> contentsToPurge = myChangeList.purgeUpTo(timestamp);
+    myStorage.purgeContents(contentsToPurge);
   }
 }

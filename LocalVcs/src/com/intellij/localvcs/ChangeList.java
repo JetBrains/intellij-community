@@ -57,12 +57,20 @@ public class ChangeList {
     last.setLabel(label);
   }
 
-  public void purgeUpTo(long timestamp) {
-    List<ChangeSet> newList = new ArrayList<ChangeSet>();
+  public List<Content> purgeUpTo(long timestamp) {
+    List<ChangeSet> newChangeSets = new ArrayList<ChangeSet>();
+    List<Content> purgedContents = new ArrayList<Content>();
+
     for (ChangeSet cs : myChangeSets) {
-      if (cs.getTimestamp() < timestamp) continue;
-      newList.add(cs);
+      if (cs.getTimestamp() < timestamp) {
+        purgedContents.addAll(cs.getContentsToPurge());
+      }
+      else {
+        newChangeSets.add(cs);
+      }
     }
-    myChangeSets = newList;
+    myChangeSets = newChangeSets;
+
+    return purgedContents;
   }
 }
