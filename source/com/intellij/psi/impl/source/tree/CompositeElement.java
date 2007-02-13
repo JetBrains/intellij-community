@@ -18,8 +18,6 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-
 public class CompositeElement extends TreeElement implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositeElement");
 
@@ -31,9 +29,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
   private int myModificationsCount = 0;
   private int myCachedLength = -1;
   private int myHC = -1;
-  // care with renaming myWrapper field
-  private static final AtomicReferenceFieldUpdater<CompositeElement, PsiElement> psiFieldUpdater = AtomicReferenceFieldUpdater.newUpdater(CompositeElement.class, PsiElement.class, "myWrapper");
-  private volatile PsiElement myWrapper = null;
+  private PsiElement myWrapper = null;
 
   public CompositeElement(@NotNull IElementType type) {
     this.type = type;
@@ -374,23 +370,23 @@ public class CompositeElement extends TreeElement implements Cloneable {
     return lastChild;
   }
 
-  public void addChild(ASTNode child, ASTNode anchorBefore) {
+  public void addChild(@NotNull ASTNode child, ASTNode anchorBefore) {
     ChangeUtil.addChild(this, (TreeElement)child, (TreeElement)anchorBefore);
   }
 
-  public void addChild(ASTNode child) {
+  public void addChild(@NotNull ASTNode child) {
     ChangeUtil.addChild(this, (TreeElement)child, null);
   }
 
-  public void removeChild(ASTNode child) {
+  public void removeChild(@NotNull ASTNode child) {
     ChangeUtil.removeChild(this, (TreeElement)child);
   }
 
-  public void removeRange(ASTNode first, ASTNode firstWhichStayInTree) {
+  public void removeRange(@NotNull ASTNode first, ASTNode firstWhichStayInTree) {
     ChangeUtil.removeChildren(this, (TreeElement)first, (TreeElement)firstWhichStayInTree);
   }
 
-  public void replaceChild(ASTNode oldChild, ASTNode newChild) {
+  public void replaceChild(@NotNull ASTNode oldChild, @NotNull ASTNode newChild) {
     ChangeUtil.replaceChild(this, (TreeElement)oldChild, (TreeElement)newChild);
   }
 
@@ -404,15 +400,16 @@ public class CompositeElement extends TreeElement implements Cloneable {
 
   public PsiElement getPsi() {
     if (myWrapper != null) return myWrapper;
-    final Language lang = getElementType().getLanguage();
-    final ParserDefinition parserDefinition = lang.getParserDefinition();
-    if (parserDefinition != null) {
-      PsiElement psi = parserDefinition.createElement(this);
-      //noinspection ConstantConditions
-      LOG.assertTrue(psi != null, "ParserDefinition.createElement() may not return null");
-      psiFieldUpdater.compareAndSet(this, null, psi);
-      LOG.assertTrue(myWrapper != null);
+    synchronized (PsiLock.LOCK) {
+      if (myWrapper != null) return myWrapper;
+      final Language lang = getElementType().getLanguage();
+      final ParserDefinition parserDefinition = lang.getParserDefinition();
+      if (parserDefinition != null) {
+        myWrapper = parserDefinition.createElement(this);
+        //noinspection ConstantConditions
+        LOG.assertTrue(myWrapper != null, "ParserDefinition.createElement() may not return null");
+      }
+      return myWrapper;
     }
-    return myWrapper;
   }
 }
