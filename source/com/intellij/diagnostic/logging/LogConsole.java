@@ -12,11 +12,8 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
@@ -25,6 +22,8 @@ import com.intellij.ui.FilterComponent;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
@@ -33,16 +32,14 @@ import java.util.ArrayList;
  * User: anna
  * Date: Apr 19, 2005
  */
-public abstract class LogConsole extends AdditionalTabComponent {
+public abstract class LogConsole extends AdditionalTabComponent implements ChangeListener {
   private ConsoleView myConsole;
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();
   private ReaderThread myReaderThread;
   private final boolean mySkipContents;
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-  private Document myOriginalDocument = null;
+  private StringBuffer myOriginalDocument = null;
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private String myPrevType = null;
 
   private FilterComponent myFilter = new FilterComponent("LOG_FILTER_HISTORY", 5) {
@@ -57,7 +54,6 @@ public abstract class LogConsole extends AdditionalTabComponent {
     }
   };
 
-  private static final long PROCESS_IDLE_TIMEOUT = 1000;
   private String myTitle = null;
   private Project myProject;
   private String myPath;
@@ -72,8 +68,6 @@ public abstract class LogConsole extends AdditionalTabComponent {
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     myConsole = builder.getConsole();
     myConsole.attachToProcess(myProcessHandler);
-
-    ApplicationManager.getApplication().executeOnPooledThread(myReaderThread);
   }
 
   private JComponent createToolbar(){
@@ -130,6 +124,19 @@ public abstract class LogConsole extends AdditionalTabComponent {
 
   public abstract boolean isActive();
 
+  public void activate() {
+    if (isActive()) {
+      myReaderThread.startRunning();
+      ApplicationManager.getApplication().executeOnPooledThread(myReaderThread);     
+    } else {
+      myReaderThread.stopRunning();
+    }
+  }
+
+  public void stateChanged(final ChangeEvent e) {
+    activate();
+  }
+
   public String getTabTitle() {
     return myTitle;
   }
@@ -140,7 +147,15 @@ public abstract class LogConsole extends AdditionalTabComponent {
 
   public void dispose() {
     myConsole.dispose();
-    myReaderThread.stopRunning(false);
+    if (myReaderThread.myFileStream != null) {
+      try {
+        myReaderThread.myFileStream.close();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+      myReaderThread.myFileStream = null;
+    }
     myFilter.dispose();
     myConsole = null;
     myReaderThread = null;
@@ -148,8 +163,8 @@ public abstract class LogConsole extends AdditionalTabComponent {
   }
 
   public void stopRunning(){
-    if (myReaderThread != null) {
-      myReaderThread.stopRunning(true);
+    if (myReaderThread != null && !isActive()) {
+      myReaderThread.stopRunning();
     }
   }
 
@@ -165,15 +180,7 @@ public abstract class LogConsole extends AdditionalTabComponent {
     }
     myOriginalDocument = getOriginalDocument();
     if (myOriginalDocument != null){
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              myOriginalDocument.insertString(myOriginalDocument.getTextLength(), text + "\n");
-            }
-          });
-        }
-      }, ModalityState.NON_MODAL);
+      myOriginalDocument.append(text).append("\n");
     }
   }
 
@@ -189,11 +196,11 @@ public abstract class LogConsole extends AdditionalTabComponent {
     }
   }
 
-  private Document getOriginalDocument(){
+  private StringBuffer getOriginalDocument(){
     if (myOriginalDocument == null) {
       final Editor editor = (Editor)((ConsoleViewImpl)myConsole).getData(DataConstants.EDITOR);
       if (editor != null){
-        myOriginalDocument = new DocumentImpl(editor.getDocument().getText());
+        myOriginalDocument = new StringBuffer(editor.getDocument().getText());
       }
     }
     return myOriginalDocument;
@@ -201,16 +208,17 @@ public abstract class LogConsole extends AdditionalTabComponent {
 
   private void filterConsoleOutput(Condition<String> isApplicable) {
     myOriginalDocument = getOriginalDocument();
-    if (myOriginalDocument != null){
+    if (myOriginalDocument != null) {
       myConsole.clear();
-      final int lineCount = myOriginalDocument.getLineCount();
-      for (int line = 0; line < lineCount; line++) {
-        final String text =
-          myOriginalDocument.getCharsSequence().subSequence(myOriginalDocument.getLineStartOffset(line), myOriginalDocument.getLineEndOffset(line)).toString();
-        final String contentType = LogConsolePreferences.getType(text);
-        if (isApplicable.value(text)){
-          myConsole.print(text + "\n", contentType != null ? LogConsolePreferences.getContentType(contentType) :
-                                       (myPrevType == LogConsolePreferences.ERROR ? ConsoleViewContentType.ERROR_OUTPUT : ConsoleViewContentType.NORMAL_OUTPUT));
+      final String[] lines = myOriginalDocument.toString().split("\n");
+      for (String line : lines) {
+        final String contentType = LogConsolePreferences.getType(line);
+        if (isApplicable.value(line)) {
+          myConsole.print(line + "\n", contentType != null
+                                       ? LogConsolePreferences.getContentType(contentType)
+                                       : (myPrevType == LogConsolePreferences.ERROR
+                                          ? ConsoleViewContentType.ERROR_OUTPUT
+                                          : ConsoleViewContentType.NORMAL_OUTPUT));
         }
         if (contentType != null) {
           myPrevType = contentType;
@@ -261,12 +269,12 @@ public abstract class LogConsole extends AdditionalTabComponent {
       }
     }
 
-    public synchronized void run() {
+    public void run() {
       if (myFileStream == null) return;
       while (myRunning){
         try {
-          long endTime = System.currentTimeMillis() + PROCESS_IDLE_TIMEOUT/1000;
-          while (System.currentTimeMillis() < endTime){
+          int i = 0;
+          while (i++ < 100){
             if (myRunning && myFileStream != null && myFileStream.ready()){
               addMessage(myFileStream.readLine());
             } else {
@@ -274,10 +282,7 @@ public abstract class LogConsole extends AdditionalTabComponent {
             }
           }
           synchronized (this) {
-            wait(PROCESS_IDLE_TIMEOUT);
-            while (myRunning && !isActive()){
-              wait(PROCESS_IDLE_TIMEOUT/4);
-            }
+            wait(100);
           }
         }
         catch (IOException e) {
@@ -289,24 +294,12 @@ public abstract class LogConsole extends AdditionalTabComponent {
       }
     }
 
-    public synchronized void stopRunning(boolean flush){
+    public void startRunning() {
+      myRunning = true;
+    }
+
+    public void stopRunning() {
       myRunning = false;
-      try {
-        if (myFileStream != null){
-          if (flush) {//flush everything to log on stop
-            String line = myFileStream.readLine();
-            while (line != null){
-              addMessage(line);
-              line = myFileStream.readLine();
-            }
-          }
-          myFileStream.close();
-          myFileStream = null;
-        }
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
     }
   }
 }

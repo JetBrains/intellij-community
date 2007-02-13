@@ -146,6 +146,7 @@ public class RunContentBuilder implements LogConsoleManager {
     };
     log.attachStopLogConsoleTrackingListener(myExecutionResult.getProcessHandler());
     addAdditionalTabComponent(log);
+    ((JTabbedPane)myComponent).addChangeListener(log);
   }
 
   public void removeLogConsole(final String path) {
@@ -160,6 +161,7 @@ public class RunContentBuilder implements LogConsoleManager {
       }
     }
     if (componentToRemove != null) {
+      ((JTabbedPane)myComponent).removeChangeListener(componentToRemove);
       removeAdditionalTabComponent(componentToRemove);
     }
   }

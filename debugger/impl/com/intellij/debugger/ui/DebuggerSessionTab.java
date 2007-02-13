@@ -98,6 +98,8 @@ public class DebuggerSessionTab implements LogConsoleManager {
   private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
 
   private Map<AdditionalTabComponent, Content>  myAdditionalContent = new HashMap<AdditionalTabComponent, Content>();
+  private Map<AdditionalTabComponent, ContentManagerListener>  myContentListeners = new HashMap<AdditionalTabComponent, ContentManagerListener>();
+
   private final LogFilesManager myManager;
 
   public DebuggerSessionTab(Project project) {
@@ -262,8 +264,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
     final LogConsole log = new LogConsole(project, new File(path), skipContent, name){
       public boolean isActive() {
         final Content selectedContent = myViewsContentManager.getSelectedContent();
-        if (selectedContent == null){
-          stopRunning();
+        if (selectedContent == null) {
           return false;
         }
         return selectedContent.getComponent() == this;
@@ -271,7 +272,14 @@ public class DebuggerSessionTab implements LogConsoleManager {
     };
     log.attachStopLogConsoleTrackingListener(myRunContentDescriptor.getProcessHandler());
     addAdditionalTabComponent(log);
- }
+    final ContentManagerAdapter l = new ContentManagerAdapter() {
+      public void selectionChanged(final ContentManagerEvent event) {
+        log.activate();
+      }
+    };
+    myContentListeners.put(log, l);
+    myViewsContentManager.addContentManagerListener(l);
+  }
 
   public void removeLogConsole(final String path) {
     LogConsole componentToRemove = null;
@@ -285,6 +293,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
       }
     }
     if (componentToRemove != null) {
+      myViewsContentManager.removeContentManagerListener(myContentListeners.remove(componentToRemove));
       removeAdditionalTabComponent(componentToRemove);
     }
   }
