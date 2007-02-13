@@ -217,6 +217,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myComponentsRegistry.registerComponent(config);
   }
 
+  public IComponentStore getComponentStore() {
+    return myComponentStore;
+  }
+
   @NotNull
   public synchronized Class[] getComponentInterfaces() {
     LOG.warn("Deprecated method usage: getComponentInterfaces", new Throwable());

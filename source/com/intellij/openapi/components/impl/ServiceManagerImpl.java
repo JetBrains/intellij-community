@@ -1,14 +1,15 @@
 package com.intellij.openapi.components.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceDescriptor;
+import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.Disposable;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,7 @@ public class ServiceManagerImpl implements BaseComponent {
 
     myExtensionPointListener = new ExtensionPointListener<ServiceDescriptor>() {
       public void extensionAdded(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor) {
-        picoContainer.registerComponent(new MyComponentAdapter(descriptor, pluginDescriptor, componentManager));
+        picoContainer.registerComponent(new MyComponentAdapter(descriptor, pluginDescriptor, (ComponentManagerEx)componentManager));
       }
 
       public void extensionRemoved(final ServiceDescriptor extension, final PluginDescriptor pluginDescriptor) {
@@ -75,10 +76,10 @@ public class ServiceManagerImpl implements BaseComponent {
     private ComponentAdapter myDelegate;
     private final ServiceDescriptor myDescriptor;
     private PluginDescriptor myPluginDescriptor;
-    private final ComponentManager myComponentManager;
-    private boolean myRegisteredInDisposer = false;
+    private final ComponentManagerEx myComponentManager;
+    private boolean myInitialized = false;
 
-    public MyComponentAdapter(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor, ComponentManager componentManager) {
+    public MyComponentAdapter(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor, ComponentManagerEx componentManager) {
       myDescriptor = descriptor;
       myPluginDescriptor = pluginDescriptor;
       myComponentManager = componentManager;
@@ -105,16 +106,17 @@ public class ServiceManagerImpl implements BaseComponent {
     }
 
     public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
-      final Object componentInstance = getDelegate().getComponentInstance(container);
+      final Object serviceInstance = getDelegate().getComponentInstance(container);
 
-      if (!myRegisteredInDisposer) {
-        if (componentInstance instanceof Disposable) {
-          Disposer.register(myComponentManager, (Disposable)componentInstance);
+      if (!myInitialized) {
+        if (serviceInstance instanceof Disposable) {
+          Disposer.register(myComponentManager, (Disposable)serviceInstance);
         }
-        myRegisteredInDisposer = true;
+        myComponentManager.getComponentStore().initComponent(serviceInstance);
+        myInitialized = true;
       }
 
-      return componentInstance;
+      return serviceInstance;
     }
 
     private synchronized ComponentAdapter getDelegate() {
