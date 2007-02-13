@@ -28,7 +28,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
-import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.jsp.JspFile;
@@ -855,27 +854,31 @@ public class TypedHandler implements TypedActionHandler {
   private static void handleAfterLParen(Editor editor, FileType fileType, char lparenChar){
     int offset = editor.getCaretModel().getOffset();
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
+    boolean atEnd = offset == editor.getDocument().getTextLength();
 
-    iterator.retreat();
+    if (!atEnd) iterator.retreat();
     BraceMatchingUtil.BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
     IElementType braceTokenType = braceMatcher.getTokenType(lparenChar, iterator);
-    if (iterator.atEnd() || iterator.getTokenType() != braceTokenType) return;
-    iterator.advance();
+    if (iterator.getTokenType() != braceTokenType) return;
 
-    IElementType tokenType = !iterator.atEnd() ? iterator.getTokenType() : null;
-    if (tokenType instanceof IJavaElementType) {
-      if (!TokenTypeEx.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType)
-          && tokenType != JavaTokenType.SEMICOLON
-          && tokenType != JavaTokenType.COMMA
-          && tokenType != JavaTokenType.RPARENTH
-          && tokenType != JavaTokenType.RBRACKET
-          && tokenType != JavaTokenType.RBRACE
-      ) {
-        return;
+    if (!iterator.atEnd()) {
+      iterator.advance();
+
+      IElementType tokenType = !iterator.atEnd() ? iterator.getTokenType() : null;
+      if (tokenType instanceof IJavaElementType) {
+        if (!TokenTypeEx.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType)
+            && tokenType != JavaTokenType.SEMICOLON
+            && tokenType != JavaTokenType.COMMA
+            && tokenType != JavaTokenType.RPARENTH
+            && tokenType != JavaTokenType.RBRACKET
+            && tokenType != JavaTokenType.RBRACE
+        ) {
+          return;
+        }
       }
-    }
 
-    iterator.retreat();
+      iterator.retreat();
+    }
 
     int lparenOffset = BraceMatchingUtil.findLeftmostLParen(iterator, braceTokenType, editor.getDocument().getCharsSequence(),fileType);
     if (lparenOffset < 0) lparenOffset = 0;
