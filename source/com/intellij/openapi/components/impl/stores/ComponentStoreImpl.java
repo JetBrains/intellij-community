@@ -133,7 +133,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   private void saveJdomExternalizable(final JDOMExternalizable component) {
-    final String componentName = ((BaseComponent)component).getComponentName();
+    final String componentName = getComponentName(component);
     StateStorage stateStorage = getOldStorage(component);
 
     try {
@@ -159,14 +159,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   void initJdomExternalizable(JDOMExternalizable component) {
-    final String componentName;
-
-    if (!(component instanceof BaseComponent)) {
-      componentName = component.getClass().getName();
-    }
-    else {
-      componentName = ((BaseComponent)component).getComponentName();
-    }
+    final String componentName = getComponentName(component);
 
     myComponents.put(componentName, component);
 
@@ -196,6 +189,18 @@ abstract class ComponentStoreImpl implements IComponentStore {
         throw new InvalidComponentDataException(e);
       }
     }
+  }
+
+  private String getComponentName(final JDOMExternalizable component) {
+    final String componentName;
+
+    if (!(component instanceof BaseComponent)) {
+      componentName = component.getClass().getName();
+    }
+    else {
+      componentName = ((BaseComponent)component).getComponentName();
+    }
+    return componentName;
   }
 
   private void loadJdomDefaults(final Object component, final String componentName) {
