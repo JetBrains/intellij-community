@@ -87,14 +87,12 @@
     </cacheBuilder>
 
     <referencesSearch implementation="com.intellij.uiDesigner.binding.FormReferencesSearcher"/>
+    <inspectionToolProvider implementation="com.intellij.uiDesigner.inspections.FormInspectionProvider"/>
   </extensions>
 
   <application-components>
     <component>
       <implementation-class>com.intellij.uiDesigner.editor.UIFormEditorProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.inspections.FormInspectionProvider</implementation-class>
     </component>
   </application-components>
 
