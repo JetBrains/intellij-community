@@ -15,51 +15,63 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.svn.SVNGanymedSession;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNException;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
 
-public class SvnApplicationSettings implements ApplicationComponent, JDOMExternalizable {
-
+@State(
+  name="SvnApplicationSettings",
+  storages = {
+    @Storage(
+      id="SvnApplicationSettings",
+      file="$APP_CONFIG$/other.xml"
+    )}
+)
+public class SvnApplicationSettings implements PersistentStateComponent<SvnApplicationSettings.ConfigurationBean> {
   private SvnFileSystemListener myVFSHandler;
   private Map<String, Map<String, Map<String, String>>> myAuthenticationInfo;
-  private List<String> myCheckoutURLs;
   private int mySvnProjectCount;
 
+  public static class ConfigurationBean {
+    public List<String> myCheckoutURLs = new ArrayList<String>();
+  }
+
+  private ConfigurationBean myConfigurationBean;
+
   public static SvnApplicationSettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(SvnApplicationSettings.class);
+    return ServiceManager.getService(SvnApplicationSettings.class);
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "SvnApplicationSettings";
+  public SvnApplicationSettings() {
+    myConfigurationBean = new ConfigurationBean();
   }
 
-  public void initComponent() {
+  public ConfigurationBean getState() {
+    writeCredentials();
+    return myConfigurationBean;
   }
 
-  public void disposeComponent() {
-    SVNGanymedSession.shutdown();
+  public void loadState(ConfigurationBean object) {
+    myConfigurationBean = object;
+    readCredentials();
   }
 
   public void svnActivated() {
@@ -77,23 +89,9 @@ public class SvnApplicationSettings implements ApplicationComponent, JDOMExterna
       LocalFileSystem.getInstance().unregisterAuxiliaryFileOperationsHandler(myVFSHandler);
       CommandProcessor.getInstance().removeCommandListener(myVFSHandler);
       myVFSHandler = null;
+      SVNGanymedSession.shutdown();
     }
   }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    readCredentials();
-
-    myCheckoutURLs = new ArrayList<String>();
-    List urls = element.getChildren("checkoutURL");
-    for (Object url1 : urls) {
-      Element child = (Element)url1;
-      String url = child.getText();
-      if (url != null) {
-        myCheckoutURLs.add(url);
-      }
-    }
-  }
-
   private void readCredentials() {
     File file = getCredentialsFile();
     if (!file.exists() || !file.canRead() || !file.isFile()) {
@@ -147,18 +145,6 @@ public class SvnApplicationSettings implements ApplicationComponent, JDOMExterna
               infoMap.put(key, value);
           }
           groupMap.put(realmName, infoMap);
-      }
-    }
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    writeCredentials();
-
-    if (myCheckoutURLs != null) {
-      for (final String url : myCheckoutURLs) {
-        Element urlElement = new Element("checkoutURL");
-        urlElement.setText(url);
-        element.addContent(urlElement);
       }
     }
   }
@@ -275,29 +261,23 @@ public class SvnApplicationSettings implements ApplicationComponent, JDOMExterna
   }
 
   public Collection<String> getCheckoutURLs() {
-    if (myCheckoutURLs == null) {
-      myCheckoutURLs = new LinkedList<String>();
-    }
-    return myCheckoutURLs;
+    return myConfigurationBean.myCheckoutURLs;
   }
 
   public void addCheckoutURL(String url) {
-    if (myCheckoutURLs == null) {
-      myCheckoutURLs = new LinkedList<String>();
-    }
-    if (myCheckoutURLs.contains(url)) {
+    if (myConfigurationBean.myCheckoutURLs.contains(url)) {
       return;
     }
-    myCheckoutURLs.add(0, url);
+    myConfigurationBean.myCheckoutURLs.add(0, url);
   }
 
   public void removeCheckoutURL(String url) {
-    if (myCheckoutURLs != null) {
+    if (myConfigurationBean.myCheckoutURLs != null) {
       // 'url' is not necessary an exact match for some of the urls in collection - it has been parsed and then converted back to string
-      for(String oldUrl: myCheckoutURLs) {
+      for(String oldUrl: myConfigurationBean.myCheckoutURLs) {
         try {
           if (url.equals(oldUrl) || SVNURL.parseURIEncoded(url).equals(SVNURL.parseURIEncoded(oldUrl))) {
-            myCheckoutURLs.remove(oldUrl);
+            myConfigurationBean.myCheckoutURLs.remove(oldUrl);
             break;
           }
         }

@@ -8,17 +8,6 @@
   <idea-version min="5.0" max="5.0"/>
   <resource-bundle>org.jetbrains.idea.svn.SvnBundle</resource-bundle>
 
-  <extensions xmlns="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-  </extensions>
-
-  <application-components>
-    <component>
-      <implementation-class>org.jetbrains.idea.svn.SvnApplicationSettings</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-  </application-components>
-
   <project-components>
     <component>
       <implementation-class>org.jetbrains.idea.svn.SvnVcs</implementation-class>
@@ -89,7 +78,10 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <checkoutProvider implementation="org.jetbrains.idea.svn.checkout.SvnCheckoutProvider"/>
+    <applicationService serviceInterface="org.jetbrains.idea.svn.SvnApplicationSettings"
+                        serviceImplementation="org.jetbrains.idea.svn.SvnApplicationSettings"/>
     <projectService serviceInterface="org.jetbrains.idea.svn.SvnBranchConfigurationManager"
                     serviceImplementation="org.jetbrains.idea.svn.SvnBranchConfigurationManager"/>
   </extensions>
