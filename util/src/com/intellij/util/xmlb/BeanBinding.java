@@ -101,10 +101,16 @@ class BeanBinding implements Binding {
     return _deserializeInto(instantiateBean(), nodes);
   }
 
-  private Object _deserializeInto(final Object result, final Node... nodes) {
-    assert nodes.length == 1;
-    assert nodes[0] instanceof Element : "Wrong node: " + nodes;
-    Element e = (Element)nodes[0];
+  private Object _deserializeInto(final Object result, final Node... aNodes) {
+    List<Node> nodes = new ArrayList<Node>();
+    for (Node aNode : aNodes) {
+      if (XmlSerializerImpl.isIgnoredNode(aNode)) continue;
+      nodes.add(aNode);
+    }
+
+    assert nodes.size() == 1;
+    assert nodes.get(0) instanceof Element : "Wrong node: " + nodes;
+    Element e = (Element)nodes.get(0);
 
     ArrayList<Binding> bindings = new ArrayList<Binding>(myPropertyBindings.keySet());
 
