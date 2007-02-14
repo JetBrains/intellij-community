@@ -1,7 +1,6 @@
 package com.intellij.uiDesigner;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -14,6 +13,7 @@ import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -21,14 +21,14 @@ import java.util.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class Properties implements ApplicationComponent, JDOMExternalizable{
+public final class Properties implements BaseComponent, JDOMExternalizable{
   private final HashMap<String,String> myClass2InplaceProperty;
   private final HashMap<String,HashSet<String>> myClass2ExpertProperties;
   private Map<String, Map<String, IntEnumEditor.Pair[]>> myClass2EnumProperties;
   private Map<String, Set<String>> myClass2DeprecatedProperties;
 
   public static Properties getInstance() {
-    return ApplicationManager.getApplication().getComponent(Properties.class);
+    return ServiceManager.getService(Properties.class);
   }
 
   public Properties(){
@@ -95,15 +95,6 @@ public final class Properties implements ApplicationComponent, JDOMExternalizabl
     return null;
   }
 
-  @NotNull
-  public String getComponentName(){
-    return "gui-designer-properties";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() { }
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(final Element element) {
     for (final Object classObject : element.getChildren("class")) {
@@ -164,5 +155,16 @@ public final class Properties implements ApplicationComponent, JDOMExternalizabl
 
   public void writeExternal(final Element element) throws WriteExternalException{
     throw new WriteExternalException();
+  }
+
+  @NonNls @NotNull
+  public String getComponentName() {
+    return "gui-designer-properties";
+  }
+
+  public void initComponent() {
+  }
+
+  public void disposeComponent() {
   }
 }

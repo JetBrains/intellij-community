@@ -37,6 +37,9 @@
     <runConfigurationExtension implementation="com.intellij.uiDesigner.snapShooter.SnapShooterConfigurationExtension"/>
     <usageTypeProvider implementation="com.intellij.uiDesigner.binding.FormUsageTypeProvider"/>
 
+    <applicationService serviceInterface="com.intellij.uiDesigner.Properties"
+                   serviceImplementation="com.intellij.uiDesigner.Properties"/>
+
     <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty"
                     serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty"/>
     <projectService serviceInterface="com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty"
@@ -77,9 +80,6 @@
   <application-components>
     <component>
       <implementation-class>com.intellij.uiDesigner.editor.UIFormEditorProvider</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.Properties</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.uiDesigner.binding.FormClassAnnotator</implementation-class>
