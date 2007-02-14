@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="ModuleRootManager" />
+  <component inherit-compiler-output="true" name="NewModuleRootManager">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder isTestSource="false" url="file://$MODULE_DIR$/src" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry forTests="false" type="sourceFolder" />
+    <orderEntry module-name="idea" type="module" />
+    <orderEntry module-name="plugins-management" type="module" />
+    <orderEntryProperties />
+  </component>
+</module>
+
