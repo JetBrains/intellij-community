@@ -26,16 +26,6 @@ import java.util.*;
 
 public class EvaluatorBuilderImpl implements EvaluatorBuilder {
   private static final EvaluatorBuilderImpl ourInstance = new EvaluatorBuilderImpl();
-  private static final Map<String, String> ourPrimitiveTypeMapping = new HashMap<String, String>() {{
-    put("boolean", "java.lang.Boolean");
-    put("byte", "java.lang.Byte");
-    put("char", "java.lang.Character");
-    put("double", "java.lang.Double");
-    put("float", "java.lang.Float");
-    put("int", "java.lang.Integer");
-    put("long", "java.lang.Long");
-    put("short", "java.lang.Short");
-  }};
 
   private EvaluatorBuilderImpl() {
   }
