@@ -8,13 +8,12 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.Query;
-import com.intellij.util.QueryFactory;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
  */
-public class SuperMethodsSearch extends QueryFactory<MethodSignatureBackedByPsiMethod, SuperMethodsSearch.SearchParameters> {
+public class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSignatureBackedByPsiMethod, SuperMethodsSearch.SearchParameters> {
   public static SuperMethodsSearch SUPER_METHODS_SEARCH_INSTANCE = new SuperMethodsSearch();
 
   public static class SearchParameters {

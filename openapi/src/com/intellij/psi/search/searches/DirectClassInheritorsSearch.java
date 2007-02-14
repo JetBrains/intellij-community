@@ -7,12 +7,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Query;
-import com.intellij.util.QueryFactory;
 
 /**
  * @author max
  */
-public class DirectClassInheritorsSearch extends QueryFactory<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
+public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   public static DirectClassInheritorsSearch INSTANCE = new DirectClassInheritorsSearch();
 
   public static class SearchParameters {

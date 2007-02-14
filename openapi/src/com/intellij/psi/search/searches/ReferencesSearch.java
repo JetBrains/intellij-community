@@ -5,15 +5,14 @@ package com.intellij.psi.search.searches;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Query;
-import com.intellij.util.QueryFactory;
 
 /**
  * @author max
  */
-public class ReferencesSearch extends QueryFactory<PsiReference, ReferencesSearch.SearchParameters> {
+public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, ReferencesSearch.SearchParameters> {
   public static ReferencesSearch INSTANCE = new ReferencesSearch();
 
   private ReferencesSearch() {

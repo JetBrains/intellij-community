@@ -8,12 +8,11 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Query;
-import com.intellij.util.QueryFactory;
 
 /**
  * @author max
  */
-public class MethodReferencesSearch extends QueryFactory<PsiReference, MethodReferencesSearch.SearchParameters> {
+public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference, MethodReferencesSearch.SearchParameters> {
   public static MethodReferencesSearch INSTANCE = new MethodReferencesSearch();
 
   public static class SearchParameters {

@@ -7,17 +7,14 @@ import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.EmptyQuery;
 import com.intellij.util.Query;
-import com.intellij.util.QueryFactory;
 
 /**
  * @author max
  */
-public class OverridingMethodsSearch extends QueryFactory<PsiMethod, OverridingMethodsSearch.SearchParameters> {
+public class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMethod, OverridingMethodsSearch.SearchParameters> {
   public static OverridingMethodsSearch INSTANCE = new OverridingMethodsSearch();
   private static EmptyQuery<PsiMethod> EMPTY = new EmptyQuery<PsiMethod>();
 

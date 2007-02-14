@@ -19,7 +19,6 @@ package com.intellij.psi.search.searches;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Query;
-import com.intellij.util.QueryFactory;
 
 /**
  * The search is used in two IDE navigation functions namely Go To Implementation (Ctrl+Alt+B) and
@@ -28,7 +27,7 @@ import com.intellij.util.QueryFactory;
  *
  * @author max
  */
-public class DefinitionsSearch extends QueryFactory<PsiElement, PsiElement> {
+public class DefinitionsSearch extends ExtensibleQueryFactory<PsiElement, PsiElement> {
   public static DefinitionsSearch INSTANCE = new DefinitionsSearch();
 
   public static Query<PsiElement> search(PsiElement definitionsOf) {

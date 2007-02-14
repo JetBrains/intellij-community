@@ -11,14 +11,18 @@ import java.util.ArrayList;
  * @author max
  */
 public class QueryFactory<Result, Parameters> {
-  private ArrayList<QueryExecutor<Result, Parameters>> myExecutors = new ArrayList<QueryExecutor<Result, Parameters>>();
+  protected final ArrayList<QueryExecutor<Result, Parameters>> myExecutors = new ArrayList<QueryExecutor<Result, Parameters>>();
 
   public final void registerExecutor(QueryExecutor<Result, Parameters> executor) {
-    myExecutors.add(executor);
+    synchronized(myExecutors) {
+      myExecutors.add(executor);
+    }
   }
 
   public final void unregisterExecutor(QueryExecutor<Result, Parameters> executor) {
-    myExecutors.remove(executor);
+    synchronized(myExecutors) {
+      myExecutors.remove(executor);
+    }
   }
 
   /**
@@ -26,7 +30,13 @@ public class QueryFactory<Result, Parameters> {
    * @param parameters of the search
    */
   public final Query<Result> createQuery(Parameters parameters) {
-    return new ExecutorsQuery<Result, Parameters>(parameters, myExecutors);
+    return new ExecutorsQuery<Result, Parameters>(parameters, getExecutors());
+  }
+
+  protected ArrayList<QueryExecutor<Result, Parameters>> getExecutors() {
+    synchronized(myExecutors) {
+      return myExecutors;
+    }
   }
 
   /**
@@ -34,7 +44,7 @@ public class QueryFactory<Result, Parameters> {
    * @param parameters of the search
    */
   public final Query<Result> createUniqueResultsQuery(Parameters parameters) {
-    return new UniqueResultsQuery<Result>(new ExecutorsQuery<Result, Parameters>(parameters, myExecutors));
+    return new UniqueResultsQuery<Result>(new ExecutorsQuery<Result, Parameters>(parameters, getExecutors()));
   }
 
   /**
@@ -43,6 +53,6 @@ public class QueryFactory<Result, Parameters> {
    * @param hashingStrategy strategy to factor results
    */
   public final Query<Result> createUniqueResultsQuery(Parameters parameters, TObjectHashingStrategy<Result> hashingStrategy) {
-    return new UniqueResultsQuery<Result>(new ExecutorsQuery<Result, Parameters>(parameters, myExecutors), hashingStrategy);
+    return new UniqueResultsQuery<Result>(new ExecutorsQuery<Result, Parameters>(parameters, getExecutors()), hashingStrategy);
   }
 }

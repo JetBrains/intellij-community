@@ -7,14 +7,13 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.EmptyQuery;
 import com.intellij.util.Query;
-import com.intellij.util.QueryFactory;
 
 /**
  * @author ven
  * Searches deeply for all overriding methods of all methods in a class, processing pairs
  * (method in original class, overriding method)
  */
-public class AllOverridingMethodsSearch extends QueryFactory<Pair<PsiMethod, PsiMethod>, AllOverridingMethodsSearch.SearchParameters> {
+public class AllOverridingMethodsSearch extends ExtensibleQueryFactory<Pair<PsiMethod, PsiMethod>, AllOverridingMethodsSearch.SearchParameters> {
   public static AllOverridingMethodsSearch INSTANCE = new AllOverridingMethodsSearch();
   private static EmptyQuery<Pair<PsiMethod, PsiMethod>> EMPTY = new EmptyQuery<Pair<PsiMethod, PsiMethod>>();
 

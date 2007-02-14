@@ -8,13 +8,12 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Query;
-import com.intellij.util.QueryFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
-public class AnnotatedMembersSearch extends QueryFactory<PsiMember, AnnotatedMembersSearch.Parameters> {
+public class AnnotatedMembersSearch extends ExtensibleQueryFactory<PsiMember, AnnotatedMembersSearch.Parameters> {
   public static AnnotatedMembersSearch INSTANCE = new AnnotatedMembersSearch();
 
   public static class Parameters {

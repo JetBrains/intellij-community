@@ -20,7 +20,7 @@ import java.util.Collection;
 /**
  * @author max
  */
-public class ClassInheritorsSearch extends QueryFactory<PsiClass, ClassInheritorsSearch.SearchParameters> {
+public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, ClassInheritorsSearch.SearchParameters> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.searches.ClassInheritorsSearch");
 
   public static ClassInheritorsSearch INSTANCE = new ClassInheritorsSearch();
