@@ -24,6 +24,10 @@ import java.util.EventListener;
  */
 public interface ConfigFileListener extends EventListener {
 
+  void configFileAdded(ConfigFile configFile);
+
+  void configFileRemoved(ConfigFile configFile);
+
   void configFileChanged(ConfigFile descriptor);
 
 }

@@ -10,8 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlDocument;
@@ -89,7 +87,8 @@ public class ConfigFileImpl implements ConfigFile {
 
   @Nullable
   public XmlFile getXmlFile() {
-    return (XmlFile)getPsiFile();
+    final PsiFile file = getPsiFile();
+    return file instanceof XmlFile? ((XmlFile)file) : null;
   }
 
   public void dispose() {

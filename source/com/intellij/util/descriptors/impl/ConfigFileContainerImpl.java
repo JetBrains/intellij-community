@@ -7,6 +7,7 @@ package com.intellij.util.descriptors.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.descriptors.*;
 import org.jetbrains.annotations.Nullable;
@@ -74,6 +75,10 @@ public class ConfigFileContainerImpl implements ConfigFileContainer {
     return myProject;
   }
 
+  public void addListener(final ConfigFileListener listener, final Disposable parentDisposable) {
+    myDispatcher.addListener(listener, parentDisposable);
+  }
+
   public void fireDescriptorChanged(final ConfigFile descriptor) {
     myDispatcher.getMulticaster().configFileChanged(descriptor);
   }
@@ -100,6 +105,8 @@ public class ConfigFileContainerImpl implements ConfigFileContainer {
 
   public void updateDescriptors(final MultiValuesMap<ConfigFileMetaData, ConfigFileInfo> descriptorsMap) {
     Set<ConfigFile> toDelete = new HashSet<ConfigFile>(myConfigFiles.values());
+    Set<ConfigFile> added = new HashSet<ConfigFile>();
+
     for (Map.Entry<ConfigFileMetaData, Collection<ConfigFileInfo>> entry : descriptorsMap.entrySet()) {
       ConfigFileMetaData metaData = entry.getKey();
       Set<ConfigFileInfo> newDescriptors = new HashSet<ConfigFileInfo>(entry.getValue());
@@ -113,13 +120,22 @@ public class ConfigFileContainerImpl implements ConfigFileContainer {
         }
       }
       for (ConfigFileInfo configuration : newDescriptors) {
-        myConfigFiles.put(metaData, new ConfigFileImpl(this, configuration));
+        final ConfigFileImpl configFile = new ConfigFileImpl(this, configuration);
+        myConfigFiles.put(metaData, configFile);
+        added.add(configFile);
       }
     }
 
     for (ConfigFile descriptor : toDelete) {
       myConfigFiles.remove(descriptor.getMetaData(), descriptor);
     }
+
     myCachedConfigFiles = null;
+    for (ConfigFile configFile : added) {
+      myDispatcher.getMulticaster().configFileAdded(configFile);
+    }
+    for (ConfigFile configFile : toDelete) {
+      myDispatcher.getMulticaster().configFileRemoved(configFile);
+    }
   }
 }

@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 public interface ConfigFileContainer extends Disposable {
   Project getProject();
 
+  void addListener(ConfigFileListener listener, Disposable parentDisposable);
+
   void addListener(ConfigFileListener listener);
 
   void removeListener(ConfigFileListener listener);
