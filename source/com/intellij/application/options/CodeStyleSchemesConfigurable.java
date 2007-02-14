@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -442,7 +443,7 @@ public class CodeStyleSchemesConfigurable implements SearchableConfigurable {
   }
 
   public static CodeStyleSchemesConfigurable getInstance() {
-    return ApplicationManager.getApplication().getComponent(CodeStyleSchemesConfigurable.class);
+    return ShowSettingsUtil.getInstance().findApplicationConfigurable(CodeStyleSchemesConfigurable.class);
   }
 
   public void selectPage(Class pageToSelect) {
