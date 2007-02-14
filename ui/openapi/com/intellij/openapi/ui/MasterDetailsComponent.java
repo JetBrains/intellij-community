@@ -444,10 +444,14 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     myOptionsPanel.add(configurable.createComponent(), BorderLayout.CENTER);
     if (!isInitialized(configurable)) {
       configurable.reset();
-      myInitializedConfigurables.add(configurable);
+      initializeConfigurable(configurable);
     }
     myOptionsPanel.revalidate();
     myOptionsPanel.repaint();
+  }
+
+  protected void initializeConfigurable(final NamedConfigurable configurable) {
+    myInitializedConfigurables.add(configurable);
   }
 
   public boolean canApply(Set<MyNode> rootNodes, String prefix, String title) {
