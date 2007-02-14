@@ -42,6 +42,7 @@ import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.*;
@@ -898,6 +899,10 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
       scope.accept(new PsiRecursiveElementVisitor() {
         public void visitReferenceExpression(PsiReferenceExpression expression) {
+        }
+
+        public void visitJspFile(final JspFile file) {
+          visitFile(file);
         }
 
         @Override

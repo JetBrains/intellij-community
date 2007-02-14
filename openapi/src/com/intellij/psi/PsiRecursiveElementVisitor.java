@@ -15,8 +15,8 @@
  */
 package com.intellij.psi;
 
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.containers.Stack;
+import com.intellij.psi.jsp.JspFile;
 
 
 /**
@@ -49,6 +49,7 @@ public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
     }
   }
 
+  //override in order to visit each root directly in visitor 
   public void visitJspFile(JspFile file) {
     super.visitJspFile(file);
     visitClass(file.getJavaClass());
