@@ -65,7 +65,7 @@ public class DefaultFileTypeFactory implements NullableFunction<String, Pair<Fac
         public FileType create() {
           return new XmlFileType();
         }
-      }, "xml;xsd;tld;xsl;jnlp;wsdl;hs;jhm;ant");
+      }, "xml;xsd;tld;xsl;jnlp;wsdl;hs;jhm;ant;mxm");
     }
     if ("DTD".equals(s)) {
       return new Pair<Factory<FileType>, String>(new Factory<FileType>() {
