@@ -75,6 +75,11 @@
 
     <moduleService serviceInterface="com.intellij.uiDesigner.StringDescriptorManager"
                    serviceImplementation="com.intellij.uiDesigner.StringDescriptorManager"/>
+
+    <annotator>
+      <language>JAVA</language>
+      <annotatorClass>com.intellij.uiDesigner.binding.FormClassAnnotator</annotatorClass>
+    </annotator>
   </extensions>
 
   <application-components>

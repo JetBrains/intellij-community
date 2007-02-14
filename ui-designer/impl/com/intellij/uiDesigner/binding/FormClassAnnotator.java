@@ -9,7 +9,6 @@ import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -32,7 +31,7 @@ public class FormClassAnnotator implements ApplicationComponent, Annotator {
   private FormReferencesSearcher myRefSearcher;
 
   @SuppressWarnings({"UNUSED_SYMBOL", "UnusedParameters", "UnusedDeclaration"})
-  public FormClassAnnotator(final FileTypeManager fileTypeManager) {
+  public FormClassAnnotator(/*final FileTypeManager fileTypeManager*/) {
     // dependency ensures that we get created after FileTypeManager and StdFileTypes.JAVA already exists
   }
 
@@ -42,14 +41,12 @@ public class FormClassAnnotator implements ApplicationComponent, Annotator {
   }
 
   public void initComponent() {
-    StdFileTypes.JAVA.getLanguage().injectAnnotator(this);
     myRefSearcher = new FormReferencesSearcher();
     ReferencesSearch.INSTANCE.registerExecutor(myRefSearcher);
     CacheBuilderRegistry.getInstance().registerCacheBuilder(StdFileTypes.GUI_DESIGNER_FORM, new FormWordsScanner());
   }
 
   public void disposeComponent() {
-    StdFileTypes.JAVA.getLanguage().removeAnnotator(this);
     ReferencesSearch.INSTANCE.unregisterExecutor(myRefSearcher);
   }
 
