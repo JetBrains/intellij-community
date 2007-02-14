@@ -53,8 +53,10 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
   }
 
   public PsiElement[] searchImplementations(final Editor editor, final PsiFile file, final PsiElement element, final int offset) {
-    boolean isInvokedOnReferenceElement = TargetElementUtil.findTargetElement(editor, FLAGS & ~TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED, offset) == null;
-    return searchImplementations(editor, file, element, offset, false, isInvokedOnReferenceElement);
+    boolean onRef = TargetElementUtil.findTargetElement(editor, FLAGS & ~TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED, offset) == null;
+    final boolean isAbstract =
+      element instanceof PsiModifierListOwner && ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.ABSTRACT);
+    return searchImplementations(editor, file, element, offset, onRef && !isAbstract, onRef);
   }
 
   @NotNull
