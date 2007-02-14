@@ -125,6 +125,7 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
   public abstract boolean isActive();
 
   public void activate() {
+    if (myReaderThread == null) return;
     if (isActive()) {
       myReaderThread.startRunning();
       ApplicationManager.getApplication().executeOnPooledThread(myReaderThread);     
