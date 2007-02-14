@@ -59,7 +59,7 @@ public class SocketLock {
     if (mySocket == null) {
       if (!myIsDialogShown) {
         final String productName = ApplicationNamesInfo.getInstance().getProductName();
-        if (Main.isHeadless()) { //team server inspections
+        if (MainImpl.isHeadless()) { //team server inspections
           throw new RuntimeException("Only one instance of " + productName + " can be run at a time.");
         }
         @NonNls final String pathToLogFile = PathManager.getSystemPath() + "/log/idea.log file".replace('/', File.separatorChar);

@@ -19,6 +19,9 @@ import java.util.List;
 public class StartupActionScriptManager {
   @NonNls private static final String ACTION_SCRIPT_FILE = "action.script";
 
+  private StartupActionScriptManager() {
+  }
+
   public static synchronized void executeActionScript() throws IOException {
     List<ActionCommand> commands = loadActionScript();
 

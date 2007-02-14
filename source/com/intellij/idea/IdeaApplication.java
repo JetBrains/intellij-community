@@ -114,7 +114,7 @@ public class IdeaApplication {
     }
 
     public void premain(String[] args) {
-      if (Main.shouldShowSplash(args)) {
+      if (MainImpl.shouldShowSplash(args)) {
         final Splash splash = new Splash(ApplicationInfoImpl.getShadowInstance().getLogoUrl());
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
