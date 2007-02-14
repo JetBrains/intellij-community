@@ -9,10 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +38,9 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     LOG.assertTrue(endElement.isPhysical(), "Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree");
 
     if (startElement.getTextRange().getStartOffset() >= endElement.getTextRange().getEndOffset()) {
-      LOG.error("Empty PSI elements should not be passed to createDescriptor");
+      if (!(startElement instanceof PsiFile && endElement instanceof PsiFile)) {
+        LOG.error("Empty PSI elements should not be passed to createDescriptor");
+      }
     }
 
     myHighlightType = highlightType;
