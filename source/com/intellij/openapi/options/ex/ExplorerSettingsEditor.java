@@ -215,6 +215,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
       configurable.disposeUIResources();
     }
 
+    mySelectedConfigurable = null;
     myOptionContainers = null;
     myInitializedConfigurables2Component.clear();
     super.dispose();
