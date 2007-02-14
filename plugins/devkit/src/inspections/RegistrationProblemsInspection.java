@@ -250,7 +250,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
                   ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
         } else {
           final PsiClass componentClass = myPsiManager.findClass(type.myClassName, myScope);
-          if (componentClass != null && !implClass.isInheritor(componentClass, true)) {
+          if (componentClass != null && !implClass.isInheritor(componentClass, true) && type != ComponentType.APPLICATION) {
             addProblem(impl,
                     DevKitBundle.message("inspections.registration.problems.component.should.implement", type.myClassName),
                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
