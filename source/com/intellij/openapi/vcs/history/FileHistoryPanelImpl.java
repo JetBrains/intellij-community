@@ -561,8 +561,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
     public boolean isEnabled() {
       if (!super.isEnabled()) return false;
-      if (!myHistorySession.isContentAvailable((VcsFileRevision) getSelection().get(0)) ||
-          !myHistorySession.isContentAvailable((VcsFileRevision) getSelection().get(1))) {
+      if (!myHistorySession.isContentAvailable(getSelectedRevision(0)) ||
+          !myHistorySession.isContentAvailable(getSelectedRevision(1))) {
         return false;
       }
       return true;
@@ -831,6 +831,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     List selection = getSelection();
     if (selection.isEmpty()) return null;
     return ((TreeNodeOnVcsRevision)selection.get(0)).myRevision;
+  }
+
+  private VcsFileRevision getSelectedRevision(int index) {
+    List selection = getSelection();
+    if (selection.isEmpty()) return null;
+    return ((TreeNodeOnVcsRevision)selection.get(index)).myRevision;
   }
 
   class TreeNodeOnVcsRevision extends DefaultMutableTreeNode
