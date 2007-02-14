@@ -17,6 +17,9 @@ public class PathManagerEx {
   @NonNls private static final String TESTDATA_DIRECTORY = "testData";
   @NonNls private static final String RT_DIRECTORY = "rt";
 
+  private PathManagerEx() {
+  }
+
   public static String getTestDataPath() {
     return PathManager.getHomePath() + File.separatorChar + TESTDATA_DIRECTORY;
   }
@@ -27,8 +30,7 @@ public class PathManagerEx {
   public static String getPluginTempPath () {
     String systemPath = PathManager.getSystemPath();
 
-    String filePath = systemPath + File.separator + PathManager.PLUGINS_DIRECTORY;
-    return filePath;
+    return systemPath + File.separator + PathManager.PLUGINS_DIRECTORY;
   }
 
 }
