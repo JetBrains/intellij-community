@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.SeparatorFactory;
 
 import javax.swing.*;
@@ -156,14 +157,18 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     int indexInSelection = changes.indexOf(leadSelection);
     if (indexInSelection >= 0) {
       Change[] changesArray = changes.toArray(new Change[changes.size()]);
-      ShowDiffAction.showDiffForChange(changesArray, indexInSelection, myProject, new DiffToolbarActionsFactory(), false);
+      ShowDiffAction.showDiffForChange(changesArray, indexInSelection, myProject, new DiffToolbarActionsFactory(), isInFrame());
     }
     else {
-      ShowDiffAction.showDiffForChange(new Change[]{leadSelection}, 0, myProject, new DiffToolbarActionsFactory(), false);
+      ShowDiffAction.showDiffForChange(new Change[]{leadSelection}, 0, myProject, new DiffToolbarActionsFactory(), isInFrame());
     }
   }
 
-  private class DiffToolbarActionsFactory implements ShowDiffAction.AdditionalToolbarActionsFactory {
+  public boolean isInFrame() {
+    return ModalityState.current().equals(ModalityState.NON_MODAL);
+  }
+
+private class DiffToolbarActionsFactory implements ShowDiffAction.AdditionalToolbarActionsFactory {
     public List<? extends AnAction> createActions(Change change) {
       return createDiffActions(change);
     }

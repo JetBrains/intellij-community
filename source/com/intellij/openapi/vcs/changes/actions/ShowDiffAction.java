@@ -148,6 +148,9 @@ public class ShowDiffAction extends AnAction {
       if (showFrame) {
         diffReq.addHint(DiffTool.HINT_SHOW_FRAME);
       }
+      else {
+        diffReq.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);
+      }
       tool.show(diffReq);
     }
   }
