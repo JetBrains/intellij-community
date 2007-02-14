@@ -17,11 +17,12 @@ package com.intellij.lang;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
-public class LanguageDialect extends Language {
+public abstract class LanguageDialect extends Language {
   private final Language myBaseLanguage;
 
-  public LanguageDialect(@NotNull String id, @NotNull Language baseLanguage) {
+  public LanguageDialect(@NonNls @NotNull String id, @NotNull Language baseLanguage) {
     super(id);
     myBaseLanguage = baseLanguage;
   }
