@@ -8,6 +8,8 @@ import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -54,7 +56,14 @@ class ProjectStateStorageManager extends StateStorageManager {
         }
       }
 
+      final NodeList oldElements = element.getElementsByTagName(USED_MACROS_ELEMENT_NAME);
+      for (int i = 0; i < oldElements.getLength(); i++) {
+        final Node oldElement = oldElements.item(i);
+        oldElement.getParentNode().removeChild(oldElement);
+      }
+
       if (!usedMacros.isEmpty()) {
+
         Element usedMacrosElement = element.getOwnerDocument().createElement(USED_MACROS_ELEMENT_NAME);
 
         for (String usedMacro : usedMacros) {
