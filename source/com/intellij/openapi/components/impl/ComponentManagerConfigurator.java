@@ -4,6 +4,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.ComponentManagerConfig;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.DOMUtil;
 import com.intellij.util.containers.HashMap;

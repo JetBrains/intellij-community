@@ -7,6 +7,7 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -53,6 +54,7 @@ public class PluginManager {
   private static final Object PLUGIN_CLASSES_LOCK = new Object();
   private static String myPluginError = null;
   private static final String CORE_PLUGIN_ID = "com.intellij";
+  static final Object lock = new Object();
 
   private static Logger getLogger() {
     if (ourLogger == null) {
@@ -66,6 +68,19 @@ public class PluginManager {
   @SuppressWarnings({"WeakerAccess"}) static String[] ourArguments;
   @SuppressWarnings({"WeakerAccess"}) static String ourMainClass;
   @SuppressWarnings({"WeakerAccess"}) static String ourMethodName;
+
+  public static void initPluginClasses () {
+    synchronized(lock) {
+      File file = new File (getPluginClassesPath());
+      if (file.exists())
+        file.delete();
+    }
+  }
+
+  @NonNls
+  static String getPluginClassesPath() {
+    return PathManagerEx.getPluginTempPath() + File.separator + "plugin.classes";
+  }
 
   private static class Facade extends PluginsFacade {
     public IdeaPluginDescriptor getPlugin(PluginId id) {
@@ -639,7 +654,7 @@ public class PluginManager {
 
       // prepare plugins
       if (!isLoadingOfExternalPluginsDisabled()) {
-        PluginInstaller.initPluginClasses();
+        initPluginClasses();
         StartupActionScriptManager.executeActionScript();
       }
 

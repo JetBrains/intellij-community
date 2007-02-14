@@ -1,6 +1,6 @@
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.components.impl.ComponentManagerConfig;
+import com.intellij.openapi.components.ComponentManagerConfig;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;

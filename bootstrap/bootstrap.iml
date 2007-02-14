@@ -8,8 +8,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry forTests="false" type="sourceFolder" />
-    <orderEntry module-name="idea" type="module" />
-    <orderEntry module-name="plugins-management" type="module" />
+    <orderEntry module-name="extensions" type="module" />
+    <orderEntry module-name="util" type="module" />
+    <orderEntry module-name="openapi" type="module" />
     <orderEntryProperties />
   </component>
 </module>

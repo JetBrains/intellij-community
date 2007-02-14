@@ -4,14 +4,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.io.ZipUtil;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
@@ -28,7 +26,6 @@ import java.util.*;
  * To change this template use Options | File Templates.
  */
 public class PluginInstaller {
-  private static final Object lock = new Object();
 
   private PluginInstaller() {}
 
@@ -139,7 +136,7 @@ public class PluginInstaller {
       }
     }
 
-    synchronized (lock) {
+    synchronized (PluginManager.lock) {
       File oldFile = null;
       if (PluginManager.isPluginInstalled(pluginNode.getPluginId())) {
         //store old plugins file
@@ -211,7 +208,7 @@ public class PluginInstaller {
   }
 
   public static void prepareToUninstall (PluginId pluginId) throws IOException {
-    synchronized (lock) {
+    synchronized (PluginManager.lock) {
       if (PluginManager.isPluginInstalled(pluginId)) {
         // add command to delete the 'action script' file
         IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
@@ -222,23 +219,10 @@ public class PluginInstaller {
     }
   }
 
-  public static void initPluginClasses () {
-    synchronized(lock) {
-      File file = new File (getPluginClassesPath());
-      if (file.exists())
-        file.delete();
-    }
-  }
-
-  @NonNls
-  private static String getPluginClassesPath() {
-    return PathManagerEx.getPluginTempPath() + File.separator + "plugin.classes";
-  }
-
   @SuppressWarnings({"unchecked"})
   public static Map<String, String> loadPluginClasses () throws IOException, ClassNotFoundException {
-    synchronized(lock) {
-      File file = new File (getPluginClassesPath());
+    synchronized(PluginManager.lock) {
+      File file = new File (PluginManager.getPluginClassesPath());
       if (file.exists()) {
         ObjectInputStream ois = new ObjectInputStream (new FileInputStream (file));
         try {

@@ -43,7 +43,7 @@ REQUIRED_JVM_ARGS="-Xbootclasspath/p:../lib/boot.jar: $IDEA_PROPERTIES_PROPERTY"
 JVM_ARGS=`tr '\n' ' ' < "$IDEA_VM_OPTIONS"`
 JVM_ARGS="$JVM_ARGS $REQUIRED_JVM_ARGS"
 
-CLASSPATH=../lib/idea.jar
+CLASSPATH=../lib/bootstrap.jar
 CLASSPATH=$CLASSPATH:../lib/openapi.jar
 CLASSPATH=$CLASSPATH:../lib/jdom.jar
 CLASSPATH=$CLASSPATH:../lib/log4j.jar
