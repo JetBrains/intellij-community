@@ -130,7 +130,6 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
 
   public void amnesty(RefEntity refEntity) {
     getIgnoredElements().remove(refEntity);
-    super.amnesty(refEntity);
   }
 
   public void ignoreProblem(RefEntity refEntity, CommonProblemDescriptor problem, int idx) {

@@ -10,9 +10,9 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.Collection;
 
 /**
  * @author max
@@ -79,12 +79,11 @@ public abstract class FilteringInspectionTool extends InspectionTool {
 
   public void ignoreCurrentElement(RefEntity refEntity) {
     if (refEntity == null) return;
-    myIgnoreElements.add((RefElement)refEntity);
+    myIgnoreElements.add(refEntity);
   }
 
   public void amnesty(RefEntity refEntity) {
-    myIgnoreElements.remove((RefElement)refEntity);
-    super.amnesty(refEntity);
+    myIgnoreElements.remove(refEntity);    
   }
 
   public void cleanup() {

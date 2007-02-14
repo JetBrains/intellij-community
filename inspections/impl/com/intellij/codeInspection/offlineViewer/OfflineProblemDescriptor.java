@@ -110,6 +110,7 @@ public class OfflineProblemDescriptor {
   public OfflineProblemDescriptor getOwner() {
     if (myParentType != null && myParentFQName != null) {
       final OfflineProblemDescriptor descriptor = new OfflineProblemDescriptor();
+      descriptor.setLine(myLine);
       descriptor.setFQName(myParentFQName[0]);
       descriptor.setType(myParentType[0]);
       if (myParentType.length > 1 && myParentFQName.length > 1) {

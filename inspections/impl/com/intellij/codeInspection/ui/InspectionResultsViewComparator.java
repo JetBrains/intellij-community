@@ -8,13 +8,18 @@
  */
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.SingleInspectionProfilePanel;
 import com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptor;
+import com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptorNode;
 import com.intellij.codeInspection.offlineViewer.OfflineRefElementNode;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
@@ -39,7 +44,8 @@ public class InspectionResultsViewComparator implements Comparator {
       return SingleInspectionProfilePanel.getDisplayTextToSort(node1.toString())
       .compareToIgnoreCase(SingleInspectionProfilePanel.getDisplayTextToSort(node2.toString()));
 
-    if (node1 instanceof OfflineRefElementNode && node2 instanceof OfflineRefElementNode) {
+    if ((node1 instanceof OfflineRefElementNode && node2 instanceof OfflineRefElementNode) ||
+        (node1 instanceof OfflineProblemDescriptorNode && node2 instanceof OfflineProblemDescriptorNode)) {
       final Object userObject1 = node1.getUserObject();
       final Object userObject2 = node2.getUserObject();
       if (userObject1 instanceof OfflineProblemDescriptor && userObject2 instanceof OfflineProblemDescriptor) {
@@ -48,11 +54,11 @@ public class InspectionResultsViewComparator implements Comparator {
         if (descriptor1.getLine() != descriptor2.getLine()) return descriptor1.getLine() - descriptor2.getLine();
         return descriptor1.getFQName().compareTo(descriptor2.getFQName());
       }
-      if (userObject1 instanceof OfflineProblemDescriptor) { //todo sort properly
-        return 1;
+      if (userObject1 instanceof OfflineProblemDescriptor) {
+        return compareLineNumbers(userObject2, (OfflineProblemDescriptor)userObject1);
       }
       if (userObject2 instanceof OfflineProblemDescriptor) {
-        return -1;
+        return -compareLineNumbers(userObject1, (OfflineProblemDescriptor)userObject2);
       }
     }
 
@@ -81,9 +87,33 @@ public class InspectionResultsViewComparator implements Comparator {
         }
       }
     }
-    if (node1 instanceof ProblemDescriptionNode && node2 instanceof ProblemDescriptionNode) return 0;
+    if (node1 instanceof ProblemDescriptionNode && node2 instanceof ProblemDescriptionNode) {
+      final CommonProblemDescriptor descriptor1 = ((ProblemDescriptionNode)node1).getDescriptor();
+      final CommonProblemDescriptor descriptor2 = ((ProblemDescriptionNode)node2).getDescriptor();
+      if (descriptor1 instanceof ProblemDescriptor && descriptor2 instanceof ProblemDescriptor) {
+        return ((ProblemDescriptor)descriptor1).getLineNumber() - ((ProblemDescriptor)descriptor2).getLineNumber();
+      }
+      if (descriptor1 != null && descriptor2 != null) {
+        return descriptor1.getDescriptionTemplate().compareToIgnoreCase(descriptor2.getDescriptionTemplate());
+      }
+      return 0;
+    }
 
-    return node1.toString().compareTo(node2.toString());
+    return 0;
+  }
+
+  private static int compareLineNumbers(final Object userObject, final OfflineProblemDescriptor descriptor) {
+    if (userObject instanceof RefElement) {
+      final RefElement refElement = (RefElement)userObject;
+      final PsiElement psiElement = refElement.getElement();
+      if (psiElement != null) {
+        Document document = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(psiElement.getContainingFile());
+        if (document != null) {
+          return descriptor.getLine() - document.getLineNumber(psiElement.getTextOffset()) -1;
+        }
+      }
+    }
+    return -1;
   }
 
   public static InspectionResultsViewComparator getInstance() {

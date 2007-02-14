@@ -96,6 +96,7 @@ public class RefElementNode extends InspectionTreeNode {
 
   public void amnesty() {
     myTool.amnesty(getElement());
+    super.amnesty();
   }
 
   public FileStatus getNodeStatus() {

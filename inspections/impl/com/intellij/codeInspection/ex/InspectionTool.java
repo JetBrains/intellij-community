@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.List;
 
 public abstract class InspectionTool extends InspectionProfileEntry {
   private GlobalInspectionContextImpl myContext;
@@ -116,14 +115,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
 
   public abstract Collection<RefEntity> getIgnoredRefElements();
 
-  public void amnesty(RefEntity refEntity) {
-    final List<RefEntity> children = refEntity != null ? refEntity.getChildren() : null;
-    if (children != null) {
-      for (RefEntity child : children) {
-        amnesty(child);
-      }
-    }
-  }
+  public abstract void amnesty(RefEntity refEntity);
 
   public abstract boolean isElementIgnored(final RefElement element);
 

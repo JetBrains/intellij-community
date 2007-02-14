@@ -15,8 +15,8 @@ import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.InspectionRVContentProvider;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.QuickFixAction;
-import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -130,13 +130,17 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
       for (OfflineProblemDescriptor descriptor : descriptors) {
         if (Comparing.strEqual(descriptor.getFQName(), externalName)) {
           final Set<OfflineProblemDescriptor> excluded = new HashSet<OfflineProblemDescriptor>(descriptors);
-          excluded.remove(descriptor);
+          for (Iterator<OfflineProblemDescriptor> it = excluded.iterator(); it.hasNext();) {
+            final OfflineProblemDescriptor ex = it.next();
+            if (Comparing.strEqual(ex.getFQName(), externalName)) {
+              it.remove();
+            }
+          }
           if (excluded.isEmpty()) {
             content.remove(packageName);
           } else {
             content.put(packageName, excluded);
           }
-          return;
         }
       }
     }

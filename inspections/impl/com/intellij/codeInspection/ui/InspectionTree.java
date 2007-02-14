@@ -258,7 +258,7 @@ public class InspectionTree extends Tree {
       }
 
       int problemCount = node.getProblemCount();
-      if (problemCount > 0) {
+      if (!leaf) {
         append(" " + InspectionsBundle.message("inspection.problem.descriptor.count", problemCount), patchAttr(node, SimpleTextAttributes.GRAYED_ATTRIBUTES));
       }
 
