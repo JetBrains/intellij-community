@@ -15,10 +15,7 @@ import gnu.trove.THashSet;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.*;
 
 public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements ApplicationComponent{
   private WeakHashMap<VirtualFilePointerListener, THashSet<VirtualFilePointer>> myListenerToPointersMap;
@@ -151,6 +148,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       new HashMap<VirtualFilePointerListener,ArrayList<VirtualFilePointer>>();
 
     synchronized(this) {
+      Set<VirtualFilePointer> visitedPointers = new HashSet<VirtualFilePointer>(myUrlToPointerMap.size());
+
       for(Map.Entry<VirtualFilePointerListener,THashSet<VirtualFilePointer>> entry:myListenerToPointersMap.entrySet()) {
         ArrayList<VirtualFilePointer> list = null;
   
@@ -162,8 +161,17 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
               list = new ArrayList<VirtualFilePointer>();
               listenerToArrayOfPointers.put(entry.getKey(), list);
             }
+            visitedPointers.add(pointer);
             list.add(pointer);
           }
+        }
+      }
+
+      for(WeakReference<VirtualFilePointer> pointer:myUrlToPointerMap.values()) {
+        final VirtualFilePointer filePointer = pointer.get();
+        if (filePointer != null && !visitedPointers.contains(filePointer)) {
+          visitedPointers.add(filePointer);
+          listenerNotifier.processPointer((VirtualFilePointerImpl)filePointer);
         }
       }
     }
