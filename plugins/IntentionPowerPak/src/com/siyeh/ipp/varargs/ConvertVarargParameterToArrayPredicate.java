@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Bas Leijdekkers
+ * Copyright 2006-2007 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
-public class ConvertVarargParameterToArrayPredicate
+class ConvertVarargParameterToArrayPredicate
         implements PsiElementPredicate {
 
     public boolean satisfiedBy(@NotNull PsiElement element) {
