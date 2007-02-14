@@ -1,6 +1,5 @@
-package com.intellij.openapi.components.impl;
+package com.intellij.openapi.components;
 
-import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NonNls;
