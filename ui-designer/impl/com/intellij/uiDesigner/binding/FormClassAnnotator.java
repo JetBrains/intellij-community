@@ -5,11 +5,9 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -43,7 +41,6 @@ public class FormClassAnnotator implements ApplicationComponent, Annotator {
   public void initComponent() {
     myRefSearcher = new FormReferencesSearcher();
     ReferencesSearch.INSTANCE.registerExecutor(myRefSearcher);
-    CacheBuilderRegistry.getInstance().registerCacheBuilder(StdFileTypes.GUI_DESIGNER_FORM, new FormWordsScanner());
   }
 
   public void disposeComponent() {

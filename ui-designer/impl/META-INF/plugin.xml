@@ -80,6 +80,11 @@
       <language>JAVA</language>
       <annotatorClass>com.intellij.uiDesigner.binding.FormClassAnnotator</annotatorClass>
     </annotator>
+
+    <cacheBuilder>
+      <fileType>GUI_DESIGNER_FORM</fileType>
+      <wordsScannerClass>com.intellij.uiDesigner.binding.FormWordsScanner</wordsScannerClass>
+    </cacheBuilder>
   </extensions>
 
   <application-components>

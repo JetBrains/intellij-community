@@ -4,6 +4,7 @@
 
 package com.intellij.lang.cacheBuilder;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,15 @@ public class CacheBuilderRegistryImpl extends CacheBuilderRegistry {
 
   @Nullable
   public WordsScanner getCacheBuilder(@NotNull FileType fileType) {
-    return myMap.get(fileType);
+    final WordsScanner scanner = myMap.get(fileType);
+    if (scanner != null) {
+      return scanner;
+    }
+    for(CacheBuilderEP ep: Extensions.getExtensions(CacheBuilderEP.EP_NAME)) {
+      if (ep.getFileType().equals(fileType.getName())) {
+        return ep.getWordsScanner();
+      }
+    }
+    return null;
   }
 }
