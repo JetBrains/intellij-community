@@ -242,10 +242,10 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
       final String namespace = "".equals(namespacePrefix) ?
                                ((XmlNSDescriptorImpl)getNSDescriptor()).getDefaultNamespace() :
                                myDescriptorTag.getNamespaceByPrefix(namespacePrefix);
-    return getElementDescriptor(localName, namespace, null);
+    return getElementDescriptor(localName, namespace, null, name);
   }
 
-  protected XmlElementDescriptor getElementDescriptor(final String localName, final String namespace, XmlElement context) {
+  protected XmlElementDescriptor getElementDescriptor(final String localName, final String namespace, XmlElement context, String fullName) {
     XmlElementDescriptor[] elements = getElementsDescriptors();
 
     for (XmlElementDescriptor element1 : elements) {
@@ -255,7 +255,8 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
       if (element.getName().equals(localName)) {
         if ( namespace == null ||
              namespace.equals(namespaceByContext) ||
-             namespaceByContext.equals(XmlUtil.EMPTY_URI)
+             namespaceByContext.equals(XmlUtil.EMPTY_URI) ||
+             element.getName(context).equals(fullName)
            ) {
           return element;
         } else if ((namespace == null || namespace.length() == 0) &&
@@ -286,7 +287,12 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public XmlElementDescriptor getElementDescriptor(XmlTag element){
-    XmlElementDescriptor elementDescriptor = getElementDescriptor(element.getLocalName(), element.getNamespace(), (XmlElement)element.getParent());
+    XmlElementDescriptor elementDescriptor = getElementDescriptor(
+      element.getLocalName(),
+      element.getNamespace(),
+      (XmlElement)element.getParent(),
+      element.getName()
+    );
 
     if(elementDescriptor == null || element.getAttributeValue("xsi:type") != null){
       final XmlElementDescriptor xmlDescriptorByType = XmlUtil.findXmlDescriptorByType(element);
