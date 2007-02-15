@@ -6,8 +6,8 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +17,10 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public abstract class MappedBufferWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.MappedBufferWrapper");
@@ -30,7 +34,38 @@ public abstract class MappedBufferWrapper {
   protected File myFile;
   protected long myPosition;
   protected long myLength;
-  private ByteBuffer myBuffer;
+
+  private volatile ByteBuffer myBuffer;
+
+  private volatile int myAccessCounter = 0;
+  private int myAccessCounterDisposerLastCheckedMe = -1;
+
+  private static List<MappedBufferWrapper> ourMappedWrappers = new ArrayList<MappedBufferWrapper>();
+
+  private static final Object LOCK = new Object();
+
+  static {
+    ScheduledExecutorService service = ConcurrencyUtil.newSingleScheduledThreadExecutor("Memory mapped files disposer");
+    service.scheduleWithFixedDelay(new Runnable() {
+      public void run() {
+        MappedBufferWrapper[] wrappers;
+        synchronized (LOCK) {
+          wrappers = ourMappedWrappers.toArray(new MappedBufferWrapper[ourMappedWrappers.size()]);
+        }
+
+        for (MappedBufferWrapper wrapper : wrappers) {
+          synchronized (wrapper) {
+            if (wrapper.myAccessCounter == wrapper.myAccessCounterDisposerLastCheckedMe) {
+              wrapper.unmap();
+            }
+            else {
+              wrapper.myAccessCounterDisposerLastCheckedMe = wrapper.myAccessCounter;
+            }
+          }
+        }
+      }
+    }, 60, 60, TimeUnit.SECONDS);
+  }
 
   public MappedBufferWrapper(final File file, final long pos, final long length) {
     myFile = file;
@@ -41,29 +76,38 @@ public abstract class MappedBufferWrapper {
   protected abstract MappedByteBuffer map();
 
   public final void unmap() {
-    if (!unmapMappedByteBuffer142b19(this)) {
-      unmapMappedByteBuffer141(this);
+    synchronized (LOCK) {
+      ourMappedWrappers.remove(this);
+      if (!unmapMappedByteBuffer142b19(this)) {
+        unmapMappedByteBuffer141(this);
+      }
     }
   }
 
+  /*
+   * An assumption made here that any retreiver of the buffer will not use it for time longer than 60 seconds.
+   */
   public ByteBuffer buf() {
-    ByteBuffer buffer = _buf();
-    if (buffer == null) {
-      buffer = map();
-      myBuffer = buffer;
+    synchronized (this) {
+      myAccessCounter++;
+
+      ByteBuffer buffer = myBuffer;
+      if (buffer == null) {
+        synchronized (LOCK) {
+          buffer = map();
+
+          ourMappedWrappers.add(this);
+          myBuffer = buffer;
+        }
+      }
+
+      return buffer;
     }
-
-    return buffer;
-  }
-
-  @Nullable
-  private ByteBuffer _buf() {
-    return myBuffer;
   }
 
 
   private static void unmapMappedByteBuffer141(MappedBufferWrapper holder) {
-    ByteBuffer buffer = holder._buf();
+    ByteBuffer buffer = holder.myBuffer;
 
     unmapBuffer(buffer);
     holder.myBuffer = null;
@@ -93,7 +137,7 @@ public abstract class MappedBufferWrapper {
   }
 
   private static boolean unmapMappedByteBuffer142b19(MappedBufferWrapper holder) {
-    if (clean(holder._buf())) {
+    if (clean(holder.myBuffer)) {
       holder.myBuffer = null;
       return true;
     }
@@ -140,11 +184,11 @@ public abstract class MappedBufferWrapper {
   }
 
   public boolean isMapped() {
-    return _buf() != null;
+    return myBuffer != null;
   }
 
   public void flush() {
-    final ByteBuffer buffer = _buf();
+    final ByteBuffer buffer = myBuffer;
     if (buffer != null) {
       if (buffer instanceof MappedByteBuffer) {
         final MappedByteBuffer mappedByteBuffer = (MappedByteBuffer)buffer;
