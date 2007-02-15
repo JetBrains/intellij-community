@@ -140,7 +140,17 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
       public Boolean compute() {
         synchronized (VcsDirtyScopeImpl.this) {
           if (myProject.isDisposed()) return Boolean.FALSE;
-          if (!myAffectedContentRoots.contains(myVcsManager.getVcsRootFor(path))) return Boolean.FALSE;
+          boolean isAffectedContentRoot = false;
+          final VirtualFile vcsRoot = myVcsManager.getVcsRootFor(path);
+          if (vcsRoot != null) {
+            for(VirtualFile contentRoot: myAffectedContentRoots) {
+              if (VfsUtil.isAncestor(contentRoot, vcsRoot, false)) {
+                isAffectedContentRoot = true;
+                break;
+              }
+            }
+          }
+          if (!isAffectedContentRoot) return Boolean.FALSE;
 
           for (FilePath filePath : myDirtyDirectoriesRecursively) {
             if (path.isUnder(filePath, false)) return Boolean.TRUE;
