@@ -41,7 +41,8 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
 
   protected TextRange createTextRange() {
     if (myGenericValue instanceof GenericAttributeValue) {
-      return new TextRange(1, ((GenericAttributeValue)myGenericValue).getXmlAttributeValue().getTextLength() - 1);
+      final int length = ((GenericAttributeValue)myGenericValue).getXmlAttributeValue().getTextLength();
+      return length < 2 ? TextRange.from(0, length) : new TextRange(1, length - 1);
     }
     final XmlTag tag = myGenericValue.getXmlTag();
     assert tag != null;
