@@ -37,20 +37,20 @@ import java.util.Set;
 /**
  * @author cdr
  */
-public class PropertyReference implements PsiPolyVariantReference, QuickFixProvider, PsiReference,
-                                                                   EmptyResolveMessageProvider {
+public class PropertyReference implements PsiPolyVariantReference, QuickFixProvider, EmptyResolveMessageProvider {
   private final String myKey;
   private final PsiElement myElement;
   @Nullable private final String myBundleName;
   private boolean mySoft;
 
-  public PropertyReference(String key, final PsiElement element, @Nullable final String bundleName, final boolean soft) {
+  public PropertyReference(@NotNull String key, @NotNull PsiElement element, @Nullable final String bundleName, final boolean soft) {
     myKey = key;
     myElement = element;
     myBundleName = bundleName;
     mySoft = soft;
   }
 
+  @NotNull
   public PsiElement getElement() {
     return myElement;
   }
@@ -95,10 +95,12 @@ public class PropertyReference implements PsiPolyVariantReference, QuickFixProvi
     return result;
   }
 
+  @NotNull
   protected String getKeyText() {
     return myKey;
   }
 
+  @NotNull
   public String getCanonicalText() {
     return myKey;
   }
@@ -175,4 +177,15 @@ public class PropertyReference implements PsiPolyVariantReference, QuickFixProvi
     QuickFixAction.registerQuickFixAction(info, fix);
   }
 
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    PropertyReference other = (PropertyReference)o;
+
+    return getElement() == other.getElement() && getKeyText().equals(other.getKeyText());
+  }
+
+  public int hashCode() {
+    return getKeyText().hashCode();
+  }
 }

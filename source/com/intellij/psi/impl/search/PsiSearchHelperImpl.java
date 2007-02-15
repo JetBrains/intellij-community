@@ -51,7 +51,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     ReferencesSearch.INSTANCE.registerExecutor(new PsiAnnotationMethodReferencesSearcher());
     ReferencesSearch.INSTANCE.registerExecutor(new ConstructorReferencesSearcher());
     ReferencesSearch.INSTANCE.registerExecutor(new SimpleAccessorReferenceSearcher());
-    ReferencesSearch.INSTANCE.registerExecutor(new PropertyReferenceSearcher());
+    ReferencesSearch.INSTANCE.registerExecutor(new PropertyReferenceViaLastWordSearcher());
 
     DirectClassInheritorsSearch.INSTANCE.registerExecutor(new JavaDirectInheritorsSearcher());
 
