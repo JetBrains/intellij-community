@@ -31,7 +31,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -182,8 +182,8 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
     writeModule(element);
   }
 
-  @Nullable // can return null if called too early
-  public String getDefaultCoverageFileName() {
+  @NotNull
+  public String getCoverageFileName() {
     return MAIN_CLASS_NAME;
   }
 
