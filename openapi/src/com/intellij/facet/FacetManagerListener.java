@@ -17,8 +17,13 @@ public interface FacetManagerListener extends EventListener {
 
   void beforeFacetRemoved(@NotNull Facet facet);
 
+  void beforeFacetRenamed(@NotNull Facet facet);
+
+
   void facetAdded(@NotNull Facet facet);
 
   void facetRemoved(@NotNull Facet facet);
+
+  void facetRenamed(@NotNull Facet facet);
 
 }

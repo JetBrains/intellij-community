@@ -4,16 +4,15 @@
 
 package com.intellij.facet.impl;
 
-import com.intellij.facet.ModifiableFacetModel;
-import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.Facet;
+import com.intellij.facet.ModifiableFacetModel;
+import com.intellij.facet.FacetManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
-
-import java.util.*;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
 
 /**
  * @author nik
@@ -21,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 public class FacetModelImpl extends FacetModelBase implements ModifiableFacetModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.FacetModelImpl");
   private List<Facet> myFacets = new ArrayList<Facet>();
+  private Map<Facet, String> myFacet2NewName = new HashMap<Facet, String>();
   private FacetManagerImpl myManager;
 
   public FacetModelImpl(final FacetManagerImpl manager) {
@@ -43,7 +43,17 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
     if (myFacets == null || !myFacets.remove(facet)) {
       LOG.error("Facet " + facet + " [" + facet.getTypeId() + "] not found");
     }
+    myFacet2NewName.remove(facet);
     facetsChanged();
+  }
+
+  public void rename(final Facet facet, final String newName) {
+    myFacet2NewName.put(facet, newName);
+  }
+
+  @Nullable
+  public String getNewName(final Facet facet) {
+    return myFacet2NewName.get(facet);
   }
 
   public void commit() {

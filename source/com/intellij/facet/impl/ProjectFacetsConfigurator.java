@@ -30,7 +30,6 @@ public class ProjectFacetsConfigurator {
   private Map<FacetInfo, Facet> myInfo2Facet = new HashMap<FacetInfo, Facet>();
   private Map<Facet, FacetInfo> myFacet2Info = new HashMap<Facet, FacetInfo>();
 
-
   public ProjectFacetsConfigurator() {
   }
 
@@ -39,8 +38,8 @@ public class ProjectFacetsConfigurator {
     getOrCreateModifiableModel(facet.getModule()).removeFacet(facet);
   }
 
-  public Facet createAndAddFacet(Module module, FacetType<?, ?> type, final @Nullable FacetInfo underlyingFacet) {
-    final Facet facet = createFacet(type, module, myInfo2Facet.get(underlyingFacet));
+  public Facet createAndAddFacet(Module module, FacetType<?, ?> type, String name, final @Nullable FacetInfo underlyingFacet) {
+    final Facet facet = createFacet(type, module, name, myInfo2Facet.get(underlyingFacet));
     getOrCreateModifiableModel(module).addFacet(facet);
     addFacetInfo(facet);
     return facet;
@@ -48,7 +47,7 @@ public class ProjectFacetsConfigurator {
 
   private void addFacetInfo(final Facet facet) {
     LOG.assertTrue(!myFacet2Info.containsKey(facet));
-    FacetInfo info = new FacetInfo(facet.getType(), facet.getConfiguration(), myFacet2Info.get(facet.getUnderlyingFacet()));
+    FacetInfo info = new FacetInfo(facet.getType(), facet.getName(), facet.getConfiguration(), myFacet2Info.get(facet.getUnderlyingFacet()));
     myFacet2Info.put(facet, info);
     myInfo2Facet.put(info, facet);
     getTreeModel(facet.getModule()).addFacetInfo(info);
@@ -64,8 +63,8 @@ public class ProjectFacetsConfigurator {
     }
   }
 
-  private static <C extends FacetConfiguration> Facet createFacet(final FacetType<?, C> type, final Module module, final @Nullable Facet underlyingFacet) {
-    return type.createFacet(module, type.createDefaultConfiguration(), underlyingFacet);
+  private static <C extends FacetConfiguration> Facet createFacet(final FacetType<?, C> type, final Module module, String name, final @Nullable Facet underlyingFacet) {
+    return type.createFacet(module, name, type.createDefaultConfiguration(), underlyingFacet);
   }
 
   private boolean isNewFacet(Facet facet) {

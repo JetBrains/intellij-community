@@ -4,8 +4,8 @@
 
 package com.intellij.facet;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,9 +19,11 @@ public class Facet<C extends FacetConfiguration> implements Disposable {
   private final @NotNull Module myModule;
   private final @NotNull C myConfiguration;
   private final Facet myUnderlyingFacet;
+  private String myName;
   private boolean myImplicit;
 
-  public Facet(@NotNull final FacetType facetType, @NotNull final Module module, @NotNull final C configuration, Facet underlyingFacet) {
+  public Facet(@NotNull final FacetType facetType, @NotNull final Module module, final String name, @NotNull final C configuration, Facet underlyingFacet) {
+    myName = name;
     myFacetType = facetType;
     myModule = module;
     myConfiguration = configuration;
@@ -79,7 +81,16 @@ public class Facet<C extends FacetConfiguration> implements Disposable {
     return super.equals(obj);
   }
 
-  public String getPresentableName() {
-    return myFacetType.getPresentableName();
+
+  public final String getName() {
+    return myName;
   }
+
+  /**
+   * use {@link com.intellij.facet.ModifiableFacetModel#rename} to rename facet
+   */
+  final void setName(final String name) {
+    myName = name;
+  }
+
 }

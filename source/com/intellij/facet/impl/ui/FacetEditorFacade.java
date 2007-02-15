@@ -10,6 +10,8 @@ import com.intellij.facet.FacetInfo;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.openapi.module.ModuleType;
 
+import java.util.Collection;
+
 /**
  * @author nik
  */
@@ -25,7 +27,9 @@ public interface FacetEditorFacade {
 
   void deleteSelectedFacet();
 
-  void createFacet(final FacetInfo parent, final FacetType type);
+  void createFacet(final FacetInfo parent, final FacetType type, final String name);
+
+  Collection<FacetInfo> getFacetsByType(FacetType<?,?> type);
 
   @Nullable
   FacetInfo getParent(final FacetInfo facet);

@@ -12,6 +12,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.ModuleType;
 
+import java.util.Collection;
+
 /**
  * @author nik
 */
@@ -27,7 +29,23 @@ public class AddFacetAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     FacetInfo parent = myEditor.getSelectedFacetInfo();
-    myEditor.createFacet(parent, myType);
+    final Collection<FacetInfo> facetInfos = myEditor.getFacetsByType(myType);
+    String facetName = myType.getPresentableName();
+    int i = 2;
+    while (facetExists(facetName, facetInfos)) {
+      facetName = myType.getPresentableName() + i;
+      i++;
+    }
+    myEditor.createFacet(parent, myType, facetName);
+  }
+
+  private static boolean facetExists(final String facetName, final Collection<FacetInfo> facetInfos) {
+    for (FacetInfo facetInfo : facetInfos) {
+      if (facetInfo.getName().equals(facetName)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void update(AnActionEvent e) {

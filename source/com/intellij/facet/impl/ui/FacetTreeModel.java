@@ -6,6 +6,7 @@ package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.FacetInfo;
+import com.intellij.facet.FacetType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.BidirectionalMap;
 import org.jetbrains.annotations.Nullable;
@@ -14,13 +15,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Collection;
 
 /**
  * @author nik
  */
 public class FacetTreeModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.FacetTreeModel");
-  private static final FacetInfo ROOT = new FacetInfo(null, null, null);
+  private static final FacetInfo ROOT = new FacetInfo(null, "", null, null);
   private List<FacetInfo> myFacetInfos = new ArrayList<FacetInfo>();
   private BidirectionalMap<FacetInfo, FacetInfo> myParents = new BidirectionalMap<FacetInfo, FacetInfo>();
 
@@ -94,5 +96,16 @@ public class FacetTreeModel {
       }
     }
     return false;
+  }
+
+  public Collection<FacetInfo> getFacetInfos(final FacetType<?, ?> type) {
+    final FacetInfo[] facetInfos = getFacetInfos();
+    List<FacetInfo> infos = new ArrayList<FacetInfo>();
+    for (FacetInfo facetInfo : facetInfos) {
+      if (facetInfo.getFacetType().equals(type)) {
+        infos.add(facetInfo);
+      }
+    }
+    return infos;
   }
 }

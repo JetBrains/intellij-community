@@ -146,7 +146,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
 
   private boolean myDisposed = true;
 
-  private FacetEditorFacadeImpl myFacetEditorFacade = new FacetEditorFacadeImpl(this);
+  private FacetEditorFacadeImpl myFacetEditorFacade = new FacetEditorFacadeImpl(this, TREE_UPDATER);
 
   private final Map<Library, Set<String>> myLibraryDependencyCache = new HashMap<Library, Set<String>>();
   private final Map<ProjectJdk, Set<String>> myJdkDependencyCache = new HashMap<ProjectJdk, Set<String>>();

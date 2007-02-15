@@ -221,6 +221,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
           ex[0] = e;
         }
         finally {
+          myFacetsConfigurator.disposeEditors();
           myFacetsConfigurator = new ProjectFacetsConfigurator();
           myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
           for (Module module : myModuleModel.getModules()) {

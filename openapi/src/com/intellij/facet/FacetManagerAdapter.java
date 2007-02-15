@@ -16,6 +16,12 @@ public abstract class FacetManagerAdapter implements FacetManagerListener {
   public void beforeFacetRemoved(@NotNull Facet facet) {
   }
 
+  public void beforeFacetRenamed(@NotNull final Facet facet) {
+  }
+
+  public void facetRenamed(@NotNull final Facet facet) {
+  }
+
   public void facetAdded(@NotNull Facet facet) {
   }
 

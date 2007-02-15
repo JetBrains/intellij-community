@@ -60,7 +60,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
 
   public abstract C createDefaultConfiguration();
 
-  public abstract F createFacet(@NotNull Module module, @NotNull C configuration, @Nullable Facet underlyingFacet);
+  public abstract F createFacet(@NotNull Module module, final String name, @NotNull C configuration, @Nullable Facet underlyingFacet);
 
   public boolean isOnlyOneFacetAllowed() {
     return false;

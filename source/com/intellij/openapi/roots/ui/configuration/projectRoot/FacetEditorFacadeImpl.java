@@ -13,8 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * @author nik
@@ -22,10 +21,12 @@ import java.util.HashMap;
 public class FacetEditorFacadeImpl implements FacetEditorFacade {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.projectRoot.FacetEditorFacadeImpl");
   private ProjectRootConfigurable myConfigurable;
+  private Runnable myTreeUpdater;
   private Map<Facet, MasterDetailsComponent.MyNode> myNodes = new HashMap<Facet, MasterDetailsComponent.MyNode>();
 
-  public FacetEditorFacadeImpl(final ProjectRootConfigurable configurable) {
+  public FacetEditorFacadeImpl(final ProjectRootConfigurable configurable, final Runnable treeUpdater) {
     myConfigurable = configurable;
+    myTreeUpdater = treeUpdater;
   }
 
   public void addFacetsNodes(final Module module, final MasterDetailsComponent.MyNode moduleNode) {
@@ -33,7 +34,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
 
     final FacetModel facetModel = getFacetConfigurator().getFacetModel(module);
     for (Facet facet : facetModel.getSortedFacets()) {
-      //todo[nik] remove later
+      //todo[nik] remove later this condition later. It's used to hide javaee facets
       if (FacetTypeRegistry.getInstance().findFacetType(facet.getTypeId()) != null) {
         addFacetNode(facet, moduleNode);
       }
@@ -41,7 +42,8 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
   }
 
   private MasterDetailsComponent.MyNode addFacetNode(final Facet facet, final MasterDetailsComponent.MyNode moduleNode) {
-    final MasterDetailsComponent.MyNode facetNode = new MasterDetailsComponent.MyNode(new FacetConfigurable(facet, getFacetConfigurator()));
+    final FacetConfigurable facetConfigurable = new FacetConfigurable(facet, getFacetConfigurator(), myTreeUpdater);
+    final MasterDetailsComponent.MyNode facetNode = new MasterDetailsComponent.MyNode(facetConfigurable);
     myNodes.put(facet, facetNode);
     MasterDetailsComponent.MyNode parent = moduleNode;
     final Facet underlyingFacet = facet.getUnderlyingFacet();
@@ -61,12 +63,25 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     return getFacetConfigurator().getTreeModel(selectedModule).hasFacetOfType(facet, typeId);
   }
 
-  public void createFacet(final FacetInfo parent, FacetType type) {
+  public void createFacet(final FacetInfo parent, FacetType type, final String name) {
     Module module = getSelectedModule();
 
-    final Facet facet = getFacetConfigurator().createAndAddFacet(module, type, parent);
+    final Facet facet = getFacetConfigurator().createAndAddFacet(module, type, name, parent);
     final MasterDetailsComponent.MyNode node = addFacetNode(facet, myConfigurable.findModuleNode(module));
     myConfigurable.selectNodeInTree(node);
+  }
+
+  public Collection<FacetInfo> getFacetsByType(final FacetType<?,?> type) {
+    final Module selectedModule = getSelectedModule();
+    if (selectedModule == null) return Collections.emptyList();
+    final FacetModel facetModel = getFacetConfigurator().getFacetModel(selectedModule);
+    final Collection<? extends Facet> facets = facetModel.getFacetsByType(type.getId());
+
+    final ArrayList<FacetInfo> infos = new ArrayList<FacetInfo>();
+    for (Facet facet : facets) {
+      infos.add(getFacetConfigurator().getFacetInfo(facet));
+    }
+    return infos;
   }
 
   @Nullable

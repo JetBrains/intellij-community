@@ -2,18 +2,16 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.facet.impl;
+package com.intellij.facet;
 
-import com.intellij.facet.*;
-import com.intellij.util.EventDispatcher;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleComponent;
+import com.intellij.facet.impl.FacetModelBase;
+import com.intellij.facet.impl.FacetModelImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleComponent;
+import com.intellij.openapi.util.*;
+import com.intellij.util.EventDispatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,17 +23,19 @@ import java.util.*;
  * @author nik
  */
 public class FacetManagerImpl extends FacetManager implements ModuleComponent, JDOMExternalizable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.FacetManagerImpl");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.FacetManagerImpl");
   @NonNls private static final String FACET_ELEMENT = "facet";
   @NonNls private static final String TYPE_ATTRIBUTE = "type";
+  @NonNls private static final String CONFIGURATION_ELEMENT = "configuration";
+  @NonNls private static final String NAME_ATTRIBUTE = "name";
 
   private EventDispatcher<FacetManagerListener> myDispatcher = EventDispatcher.create(FacetManagerListener.class);
   private Module myModule;
   private FacetTypeRegistry myFacetTypeRegistry;
   private FacetManagerModel myModel = new FacetManagerModel();
+  private boolean myHasNoFacetsFromBeginning = true;
 
   private boolean myInsideCommit = false;
-  @NonNls private static final String CONFIGURATION_ELEMENT = "configuration";
 
   public FacetManagerImpl(final Module module, final FacetTypeRegistry facetTypeRegistry) {
     myModule = module;
@@ -68,7 +68,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
     if (facet == null) {
       final FacetInfo underlyingFacetInfo = info.getUnderlyingFacet();
       final Facet underlyingFacet = underlyingFacetInfo != null ? getOrCreateFacet(info2Facet, underlyingFacetInfo) : null;
-      facet = info.getFacetType().createFacet(myModule, info.getConfiguration(), underlyingFacet);
+      facet = info.getFacetType().createFacet(myModule, info.getName(), info.getConfiguration(), underlyingFacet);
       info2Facet.put(info, facet);
     }
 
@@ -100,7 +100,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
   public void readExternal(Element element) throws InvalidDataException {
     List<Facet> facets = new ArrayList<Facet>();
     addFacets(facets, element, null);
-
+    myHasNoFacetsFromBeginning &= facets.isEmpty();
     myModel.setAllFacets(facets.toArray(new Facet[facets.size()]));
   }
 
@@ -124,14 +124,19 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
     if (config != null) {
       configuration.readExternal(config);
     }
-    final Facet facet = type.createFacet(myModule, configuration, underlyingFacet);
+    String name = element.getAttributeValue(NAME_ATTRIBUTE);
+    if (name == null) {
+      //todo[nik] remove later. This code is written only for compatibility with first Selena EAPs
+      name = type.getPresentableName();
+    }
+    final Facet facet = type.createFacet(myModule, name, configuration, underlyingFacet);
     facets.add(facet);
     addFacets(facets, element, facet);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     final Facet[] facets = getSortedFacets();
-    if (facets.length == 0) {
+    if (facets.length == 0 && myHasNoFacetsFromBeginning) {
       throw new WriteExternalException();
     }
 
@@ -144,6 +149,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
 
       Element child = new Element(FACET_ELEMENT);
       child.setAttribute(TYPE_ATTRIBUTE, facet.getType().getStringId());
+      child.setAttribute(NAME_ATTRIBUTE, facet.getName());
       final Element config = new Element(CONFIGURATION_ELEMENT);
       try {
         facet.getConfiguration().writeExternal(config);
@@ -157,16 +163,12 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
       elements.put(facet, child);
     }
 
-    if (element.getContentSize() == 0) {
+    if (element.getContentSize() == 0 && myHasNoFacetsFromBeginning) {
       throw new WriteExternalException();
     }
   }
 
-  public void commit(final FacetModel model) {
-    commit(model, true);
-  }
-
-  private void commit(final FacetModel model, final boolean fireEvents) {
+  public void commit(final ModifiableFacetModel model) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     LOG.assertTrue(!myInsideCommit, "Recursive commit");
     try {
@@ -182,15 +184,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
         }
       }
 
-      if (fireEvents) {
-        for (Facet facet : toAdd) {
-          myDispatcher.getMulticaster().beforeFacetAdded(facet);
-        }
-        for (Facet facet : toRemove) {
-          myDispatcher.getMulticaster().beforeFacetRemoved(facet);
-        }
-      }
-
       List<Facet> newFacets = new ArrayList<Facet>();
       for (Facet facet : getAllFacets()) {
         if (!toRemove.contains(facet)) {
@@ -198,16 +191,29 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
         }
       }
       newFacets.addAll(toAdd);
-      myModel.setAllFacets(newFacets.toArray(new Facet[newFacets.size()]));
 
-      if (fireEvents) {
-        for (Facet facet : toAdd) {
-          myDispatcher.getMulticaster().facetAdded(facet);
-        }
-        for (Facet facet : toRemove) {
-          myDispatcher.getMulticaster().facetRemoved(facet);
+      List<Pair<Facet, String>> toRename = new ArrayList<Pair<Facet, String>>();
+      for (Facet facet : newFacets) {
+        final String newName = model.getNewName(facet);
+        if (newName != null && !newName.equals(facet.getName())) {
+          toRename.add(Pair.create(facet, newName));
         }
       }
+
+      for (Facet facet : toAdd) {
+        myDispatcher.getMulticaster().beforeFacetAdded(facet);
+      }
+      for (Facet facet : toRemove) {
+        myDispatcher.getMulticaster().beforeFacetRemoved(facet);
+      }
+      for (Pair<Facet, String> pair : toRename) {
+        myDispatcher.getMulticaster().beforeFacetRenamed(pair.getFirst());
+      }
+
+      for (Pair<Facet, String> pair : toRename) {
+        pair.getFirst().setName(pair.getSecond());
+      }
+      myModel.setAllFacets(newFacets.toArray(new Facet[newFacets.size()]));
 
       for (Facet facet : toAdd) {
         facet.initFacet();
@@ -215,6 +221,17 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
       for (Facet facet : toRemove) {
         Disposer.dispose(facet);
       }
+
+      for (Facet facet : toAdd) {
+        myDispatcher.getMulticaster().facetAdded(facet);
+      }
+      for (Facet facet : toRemove) {
+        myDispatcher.getMulticaster().facetRemoved(facet);
+      }
+      for (Pair<Facet, String> pair : toRename) {
+        myDispatcher.getMulticaster().facetRenamed(pair.getFirst());
+      }
+
     }
     finally {
       myInsideCommit = false;

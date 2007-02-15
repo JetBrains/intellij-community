@@ -4,17 +4,16 @@
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
-import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.ui.NamedConfigurable;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author nik
@@ -22,15 +21,22 @@ import org.jetbrains.annotations.NonNls;
 public class FacetConfigurable extends NamedConfigurable<Facet> {
   private Facet myFacet;
   private ProjectFacetsConfigurator myFacetsConfigurator;
+  private String myFacetName;
 
-  public FacetConfigurable(final Facet facet, final ProjectFacetsConfigurator facetsConfigurator) {
-    super(false, null);
+  public FacetConfigurable(final Facet facet, final ProjectFacetsConfigurator facetsConfigurator, final Runnable updateTree) {
+    super(!facet.getType().isOnlyOneFacetAllowed(), updateTree);
     myFacet = facet;
     myFacetsConfigurator = facetsConfigurator;
+    myFacetName = myFacet.getName();
   }
 
 
   public void setDisplayName(String name) {
+    name = name.trim();
+    if (!name.equals(myFacetName)) {
+      myFacetsConfigurator.getOrCreateModifiableModel(myFacet.getModule()).rename(myFacet, name);
+      myFacetName = name;
+    }
   }
 
   public Facet getEditableObject() {
@@ -38,7 +44,7 @@ public class FacetConfigurable extends NamedConfigurable<Facet> {
   }
 
   public String getBannerSlogan() {
-    return ProjectBundle.message("facet.banner.text", myFacet.getPresentableName());
+    return ProjectBundle.message("facet.banner.text", myFacetName);
   }
 
   public JComponent createOptionsPanel() {
@@ -47,7 +53,7 @@ public class FacetConfigurable extends NamedConfigurable<Facet> {
 
   @Nls
   public String getDisplayName() {
-    return myFacet.getPresentableName();
+    return myFacetName;
   }
 
   @Nullable
