@@ -40,14 +40,14 @@ import java.util.Collections;
 import java.util.List;
 
 public class FramePanel extends DebuggerPanel implements DataProvider{
-  private static final Icon VARIABLES_ICON = IconLoader.getIcon("/debugger/value.png");
   private final JComboBox myThreadsCombo;
   private final FramesList myFramesList;
   private final ThreadsListener myThreadsListener;
   private final FramesListener myFramesListener;
 
   @NonNls private static final String HELP_ID = "debugging.debugFrame";
-  private ThreeComponentsSplitter mySplitter;
+  private JPanel myVarsPanel;
+  private JPanel myThreadsPanel;
   //private static final Icon UNFREEZE_ICON = IconLoader.getIcon("/actions/resumeThread.png");
   //private static final Icon FREEZE_ICON = IconLoader.getIcon("/actions/freezeThread.png");
 
@@ -65,30 +65,29 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     myFramesList.addListSelectionListener(myFramesListener);
     registerThreadsPopupMenu(myFramesList);
 
-    final JPanel threadsPanel = new JPanel(new BorderLayout());
-    threadsPanel.setBorder(null);
-    threadsPanel.add(myThreadsCombo, BorderLayout.NORTH);
-    threadsPanel.add(new JScrollPane(myFramesList), BorderLayout.CENTER);
+    myThreadsPanel = new JPanel(new BorderLayout());
+    myThreadsPanel.setBorder(null);
+    myThreadsPanel.add(myThreadsCombo, BorderLayout.NORTH);
+    myThreadsPanel.add(new JScrollPane(myFramesList), BorderLayout.CENTER);
 
     final FrameDebuggerTree frameTree = getFrameTree();
 
-    mySplitter = new ThreeComponentsSplitter();
-    mySplitter.setFirstComponent(threadsPanel);
-
-    final JPanel treePanel = new JPanel(new BorderLayout());
-    treePanel.add(new JScrollPane(frameTree), BorderLayout.CENTER);
-    final JLabel title = new JLabel(DebuggerBundle.message("debugger.session.tab.variables.title"));
-    title.setIcon(VARIABLES_ICON);
-    treePanel.add(title, BorderLayout.NORTH);
-
-    mySplitter.setInnerComponent(treePanel);
-    mySplitter.setLastComponent(null);
-
-    add(mySplitter, BorderLayout.CENTER);
+    myVarsPanel = new JPanel(new BorderLayout());
+    myVarsPanel.add(new JScrollPane(frameTree), BorderLayout.CENTER);
     registerDisposable(DebuggerAction.installEditAction(frameTree, DebuggerActions.EDIT_NODE_SOURCE));
 
     overrideShortcut(frameTree, DebuggerActions.SET_VALUE, KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
     overrideShortcut(frameTree, DebuggerActions.MARK_OBJECT, KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
+
+    add(myThreadsPanel, BorderLayout.CENTER);
+  }
+
+  public JPanel getVarsPanel() {
+    return myVarsPanel;
+  }
+
+  public JPanel getThreadsPanel() {
+    return myThreadsPanel;
   }
 
   private void overrideShortcut(final JComponent forComponent, final String actionId, final KeyStroke keyStroke) {
@@ -168,10 +167,11 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
 
   public void dispose() {
     final DebuggerSettings settings = DebuggerSettings.getInstance();
-    settings.THREADS_FRAME_SPLITTER_PROPORTION = getFirstProportion();
-    if (mySplitter.getLastComponent() != null) {
-      settings.FRAME_WATCHES_SPLITTER_PROPORTION = getLastProportion();
-    }
+    //settings.THREADS_FRAME_SPLITTER_PROPORTION = getFirstProportion();
+//todo
+    //if (mySplitter.getLastComponent() != null) {
+    //  settings.FRAME_WATCHES_SPLITTER_PROPORTION = getLastProportion();
+    //}
     myThreadsCombo.removeItemListener(myThreadsListener);
     super.dispose();
   }
@@ -205,25 +205,27 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
   }
 
   private float getFirstProportion() {
-    final float totalSize = mySplitter.getOrientation() ? mySplitter.getHeight() : mySplitter.getWidth();
-    final float componentSize = mySplitter.getFirstSize();
-    return componentSize / (totalSize - 2.0f * mySplitter.getDividerWidth());
+    //final float totalSize = mySplitter.getOrientation() ? mySplitter.getHeight() : mySplitter.getWidth();
+    //final float componentSize = mySplitter.getFirstSize();
+    //return componentSize / (totalSize - 2.0f * mySplitter.getDividerWidth());
+    return 0;
   }
 
   private void setFirstProportion(float proportion) {
-    final int totalSize = mySplitter.getOrientation() ? mySplitter.getHeight() : mySplitter.getWidth();
-    mySplitter.setFirstSize((int)(proportion * (float)(totalSize - 2 * mySplitter.getDividerWidth())));
+    //final int totalSize = mySplitter.getOrientation() ? mySplitter.getHeight() : mySplitter.getWidth();
+    //mySplitter.setFirstSize((int)(proportion * (float)(totalSize - 2 * mySplitter.getDividerWidth())));
   }
 
   private float getLastProportion() {
-    final float totalSize = mySplitter.getOrientation() ? mySplitter.getHeight() : mySplitter.getWidth();
-    final float componentSize = mySplitter.getLastSize();
-    return componentSize / (totalSize - 2.0f * mySplitter.getDividerWidth());
+    //final float totalSize = mySplitter.getOrientation() ? mySplitter.getHeight() : mySplitter.getWidth();
+    //final float componentSize = mySplitter.getLastSize();
+    //return componentSize / (totalSize - 2.0f * mySplitter.getDividerWidth());
+    return 0;
   }
 
   private  void setLastProportion(float proportion) {
-    final int componentSize = mySplitter.getOrientation() ? mySplitter.getHeight() : mySplitter.getWidth();
-    mySplitter.setLastSize((int)(proportion * (float)(componentSize - 2 * mySplitter.getDividerWidth())));
+    //final int componentSize = mySplitter.getOrientation() ? mySplitter.getHeight() : mySplitter.getWidth();
+    //mySplitter.setLastSize((int)(proportion * (float)(componentSize - 2 * mySplitter.getDividerWidth())));
   }
 
   private class ThreadsListener implements ItemListener{
@@ -260,10 +262,6 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
         DebuggerContextUtil.setStackFrame(getContextManager(), item.getFrameProxy());
       }
     }
-  }
-
-  public void setWatchPanel(WatchPanel watches) {
-    mySplitter.setLastComponent(watches);
   }
 
   public FrameDebuggerTree getFrameTree() {

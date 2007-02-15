@@ -39,6 +39,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.*;
 import org.jetbrains.annotations.Nullable;
@@ -57,21 +58,13 @@ import java.util.Set;
  * Use is subject to license terms.
  */
 
-public class DebuggerSessionTab implements LogConsoleManager {
+public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInfo, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerSessionTab");
 
   private static final Icon DEBUG_AGAIN_ICON = IconLoader.getIcon("/actions/startDebugger.png");
 
-  private static final Icon CONSOLE_ICON = IconLoader.getIcon("/debugger/console.png");
-  private static final Icon FRAME_ICON = IconLoader.getIcon("/debugger/frame.png");
   private static final Icon WATCHES_ICON = IconLoader.getIcon("/debugger/watches.png");
   private static final Icon WATCH_RETURN_VALUES_ICON = IconLoader.getIcon("/debugger/watchReturnValues.png");
-
-  private static Key<Key> CONTENT_KIND = Key.create("ContentKind");
-  public static Key CONSOLE_CONTENT = Key.create("ConsoleContent");
-  public static Key THREADS_CONTENT = Key.create("ThreadsContent");
-  public static Key FRAME_CONTENT = Key.create("FrameContent");
-  public static Key WATCHES_CONTENT = Key.create("WatchesContent");
 
   private final Project myProject;
   private final ContentManager myViewsContentManager;
@@ -101,6 +94,9 @@ public class DebuggerSessionTab implements LogConsoleManager {
   private Map<AdditionalTabComponent, ContentManagerListener>  myContentListeners = new HashMap<AdditionalTabComponent, ContentManagerListener>();
 
   private final LogFilesManager myManager;
+  private Content myFramesContent;
+  private Content myVarsContent;
+  private Content myWatchesContent;
 
   public DebuggerSessionTab(Project project) {
     myProject = project;
@@ -130,8 +126,8 @@ public class DebuggerSessionTab implements LogConsoleManager {
 
             case DebuggerSession.EVENT_PAUSE:
               if (myIsJustStarted) {
-                final Content frameView = findContent(FRAME_CONTENT);
-                final Content watchView = findContent(WATCHES_CONTENT);
+                final Content frameView = findContent(DebuggerContentInfo.FRAME_CONTENT);
+                final Content watchView = findContent(DebuggerContentInfo.WATCHES_CONTENT);
                 if (frameView != null) {
                   Content content = myViewsContentManager.getSelectedContent();
                   if (content == null || content.equals(frameView) || content.equals(watchView)) {
@@ -145,8 +141,9 @@ public class DebuggerSessionTab implements LogConsoleManager {
         }
       });
     }
+    myViewsContentManager = getContentFactory().createContentManager(new DebuggerContentUI(this), false, getProject());
 
-    myWatchPanel = new MainWatchPanel(getProject(), getContextManager(), WATCHES_ICON);
+    myWatchPanel = new MainWatchPanel(getProject(), getContextManager());
     myWatchPanel.setUpdateEnabled(debuggerSettings.WATCHES_VISIBLE);
     
     myFramePanel = new FramePanel(getProject(), getContextManager()) {
@@ -155,17 +152,19 @@ public class DebuggerSessionTab implements LogConsoleManager {
       }
     };
     myFramePanel.getFrameTree().setAutoVariablesMode(debuggerSettings.AUTO_VARIABLES_MODE);
+
+    myWatchesContent = createContent(myWatchPanel, DebuggerBundle.message("debugger.session.tab.watches.title"), WATCHES_ICON, WATCHES_CONTENT);
     if (debuggerSettings.WATCHES_VISIBLE) {
-      myFramePanel.setWatchPanel(myWatchPanel);
+      myViewsContentManager.addContent(myWatchesContent);
     }
 
-    final TabbedPaneContentUI ui = new TabbedPaneContentUI(SwingConstants.TOP);
-    myViewsContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(ui, false, getProject());
 
-    Content content = PeerFactory.getInstance().getContentFactory().createContent(myFramePanel, DebuggerBundle.message("debugger.session.tab.frames.title"), false);
-    content.setIcon(FRAME_ICON);
-    content.putUserData(CONTENT_KIND, FRAME_CONTENT);
-    myViewsContentManager.addContent(content);
+    myFramesContent = createContent(myFramePanel, DebuggerBundle.message("debugger.session.tab.frames.title"), IconLoader.getIcon("/debugger/frame.png"), FRAME_CONTENT);
+    myViewsContentManager.addContent(myFramesContent);
+
+
+    myVarsContent = createContent(myFramePanel.getVarsPanel(), DebuggerBundle.message("debugger.session.tab.variables.title"), IconLoader.getIcon("/debugger/value.png"), VARIABLES_CONTENT);
+    myViewsContentManager.addContent(myVarsContent);
 
     myViewsContentManager.addContentManagerListener(new ContentManagerAdapter() {
       public void selectionChanged(ContentManagerEvent event) {
@@ -214,10 +213,8 @@ public class DebuggerSessionTab implements LogConsoleManager {
       myViewsContentManager.removeContent(content);
     }
 
-    content = PeerFactory.getInstance().getContentFactory().createContent(myConsole.getComponent(), DebuggerBundle.message(
-      "debugger.session.tab.console.content.name"), false);
-    content.setIcon(CONSOLE_ICON);
-    content.putUserData(CONTENT_KIND, CONSOLE_CONTENT);
+    content = createContent(myConsole.getComponent(), DebuggerBundle.message(
+      "debugger.session.tab.console.content.name"), IconLoader.getIcon("/debugger/console.png"), CONSOLE_CONTENT);
 
     Content[] contents = myViewsContentManager.getContents();
     myViewsContentManager.removeAllContents();
@@ -473,7 +470,7 @@ public class DebuggerSessionTab implements LogConsoleManager {
   }
 
   public void addAdditionalTabComponent(AdditionalTabComponent tabComponent) {
-    final ContentFactory contentFactory = PeerFactory.getInstance().getContentFactory();
+    final ContentFactory contentFactory = getContentFactory();
     Content logContent = contentFactory.createContent(tabComponent.getComponent(), tabComponent.getTabTitle(), false);
     myAdditionalContent.put(tabComponent, logContent);
     myViewsContentManager.addContent(logContent);
@@ -555,13 +552,13 @@ public class DebuggerSessionTab implements LogConsoleManager {
       myWatchPanel.setUpdateEnabled(show);
       DebuggerSettings.getInstance().WATCHES_VISIBLE = show;
       if (show) {
-        myFramePanel.setWatchPanel(myWatchPanel);
+        myViewsContentManager.addContent(myWatchesContent);
         if (myWatchPanel.isRefreshNeeded()) {
           myWatchPanel.rebuildIfVisible(DebuggerSession.EVENT_CONTEXT);
         }
       }
       else {
-        myFramePanel.setWatchPanel(null);
+        myViewsContentManager.removeContent(myWatchesContent);
       }
     }
   }
@@ -608,5 +605,16 @@ public class DebuggerSessionTab implements LogConsoleManager {
         process.setWatchMethodReturnValuesEnabled(watch);
       }
     }
+  }
+
+  private Content createContent(JComponent component, String displayName, Icon icon, Key kind) {
+    final Content content = getContentFactory().createContent(component, displayName, false);
+    content.putUserData(CONTENT_KIND, kind);
+    content.setIcon(icon);
+    return content;
+  }
+
+  private ContentFactory getContentFactory() {
+    return PeerFactory.getInstance().getContentFactory();
   }
 }

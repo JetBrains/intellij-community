@@ -35,11 +35,8 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
   private final KeyStroke myEditWatchAccelerator = KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0);
   private boolean myUpdateEnabled = true;
 
-  public MainWatchPanel(Project project, DebuggerStateManager stateManager, final Icon icon) {
+  public MainWatchPanel(Project project, DebuggerStateManager stateManager) {
     super(project,stateManager);
-    final JLabel label = new JLabel(DebuggerBundle.message("debugger.session.tab.watches.title"));
-    label.setIcon(icon);
-    add(label, BorderLayout.NORTH);
     final WatchDebuggerTree watchTree = getWatchTree();
 
     final AnAction removeWatchesAction = ActionManager.getInstance().getAction(DebuggerActions.REMOVE_WATCH);

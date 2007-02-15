@@ -25,8 +25,8 @@ public interface ContentManager {
 
   JComponent getComponent();
 
-  void addContent  (Content content);
-  // [Valentin] Q: throw exception when failed?
+  void addContent(Content content);
+  void addContent(Content content, Object constraints);
   boolean removeContent(Content content);
 
   void setSelectedContent(Content content);

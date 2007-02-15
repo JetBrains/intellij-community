@@ -16,6 +16,7 @@ import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
 
 /**
  * @author Anton Katilin
@@ -68,6 +69,10 @@ public class ContentManagerImpl implements ContentManager {
   }
 
   public void addContent(Content content) {
+    addContent(content, null);
+  }
+
+  public void addContent(final Content content, final Object constraints) {
     try {
       ((ContentImpl)content).setManager(this);
       myContents.add(content);
@@ -78,7 +83,6 @@ public class ContentManagerImpl implements ContentManager {
     } finally {
       addProjectManagerListener();
     }
-
   }
 
   // [Valentin] Q: throw exception when failed?
