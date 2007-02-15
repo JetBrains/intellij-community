@@ -50,6 +50,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
   private static final Class ourReferenceClass = XmlTag.class;
 
   private volatile String myName = null;
+  private volatile String myNamespace = null;
   private volatile XmlAttribute[] myAttributes = null;
   private volatile Map<String, String> myAttributeValueMap = null;
   private volatile XmlTag[] myTags = null;
@@ -69,6 +70,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
   public void clearCaches() {
     myName = null;
+    myNamespace = null;
     myNamespaceMap = null;
     myAttributes = null;
     myAttributeValueMap = null;
@@ -498,7 +500,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
   @NotNull
   public String getNamespace() {
-    return getNamespaceByPrefix(getNamespacePrefix());
+    String namespace = myNamespace;
+    if (namespace == null) {
+      myNamespace = namespace = getNamespaceByPrefix(getNamespacePrefix());
+    }
+    return namespace;
   }
 
   @NotNull
