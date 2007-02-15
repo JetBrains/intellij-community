@@ -64,7 +64,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
 
   @NotNull
   public <T extends DomElement> DomFileElementImpl<T> getRoot() {
-    LOG.assertTrue(isValid());
+    LOG.assertTrue(super.isValid());
     return (DomFileElementImpl<T>)myParent;
   }
 

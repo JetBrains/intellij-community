@@ -9,6 +9,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
@@ -45,7 +46,7 @@ import java.util.*;
 /**
  * @author peter                  
  */
-public abstract class DomInvocationHandler implements InvocationHandler, DomElement {
+public abstract class DomInvocationHandler extends UserDataHolderBase implements InvocationHandler, DomElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
   private static final EvaluatedXmlName ATTRIBUTES = new EvaluatedXmlName(new XmlName("@"), null);
   public static final Method ACCEPT_METHOD = ReflectionUtil.getMethod(DomElement.class, "accept", DomElementVisitor.class);
@@ -434,7 +435,6 @@ public abstract class DomInvocationHandler implements InvocationHandler, DomElem
 
   @NotNull
   protected final XmlFile getFile() {
-    assert isValid();
     if (myFile == null) {
       myFile = getRoot().getFile();
     }
