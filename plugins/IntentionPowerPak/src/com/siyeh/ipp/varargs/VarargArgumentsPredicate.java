@@ -22,16 +22,11 @@ import org.jetbrains.annotations.NotNull;
 class VarargArgumentsPredicate implements PsiElementPredicate {
 
     public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (!(element instanceof PsiExpression)) {
+        if (!(element instanceof PsiExpressionList)) {
             return false;
         }
-        final PsiExpression expression = (PsiExpression) element;
-        final PsiElement parent = expression.getParent();
-        if (!(parent instanceof PsiExpressionList)) {
-            return false;
-        }
-        final PsiExpressionList expressionList = (PsiExpressionList) parent;
-        final PsiElement grandParent = expressionList.getParent();
+        final PsiExpressionList argumentList = (PsiExpressionList) element;
+        final PsiElement grandParent = argumentList.getParent();
         if (!(grandParent instanceof PsiMethodCallExpression)) {
             return false;
         }
@@ -41,23 +36,18 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
         if (method == null || !method.isVarArgs()) {
             return false;
         }
-        final int index = indexOfExpressionInExpressionList(expression, 
-                expressionList);
         final PsiParameterList parameterList = method.getParameterList();
         final int parametersCount = parameterList.getParametersCount();
-        return index >= parametersCount - 1;
-    }
-
-    private static int indexOfExpressionInExpressionList(
-            @NotNull PsiExpression expression,
-            @NotNull PsiExpressionList expressionList) {
-        final PsiExpression[] expressions = expressionList.getExpressions();
-        for (int i = 0; i < expressions.length; i++) {
-            final PsiExpression listExpression = expressions[i];
-            if (expression.equals(listExpression)) {
-                return i;
-            }
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        if (arguments.length < parametersCount) {
+            return false;
         }
-        return -1;
+        final PsiExpression lastExpression =
+                arguments[arguments.length - 1];
+        final PsiType lastArgumentType = lastExpression.getType();
+        final PsiParameter[] parameters = parameterList.getParameters();
+        final PsiParameter lastParameter = parameters[parameters.length - 1];
+        final PsiType lastParameterType = lastParameter.getType();
+        return !lastParameterType.equals(lastArgumentType);
     }
 }

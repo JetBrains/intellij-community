@@ -62,9 +62,9 @@ public class WrapVarargArgumentsWithExplicitArrayIntention extends Intention {
         }
         final PsiParameter[] parameters = parameterList.getParameters();
         final PsiParameter varargParameter = parameters[varargParameterIndex];
-        final PsiType type = varargParameter.getType();
+        final PsiArrayType type = (PsiArrayType)varargParameter.getType();
         newExpression.append("new ");
-        final PsiType componentType = type.getDeepComponentType();
+        final PsiType componentType = type.getComponentType();
         final JavaResolveResult resolveResult =
                 methodCallExpression.resolveMethodGenerics();
         final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
