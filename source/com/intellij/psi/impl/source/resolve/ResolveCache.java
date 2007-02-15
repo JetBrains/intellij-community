@@ -31,8 +31,6 @@ public class ResolveCache {
 
   private static final Object NULL = Key.create("NULL");
 
-  private final PsiManagerEx myManager;
-
   private final Map<PsiVariable,Object> myVarToConstValueMap1;
   private final Map<PsiVariable,Object> myVarToConstValueMap2;
 
@@ -51,23 +49,21 @@ public class ResolveCache {
   }
 
   public ResolveCache(PsiManagerEx manager) {
-    myManager = manager;
+    myVarToConstValueMap1 = getOrCreateWeakMap(manager, VAR_TO_CONST_VALUE_MAP_KEY, true);
+    myVarToConstValueMap2 = getOrCreateWeakMap(manager, VAR_TO_CONST_VALUE_MAP_KEY, false);
 
-    myVarToConstValueMap1 = getOrCreateWeakMap(myManager, VAR_TO_CONST_VALUE_MAP_KEY, true);
-    myVarToConstValueMap2 = getOrCreateWeakMap(myManager, VAR_TO_CONST_VALUE_MAP_KEY, false);
+    myPolyVariantResolveMaps[0] = getOrCreateWeakMap(manager, JAVA_RESOLVE_MAP, true);
+    myPolyVariantResolveMaps[1] = getOrCreateWeakMap(manager, JAVA_RESOLVE_MAP_INCOMPLETE, true);
+    myResolveMaps[0] = getOrCreateWeakMap(manager, RESOLVE_MAP, true);
+    myResolveMaps[1] = getOrCreateWeakMap(manager, RESOLVE_MAP_INCOMPLETE, true);
 
-    myPolyVariantResolveMaps[0] = getOrCreateWeakMap(myManager, JAVA_RESOLVE_MAP, true);
-    myPolyVariantResolveMaps[1] = getOrCreateWeakMap(myManager, JAVA_RESOLVE_MAP_INCOMPLETE, true);
-    myResolveMaps[0] = getOrCreateWeakMap(myManager, RESOLVE_MAP, true);
-    myResolveMaps[1] = getOrCreateWeakMap(myManager, RESOLVE_MAP_INCOMPLETE, true);
+    myPolyVariantResolveMaps[2] = getOrCreateWeakMap(manager, JAVA_RESOLVE_MAP, false);
+    myPolyVariantResolveMaps[3] = getOrCreateWeakMap(manager, JAVA_RESOLVE_MAP_INCOMPLETE, false);
 
-    myPolyVariantResolveMaps[2] = getOrCreateWeakMap(myManager, JAVA_RESOLVE_MAP, false);
-    myPolyVariantResolveMaps[3] = getOrCreateWeakMap(myManager, JAVA_RESOLVE_MAP_INCOMPLETE, false);
+    myResolveMaps[2] = getOrCreateWeakMap(manager, RESOLVE_MAP, false);
+    myResolveMaps[3] = getOrCreateWeakMap(manager, RESOLVE_MAP_INCOMPLETE, false);
 
-    myResolveMaps[2] = getOrCreateWeakMap(myManager, RESOLVE_MAP, false);
-    myResolveMaps[3] = getOrCreateWeakMap(myManager, RESOLVE_MAP_INCOMPLETE, false);
-
-    myManager.registerRunnableToRunOnAnyChange(new Runnable() {
+    manager.registerRunnableToRunOnAnyChange(new Runnable() {
       public void run() {
         myCaclulatedlTypes.clear();
       }
