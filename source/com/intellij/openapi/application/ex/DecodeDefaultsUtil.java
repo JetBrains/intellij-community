@@ -2,6 +2,7 @@ package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,7 @@ public class DecodeDefaultsUtil {
   public static InputStream getDefaultsInputStream(Object requestor, final String componentResourcePath) {
     try {
       final URL defaults = getDefaults(requestor, componentResourcePath);
-      return defaults != null ? defaults.openStream() : null;
+      return defaults != null ? URLUtil.openStream(defaults) : null;
     }
     catch (IOException e) {
       LOG.error(e);

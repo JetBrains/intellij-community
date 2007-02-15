@@ -6,6 +6,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.config.*;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -13,8 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Properties;
 
@@ -136,7 +136,7 @@ public class AntInstallation {
     Properties properties = new Properties();
     InputStream stream = null;
     try {
-      stream = new URLClassLoader(new URL[]{antJar.toURL()}, null).getResourceAsStream(VERSION_RESOURCE);
+      stream = new UrlClassLoader(Collections.singletonList(antJar.toURL()), null).getResourceAsStream(VERSION_RESOURCE);
       properties.load(stream);
     }
     catch (MalformedURLException e) {

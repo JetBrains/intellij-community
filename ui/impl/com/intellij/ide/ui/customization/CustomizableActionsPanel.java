@@ -4,6 +4,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
@@ -33,6 +34,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -41,6 +43,8 @@ import java.util.List;
  * Date: Mar 17, 2005
  */
 public class CustomizableActionsPanel {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.customization.CustomizableActionsPanel");
+
   private static final Icon EMPTY_ICON = new EmptyIcon(18, 18);
 
   private static final Icon QUICK_LIST_ICON = IconLoader.getIcon("/actions/quickList.png");
@@ -665,8 +669,14 @@ public class CustomizableActionsPanel {
     final AnAction action = ActionManager.getInstance().getAction(actionId);
     if (action != null && action.getTemplatePresentation() != null) {
       if (path != null && path.length() > 0) {
-        final Image image = ImageLoader.loadFromURL(VfsUtil.convertToURL(VfsUtil.pathToUrl(path.replace(File.separatorChar,
-                                                                                                        '/'))));
+        Image image = null;
+        try {
+          image = ImageLoader.loadFromStream(VfsUtil.convertToURL(VfsUtil.pathToUrl(path.replace(File.separatorChar,
+                                                                                                        '/'))).openStream());
+        }
+        catch (IOException e) {
+          LOG.debug(e);
+        }
         Icon icon = new File(path).exists() ? IconLoader.getIcon(image) : null;
         if (icon != null) {
           node.setUserObject(Pair.create(actionId, icon));

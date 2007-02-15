@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -252,6 +253,7 @@ public class PathManager {
   /**
    * Attempts to detect classpath entry which contains given resource
    */
+  @Nullable
   public static String getResourceRoot(Class context, @NonNls String path) {
     URL url = context.getResource(path);
     if (url == null) {

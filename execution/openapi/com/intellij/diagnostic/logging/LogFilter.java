@@ -16,6 +16,7 @@
 
 package com.intellij.diagnostic.logging;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -25,12 +26,15 @@ import org.jdom.Element;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 
 /**
  * User: anna
  * Date: 22-Mar-2006
  */
 public class LogFilter implements JDOMExternalizable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.logging.LogFilter");
+
   public String myName;
   public String myIconPath;
   private Icon myIcon;
@@ -68,7 +72,14 @@ public class LogFilter implements JDOMExternalizable {
       return myIcon;
     }
     if (myIconPath != null && new File(FileUtil.toSystemDependentName(myIconPath)).exists()) {
-      final Image image = ImageLoader.loadFromURL(VfsUtil.convertToURL(VfsUtil.pathToUrl(myIconPath)));
+      Image image = null;
+      try {
+        image = ImageLoader.loadFromStream(VfsUtil.convertToURL(VfsUtil.pathToUrl(myIconPath)).openStream());
+      }
+      catch (IOException e) {
+        LOG.debug(e);
+      }
+
       if (image != null){
         return IconLoader.getIcon(image);
       }

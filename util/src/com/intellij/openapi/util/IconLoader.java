@@ -113,15 +113,15 @@ public final class IconLoader {
   @Nullable
   public static Icon findIcon(final String path, final Class aClass) {
     URL url = aClass.getResource(path);
-    return findIcon(url);
+    return findIcon(url, path, aClass.getClassLoader());
   }
 
   @Nullable
-  private static Icon findIcon(URL url) {
+  private static Icon findIcon(URL url, String resourcePath, ClassLoader classLoader) {
     if (url == null) return null;
       Icon icon = ourIconsCache.get(url);
       if (icon == null) {
-        icon = new CachedImageIcon(url);
+        icon = new CachedImageIcon(resourcePath, classLoader);
         icon = ourIconsCache.cacheOrGet(url, icon);
       }
       return icon;
@@ -132,11 +132,11 @@ public final class IconLoader {
     if (!path.startsWith("/")) return null;
 
     final URL url = aClassLoader.getResource(path.substring(1));
-    return findIcon(url);
+    return findIcon(url, path, aClassLoader);
   }
 
   @Nullable
-  private static Icon checkIcon(final Image image, final URL path) {
+  private static Icon checkIcon(final Image image, final String path) {
     if (image == null || image.getHeight(ourFakeComponent) < 1) { // image wasn't loaded or broken
       return null;
     }
@@ -206,11 +206,13 @@ public final class IconLoader {
   }
 
   private static final class CachedImageIcon implements Icon {
-    private URL myURL;
+    private String myResourcePath;
+    private ClassLoader myClassLoader;
     private Object myRealIcon;
 
-    public CachedImageIcon(URL myURL) {
-      this.myURL = myURL;
+    public CachedImageIcon(String resourcePath, ClassLoader classLoader) {
+      myResourcePath = resourcePath;
+      myClassLoader = classLoader;
     }
 
     private synchronized Icon getRealIcon() {
@@ -224,8 +226,8 @@ public final class IconLoader {
         if (icon != null) return icon;
       }
 
-      Image image = ImageLoader.loadFromURL(myURL);
-      icon = checkIcon(image, myURL);
+      Image image = ImageLoader.loadFromStream(myClassLoader.getResourceAsStream(myResourcePath));
+      icon = checkIcon(image, myResourcePath);
 
       if (icon != null) {
         if (icon.getIconWidth() < 50 && icon.getIconHeight() < 50) {

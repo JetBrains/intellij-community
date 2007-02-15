@@ -8,10 +8,12 @@ package com.intellij.ide.plugins.cl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.lang.UrlClassLoader;
+import org.jetbrains.annotations.Nullable;
 import sun.misc.CompoundEnumeration;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Enumeration;
@@ -68,12 +70,27 @@ public class PluginClassLoader extends UrlClassLoader {
     if (resource != null) {
       return resource;
     }
+
     for (ClassLoader parent : myParents) {
       final URL parentResource = fetchResource(parent, name);
       if (parentResource != null) {
         return parentResource;
       }
     }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public InputStream getResourceAsStream(final String name) {
+    final InputStream stream = super.getResourceAsStream(name);
+    if (stream != null) return stream;
+
+    for (ClassLoader parent : myParents) {
+      final InputStream inputStream = parent.getResourceAsStream(name);
+      if (inputStream != null) return inputStream;
+    }
+
     return null;
   }
 

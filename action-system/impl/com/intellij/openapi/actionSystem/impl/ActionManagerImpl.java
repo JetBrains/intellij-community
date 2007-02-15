@@ -291,7 +291,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     @NonNls final String resBundleName = plugin != null ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
     ResourceBundle bundle = null;
     if (resBundleName != null) {
-      bundle = ResourceBundle.getBundle(resBundleName, Locale.getDefault(), loader);
+      bundle = getBundle(loader, resBundleName);
     }
 
     if (LOG.isDebugEnabled()) {
@@ -399,7 +399,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     @NonNls final String resBundleName = plugin != null ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
     ResourceBundle bundle = null;
     if (resBundleName != null) {
-      bundle = ResourceBundle.getBundle(resBundleName, Locale.getDefault(), loader);
+      bundle = getBundle(loader, resBundleName);
     }
 
     if (LOG.isDebugEnabled()) {
@@ -511,6 +511,21 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       }
       return null;
     }
+  }
+
+  private static Map<String, ResourceBundle> ourBundlesCache = new HashMap<String, ResourceBundle>();
+
+  private static ResourceBundle getBundle(final ClassLoader loader, final String resBundleName) {
+
+    if (ourBundlesCache.containsKey(resBundleName)) {
+      return ourBundlesCache.get(resBundleName);
+    }
+
+    final ResourceBundle bundle = ResourceBundle.getBundle(resBundleName, Locale.getDefault(), loader);
+
+    ourBundlesCache.put(resBundleName, bundle);
+
+    return bundle;
   }
 
   /**

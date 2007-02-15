@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import sun.reflect.Reflection;
 
 import javax.swing.*;
@@ -24,7 +25,6 @@ import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.net.URL;
 
 @Deprecated
 public class ImageLoader implements Serializable {
@@ -45,6 +45,7 @@ public class ImageLoader implements Serializable {
     return !mediatracker.isErrorID(1);
   }
 
+  @Nullable
   public static Image loadFromResource(@NonNls String s) {
     int stackFrameCount = 2;
     Class callerClass = Reflection.getCallerClass(stackFrameCount);
@@ -57,16 +58,16 @@ public class ImageLoader implements Serializable {
     return loadFromResource(s, callerClass);
   }
 
+  @Nullable
   public static Image loadFromResource(String s, Class aClass) {
-    URL url = aClass.getResource(s);
-    return url != null ? loadFromURL(url) : null;
+    final InputStream stream = aClass.getResourceAsStream(s);
+    return stream != null ? loadFromStream(stream) : null;
   }
 
-  public static Image loadFromURL(final URL url) {
+  public static Image loadFromStream(final InputStream inputStream) {
     try {
 
       ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-      final InputStream inputStream = url.openStream();
       try {
         byte[] buffer = new byte[1024];
         while (true) {
