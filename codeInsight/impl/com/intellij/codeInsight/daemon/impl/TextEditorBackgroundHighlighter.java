@@ -111,7 +111,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
         return TextEditorHighlightingPass.EMPTY_ARRAY;
       }
     }
-    else if (!DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(myFile)) {
+    else if (myProject.isDisposed() || !DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(myFile)) {
       return TextEditorHighlightingPass.EMPTY_ARRAY;
     }
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
