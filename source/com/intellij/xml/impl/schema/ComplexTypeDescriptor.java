@@ -1,6 +1,7 @@
 package com.intellij.xml.impl.schema;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -43,7 +44,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   public XmlElementDescriptor[] getElements() {
     if(myElementDescriptors != null) return myElementDescriptors;
 
-    synchronized(myDocumentDescriptor) {
+    synchronized(PsiLock.LOCK) {
       if(myElementDescriptors != null) return myElementDescriptors;
       Map<String,XmlElementDescriptor> map = new LinkedHashMap<String,XmlElementDescriptor>(5);
       collectElements(map, myTag, new HashSet<XmlTag>());
@@ -87,7 +88,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   public XmlAttributeDescriptor[] getAttributes() {
     if(myAttributeDescriptors != null) return myAttributeDescriptors;
 
-    synchronized(myDocumentDescriptor) {
+    synchronized(PsiLock.LOCK) {
       if(myAttributeDescriptors != null) return myAttributeDescriptors;
       List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
       collectAttributes(result, myTag, new ArrayList<XmlTag>());
