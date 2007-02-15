@@ -121,11 +121,9 @@ public class ReuseOfLocalVariableInspection
             }
             final PsiExpression rhs = assignment.getRExpression();
             assert rhs != null;
-            final String newStatement =
-                    type.getPresentableText() + ' '
-                    + newVariableName +
-                    " =  " + rhs.getText()
-                    + ';';
+            @NonNls final String newStatement =
+                    type.getPresentableText() + ' ' + newVariableName +
+                            " =  " + rhs.getText() + ';';
             replaceStatement(assignmentStatement, newStatement);
         }
     }

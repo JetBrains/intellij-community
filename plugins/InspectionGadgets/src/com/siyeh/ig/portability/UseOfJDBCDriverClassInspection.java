@@ -17,10 +17,10 @@ package com.siyeh.ig.portability;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class UseOfJDBCDriverClassInspection extends BaseInspection {
@@ -73,6 +73,9 @@ public class UseOfJDBCDriverClassInspection extends BaseInspection {
                 return;
             }
             final PsiTypeElement typeElement = variable.getTypeElement();
+            if (typeElement == null) {
+                return;
+            }
             registerError(typeElement);
         }
 
@@ -102,6 +105,9 @@ public class UseOfJDBCDriverClassInspection extends BaseInspection {
             }
             final PsiJavaCodeReferenceElement classNameElement =
                     newExpression.getClassReference();
+            if (classNameElement == null) {
+                return;
+            }
             registerError(classNameElement);
         }
     }

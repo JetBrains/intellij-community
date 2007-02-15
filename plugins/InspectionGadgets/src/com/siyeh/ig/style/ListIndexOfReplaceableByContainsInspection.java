@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Bas Leijdekkers
+ * Copyright 2006-2007 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,6 +236,9 @@ public class ListIndexOfReplaceableByContainsInspection
                     GlobalSearchScope.allScope(project);
             final PsiClass javaUtilListClass =
                     manager.findClass("java.util.List", projectScope);
+            if (javaUtilListClass == null) {
+                return false;
+            }
             final PsiElementFactory factory = manager.getElementFactory();
             final PsiClassType javaUtilListType =
                     factory.createType(javaUtilListClass);

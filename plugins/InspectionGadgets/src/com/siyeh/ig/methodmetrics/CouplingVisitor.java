@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -56,9 +56,6 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
 
     private void addDependenciesForThrowsList(PsiMethod method) {
         final PsiReferenceList throwsList = method.getThrowsList();
-        if (throwsList == null) {
-            return;
-        }
         final PsiClassType[] throwsTypes = throwsList.getReferencedTypes();
         for(PsiClassType throwsType : throwsTypes){
             addDependency(throwsType);

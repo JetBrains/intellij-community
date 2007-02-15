@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,15 +93,16 @@ public class CastThatLosesPrecisionInspection extends ExpressionInspection {
             if (result instanceof Character) {
                 result = new Integer(((Character)result).charValue());
             }
-
             if (result instanceof Number) {
                 final Number number = (Number)result;
                 if (valueIsContainableType(number, castType)) {
                     return;
                 }
             }
-
             final PsiTypeElement castTypeElement = expression.getCastType();
+            if (castTypeElement == null) {
+                return;
+            }
             registerError(castTypeElement, operandType);
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,23 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class SetupIsPublicVoidNoArgInspection extends MethodInspection {
 
     public String getID() {
         return "SetUpWithIncorrectSignature";
+    }
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "setup.is.public.void.no.arg.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -67,16 +73,11 @@ public class SetupIsPublicVoidNoArgInspection extends MethodInspection {
             }
             final PsiParameterList parameterList = method.getParameterList();
             final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters == null) {
-                return;
-            }
             if (parameters.length != 0) {
                 registerMethodError(method);
-            }
-            else if (!returnType.equals(PsiType.VOID)) {
+            } else if (!returnType.equals(PsiType.VOID)) {
                 registerMethodError(method);
-            }
-            else if (!method.hasModifierProperty(PsiModifier.PUBLIC) &&
+            } else if (!method.hasModifierProperty(PsiModifier.PUBLIC) &&
                     !method.hasModifierProperty(PsiModifier.PROTECTED)) {
                 registerMethodError(method);
             }

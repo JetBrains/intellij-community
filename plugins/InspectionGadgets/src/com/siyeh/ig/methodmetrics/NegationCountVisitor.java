@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 class NegationCountVisitor extends PsiRecursiveElementVisitor {
+    
     private int m_count = 0;
 
     public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
@@ -38,9 +39,6 @@ class NegationCountVisitor extends PsiRecursiveElementVisitor {
     public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
         super.visitPrefixExpression(expression);
         final PsiJavaToken sign = expression.getOperationSign();
-        if (sign == null) {
-            return;
-        }
         if (sign.getTokenType().equals(JavaTokenType.EXCL)) {
             m_count++;
         }

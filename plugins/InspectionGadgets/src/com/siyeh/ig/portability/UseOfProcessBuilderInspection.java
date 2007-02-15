@@ -17,11 +17,11 @@ package com.siyeh.ig.portability;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class UseOfProcessBuilderInspection extends BaseInspection {
 
@@ -50,11 +50,13 @@ public class UseOfProcessBuilderInspection extends BaseInspection {
             super.visitVariable(variable);
             final PsiType type = variable.getType();
             final String typeString = type.getCanonicalText();
-            if(!"java.lang.ProcessBuilder".equals(typeString))
-            {
-               return;
+            if(!"java.lang.ProcessBuilder".equals(typeString)) {
+                return;
             }
             final PsiTypeElement typeElement = variable.getTypeElement();
+            if (typeElement == null) {
+                return;
+            }
             registerError(typeElement);
         }
 
@@ -66,12 +68,14 @@ public class UseOfProcessBuilderInspection extends BaseInspection {
                 return;
             }
             @NonNls final String typeString = type.getCanonicalText();
-            if(!"java.lang.ProcessBuilder".equals(typeString))
-            {
-               return;
+            if(!"java.lang.ProcessBuilder".equals(typeString)) {
+                return;
             }
             final PsiJavaCodeReferenceElement classNameElement =
                     newExpression.getClassReference();
+            if (classNameElement == null) {
+                return;
+            }
             registerError(classNameElement);
         }
     }

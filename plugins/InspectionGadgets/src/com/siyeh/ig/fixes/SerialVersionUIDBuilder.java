@@ -110,7 +110,8 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
             for(final PsiClassInitializer initializer : initializers){
                 final PsiModifierList modifierList =
                         initializer.getModifierList();
-                if(modifierList.hasModifierProperty(PsiModifier.STATIC)){
+                if(modifierList != null &&
+                        modifierList.hasModifierProperty(PsiModifier.STATIC)){
                     final MemberSignature initializerSignature =
                             MemberSignature.getStaticInitializerMemberSignature();
                     staticInitializers.add(initializerSignature);
@@ -329,8 +330,8 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
             final PsiType stringType = PsiType.getJavaLangString(manager,
                                                                  scope);
             if(field.hasModifierProperty(PsiModifier.FINAL) &&
-                    (fieldType instanceof PsiPrimitiveType || fieldType
-                            .equals(stringType))){
+                    (fieldType instanceof PsiPrimitiveType ||
+                            fieldType.equals(stringType))) {
                 return !PsiUtil.isConstantExpression(initializer);
             } else{
                 return true;
@@ -458,7 +459,8 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
                         MemberSignature.createTypeSignature(type).replace('/',
                                                                           '.');
                 final String className = clazz.getQualifiedName();
-                final StringBuilder signatureBuffer = new StringBuilder("(");
+                @NonNls final StringBuilder signatureBuffer =
+                        new StringBuilder("(");
                 if(!isStatic){
                     signatureBuffer.append('L').append(className).append(';');
                 }
@@ -466,7 +468,7 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
                 if(!field.getContainingClass().equals(clazz)){
                     return;
                 }
-                String name = null;
+                @NonNls String name = null;
                 final PsiElement parent = expression.getParent();
                 if(parent instanceof PsiAssignmentExpression){
                     final PsiAssignmentExpression assignment = (PsiAssignmentExpression) parent;

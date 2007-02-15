@@ -17,10 +17,10 @@ package com.siyeh.ig.portability;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class UseOfAWTPeerClassInspection extends BaseInspection {
@@ -73,8 +73,10 @@ public class UseOfAWTPeerClassInspection extends BaseInspection {
                     "java.awt.peer.ComponentPeer")) {
                 return;
             }
-
             final PsiTypeElement typeElement = variable.getTypeElement();
+            if (typeElement == null) {
+                return;
+            }
             registerError(typeElement);
         }
 
@@ -105,6 +107,9 @@ public class UseOfAWTPeerClassInspection extends BaseInspection {
             }
             final PsiJavaCodeReferenceElement classNameElement =
                     newExpression.getClassReference();
+            if (classNameElement == null) {
+                return;
+            }
             registerError(classNameElement);
         }
     }

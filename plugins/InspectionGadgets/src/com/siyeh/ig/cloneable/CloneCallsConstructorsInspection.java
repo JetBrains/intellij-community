@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,8 @@ public class CloneCallsConstructorsInspection extends ExpressionInspection {
             final String methodName = method.getName();
             final PsiParameterList parameterList = method.getParameterList();
             final boolean isClone =
-                    HardcodedMethodConstants.CLONE.equals(methodName) && parameterList.getParametersCount() == 0;
+                    HardcodedMethodConstants.CLONE.equals(methodName) &&
+                            parameterList.getParametersCount() == 0;
             if (isClone) {
                 method.accept(new PsiRecursiveElementVisitor() {
 
@@ -76,6 +77,9 @@ public class CloneCallsConstructorsInspection extends ExpressionInspection {
                         }
                         final PsiJavaCodeReferenceElement classReference =
                                 newExpression.getClassReference();
+                        if (classReference == null) {
+                            return;
+                        }
                         registerError(classReference);
                     }
                 });

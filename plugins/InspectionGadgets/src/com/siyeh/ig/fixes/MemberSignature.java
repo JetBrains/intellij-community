@@ -59,7 +59,7 @@ public class MemberSignature implements Comparable<MemberSignature>
         }
     }
 
-    public MemberSignature(String name, int modifiers, @NonNls String signature)
+    public MemberSignature(@NonNls String name, int modifiers, @NonNls String signature)
     {
         super();
         this.name = name;

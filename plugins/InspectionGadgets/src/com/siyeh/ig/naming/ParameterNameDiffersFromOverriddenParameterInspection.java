@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,12 +87,10 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
             final PsiParameterList parameterList =
                     superMethod.getParameterList();
             final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters != null) {
-                final String superParameterName = parameters[index].getName();
-                assert superParameterName != null;
-                if (!superParameterName.equals(parameterName)) {
-                    return new RenameParameterFix(superParameterName);
-                }
+            final String superParameterName = parameters[index].getName();
+            assert superParameterName != null;
+            if (!superParameterName.equals(parameterName)) {
+                return new RenameParameterFix(superParameterName);
             }
         }
         return null;

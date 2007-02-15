@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,6 +118,9 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
                     PsiDocumentManager.getInstance(psiManager.getProject());
             final JspFile file = PsiUtil.getJspFile(statement);
             final Document document = documentManager.getDocument(file);
+            if (document == null) {
+                return;
+            }
             final TextRange textRange = statement.getTextRange();
             document.replaceString(textRange.getStartOffset(),
                     textRange.getEndOffset(), newStatementText);
@@ -126,6 +129,9 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
             PsiElement elementAt =
                     viewProvider.findElementAt(textRange.getStartOffset(),
                             StdLanguages.JAVA);
+            if (elementAt == null) {
+                return;
+            }
             final int endOffset = textRange.getStartOffset() +
                     newStatementText.length();
             while(elementAt.getTextRange().getEndOffset() < endOffset ||

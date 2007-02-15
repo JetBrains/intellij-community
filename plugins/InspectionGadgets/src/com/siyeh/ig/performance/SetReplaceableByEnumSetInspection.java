@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class SetReplaceableByEnumSetInspection extends ExpressionInspection {
@@ -76,9 +76,12 @@ public class SetReplaceableByEnumSetInspection extends ExpressionInspection {
             if (!argumentClass.isEnum()) {
                 return;
             }
-            final PsiJavaCodeReferenceElement classRef =
+            final PsiJavaCodeReferenceElement classReference =
                     expression.getClassReference();
-            registerError(classRef);
+            if (classReference == null) {
+                return;
+            }
+            registerError(classReference);
         }
     }
 }

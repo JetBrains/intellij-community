@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassInitializerInspection extends ClassInspection {
@@ -44,15 +44,20 @@ public class ClassInitializerInspection extends ClassInspection {
 
     private static class ClassInitializerVisitor extends BaseInspectionVisitor {
 
+        // todo use visitClassInitializer()
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes
             final PsiClassInitializer[] initializers = aClass.getInitializers();
             for (final PsiClassInitializer initializer : initializers) {
-                if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
-                    final PsiCodeBlock body = initializer.getBody();
-                    final PsiJavaToken leftBrace = body.getLBrace();
-                    registerError(leftBrace);
+                if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
+                    continue;
                 }
+                final PsiCodeBlock body = initializer.getBody();
+                final PsiJavaToken leftBrace = body.getLBrace();
+                if (leftBrace == null) {
+                    continue;
+                }
+                registerError(leftBrace);
             }
         }
     }

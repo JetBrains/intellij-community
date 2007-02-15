@@ -98,6 +98,9 @@ public class ArrayLengthInLoopConditionInspection extends BaseInspection {
                     }
                     final PsiElement lengthElement =
                             expression.getReferenceNameElement();
+                    if (lengthElement == null) {
+                        return;
+                    }
                     registerError(lengthElement);
                 }
             };
