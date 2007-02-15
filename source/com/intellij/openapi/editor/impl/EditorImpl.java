@@ -914,8 +914,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     mySizeContainer.changedUpdate(e);
     validateSize();
 
-    int startLine = offsetToLogicalPosition(e.getOffset()).line;
-    int endLine = offsetToLogicalPosition(e.getOffset() + e.getNewLength()).line;
+    int startLine = calcLogicalLineNumber(e.getOffset());
+    int endLine = calcLogicalLineNumber(e.getOffset() + e.getNewLength());
 
     boolean painted = false;
     if (myDocument.getTextLength() > 0) {
