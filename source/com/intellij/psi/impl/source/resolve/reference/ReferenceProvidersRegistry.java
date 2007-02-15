@@ -348,7 +348,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     registerXmlAttributeValueReferenceProvider(attributeNames, elementFilter, true, provider);
   }
 
-  public @NotNull PsiReferenceProvider getProviderByType(@NotNull ReferenceProviderType type) {
+  public @Nullable PsiReferenceProvider getProviderByType(@NotNull ReferenceProviderType type) {
     return myReferenceTypeToProviderMap.get(type);
   }
 
