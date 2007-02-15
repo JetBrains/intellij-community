@@ -4,6 +4,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.util.Function;
+import com.intellij.util.ReflectionCache;
 import com.intellij.openapi.util.Comparing;
 
 /**
@@ -34,7 +35,7 @@ public class NamedEnumUtil {
   }
 
   private static <T extends Enum> Function<Enum, String> getShow(final Class<T> enumClass) {
-    return NamedEnum.class.isAssignableFrom(enumClass) ? NAMED_SHOW : SIMPLE_SHOW;
+    return ReflectionCache.isAssignable(NamedEnum.class, enumClass) ? NAMED_SHOW : SIMPLE_SHOW;
   }
 
   public static <T extends Enum> String getEnumValueByElement(final T element) {
