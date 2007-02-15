@@ -13,12 +13,14 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class MoveFilesOrDirectoriesUtil {
@@ -50,14 +52,17 @@ public class MoveFilesOrDirectoriesUtil {
   /**
    * @param elements should contain PsiDirectories or PsiFiles only
    */
-  public static void doMove(final Project project, final PsiElement[] elements, PsiDirectory initialTargetElement, final MoveCallback moveCallback) {
+  public static void doMove(final Project project, final PsiElement[] elements, PsiElement initialTargetElement, final MoveCallback moveCallback) {
     for (PsiElement element : elements) {
       if (!(element instanceof PsiFile) && !(element instanceof PsiDirectory)) {
         throw new IllegalArgumentException("unexpected element type: " + element);
       }
     }
 
-    final PsiDirectory initialTargetDirectory = getInitialTargetDirectory(initialTargetElement, elements);
+    final PsiDirectory targetDirectory = resolveToDirectory(project, initialTargetElement);
+    if ( targetDirectory == null ) return;
+    
+    final PsiDirectory initialTargetDirectory = getInitialTargetDirectory(targetDirectory, elements);
 
     final MoveFilesOrDirectoriesDialog.Callback doRun = new MoveFilesOrDirectoriesDialog.Callback() {
       public void run(final MoveFilesOrDirectoriesDialog moveDialog) {
@@ -102,6 +107,24 @@ public class MoveFilesOrDirectoriesUtil {
       HelpID.getMoveHelpID(elements[0])
     );
     moveDialog.show();
+  }
+
+  @Nullable
+  private static PsiDirectory resolveToDirectory(final Project project, final PsiElement element) {
+    if (!(element instanceof PsiPackage)) {
+      return (PsiDirectory)element;
+    }
+
+    PsiDirectory[] directories = ((PsiPackage)element).getDirectories();
+    switch (directories.length) {
+      case 0:
+        return null;
+      case 1:
+        return directories[0];
+      default:
+        return MoveClassesOrPackagesUtil.chooseDirectory(directories, directories[0], project, new HashMap<PsiDirectory, String>());
+    }
+
   }
 
   private static PsiDirectory getCommonDirectory(PsiElement[] movedElements) {

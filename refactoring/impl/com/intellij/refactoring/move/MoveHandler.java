@@ -19,6 +19,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl;
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesToNewDirectoryDialog;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.move.moveInner.MoveInnerImpl;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandler;
@@ -33,16 +34,11 @@ import java.awt.*;
 public class MoveHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.MoveHandler");
 
-  public static final int NOT_SUPPORTED = 0;
-  public static final int CLASSES = 1;
-  public static final int PACKAGES = 2;
-  public static final int MEMBERS = 3;
-  public static final int INNER_TO_UPPER = 4;
-  public static final int INNER_TO_UPPER_OR_MEMBERS = 5;
-  public static final int FILES = 6;
-  public static final int DIRECTORIES = 7;
-  public static final int MOVE_OR_REARRANGE_PACKAGE = 8;
-  public static final int INSTANCE_METHOD = 9;
+  enum MoveType {
+    NOT_SUPPORTED, CLASSES, PACKAGES, MEMBERS, INNER_TO_UPPER, INNER_TO_UPPER_OR_MEMBERS,
+    FILES, DIRECTORIES, INSTANCE_METHOD, MOVE_OR_REARRANGE_PACKAGE
+  }
+
   public static final String REFACTORING_NAME = RefactoringBundle.message("move.tltle");
 
 
@@ -102,7 +98,7 @@ public class MoveHandler implements RefactoringActionHandler {
   private boolean tryToMoveElement(final PsiElement element, final Project project, final DataContext dataContext) {
     if ((element instanceof PsiFile && ((PsiFile)element).getVirtualFile() != null)
         || element instanceof PsiDirectory) {
-      final PsiDirectory targetContainer = (PsiDirectory)myTargetContainerFinder.getTargetContainer(dataContext);
+      final PsiElement targetContainer = myTargetContainerFinder.getTargetContainer(dataContext);
       MoveFilesOrDirectoriesUtil.doMove(project, new PsiElement[]{element}, targetContainer, null);
       return true;
     } else if (element instanceof PsiField) {
@@ -128,11 +124,11 @@ public class MoveHandler implements RefactoringActionHandler {
           SelectInnerOrMembersRefactoringDialog dialog = new SelectInnerOrMembersRefactoringDialog(aClass, project);
           dialog.show();
           if (dialog.isOK()) {
-            int type = dialog.getRefactoringType();
-            if (type == INNER_TO_UPPER) {
+            MoveType type = dialog.getRefactoringType();
+            if (type == MoveType.INNER_TO_UPPER) {
               MoveInnerImpl.doMove(project, new PsiElement[]{aClass}, null);
             }
-            else if (type == MEMBERS) {
+            else if (type == MoveType.MEMBERS) {
               MoveMembersImpl.doMove(project, new PsiElement[]{aClass}, null, null);
             }
           }
@@ -165,60 +161,94 @@ public class MoveHandler implements RefactoringActionHandler {
   public static void doMove(Project project, @NotNull PsiElement[] elements, PsiElement targetContainer, MoveCallback callback) {
     if (elements.length == 0) return;
 
-    int moveType = getMoveType(elements);
-    if (moveType == CLASSES || moveType == PACKAGES) {
-      MoveClassesOrPackagesImpl.doMove(project, elements, targetContainer, callback);
-    }
-    else if (moveType == FILES || moveType == DIRECTORIES) {
-      if (!LOG.assertTrue(targetContainer == null || targetContainer instanceof PsiDirectory)) {
+    MoveType moveType = getMoveType(elements);
+    if (moveType == MoveType.CLASSES || moveType == MoveType.PACKAGES) {
+      if (tryDirectoryMove ( elements, targetContainer)) {
         return;
       }
-      MoveFilesOrDirectoriesUtil.doMove(project, elements, (PsiDirectory)targetContainer, callback);
+      if (tryPackageRearrange(project, elements, targetContainer, moveType)) {
+        return;
+      }
+      MoveClassesOrPackagesImpl.doMove(project, elements, targetContainer, callback);
     }
-    else if (moveType == MEMBERS) {
+    else if (moveType == MoveType.FILES || moveType == MoveType.DIRECTORIES) {
+      if (!LOG.assertTrue(targetContainer == null || targetContainer instanceof PsiDirectory || targetContainer instanceof PsiPackage )) {
+        return;
+      }
+      MoveFilesOrDirectoriesUtil.doMove(project, elements, targetContainer, callback);
+    }
+    else if (moveType == MoveType.MEMBERS) {
       MoveMembersImpl.doMove(project, elements, targetContainer, callback);
     }
-    else if (moveType == INNER_TO_UPPER) {
+    else if (moveType == MoveType.INNER_TO_UPPER) {
       MoveInnerImpl.doMove(project, elements, callback);
     }
-    else if (moveType == INSTANCE_METHOD) {
+    else if (moveType == MoveType.INSTANCE_METHOD) {
       new MoveInstanceMethodHandler().invoke(project, elements, null);
     }
-    else if (moveType == INNER_TO_UPPER_OR_MEMBERS) {
+    else if (moveType == MoveType.INNER_TO_UPPER_OR_MEMBERS) {
       SelectInnerOrMembersRefactoringDialog dialog = new SelectInnerOrMembersRefactoringDialog((PsiClass)elements[0], project);
       dialog.show();
       if (!dialog.isOK()) {
         return;
       }
       moveType = dialog.getRefactoringType();
-      if (moveType == INNER_TO_UPPER) {
+      if (moveType == MoveType.INNER_TO_UPPER) {
         MoveInnerImpl.doMove(project, elements, callback);
       }
-      else if (moveType == MEMBERS) {
+      else if (moveType == MoveType.MEMBERS) {
         MoveMembersImpl.doMove(project, elements, targetContainer, callback);
-      }
-    }
-    else if (moveType == MOVE_OR_REARRANGE_PACKAGE) {
-      PsiDirectory[] directories = convertToDirectories(moveType, elements);
-      SelectMoveOrRearrangePackageDialog dialog = new SelectMoveOrRearrangePackageDialog(project, directories);
-      dialog.show();
-      if (!dialog.isOK()) return;
-      moveType = dialog.getRefactoringType();
-      if (moveType == PACKAGES) {
-        MoveClassesOrPackagesImpl.doMove(project, elements, targetContainer, callback);
-      } else {
-        MoveClassesOrPackagesImpl.doRearrangePackage(project, directories);
       }
     }
   }
 
-  private static PsiDirectory[] convertToDirectories(int moveType, PsiElement[] elements) {
-    LOG.assertTrue(moveType == MOVE_OR_REARRANGE_PACKAGE);
-    PsiDirectory[] directories = new PsiDirectory[elements.length];
-    for (int i = 0; i < directories.length; i++) {
-      directories[i] = (PsiDirectory)elements[i];
+  private static boolean tryDirectoryMove(final PsiElement[] sourceElements, final PsiElement targetElement) {
+    if (targetElement instanceof PsiDirectory) {
+      final PsiDirectory directory = (PsiDirectory)targetElement;
+      if (directory.getPackage() != null) {
+        final PsiElement[] resolvedElements = resolveToPackages(sourceElements);
+        if (resolvedElements != null) {
+          new MoveClassesOrPackagesToNewDirectoryDialog(directory, resolvedElements).show();
+          return true;
+        }
+      }
     }
-    return directories;
+    return false;
+  }
+
+  private static PsiElement[] resolveToPackages(final PsiElement[] sourceElements) {
+    final PsiElement[] resolved = new PsiElement[sourceElements.length];
+    for (int i = 0; i < sourceElements.length; i++) {
+      final PsiElement sourceElement = sourceElements[i];
+      if (sourceElement instanceof PsiDirectory) {
+        final PsiPackage psiPackage = ((PsiDirectory)sourceElement).getPackage();
+        if (psiPackage == null || psiPackage.getDirectories().length != 1) {
+          return null;
+        }
+        resolved[i] = psiPackage;
+      }
+      else {
+        resolved[i] = sourceElement;
+      }
+    }
+    return resolved;
+  }
+
+  private static boolean tryPackageRearrange(final Project project, final PsiElement[] elements,
+                                             final PsiElement targetContainer, MoveType moveType) {
+    if (moveType == MoveType.PACKAGES && targetContainer == null && MoveFilesOrDirectoriesUtil.canMoveOrRearrangePackages(elements) ) {
+      PsiDirectory[] directories = new PsiDirectory[elements.length];
+      System.arraycopy(elements, 0, directories, 0, directories.length);
+      SelectMoveOrRearrangePackageDialog dialog = new SelectMoveOrRearrangePackageDialog(project, directories);
+      dialog.show();
+      if (!dialog.isOK()) return true;
+      moveType = dialog.getRefactoringType();
+      if (moveType != MoveType.PACKAGES) {
+        MoveClassesOrPackagesImpl.doRearrangePackage(project, directories);
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -226,20 +256,20 @@ public class MoveHandler implements RefactoringActionHandler {
    * target container can be null => means that container is not determined yet and must be spacify by the user
    */
   public static boolean canMove(@NotNull PsiElement[] elements, PsiElement targetContainer) {
-    int moveType = getMoveType(elements);
-    if (moveType == NOT_SUPPORTED) {
+    MoveType moveType = getMoveType(elements);
+    if (moveType == MoveType.NOT_SUPPORTED) {
       return false;
     }
     if (targetContainer == null) {
       return true;
     }
-    if (moveType == INNER_TO_UPPER) {
+    if (moveType == MoveType.INNER_TO_UPPER) {
       return targetContainer.equals(MoveInnerImpl.getTargetContainer((PsiClass)elements[0], false));
     }
-    else if (moveType == MEMBERS) {
+    else if (moveType == MoveType.MEMBERS) {
       return targetContainer instanceof PsiClass && !(targetContainer instanceof PsiAnonymousClass);
     }
-    else if (moveType == CLASSES || moveType == PACKAGES) {
+    else if (moveType == MoveType.CLASSES || moveType == MoveType.PACKAGES ) {
       if (targetContainer instanceof PsiPackage) {
         return true;
       }
@@ -248,10 +278,9 @@ public class MoveHandler implements RefactoringActionHandler {
       }
       return false;
     }
-    else if (moveType == FILES || moveType == DIRECTORIES) {
-      return targetContainer instanceof PsiDirectory;
-    }
-    else {
+    else if (moveType == MoveType.FILES || moveType == MoveType.DIRECTORIES) {
+      return targetContainer instanceof PsiDirectory || targetContainer instanceof PsiPackage;
+    } else {
       return false;
     }
   }
@@ -259,92 +288,88 @@ public class MoveHandler implements RefactoringActionHandler {
   /**
    * Must be invoked in AtomicAction
    */
-  public static int getMoveType(@NotNull PsiElement[] elements) {
+  private static MoveType getMoveType(@NotNull PsiElement[] elements) {
     for (PsiElement element : elements) {
-      if (element instanceof JspClass || element instanceof JspHolderMethod) return NOT_SUPPORTED;
+      if (element instanceof JspClass || element instanceof JspHolderMethod) return MoveType.NOT_SUPPORTED;
     }
     if (MoveFilesOrDirectoriesUtil.canMoveFiles(elements)) {
-      return FILES;
+      return MoveType.FILES;
     }
     if (MoveFilesOrDirectoriesUtil.canMoveDirectories(elements)) {
-      return DIRECTORIES;
-    }
-
-    if (MoveFilesOrDirectoriesUtil.canMoveOrRearrangePackages(elements)) {
-      return MOVE_OR_REARRANGE_PACKAGE;
+      return MoveType.DIRECTORIES;
     }
 
     if (elements.length == 1) {
       PsiElement element = elements[0];
       if (element instanceof PsiPackage) {
-        return PACKAGES;
+        return MoveType.PACKAGES;
       }
       if (element instanceof PsiDirectory) {
         PsiDirectory directory = (PsiDirectory)element;
-        return directory.getPackage() != null ? PACKAGES : NOT_SUPPORTED;
+        return directory.getPackage() != null ? MoveType.PACKAGES : MoveType.NOT_SUPPORTED;
       }
       else if (element instanceof PsiField) {
-        return MEMBERS;
+        return MoveType.MEMBERS;
       }
       else if (element instanceof PsiMethod) {
-        return ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC) ? MEMBERS : INSTANCE_METHOD;
+        return ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC) ? MoveType.MEMBERS : MoveType.INSTANCE_METHOD;
       }
       else if (element instanceof PsiClass) {
         PsiClass aClass = (PsiClass)element;
         if (aClass.getParent() instanceof PsiFile) { // top-level class
-          return CLASSES;
+          return MoveType.CLASSES;
         }
         else if (aClass.getParent() instanceof PsiClass) { // is inner class
           if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
-            return INNER_TO_UPPER;
+            return MoveType.INNER_TO_UPPER;
           }
-          return INNER_TO_UPPER_OR_MEMBERS;
+          return MoveType.INNER_TO_UPPER_OR_MEMBERS;
         }
       }
-      return NOT_SUPPORTED;
+      return MoveType.NOT_SUPPORTED;
     }
     // the case of multiple members
     // check if this is move packages
-    int type = PACKAGES;
+    MoveType type = MoveType.PACKAGES;
     for (PsiElement element : elements) {
       if (element instanceof PsiPackage) {
         continue;
       }
       if (!(element instanceof PsiDirectory)) {
-        type = NOT_SUPPORTED;
+        type = MoveType.NOT_SUPPORTED;
         break;
       }
       PsiDirectory directory = (PsiDirectory)element;
       if (directory.getPackage() == null) {
-        type = NOT_SUPPORTED;
+        type = MoveType.NOT_SUPPORTED;
         break;
       }
     }
-    if (type != NOT_SUPPORTED) return type;
+    if (type != MoveType.NOT_SUPPORTED) return type;
     // check if this is move classes
-    type = CLASSES;
+    type = MoveType.CLASSES;
     for (PsiElement element : elements) {
       if (!(element instanceof PsiClass)) {
-        type = NOT_SUPPORTED;
+        type = MoveType.NOT_SUPPORTED;
         break;
       }
       if (!(element.getParent() instanceof PsiFile)) {
-        type = NOT_SUPPORTED;
+        type = MoveType.NOT_SUPPORTED;
         break;
       }
     }
-    if (type != NOT_SUPPORTED) return type;
+    if (type != MoveType.NOT_SUPPORTED) return type;
     // check if this is move members
-    type = MEMBERS;
+    type = MoveType.MEMBERS;
     for (PsiElement element : elements) {
       if (element instanceof PsiClass) {
         if (!(element.getParent() instanceof PsiClass)) { // is not inner
-          type = NOT_SUPPORTED;
+          type = MoveType.NOT_SUPPORTED;
           break;
         }
       }
       else if (!(element instanceof PsiField || element instanceof PsiMethod)) {
-        type = NOT_SUPPORTED;
+        type = MoveType.NOT_SUPPORTED;
         break;
       }
     }
@@ -421,14 +446,14 @@ public class MoveHandler implements RefactoringActionHandler {
       return panel;
     }
 
-    public int getRefactoringType() {
+    public MoveType getRefactoringType() {
       if (myRbMovePackage.isSelected()) {
-        return MoveHandler.PACKAGES;
+        return MoveType.PACKAGES;
       }
       if (myRbRearrangePackage.isSelected()) {
-        return MoveHandler.MOVE_OR_REARRANGE_PACKAGE;
+        return MoveType.MOVE_OR_REARRANGE_PACKAGE;
       }
-      return MoveHandler.NOT_SUPPORTED;
+      return MoveType.NOT_SUPPORTED;
     }
   }
 
@@ -477,14 +502,14 @@ public class MoveHandler implements RefactoringActionHandler {
       return panel;
     }
 
-    public int getRefactoringType() {
+    public MoveType getRefactoringType() {
       if (myRbMoveInner.isSelected()) {
-        return MoveHandler.INNER_TO_UPPER;
+        return MoveType.INNER_TO_UPPER;
       }
       if (myRbMoveMembers.isSelected()) {
-        return MoveHandler.MEMBERS;
+        return MoveType.MEMBERS;
       }
-      return MoveHandler.NOT_SUPPORTED;
+      return MoveType.NOT_SUPPORTED;
     }
   }
 

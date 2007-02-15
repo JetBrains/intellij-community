@@ -6,15 +6,11 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.actions.MoveAction;
 import com.intellij.refactoring.move.MoveHandler;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesToNewDirectoryDialog;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
-import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +25,6 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.*;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -206,83 +201,21 @@ class MoveDropTargetListener implements DropTargetListener {
       }
       return psiElements.toArray(new PsiElement[psiElements.size()]);
     }
-
-    @Nullable
-    protected PsiElement resolvePackageToDirectory(final PsiElement targetElement, final PsiElement[] sourceElements, boolean silent) {
-      if (targetElement != null && (targetElement instanceof PsiPackage) && (sourceElements.length != 0) &&
-          (sourceElements[0] instanceof PsiFileSystemItem)) {
-        final PsiDirectory[] psiDirectories = ((PsiPackage)targetElement).getDirectories();
-        if (psiDirectories.length == 0) {
-          return null;
-        }
-        if (psiDirectories.length == 1 || silent) {
-          return psiDirectories[0];
-        }
-        else {
-          return MoveClassesOrPackagesUtil
-            .chooseDirectory(psiDirectories, psiDirectories[0], myProject, new HashMap<PsiDirectory, String>());
-        }
-      }
-      else {
-        return targetElement;
-      }
-    }
   }
 
   private class MoveDropHandler extends MoveCopyDropHandler {
 
     protected boolean canDrop(@NotNull final TreeNode[] sourceNodes, @Nullable final TreeNode targetNode) {
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
-      final PsiElement targetElement = resolvePackageToDirectory(getPsiElement(targetNode), sourceElements, true);
-      return (sourceElements.length == 0 || ((targetNode == null || targetElement != null) && (
-        MoveHandler.canMove(sourceElements, targetElement) || MoveFilesOrDirectoriesUtil.canMoveOrRearrangePackages(sourceElements))));
+      final PsiElement targetElement = getPsiElement(targetNode);
+      return sourceElements.length == 0 ||
+             ((targetNode == null || targetElement != null) && MoveHandler.canMove(sourceElements, targetElement));
     }
 
     public void doDrop(@NotNull final TreeNode[] sourceNodes, @NotNull final TreeNode targetNode) {
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
-      final PsiElement targetElement = resolvePackageToDirectory(getPsiElement(targetNode), sourceElements, false);
+      final PsiElement targetElement = getPsiElement(targetNode);
       if (targetElement == null) return;
-      if (!tryDirectoryMove(sourceElements, targetElement)) {
-        doStandardMove(sourceElements, targetElement);
-      }
-    }
-
-    private boolean tryDirectoryMove(final PsiElement[] sourceElements, final PsiElement targetElement) {
-      if (targetElement instanceof PsiDirectory) {
-        final PsiDirectory directory = (PsiDirectory)targetElement;
-        if (directory.getPackage() != null) {
-          int moveType = MoveHandler.getMoveType(sourceElements);
-          if (moveType == MoveHandler.CLASSES || moveType == MoveHandler.MOVE_OR_REARRANGE_PACKAGE) {
-            final PsiElement[] resolvedElements = resolveDirectoriesToPackages(sourceElements);
-            if (resolvedElements != null) {
-              new MoveClassesOrPackagesToNewDirectoryDialog((PsiDirectory)targetElement, resolvedElements).show();
-              return true;
-            }
-          }
-        }
-      }
-      return false;
-    }
-
-    private PsiElement[] resolveDirectoriesToPackages(final PsiElement[] sourceElements) {
-      final PsiElement[] resolved = new PsiElement[sourceElements.length];
-      for (int i = 0; i < sourceElements.length; i++) {
-        final PsiElement sourceElement = sourceElements[i];
-        if (sourceElement instanceof PsiDirectory) {
-          final PsiPackage psiPackage = ((PsiDirectory)sourceElement).getPackage();
-          if (psiPackage == null || psiPackage.getDirectories().length != 1) {
-            return null;
-          }
-          resolved[i] = psiPackage;
-        }
-        else {
-          resolved[i] = sourceElement;
-        }
-      }
-      return resolved;
-    }
-
-    private void doStandardMove(final PsiElement[] sourceElements, final PsiElement targetElement) {
       final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
       getActionHandler(dataContext).invoke(myProject, sourceElements, new DataContext() {
         @Nullable
@@ -308,7 +241,7 @@ class MoveDropTargetListener implements DropTargetListener {
     }
   }
 
-  /*
+  /* TODO: make it work on (SHIFT or ALT?)
   private class CopyDropHandler extends MoveCopyDropHandler {
 
     protected boolean canDrop(@NotNull final TreeNode[] sourceNodes, @Nullable final TreeNode targetNode) {

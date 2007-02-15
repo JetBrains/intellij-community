@@ -39,7 +39,6 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
     myElementsToMove = elementsToMove;
     myDestDirectoryField.setText(directory.getVirtualFile().getPath());
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
-    //myDestDirectoryField.addBrowseFolderListener(RefactoringBundle.message("select.target.directory"), "", myDirectory.getProject(), descriptor);
     myDestDirectoryField.getButton().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final VirtualFile[] files = FileChooser.chooseFiles(myDirectory.getProject(), descriptor, directory.getVirtualFile());
