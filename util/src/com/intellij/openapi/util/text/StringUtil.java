@@ -367,7 +367,7 @@ public class StringUtil {
     return false;
   }
 
-  public static void escapeStringCharacters(int length, final String str, @NotNull @NonNls StringBuffer buffer) {
+  public static void escapeStringCharacters(int length, final String str, @NotNull @NonNls StringBuilder buffer) {
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
       switch (ch) {
@@ -417,9 +417,14 @@ public class StringUtil {
   }
 
   @NotNull public static String escapeStringCharacters(@NotNull String s) {
-    StringBuffer buffer = new StringBuffer();
-    escapeStringCharacters(s.length(), s, buffer);
-    return buffer.toString();
+    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    try {
+      escapeStringCharacters(s.length(), s, buffer);
+      return buffer.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(buffer);
+    }
   }
 
 

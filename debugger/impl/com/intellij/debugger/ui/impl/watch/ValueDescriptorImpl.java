@@ -175,7 +175,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         buf.append("null");
       }
       else {
-        if(StringUtil.startsWithChar(label, '\"') && StringUtil.endsWithChar(label, '\"')) {
+        if(label.length() > 1 && StringUtil.startsWithChar(label, '\"') && StringUtil.endsWithChar(label, '\"')) {
           buf.append('"');
           buf.append(DebuggerUtils.translateStringValue(label.substring(1, label.length() - 1)));
           buf.append('"');

@@ -35,6 +35,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -150,12 +151,17 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
 
   public static String translateStringValue(final String str) {
     int length = str.length();
-    StringBuffer buffer = new StringBuffer(length + 16);
-    StringUtil.escapeStringCharacters(length, str, buffer);
-    if (str.length() > length) {
-      buffer.append("...");
+    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    try {
+      StringUtil.escapeStringCharacters(length, str, buffer);
+      if (str.length() > length) {
+        buffer.append("...");
+      }
+      return buffer.toString();
     }
-    return buffer.toString();
+    finally {
+      StringBuilderSpinAllocator.dispose(buffer);
+    }
   }
 
   protected static ArrayClass getArrayClass(String className) {
