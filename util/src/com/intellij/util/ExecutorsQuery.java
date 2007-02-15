@@ -18,6 +18,7 @@ public final class ExecutorsQuery<Result, Parameter> implements Query<Result> {
   private final List<QueryExecutor<Result, Parameter>> myExecutors;
 
   private boolean myIsProcessing = false;
+  public static boolean DEBUG;
 
   public ExecutorsQuery(@NotNull final Parameter params, @NotNull List<QueryExecutor<Result, Parameter>> executors) {
     myParameters = params;
@@ -56,7 +57,10 @@ public final class ExecutorsQuery<Result, Parameter> implements Query<Result> {
     myIsProcessing = true;
     try {
       for (QueryExecutor<Result, Parameter> executor : myExecutors) {
-        if (!executor.execute(myParameters, consumer)) return false;
+        if (!executor.execute(myParameters, consumer)) {
+          if (DEBUG) System.out.println("Executor return false:"+executor);
+          return false;
+        }
       }
 
       return true;
