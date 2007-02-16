@@ -49,6 +49,7 @@ public class TabbedPaneWrapper {
     assertIsDispatchThread();
 
     myTabbedPane = createTabbedPane(tabPlacement);
+    myTabbedPane.putClientProperty(TabbedPaneWrapper.class, myTabbedPane);
     myTabbedPane.myInstallKeyboardNavigation = installKeyboardNavigation;
     myTabbedPaneHolder = createTabbedPaneHolder();
     myTabbedPaneHolder.add(myTabbedPane, BorderLayout.CENTER);
@@ -622,5 +623,9 @@ public class TabbedPaneWrapper {
     public void unregister() {
       myAction.unregisterCustomShortcutSet(myComponent);
     }
+  }
+
+  public static TabbedPaneWrapper get(JTabbedPane tabs) {
+    return (TabbedPaneWrapper)tabs.getClientProperty(TabbedPaneWrapper.class);
   }
 }

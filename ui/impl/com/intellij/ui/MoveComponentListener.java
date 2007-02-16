@@ -62,12 +62,4 @@ public class MoveComponentListener extends MouseAdapter implements MouseMotionLi
       e.consume();
     }
   }
-
-  public void mouseEntered(MouseEvent e) {
-    myComponent.setActive(true);
-  }
-
-  public void mouseExited(MouseEvent e) {
-    myComponent.setActive(false);
-  }
 }

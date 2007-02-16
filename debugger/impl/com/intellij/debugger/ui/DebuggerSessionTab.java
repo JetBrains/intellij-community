@@ -471,7 +471,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
 
   public void addAdditionalTabComponent(AdditionalTabComponent tabComponent) {
     final ContentFactory contentFactory = getContentFactory();
-    Content logContent = contentFactory.createContent(tabComponent.getComponent(), tabComponent.getTabTitle(), false);
+    Content logContent = createContent(tabComponent.getComponent(), tabComponent.getTabTitle(), null, CONSOLE_CONTENT);
     myAdditionalContent.put(tabComponent, logContent);
     myViewsContentManager.addContent(logContent);
   }
