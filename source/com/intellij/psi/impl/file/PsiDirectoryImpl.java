@@ -451,7 +451,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   }
 
   @NotNull
-  public PsiFile copyFileFrom(final String newName, final PsiFile originalFile) throws IncorrectOperationException {
+  public PsiFile copyFileFrom(@NotNull String newName, @NotNull PsiFile originalFile) throws IncorrectOperationException {
     checkCreateFile(newName);
 
     final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(originalFile);
@@ -477,7 +477,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
   }
 
-  public void checkCreateFile(String name) throws IncorrectOperationException {
+  public void checkCreateFile(@NotNull String name) throws IncorrectOperationException {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     FileType type = fileTypeManager.getFileTypeByFileName(name);
     /* [dsl] now it is possible to create a Java file outside source path.

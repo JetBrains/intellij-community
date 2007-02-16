@@ -189,14 +189,26 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         ref.bindToElement(newClass);
       }
 
+      List<PsiReference> referencesToRebind = new ArrayList<PsiReference>();
+      for (UsageInfo usage : usages) {
+        if (usage.isNonCodeUsage) continue;
+        PsiElement refElement = usage.getElement();
+        PsiReference[] references = refElement.getReferences();
+        for (PsiReference reference : references) {
+          if (reference.isReferenceTo(myInnerClass)) {
+            referencesToRebind.add(reference);
+          }
+        }
+      }
+
       myInnerClass.delete();
 
       // correct references in usages
       for (UsageInfo usage : usages) {
         if (usage.isNonCodeUsage) continue;
-        PsiElement ref = usage.getElement();
+        PsiElement refElement = usage.getElement();
         if (myParameterNameOuterClass != null) { // should pass outer as parameter
-          PsiElement refParent = ref.getParent();
+          PsiElement refParent = refElement.getParent();
           if (refParent instanceof PsiNewExpression || refParent instanceof PsiAnonymousClass) {
             PsiNewExpression newExpr = refParent instanceof PsiNewExpression
                                        ? (PsiNewExpression)refParent
@@ -223,7 +235,10 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
             }
           }
         }
-        ref.getReference().bindToElement(newClass);
+      }
+
+      for (PsiReference reference : referencesToRebind) {
+        reference.bindToElement(newClass);
       }
 
       if (field != null) {

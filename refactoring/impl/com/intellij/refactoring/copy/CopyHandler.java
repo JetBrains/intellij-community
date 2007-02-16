@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 
@@ -312,13 +313,11 @@ public class CopyHandler {
    * @return first copied PsiFile (recursivly); null if no PsiFiles copied
    */
   @Nullable
-  private static PsiFile copyToDirectory(final PsiElement elementToCopy,
-                                         @Nullable String newName,
-                                         final PsiDirectory targetDirectory) throws IncorrectOperationException{
+  private static PsiFile copyToDirectory(@NotNull PsiElement elementToCopy, @Nullable String newName, @NotNull PsiDirectory targetDirectory) throws IncorrectOperationException{
     if (elementToCopy instanceof PsiFile) {
-      final PsiFile file = (PsiFile)elementToCopy;
-      if (newName == null) newName = file.getName();
-      return targetDirectory.copyFileFrom(newName, file);
+      PsiFile file = (PsiFile)elementToCopy;
+      String name = newName == null ? file.getName() : newName;
+      return targetDirectory.copyFileFrom(name, file);
     }
     else if (elementToCopy instanceof PsiDirectory) {
       PsiDirectory directory = (PsiDirectory)elementToCopy;
@@ -330,7 +329,7 @@ public class CopyHandler {
       PsiFile firstFile = null;
       PsiElement[] children = directory.getChildren();
       for (PsiElement child : children) {
-        PsiFile f = copyToDirectory(child, null, subdirectory);
+        PsiFile f = copyToDirectory(child, ((PsiFileSystemItem)child).getName(), subdirectory);
         if (firstFile == null) {
           firstFile = f;
         }

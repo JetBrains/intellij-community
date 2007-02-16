@@ -31,15 +31,17 @@ public class MoveInnerTest extends MultiFileTestCase {
     doTest(createAction("pack1.Outer.Inner", "Inner", false, null, true, true));
   }
 
+  public void testXmlReferences() throws Exception {
+    doTest(createAction("pack1.Outer.Inner", "Inner", false, null, true, true));
+  }
+
   public void testScr22592() throws Exception {
     doTest(createAction("xxx.Outer.Inner", "Inner", true, "outer", false, false));
   }
 
-  /*
   public void testScr30106() throws Exception {
     doTest(createAction("p.A.B", "B", true, "outer", false, false));
   }
-  */
 
   private PerformAction createAction(final String innerClassName,
                                      final String newClassName,

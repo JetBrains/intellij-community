@@ -199,7 +199,7 @@ public interface PsiDirectory extends PsiFileSystemItem {
    */
   @NotNull PsiFile createFile(String name) throws IncorrectOperationException;
 
-  @NotNull PsiFile copyFileFrom(String newName, PsiFile originalFile) throws IncorrectOperationException;
+  @NotNull PsiFile copyFileFrom(@NotNull String newName, @NotNull PsiFile originalFile) throws IncorrectOperationException;
 
   /**
    * Checks if it's possible to create a file with the specified name in the directory,
@@ -209,7 +209,7 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @param name the name of the file to check creation possibility.
    * @throws IncorrectOperationException if the creation is not possible.
    */
-  void checkCreateFile(String name) throws IncorrectOperationException;
+  void checkCreateFile(@NotNull String name) throws IncorrectOperationException;
 
   /**
    * Checks if the directory is a source root for the project to which it belongs.
