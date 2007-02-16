@@ -25,19 +25,24 @@ import org.jetbrains.annotations.NotNull;
 
 public class EmptyClassInspection extends ClassInspection {
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }
 
     @NotNull
     protected String buildErrorString(Object... infos) {
-        final PsiClass aClass = (PsiClass)infos[0];
-        if (aClass instanceof PsiAnonymousClass) {
+      Object element = infos[0];
+      if (element instanceof PsiAnonymousClass) {
             return InspectionGadgetsBundle.message(
                      "empty.anonymous.class.problem.descriptor");
-        } else {
+        } else if (element instanceof PsiClass){
             return InspectionGadgetsBundle.message(
                     "empty.class.problem.descriptor");
+        }
+        else {
+          return InspectionGadgetsBundle.message(
+                  "empty.class.file.without.class.problem.descriptor");
         }
     }
 
@@ -46,8 +51,14 @@ public class EmptyClassInspection extends ClassInspection {
     }
 
     private static class EmptyClassVisitor extends BaseInspectionVisitor {
+      public void visitFile(final PsiFile file) {
+        if (file instanceof PsiJavaFile
+            && ((PsiJavaFile)file).getClasses().length == 0) {
+          registerError(file, file);
+        }
+      }
 
-        public void visitClass(@NotNull PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
             //don't call super, to prevent drilldown
 
             if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
