@@ -8,6 +8,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.lang.cacheBuilder.WordOccurrence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
+import com.intellij.lang.cacheBuilder.SimpleWordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.parsing.PropertiesLexer;
 import com.intellij.lexer.*;
@@ -236,13 +237,13 @@ public class IdTableBuilding {
     if (fileType instanceof LanguageFileType) {
       final Language lang = ((LanguageFileType)fileType).getLanguage();
       final FindUsagesProvider findUsagesProvider = lang.getFindUsagesProvider();
-      //noinspection ConstantConditions
-      final WordsScanner scanner = findUsagesProvider == null ? null : findUsagesProvider.getWordsScanner();
-      if (scanner != null) {
-        final ParserDefinition parserDef = lang.getParserDefinition();
-        final TokenSet commentTokens = parserDef != null ? parserDef.getCommentTokens() : null;
-        return new WordsScannerIdCacheBuilderAdapter(scanner, highlighter, commentTokens, virtualFile);
+      WordsScanner scanner = findUsagesProvider == null ? null : findUsagesProvider.getWordsScanner();
+      if (scanner == null) {
+        scanner = new SimpleWordsScanner();
       }
+      final ParserDefinition parserDef = lang.getParserDefinition();
+      final TokenSet commentTokens = parserDef != null ? parserDef.getCommentTokens() : null;
+      return new WordsScannerIdCacheBuilderAdapter(scanner, highlighter, commentTokens, virtualFile);
     }
 
     if (fileType instanceof CustomFileType) {
