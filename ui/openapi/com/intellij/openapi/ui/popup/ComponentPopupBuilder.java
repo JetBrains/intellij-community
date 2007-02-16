@@ -73,8 +73,10 @@ public interface ComponentPopupBuilder {
   JBPopup createPopup();
 
   @NotNull
-  ComponentPopupBuilder setCancelButton(IconButton cancelButton);
+  ComponentPopupBuilder setCancelButton(@NotNull IconButton cancelButton);
 
   @NotNull
   ComponentPopupBuilder setCancelOnOtherWindowOpen(boolean cancelOnWindow);
+
+  @NotNull ComponentPopupBuilder setTitleIcon(@NotNull ActiveIcon icon);
 }

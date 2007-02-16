@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,6 +43,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private IconButton myCancelButton;
   private MouseChecker myCancelOnMouseOutCallback;
   private boolean myCancelOnWindow;
+  private ActiveIcon myTitleIcon = new ActiveIcon(new EmptyIcon(0));
 
   public ComponentPopupBuilderImpl(final JComponent component,
                                    final JComponent prefferedFocusedComponent) {
@@ -133,7 +135,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   public JBPopup createPopup() {
     final JBPopupImpl popup = new JBPopupImpl(myComponent, myPrefferedFocusedComponent, myRequestFocus, myForceHeavyweight,
                                               myDimensionServiceKey, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null,
-                                              myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton, myCancelOnMouseOutCallback, myCancelOnWindow);
+                                              myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton, myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon);
     if (myPopupUpdater != null) {
       popup.setPopupUpdater(myPopupUpdater, myProject);
     }
@@ -145,6 +147,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
     final Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
     boolean fromQuickSearch =  focusedComponent != null && focusedComponent.getParent() instanceof ChooseByNameBase.JPanelProvider;
     myRequestFocus = !fromQuickSearch && LookupManager.getInstance(project).getActiveLookup() == null;
+    return this;
+  }
+
+  @NotNull
+  public ComponentPopupBuilder setTitleIcon(@NotNull final ActiveIcon icon) {
+    myTitleIcon = icon;
     return this;
   }
 }

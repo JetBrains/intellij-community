@@ -14,8 +14,17 @@ import java.awt.*;
 public class TitlePanel extends CaptionPanel {
 
   private JLabel myLabel;
+  private Icon myRegular;
+  private Icon myInactive;
 
   public TitlePanel() {
+    this(null, null);
+  }
+
+  public TitlePanel(Icon regular, Icon inactive) {
+    myRegular = regular;
+    myInactive = inactive;
+
     myLabel = new JLabel();
     myLabel.setOpaque(false);
     myLabel.setForeground(Color.black);
@@ -24,6 +33,13 @@ public class TitlePanel extends CaptionPanel {
     myLabel.setBorder(new EmptyBorder(1, 2, 2, 2));
 
     add(myLabel, BorderLayout.CENTER);
+
+    setActive(false);
+  }
+
+  public void setActive(final boolean active) {
+    super.setActive(active);
+    myLabel.setIcon(active ? myRegular : myInactive);
   }
 
   public void setText(String titleText) {
