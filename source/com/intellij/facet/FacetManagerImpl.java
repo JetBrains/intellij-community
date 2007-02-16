@@ -63,6 +63,17 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
     model.commit();
   }
 
+  @Nullable
+  public <F extends Facet> F findFacet(final FacetTypeId<F> type, final String name) {
+    final Collection<F> fs = getFacetsByType(type);
+    for (F f : fs) {
+      if (f.getName().equals(name)) {
+        return f;
+      }
+    }
+    return null;
+  }
+
   private Facet getOrCreateFacet(final Map<FacetInfo, Facet> info2Facet, final FacetInfo info) {
     Facet facet = info2Facet.get(info);
     if (facet == null) {
@@ -192,11 +203,11 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
       }
       newFacets.addAll(toAdd);
 
-      List<Pair<Facet, String>> toRename = new ArrayList<Pair<Facet, String>>();
+      List<FacetRenameInfo> toRename = new ArrayList<FacetRenameInfo>();
       for (Facet facet : newFacets) {
         final String newName = model.getNewName(facet);
         if (newName != null && !newName.equals(facet.getName())) {
-          toRename.add(Pair.create(facet, newName));
+          toRename.add(new FacetRenameInfo(facet, facet.getName(), newName));
         }
       }
 
@@ -206,12 +217,12 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
       for (Facet facet : toRemove) {
         myDispatcher.getMulticaster().beforeFacetRemoved(facet);
       }
-      for (Pair<Facet, String> pair : toRename) {
-        myDispatcher.getMulticaster().beforeFacetRenamed(pair.getFirst());
+      for (FacetRenameInfo info : toRename) {
+        myDispatcher.getMulticaster().beforeFacetRenamed(info.myFacet);
       }
 
-      for (Pair<Facet, String> pair : toRename) {
-        pair.getFirst().setName(pair.getSecond());
+      for (FacetRenameInfo info : toRename) {
+        info.myFacet.setName(info.myNewName);
       }
       myModel.setAllFacets(newFacets.toArray(new Facet[newFacets.size()]));
 
@@ -228,8 +239,8 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
       for (Facet facet : toRemove) {
         myDispatcher.getMulticaster().facetRemoved(facet);
       }
-      for (Pair<Facet, String> pair : toRename) {
-        myDispatcher.getMulticaster().facetRenamed(pair.getFirst());
+      for (FacetRenameInfo info : toRename) {
+        myDispatcher.getMulticaster().facetRenamed(info.myFacet, info.myOldName);
       }
 
     }
@@ -278,6 +289,17 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
       myAllFacets = allFacets;
       facetsChanged();
     }
+  }
 
+  private static class FacetRenameInfo {
+    private Facet myFacet;
+    private String myOldName;
+    private String myNewName;
+
+    public FacetRenameInfo(final Facet facet, final String oldName, final String newName) {
+      myFacet = facet;
+      myOldName = oldName;
+      myNewName = newName;
+    }
   }
 }

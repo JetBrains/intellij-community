@@ -5,7 +5,7 @@
 package com.intellij.facet;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.facet.FacetInfo;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -22,4 +22,7 @@ public abstract class FacetManager implements FacetModel {
   public abstract ModifiableFacetModel createModifiableModel();
 
   public abstract void createAndCommitFacets(final FacetInfo[] facetInfos);
+
+  @Nullable
+  public abstract <F extends Facet> F findFacet(FacetTypeId<F> type, String name);  
 }

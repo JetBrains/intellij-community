@@ -55,6 +55,7 @@ public class DummyFileSystem extends VirtualFileSystem implements ApplicationCom
     return findFileByPath(path);
   }
 
+  @NotNull
   public String getComponentName() {
     return "DummyFileSystem";
   }
