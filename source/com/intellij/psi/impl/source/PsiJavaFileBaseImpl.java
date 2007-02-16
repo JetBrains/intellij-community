@@ -16,10 +16,10 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -27,9 +27,9 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,12 +42,12 @@ import java.util.concurrent.ConcurrentMap;
 
 public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJavaFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaFileBaseImpl");
-  private static final Key<ResolveCache.MapPair<PsiJavaFile,Map<String, SoftReference<JavaResolveResult[]>>>> CACHED_CLASSES_MAP_KEY = Key.create("PsiJavaFileBaseImpl.CACHED_CLASSES_MAP_KEY");
+  private static final Key<ResolveCache.MapPair<PsiJavaFile,ConcurrentMap<String, SoftReference<JavaResolveResult[]>>>> CACHED_CLASSES_MAP_KEY = Key.create("PsiJavaFileBaseImpl.CACHED_CLASSES_MAP_KEY");
 
   private volatile PsiImportListImpl myRepositoryImportList = null;
   private volatile String myCachedPackageName = null;
   protected volatile PsiClass[] myCachedClasses = null;
-  private final ConcurrentMap<PsiJavaFile,Map<String, SoftReference<JavaResolveResult[]>>> myGuessCache;
+  private final ConcurrentMap<PsiJavaFile,ConcurrentMap<String, SoftReference<JavaResolveResult[]>>> myGuessCache;
 
   private static final @NonNls String[] IMPLICIT_IMPORTS = new String[]{ "java.lang" };
   private LanguageLevel myLanguageLevel;
@@ -427,13 +427,13 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return ref != null ? ref.get() : null;
   }
 
-  private Map<String, SoftReference<JavaResolveResult[]>> preparedCleanMap = new HashMap<String, SoftReference<JavaResolveResult[]>>();
+  private ConcurrentMap<String, SoftReference<JavaResolveResult[]>> preparedCleanMap = new ConcurrentHashMap<String, SoftReference<JavaResolveResult[]>>();
   private void setGuess(final String name, final JavaResolveResult[] cached){
-    Map<String, SoftReference<JavaResolveResult[]>> guessForFile = ConcurrencyUtil.cacheOrGet(myGuessCache, this, preparedCleanMap);
-    if(guessForFile == preparedCleanMap) {
-      preparedCleanMap = new HashMap<String, SoftReference<JavaResolveResult[]>>();
+    ConcurrentMap<String, SoftReference<JavaResolveResult[]>> guessForFile = ConcurrencyUtil.cacheOrGet(myGuessCache, this, preparedCleanMap);
+    if (guessForFile == preparedCleanMap) {
+      preparedCleanMap = new ConcurrentHashMap<String, SoftReference<JavaResolveResult[]>>();
     }
-    guessForFile.put(name, new SoftReference<JavaResolveResult[]>(cached));
+    guessForFile.putIfAbsent(name, new SoftReference<JavaResolveResult[]>(cached));
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
