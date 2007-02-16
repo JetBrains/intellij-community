@@ -157,6 +157,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   @NonNls private final static String CARD_INVALID = "invalid";
   private final JPanel myValidCard;
   private final JPanel myInvalidCard;
+  private boolean myInvalid = false;
 
   private final CutCopyPasteSupport myCutCopyPasteSupport;
   /**
@@ -805,6 +806,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
         SelectionState.restoreSelection(this, selection);
         restoreTabbedPaneSelectedTabs(tabbedPaneSelectedTabs);
       }
+      myInvalid = false;
       myCardLayout.show(this, CARD_VALID);
       refresh();
     }
@@ -813,9 +815,14 @@ public final class GuiEditor extends JPanel implements DataProvider {
       // setting fictive container
       setRootContainer(new RadRootContainer(myModule, "0"));
       myFormInvalidLabel.setText(UIDesignerBundle.message("error.form.file.is.invalid.message", exc.getMessage()));
+      myInvalid = true;
       myCardLayout.show(this, CARD_INVALID);
       repaint();
     }
+  }
+
+  public boolean isFormInvalid() {
+    return myInvalid;
   }
 
   private Map<String, String> saveTabbedPaneSelectedTabs() {

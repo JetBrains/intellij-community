@@ -12,20 +12,21 @@ package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.uiDesigner.LoaderFactory;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.lw.IComponent;
-import com.intellij.uiDesigner.editor.UIFormEditor;
+import com.intellij.uiDesigner.LoaderFactory;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.editor.UIFormEditor;
+import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.radComponents.RadErrorComponent;
 
 public class ReloadCustomComponentsAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
+    Project project = e.getData(DataKeys.PROJECT);
     if (project == null) return;
     LoaderFactory.getInstance(project).clearClassLoaderCache();
     final FileEditor[] fileEditors = FileEditorManager.getInstance(project).getAllEditors();
@@ -44,10 +45,13 @@ public class ReloadCustomComponentsAction extends AnAction {
 
   private static boolean haveCustomComponents(final GuiEditor editor) {
     // quick & dirty check
+    if (editor.isFormInvalid()) {
+      return true;
+    }
     final Ref<Boolean> result = new Ref<Boolean>();
     FormEditingUtil.iterate(editor.getRootContainer(), new FormEditingUtil.ComponentVisitor() {
       public boolean visit(final IComponent component) {
-        if (!component.getComponentClassName().startsWith("javax.swing")) {
+        if (component instanceof RadErrorComponent || !component.getComponentClassName().startsWith("javax.swing")) {
           result.set(Boolean.TRUE);
           return false;
         }
