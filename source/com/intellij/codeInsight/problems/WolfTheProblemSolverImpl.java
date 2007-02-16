@@ -95,7 +95,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   };
 
-  private long myPsiModificationCount = -1000;
   private final PsiTreeChangeListener myChangeListener;
 
   private static class ProblemFileInfo {
@@ -186,8 +185,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   public void startCheckingIfVincentSolvedProblemsYet(final ProgressIndicator progress, ProgressableTextEditorHighlightingPass progressablePass) throws ProcessCanceledException{
     if (!myProject.isOpen()) return;
-    long psiModificationCount = PsiManager.getInstance(myProject).getModificationTracker().getOutOfCodeBlockModificationCount();
-    if (psiModificationCount == myPsiModificationCount) return; //optimization
 
     progressablePass.setProgressLimit(myCheckingQueue.size());
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
@@ -197,17 +194,16 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         oldInfo = ((StatusBarEx)statusBar).getInfo();
       }
       for (VirtualFile virtualFile : myCheckingQueue) {
-        if (progress.isCanceled()) break;
+        progress.checkCanceled();
         statusBar.setInfo("Checking '" + virtualFile.getPresentableUrl() + "'");
-        myCheckingQueue.remove(virtualFile);
         if (!virtualFile.isValid() || orderVincentToCleanTheCar(virtualFile, progress)) {
           synchronized (myProblems) {
             myProblems.remove(virtualFile);
+            myCheckingQueue.remove(virtualFile);
           }
         }
         progressablePass.advanceProgress(1);
       }
-      myPsiModificationCount = psiModificationCount;
     }
     finally {
       restoreStatusBar(statusBar, oldInfo);
@@ -260,7 +256,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return true;
   }
 
-  private void restoreStatusBar(final StatusBar statusBar, final String oldInfo) {
+  private static void restoreStatusBar(final StatusBar statusBar, final String oldInfo) {
     if (statusBar instanceof StatusBarEx) {
       statusBar.setInfo(oldInfo);
     }
@@ -401,7 +397,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   public void clearProblems(@NotNull VirtualFile virtualFile) {
-    ProblemFileInfo old = null;
+    ProblemFileInfo old;
     synchronized (myProblems) {
       old = myProblems.remove(virtualFile);
       myCheckingQueue.remove(virtualFile);
