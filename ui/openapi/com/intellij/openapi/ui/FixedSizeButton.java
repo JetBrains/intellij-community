@@ -16,11 +16,10 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * This class represents non resizable, nonfocusable button with the
@@ -28,7 +27,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class FixedSizeButton extends JButton {
   private final int mySize;
-  private final JComponent myComponent;
+  private JComponent myComponent;
+
+  public FixedSizeButton() {
+    this(-1, null);
+  }
 
   private FixedSizeButton(int size,JComponent component){
     super(IconLoader.getIcon("/general/ellipsis.png"));
@@ -70,13 +73,17 @@ public class FixedSizeButton extends JButton {
 
   public Dimension getPreferredSize(){
     if(myComponent!=null){
-      int height=myComponent.getPreferredSize().height;
-      return new Dimension(height,height);
+      int size=myComponent.getPreferredSize().height;
+      return new Dimension(size,size);
     }else if(mySize!=-1){
       return new Dimension(mySize,mySize);
     }else{
-      throw new IllegalStateException("myComponent==null and mySize==-1");
+      return super.getPreferredSize();
     }
+  }
+
+  public void setAttachedComponent(JComponent component) {
+    myComponent = component;
   }
 
   public JComponent getAttachedComponent() {
