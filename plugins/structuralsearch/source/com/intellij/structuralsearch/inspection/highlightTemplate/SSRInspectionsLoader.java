@@ -16,21 +16,11 @@
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
 import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.openapi.components.ApplicationComponent;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author cdr
  */
-public class SSRInspectionsLoader implements ApplicationComponent, InspectionToolProvider {
-  @NonNls
-  public String getComponentName() {
-    return "SSRInspectionsLoader";
-  }
-
-  public void initComponent() {}
-
-  public void disposeComponent() {}
+public class SSRInspectionsLoader implements InspectionToolProvider {
 
   public Class[] getInspectionClasses() {
     return new Class[] {
