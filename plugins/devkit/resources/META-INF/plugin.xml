@@ -26,9 +26,6 @@
     <component>
       <implementation-class>org.jetbrains.idea.devkit.run.PluginConfigurationType</implementation-class>
     </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.devkit.module.PluginTemplatesFactory</implementation-class>
-    </component>
   </application-components>
 
   <module-components>

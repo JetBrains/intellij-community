@@ -18,12 +18,17 @@ package org.jetbrains.idea.devkit;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor;
+import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
+import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection;
 import org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
-public class DevKitPlugin implements ApplicationComponent, InspectionToolProvider {
+public class DevKitPlugin implements ApplicationComponent, InspectionToolProvider, FileTemplateGroupDescriptorFactory {
 
   public DevKitPlugin(ModuleTypeManager moduleTypeManager) {
     moduleTypeManager.registerModuleType(PluginModuleType.getInstance(), true);
@@ -46,4 +51,15 @@ public class DevKitPlugin implements ApplicationComponent, InspectionToolProvide
 
   public void disposeComponent() {
   }
+
+  public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
+    FileTemplateGroupDescriptor descriptor = new FileTemplateGroupDescriptor(DevKitBundle.message("plugin.descriptor"), IconLoader.getIcon("/nodes/plugin.png"));
+    descriptor.addTemplate(new FileTemplateDescriptor("plugin.xml", StdFileTypes.XML.getIcon()));
+    descriptor.addTemplate(new FileTemplateDescriptor("ProjectComponent.java", StdFileTypes.JAVA.getIcon()));
+    descriptor.addTemplate(new FileTemplateDescriptor("ApplicationComponent.java", StdFileTypes.JAVA.getIcon()));
+    descriptor.addTemplate(new FileTemplateDescriptor("ModuleComponent.java", StdFileTypes.JAVA.getIcon()));
+    descriptor.addTemplate(new FileTemplateDescriptor("Action.java", StdFileTypes.JAVA.getIcon()));
+    return descriptor;
+  }
+
 }
