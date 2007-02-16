@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
+import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.jsp.JspFile;
@@ -737,7 +738,7 @@ public class TypedHandler implements TypedActionHandler {
       if (tag == null) return;
     }
 
-    if (tag instanceof JspXmlTagBase) return;
+    if (tag instanceof JspXmlTagBase || tag instanceof JspXmlRootTag) return;
     if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) != null) return;
     if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return;
     if (PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class) != null) return;
