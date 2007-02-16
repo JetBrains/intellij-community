@@ -17,9 +17,9 @@ import java.util.List;
 
 public class ExternalResourceConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private JPanel myPanel;
-  private List<EditLocationDialog.Pair> myPairs;
+  private List<EditLocationDialog.NameLocationPair> myPairs;
   private List<String> myIgnoredUrls;
-  private AddEditRemovePanel<EditLocationDialog.Pair> myExtPanel;
+  private AddEditRemovePanel<EditLocationDialog.NameLocationPair> myExtPanel;
   private AddEditRemovePanel<String> myIgnorePanel;
 
   public String getDisplayName() {
@@ -33,18 +33,18 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
       }
     };
 
-    myExtPanel = new AddEditRemovePanel<EditLocationDialog.Pair>(
+    myExtPanel = new AddEditRemovePanel<EditLocationDialog.NameLocationPair>(
       IdeBundle.message("label.edit.external.resource.configure.external.resources"), new ExtUrlsTableModel(), myPairs) {
-      protected EditLocationDialog.Pair addItem() {
+      protected EditLocationDialog.NameLocationPair addItem() {
         return addExtLocation();
       }
 
-      protected boolean removeItem(EditLocationDialog.Pair o) {
+      protected boolean removeItem(EditLocationDialog.NameLocationPair o) {
         setModified(true);
         return true;
       }
 
-      protected EditLocationDialog.Pair editItem(EditLocationDialog.Pair o) {
+      protected EditLocationDialog.NameLocationPair editItem(EditLocationDialog.NameLocationPair o) {
         return editExtLocation(o);
       }
 
@@ -109,7 +109,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
 
     manager.clearAllResources();
     for (Object myPair : myPairs) {
-      EditLocationDialog.Pair pair = (EditLocationDialog.Pair)myPair;
+      EditLocationDialog.NameLocationPair pair = (EditLocationDialog.NameLocationPair)myPair;
       manager.addResource(pair.myName, pair.myLocation.replace('\\', '/'));
     }
 
@@ -121,13 +121,13 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
 
   public void reset() {
 
-    myPairs = new ArrayList<EditLocationDialog.Pair>();
+    myPairs = new ArrayList<EditLocationDialog.NameLocationPair>();
     ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
 
     String[] urls = manager.getAvailableUrls();
     for (String url : urls) {
       String loc = manager.getResourceLocation(url);
-      myPairs.add(new EditLocationDialog.Pair(url, loc));
+      myPairs.add(new EditLocationDialog.NameLocationPair(url, loc));
     }
 
     Collections.sort(myPairs);
@@ -156,7 +156,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     return "preferences.externalResources";
   }
 
-  private EditLocationDialog.Pair addExtLocation() {
+  private EditLocationDialog.NameLocationPair addExtLocation() {
     EditLocationDialog dialog = new EditLocationDialog(null, true);
     dialog.show();
     if (!dialog.isOK()) return null;
@@ -164,9 +164,9 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     return dialog.getPair();
   }
 
-  private EditLocationDialog.Pair editExtLocation(Object o) {
+  private EditLocationDialog.NameLocationPair editExtLocation(Object o) {
     EditLocationDialog dialog = new EditLocationDialog(null, true);
-    final EditLocationDialog.Pair pair = (EditLocationDialog.Pair)o;
+    final EditLocationDialog.NameLocationPair pair = (EditLocationDialog.NameLocationPair)o;
     dialog.init(pair.myName, pair.myLocation);
     dialog.show();
     if (!dialog.isOK()) return null;
@@ -196,7 +196,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   }
 
   public void selectResource(final String uri) {
-    myExtPanel.setSelected(new EditLocationDialog.Pair(uri, null));
+    myExtPanel.setSelected(new EditLocationDialog.NameLocationPair(uri, null));
   }
 
   private class PathRenderer extends DefaultTableCellRenderer {
@@ -233,7 +233,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     }
 
     public Object getField(Object o, int columnIndex) {
-      final EditLocationDialog.Pair pair = (EditLocationDialog.Pair)o;
+      final EditLocationDialog.NameLocationPair pair = (EditLocationDialog.NameLocationPair)o;
       switch (columnIndex) {
         case 0:
           return pair.myName;

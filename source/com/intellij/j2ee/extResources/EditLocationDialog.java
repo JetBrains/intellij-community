@@ -99,10 +99,10 @@ public class EditLocationDialog extends DialogWrapper {
     return myTfUrl;
   }
 
-  public Pair getPair() {
+  public NameLocationPair getPair() {
     String path = myTfPath.getText().trim();
     String url = myTfUrl.getText().trim();
-    return new Pair(url, path);
+    return new NameLocationPair(url, path);
   }
 
   protected FileChooserDescriptor getChooserDescriptor(){
@@ -125,21 +125,21 @@ public class EditLocationDialog extends DialogWrapper {
     myTfPath.setText(location);
   }
 
-  public static class Pair implements Comparable {
+  public static class NameLocationPair implements Comparable {
     String myName;
     String myLocation;
 
-    public Pair(String name, String location) {
+    public NameLocationPair(String name, String location) {
       myName = name;
       myLocation = location;
     }
 
     public int compareTo(Object o) {
-      return myName.compareTo(((Pair)o).myName);
+      return myName.compareTo(((NameLocationPair)o).myName);
     }
 
     public boolean equals(Object obj) {
-      if (! (obj instanceof Pair)) return false;
+      if (! (obj instanceof NameLocationPair)) return false;
       return compareTo(obj) == 0;
     }
 
