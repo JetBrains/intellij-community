@@ -457,6 +457,10 @@ public class EditorDelegate implements EditorEx {
     myDelegate.setEmbeddedIntoDialogWrapper(b);
   }
 
+  public VirtualFile getVirtualFile() {
+    return myDelegate.getVirtualFile();
+  }
+
   public void setOneLineMode(final boolean isOneLineMode) {
     myDelegate.setOneLineMode(isOneLineMode);
   }

@@ -98,4 +98,6 @@ public interface EditorEx extends Editor {
 
   boolean isEmbeddedIntoDialogWrapper();
   void setEmbeddedIntoDialogWrapper(boolean b);
+
+  VirtualFile getVirtualFile();
 }

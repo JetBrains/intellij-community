@@ -1,6 +1,7 @@
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
  * Describes logic for injecting language inside hosting PSI element.
@@ -10,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
  * @see com.intellij.psi.PsiManager#unregisterLanguageInjector(LanguageInjector)
  */
 public interface LanguageInjector {
+  ExtensionPointName<LanguageInjector> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.languageInjector");
+
   /**
    * @param host PSI element inside which your language will be injected.
    * @param injectionPlacesRegistrar stores places where injection occurs. <br>

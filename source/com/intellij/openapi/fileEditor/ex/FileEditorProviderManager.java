@@ -1,6 +1,6 @@
 package com.intellij.openapi.fileEditor.ex;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class FileEditorProviderManager{
   public static FileEditorProviderManager getInstance(){
-    return ApplicationManager.getApplication().getComponent(FileEditorProviderManager.class);
+    return ServiceManager.getService(FileEditorProviderManager.class);
   }
 
   /**

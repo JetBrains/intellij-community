@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -60,7 +61,7 @@ public class InjectedLanguageUtil {
       CachedValueProvider.Result<List<Pair<PsiElement, TextRange>>> result = new InjectedPsiProvider<T>(host, textEscaper).compute();
       return result == null ? null : result.getValue();
     }
-    
+
     CachedValue<List<Pair<PsiElement, TextRange>>> cachedPsi = host.getUserData(INJECTED_PSI);
     if (cachedPsi == null) {
       InjectedPsiProvider<T> provider = new InjectedPsiProvider<T>(host, textEscaper);
@@ -335,6 +336,9 @@ public class InjectedLanguageUtil {
         }
       };
       for (LanguageInjector injector : psiManager.getLanguageInjectors()) {
+        injector.getLanguagesToInject(host, placesRegistrar);
+      }
+      for (LanguageInjector injector : Extensions.getExtensions(LanguageInjector.EXTENSION_POINT_NAME)) {
         injector.getLanguagesToInject(host, placesRegistrar);
       }
       return result;

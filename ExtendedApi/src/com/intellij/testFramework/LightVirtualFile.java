@@ -19,6 +19,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 
 public class LightVirtualFile extends VirtualFile {
   private FileType myFileType;
@@ -175,7 +176,9 @@ public class LightVirtualFile extends VirtualFile {
   }
 
   public byte[] contentsToByteArray() throws IOException {
-    return getContent().toString().getBytes(getCharset().name());
+    final Charset charset = getCharset();
+    final String s = getContent().toString();
+    return charset != null ? s.getBytes(charset.name()) : s.getBytes();
   }
 
   public long getModificationStamp() {

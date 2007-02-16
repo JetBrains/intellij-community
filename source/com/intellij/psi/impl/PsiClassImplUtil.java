@@ -605,8 +605,8 @@ public class PsiClassImplUtil {
 
     if (noExtends) {
       PsiManager manager = psiClass.getManager();
-      if (!"java.lang.Object".equals(psiClass.getQualifiedName())) {
-        PsiClassType objectType = manager.getElementFactory().createTypeByFQClassName("java.lang.Object", psiClass.getResolveScope());
+      if (!CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) {
+        PsiClassType objectType = manager.getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, psiClass.getResolveScope());
         result.add(0, objectType);
       }
     }

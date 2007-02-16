@@ -45,26 +45,14 @@ import com.intellij.codeInspection.visibility.VisibilityInspection;
 import com.intellij.codeInspection.wrongPackageStatement.WrongPackageStatementInspection;
 import com.intellij.lang.properties.UnusedMessageFormatParameterInspection;
 import com.intellij.lang.properties.UnusedPropertyInspection;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.xml.util.CheckEmptyScriptTagInspection;
 import com.intellij.xml.util.CheckImageSizeInspection;
 import com.intellij.xml.util.CheckValidXmlInScriptBodyInspection;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
-public class StandardInspectionToolsProvider implements InspectionToolProvider, ApplicationComponent {
-  @NotNull
-  public String getComponentName() {
-    return "StandardInspectionToolsProvider";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-
-  }
+public class StandardInspectionToolsProvider implements InspectionToolProvider {
 
   public Class[] getInspectionClasses() {
     return new Class[] {

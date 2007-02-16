@@ -19,6 +19,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 public class MockApplication extends MockComponentManager implements ApplicationEx {
+  public MockApplication() {
+    super(null);
+  }
 
   public String getName() {
     return "mock";

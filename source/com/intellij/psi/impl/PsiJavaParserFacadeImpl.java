@@ -42,11 +42,11 @@ import java.util.Properties;
 public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiJavaParserFacadeImpl");
 
-  protected final PsiManagerImpl myManager;
+  protected final PsiManagerEx myManager;
   protected static final Map<String, PsiPrimitiveType> ourPrimitiveTypesMap = new HashMap<String, PsiPrimitiveType>();
   protected PsiJavaFile myDummyJavaFile;
 
-  public PsiJavaParserFacadeImpl(PsiManagerImpl manager) {
+  public PsiJavaParserFacadeImpl(PsiManagerEx manager) {
     myManager = manager;
   }
 

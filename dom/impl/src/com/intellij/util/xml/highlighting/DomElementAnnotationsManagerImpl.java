@@ -4,7 +4,6 @@
 
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
@@ -91,18 +90,16 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   };
   private final DomHighlightingHelperImpl myHighlightingHelper = new DomHighlightingHelperImpl(this);
   private final ModificationTracker myModificationTracker;
-  private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
   private final ProjectRootManager myProjectRootManager;
   private final CachedValuesManager myCachedValuesManager;
-  private final InspectionProjectProfileManager myInspectionProjectProfileManager;
 
-  public DomElementAnnotationsManagerImpl(Project project, InspectionProfileManager manager, DaemonCodeAnalyzerImpl daemonCodeAnalyzer, ProjectRootManager projectRootManager, PsiManager psiManager, InspectionProjectProfileManager inspectionProjectProfileManager) {
-    this(project, manager, daemonCodeAnalyzer, projectRootManager, psiManager.getCachedValuesManager(), inspectionProjectProfileManager);
+  public DomElementAnnotationsManagerImpl(Project project, InspectionProfileManager manager, ProjectRootManager projectRootManager,
+                                          PsiManager psiManager) {
+    this(project, manager, projectRootManager, psiManager.getCachedValuesManager());
   }
-  public DomElementAnnotationsManagerImpl(Project project, InspectionProfileManager inspectionProfileManager, DaemonCodeAnalyzerImpl daemonCodeAnalyzer, ProjectRootManager projectRootManager, final CachedValuesManager cachedValuesManager, InspectionProjectProfileManager inspectionProjectProfileManager) {
-    myInspectionProjectProfileManager = inspectionProjectProfileManager;
+  public DomElementAnnotationsManagerImpl(Project project, InspectionProfileManager inspectionProfileManager, ProjectRootManager projectRootManager,
+                                          final CachedValuesManager cachedValuesManager) {
     myCachedValuesManager = cachedValuesManager;
-    myDaemonCodeAnalyzer = daemonCodeAnalyzer;
     myProjectRootManager = projectRootManager;
     final int[] modCount = new int[]{0};
     myModificationTracker = new ModificationTracker() {
@@ -279,7 +276,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   }
 
   protected InspectionProfile getInspectionProfile(final DomFileElement fileElement) {
-    return myInspectionProjectProfileManager.getInspectionProfile(fileElement.getFile());
+    return InspectionProjectProfileManager.getInstance(fileElement.getManager().getProject()).getInspectionProfile(fileElement.getFile());
   }
 
   @Nullable

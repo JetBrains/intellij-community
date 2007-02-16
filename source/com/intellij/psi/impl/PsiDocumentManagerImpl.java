@@ -120,17 +120,17 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   public FileViewProvider getCachedViewProvider(Document document) {
     final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null || !virtualFile.isValid()) return null;
-    return ((PsiManagerImpl)myPsiManager).getFileManager().findCachedViewProvider(virtualFile);
+    return ((PsiManagerEx)myPsiManager).getFileManager().findCachedViewProvider(virtualFile);
   }
 
   @Nullable
   protected PsiFile getCachedPsiFile(VirtualFile virtualFile) {
-    return ((PsiManagerImpl)myPsiManager).getFileManager().getCachedPsiFile(virtualFile);
+    return ((PsiManagerEx)myPsiManager).getFileManager().getCachedPsiFile(virtualFile);
   }
 
   @Nullable
   protected PsiFile getPsiFile(VirtualFile virtualFile) {
-    return ((PsiManagerImpl)myPsiManager).getFileManager().findFile(virtualFile);
+    return ((PsiManagerEx)myPsiManager).getFileManager().findFile(virtualFile);
   }
 
   public Document getDocument(@NotNull PsiFile file) {

@@ -1,7 +1,6 @@
 package com.intellij.uiDesigner.editor;
 
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
@@ -16,7 +15,7 @@ import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public final class UIFormEditorProvider implements FileEditorProvider, ApplicationComponent {
+public final class UIFormEditorProvider implements FileEditorProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.editor.UIFormEditorProvider");
 
   public boolean accept(@NotNull final Project project, @NotNull final VirtualFile file){
@@ -55,12 +54,4 @@ public final class UIFormEditorProvider implements FileEditorProvider, Applicati
       FileEditorPolicy.PLACE_BEFORE_DEFAULT_EDITOR : FileEditorPolicy.HIDE_DEFAULT_EDITOR;
   }
 
-  @NotNull
-  public String getComponentName(){
-    return "uiDesignerEditorProvider";
-  }
-
-  public void initComponent() {}
-
-  public void disposeComponent(){}
 }

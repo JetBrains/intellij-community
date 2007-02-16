@@ -17,6 +17,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.CodeFragmentElement;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -218,7 +219,7 @@ public class BlockSupportImpl extends BlockSupport {
       parent.replaceAllChildrenToChildrenOf(holderElement);
     }
     else {
-      final PsiManagerImpl manager = (PsiManagerImpl)fileImpl.getManager();
+      final PsiManagerEx manager = (PsiManagerEx)fileImpl.getManager();
       final PsiElementFactoryImpl factory = (PsiElementFactoryImpl)manager.getElementFactory();
 
 
@@ -240,7 +241,7 @@ public class BlockSupportImpl extends BlockSupport {
 
   static void replaceFileElement(final PsiFileImpl fileImpl, final FileElement fileElement,
                                          final FileElement newFileElement,
-                                         final PsiManagerImpl manager) {
+                                         final PsiManagerEx manager) {
     final RepositoryManager repositoryManager = manager.getRepositoryManager();
     final int oldLength = fileElement.getTextLength();
     sendPsiBeforeEvent(fileImpl);
@@ -293,7 +294,7 @@ public class BlockSupportImpl extends BlockSupport {
         LOG.error(th);
       }
       finally {
-        ((PsiManagerImpl)file.getManager()).invalidateFile(file);
+        ((PsiManagerEx)file.getManager()).invalidateFile(file);
       }
     }
   }

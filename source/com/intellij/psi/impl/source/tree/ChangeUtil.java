@@ -18,6 +18,7 @@ import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.light.LightTypeElement;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -273,7 +274,7 @@ public class ChangeUtil {
           final PomModelEvent event = new PomModelEvent(model);
           final TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(treeAspect, changedFile);
           event.registerChangeSet(treeAspect, destinationTreeChange);
-          final PsiManagerImpl psiManager = (PsiManagerImpl) manager;
+          final PsiManagerEx psiManager = (PsiManagerEx) manager;
           RepositoryManager repositoryManager = psiManager.getRepositoryManager();
           final PsiFile file = (PsiFile)changedFile.getPsi();
           if (repositoryManager != null) {

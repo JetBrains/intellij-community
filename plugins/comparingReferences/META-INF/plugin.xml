@@ -7,9 +7,8 @@
   <idea-version since-build="3000"/>
   <is-internal/>
 
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.codeInspection.ComparingReferencesProvider</implementation-class>
-    </component>
-  </application-components>
+  <extensions defaultExtensionNs="com.intellij">
+    <inspectionToolProvider implementation="com.intellij.codeInspection.ComparingReferencesProvider"/>
+  </extensions>
+
 </idea-plugin>

@@ -24,6 +24,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakFactoryMap;
+import com.intellij.util.containers.SoftFactoryMap;
 import net.sf.cglib.proxy.Factory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,7 @@ import java.util.*;
  * @author peter
  */
 public abstract class ElementPresentationManager {
-  private static final WeakFactoryMap<Class,Method> ourNameValueMethods = new WeakFactoryMap<Class, Method>() {
+  private static final SoftFactoryMap<Class,Method> ourNameValueMethods = new SoftFactoryMap<Class, Method>() {
     @Nullable
     protected Method create(final Class key) {
       for (final Method method : ReflectionCache.getMethods(key)) {

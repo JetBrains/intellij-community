@@ -25,7 +25,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.WeakFactoryMap;
+import com.intellij.util.containers.SoftFactoryMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +45,7 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
       return new DomResolveConverter(key);
     }
   };
-  private final WeakFactoryMap<DomElement, CachedValue<Map<String, DomElement>>> myResolveCache = new WeakFactoryMap<DomElement, CachedValue<Map<String, DomElement>>>() {
+  private final SoftFactoryMap<DomElement, CachedValue<Map<String, DomElement>>> myResolveCache = new SoftFactoryMap<DomElement, CachedValue<Map<String, DomElement>>>() {
     @NotNull
     protected CachedValue<Map<String, DomElement>> create(final DomElement scope) {
       final DomManager domManager = scope.getManager();

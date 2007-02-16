@@ -248,9 +248,13 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   final void fireEvent(DomEvent event) {
-    myModificationCount++;
+    incModificationCount();
     event.accept(MODIFICATION_TRACKER);
     myListeners.getMulticaster().eventOccured(event);
+  }
+
+  public void incModificationCount() {
+    myModificationCount++;
   }
 
   public final GenericInfoImpl getGenericInfo(final Type type) {
@@ -454,8 +458,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     if (parent == null) return null;
 
     final GenericInfoImpl info = parent.getGenericInfo();
-    final String tagName = tag.getName();
-    final DomChildrenDescription childDescription = info.getChildDescription(tagName);
+    final DomChildrenDescription childDescription = info.findChildrenDescription(parent, tag.getLocalName(), tag.getNamespace(), false, tag.getName());
     if (childDescription == null) return null;
 
     childDescription.getValues(parent.getProxy());

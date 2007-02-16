@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -1005,12 +1006,12 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   private static int addImportForClass(PsiFile file, int startOffset, int endOffset, PsiClass aClass) throws IncorrectOperationException {
     SmartPsiElementPointer pointer = SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(aClass);
     LOG.assertTrue(CommandProcessor.getInstance().getCurrentCommand() != null);
-    LOG.assertTrue(ApplicationManager.getApplication().getCurrentWriteAction(null) != null);
+    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().getCurrentWriteAction(null) != null);
 
     final PsiManager manager = file.getManager();
     final PsiResolveHelper helper = manager.getResolveHelper();
 
-    final Document document = PsiDocumentManager.getInstance(manager.getProject()).getDocument(file);
+    final Document document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
 
     CharSequence chars = document.getCharsSequence();
     int length = document.getTextLength();
@@ -1064,7 +1065,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     return newStartOffset;
   }
 
-  private static class InsertHandlerState{
+  public static class InsertHandlerState{
     int tailOffset;
     int caretOffset;
 

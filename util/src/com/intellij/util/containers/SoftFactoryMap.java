@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2006 JetBrains s.r.o.
+ * Copyright 2000-2007 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,19 @@
  */
 package com.intellij.util.containers;
 
-import java.lang.ref.WeakReference;
+import java.lang.ref.SoftReference;
 import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
  */
-public abstract class WeakFactoryMap<T,V> {
-  private final ConcurrentMap<T, WeakReference<V>> myMap = new ConcurrentWeakHashMap<T, WeakReference<V>>();
+public abstract class SoftFactoryMap<T,V> {
+  private final ConcurrentMap<T, SoftReference<V>> myMap = new ConcurrentWeakHashMap<T, SoftReference<V>>();
 
   protected abstract V create(T key);
 
   public final V get(T key) {
-    final WeakReference<V> reference = myMap.get(key);
+    final SoftReference<V> reference = myMap.get(key);
     if (reference != null) {
       final V v = reference.get();
       if (v != null) {
@@ -36,8 +36,8 @@ public abstract class WeakFactoryMap<T,V> {
     }
 
     final V value = create(key);
-    WeakReference<V> valueRef = new WeakReference<V>(value == null ? (V)FactoryMap.NULL : value);
-    WeakReference<V> prevRef = myMap.putIfAbsent(key, valueRef);
+    SoftReference<V> valueRef = new SoftReference<V>(value == null ? (V)FactoryMap.NULL : value);
+    SoftReference<V> prevRef = myMap.putIfAbsent(key, valueRef);
     V prev = prevRef == null ? null : prevRef.get();
     return prev == null || prev == FactoryMap.NULL? value : prev;
   }

@@ -8,10 +8,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AnnotationTypeFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
-import com.intellij.psi.impl.CheckUtil;
-import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.PsiSubstitutorEx;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
@@ -340,7 +337,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return JavaResolveResult.EMPTY_ARRAY;
     }
 
-    final ResolveCache resolveCache = ((PsiManagerImpl)manager).getResolveCache();
+    final ResolveCache resolveCache = ((PsiManagerEx)manager).getResolveCache();
     final boolean needToPreventRecursion = getContext() instanceof PsiReferenceList;
     return (JavaResolveResult[])resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, needToPreventRecursion, incompleteCode);
   }

@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -26,6 +27,8 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.text.MessageFormat;
 import java.util.*;
+
+import gnu.trove.THashSet;
 
 /*
  * @author: MYakovlev
@@ -164,8 +167,11 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
           }
         });
 
-        FileTemplateGroupDescriptorFactory[] templateGroupFactories = ApplicationManager.getApplication().getComponents(FileTemplateGroupDescriptorFactory.class);
-        for (FileTemplateGroupDescriptorFactory templateGroupFactory : templateGroupFactories) {
+        Set<FileTemplateGroupDescriptorFactory> factories = new THashSet<FileTemplateGroupDescriptorFactory>();
+        factories.addAll(Arrays.asList(ApplicationManager.getApplication().getComponents(FileTemplateGroupDescriptorFactory.class)));
+        factories.addAll(Arrays.asList(Extensions.getExtensions(FileTemplateGroupDescriptorFactory.EXTENSION_POINT_NAME)));
+
+        for (FileTemplateGroupDescriptorFactory templateGroupFactory : factories) {
           ContainerUtil.addIfNotNull(templateGroupFactory.getFileTemplatesDescriptor(), categories);
         }
 

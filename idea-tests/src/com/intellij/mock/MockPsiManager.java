@@ -5,16 +5,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.RepositoryElementsManager;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.RepositoryManager;
+import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.javadoc.JavadocManager;
@@ -24,21 +23,27 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class MockPsiManager extends PsiManagerEx {
   private final List<PsiClass> myClasses = new SmartList<PsiClass>();
   private final List<PsiPackage> myPackages = new SmartList<PsiPackage>();
   private Project myProject;
   private ResolveCache myResolveCache;
-  private MockPsiElementFactory myElementFactory;
+  private PsiElementFactory myElementFactory;
+  private final Map<VirtualFile,PsiDirectory> myDirectories = new THashMap<VirtualFile, PsiDirectory>();
+  private CachedValuesManagerImpl myCachedValuesManager;
+  private MockFileManager myMockFileManager;
+  private PsiModificationTrackerImpl myPsiModificationTracker;
 
   public MockPsiManager() {
     this(null);
@@ -46,6 +51,10 @@ public class MockPsiManager extends PsiManagerEx {
 
   public MockPsiManager(final Project project) {
     myProject = project;
+  }
+
+  public void addPsiDirectory(VirtualFile file, PsiDirectory psiDirectory) {
+    myDirectories.put(file, psiDirectory);
   }
 
   public Project getProject() {
@@ -79,7 +88,7 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public PsiDirectory findDirectory(VirtualFile file) {
-    return null;
+    return myDirectories.get(file);
   }
 
   public PsiClass findClass(@NotNull final String qualifiedName) {
@@ -91,6 +100,8 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public void addClass(PsiClass psiClass) {
+    final PsiClass existing = findClass(psiClass.getQualifiedName());
+    if (existing != null) myClasses.remove(existing);
     myClasses.add(psiClass);
   }
 
@@ -165,7 +176,7 @@ public class MockPsiManager extends PsiManagerEx {
     return myElementFactory;
   }
 
-  public void setElementFactory(final MockPsiElementFactory elementFactory) {
+  public void setElementFactory(final PsiElementFactory elementFactory) {
     myElementFactory = elementFactory;
   }
 
@@ -179,7 +190,16 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public PsiResolveHelper getResolveHelper() {
-    return null;
+    return new MockResolveHelper() {
+      public boolean isAccessible(final PsiMember member, final PsiModifierList modifierList, final PsiElement place,
+                                  final PsiClass accessObjectClass, final PsiElement currentFileResolveScope) {
+        return true;
+      }
+
+      public boolean isAccessible(final PsiMember member, final PsiElement place, final PsiClass accessObjectClass) {
+        return true;
+      }
+    };
   }
 
   public PsiShortNamesCache getShortNamesCache() {
@@ -202,11 +222,17 @@ public class MockPsiManager extends PsiManagerEx {
   //}
 
   public PsiModificationTracker getModificationTracker() {
-    return new PsiModificationTrackerImpl(this);
+    if (myPsiModificationTracker == null) {
+      myPsiModificationTracker = new PsiModificationTrackerImpl(this);
+    }
+    return myPsiModificationTracker;
   }
 
   public CachedValuesManager getCachedValuesManager() {
-    return null;
+    if (myCachedValuesManager == null) {
+      myCachedValuesManager = new CachedValuesManagerImpl(this);
+    }
+    return myCachedValuesManager;
   }
 
   public void moveFile(PsiFile file, PsiDirectory newParentDir) throws IncorrectOperationException {
@@ -297,7 +323,7 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public RepositoryManager getRepositoryManager() {
-    throw new UnsupportedOperationException("Method getRepositoryManager is not yet implemented in " + getClass().getName());
+    return new MockRepositoryManager();
   }
 
   public RepositoryElementsManager getRepositoryElementsManager() {
@@ -323,7 +349,6 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public void registerWeakRunnableToRunOnChange(Runnable runnable) {
-    throw new UnsupportedOperationException("Method registerWeakRunnableToRunOnChange is not yet implemented in " + getClass().getName());
   }
 
   public void registerRunnableToRunOnAnyChange(Runnable runnable) {
@@ -331,5 +356,18 @@ public class MockPsiManager extends PsiManagerEx {
 
   public void registerRunnableToRunAfterAnyChange(Runnable runnable) {
     throw new UnsupportedOperationException("Method registerRunnableToRunAfterAnyChange is not yet implemented in " + getClass().getName());
+  }
+
+  public FileManager getFileManager() {
+    if (myMockFileManager == null) {
+      myMockFileManager = new MockFileManager(this);
+    }
+    return myMockFileManager;
+  }
+
+  public void invalidateFile(final PsiFile file) {
+  }
+
+  public void beforeChildRemoval(final PsiTreeChangeEventImpl event) {
   }
 }

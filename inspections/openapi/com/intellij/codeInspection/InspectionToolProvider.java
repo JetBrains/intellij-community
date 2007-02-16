@@ -15,10 +15,14 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+
 /**
- * Plugin's ApplicationComponent that implements this interface will be automatically queried for inspection tool classes.
+ * Plugin's ApplicationComponent or extension that implements this interface will be automatically queried for inspection tool classes.
  */
 public interface InspectionToolProvider {
+  ExtensionPointName<InspectionToolProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.inspectionToolProvider");
+
   /**
    * Query method for inspection tools provided by a plugin.
    * @return classes that extend {@link InspectionProfileEntry}

@@ -1,6 +1,5 @@
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider;
@@ -18,7 +17,7 @@ import java.util.Comparator;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class FileEditorProviderManagerImpl extends FileEditorProviderManager implements ApplicationComponent{
+public final class FileEditorProviderManagerImpl extends FileEditorProviderManager {
   private static final FileEditorProvider[] EMPTY_ARRAY=new FileEditorProvider[]{};
 
   private final ArrayList<FileEditorProvider> myProviders;
@@ -76,14 +75,6 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     return null;
   }
 
-  @NotNull
-  public String getComponentName(){
-    return "resourceProviderManager";
-  }
-
-  public void initComponent(){
-  }
-
   private void registerProvider(FileEditorProvider provider) {
     String editorTypeId = provider.getEditorTypeId();
     for(int i=myProviders.size()-1;i>=0;i--){
@@ -96,8 +87,6 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     }
     myProviders.add(provider);
   }
-
-  public void disposeComponent(){}
 
   private static final class MyComparator implements Comparator<FileEditorProvider>{
     public static final MyComparator ourInstance = new MyComparator();

@@ -2,7 +2,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
@@ -146,7 +146,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
         };
       }
       cachedPackages = psiPackages;
-      ((PsiManagerImpl)manager).registerWeakRunnableToRunOnChange(myPackagesEraser);
+      ((PsiManagerEx)manager).registerWeakRunnableToRunOnChange(myPackagesEraser);
       myDefaultPackageContent = new SoftReference<List<PsiElement>>(cachedPackages);
     }
     return cachedPackages;

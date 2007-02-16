@@ -16,7 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.WeakFactoryMap;
+import com.intellij.util.containers.SoftFactoryMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
@@ -31,43 +31,43 @@ import java.util.WeakHashMap;
  */
 public class ReflectionCache {
   private static final Map<Class,Class> ourSuperClasses = new WeakHashMap<Class, Class>();
-  private static final WeakFactoryMap<Class,Class[]> ourInterfaces = new WeakFactoryMap<Class, Class[]>() {
+  private static final SoftFactoryMap<Class,Class[]> ourInterfaces = new SoftFactoryMap<Class, Class[]>() {
     @NotNull
     protected Class[] create(final Class key) {
       return key.getInterfaces();
     }
   };
-  private static final WeakFactoryMap<Class, Method[]> ourMethods = new WeakFactoryMap<Class, Method[]>() {
+  private static final SoftFactoryMap<Class, Method[]> ourMethods = new SoftFactoryMap<Class, Method[]>() {
     @NotNull
     protected Method[] create(final Class key) {
       return key.getMethods();
     }
   };
-  private static final WeakFactoryMap<Pair<Class,Class>,Boolean> ourAssignables = new WeakFactoryMap<Pair<Class, Class>, Boolean>() {
+  private static final SoftFactoryMap<Pair<Class,Class>,Boolean> ourAssignables = new SoftFactoryMap<Pair<Class, Class>, Boolean>() {
     protected Boolean create(final Pair<Class, Class> key) {
       return key.getFirst().isAssignableFrom(key.getSecond());
     }
   };
 
-  private static final WeakFactoryMap<Class,Boolean> ourIsInterfaces = new WeakFactoryMap<Class, Boolean>() {
+  private static final SoftFactoryMap<Class,Boolean> ourIsInterfaces = new SoftFactoryMap<Class, Boolean>() {
     @NotNull
     protected Boolean create(final Class key) {
       return key.isInterface();
     }
   };
-  private static final WeakFactoryMap<Class, TypeVariable[]> ourTypeParameters = new WeakFactoryMap<Class, TypeVariable[]>() {
+  private static final SoftFactoryMap<Class, TypeVariable[]> ourTypeParameters = new SoftFactoryMap<Class, TypeVariable[]>() {
     @NotNull
     protected TypeVariable[] create(final Class key) {
       return key.getTypeParameters();
     }
   };
-  private static final WeakFactoryMap<Class, Type[]> ourGenericInterfaces = new WeakFactoryMap<Class, Type[]>() {
+  private static final SoftFactoryMap<Class, Type[]> ourGenericInterfaces = new SoftFactoryMap<Class, Type[]>() {
     @NotNull
     protected Type[] create(final Class key) {
       return key.getGenericInterfaces();
     }
   };
-  private static final WeakFactoryMap<ParameterizedType, Type[]> ourActualTypeArguments = new WeakFactoryMap<ParameterizedType, Type[]>() {
+  private static final SoftFactoryMap<ParameterizedType, Type[]> ourActualTypeArguments = new SoftFactoryMap<ParameterizedType, Type[]>() {
     @NotNull
     protected Type[] create(final ParameterizedType key) {
       return key.getActualTypeArguments();

@@ -8,11 +8,11 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
+import com.intellij.util.pico.IdeaPicoContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
-import org.picocontainer.defaults.DefaultPicoContainer;
 
 import java.lang.reflect.Array;
 import java.util.HashMap;
@@ -20,11 +20,12 @@ import java.util.Map;
 
 public class MockComponentManager extends UserDataHolderBase implements ComponentManager {
   private final MessageBus myMessageBus = MessageBusFactory.newMessageBus(this);
-  private final MutablePicoContainer myPicoContainer = new DefaultPicoContainer();
+  private final MutablePicoContainer myPicoContainer;
 
   private final Map<Class, Object> myComponents = new HashMap<Class, Object>();
 
-  public MockComponentManager() {
+  public MockComponentManager(@Nullable PicoContainer parent) {
+    myPicoContainer = new IdeaPicoContainer(parent);                                            
     myPicoContainer.registerComponentInstance(this);
   }
 
@@ -41,7 +42,8 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   public <T> T getComponent(Class<T> interfaceClass) {
-    return (T)myComponents.get(interfaceClass);
+    final Object o = myPicoContainer.getComponentInstance(interfaceClass);
+    return (T)(o != null ? o : myComponents.get(interfaceClass));
   }
 
   public <T> T getComponent(Class<T> interfaceClass, T defaultImplementation) {
@@ -63,7 +65,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   @NotNull
-  public PicoContainer getPicoContainer() {
+  public MutablePicoContainer getPicoContainer() {
     return myPicoContainer;
   }
 

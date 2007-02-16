@@ -36,6 +36,8 @@
     <implicitUsageProvider implementation="com.intellij.uiDesigner.binding.UIDesignerImplicitUsageProvider"/>
     <runConfigurationExtension implementation="com.intellij.uiDesigner.snapShooter.SnapShooterConfigurationExtension"/>
     <usageTypeProvider implementation="com.intellij.uiDesigner.binding.FormUsageTypeProvider"/>
+    <inspectionToolProvider implementation="com.intellij.uiDesigner.inspections.FormInspectionProvider"/>
+    <fileEditorProvider implementation="com.intellij.uiDesigner.editor.UIFormEditorProvider"/>
 
     <applicationService serviceInterface="com.intellij.uiDesigner.Properties"
                    serviceImplementation="com.intellij.uiDesigner.Properties"/>
@@ -89,12 +91,6 @@
     <referencesSearch implementation="com.intellij.uiDesigner.binding.FormReferencesSearcher"/>
     <inspectionToolProvider implementation="com.intellij.uiDesigner.inspections.FormInspectionProvider"/>
   </extensions>
-
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.editor.UIFormEditorProvider</implementation-class>
-    </component>
-  </application-components>
 
   <project-components>
     <component>
@@ -259,4 +255,3 @@
     </group>
   </actions>
 </idea-plugin>
-  

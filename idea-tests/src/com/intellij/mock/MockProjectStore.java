@@ -1,0 +1,98 @@
+/*
+ * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
+ */
+package com.intellij.mock;
+
+import com.intellij.openapi.components.impl.stores.IProjectStore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jdom.JDOMException;
+
+import java.io.IOException;
+import java.util.List;
+
+/**
+ * @author peter
+ */
+public class MockProjectStore implements IProjectStore {
+  public boolean checkVersion() {
+    throw new UnsupportedOperationException("Method checkVersion is not yet implemented in " + getClass().getName());
+  }
+
+  @SuppressWarnings({"EmptyMethod"})
+  public boolean isSavePathsRelative() {
+    throw new UnsupportedOperationException("Method isSavePathsRelative is not yet implemented in " + getClass().getName());
+  }
+
+  public void setProjectFilePath(final String filePath) {
+    throw new UnsupportedOperationException("Method setProjectFilePath is not yet implemented in " + getClass().getName());
+  }
+
+  public void setSavePathsRelative(final boolean b) {
+    throw new UnsupportedOperationException("Method setSavePathsRelative is not yet implemented in " + getClass().getName());
+  }
+
+  @Nullable
+  public VirtualFile getProjectBaseDir() {
+    throw new UnsupportedOperationException("Method getProjectBaseDir is not yet implemented in " + getClass().getName());
+  }//------ This methods should be got rid of
+
+  public void loadProject() throws IOException, JDOMException, InvalidDataException {
+    throw new UnsupportedOperationException("Method loadProject is not yet implemented in " + getClass().getName());
+  }
+
+  @Nullable
+  public VirtualFile getProjectFile() {
+    throw new UnsupportedOperationException("Method getProjectFile is not yet implemented in " + getClass().getName());
+  }
+
+  @Nullable
+  public VirtualFile getWorkspaceFile() {
+    throw new UnsupportedOperationException("Method getWorkspaceFile is not yet implemented in " + getClass().getName());
+  }
+
+  public void loadProjectFromTemplate(Project project) {
+    throw new UnsupportedOperationException("Method loadProjectFromTemplate is not yet implemented in " + getClass().getName());
+  }
+
+  @NotNull
+  public String getProjectFileName() {
+    throw new UnsupportedOperationException("Method getProjectFileName is not yet implemented in " + getClass().getName());
+  }
+
+  @NotNull
+  public String getProjectFilePath() {
+    return null;
+  }
+
+  public void initStore() {
+    throw new UnsupportedOperationException("Method initStore is not yet implemented in " + getClass().getName());
+  }
+
+  public void initComponent(Object component) {
+    throw new UnsupportedOperationException("Method initComponent is not yet implemented in " + getClass().getName());
+  }
+
+  public void commit() {
+    throw new UnsupportedOperationException("Method commit is not yet implemented in " + getClass().getName());
+  }
+
+  public void save() throws IOException {
+    throw new UnsupportedOperationException("Method save is not yet implemented in " + getClass().getName());
+  }
+
+  public void load() throws IOException {
+    throw new UnsupportedOperationException("Method load is not yet implemented in " + getClass().getName());
+  }
+
+  public List<VirtualFile> getAllStorageFiles(final boolean includingSubStructures) {
+    throw new UnsupportedOperationException("Method getAllStorageFiles is not yet implemented in " + getClass().getName());
+  }
+
+  public List<VirtualFile> getAllStorageFilesToSave(final boolean includingSubStructures) {
+    throw new UnsupportedOperationException("Method getAllStorageFilesToSave is not yet implemented in " + getClass().getName());
+  }
+}

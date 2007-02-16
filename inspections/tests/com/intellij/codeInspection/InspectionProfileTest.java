@@ -13,7 +13,6 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.fixtures.IdeaTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -31,7 +30,7 @@ public class InspectionProfileTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.setUp();
-    InspectionToolRegistrar.getInstance().registerTools(ApplicationManager.getApplication().getComponents(InspectionToolProvider.class));
+    InspectionToolRegistrar.getInstance().ensureInitialized();
   }
 
   protected void tearDown() throws Exception {

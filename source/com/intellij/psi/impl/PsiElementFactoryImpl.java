@@ -47,7 +47,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     ourPrimitiveTypesMap.put(PsiType.NULL.getCanonicalText(), (PsiPrimitiveType)PsiType.NULL);
   }
 
-  public PsiElementFactoryImpl(PsiManagerImpl manager) {
+  public PsiElementFactoryImpl(PsiManagerEx manager) {
     super(manager);
   }
 

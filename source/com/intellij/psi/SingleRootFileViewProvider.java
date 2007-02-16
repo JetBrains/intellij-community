@@ -17,7 +17,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -25,7 +24,9 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
@@ -101,7 +102,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   public final PsiFile getPsi(Language target) {
     if (!isPhysical()) {
-      ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
+      ((PsiManagerEx)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
     }
     return getPsiInner(target);
   }
@@ -199,8 +200,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       if (fileTypeManager.isFileIgnored(name)) return null; // cannot use ProjectFileIndex because of "name"!
 
       final Project project = myManager.getProject();
-      final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-
       if (isPhysical()) { // check directories consistency
         final VirtualFile parent = vFile.getParent();
         if (parent == null) return null;
@@ -219,7 +218,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       }
 
       if (fileType instanceof JavaClassFileType) {
-        if (projectFileIndex.isInLibraryClasses(vFile)) {
+        if (ProjectRootManager.getInstance(project).getFileIndex().isInLibraryClasses(vFile)) {
           // skip inners & anonymous
           int dotIndex = name.lastIndexOf('.');
           if (dotIndex < 0) dotIndex = name.length();
@@ -417,7 +416,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   public void forceCachedPsi(final PsiFile psiFile) {
     myPsiFile.set(psiFile);
-    ((PsiManagerImpl)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
+    ((PsiManagerEx)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
   }
 
   private Content getContent() {

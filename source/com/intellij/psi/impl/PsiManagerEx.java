@@ -4,8 +4,10 @@
 package com.intellij.psi.impl;
 
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -31,4 +33,10 @@ public abstract class PsiManagerEx extends PsiManager {
   public abstract void registerRunnableToRunOnAnyChange(Runnable runnable);
 
   public abstract void registerRunnableToRunAfterAnyChange(Runnable runnable);
+
+  public abstract FileManager getFileManager();
+
+  public abstract void invalidateFile(PsiFile file);
+
+  public abstract void beforeChildRemoval(final PsiTreeChangeEventImpl event);
 }

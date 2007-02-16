@@ -3,11 +3,10 @@
  */
 package com.intellij.util.xml.ui;
 
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public abstract class PerspectiveFileEditorProvider extends WeighedFileEditorProvider implements ApplicationComponent {
+public abstract class PerspectiveFileEditorProvider extends WeighedFileEditorProvider {
   @NotNull
   public abstract PerspectiveFileEditor createEditor(Project project, VirtualFile file);
 
@@ -51,9 +50,4 @@ public abstract class PerspectiveFileEditorProvider extends WeighedFileEditorPro
     return getClass().getName();
   }
 
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
 }

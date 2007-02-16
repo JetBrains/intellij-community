@@ -58,11 +58,11 @@ public class MockDocument implements DocumentEx {
   }
 
   public int getTextLength() {
-    return 0;
+    return myText.length();
   }
 
   public int getLineCount() {
-    return 0;
+    return 1;
   }
 
   public int getLineNumber(int offset) {
@@ -74,7 +74,7 @@ public class MockDocument implements DocumentEx {
   }
 
   public int getLineEndOffset(int line) {
-    return 0;
+    return myText.length();
   }
 
   public void insertString(int offset, CharSequence s) {

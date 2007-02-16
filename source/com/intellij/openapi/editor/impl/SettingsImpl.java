@@ -10,16 +10,17 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 public class SettingsImpl implements EditorSettings {
-  private EditorImpl myEditor;
+  private EditorEx myEditor;
   private Boolean myIsCamelWords;
 
-  public SettingsImpl(EditorImpl editor) {
+  public SettingsImpl(EditorEx editor) {
     myEditor = editor;
   }
 

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -31,7 +30,7 @@ import java.beans.PropertyChangeListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class TextEditorProvider implements FileEditorProvider, ApplicationComponent {
+public final class TextEditorProvider implements FileEditorProvider {
 
   @NonNls private static final String TYPE_ID = "text-editor";
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.TextEditorProvider");
@@ -125,15 +124,6 @@ public final class TextEditorProvider implements FileEditorProvider, Application
   public FileEditorPolicy getPolicy() {
     return FileEditorPolicy.NONE;
   }
-
-  @NotNull
-  public String getComponentName() {
-    return "textEditorProvider";
-  }
-
-  public void initComponent() {}
-
-  public void disposeComponent() {}
 
   @NotNull public TextEditor getTextEditor(@NotNull Editor editor) {
     TextEditor textEditor = editor.getUserData(TEXT_EDITOR_KEY);
