@@ -97,14 +97,11 @@ public abstract class AbstractVcs {
     // TODO[yole]: change as appropriate for per-directory mapping
   }
 
-  public void activate() {
-  }
+  public void activate() {}
 
-  public void deactivate() {
-  }
+  public void deactivate() {}
 
-  public void directoryMappingChanged() {
-  }
+  public void directoryMappingChanged() {}
 
   public boolean markExternalChangesAsUpToDate() {
     return false;
@@ -119,7 +116,7 @@ public abstract class AbstractVcs {
     myIsStarted = false;
   }
 
-  public FileViewEnvironment getFileViewEnvironment() {
+  @Nullable public FileViewEnvironment getFileViewEnvironment() {
     return null;
   }
 
@@ -132,11 +129,11 @@ public abstract class AbstractVcs {
     return null;
   }
 
-  public VcsHistoryProvider getVcsHistoryProvider() {
+  @Nullable public VcsHistoryProvider getVcsHistoryProvider() {
     return null;
   }
 
-  public VcsHistoryProvider getVcsBlockHistoryProvider() {
+  @Nullable public VcsHistoryProvider getVcsBlockHistoryProvider() {
     return null;
   }
 
@@ -144,7 +141,7 @@ public abstract class AbstractVcs {
     return getDisplayName();
   }
 
-  public UpdateEnvironment getUpdateEnvironment() {
+  @Nullable public UpdateEnvironment getUpdateEnvironment() {
     return null;
   }
 
@@ -156,15 +153,16 @@ public abstract class AbstractVcs {
     return true;
   }
 
+  @Nullable
   public UpdateEnvironment getStatusEnvironment() {
     return null;
   }
 
-  public AnnotationProvider getAnnotationProvider() {
+  @Nullable public AnnotationProvider getAnnotationProvider() {
     return null;
   }
 
-  public DiffProvider getDiffProvider() {
+  @Nullable public DiffProvider getDiffProvider() {
     return null;
   }
 
@@ -204,7 +202,7 @@ public abstract class AbstractVcs {
     return null;
   }
 
-  public UpdateEnvironment getIntegrateEnvironment() {
+  @Nullable public UpdateEnvironment getIntegrateEnvironment() {
     return null;
   }
 
@@ -216,7 +214,7 @@ public abstract class AbstractVcs {
   public void rollbackIfUnchanged(VirtualFile file) {
   }
 
-  public ContentRevision createUpToDateRevision(final VirtualFile file) {
+  @Nullable public ContentRevision createUpToDateRevision(final VirtualFile file) {
     return null;
   }
 
