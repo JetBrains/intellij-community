@@ -41,15 +41,20 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.CopyDialog;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
+import java.util.List;
+import java.util.ArrayList;
 
 public class CopyAction extends BasicAction {
   protected String getActionName(AbstractVcs vcs) {
@@ -87,14 +92,36 @@ public class CopyAction extends BasicAction {
 
   protected void perform(final Project project, final SvnVcs activeVcs, VirtualFile file, DataContext context, AbstractVcsHelper helper)
     throws VcsException {
-    final File srcFile = new File(file.getPath());
-    CopyDialog dialog = new CopyDialog(project, true, srcFile);
+    CopyDialog dialog = new CopyDialog(project, true, new File(file.getPath()));
     dialog.show();
     if (dialog.isOK()) {
       final String dstURL = dialog.getToURL();
       final SVNRevision revision = dialog.getRevision();
       final String comment = dialog.getComment();
-      final SVNException[] exception = new SVNException[1];
+      final Ref<Exception> exception = new Ref<Exception>();
+      final boolean isSrcFile = dialog.isCopyFromWorkingCopy();
+      final File srcFile = new File(dialog.getCopyFromPath());
+      final SVNURL srcUrl;
+      final SVNURL dstSvnUrl;
+      final SVNURL parentUrl;
+      try {
+        final SVNWCClient wcClient = activeVcs.createWCClient();
+        srcUrl = SVNURL.parseURIEncoded(dialog.getCopyFromUrl());
+        dstSvnUrl = SVNURL.parseURIEncoded(dstURL);
+        parentUrl = dstSvnUrl.removePathTail();
+
+        if (!dirExists(parentUrl, wcClient)) {
+          int rc = Messages.showYesNoDialog(project, "The repository path '" + parentUrl + "' does not exist. Would you like to create it?",
+                                            "Branch or Tag", Messages.getQuestionIcon());
+          if (rc == 1) {
+            return;
+          }
+        }
+
+      }
+      catch (SVNException e) {
+        throw new VcsException(e);
+      }
 
       Runnable copyCommand = new Runnable() {
         public void run() {
@@ -105,22 +132,57 @@ public class CopyAction extends BasicAction {
               progress.setText(SvnBundle.message("progress.text.copy.to", dstURL));
               client.setEventHandler(new CopyEventHandler(progress));
             }
-            SVNCommitInfo result = client.doCopy(srcFile, revision, SVNURL.parseURIEncoded(dstURL), comment);
+            checkCreateDir(parentUrl, activeVcs, comment);
+            SVNCommitInfo result;
+            if (isSrcFile) {
+              result = client.doCopy(srcFile, revision, dstSvnUrl, comment);
+            }
+            else {
+              result = client.doCopy(srcUrl, revision, dstSvnUrl, false, comment);
+            }
             if (result != null && result != SVNCommitInfo.NULL) {
-              WindowManager.getInstance().getStatusBar(project).setInfo(
-                SvnBundle.message("status.text.comitted.revision", result.getNewRevision()));
+              WindowManager.getInstance().getStatusBar(project)
+                .setInfo(SvnBundle.message("status.text.comitted.revision", result.getNewRevision()));
             }
           }
-          catch (SVNException e) {
-            exception[0] = e;
+          catch (Exception e) {
+            exception.set(e);
           }
         }
       };
       ProgressManager.getInstance().runProcessWithProgressSynchronously(copyCommand, SvnBundle.message("progress.title.copy"), false, project);
-      if (exception[0] != null) {
-        throw new VcsException(exception[0]);
+      if (!exception.isNull()) {
+        throw new VcsException(exception.get());
       }
     }
+  }
+
+  private static void checkCreateDir(SVNURL url, final SvnVcs activeVcs, final String comment) throws SVNException, VcsException {
+    final SVNURL baseUrl = url;
+    SVNWCClient client = activeVcs.createWCClient();
+    List<SVNURL> dirsToCreate = new ArrayList<SVNURL>();
+    while(!dirExists(url, client)) {
+      dirsToCreate.add(0, url);
+      url = url.removePathTail();
+      if (url.getPath().length() == 0) {
+        throw new VcsException("Invalid repository root path for " + baseUrl);
+      }
+    }
+    SVNCommitClient commitClient = activeVcs.createCommitClient();
+    commitClient.doMkDir(dirsToCreate.toArray(new SVNURL[dirsToCreate.size()]), comment);
+  }
+
+  private static boolean dirExists(final SVNURL url, final SVNWCClient client) throws SVNException {
+    try {
+      client.doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+    }
+    catch(SVNException e) {
+      if (e.getErrorMessage().getErrorCode().equals(SVNErrorCode.RA_ILLEGAL_URL)) {
+        return false;
+      }
+      throw e;
+    }
+    return true;
   }
 
   protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] files, DataContext context, AbstractVcsHelper helper)

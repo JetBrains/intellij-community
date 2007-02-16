@@ -19,15 +19,21 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.ui.DocumentAdapter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 public class SvnRevisionPanel extends JPanel {
   private JRadioButton mySpecified;
@@ -36,6 +42,7 @@ public class SvnRevisionPanel extends JPanel {
   private TextFieldWithBrowseButton myRevisionField;
   private Project myProject;
   private UrlProvider myUrlProvider;
+  private ArrayList<ChangeListener> myChangeListeners = new ArrayList<ChangeListener>();
 
   public SvnRevisionPanel() {
     super(new BorderLayout());
@@ -60,16 +67,23 @@ public class SvnRevisionPanel extends JPanel {
         } else {
           myRevisionField.setEnabled(false);
         }
+        notifyChangeListeners();
       }
     });
 
     myHead.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myRevisionField.setEnabled(false);
+        notifyChangeListeners();
       }
     });
 
     myRevisionField.getTextField().setColumns(10);
+    myRevisionField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        notifyChangeListeners();
+      }
+    });
   }
 
   private void chooseRevision() {
@@ -94,6 +108,7 @@ public class SvnRevisionPanel extends JPanel {
     return myHead.isSelected() ? SVNRevision.HEAD.toString() : myRevisionField.getText();
   }
 
+  @NotNull
   public SVNRevision getRevision() throws ConfigurationException {
 
     if (myHead.isSelected()) return SVNRevision.HEAD;
@@ -104,6 +119,10 @@ public class SvnRevisionPanel extends JPanel {
     }
 
     return result;
+  }
+
+  public void setRevisionText(String text) {
+    myRevisionField.setText(text);
   }
 
   public void setRevision(final SVNRevision revision) {
@@ -117,7 +136,36 @@ public class SvnRevisionPanel extends JPanel {
     }
   }
 
-  interface UrlProvider {
+  @Override
+  public void setEnabled(final boolean enabled) {
+    super.setEnabled(enabled);
+    if (!enabled) {
+      myHead.setEnabled(false);
+      mySpecified.setEnabled(false);
+      myRevisionField.setEnabled(false);
+    }
+    else {
+      myHead.setEnabled(true);
+      mySpecified.setEnabled(true);
+      myRevisionField.setEnabled(mySpecified.isSelected());
+    }
+  }
+
+  public void addChangeListener(ChangeListener listener) {
+    myChangeListeners.add(listener);
+  }
+
+  public void removeChangeListener(ChangeListener listener) {
+    myChangeListeners.remove(listener);
+  }
+
+  private void notifyChangeListeners() {
+    for(ChangeListener listener: myChangeListeners) {
+      listener.stateChanged(new ChangeEvent(this));
+    }
+  }
+
+  public interface UrlProvider {
     String getUrl();
   }
 }

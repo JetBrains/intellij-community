@@ -19,10 +19,15 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBranchConfiguration;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -97,6 +102,26 @@ public class BranchConfigurationDialog extends DialogWrapper {
   @NonNls
   protected String getDimensionServiceKey() {
     return "Subversion.BranchConfigurationDialog";
+  }
+
+  public static void configureBranches(final Project project, final VirtualFile file) {
+    final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
+
+    SvnBranchConfiguration configuration;
+    try {
+      configuration = SvnBranchConfigurationManager.getInstance(project).get(vcsRoot);
+    }
+    catch (VcsException ex) {
+      Messages.showErrorDialog(project, "Error loading branch configuration: " + ex.getMessages(), "Configure Branches");
+      return;
+    }
+
+    final SvnBranchConfiguration clonedConfiguration = configuration.clone();
+    BranchConfigurationDialog dlg = new BranchConfigurationDialog(project, clonedConfiguration);
+    dlg.show();
+    if (dlg.isOK()) {
+      SvnBranchConfigurationManager.getInstance(project).setConfiguration(vcsRoot, clonedConfiguration);
+    }
   }
 
   private static class MyListModel extends AbstractListModel {

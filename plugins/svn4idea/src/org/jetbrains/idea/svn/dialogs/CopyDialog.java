@@ -15,13 +15,26 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.svn.SvnBranchConfiguration;
+import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.update.SvnRevisionPanel;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -30,8 +43,10 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -42,53 +57,170 @@ import java.io.File;
  * Date: 05.07.2005
  * Time: 23:35:12
  */
-public class CopyDialog extends DialogWrapper implements ActionListener {
+public class CopyDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.dialogs.CopyDialog");
+
   private File mySrcFile;
+  private String mySrcURL;
   private Project myProject;
   private String myURL;
 
-  private JTextField myFromURLText;
   private TextFieldWithBrowseButton myToURLText;
 
-  private JRadioButton myWorkingRevisionButton;
-  private JRadioButton myHEADRevisionButton;
-  private JRadioButton mySpecificRevisionButton;
-  private JTextField myRevisionText;
   private JTextArea myCommentText;
   private JPanel myTopPanel;
-  private String mySrcURL;
+  private JRadioButton myWorkingCopyRadioButton;
+  private JRadioButton myRepositoryRadioButton;
+  private TextFieldWithBrowseButton myWorkingCopyField;
+  private TextFieldWithBrowseButton myRepositoryField;
+  private SvnRevisionPanel myRevisionPanel;
+  private ComboboxWithBrowseButton myBranchTagBaseComboBox;
+  private JTextField myBranchTextField;
+  private JRadioButton myBranchOrTagRadioButton;
+  private JRadioButton myAnyLocationRadioButton;
+  private JButton myProjectButton;
+  private JLabel myErrorLabel;
 
   @NonNls private static final String HELP_ID = "vcs.subversion.branch";
+  private SvnBranchConfiguration myBranchConfiguration;
+  private VirtualFile mySrcVirtualFile;
 
-  public CopyDialog(Project project, boolean canBeParent, File file) {
+  public CopyDialog(final Project project, boolean canBeParent, File file) {
     super(project, canBeParent);
     mySrcFile = file;
     myProject = project;
     setResizable(true);
     setTitle(SvnBundle.message("dialog.title.branch"));
     getHelpAction().setEnabled(true);
+    myProjectButton.setIcon(IconLoader.getIcon("/nodes/ideaProject.png"));
+    myBranchTagBaseComboBox.setPreferredSize(new Dimension(myBranchTagBaseComboBox.getPreferredSize().width,
+                                                           myWorkingCopyField.getPreferredSize().height));
 
-    myToURLText.addActionListener(this);
-    myWorkingRevisionButton.addActionListener(this);
-    myHEADRevisionButton.addActionListener(this);
-    mySpecificRevisionButton.addActionListener(this);
-
-    myRevisionText.setMinimumSize(myRevisionText.getPreferredSize());
-    myRevisionText.getDocument().addDocumentListener(new DocumentListener() {
-      public void insertUpdate(DocumentEvent e) {
-        getOKAction().setEnabled(isOKActionEnabled());
+    myWorkingCopyField.addBrowseFolderListener("Select Working Copy Location", "Select Location to Copy From:",
+                                               project, new FileChooserDescriptor(false, true, false, false, false, false));
+    myWorkingCopyField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        updateControls();
       }
-
-      public void removeUpdate(DocumentEvent e) {
-        getOKAction().setEnabled(isOKActionEnabled());
+    });
+    myRepositoryField.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        SelectLocationDialog dlg = new SelectLocationDialog(project, myRepositoryField.getText());
+        dlg.show();
+        if (dlg.isOK()) {
+          myRepositoryField.setText(dlg.getSelectedURL());
+        }
       }
+    });
+    myRepositoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        updateToURL();
+      }
+    });
+    myToURLText.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        String url = myToURLText.getText();
+        String dstName = SVNPathUtil.tail(mySrcURL);
+        dstName = SVNEncodingUtil.uriDecode(dstName);
+        SelectLocationDialog dialog = new SelectLocationDialog(myProject, SVNPathUtil.removeTail(url), SvnBundle.message("label.copy.select.location.dialog.copy.as"), dstName, false);
+        dialog.show();
+        if (dialog.isOK()) {
+          url = dialog.getSelectedURL();
+          String name = dialog.getDestinationName();
+          url = SVNPathUtil.append(url, name);
+          myToURLText.setText(url);
+        }
+      }
+    });
+    myRevisionPanel.setProject(myProject);
+    myRevisionPanel.setUrlProvider(new SvnRevisionPanel.UrlProvider() {
+      public String getUrl() {
+        return mySrcURL;
+      }
+    });
 
-      public void changedUpdate(DocumentEvent e) {
+    mySrcVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    mySrcVirtualFile = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(mySrcVirtualFile);
+    updateBranchTagBases();
+
+    myRevisionPanel.addChangeListener(new ChangeListener() {
+      public void stateChanged(final ChangeEvent e) {
         getOKAction().setEnabled(isOKActionEnabled());
       }
     });
 
     init();
+    ActionListener listener = new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        updateControls();
+      }
+    };
+    myWorkingCopyRadioButton.addActionListener(listener);
+    myRepositoryRadioButton.addActionListener(listener);
+    myBranchOrTagRadioButton.addActionListener(listener);
+    myAnyLocationRadioButton.addActionListener(listener);
+    updateControls();
+    myBranchTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        updateToURL();
+      }
+    });
+    updateToURL();
+    myProjectButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myRepositoryField.setText(myBranchConfiguration.getBaseUrl(mySrcURL));
+      }
+    });
+    myBranchTagBaseComboBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        BranchConfigurationDialog.configureBranches(project, mySrcVirtualFile);
+        updateBranchTagBases();
+      }
+    });
+    myBranchTagBaseComboBox.getComboBox().addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        updateToURL();
+      }
+    });
+  }
+
+  private void updateBranchTagBases() {
+    try {
+      myBranchConfiguration = SvnBranchConfigurationManager.getInstance(myProject).get(mySrcVirtualFile);
+      final String[] strings = myBranchConfiguration.getBranchUrls().toArray(new String[myBranchConfiguration.getBranchUrls().size()]);
+      myBranchTagBaseComboBox.getComboBox().setModel(new DefaultComboBoxModel(strings));
+    }
+    catch (VcsException e) {
+      LOG.error(e);
+      myBranchTagBaseComboBox.setEnabled(false);
+    }
+  }
+
+  private void updateToURL() {
+    String relativeUrl;
+    if (myWorkingCopyRadioButton.isSelected()) {
+      relativeUrl = myBranchConfiguration.getRelativeUrl(mySrcURL);
+    }
+    else {
+      relativeUrl = myBranchConfiguration.getRelativeUrl(myRepositoryField.getText());
+    }
+
+    if (relativeUrl != null) {
+      myToURLText.setText(myBranchTagBaseComboBox.getComboBox().getSelectedItem().toString() + "/" + myBranchTextField.getText() + relativeUrl);
+    }
+  }
+
+  private void updateControls() {
+    myWorkingCopyField.setEnabled(myWorkingCopyRadioButton.isSelected());
+    myRepositoryField.setEnabled(myRepositoryRadioButton.isSelected());
+    myRevisionPanel.setEnabled(myRepositoryRadioButton.isSelected());
+    myProjectButton.setEnabled(myRepositoryRadioButton.isSelected());
+
+    myBranchTagBaseComboBox.setEnabled(myBranchOrTagRadioButton.isSelected());
+    myBranchTextField.setEnabled(myBranchOrTagRadioButton.isSelected());
+    myToURLText.setEnabled(myAnyLocationRadioButton.isSelected());
+
+    getOKAction().setEnabled(isOKActionEnabled());
   }
 
   protected Action[] createActions() {
@@ -110,15 +242,6 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
         mySrcURL = info.getURL() == null ? null : info.getURL().toString();
         revStr = String.valueOf(info.getRevision());
         myURL = mySrcURL;
-        if (myURL != null) {
-          @NonNls String dstName = "CopyOf" + SVNPathUtil.tail(myURL);
-          if (mySrcFile.isDirectory()) {
-            myURL = SVNPathUtil.append(myURL, dstName);
-          }
-          else {
-            myURL = SVNPathUtil.append(SVNPathUtil.removeTail(myURL), dstName);
-          }
-        }
       }
     }
     catch (SVNException e) {
@@ -127,15 +250,13 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
     if (myURL == null) {
       return;
     }
-    myFromURLText.setText(mySrcURL);
+    myWorkingCopyField.setText(mySrcFile.toString());
+    myRepositoryField.setText(mySrcURL);
     myToURLText.setText(myURL);
-    myRevisionText.setText(revStr);
-    myRevisionText.selectAll();
-    myRevisionText.setEnabled(mySpecificRevisionButton.isSelected());
+    myRevisionPanel.setRevisionText(revStr);
+    updateControls();
 
-    myWorkingRevisionButton.setSelected(true);
-
-    getOKAction().setEnabled(isOKActionEnabled());
+    myWorkingCopyRadioButton.setSelected(true);
   }
 
   public String getComment() {
@@ -143,15 +264,16 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
   }
 
   public SVNRevision getRevision() {
-    if (myWorkingRevisionButton.isSelected()) {
+    if (myWorkingCopyRadioButton.isSelected()) {
       return SVNRevision.WORKING;
     }
-    else if (myHEADRevisionButton.isSelected()) {
-      return SVNRevision.HEAD;
-    }
     else {
-      String revStr = myRevisionText.getText();
-      return SVNRevision.parse(revStr);
+      try {
+        return myRevisionPanel.getRevision();
+      }
+      catch (ConfigurationException e) {
+        return SVNRevision.UNDEFINED;
+      }
     }
   }
 
@@ -161,35 +283,6 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
 
   protected JComponent createCenterPanel() {
     return myTopPanel;
-  }
-
-  public void actionPerformed(ActionEvent e) {
-    myRevisionText.setEnabled(mySpecificRevisionButton.isSelected());
-    if (mySpecificRevisionButton.isSelected()) {
-      myRevisionText.selectAll();
-      myRevisionText.requestFocus();
-    }
-    if (e != null &&
-        (e.getSource() == mySpecificRevisionButton ||
-         e.getSource() == myWorkingRevisionButton ||
-         e.getSource() == myHEADRevisionButton)) {
-
-      getOKAction().setEnabled(isOKActionEnabled());
-      return;
-    }
-    // select repository
-    String url = myToURLText.getText();
-    String dstName = SVNPathUtil.tail(myURL);
-    dstName = SVNEncodingUtil.uriDecode(dstName);
-    SelectLocationDialog dialog = new SelectLocationDialog(myProject, SVNPathUtil.removeTail(url), SvnBundle.message("label.copy.select.location.dialog.copy.as"), dstName, false);
-    dialog.show();
-    if (dialog.isOK()) {
-      url = dialog.getSelectedURL();
-      String name = dialog.getDestinationName();
-      url = SVNPathUtil.append(url, name);
-      myToURLText.setText(url);
-    }
-    getOKAction().setEnabled(isOKActionEnabled());
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -205,21 +298,58 @@ public class CopyDialog extends DialogWrapper implements ActionListener {
   }
 
   public boolean isOKActionEnabled() {
+    myErrorLabel.setText(" ");
     if (myURL == null) {
       return false;
     }
     String url = myToURLText.getText();
     if (url != null && url.trim().length() > 0) {
-      if (mySpecificRevisionButton.isSelected()) {
-        String revStr = myRevisionText.getText();
-        SVNRevision revision = SVNRevision.parse(revStr);
-        if (revision != null && revision.isValid() && !revision.isLocal()) {
-          return true;
+      if (myRepositoryRadioButton.isSelected()) {
+        SVNRevision revision;
+        try {
+          revision = myRevisionPanel.getRevision();
         }
+        catch (ConfigurationException e) {
+          revision = SVNRevision.UNDEFINED;
+        }
+        if (!revision.isValid() || revision.isLocal()) {
+          myErrorLabel.setText("Invalid revision '" + myRevisionPanel.getRevisionText() + "'");
+          return false;
+        }
+        return true;
       }
-      return true;
+      else if (myWorkingCopyRadioButton.isSelected()) {
+        File wcFile = new File(myWorkingCopyField.getText());
+        if (wcFile.isFile()) {
+          wcFile = wcFile.getParentFile();
+        }
+        try {
+          SVNWCClient client = SvnVcs.getInstance(myProject).createWCClient();
+          SVNInfo info = client.doInfo(mySrcFile, SVNRevision.WORKING);
+          mySrcURL = info != null && info.getURL() != null ? info.getURL().toString() : null;
+        }
+        catch (SVNException e) {
+          mySrcURL = null;
+        }
+        if (mySrcURL == null) {
+          myErrorLabel.setText("No working copy found at " + myWorkingCopyField.getText());
+          return false;
+        }
+        return true;
+      }
     }
     return false;
   }
 
+  public boolean isCopyFromWorkingCopy() {
+    return myWorkingCopyRadioButton.isSelected();
+  }
+
+  public String getCopyFromPath() {
+    return myWorkingCopyField.getText();
+  }
+
+  public String getCopyFromUrl() {
+    return myRepositoryField.getText();
+  }
 }

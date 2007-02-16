@@ -16,6 +16,8 @@
 
 package org.jetbrains.idea.svn;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,5 +49,28 @@ public class SvnBranchConfiguration {
     result.myTrunkUrl = myTrunkUrl;
     result.myBranchUrls = new ArrayList<String>(myBranchUrls);
     return result;
+  }
+
+  @Nullable
+  public String getBaseUrl(String url) {
+    if (url.startsWith(myTrunkUrl)) {
+      return myTrunkUrl;
+    }
+    for(String branchUrl: myBranchUrls) {
+      if (url.startsWith(branchUrl)) {
+        int pos = url.indexOf('/', branchUrl.length()+1);
+        if (pos >= 0) {
+          return url.substring(0, pos);
+        }
+        return branchUrl;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public String getRelativeUrl(String url) {
+    String baseUrl = getBaseUrl(url);
+    return baseUrl == null ? null : url.substring(baseUrl.length());
   }
 }
