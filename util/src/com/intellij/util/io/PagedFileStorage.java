@@ -6,11 +6,9 @@ package com.intellij.util.io;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.util.Arrays;
 
 /**
@@ -71,38 +69,36 @@ public final class PagedFileStorage {
     unmap();
   }
 
-  public void resize(int size) throws IOException {
-    final int current = (int)myFile.length();
-    if (current == size) return;
+  public void resize(int newSize) throws IOException {
+    int oldSize = (int)myFile.length();
+    if (oldSize == newSize) return;
+
     unmap();
-    if (size > current) {
-      FileOutputStream stream = new FileOutputStream(myFile, true);
-      FileChannel channel = stream.getChannel();
-
-      try {
-        byte[] temp = new byte[size - current];
-        Arrays.fill(temp, (byte)0);
-        channel.write(ByteBuffer.wrap(temp));
-
-        channel.force(true);
-      }
-      finally {
-        channel.close();
-        stream.close();
-      }
-    }
-    else {
-      RandomAccessFile raf = new RandomAccessFile(myFile, RW);
-      try {
-        raf.setLength(size);
-      }
-      finally {
-        raf.close();
-      }
-    }
-
+    resizeFile(newSize);
     map();
+
+    // it is not guaranteed that new portition will consist of null
+    // after resize, so we should fill it manually
+    int delta = newSize - oldSize;
+    if (delta > 0) fillWithZeros(oldSize, delta);
   }
+
+  private void resizeFile(int newSzie) throws IOException {
+    RandomAccessFile raf = new RandomAccessFile(myFile, RW);
+    try {
+      raf.setLength(newSzie);
+    }
+    finally {
+      raf.close();
+    }
+  }
+
+  private void fillWithZeros(int from, int length) {
+    byte[] buff = new byte[length];
+    Arrays.fill(buff, (byte)0);
+    put(from, buff, 0, buff.length);
+  }
+
 
   public final long length() {
     if (mySize == -1) {
