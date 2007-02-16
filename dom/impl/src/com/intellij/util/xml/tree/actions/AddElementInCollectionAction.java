@@ -4,14 +4,18 @@
 
 package com.intellij.util.xml.tree.actions;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.ElementPresentationManager;
+import com.intellij.util.xml.MergedObject;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomElementsGroupNode;
@@ -132,39 +136,71 @@ public class AddElementInCollectionAction extends AddDomElementAction {
   }
 
 
-  protected DefaultAddAction createAddingAction(final AnActionEvent e,
+  protected AnAction createAddingAction(final AnActionEvent e,
                                                 final String name,
                                                 final Icon icon,
                                                 final Type type,
                                                 final DomCollectionChildDescription description) {
 
-    return new DefaultAddAction(name, name, icon) {
-      // we need this properties, don't remove it (shared dataContext assertion)
-      private DomElement myParent = AddElementInCollectionAction.this.getParentDomElement(e);
-      private DomModelTreeView myView = getTreeView(e);
+    final DomElement parentDomElement = getParentDomElement(e);
 
-      protected Type getElementType() {
-        return type;
+    if (parentDomElement instanceof MergedObject) {
+      final List<DomElement> implementations = (List<DomElement>)((MergedObject)parentDomElement).getImplementations();
+      final DefaultActionGroup actionGroup = new DefaultActionGroup(name, true);
+
+      for (DomElement implementation : implementations) {
+        final XmlFile xmlFile = implementation.getRoot().getFile();
+        if(xmlFile != null) {
+            actionGroup.add(new MyDefaultAddAction(implementation, xmlFile.getName(), xmlFile.getIcon(0), e, type, description));
+        }
       }
+      return actionGroup;
+    }
 
-      protected DomCollectionChildDescription getDomCollectionChildDescription() {
-        return description;
-      }
+    return new MyDefaultAddAction(parentDomElement, name, icon, e, type, description);
+  }
 
-      protected DomElement getParentDomElement() {
-        return myParent;
-      }
+  private class MyDefaultAddAction extends DefaultAddAction {
+    // we need this properties, don't remove it (shared dataContext assertion)
+    private DomElement myParent;
+    private DomModelTreeView myView;
+    private final Type myType;
+    private final DomCollectionChildDescription myDescription;
 
-      protected void afterAddition(final DomElement newElement) {
-        final DomElement copy = newElement.createStableCopy();
+    public MyDefaultAddAction(final DomElement parent,
+                              final String name,
+                              final Icon icon,
+                              final AnActionEvent e,
+                              final Type type,
+                              final DomCollectionChildDescription description) {
+      super(name, name, icon);
+      myType = type;
+      myDescription = description;
+      myParent = parent;
+      myView = getTreeView(e);
+    }
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            myView.setSelectedDomElement(copy);
-          }
-        });
+    protected Type getElementType() {
+      return myType;
+    }
 
-      }
-    };
+    protected DomCollectionChildDescription getDomCollectionChildDescription() {
+      return myDescription;
+    }
+
+    protected DomElement getParentDomElement() {
+      return myParent;
+    }
+
+    protected void afterAddition(final DomElement newElement) {
+      final DomElement copy = newElement.createStableCopy();
+
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          myView.setSelectedDomElement(copy);
+        }
+      });
+
+    }
   }
 }

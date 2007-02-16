@@ -21,8 +21,8 @@ import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
 import javax.swing.*;
+import java.lang.reflect.Type;
 
 /**
  * User: Sergey.Vasiliev
@@ -72,7 +72,8 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
     final Type[] aClass = new Type[]{null};
     final StableElement<T> result = new WriteCommandAction<StableElement<T>>(domManager.getProject(), parent.getRoot().getFile()) {
       protected void run(Result<StableElement<T>> result) throws Throwable {
-        final T t = (T)getDomCollectionChildDescription().addValue(getParentDomElement(), getElementType());
+        final DomElement parentDomElement = getParentDomElement();
+        final T t = (T)getDomCollectionChildDescription().addValue(parentDomElement, getElementType());
         tuneNewValue(t);
         aClass[0] = parent.getGenericInfo().getCollectionChildDescription(t.getXmlElementName()).getType();
         oldChoosers[0] = domManager.getTypeChooserManager().getTypeChooser(aClass[0]);
