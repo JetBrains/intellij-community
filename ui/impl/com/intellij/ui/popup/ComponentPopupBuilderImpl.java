@@ -44,6 +44,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private MouseChecker myCancelOnMouseOutCallback;
   private boolean myCancelOnWindow;
   private ActiveIcon myTitleIcon = new ActiveIcon(new EmptyIcon(0));
+  private boolean myCancelKeyEnabled = true;
 
   public ComponentPopupBuilderImpl(final JComponent component,
                                    final JComponent prefferedFocusedComponent) {
@@ -135,7 +136,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   public JBPopup createPopup() {
     final JBPopupImpl popup = new JBPopupImpl(myComponent, myPrefferedFocusedComponent, myRequestFocus, myForceHeavyweight,
                                               myDimensionServiceKey, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null,
-                                              myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton, myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon);
+                                              myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton,
+                                              myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled);
     if (myPopupUpdater != null) {
       popup.setPopupUpdater(myPopupUpdater, myProject);
     }
@@ -153,6 +155,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @NotNull
   public ComponentPopupBuilder setTitleIcon(@NotNull final ActiveIcon icon) {
     myTitleIcon = icon;
+    return this;
+  }
+
+  @NotNull
+  public ComponentPopupBuilder setCancelKeyEnabled(final boolean enabled) {
+    myCancelKeyEnabled = enabled;
     return this;
   }
 }

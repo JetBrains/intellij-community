@@ -79,4 +79,6 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setCancelOnOtherWindowOpen(boolean cancelOnWindow);
 
   @NotNull ComponentPopupBuilder setTitleIcon(@NotNull ActiveIcon icon);
+  
+  @NotNull ComponentPopupBuilder setCancelKeyEnabled(boolean enabled);
 }
