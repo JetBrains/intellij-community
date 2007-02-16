@@ -46,7 +46,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   private volatile PsiImportListImpl myRepositoryImportList = null;
   private volatile String myCachedPackageName = null;
-  protected volatile PsiClass[] myCachedClasses = null;
+  private volatile PsiClass[] myCachedClasses = null;
   private final ConcurrentMap<PsiJavaFile,ConcurrentMap<String, SoftReference<JavaResolveResult[]>>> myGuessCache;
 
   private static final @NonNls String[] IMPLICIT_IMPORTS = new String[]{ "java.lang" };
@@ -91,22 +91,23 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   @NotNull
   public PsiClass[] getClasses() {
-    if (myCachedClasses == null){
+    PsiClass[] cachedClasses = myCachedClasses;
+    if (cachedClasses == null){
       if (getTreeElement() != null || getRepositoryId() < 0){
         LOG.debug("Loading tree for " + getName());
-        myCachedClasses = calcTreeElement().getChildrenAsPsiElements(CLASS_BIT_SET, PSI_CLASS_ARRAY_CONSTRUCTOR);
+        cachedClasses = calcTreeElement().getChildrenAsPsiElements(CLASS_BIT_SET, PSI_CLASS_ARRAY_CONSTRUCTOR);
       }
       else{
         long[] classIds = getRepositoryManager().getFileView().getClasses(getRepositoryId());
-        PsiClass[] classes = classIds.length > 0 ? new PsiClass[classIds.length] : PsiClass.EMPTY_ARRAY;
+        cachedClasses = classIds.length > 0 ? new PsiClass[classIds.length] : PsiClass.EMPTY_ARRAY;
         for(int i = 0; i < classIds.length; i++){
           long id = classIds[i];
-          classes[i] = (PsiClass)getRepositoryElementsManager().findOrCreatePsiElementById(id);
+          cachedClasses[i] = (PsiClass)getRepositoryElementsManager().findOrCreatePsiElementById(id);
         }
-        myCachedClasses = classes;
       }
+      myCachedClasses = cachedClasses;
     }
-    return myCachedClasses;
+    return cachedClasses;
   }
 
   public PsiPackageStatement getPackageStatement() {
@@ -115,21 +116,23 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   @NotNull
   public String getPackageName(){
-    if (myCachedPackageName == null){
+    String cachedPackageName = myCachedPackageName;
+    if (cachedPackageName == null){
       if (getTreeElement() != null || getRepositoryId() < 0){
         PsiPackageStatement statement = getPackageStatement();
         if (statement == null){
-          myCachedPackageName = "";
+          cachedPackageName = "";
         }
         else{
-          myCachedPackageName = statement.getPackageName();
+          cachedPackageName = statement.getPackageName();
         }
       }
       else{
-        myCachedPackageName = getRepositoryManager().getFileView().getPackageName(getRepositoryId());
+        cachedPackageName = getRepositoryManager().getFileView().getPackageName(getRepositoryId());
       }
+      myCachedPackageName = cachedPackageName;
     }
-    return myCachedPackageName;
+    return cachedPackageName;
   }
 
   @NotNull
