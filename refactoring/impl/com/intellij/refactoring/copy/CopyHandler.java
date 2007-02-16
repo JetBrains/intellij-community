@@ -312,16 +312,21 @@ public class CopyHandler {
    * @return first copied PsiFile (recursivly); null if no PsiFiles copied
    */
   @Nullable
-  private static PsiFile copyToDirectory(final PsiElement elementToCopy, String newName, final PsiDirectory targetDirectory) throws IncorrectOperationException{
+  private static PsiFile copyToDirectory(final PsiElement elementToCopy,
+                                         @Nullable String newName,
+                                         final PsiDirectory targetDirectory) throws IncorrectOperationException{
     if (elementToCopy instanceof PsiFile) {
-      return targetDirectory.copyFileFrom(newName, (PsiFile)elementToCopy);
+      final PsiFile file = (PsiFile)elementToCopy;
+      if (newName == null) newName = file.getName();
+      return targetDirectory.copyFileFrom(newName, file);
     }
     else if (elementToCopy instanceof PsiDirectory) {
       PsiDirectory directory = (PsiDirectory)elementToCopy;
       if (directory.equals(targetDirectory)) {
         return null;
       }
-      PsiDirectory subdirectory = targetDirectory.createSubdirectory(newName == null ? directory.getName() : newName);
+      if (newName == null) newName = directory.getName();
+      PsiDirectory subdirectory = targetDirectory.createSubdirectory(newName);
       PsiFile firstFile = null;
       PsiElement[] children = directory.getChildren();
       for (PsiElement child : children) {
