@@ -887,6 +887,7 @@ public class ExpressionParsing extends Parsing {
     TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
+    boolean firstExpressionMissing = false;
     while (true) {
       if (lexer.getTokenType() == RBRACE) {
         TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
@@ -900,15 +901,20 @@ public class ExpressionParsing extends Parsing {
         return element;
       }
 
+      if (firstExpressionMissing) {
+        // before comma must be an expression 
+        TreeUtil.insertBefore(element.getLastChildNode(), Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
+      }
+
       TreeElement arg = parseExpression(lexer);
       if (arg == null) {
-        if (lexer.getTokenType() != COMMA) {
+        if (lexer.getTokenType() == COMMA) {
+          firstExpressionMissing = true;
+        }
+        else {
           TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.rbrace")));
           element.putUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY, "");
           return element;
-        }
-        else {
-          TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.expression")));
         }
       }
       else {
