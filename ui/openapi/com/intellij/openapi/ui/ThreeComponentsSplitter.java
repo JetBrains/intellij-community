@@ -98,15 +98,15 @@ public class ThreeComponentsSplitter extends JPanel {
   }
 
   private boolean lastVisible() {
-    return myLastComponent != null && myLastComponent.isVisible();
+    return !Splitter.isNull(myLastComponent) && myLastComponent.isVisible();
   }
 
   private boolean innerVisible() {
-    return myInnerComponent != null && myInnerComponent.isVisible();
+    return !Splitter.isNull(myInnerComponent) && myInnerComponent.isVisible();
   }
 
   private boolean firstVisible() {
-    return myFirstComponent != null && myFirstComponent.isVisible();
+    return !Splitter.isNull(myFirstComponent) && myFirstComponent.isVisible();
   }
 
   private int visibleDividersCount() {
@@ -188,6 +188,9 @@ public class ThreeComponentsSplitter extends JPanel {
       if (!innerVisible()) {
         lastComponentSize += innerComponentSize;
         innerComponentSize = 0;
+        if (!lastVisible()) {
+          firstCompontSize = componentSize;
+        }
       }
     }
 
@@ -237,19 +240,25 @@ public class ThreeComponentsSplitter extends JPanel {
     myLastDivider.setBounds(lastDividerRect);
     myLastDivider.doLayout();
 
-    if (myFirstComponent != null) {
+    if (!Splitter.isNull(myFirstComponent)) {
       myFirstComponent.setBounds(firstRect);
       myFirstComponent.revalidate();
+    } else {
+      Splitter.hideNull(myFirstComponent);
     }
 
-    if (myInnerComponent != null) {
+    if (!Splitter.isNull(myInnerComponent)) {
       myInnerComponent.setBounds(innerRect);
       myInnerComponent.revalidate();
+    } else {
+      Splitter.hideNull(myInnerComponent);
     }
 
-    if (myLastComponent != null) {
+    if (!Splitter.isNull(myLastComponent)) {
       myLastComponent.setBounds(lastRect);
       myLastComponent.revalidate();
+    } else {
+      Splitter.hideNull(myLastComponent);
     }
   }
 
@@ -560,4 +569,5 @@ public class ThreeComponentsSplitter extends JPanel {
       }
     }
   }
+
 }

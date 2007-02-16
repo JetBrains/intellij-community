@@ -227,6 +227,10 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
 
   }
 
+  public void show(final Component owner) {
+    showInCenterOf(owner);
+  }
+
   public final void show(Component owner, int aScreenX, int aScreenY) {
     if (myContainer == null) {
       throw new IllegalStateException("Wizard dialog was already disposed. Recreate a new instance to show the wizard again");
@@ -507,4 +511,11 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     myParent.onChildSelectedFor(myParentValue);
   }
 
+  public void setLocation(final Point screenPoint) {
+    JBPopupImpl.moveTo(myContainer, screenPoint);
+  }
+
+  public void setSize(final Dimension size) {
+    JBPopupImpl.setSize(myContainer, size);
+  }
 }

@@ -57,6 +57,12 @@ public interface JBPopup extends Disposable {
    */
   void showInCenterOf(@NotNull Component focusOwner);
 
+
+  /**
+   * Shows in best position with a given owner
+   */
+  void show(Component owner);  
+
   /**
    * Shows the popup in the center of the active window in the IDEA frame for the specified project.
    *
@@ -90,4 +96,12 @@ public interface JBPopup extends Disposable {
    * @return the contents of the popup.
    */
   Component getContent();
+
+  /**
+   * Moves popup to the given point. Does nothhinbg if popup is invisible.
+   * @param screenPoint
+   */
+  void setLocation(final Point screenPoint);
+
+  void setSize(Dimension size);
 }

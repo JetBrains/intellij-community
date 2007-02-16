@@ -173,7 +173,7 @@ public class Splitter extends JPanel {
   public void doLayout() {
     final int width = getWidth();
     final int height = getHeight();
-    if (myFirstComponent != null && myFirstComponent.isVisible() && mySecondComponent != null && mySecondComponent.isVisible()) {
+    if (!isNull(myFirstComponent) && myFirstComponent.isVisible() && !isNull(mySecondComponent) && mySecondComponent.isVisible()) {
       // both first and second components are visible
       Rectangle firstRect = new Rectangle();
       Rectangle dividerRect = new Rectangle();
@@ -234,12 +234,14 @@ public class Splitter extends JPanel {
       myFirstComponent.validate();
       mySecondComponent.validate();
     }
-    else if (myFirstComponent != null && myFirstComponent.isVisible()) { // only first component is visible
+    else if (!isNull(myFirstComponent) && myFirstComponent.isVisible()) { // only first component is visible
+      hideNull(mySecondComponent);
       myDivider.setVisible(false);
       myFirstComponent.setBounds(0, 0, width, height);
       myFirstComponent.validate();
     }
-    else if (mySecondComponent != null && mySecondComponent.isVisible()) { // only second component is visible
+    else if (!isNull(mySecondComponent) && mySecondComponent.isVisible()) { // only second component is visible
+      hideNull(myFirstComponent);
       myDivider.setVisible(false);
       mySecondComponent.setBounds(0, 0, width, height);
       mySecondComponent.validate();
@@ -249,13 +251,31 @@ public class Splitter extends JPanel {
       if (myFirstComponent != null) {
         myFirstComponent.setBounds(0, 0, 0, 0);
         myFirstComponent.validate();
+      } else {
+        hideNull(myFirstComponent);
       }
       if (mySecondComponent != null) {
         mySecondComponent.setBounds(0, 0, 0, 0);
         mySecondComponent.validate();
+      } else {
+        hideNull(mySecondComponent);
       }
     }
     myDivider.doLayout();
+  }
+
+  static boolean isNull(Component component) {
+    if (component instanceof NullableComponent) {
+      return ((NullableComponent)component).isNull();
+    }
+    return component == null;
+  }
+
+  static void hideNull(Component component) {
+    if (component instanceof NullableComponent) {
+      component.setBounds(0, 0, 0, 0);
+      component.validate();
+    }
   }
 
   public int getDividerWidth() {

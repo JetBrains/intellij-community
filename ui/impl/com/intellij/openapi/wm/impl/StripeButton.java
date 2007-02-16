@@ -9,9 +9,9 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.MouseDragHelper;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -47,7 +47,6 @@ public final class StripeButton extends JToggleButton implements ActionListener 
   private JLabel myDragButtonImage;
   private Point myPressedPoint;
   private Stripe myLastStripe;
-  private static final int DRAG_START_DEADZONE = 7;
 
   StripeButton(final InternalDecorator decorator, ToolWindowsPane pane) {
     myDecorator = decorator;
@@ -155,7 +154,8 @@ public final class StripeButton extends JToggleButton implements ActionListener 
   }
 
   private boolean isWithinDeadZone(final MouseEvent e) {
-    return Math.abs(myPressedPoint.x - e.getPoint().x) < DRAG_START_DEADZONE && Math.abs(myPressedPoint.y - e.getPoint().y) < DRAG_START_DEADZONE;
+    return Math.abs(myPressedPoint.x - e.getPoint().x) < MouseDragHelper.DRAG_START_DEADZONE && Math.abs(myPressedPoint.y - e.getPoint().y) < MouseDragHelper
+      .DRAG_START_DEADZONE;
   }
 
   @Nullable

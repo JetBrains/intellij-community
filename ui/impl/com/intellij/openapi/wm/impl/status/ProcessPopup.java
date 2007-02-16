@@ -1,6 +1,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SeparatorComponent;
@@ -113,11 +114,7 @@ public class ProcessPopup  {
     builder.setCancelOnClickOutside(false);
     builder.setRequestFocus(true);
 
-    final IconButton hideButton = new IconButton("Hide", IconLoader.getIcon("/general/hideToolWindow.png"),
-                                                 IconLoader.getIcon("/general/hideToolWindow.png"),
-                                                 IconLoader.getIcon("/general/hideToolWindowInactive.png"));
-
-    builder.setCancelButton(hideButton);
+    builder.setCancelButton(new MinimizeButton("Hide"));
 
     myPopup = builder.createPopup();
     myPopup.showInCenterOf(myProgressPanel.getRootPane());

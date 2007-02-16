@@ -5,8 +5,8 @@
 package com.intellij.ui;
 
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.JBPopupImpl;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -25,7 +25,7 @@ public class MoveComponentListener extends MouseAdapter implements MouseMotionLi
   }
 
   private void endOperation() {
-    setCursor();
+    JBPopupImpl.setDefaultCursor(myComponent);
     myStartPoint = null;
   }
 
@@ -44,28 +44,21 @@ public class MoveComponentListener extends MouseAdapter implements MouseMotionLi
     endOperation();
   }
 
-  private void setCursor() {
-    final Window wnd = SwingUtilities.getWindowAncestor(myComponent);
-    if (wnd != null) {
-      wnd.setCursor(Cursor.getDefaultCursor());
-    }
-  }
-
   public void mouseMoved(MouseEvent e) {
     if (e.isConsumed()) return;
-    setCursor();
+    JBPopupImpl.setDefaultCursor(myComponent);
   }
 
   public void mouseDragged(MouseEvent e) {
     if (e.isConsumed()) return;
-    setCursor();
+    JBPopupImpl.setDefaultCursor(myComponent);
     if (myStartPoint != null) {
       final Point draggedTo = new RelativePoint(e).getScreenPoint();
       draggedTo.x -= myStartPoint.x;
       draggedTo.y -= myStartPoint.y;
 
-      final Window wnd = SwingUtilities.getWindowAncestor(myComponent);
-      wnd.setLocation(draggedTo);
+      JBPopupImpl.moveTo(myComponent, draggedTo);
+
       e.consume();
     }
   }
