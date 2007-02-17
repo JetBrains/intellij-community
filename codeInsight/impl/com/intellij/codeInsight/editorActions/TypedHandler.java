@@ -1043,41 +1043,18 @@ public class TypedHandler implements TypedActionHandler {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (!settings.AUTOINDENT_CLOSING_BRACE) return;
 
-    final int offset = editor.getCaretModel().getOffset() - 1;
-    final Document document = editor.getDocument();
-    CharSequence chars = document.getCharsSequence();
-    if (offset < 0 || chars.charAt(offset) != '}') return;
-    int spaceStart = CharArrayUtil.shiftBackward(chars, offset - 1, " \t");
-    if (spaceStart < 0 || chars.charAt(spaceStart) == '\n' || chars.charAt(spaceStart) == '\r'){
-      PsiDocumentManager.getInstance(project).commitDocument(document);
-
-      final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      if (file == null || !file.isWritable()) return;
-      PsiElement element = file.findElementAt(offset);
-      if (element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RBRACE){
-        final Runnable action = new Runnable() {
-          public void run(){
-            try{
-              int newOffset = CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
-              editor.getCaretModel().moveToOffset(newOffset + 1);
-              editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-              editor.getSelectionModel().removeSelection();
-            }
-            catch(IncorrectOperationException e){
-              LOG.error(e);
-            }
-          }
-        };
-        ApplicationManager.getApplication().runWriteAction(action);
-      }
-    }
+    indentBrace(project, editor, '}', JavaTokenType.RBRACE);
   }
 
   private static void indentOpenedBrace(final Project project, final Editor editor){
+    indentBrace(project, editor, '{', JavaTokenType.LBRACE);
+  }
+
+  private static void indentBrace(final Project project, final Editor editor, final char braceChar, final IElementType braceTokenType) {
     final int offset = editor.getCaretModel().getOffset() - 1;
     final Document document = editor.getDocument();
     CharSequence chars = document.getCharsSequence();
-    if (offset < 0 || chars.charAt(offset) != '{') return;
+    if (offset < 0 || chars.charAt(offset) != braceChar) return;
 
     int spaceStart = CharArrayUtil.shiftBackward(chars, offset - 1, " \t");
     if (spaceStart < 0 || chars.charAt(spaceStart) == '\n' || chars.charAt(spaceStart) == '\r'){
@@ -1086,7 +1063,7 @@ public class TypedHandler implements TypedActionHandler {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (file == null || !file.isWritable()) return;
       PsiElement element = file.findElementAt(offset);
-      if (element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.LBRACE){
+      if (element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == braceTokenType){
         final Runnable action = new Runnable() {
           public void run(){
             try{
