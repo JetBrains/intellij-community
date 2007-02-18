@@ -4,6 +4,7 @@
  */
 package com.intellij.execution.remote;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.ui.ConfigurationArgumentsHelpArea;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,11 +32,14 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   private JPanel myShmemPanel;
   private JPanel mySocketPanel;
   private ConfigurationArgumentsHelpArea myHelpArea;
+  @NonNls private ConfigurationArgumentsHelpArea myJDK13HelpArea;
   private String myHostName = "";
   @NonNls
   protected static final String LOCALHOST = "localhost";
 
   public RemoteConfigurable() {
+    myJDK13HelpArea.setLabelText(ExecutionBundle.message("environment.variables.helper.use.arguments.jdk13.label"));
+    
     final ButtonGroup transportGroup = new ButtonGroup();
     transportGroup.add(myRbSocket);
     transportGroup.add(myRbShmem);
@@ -159,7 +163,10 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
       useSockets ? myPortField.getText().trim() : myAddressField.getText().trim(),
       myRbListen.isSelected()
     );
-    myHelpArea.updateText(connection.getLaunchCommandLine());
+    final String cmdLine = connection.getLaunchCommandLine();
+    
+    myHelpArea.updateText(cmdLine);
+    myJDK13HelpArea.updateText("-Xnoagent -Djava.compiler=NONE " + cmdLine);
   }
 
 

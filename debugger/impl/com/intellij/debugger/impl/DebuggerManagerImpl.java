@@ -364,14 +364,16 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   }
 
   private static boolean shouldForceNoJIT(ProjectJdk jdk) {
-    if (jdk == null) {
+    if (DebuggerSettings.getInstance().DISABLE_JIT) {
       return true;
     }
-    final String version = PathUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
-    if (version == null) {
-      return true;
+    if (jdk != null) {
+      final String version = PathUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
+      if (version != null && (version.startsWith("1.2") || version.startsWith("1.3"))) {
+        return true;
+      }
     }
-    return version.startsWith("1.2") || version.startsWith("1.3");
+    return false;
   }
 
   public static RemoteConnection createDebugParameters(final JavaParameters parameters, GenericDebuggerRunnerSettings settings, boolean checkValidity)

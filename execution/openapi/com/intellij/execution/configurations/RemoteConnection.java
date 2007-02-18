@@ -73,12 +73,12 @@ public class RemoteConnection {
     @NonNls String result;
     if (shmem) {
       if (serverMode) {
-        result = "-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_shmem,server=n,address=" +
+        result = "-Xdebug -Xrunjdwp:transport=dt_shmem,server=n,address=" +
                  ((address.length() > 0)? address : "...") +
                  ONTHROW + ",suspend=y" + ONUNCAUGHT;
       }
       else {
-        result = "-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_shmem,server=y,suspend=n,address=" +
+        result = "-Xdebug -Xrunjdwp:transport=dt_shmem,server=y,suspend=n,address=" +
                  ((address.length() > 0)? address : "...");
       }
     }
@@ -90,12 +90,12 @@ public class RemoteConnection {
       catch (NumberFormatException e) {
       }
       if (serverMode) {
-        result = "-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=n,address=" +
+        result = "-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=" +
                  ((p == -1)? "..." : Integer.toString(p)) +
                  ONTHROW + ",suspend=y" + ONUNCAUGHT;
       }
       else {
-        result = "-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=" +
+        result = "-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=" +
                  ((p == -1)? "..." : Integer.toString(p));
       }
     }

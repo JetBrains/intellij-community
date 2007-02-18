@@ -34,6 +34,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public int VALUE_LOOKUP_DELAY; // ms
   public int DEBUGGER_TRANSPORT;
   public boolean FORCE_CLASSIC_VM;
+  public boolean DISABLE_JIT;
   public boolean HIDE_DEBUGGER_ON_PROCESS_TERMINATION;
   public boolean HOTSWAP_IN_BACKGROUND = true;
   public boolean SKIP_SYNTHETIC_METHODS;
@@ -127,6 +128,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
       VALUE_LOOKUP_DELAY == secondSettings.VALUE_LOOKUP_DELAY &&
       DEBUGGER_TRANSPORT == secondSettings.DEBUGGER_TRANSPORT &&
       FORCE_CLASSIC_VM == secondSettings.FORCE_CLASSIC_VM &&
+      DISABLE_JIT == secondSettings.DISABLE_JIT &&
       HIDE_DEBUGGER_ON_PROCESS_TERMINATION == secondSettings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION &&
       HOTSWAP_IN_BACKGROUND == secondSettings.HOTSWAP_IN_BACKGROUND &&
       SKIP_SYNTHETIC_METHODS == secondSettings.SKIP_SYNTHETIC_METHODS &&

@@ -28,6 +28,7 @@ public class DebuggerGeneralConfigurable implements Configurable{
   private JRadioButton myRbNever;
   private JRadioButton myRbAsk;
   private StateRestoringCheckBox myCbForceClassicVM;
+  private JCheckBox myCbDisableJIT;
   private ClassFilterEditor mySteppingFilterEditor;
   private JTextField myValueTooltipDelayField;
   private JCheckBox myCbSkipSimpleGetters;
@@ -64,6 +65,7 @@ public class DebuggerGeneralConfigurable implements Configurable{
     myHotswapInBackground.setSelected(settings.HOTSWAP_IN_BACKGROUND);
     myCbCompileBeforeHotswap.setSelected(settings.COMPILE_BEFORE_HOTSWAP);
     myCbForceClassicVM.setSelected(settings.FORCE_CLASSIC_VM);
+    myCbDisableJIT.setSelected(settings.DISABLE_JIT);
 
     myCbStepInfoFiltersEnabled.setSelected(settings.TRACING_FILTERS_ENABLED);
 
@@ -106,6 +108,7 @@ public class DebuggerGeneralConfigurable implements Configurable{
     settings.HOTSWAP_IN_BACKGROUND = myHotswapInBackground.isSelected();
     settings.COMPILE_BEFORE_HOTSWAP = myCbCompileBeforeHotswap.isSelected();
     settings.FORCE_CLASSIC_VM = myCbForceClassicVM.isSelectedWhenSelectable();
+    settings.DISABLE_JIT = myCbDisableJIT.isSelected();
     settings.TRACING_FILTERS_ENABLED = myCbStepInfoFiltersEnabled.isSelected();
 
     mySteppingFilterEditor.stopEditing();
@@ -212,6 +215,9 @@ public class DebuggerGeneralConfigurable implements Configurable{
 
     myCbForceClassicVM = new StateRestoringCheckBox(DebuggerBundle.message("label.debugger.general.configurable.force.classic.vm"));
     panel.add(myCbForceClassicVM, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+
+    myCbDisableJIT = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.disable.jit"));
+    panel.add(myCbDisableJIT, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
     panel.add(new JLabel(DebuggerBundle.message("label.debugger.general.configurable.debugger.transport")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     myRbSocket = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.socket"));
