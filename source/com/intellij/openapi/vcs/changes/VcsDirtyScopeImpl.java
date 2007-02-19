@@ -141,6 +141,9 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
         synchronized (VcsDirtyScopeImpl.this) {
           if (myProject.isDisposed()) return Boolean.FALSE;
           boolean isAffectedContentRoot = false;
+          if (myVcsManager.getVcsFor(path) != myVcs) {
+            return Boolean.FALSE;
+          }
           final VirtualFile vcsRoot = myVcsManager.getVcsRootFor(path);
           if (vcsRoot != null) {
             for(VirtualFile contentRoot: myAffectedContentRoots) {
