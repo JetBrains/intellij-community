@@ -38,7 +38,7 @@ public class ParsingTest extends TestCase{
   public void testParseClassGenericSignature2() {
     try {
       final BoundsParser parser = new BoundsParser();
-      parser.parseClassSignature(new StringCharacterIterator("Lcom/intellij/util/containers/Queue<TT;>.QueueState;"), new StringBuffer());
+      parser.parseClassSignature(new StringCharacterIterator("Lcom/intellij/util/containers/Queue<TT;>.QueueState;"), new StringBuilder());
       assertTrue(true);
     }
     catch (SignatureParsingException e) {
@@ -50,7 +50,7 @@ public class ParsingTest extends TestCase{
   public void testParseClassGenericSignature3() {
     try {
       final BoundsParser parser = new BoundsParser();
-      parser.parseClassSignature(new StringCharacterIterator("Lcom/intellij/util/xml/ui/DomCollectionControl<Lcom/intellij/javaee/model/xml/SecurityRole;>.ControlAddAction;"), new StringBuffer());
+      parser.parseClassSignature(new StringCharacterIterator("Lcom/intellij/util/xml/ui/DomCollectionControl<Lcom/intellij/javaee/model/xml/SecurityRole;>.ControlAddAction;"), new StringBuilder());
       assertTrue(true);
     }
     catch (SignatureParsingException e) {
@@ -62,7 +62,7 @@ public class ParsingTest extends TestCase{
   public void testParseClassGenericSignature4() {
     try {
       final BoundsParser parser = new BoundsParser();
-      parser.parseClassSignature(new StringCharacterIterator("Ljava/lang/Object;Lcom/intellij/util/SpinAllocator<Lcom/intellij/util/io/RandomAccessPagedDataInput;>.IDisposer<Lcom/intellij/util/io/RandomAccessPagedDataInput;>;"), new StringBuffer());
+      parser.parseClassSignature(new StringCharacterIterator("Ljava/lang/Object;Lcom/intellij/util/SpinAllocator<Lcom/intellij/util/io/RandomAccessPagedDataInput;>.IDisposer<Lcom/intellij/util/io/RandomAccessPagedDataInput;>;"), new StringBuilder());
       assertTrue(true);
     }
     catch (SignatureParsingException e) {
