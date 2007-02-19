@@ -20,6 +20,8 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.rules.MergeableUsage;
+import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -34,7 +36,7 @@ class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
   private final static NodeComparator COMPARATOR = new NodeComparator();
   private final UsageGroup myGroup;
   private final int myRuleIndex;
-  private final Map<UsageGroup, GroupNode> mySubgroupNodes = new HashMap<UsageGroup, GroupNode>();
+  private final Map<UsageGroup, GroupNode> mySubgroupNodes = new THashMap<UsageGroup, GroupNode>();
   private final List<UsageNode> myUsageNodes = new ArrayList<UsageNode>();
   private volatile int myRecursiveUsageCount = 0;
 
@@ -55,19 +57,17 @@ class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
     return children == null ? result : result + children.toString();
   }
 
-  public GroupNode addGroup(UsageGroup group, int ruleIndex) {
+  public GroupNode addGroup(@NotNull UsageGroup group, int ruleIndex) {
     GroupNode node = mySubgroupNodes.get(group);
     if (node == null) {
-      node = new GroupNode(group, ruleIndex, myTreeModel);
+      final GroupNode node1 = node = new GroupNode(group, ruleIndex, myTreeModel);
       mySubgroupNodes.put(group, node);
-      final GroupNode node1 = node;
+
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           myTreeModel.insertNodeInto(node1, GroupNode.this, getNodeInsertionIndex(node1));
         }
       });
-      //UIUtil.pump();
-
     }
     return node;
   }
@@ -135,7 +135,6 @@ class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
         incrementUsageCount();
       }
     });
-    //UIUtil.pump();
     return node;
   }
 

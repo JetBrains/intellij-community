@@ -25,11 +25,11 @@ import javax.swing.*;
 
 public class UsageViewTreeModelBuilder extends DefaultTreeModel {
   private final RootGroupNode myRootNode;
-  private DefaultMutableTreeNode myTargetsNode;
+  private final DefaultMutableTreeNode myTargetsNode;
 
-  private UsageTarget[] myTargets;
+  private final UsageTarget[] myTargets;
   private UsageTargetNode[] myTargetNodes;
-  private String myTargetsNodeText;
+  private final String myTargetsNodeText;
 
   public UsageViewTreeModelBuilder(UsageViewPresentation presentation, UsageTarget[] targets) {
     //noinspection HardCodedStringLiteral
@@ -41,8 +41,10 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
     myTargetsNodeText = presentation.getTargetsNodeText();
     if (myTargetsNodeText != null) {
       myTargetsNode = new DefaultMutableTreeNode(myTargetsNodeText);
-
       addTargetNodes();
+    }
+    else {
+      myTargetsNode = null;
     }
   }
 
@@ -104,6 +106,10 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
           myTreeModel.insertNodeInto(node, RootGroupNode.this, getNodeInsertionIndex(node));
         }
       });
+    }
+
+    public String toString() {
+      return "Root "+super.toString();
     }
   }
 }

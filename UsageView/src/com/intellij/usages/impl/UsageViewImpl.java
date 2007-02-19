@@ -19,7 +19,6 @@ import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -60,6 +59,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -141,40 +141,45 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     myUsageSearcherFactory = usageSearcherFactory;
     myProject = project;
     myRootPanel = new MyPanel(myTree);
-
-    UsageViewTreeModelBuilder model = new UsageViewTreeModelBuilder(myPresentation, targets);
-    myBuilder = new UsageNodeTreeBuilder(getActiveGroupingRules(project), getActiveFilteringRules(project), (GroupNode)model.getRoot());
-    myTree.setModel(model);
-
-    myRootPanel.setLayout(new BorderLayout());
-
-    JPanel centralPanel = new JPanel();
-    centralPanel.setLayout(new BorderLayout());
-    myRootPanel.add(centralPanel, BorderLayout.CENTER);
-
-    JPanel toolbarPanel = new JPanel(new BorderLayout());
-    toolbarPanel.add(createToolbar(), BorderLayout.WEST);
-    toolbarPanel.add(createFiltersToolbar(), BorderLayout.CENTER);
-    myRootPanel.add(toolbarPanel, BorderLayout.WEST);
-
-    centralPanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
-    centralPanel.add(myButtonPanel, BorderLayout.SOUTH);
-
-    initTree();
-
-    myTree.setCellRenderer(new UsageViewTreeCellRenderer(this));
-    collapseAll();
-
     myModelTracker = new UsageModelTracker(project);
-    myModelTracker.addListener(this);
 
-    if (myPresentation.isShowCancelButton()) {
-      addButtonToLowerPane(new Runnable() {
-        public void run() {
-          close();
+    final UsageViewTreeModelBuilder model = new UsageViewTreeModelBuilder(myPresentation, targets);
+    myBuilder = new UsageNodeTreeBuilder(getActiveGroupingRules(project), getActiveFilteringRules(project), (GroupNode)model.getRoot());
+
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        myTree.setModel(model);
+
+        myRootPanel.setLayout(new BorderLayout());
+
+        JPanel centralPanel = new JPanel();
+        centralPanel.setLayout(new BorderLayout());
+        myRootPanel.add(centralPanel, BorderLayout.CENTER);
+
+        JPanel toolbarPanel = new JPanel(new BorderLayout());
+        toolbarPanel.add(createToolbar(), BorderLayout.WEST);
+        toolbarPanel.add(createFiltersToolbar(), BorderLayout.CENTER);
+        myRootPanel.add(toolbarPanel, BorderLayout.WEST);
+
+        centralPanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
+        centralPanel.add(myButtonPanel, BorderLayout.SOUTH);
+
+        initTree();
+
+        myTree.setCellRenderer(new UsageViewTreeCellRenderer(UsageViewImpl.this));
+        collapseAll();
+
+        myModelTracker.addListener(UsageViewImpl.this);
+
+        if (myPresentation.isShowCancelButton()) {
+          addButtonToLowerPane(new Runnable() {
+            public void run() {
+              close();
+            }
+          }, UsageViewBundle.message("usage.view.cancel.button"));
         }
-      }, UsageViewBundle.message("usage.view.cancel.button"));
-    }
+      }
+    });
   }
 
   private static UsageFilteringRule[] getActiveFilteringRules(final Project project) {
@@ -208,29 +213,27 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     SmartExpander.installOn(myTree);
     TreeUtil.installActions(myTree);
     EditSourceOnDoubleClickHandler.install(myTree);
-    myTree.addKeyListener(
-        new KeyAdapter() {
-        public void keyPressed(KeyEvent e) {
-          if (KeyEvent.VK_ENTER == e.getKeyCode()) {
-            TreePath leadSelectionPath = myTree.getLeadSelectionPath();
-            if (leadSelectionPath == null) return;
+    myTree.addKeyListener(new KeyAdapter() {
+      public void keyPressed(KeyEvent e) {
+        if (KeyEvent.VK_ENTER == e.getKeyCode()) {
+          TreePath leadSelectionPath = myTree.getLeadSelectionPath();
+          if (leadSelectionPath == null) return;
 
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode)leadSelectionPath.getLastPathComponent();
-            if (node instanceof UsageNode) {
-              final Usage usage = ((UsageNode)node).getUsage();
-              usage.navigate(false);
-              usage.highlightInEditor();
-            }
-            else if (node.isLeaf()) {
-              Navigatable navigatable = getNavigatableForNode(node);
-              if (navigatable != null && navigatable.canNavigate()) {
-                navigatable.navigate(false);
-              }
+          DefaultMutableTreeNode node = (DefaultMutableTreeNode)leadSelectionPath.getLastPathComponent();
+          if (node instanceof UsageNode) {
+            final Usage usage = ((UsageNode)node).getUsage();
+            usage.navigate(false);
+            usage.highlightInEditor();
+          }
+          else if (node.isLeaf()) {
+            Navigatable navigatable = getNavigatableForNode(node);
+            if (navigatable != null && navigatable.canNavigate()) {
+              navigatable.navigate(false);
             }
           }
         }
       }
-    );
+    });
 
     PopupHandler.installPopupHandler(myTree, IdeActions.GROUP_USAGE_VIEW_POPUP, ActionPlaces.USAGE_VIEW_POPUP);
     //TODO: install speed search. Not in openapi though. It makes sense to create a common TreeEnchancer service.
@@ -511,29 +514,28 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     myUsageNodes.clear();
     myIsFirstVisibleUsageFound = false;
     ((UsageViewTreeModelBuilder)myTree.getModel()).reset();
-    TreeUtil.expand(myTree, 2);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        TreeUtil.expand(myTree, 2);
+      }
+    });
+
     myUsages.clear();
   }
 
   public void appendUsageLater(final Usage usage) {
-    myUsages.add(usage);
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-
-    myFlushAlarm.cancelAllRequests();
-    myFlushAlarm.addRequest(
-      new Runnable() {
-        public void run() {
-          flush();
-        }
-      },
-      300);
-
-
     myUsagesToFlush.offer(usage);
     if (myUsagesToFlush.size() > 50) {
       flush();
     }
+    myFlushAlarm.cancelAllRequests();
+    myFlushAlarm.addRequest(new Runnable() {
+      public void run() {
+        flush();
+      }
+    }, 300);
   }
+  
 
   private void flush() {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -546,7 +548,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     });
   }
 
-  private boolean myIsFirstVisibleUsageFound = false;
+  private volatile boolean myIsFirstVisibleUsageFound = false;
 
   public void appendUsage(Usage usage) {
     // invoke in ReadAction to be be sure that usages are not invalidated while the tree is being built
@@ -559,8 +561,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     final UsageNode node = myBuilder.appendUsage(usage);
     myUsageNodes.put(usage, node == null ? NULL_NODE : node);
     if (!myIsFirstVisibleUsageFound && node != null) { //first visible usage found;
-      showNode(node);
       myIsFirstVisibleUsageFound = true;
+      showNode(node);
     }
   }
 
@@ -686,14 +688,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private void showNode(final UsageNode node) {
-    Runnable runnable = new Runnable() {
+    SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         TreePath usagePath = new TreePath(node.getPath());
         myTree.expandPath(usagePath.getParentPath());
         myTree.setSelectionPath(usagePath);
       }
-    };
-    SwingUtilities.invokeLater(runnable);
+    });
   }
 
   public void addButtonToLowerPane(Runnable runnable, String text) {

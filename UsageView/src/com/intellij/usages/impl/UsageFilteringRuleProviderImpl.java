@@ -64,7 +64,6 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
   public AnAction[] createFilteringActions(UsageView view) {
     final UsageViewImpl impl = (UsageViewImpl)view;
     myReadWriteState = new ReadWriteState();
-    impl.rulesChanged();
     if(view.getPresentation().isCodeUsages()) {
       final JComponent component = view.getComponent();
 
