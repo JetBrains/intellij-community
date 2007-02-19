@@ -60,7 +60,7 @@ public class MoveFilesOrDirectoriesUtil {
     }
 
     final PsiDirectory targetDirectory = resolveToDirectory(project, initialTargetElement);
-    if ( targetDirectory == null ) return;
+    if ( initialTargetElement != null && targetDirectory == null ) return;
     
     final PsiDirectory initialTargetDirectory = getInitialTargetDirectory(targetDirectory, elements);
 
