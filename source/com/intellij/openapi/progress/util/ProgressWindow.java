@@ -339,6 +339,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
       myProgressBar.setMaximum(100);
       createCenterPanel();
 
+      myTitlePanel.setActive(true);
       myTitlePanel.addMouseListener(new MouseAdapter() {
         public void mousePressed(MouseEvent e) {
           final Point titleOffset = RelativePoint.getNorthWestOf(myTitlePanel).getScreenPoint();
