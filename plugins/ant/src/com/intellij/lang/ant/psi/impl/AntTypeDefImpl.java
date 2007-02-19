@@ -10,8 +10,8 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -20,6 +20,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ObjectCache;
+import com.intellij.util.lang.UrlClassLoader;
 import org.apache.tools.ant.Task;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,6 @@ import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -427,7 +427,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     if (file != null) {
       loader = file.getClassLoader().getClassloader();
       if (urls.length > 0) {
-        loader = new URLClassLoader(urls, loader);
+        loader = new UrlClassLoader(urls, loader);
       }
     }
     return loader;
