@@ -17,10 +17,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlChildRole;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.*;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
@@ -118,9 +115,14 @@ public class DomElementsHighlightingUtil {
     final PsiElement psiElement = getPsiElement(domElement);
     final DomElementProblemDescriptor.HighlightingType highlightingType = problemDescriptor.getHighlightingType();
 
-    if (highlightingType == DomElementProblemDescriptor.HighlightingType.ALL_TAG) {
-      final XmlTag tag = (XmlTag)(psiElement instanceof XmlTag ? psiElement : psiElement.getParent());
-      descriptors.add(creator.fun(Pair.create(new TextRange(0, tag.getTextLength()), (PsiElement)tag)));
+    if (highlightingType == DomElementProblemDescriptor.HighlightingType.WHOLE_ELEMENT) {
+      if (psiElement instanceof XmlAttributeValue) {
+        final PsiElement attr = psiElement.getParent();
+        descriptors.add(creator.fun(Pair.create(new TextRange(0, attr.getTextLength()), attr)));
+      } else {
+        final XmlTag tag = (XmlTag)(psiElement instanceof XmlTag ? psiElement : psiElement.getParent());
+        descriptors.add(creator.fun(Pair.create(new TextRange(0, tag.getTextLength()), (PsiElement)tag)));
+      }
       return descriptors;
     }
     
@@ -128,7 +130,7 @@ public class DomElementsHighlightingUtil {
       if (psiElement instanceof XmlTag) {
         final XmlTag tag = (XmlTag)psiElement;
         switch (highlightingType) {
-          case ALL_TAG:
+          case WHOLE_ELEMENT:
             descriptors.add(creator.fun(Pair.create(new TextRange(0, tag.getTextLength()), (PsiElement)tag)));
             break;
           case START_TAG_NAME:

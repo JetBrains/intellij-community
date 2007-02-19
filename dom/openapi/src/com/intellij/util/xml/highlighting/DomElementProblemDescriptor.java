@@ -28,7 +28,8 @@ import java.util.List;
 
 public interface DomElementProblemDescriptor extends CommonProblemDescriptor {
 
-  enum HighlightingType { START_TAG_NAME, ALL_TAG }
+  enum HighlightingType { START_TAG_NAME, WHOLE_ELEMENT
+  }
 
   @NotNull
   DomElement getDomElement();
