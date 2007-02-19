@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileEditor;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladimir Kondratyev
  */
 public interface FileEditorProvider {
+  ExtensionPointName<FileEditorProvider> EP_FILE_EDITOR_PROVIDER = new ExtensionPointName<FileEditorProvider>("com.intellij.fileEditorProvider");
+
   /**
    * @param file file to be tested for acceptance. This
    * parameter is never <code>null</code>.

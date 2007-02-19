@@ -1,5 +1,8 @@
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider;
@@ -8,6 +11,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,13 +27,19 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   private final ArrayList<FileEditorProvider> myProviders;
   private final ArrayList<FileEditorProvider> mySharedProviderList;
 
-  public FileEditorProviderManagerImpl(FileEditorProvider[] providers) {
+  public FileEditorProviderManagerImpl() {
     myProviders = new ArrayList<FileEditorProvider>();
     mySharedProviderList = new ArrayList<FileEditorProvider>();
 
-    for (FileEditorProvider provider : providers) {
-      registerProvider(provider);
-    }
+    Extensions.getRootArea().getExtensionPoint(FileEditorProvider.EP_FILE_EDITOR_PROVIDER).addExtensionPointListener(new ExtensionPointListener<FileEditorProvider>() {
+      public void extensionAdded(final FileEditorProvider extension, @Nullable final PluginDescriptor pluginDescriptor) {
+        registerProvider(extension);
+      }
+
+      public void extensionRemoved(final FileEditorProvider extension, @Nullable final PluginDescriptor pluginDescriptor) {
+        unregisterProvider(extension);
+      }
+    });
   }
 
   @NotNull
@@ -65,6 +75,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     }
   }
 
+  @Nullable
   public synchronized FileEditorProvider getProvider(@NotNull String editorTypeId){
     for(int i=myProviders.size()-1;i>=0;i--){
       FileEditorProvider provider=myProviders.get(i);
@@ -86,6 +97,11 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
       }
     }
     myProviders.add(provider);
+  }
+
+  private void unregisterProvider(FileEditorProvider provider) {
+    final boolean b = myProviders.remove(provider);
+    assert b;
   }
 
   private static final class MyComparator implements Comparator<FileEditorProvider>{

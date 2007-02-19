@@ -5,6 +5,7 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -28,5 +29,6 @@ public abstract class FileEditorProviderManager{
   /**
    * @return may be null
    */
+  @Nullable
   public abstract FileEditorProvider getProvider(@NotNull String editorTypeId);
 }
