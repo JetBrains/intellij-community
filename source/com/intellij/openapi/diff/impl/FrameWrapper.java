@@ -160,6 +160,7 @@ public class FrameWrapper {
         ProjectManager.getInstance().removeProjectManagerListener(myProject, myProjectListener);
         myProject = null;
       }
+      myPreferedFocus = null;
       super.dispose();
     }
 
