@@ -46,6 +46,7 @@ public class SvnFileRevision implements VcsFileRevision {
   private String myURL;
   private SVNRevision myPegRevision;
   private SVNRevision myRevision;
+  private String myCopyFromPath;
 
   public SvnFileRevision(SvnVcs vcs,
                          SVNRevision pegRevision,
@@ -53,13 +54,15 @@ public class SvnFileRevision implements VcsFileRevision {
                          String url,
                          String author,
                          Date date,
-                         String commitMessage) {
+                         String commitMessage,
+                         String copyFromPath) {
     myRevisionNumber = new SvnRevisionNumber(revision);
     myPegRevision = pegRevision;
     myRevision = revision;
     myAuthor = author;
     myDate = date;
     myCommitMessage = commitMessage;
+    myCopyFromPath = copyFromPath;
     myVCS = vcs;
     myURL = url;
   }
@@ -128,6 +131,10 @@ public class SvnFileRevision implements VcsFileRevision {
 
   public byte[] getContent() throws IOException {
     return myContent;
+  }
+
+  public String getCopyFromPath() {
+    return myCopyFromPath;
   }
 
   private class ConentLoader implements Runnable {

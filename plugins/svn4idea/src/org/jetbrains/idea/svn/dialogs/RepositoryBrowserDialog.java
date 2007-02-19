@@ -615,7 +615,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       Project p = (Project) e.getDataContext().getData(DataConstants.PROJECT);
       SVNRevision rev = SVNRevision.create(entry.getRevision());
       final SvnFileRevision revision = new SvnFileRevision(myVCS, SVNRevision.UNDEFINED, rev, url.toString(),
-              entry.getAuthor(), entry.getDate(), null);
+              entry.getAuthor(), entry.getDate(), null, null);
       VirtualFile vcsVF = new VcsVirtualFile(node.getSVNDirEntry().getName(), revision, VcsFileSystem.getInstance());
       FileEditorManager.getInstance(p).openFile(vcsVF, true);
     }

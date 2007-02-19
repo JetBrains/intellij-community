@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.*;
@@ -29,6 +30,7 @@ import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ShowAllSubmittedFilesAction;
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -62,7 +64,13 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
   }
 
   public ColumnInfo[] getRevisionColumns() {
-    return new ColumnInfo[0];
+    return new ColumnInfo[] {
+      new ColumnInfo<SvnFileRevision, String>("Copy From") {
+        public String valueOf(final SvnFileRevision o) {
+          return o.getCopyFromPath();
+        }
+      }
+    };
   }
 
   public VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
@@ -124,12 +132,18 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
         return;
     }
     final String url = info.getURL() == null ? null : info.getURL().toString();
+    String relativeUrl = url;
+    final String root = info.getRepositoryRootURL().toString();
+    if (url != null && url.startsWith(root)) {
+      relativeUrl = url.substring(root.length());
+    }
+    final Ref<String> lastPath = new Ref<String>(relativeUrl);
     if (indicator != null) {
       indicator.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", url));
     }
     final SVNRevision pegRevision = info.getRevision();
     SVNLogClient client = myVcs.createLogClient();
-    client.doLog(new File[]{new File(file.getIOFile().getAbsolutePath())}, SVNRevision.HEAD, SVNRevision.create(1), false, false, 0,
+    client.doLog(new File[]{new File(file.getIOFile().getAbsolutePath())}, SVNRevision.HEAD, SVNRevision.create(1), false, true, 0,
                  new ISVNLogEntryHandler() {
                    public void handleLogEntry(SVNLogEntry logEntry) {
                      if (indicator != null) {
@@ -139,7 +153,27 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
                      String author = logEntry.getAuthor();
                      String message = logEntry.getMessage();
                      SVNRevision rev = SVNRevision.create(logEntry.getRevision());
-                     result.add(new SvnFileRevision(myVcs, pegRevision, rev, url, author, date, message));
+                     String copyPath = null;
+                     SVNLogEntryPath entryPath = (SVNLogEntryPath)logEntry.getChangedPaths().get(lastPath.get());
+                     if (entryPath != null) {
+                       copyPath = entryPath.getCopyPath();
+                     }
+                     else {
+                       String path = SVNPathUtil.removeTail(lastPath.get());
+                       while(path.length() > 0) {
+                         entryPath = (SVNLogEntryPath) logEntry.getChangedPaths().get(path);
+                         if (entryPath != null) {
+                           String relativePath = lastPath.get().substring(entryPath.getPath().length());
+                           copyPath = entryPath.getCopyPath() + relativePath;
+                           break;
+                         }
+                         path = SVNPathUtil.removeTail(path);
+                       }
+                     }
+                     if (copyPath != null) {
+                       lastPath.set(copyPath);
+                     }
+                     result.add(new SvnFileRevision(myVcs, pegRevision, rev, url, author, date, message, copyPath));
                    }
                  });
   }
@@ -149,7 +183,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
       indicator.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myURL.toString()));
     }
     SVNLogClient client = myVcs.createLogClient();
-    client.doLog(myURL, new String[] {}, SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNRevision.create(1), false, false, 0,
+    client.doLog(myURL, new String[] {}, SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNRevision.create(1), false, true, 0,
                  new ISVNLogEntryHandler() {
                    public void handleLogEntry(SVNLogEntry logEntry) {
                      if (indicator != null) {

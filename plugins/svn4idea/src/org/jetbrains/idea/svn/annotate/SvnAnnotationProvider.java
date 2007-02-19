@@ -41,7 +41,7 @@ public class SvnAnnotationProvider implements AnnotationProvider {
   }
 
   public FileAnnotation annotate(final VirtualFile file) throws VcsException {
-    return annotate(file, new SvnFileRevision(myVcs, SVNRevision.HEAD, SVNRevision.HEAD, null, null, null, null));
+    return annotate(file, new SvnFileRevision(myVcs, SVNRevision.HEAD, SVNRevision.HEAD, null, null, null, null, null));
   }
 
   public FileAnnotation annotate(final VirtualFile file, final VcsFileRevision revision) throws VcsException {
