@@ -673,23 +673,19 @@
         <action id="PrevSplitter" class="com.intellij.ide.actions.PrevSplitAction"/>
       </group>
 
-      <!--
-      <group id="FeedbackMenu" popup="true">
-        <action id="SendFeedback" class="com.intellij.ide.actions.SendFeedbackAction"/>
-      </group>
-      -->
-
       <!-- Help -->
       <group id="HelpMenu" popup="true">
         <action id="HelpTopics" class="com.intellij.ide.actions.HelpTopicsAction" icon="/actions/menu-help.png"/>
         <action id="ShowTips" class="com.intellij.ide.actions.ShowTipsAction"/>
         <action id="ProductivityGude" class="com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsAction"/>
+        <separator/>
         <action id="TechnicalSupport" class="com.intellij.ide.actions.TechnicalSupportAction"/>
+        <action id="SendFeedback" class="com.intellij.ide.actions.SendFeedbackAction"/>
+        <separator/>
         <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction"/>
         <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction"/>
         <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction"
-                icon="/general/defaultKeymap.png"
-          />
+                icon="/general/defaultKeymap.png"/>
         <separator/>
         <action id="Register" class="com.intellij.ide.actions.RegisterAction"/>
         <action id="CheckForUpdate" class="com.intellij.ide.actions.CheckForUpdateAction"/>
