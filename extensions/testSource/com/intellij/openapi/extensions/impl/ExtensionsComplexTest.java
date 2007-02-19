@@ -153,34 +153,6 @@ public class ExtensionsComplexTest extends TestCase {
     assertSame(dependentObjectOne, dependentObjectTwo.getOne());
   }
 
-  public void testInitFailureUnload() throws Throwable {
-    initExtensionPoints(PLUGIN_NAME, EXTENSION_POINTS_ROOT, null);
-    initExtensions(EXTENSIONS_ROOT, null);
-    try {
-      initExtensions(EXTENSIONS_ROOT_FAILING, null);
-      fail("Should have failed");
-    }
-    catch (ExceptionInInitializerError e) {
-    }
-    try {
-      Extensions.getRootArea().unregisterExtensionPoint(TEST_EP_NAME);
-      Extensions.getRootArea().unregisterExtensionPoint(TEST_DEPENDENT1_NAME);
-      assertFalse(Extensions.getRootArea().hasExtensionPoint(TEST_DEPENDENT1_NAME));
-      assertFalse(Extensions.getRootArea().hasExtensionPoint(TEST_EP_NAME));
-    }
-    catch (Throwable e) {
-      e.printStackTrace();
-      throw e;
-    }
-    initExtensionPoints(PLUGIN_NAME, EXTENSION_POINTS_ROOT, null);
-    initExtensions(EXTENSIONS_ROOT, null);
-    assertEquals(1, Extensions.getRootArea().getExtensionPoint(TEST_DEPENDENT1_NAME).getExtensions().length);
-    assertEquals(1, Extensions.getRootArea().getExtensionPoint(TEST_EP_NAME).getExtensions().length);
-    DependentObjectOne dependentObjectOne = (DependentObjectOne)Extensions.getRootArea().getExtensionPoint(TEST_DEPENDENT1_NAME).getExtension();
-    assertEquals(1, dependentObjectOne.getTestBeans().length);
-    assertSame(Extensions.getRootArea().getExtensionPoint(TEST_EP_NAME).getExtension(), dependentObjectOne.getTestBeans()[0]);
-  }
-
   public void _testPluginInitInAreas() throws Exception {
     initExtensionPoints(PLUGIN_NAME,
                         "<extensionPoints>\n" +

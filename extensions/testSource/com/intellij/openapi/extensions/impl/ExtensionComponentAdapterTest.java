@@ -30,14 +30,14 @@ public class ExtensionComponentAdapterTest extends MockObjectTestCase {
   public void testUnknownAttributes() {
     final DefaultPicoContainer container = new DefaultPicoContainer();
     final ExtensionComponentAdapter extensionComponentAdapter =
-          new ExtensionComponentAdapter(TestExtensionClassOne.class, readElement("<bean implementation=\"123\"/>"), container, new DefaultPluginDescriptor("test"));
+          new ExtensionComponentAdapter(TestExtensionClassOne.class.getName(), readElement("<bean implementation=\"123\"/>"), container, new DefaultPluginDescriptor("test"));
     extensionComponentAdapter.getComponentInstance(container);
   }
 
   private ExtensionComponentAdapter createAdapter(String text) {
     Element extensionElement = readElement(text);
 
-    ExtensionComponentAdapter adapter = new ExtensionComponentAdapter(Object.class, extensionElement, new DefaultPicoContainer(), new DefaultPluginDescriptor(""));
+    ExtensionComponentAdapter adapter = new ExtensionComponentAdapter(Object.class.getName(), extensionElement, new DefaultPicoContainer(), new DefaultPluginDescriptor(""));
     return adapter;
   }
 

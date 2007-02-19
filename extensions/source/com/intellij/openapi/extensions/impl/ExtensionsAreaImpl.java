@@ -125,25 +125,11 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
       }
     }
     if (implClass != null) {
-      try {
-        Class implementationClass;
-        if (pluginDescriptor.getPluginClassLoader() == null) {
-          implementationClass = Class.forName(implClass);
-        }
-        else {
-          implementationClass = Class.forName(implClass, true, pluginDescriptor.getPluginClassLoader());
-        }
-        adapter = new ExtensionComponentAdapter(implementationClass, extensionElement, getPluginContainer(pluginId.getIdString()), pluginDescriptor);
-      }
-      catch (ClassNotFoundException e) {
-        myLogger.warn("Extension implementation class not found: " + implClass);
-        myExtensionElement2extension.put(extensionElement, null);
-        return;
-      }
+      adapter = new ExtensionComponentAdapter(implClass, extensionElement, getPluginContainer(pluginId.getIdString()), pluginDescriptor);
     }
     else {
       final ExtensionPoint extensionPoint = getExtensionPoint(epName);
-      adapter = new ExtensionComponentAdapter(extensionPoint.getExtensionClass(), extensionElement, getPluginContainer(pluginId.getIdString()), pluginDescriptor);
+      adapter = new ExtensionComponentAdapter(extensionPoint.getExtensionClass().getName(), extensionElement, getPluginContainer(pluginId.getIdString()), pluginDescriptor);
     }
     myExtensionElement2extension.put(extensionElement, adapter);
     internalGetPluginContainer().registerComponent(adapter);

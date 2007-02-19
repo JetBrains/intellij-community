@@ -16,32 +16,47 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
+import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.annotations.Annotations;
 import com.thoughtworks.xstream.core.util.CompositeClassLoader;
 import com.thoughtworks.xstream.io.xml.JDomReader;
 import org.jdom.Element;
-import org.picocontainer.PicoContainer;
-import org.picocontainer.PicoInitializationException;
-import org.picocontainer.PicoIntrospectionException;
+import org.picocontainer.*;
 import org.picocontainer.defaults.AssignabilityRegistrationException;
+import org.picocontainer.defaults.CachingComponentAdapter;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 import org.picocontainer.defaults.NotConcreteRegistrationException;
 
 /**
  * @author Alexander Kireyev
  */
-public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdapter implements LoadingOrder.Orderable {
+public class ExtensionComponentAdapter implements ComponentAdapter, LoadingOrder.Orderable, AssignableToComponentAdapter {
   private Object myComponentInstance;
+  private String myImplementationClassName;
   private Element myExtensionElement;
   private PicoContainer myContainer;
   private PluginDescriptor myPluginDescriptor;
+  private ComponentAdapter myDelegate;
+  private Class myImplementationClass;
 
-  public ExtensionComponentAdapter(Class implementationClass, Element extensionElement, PicoContainer container, PluginDescriptor pluginDescriptor) {
-    super(new Object(), implementationClass);
+  public ExtensionComponentAdapter(
+    String implementationClass,
+    Element extensionElement,
+    PicoContainer container,
+    PluginDescriptor pluginDescriptor) {
+    myImplementationClassName = implementationClass;
     myExtensionElement = extensionElement;
     myContainer = container;
     myPluginDescriptor = pluginDescriptor;
+  }
+
+  public Object getComponentKey() {
+    return this;
+  }
+
+  public Class getComponentImplementation() {
+    return loadClass(myImplementationClassName);
   }
 
   public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException, AssignabilityRegistrationException, NotConcreteRegistrationException {
@@ -49,6 +64,8 @@ public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdap
 
     if (myComponentInstance == null) {
       if (!Element.class.equals(getComponentImplementation())) {
+        Object componentInstance = getDelegate().getComponentInstance(container);
+
         final CompositeClassLoader classLoader = new CompositeClassLoader();
         if (myPluginDescriptor.getPluginClassLoader() != null) {
           classLoader.add(myPluginDescriptor.getPluginClassLoader());
@@ -57,7 +74,6 @@ public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdap
         XStream xStream = new XStream();
         xStream.setClassLoader(classLoader);
         //xStream.registerConverter(new ElementConverter());
-        Object componentInstance = super.getComponentInstance(container);
         if (componentInstance instanceof ReaderConfigurator) {
           ReaderConfigurator readerConfigurator = (ReaderConfigurator) componentInstance;
           readerConfigurator.configureReader(xStream);
@@ -76,6 +92,14 @@ public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdap
     }
 
     return myComponentInstance;
+  }
+
+  public void verify(PicoContainer container) throws PicoIntrospectionException {
+    throw new UnsupportedOperationException("Method verify is not supported in " + getClass());
+  }
+
+  public void accept(PicoVisitor visitor) {
+    throw new UnsupportedOperationException("Method accept is not supported in " + getClass());
   }
 
   public Object getExtension() {
@@ -105,5 +129,37 @@ public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdap
 
   public PluginDescriptor getPluginDescriptor() {
     return myPluginDescriptor;
+  }
+
+  private Class loadClass(final String className) {
+    if (myImplementationClass != null) return myImplementationClass;
+
+    try {
+      ClassLoader classLoader = myPluginDescriptor != null ? myPluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
+      if (classLoader == null) {
+        classLoader = getClass().getClassLoader();
+      }
+
+
+      myImplementationClass = Class.forName(className, true, classLoader);
+    }
+    catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+
+    return myImplementationClass;
+  }
+
+  private synchronized ComponentAdapter getDelegate() {
+    if (myDelegate == null) {
+      myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), loadClass(
+        myImplementationClassName), null, true));
+    }
+
+    return myDelegate;
+  }
+
+  public boolean isAssignableTo(Class aClass) {
+    return aClass.getName().equals(myImplementationClassName);
   }
 }
