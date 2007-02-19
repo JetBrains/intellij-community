@@ -60,7 +60,9 @@ public class RefCountHolder {
   }
 
   public synchronized XmlAttribute getAttributeById(String id) {
+    /* TODO[cdr, maxim.mossienko]
     LOG.assertTrue(myTouched);
+    */
     return myXmlId2AttributeMap.get(id);
   }
 
