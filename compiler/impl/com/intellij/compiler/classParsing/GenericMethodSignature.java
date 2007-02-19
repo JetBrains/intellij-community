@@ -1,7 +1,7 @@
 package com.intellij.compiler.classParsing;
 
-import com.intellij.util.ArrayUtil;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.util.ArrayUtil;
 
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
@@ -44,7 +44,7 @@ public class GenericMethodSignature {
   public static GenericMethodSignature parse(String methodSignature) throws SignatureParsingException {
     final StringCharacterIterator it = new StringCharacterIterator(methodSignature);
 
-    final StringBuffer formals = new StringBuffer();
+    final StringBuilder formals = new StringBuilder();
     if (it.current() == '<') {
       SignatureParser.INSTANCE.parseFormalTypeParameters(it, formals);
     }
@@ -59,7 +59,7 @@ public class GenericMethodSignature {
     if (it.current() != ')') {
       final List<String> params = new ArrayList<String>();
       while (it.current() != ')') {
-        final StringBuffer typeSignature = new StringBuffer();
+        final StringBuilder typeSignature = new StringBuilder();
         SignatureParser.INSTANCE.parseTypeSignature(it, typeSignature);
         params.add(typeSignature.toString());
       }
@@ -70,10 +70,10 @@ public class GenericMethodSignature {
     }
     it.next(); // skip ')'
 
-    final StringBuffer returnTypeSignature = new StringBuffer();
+    final StringBuilder returnTypeSignature = new StringBuilder();
     SignatureParser.INSTANCE.parseReturnType(it, returnTypeSignature);
 
-    final StringBuffer throwsSignature = new StringBuffer();
+    final StringBuilder throwsSignature = new StringBuilder();
     if (it.current() != CharacterIterator.DONE) {
       SignatureParser.INSTANCE.parseThrowsSignature(it, throwsSignature);
     }

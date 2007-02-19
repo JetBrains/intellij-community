@@ -19,8 +19,8 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.compiler.make.BuildConfiguration;
+import com.intellij.openapi.compiler.make.BuildRecipe;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.descriptors.ConfigFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -187,17 +188,24 @@ public abstract class DeploymentUtil {
       len++;
     }
 
-    if (len == 0) return null;
-    StringBuffer relativePath = new StringBuffer();
-    for (int i=len; i < basePath.length(); i++) {
-      if (basePath.charAt(i) == File.separatorChar) {
-        relativePath.append("..");
-        relativePath.append(File.separatorChar);
-      }
+    if (len == 0) {
+      return null;
     }
-    relativePath.append(filePath.substring(lastSeparatorIndex + 1));
+    final StringBuilder relativePath = StringBuilderSpinAllocator.alloc();
+    try {
+      for (int i=len; i < basePath.length(); i++) {
+        if (basePath.charAt(i) == File.separatorChar) {
+          relativePath.append("..");
+          relativePath.append(File.separatorChar);
+        }
+      }
+      relativePath.append(filePath.substring(lastSeparatorIndex + 1));
 
-    return relativePath.toString();
+      return relativePath.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(relativePath);
+    }
   }
 
   public abstract @Nullable File findUserSuppliedManifestFile(@NotNull BuildRecipe buildRecipe);

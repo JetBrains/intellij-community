@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.BreakpointRequest;
@@ -189,17 +190,22 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       final boolean hasClassInfo = className != null && className.length() > 0;
       final boolean hasMethodInfo = myMethodName != null && myMethodName.length() > 0;
       if (hasClassInfo || hasMethodInfo) {
-        final StringBuffer info = new StringBuffer();
-        if (hasClassInfo) {
-          info.append(className);
-        }
-        if(hasMethodInfo) {
+        final StringBuilder info = StringBuilderSpinAllocator.alloc();
+        try {
           if (hasClassInfo) {
-            info.append(".");
+            info.append(className);
           }
-          info.append(myMethodName);
+          if(hasMethodInfo) {
+            if (hasClassInfo) {
+              info.append(".");
+            }
+            info.append(myMethodName);
+          }
+          return DebuggerBundle.message("line.breakpoint.display.name.with.class.or.method", lineNumber, info.toString());
         }
-        return DebuggerBundle.message("line.breakpoint.display.name.with.class.or.method", lineNumber, info.toString());
+        finally {
+          StringBuilderSpinAllocator.dispose(info);
+        }
       }
       return DebuggerBundle.message("line.breakpoint.display.name", lineNumber);
     }

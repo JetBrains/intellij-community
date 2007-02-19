@@ -54,6 +54,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ProfilingUtil;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectProcedure;
@@ -1594,28 +1595,33 @@ public class CompileDriver {
   private void showCyclicModulesHaveDifferentLanguageLevel(Module[] modulesInChunk) {
     LOG.assertTrue(modulesInChunk.length > 0);
     String moduleNameToSelect = modulesInChunk[0].getName();
-    final StringBuffer moduleNames = getModulesString(modulesInChunk);
-    Messages.showMessageDialog(myProject, CompilerBundle.message("error.chunk.modules.must.have.same.language.level", moduleNames.toString()), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+    final String moduleNames = getModulesString(modulesInChunk);
+    Messages.showMessageDialog(myProject, CompilerBundle.message("error.chunk.modules.must.have.same.language.level", moduleNames), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
     showConfigurationDialog(moduleNameToSelect, null);
   }
 
   private void showCyclicModulesHaveDifferentJdksError(Module[] modulesInChunk) {
     LOG.assertTrue(modulesInChunk.length > 0);
     String moduleNameToSelect = modulesInChunk[0].getName();
-    final StringBuffer moduleNames = getModulesString(modulesInChunk);
-    Messages.showMessageDialog(myProject, CompilerBundle.message("error.chunk.modules.must.have.same.jdk", moduleNames.toString()), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+    final String moduleNames = getModulesString(modulesInChunk);
+    Messages.showMessageDialog(myProject, CompilerBundle.message("error.chunk.modules.must.have.same.jdk", moduleNames), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
     showConfigurationDialog(moduleNameToSelect, null);
   }
 
-  private static StringBuffer getModulesString(Module[] modulesInChunk) {
-    final StringBuffer moduleNames = new StringBuffer();
-    for (Module module : modulesInChunk) {
-      if (moduleNames.length() > 0) {
-        moduleNames.append("\n");
+  private static String getModulesString(Module[] modulesInChunk) {
+    final StringBuilder moduleNames = StringBuilderSpinAllocator.alloc();
+    try {
+      for (Module module : modulesInChunk) {
+        if (moduleNames.length() > 0) {
+          moduleNames.append("\n");
+        }
+        moduleNames.append("\"").append(module.getName()).append("\"");
       }
-      moduleNames.append("\"").append(module.getName()).append("\"");
+      return moduleNames.toString();
     }
-    return moduleNames;
+    finally {
+      StringBuilderSpinAllocator.dispose(moduleNames);
+    }
   }
 
   private static boolean hasSources(Module module, boolean checkTestSources) {
@@ -1642,24 +1648,30 @@ public class CompileDriver {
   }
 
   private void showNotSpecifiedError(final @NonNls String resourceId, List<String> modules, String tabNameToSelect) {
-    final StringBuffer names = new StringBuffer();
     String nameToSelect = null;
     final int maxModulesToShow = 10;
-    for (String name : modules.size() > maxModulesToShow ? modules.subList(0, maxModulesToShow) : modules) {
-      if (nameToSelect == null) {
-        nameToSelect = name;
+    final StringBuilder names = StringBuilderSpinAllocator.alloc();
+    final String message;
+    try {
+      for (String name : modules.size() > maxModulesToShow ? modules.subList(0, maxModulesToShow) : modules) {
+        if (nameToSelect == null) {
+          nameToSelect = name;
+        }
+        if (names.length() > 0) {
+          names.append(",\n");
+        }
+        names.append("\"");
+        names.append(name);
+        names.append("\"");
       }
-      if (names.length() > 0) {
-        names.append(",\n");
+      if (modules.size() > maxModulesToShow) {
+        names.append(",\n...");
       }
-      names.append("\"");
-      names.append(name);
-      names.append("\"");
+      message = CompilerBundle.message(resourceId, modules.size(), names.toString());
     }
-    if (modules.size() > maxModulesToShow) {
-      names.append(",\n...");
+    finally {
+      StringBuilderSpinAllocator.dispose(names);
     }
-    final String message = CompilerBundle.message(resourceId, modules.size(), names);
 
     if(ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error(message);

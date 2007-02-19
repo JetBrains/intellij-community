@@ -254,38 +254,43 @@ public class DebuggerTreeBase extends Tree {
     if (tabSize < 0) {
       tabSize = 0;
     }
-    StringBuffer buf = new StringBuffer();
-    boolean special = false;
-    for(int idx = 0; idx < text.length(); idx++) {
-      char c = text.charAt(idx);
-      if(special) {
-        if (c == 't') { // convert tabs to spaces
-          for (int i = 0; i < tabSize; i++) {
-            buf.append(' ');
+    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+    try {
+      boolean special = false;
+      for(int idx = 0; idx < text.length(); idx++) {
+        char c = text.charAt(idx);
+        if(special) {
+          if (c == 't') { // convert tabs to spaces
+            for (int i = 0; i < tabSize; i++) {
+              buf.append(' ');
+            }
+          }
+          else if (c == 'r') { // remove occurances of '\r'
+          }
+          else if (c == 'n') {
+            buf.append('\n');
+          }
+          else {
+            buf.append('\\');
+            buf.append(c);
+          }
+          special = false;
+        }
+        else {
+          if(c == '\\') {
+            special = true;
+          }
+          else {
+            buf.append(c);
           }
         }
-        else if (c == 'r') { // remove occurances of '\r'
-        }
-        else if (c == 'n') {
-          buf.append('\n');
-        }
-        else {
-          buf.append('\\');
-          buf.append(c);
-        }
-        special = false;
       }
-      else {
-        if(c == '\\') {
-          special = true;
-        }
-        else {
-          buf.append(c);
-        }
-      }
-    }
 
-    return buf.toString();
+      return buf.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(buf);
+    }
   }
 
   public void dispose() {

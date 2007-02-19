@@ -1209,20 +1209,25 @@ public abstract class DebugProcessImpl implements DebugProcess {
       dims++;
     }
 
-    StringBuffer buffer = new StringBuffer();
-    for (int i = 0; i < dims; i++) {
-      buffer.append('[');
+    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    try {
+      for (int i = 0; i < dims; i++) {
+        buffer.append('[');
+      }
+      String primitiveSignature = JVMNameUtil.getPrimitiveSignature(className);
+      if(primitiveSignature != null) {
+        buffer.append(primitiveSignature);
+      }
+      else {
+        buffer.append('L');
+        buffer.append(className);
+        buffer.append(';');
+      }
+      return buffer.toString();
     }
-    String primitiveSignature = JVMNameUtil.getPrimitiveSignature(className);
-    if(primitiveSignature != null) {
-      buffer.append(primitiveSignature);
+    finally {
+      StringBuilderSpinAllocator.dispose(buffer);
     }
-    else {
-      buffer.append('L');
-      buffer.append(className);
-      buffer.append(';');
-    }
-    return buffer.toString();
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

@@ -16,7 +16,7 @@ public class BoundsParser extends SignatureParser{
   final List<String> myInterfaceBounds = new ArrayList<String>();
   private int myParsingBound;
 
-  public void parseClassBound(CharacterIterator it, StringBuffer buf) throws SignatureParsingException {
+  public void parseClassBound(CharacterIterator it, StringBuilder buf) throws SignatureParsingException {
     myParsingBound += 1;
     try {
       super.parseClassBound(it, buf);
@@ -26,7 +26,7 @@ public class BoundsParser extends SignatureParser{
     }
   }
 
-  public void parseInterfaceBound(CharacterIterator it, StringBuffer buf) throws SignatureParsingException {
+  public void parseInterfaceBound(CharacterIterator it, StringBuilder buf) throws SignatureParsingException {
     myParsingBound += 1;
     try {
       super.parseInterfaceBound(it, buf);
@@ -36,7 +36,7 @@ public class BoundsParser extends SignatureParser{
     }
   }
 
-  public void parseClassTypeSignature(CharacterIterator it, StringBuffer buf) throws SignatureParsingException {
+  public void parseClassTypeSignature(CharacterIterator it, StringBuilder buf) throws SignatureParsingException {
     if (myParsingBound > 0) {
       final int start = buf.length();
 
@@ -61,7 +61,7 @@ public class BoundsParser extends SignatureParser{
 
   public static String[] getBounds(String classSignature) throws SignatureParsingException {
     final BoundsParser parser = new BoundsParser();
-    parser.parseClassSignature(new StringCharacterIterator(classSignature), new StringBuffer());
+    parser.parseClassSignature(new StringCharacterIterator(classSignature), new StringBuilder());
     return parser.getBounds();
   }
 }

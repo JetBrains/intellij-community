@@ -708,37 +708,48 @@ public class StringUtil {
   }
 
   @NotNull public static String repeatSymbol(final char aChar, final int count) {
-    final StringBuffer buffer = new StringBuffer();
-    repeatSymbol(buffer, aChar, count);
-    return buffer.toString();
+    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    try {
+      repeatSymbol(buffer, aChar, count);
+      return buffer.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(buffer);
+    }
   }
 
-  @NotNull public static List<String> splitHonorQuotes(@NotNull String s, char separator) {
-    final ArrayList<String> result = new ArrayList<String>();
-    StringBuilder builder = new StringBuilder();
-    boolean inQuotes = false;
-    for (int i = 0; i < s.length(); i++) {
-      final char c = s.charAt(i);
-      if (c == separator && !inQuotes) {
-        if (builder.length() > 0) {
-          result.add(builder.toString());
-          builder = new StringBuilder();
-        }
-        continue;
-      }
+  @NotNull
+   public static List<String> splitHonorQuotes(@NotNull String s, char separator) {
+     final ArrayList<String> result = new ArrayList<String>();
+     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+     try {
+       boolean inQuotes = false;
+       for (int i = 0; i < s.length(); i++) {
+         final char c = s.charAt(i);
+         if (c == separator && !inQuotes) {
+           if (builder.length() > 0) {
+             result.add(builder.toString());
+             builder.setLength(0);
+           }
+           continue;
+         }
 
-      if (c == '"' && !(i > 0 && s.charAt(i - 1) == '\\')) {
-        inQuotes = !inQuotes;
-      }
-      builder.append(c);
-    }
+         if (c == '"' && !(i > 0 && s.charAt(i - 1) == '\\')) {
+           inQuotes = !inQuotes;
+         }
+         builder.append(c);
+       }
 
-    if (builder.length() > 0) {
-      result.add(builder.toString());
-    }
-
-    return result;
-  }
+       if (builder.length() > 0) {
+         result.add(builder.toString());
+       }
+     }
+     finally {
+       StringBuilderSpinAllocator.dispose(builder);
+     }
+     return result;
+   }
+  
 
   @NotNull public static List<String> split(@NotNull String s, @NotNull String separator) {
     if (separator.length() == 0) {
@@ -805,12 +816,17 @@ public class StringUtil {
   }
 
   @NotNull public static String join(@NotNull final String[] strings, @NotNull final String separator) {
-    final StringBuilder result = new StringBuilder();
-    for (int i = 0; i < strings.length; i++) {
-      if (i > 0) result.append(separator);
-      result.append(strings[i]);
+    final StringBuilder result = StringBuilderSpinAllocator.alloc();
+    try {
+      for (int i = 0; i < strings.length; i++) {
+        if (i > 0) result.append(separator);
+        result.append(strings[i]);
+      }
+      return result.toString();
     }
-    return result.toString();
+    finally {
+      StringBuilderSpinAllocator.dispose(result);
+    }
   }
 
   @NotNull public static String[] zip(@NotNull String[] strings1, @NotNull String[] strings2, String separator) {
@@ -834,35 +850,50 @@ public class StringUtil {
   }
 
   @NotNull public static <T> String join(@NotNull Collection<T> items, @NotNull Function<T, String> f, @NotNull @NonNls String separator) {
-    final StringBuilder result = new StringBuilder();
-    for (T item : items) {
-      String string = f.fun(item);
-      if (string != null && string.length() != 0) {
-        if (result.length() != 0) result.append(separator);
-        result.append(string);
+    final StringBuilder result = StringBuilderSpinAllocator.alloc();
+    try {
+      for (T item : items) {
+        String string = f.fun(item);
+        if (string != null && string.length() != 0) {
+          if (result.length() != 0) result.append(separator);
+          result.append(string);
+        }
       }
+      return result.toString();
     }
-    return result.toString();
+    finally {
+      StringBuilderSpinAllocator.dispose(result);
+    }
   }
 
   @NotNull public static String join(@NotNull Collection<String> strings, final @NotNull String separator) {
-    final StringBuilder result = new StringBuilder();
-    for (String string : strings) {
-      if (string != null && string.length() != 0) {
-        if (result.length() != 0) result.append(separator);
-        result.append(string);
+    final StringBuilder result = StringBuilderSpinAllocator.alloc();
+    try {
+      for (String string : strings) {
+        if (string != null && string.length() != 0) {
+          if (result.length() != 0) result.append(separator);
+          result.append(string);
+        }
       }
+      return result.toString();
     }
-    return result.toString();
+    finally {
+      StringBuilderSpinAllocator.dispose(result);
+    }
   }
 
   @NotNull public static String join(@NotNull final int[] strings, final @NotNull String separator) {
-    final StringBuilder result = new StringBuilder();
-    for (int i = 0; i < strings.length; i++) {
-      if (i > 0) result.append(separator);
-      result.append(strings[i]);
+    final StringBuilder result = StringBuilderSpinAllocator.alloc();
+    try {
+      for (int i = 0; i < strings.length; i++) {
+        if (i > 0) result.append(separator);
+        result.append(strings[i]);
+      }
+      return result.toString();
     }
-    return result.toString();
+    finally {
+      StringBuilderSpinAllocator.dispose(result);
+    }
   }
 
   @NotNull public static String stripQuotesAroundValue(@NotNull String text) {

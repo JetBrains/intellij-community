@@ -12,14 +12,14 @@ import java.text.CharacterIterator;
 public class SignatureParser {
   public static final SignatureParser INSTANCE = new SignatureParser();
 
-  public void parseIdentifier(CharacterIterator it, final StringBuffer buf) {
+  public void parseIdentifier(CharacterIterator it, final StringBuilder buf) {
     while (Character.isJavaIdentifierPart(it.current())) {
       buf.append(it.current());
       it.next();
     }
   }
 
-  public void parseFormalTypeParameters(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseFormalTypeParameters(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     if (it.current() != '<') {
       throw new SignatureParsingException(CompilerBundle.message("error.signature.parsing.expected.other.symbol", "<", buf.toString()));
     }
@@ -35,7 +35,7 @@ public class SignatureParser {
     it.next();
   }
 
-  public void parseFormalTypeParameter(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseFormalTypeParameter(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     parseIdentifier(it, buf);
     parseClassBound(it, buf);
     while (it.current() == ':') {
@@ -43,7 +43,7 @@ public class SignatureParser {
     }
   }
 
-  public void parseClassBound(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseClassBound(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     if (it.current() != ':') {
       throw new SignatureParsingException(CompilerBundle.message("error.signature.parsing.expected.other.symbol", ":", buf.toString()));
     }
@@ -56,7 +56,7 @@ public class SignatureParser {
     }
   }
 
-  public void parseInterfaceBound(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseInterfaceBound(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     if (it.current() != ':') {
       throw new SignatureParsingException(CompilerBundle.message("error.signature.parsing.expected.other.symbol", ":", buf.toString()));
     }
@@ -65,15 +65,15 @@ public class SignatureParser {
     parseFieldTypeSignature(it, buf);
   }
 
-  public void parseSuperclassSignature(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseSuperclassSignature(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     parseClassTypeSignature(it, buf);
   }
 
-  public void parseSuperinterfaceSignature(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseSuperinterfaceSignature(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     parseClassTypeSignature(it, buf);
   }
 
-  public void parseFieldTypeSignature(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseFieldTypeSignature(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     if (it.current() == 'L') {
       parseClassTypeSignature(it, buf);
     }
@@ -89,7 +89,7 @@ public class SignatureParser {
     }
   }
 
-  public void parseClassTypeSignature(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseClassTypeSignature(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     buf.append(it.current());
     it.next();     // consume 'L'
     parseSimpleClassTypeSignature(it, buf);
@@ -103,20 +103,20 @@ public class SignatureParser {
     it.next(); // consume ';'
   }
 
-  public void parseSimpleClassTypeSignature(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseSimpleClassTypeSignature(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     parseIdentifier(it, buf);
     if (it.current() == '<') {
       parseTypeArguments(it, buf);
     }
   }
 
-  public void parseClassTypeSignatureSuffix(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseClassTypeSignatureSuffix(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     buf.append(it.current());
     it.next();
     parseSimpleClassTypeSignature(it, buf);
   }
 
-  public void parseTypeVariableSignature(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseTypeVariableSignature(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     buf.append(it.current());
     it.next(); // consume 'T'
     parseIdentifier(it, buf);
@@ -127,7 +127,7 @@ public class SignatureParser {
     it.next(); // consume ';'
   }
 
-  public void parseTypeArguments(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseTypeArguments(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     buf.append(it.current());
     it.next(); // consume '<'
     while (it.current() != '>') {
@@ -137,7 +137,7 @@ public class SignatureParser {
     it.next(); // consume '>'
   }
 
-  public void parseTypeArgument(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseTypeArgument(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     if (it.current() == '*') {
       parseWildcardIndicator(it, buf);
     }
@@ -149,18 +149,18 @@ public class SignatureParser {
     }
   }
 
-  public void parseWildcardIndicator(CharacterIterator it, final StringBuffer buf) {
+  public void parseWildcardIndicator(CharacterIterator it, final StringBuilder buf) {
     buf.append(it.current());
     it.next();
   }
 
-  public void parseArrayTypeSignature(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseArrayTypeSignature(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     buf.append(it.current());
     it.next(); // consume '['
     parseTypeSignature(it, buf);
   }
 
-  public void parseTypeSignature(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseTypeSignature(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     char current = it.current();
     if (current == 'B' || current == 'C' || current == 'D' || current == 'F' || current == 'I' || current == 'J' || current == 'S' || current == 'Z') {
       buf.append(it.current());
@@ -174,7 +174,7 @@ public class SignatureParser {
     }
   }
 
-  public void parseReturnType(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseReturnType(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     if (it.current() == 'V') {
       buf.append(it.current());
       it.next();
@@ -184,7 +184,7 @@ public class SignatureParser {
     }
   }
 
-  public void parseThrowsSignature(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseThrowsSignature(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     if (it.current() != '^') {
       throw new SignatureParsingException(CompilerBundle.message("error.signature.parsing.expected.other.symbol", "^", buf.toString()));
     }
@@ -198,7 +198,7 @@ public class SignatureParser {
     }
   }
 
-  public void parseMethodSignature(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseMethodSignature(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     if (it.current() == '<') {
       parseFormalTypeParameters(it, buf);
     }
@@ -224,7 +224,7 @@ public class SignatureParser {
     }
   }
 
-  public void parseClassSignature(CharacterIterator it, final StringBuffer buf) throws SignatureParsingException {
+  public void parseClassSignature(CharacterIterator it, final StringBuilder buf) throws SignatureParsingException {
     if (it.current() == '<') {
       buf.append(it.current());
       it.next();
