@@ -24,11 +24,11 @@ import java.awt.*;
  * @author max
  */
 public class CaptionPanel extends JPanel {
-  private final static Color CNT_COLOR = new Color(0xcacaca);
-  private final static Color BND_COLOR = new Color(0xefefef);
+  private final static Color CNT_COLOR = new Color(240, 240, 240);
+  private final static Color BND_COLOR = new Color(240, 240, 240);
 
-  private final static Color CNT_ACTIVE_COLOR = new Color(105, 128, 180);
-  private final static Color BND_ACTIVE_COLOR = CNT_ACTIVE_COLOR.brighter();
+  private final static Color CNT_ACTIVE_COLOR = new Color(0xcacaca);
+  private final static Color BND_ACTIVE_COLOR = new Color(0xefefef);
 
   private boolean myActive = false;
   private ActiveComponent myButtonComponent;
@@ -44,16 +44,16 @@ public class CaptionPanel extends JPanel {
     final Graphics2D g2d = (Graphics2D) g;
 
     if (myActive) {
-      g.setColor(Color.gray);
-      g.drawLine(0, 0, getWidth(), 0);
       g.setColor(Color.white);
+      g.drawLine(0, 0, getWidth(), 0);
+      g.setColor(Color.gray);
       g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
       g2d.setPaint(new GradientPaint(0, 0, BND_ACTIVE_COLOR, 0, getHeight(), CNT_ACTIVE_COLOR));
     }
     else {
       g.setColor(Color.white);
       g.drawLine(0, 0, getWidth(), 0);
-      g.setColor(Color.gray);
+      g.setColor(Color.lightGray);
       g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
       g2d.setPaint(new GradientPaint(0, 0, BND_COLOR, 0, getHeight(), CNT_COLOR));
     }
