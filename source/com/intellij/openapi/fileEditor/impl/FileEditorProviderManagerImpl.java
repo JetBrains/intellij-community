@@ -27,7 +27,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   private final ArrayList<FileEditorProvider> myProviders;
   private final ArrayList<FileEditorProvider> mySharedProviderList;
 
-  public FileEditorProviderManagerImpl() {
+  public FileEditorProviderManagerImpl(FileEditorProvider[] providers) {
     myProviders = new ArrayList<FileEditorProvider>();
     mySharedProviderList = new ArrayList<FileEditorProvider>();
 
@@ -40,6 +40,10 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
         unregisterProvider(extension);
       }
     });
+
+    for (FileEditorProvider provider : providers) {
+      registerProvider(provider);
+    }
   }
 
   @NotNull
