@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
@@ -20,6 +21,10 @@ public class UrlClassLoader extends ClassLoader {
 
   public UrlClassLoader(List<URL> urls, ClassLoader parent) {
     this(urls, parent, false, false);
+  }
+
+  public UrlClassLoader(URL[] urls, ClassLoader parent) {
+    this(Arrays.asList(urls), parent, false, false);
   }
 
   public UrlClassLoader(List<URL> urls, ClassLoader parent, boolean canLockJars, boolean canUseCache) {
@@ -73,15 +78,35 @@ public class UrlClassLoader extends ClassLoader {
 
   @Nullable
   public URL findResource(final String name) {
+    Resource res = _getResource(name);
+    if (res == null) return null;
+    return res.getURL();
+  }
+
+  @Nullable
+  private Resource _getResource(final String name) {
     String n = name;
 
     if (n.startsWith("/")) n = n.substring(1);
-    Resource res = myClassPath.getResource(n, true);
-    if (res == null) return null;
-    return res.getURL();
+    return myClassPath.getResource(n, true);
+  }
+
+  @Nullable
+  @Override
+  public InputStream getResourceAsStream(final String name) {
+    try {
+      Resource res = _getResource(name);
+      if (res == null) return null;
+      return res.getInputStream();
+    }
+    catch (IOException e) {
+      return null;
+    }
   }
 
   protected Enumeration<URL> findResources(String name) throws IOException {
     return myClassPath.getResources(name, true);
   }
+
+  
 }
