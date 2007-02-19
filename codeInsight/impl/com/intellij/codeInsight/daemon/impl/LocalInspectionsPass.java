@@ -102,7 +102,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   public void inspect(final LocalInspectionTool[] tools, final ProgressIndicator progress, final InspectionManagerEx iManager, final boolean isOnTheFly) {
     final PsiElement[] elements = getElementsIntersectingRange(myFile, myStartOffset, myEndOffset);
 
-    final Job<?> job = JobScheduler.getInstance().createJob("Inspection tools", Job.DEFAULT_PRIORITY - 1); // TODO: Better name, handle priority
+    final Job<?> job = JobScheduler.getInstance().createJob("Inspection tools", Job.DEFAULT_PRIORITY); // TODO: Better name, handle priority
 
     for (final LocalInspectionTool tool : tools) {
       job.addTask(new Runnable() {

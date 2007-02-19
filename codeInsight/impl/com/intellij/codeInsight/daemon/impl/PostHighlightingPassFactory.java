@@ -2,10 +2,9 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -20,9 +19,7 @@ import org.jetbrains.annotations.Nullable;
 public class PostHighlightingPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   public PostHighlightingPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{
-      Pass.UPDATE_ALL,
-    }, null, true, Pass.POST_UPDATE_ALL);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL,}, null, true, Pass.POST_UPDATE_ALL);
   }
 
   @NonNls
@@ -33,15 +30,10 @@ public class PostHighlightingPassFactory extends AbstractProjectComponent implem
 
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    TextRange textRange = calculateRangeToProcess(editor);
-    return new PostHighlightingPass(myProject, file, editor, textRange.getStartOffset(), textRange.getEndOffset());
-  }
-
-  private static TextRange calculateRangeToProcess(Editor editor) {
-    Document document = editor.getDocument();
-
-    int startOffset = 0;
-    int endOffset = document.getTextLength();
-    return new TextRange(startOffset, endOffset);
+    TextRange textRange = GeneralHighlightingPassFactory.calculateRangeToProcessForSyntaxPass(editor);
+    if (textRange == null) return null;
+    int startOffset = textRange.getStartOffset();
+    int endOffset = textRange.getEndOffset();
+    return new PostHighlightingPass(myProject, file, editor, startOffset, endOffset);
   }
 }

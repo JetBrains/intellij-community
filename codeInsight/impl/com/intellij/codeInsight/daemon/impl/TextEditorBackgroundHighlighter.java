@@ -59,7 +59,6 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     Pass.POST_UPDATE_ALL,
     //Pass.UPDATE_OVERRIDEN_MARKERS,
     Pass.LOCAL_INSPECTIONS,
-    Pass.POPUP_HINTS2,
     Pass.EXTERNAL_TOOLS,
   };
 
@@ -76,8 +75,8 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     Pass.POST_UPDATE_ALL,
     Pass.UPDATE_OVERRIDEN_MARKERS,
     Pass.LOCAL_INSPECTIONS,
-    Pass.POPUP_HINTS2,
-    Pass.EXTERNAL_TOOLS,};
+    Pass.EXTERNAL_TOOLS,
+  };
 
   public TextEditorBackgroundHighlighter(@NotNull Project project, @NotNull Editor editor) {
     myProject = project;

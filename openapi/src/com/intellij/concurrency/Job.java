@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 public interface Job<T> {
-  int DEFAULT_PRIORITY = 5;
+  // the lower the priority the more important the task is
+  int DEFAULT_PRIORITY = 100;
 
   String getTitle();
 

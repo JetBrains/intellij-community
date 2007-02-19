@@ -12,6 +12,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.LightColors;
+import com.intellij.psi.PsiFile;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,8 +35,7 @@ public class FileLevelIntentionComponent extends JPanel {
   public FileLevelIntentionComponent(final String description,
                                      final HighlightSeverity severity,
                                      List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> intentions,
-                                     final Project project,
-                                     final Editor editor) {
+                                     final Project project, final PsiFile psiFile, final Editor editor) {
     super(new BorderLayout());
     myEditor = editor;
     myProject = project;
@@ -56,7 +56,7 @@ public class FileLevelIntentionComponent extends JPanel {
 
     content.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
-        IntentionHintComponent.showIntentionHint(myProject, myEditor,
+        IntentionHintComponent.showIntentionHint(myProject, psiFile, myEditor,
                                                  new ArrayList<HighlightInfo.IntentionActionDescriptor>(),
                                                  myIntentions,
                                                  true);

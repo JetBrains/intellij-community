@@ -93,6 +93,11 @@ public class FileStatusMap {
     }
   }
 
+  /**
+   * @param document
+   * @param passId
+   * @return null for processed file, whole file for untouched or emtirely dirty file, PsiElement(usually code block) for dirty region (optimization)
+   */
   public PsiElement getFileDirtyScope(@NotNull Document document, int passId) {
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);
@@ -155,6 +160,7 @@ public class FileStatusMap {
     return commonParent;
   }
 
+  @NotNull
   public RefCountHolder getRefCountHolder(@NotNull Document document, @NotNull PsiFile file) {
     RefCountHolder refCountHolder;
     synchronized (myRefCountHolderLock) {

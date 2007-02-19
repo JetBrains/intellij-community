@@ -52,7 +52,7 @@ public abstract class PassExecutorService {
     mySubmittedPasses.clear();
   }
 
-  public void submitPasses(Map<FileEditor, HighlightingPass[]> passesMap, DaemonProgressIndicator updateProgress) {
+  public void submitPasses(Map<FileEditor, HighlightingPass[]> passesMap, DaemonProgressIndicator updateProgress, final int jobPriority) {
     final AtomicInteger threadsToStartCountdown = new AtomicInteger(0);
     int id = 1;
 
@@ -93,7 +93,7 @@ public abstract class PassExecutorService {
       }
       threadsToStartCountdown.addAndGet(passesToAdd.length);
       for (final TextEditorHighlightingPass pass : passesToAdd) {
-        createScheduledPass(fileEditor, pass, toBeSubmitted, passesToAdd, freePasses, updateProgress, threadsToStartCountdown);
+        createScheduledPass(fileEditor, pass, toBeSubmitted, passesToAdd, freePasses, updateProgress, threadsToStartCountdown, jobPriority);
       }
     }
     for (ScheduledPass freePass : freePasses) {
@@ -101,42 +101,40 @@ public abstract class PassExecutorService {
     }
   }
 
-  private ScheduledPass
-  createScheduledPass(final FileEditor fileEditor,
+  private ScheduledPass createScheduledPass(final FileEditor fileEditor,
                                             final TextEditorHighlightingPass pass,
                                             final Map<Pair<FileEditor, Integer>, ScheduledPass> toBeSubmitted,
                                             final TextEditorHighlightingPass[] textEditorHighlightingPasses,
                                             final List<ScheduledPass> freePasses,
                                             final DaemonProgressIndicator updateProgress,
-                                            final AtomicInteger myThreadsToStartCountdown) {
+                                            final AtomicInteger myThreadsToStartCountdown,
+                                            final int jobPriority) {
     int passId = pass.getId();
     Pair<FileEditor, Integer> key = Pair.create(fileEditor, passId);
     ScheduledPass scheduledPass = toBeSubmitted.get(key);
     if (scheduledPass != null) return scheduledPass;
-    int[] completionPredecessorIds = pass.getCompletionPredecessorIds();
-    scheduledPass = new ScheduledPass(fileEditor, pass, updateProgress, myThreadsToStartCountdown);
+    scheduledPass = new ScheduledPass(fileEditor, pass, updateProgress, myThreadsToStartCountdown, jobPriority);
     toBeSubmitted.put(key, scheduledPass);
-    for (int predecessorId : completionPredecessorIds) {
+    for (int predecessorId : pass.getCompletionPredecessorIds()) {
       Pair<FileEditor, Integer> predkey = Pair.create(fileEditor, predecessorId);
       ScheduledPass predecessor = toBeSubmitted.get(predkey);
       if (predecessor == null) {
         TextEditorHighlightingPass textEditorPass = findPassById(predecessorId, textEditorHighlightingPasses);
         predecessor = textEditorPass == null ? null : createScheduledPass(fileEditor, textEditorPass, toBeSubmitted, textEditorHighlightingPasses,freePasses,
-                                                                          updateProgress, myThreadsToStartCountdown);
+                                                                          updateProgress, myThreadsToStartCountdown, jobPriority);
       }
       if (predecessor != null) {
         predecessor.mySuccessorsOnCompletion.add(scheduledPass);
         scheduledPass.myRunningPredecessorsCount.incrementAndGet();
       }
     }
-    int[] startingPredecessorIds = pass.getStartingPredecessorIds();
-    for (int predecessorId : startingPredecessorIds) {
+    for (int predecessorId : pass.getStartingPredecessorIds()) {
       Pair<FileEditor, Integer> predkey = Pair.create(fileEditor, predecessorId);
       ScheduledPass predecessor = toBeSubmitted.get(predkey);
       if (predecessor == null) {
         TextEditorHighlightingPass textEditorPass = findPassById(predecessorId, textEditorHighlightingPasses);
         predecessor = textEditorPass == null ? null : createScheduledPass(fileEditor, textEditorPass, toBeSubmitted, textEditorHighlightingPasses,freePasses,
-                                                                          updateProgress, myThreadsToStartCountdown);
+                                                                          updateProgress, myThreadsToStartCountdown, jobPriority);
       }
       if (predecessor != null) {
         predecessor.mySuccessorsOnSubmit.add(scheduledPass);
@@ -162,7 +160,7 @@ public abstract class PassExecutorService {
 
   private void submit(ScheduledPass pass) {
     if (!pass.myUpdateProgress.isCanceled()) {
-      Job<Void> job = JobScheduler.getInstance().createJob(pass.myPass.toString(), Job.DEFAULT_PRIORITY);
+      Job<Void> job = JobScheduler.getInstance().createJob(pass.myPass.toString(), pass.myJobPriority);
       job.addTask(pass);
       job.schedule();
       mySubmittedPasses.put(pass, job);
@@ -181,13 +179,15 @@ public abstract class PassExecutorService {
         put(textEditor, highlightingPasses);
       }
     };
-    submitPasses(passes, visibleProgress);
+    // higher priority
+    submitPasses(passes, visibleProgress, Job.DEFAULT_PRIORITY-10);
   }
 
   private class ScheduledPass implements Runnable {
     private final FileEditor myFileEditor;
     private final TextEditorHighlightingPass myPass;
     private final AtomicInteger myThreadsToStartCountdown;
+    private final int myJobPriority;
     private final AtomicInteger myRunningPredecessorsCount;
     private final Collection<ScheduledPass> mySuccessorsOnCompletion = new ArrayList<ScheduledPass>();
     private final Collection<ScheduledPass> mySuccessorsOnSubmit = new ArrayList<ScheduledPass>();
@@ -196,10 +196,11 @@ public abstract class PassExecutorService {
     public ScheduledPass(final FileEditor fileEditor,
                          TextEditorHighlightingPass pass,
                          final DaemonProgressIndicator progressIndicator,
-                         final AtomicInteger myThreadsToStartCountdown) {
+                         final AtomicInteger myThreadsToStartCountdown, final int jobPriority) {
       myFileEditor = fileEditor;
       myPass = pass;
       this.myThreadsToStartCountdown = myThreadsToStartCountdown;
+      myJobPriority = jobPriority;
       myRunningPredecessorsCount = new AtomicInteger(0);
       myUpdateProgress = progressIndicator;
     }

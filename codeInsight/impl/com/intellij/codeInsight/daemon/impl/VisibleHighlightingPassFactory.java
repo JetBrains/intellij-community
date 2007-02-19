@@ -28,7 +28,7 @@ public class VisibleHighlightingPassFactory extends AbstractProjectComponent imp
 
   public VisibleHighlightingPassFactory(Project project,  TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_FOLDING,}, null, false, Pass.UPDATE_VISIBLE);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_FOLDING,}, null, true, Pass.UPDATE_VISIBLE);
   }
 
   @NonNls

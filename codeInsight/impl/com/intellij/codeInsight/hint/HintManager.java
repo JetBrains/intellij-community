@@ -59,22 +59,22 @@ public class HintManager implements ApplicationComponent {
   public static final int HIDE_IF_OUT_OF_EDITOR = 0x40;
   public static final int UPDATE_BY_SCROLLING = 0x80;
 
-  private TooltipController myTooltipController;
+  private final TooltipController myTooltipController;
 
-  private AnActionListener myAnActionListener;
+  private final AnActionListener myAnActionListener;
   private final MyEditorManagerListener myEditorManagerListener;
-  private EditorMouseAdapter myEditorMouseListener;
-  private FocusListener myEditorFocusListener;
-  private DocumentListener myEditorDocumentListener;
-  private VisibleAreaListener myVisibleAreaListener;
-  private CaretListener myCaretMoveListener;
+  private final EditorMouseAdapter myEditorMouseListener;
+  private final FocusListener myEditorFocusListener;
+  private final DocumentListener myEditorDocumentListener;
+  private final VisibleAreaListener myVisibleAreaListener;
+  private final CaretListener myCaretMoveListener;
 
   private LightweightHint myQuestionHint = null;
   private QuestionAction myQuestionAction = null;
 
-  private List<HintInfo> myHintsStack = new ArrayList<HintInfo>(); // Vector of HintInfo
+  private final List<HintInfo> myHintsStack = new ArrayList<HintInfo>();
   private Editor myLastEditor = null;
-  private Alarm myHideAlarm = new Alarm();
+  private final Alarm myHideAlarm = new Alarm();
 
   public static interface ActionToIgnore {
   }
@@ -141,6 +141,7 @@ public class HintManager implements ApplicationComponent {
 
     myEditorDocumentListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent event) {
+        LOG.assertTrue(SwingUtilities.isEventDispatchThread());
         HintInfo[] infos = myHintsStack.toArray(new HintInfo[myHintsStack.size()]);
         for (HintInfo info : infos) {
           if ((info.flags & HIDE_BY_TEXT_CHANGE) != 0) {
@@ -171,6 +172,7 @@ public class HintManager implements ApplicationComponent {
   public void initComponent() { }
 
   private void updateScrollableHints(VisibleAreaEvent e) {
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     for (HintInfo info : myHintsStack) {
       if (info.hint instanceof LightweightHint && (info.flags & UPDATE_BY_SCROLLING) != 0) {
         updateScrollableHintPosition(e, info.hint, (info.flags & HIDE_IF_OUT_OF_EDITOR) != 0);
@@ -183,6 +185,7 @@ public class HintManager implements ApplicationComponent {
   }
 
   public boolean hasShownHintsThatWillHideByOtherHint() {
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     for (HintInfo hintInfo : myHintsStack) {
       if (hintInfo.hint.isVisible() && (hintInfo.flags & HIDE_BY_OTHER_HINT) != 0) return true;
     }
@@ -191,6 +194,7 @@ public class HintManager implements ApplicationComponent {
 
   @Nullable
   public Hint findHintByType(Class klass){
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     for (HintInfo hintInfo : myHintsStack) {
       if (klass.isInstance(hintInfo.hint.getComponent()) && hintInfo.hint.isVisible()){
         return hintInfo.hint;
@@ -259,6 +263,7 @@ public class HintManager implements ApplicationComponent {
                              int flags,
                              int timeout,
                              boolean reviveOnEditorChange) {
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     myHideAlarm.cancelAllRequests();
 
     hideHints(HIDE_BY_OTHER_HINT, false, false);
@@ -337,10 +342,9 @@ public class HintManager implements ApplicationComponent {
   }
 
   public void hideAllHints() {
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     for (HintInfo info : myHintsStack) {
-      if (info.hint.isVisible()) {
         info.hint.hide();
-      }
     }
     myHintsStack.clear();
     updateLastEditor(null);
@@ -354,6 +358,7 @@ public class HintManager implements ApplicationComponent {
     Project project = editor.getProject();
     Lookup lookup = project == null ? null : LookupManager.getInstance(project).getActiveLookup();
 
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     if (lookup == null) {
       for (HintInfo info : myHintsStack) {
         if (!info.hint.isSelectingHint()) continue;
@@ -375,7 +380,7 @@ public class HintManager implements ApplicationComponent {
     }
   }
 
-  private Point getHintPositionRelativeTo(final LightweightHint hint,
+  private static Point getHintPositionRelativeTo(final LightweightHint hint,
                                           final Editor editor,
                                           final short constraint,
                                           final Rectangle cellBounds,
@@ -576,35 +581,31 @@ public class HintManager implements ApplicationComponent {
                                                                                      HighlighterLayer.ERROR + 1,
                                                                                      attributes,
                                                                                      HighlighterTargetArea.EXACT_RANGE);
-
     ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (myQuestionHint != null) {
-            myQuestionHint.hide();
-            myQuestionHint = null;
-            myQuestionAction = null;
-          }
-
-          hint.addHintListener(
-            new HintListener() {
-              public void hintHidden(EventObject event) {
-                editor.getMarkupModel().removeHighlighter(highlighter);
-
-                if (myQuestionHint == hint) {
-                  myQuestionAction = null;
-                  myQuestionHint = null;
-                }
-                hint.removeHintListener(this);
-              }
-            }
-          );
-
-          showEditorHint(hint, editor, p,
-                         HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | UPDATE_BY_SCROLLING | HIDE_IF_OUT_OF_EDITOR, 0, false);
-          myQuestionAction = action;
-          myQuestionHint = hint;
+      public void run() {
+        if (myQuestionHint != null) {
+          myQuestionHint.hide();
+          myQuestionHint = null;
+          myQuestionAction = null;
         }
-      });
+
+        hint.addHintListener(new HintListener() {
+          public void hintHidden(EventObject event) {
+            editor.getMarkupModel().removeHighlighter(highlighter);
+
+            if (myQuestionHint == hint) {
+              myQuestionAction = null;
+              myQuestionHint = null;
+            }
+            hint.removeHintListener(this);
+          }
+        });
+
+        showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | UPDATE_BY_SCROLLING | HIDE_IF_OUT_OF_EDITOR, 0, false);
+        myQuestionAction = action;
+        myQuestionHint = hint;
+      }
+    });
   }
 
   private void updateLastEditor(final Editor editor) {
@@ -711,6 +712,7 @@ public class HintManager implements ApplicationComponent {
     }
 
     public boolean isEnabled(Editor editor, DataContext dataContext) {
+      LOG.assertTrue(SwingUtilities.isEventDispatchThread());
       Project project = (Project)dataContext.getData(DataConstants.PROJECT);
 
       if (project != null) {
@@ -733,6 +735,7 @@ public class HintManager implements ApplicationComponent {
   }
 
   private boolean hideHints(int mask, boolean onlyOne, boolean editorChanged) {
+    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     try {
       boolean done = false;
 

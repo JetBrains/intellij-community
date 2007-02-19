@@ -39,6 +39,6 @@ public class ShowIntentionsPassFactory extends AbstractProjectComponent implemen
 
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    return new ShowIntentionsPass(myProject, editor, IntentionManager.getInstance(myProject).getIntentionActions(), Pass.UPDATE_ALL);
+    return new ShowIntentionsPass(myProject, editor, IntentionManager.getInstance(myProject).getIntentionActions(), -1);
   }
 }

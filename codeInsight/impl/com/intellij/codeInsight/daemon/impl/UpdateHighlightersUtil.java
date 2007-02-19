@@ -127,7 +127,7 @@ public class UpdateHighlightersUtil {
             for (FileEditor fileEditor : manager.getEditors(vFile)) {
               if (fileEditor instanceof TextEditor) {
                 FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.description, info.severity, info.quickFixActionRanges,
-                                                                                        project, ((TextEditor)fileEditor).getEditor());
+                                                                                        project, psiFile, ((TextEditor)fileEditor).getEditor());
                 manager.showEditorAnnotation(fileEditor, component);
                 List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
                 if (fileLevelInfos == null) {

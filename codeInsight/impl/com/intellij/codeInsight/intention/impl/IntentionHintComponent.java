@@ -28,9 +28,9 @@ import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -50,8 +50,7 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 public class IntentionHintComponent extends JPanel {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.codeInsight.intention.impl.IntentionHintComponent.ListPopupRunnable");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionHintComponent.ListPopupRunnable");
 
   private static final Icon ourIntentionIcon = IconLoader.getIcon("/actions/intentionBulb.png");
   private static final Icon ourQuickFixIcon = IconLoader.getIcon("/actions/quickfixBulb.png");
@@ -65,52 +64,79 @@ public class IntentionHintComponent extends JPanel {
   private final Project myProject;
   private final Editor myEditor;
 
-  private static Alarm myAlarm = new Alarm();
+  private static final Alarm myAlarm = new Alarm();
 
-  private RowIcon myHighlightedIcon;
-  private JButton myButton;
+  private final RowIcon myHighlightedIcon;
+  private final JButton myButton;
 
   private final Icon mySmartTagIcon;
 
   private static final int DELAY = 500;
-  private MyComponentHint myComponentHint;
+  private final MyComponentHint myComponentHint;
   private static final Color BACKGROUND_COLOR = new Color(255, 255, 255, 0);
   private boolean myPopupShown = false;
   private ListPopup myPopup;
-
-  private class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching> {
-    private final Set<IntentionActionWithTextCaching> myActions;
-    private final IntentionManagerSettings mySettings;
-    private final Set<IntentionAction> myQuickFixes = new ConcurrentHashSet<IntentionAction>();
-
-    public IntentionListStep(List<HighlightInfo.IntentionActionDescriptor> quickFixes,
-                             List<HighlightInfo.IntentionActionDescriptor> intentions) {
-      mySettings = IntentionManagerSettings.getInstance();
-      Set<HighlightInfo.IntentionActionDescriptor> allActions = new THashSet<HighlightInfo.IntentionActionDescriptor>(quickFixes);
-      allActions.addAll(intentions);
-      for (HighlightInfo.IntentionActionDescriptor pair : quickFixes) {
-        myQuickFixes.add(pair.getAction());
-        if (pair.getOptions() != null) {
-          myQuickFixes.addAll(pair.getOptions());
-        }
-      }
-      myActions = wrapActions(allActions);
+  private static final TObjectHashingStrategy<IntentionActionWithTextCaching> ACTION_TEXT_AND_CLASS_EQUALS = new TObjectHashingStrategy<IntentionActionWithTextCaching>() {
+    public int computeHashCode(final IntentionActionWithTextCaching object) {
+      return object.getText().hashCode();
     }
 
-    private Set<IntentionActionWithTextCaching> wrapActions(Set<HighlightInfo.IntentionActionDescriptor> actions) {
-      Set<IntentionActionWithTextCaching> compositeActions = new ConcurrentHashSet<IntentionActionWithTextCaching>(actions.size());
-      for (HighlightInfo.IntentionActionDescriptor pair : actions) {
-        if (pair.getAction() != null) {
-          IntentionActionWithTextCaching action = new IntentionActionWithTextCaching(pair.getAction(), pair.getDisplayName());
-          if (pair.getOptions() != null) {
-            for (IntentionAction intentionAction : pair.getOptions()) {
-              action.addAction(intentionAction, myQuickFixes.contains(intentionAction));
-            }
+    public boolean equals(final IntentionActionWithTextCaching o1, final IntentionActionWithTextCaching o2) {
+      return o1.getAction().getClass() == o2.getAction().getClass() && o1.getText().equals(o2.getText());
+    }
+  };
+  private final PsiFile myFile;
+
+  private class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching> {
+    private final Set<IntentionActionWithTextCaching> myCachedIntentions = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
+    private final Set<IntentionActionWithTextCaching> myCachedFixes = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
+    private final IntentionManagerSettings mySettings;
+
+    private IntentionListStep(List<HighlightInfo.IntentionActionDescriptor> quickFixes,
+                             List<HighlightInfo.IntentionActionDescriptor> intentions) {
+      mySettings = IntentionManagerSettings.getInstance();
+      updateActions(quickFixes, intentions);
+    }
+
+    //true if nothing changed
+    private boolean updateActions(final List<HighlightInfo.IntentionActionDescriptor> quickFixes,
+                              final List<HighlightInfo.IntentionActionDescriptor> intentions) {
+      boolean result = wrapActionsTo(quickFixes, myCachedFixes);
+      result &= wrapActionsTo(intentions, myCachedIntentions);
+      return result;
+    }
+
+    private boolean wrapActionsTo(final List<HighlightInfo.IntentionActionDescriptor> descriptors,
+                               final Set<IntentionActionWithTextCaching> cachedActions) {
+      boolean result = true;
+      for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
+        IntentionAction action = descriptor.getAction();
+        IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(action, descriptor.getDisplayName());
+        result &= !cachedActions.add(cachedAction);
+        List<IntentionAction> options = descriptor.getOptions();
+        if (options != null) {
+          for (IntentionAction option : options) {
+            boolean isFix = myCachedFixes.contains(new IntentionActionWithTextCaching(option, option.getText()));
+            cachedAction.addAction(option, isFix);
           }
-          compositeActions.add(action);
         }
       }
-      return compositeActions;
+      result &= removeInvalidActions(cachedActions);
+      return result;
+    }
+
+    private boolean removeInvalidActions(final Collection<IntentionActionWithTextCaching> cachedActions) {
+      boolean result = true;
+      Iterator<IntentionActionWithTextCaching> iterator = cachedActions.iterator();
+      while (iterator.hasNext()) {
+        IntentionActionWithTextCaching cachedAction = iterator.next();
+        IntentionAction action = cachedAction.getAction();
+        if (!myFile.isValid() || !action.isAvailable(myProject, myEditor, myFile)) {
+          iterator.remove();
+          result = false;
+        }
+      }
+      return result;
     }
 
     public String getTitle() {
@@ -123,7 +149,7 @@ public class IntentionHintComponent extends JPanel {
 
     public PopupStep onChosen(final IntentionActionWithTextCaching action, final boolean finalChoice) {
       if (finalChoice && !(action.getAction() instanceof EmptyIntentionAction)) {
-        applyAction(action.getAction());
+        applyAction(action);
         return PopupStep.FINAL_CHOICE;
       }
 
@@ -159,11 +185,12 @@ public class IntentionHintComponent extends JPanel {
 
     @NotNull
     public List<IntentionActionWithTextCaching> getValues() {
-      ArrayList<IntentionActionWithTextCaching> result = new ArrayList<IntentionActionWithTextCaching>(myActions);
+      List<IntentionActionWithTextCaching> result = new ArrayList<IntentionActionWithTextCaching>(myCachedFixes);
+      result.addAll(myCachedIntentions);
       Collections.sort(result, new Comparator<IntentionActionWithTextCaching>() {
         public int compare(final IntentionActionWithTextCaching o1, final IntentionActionWithTextCaching o2) {
-          boolean isFix1 = myQuickFixes.contains(o1.getAction());
-          boolean isFix2 = myQuickFixes.contains(o2.getAction());
+          boolean isFix1 = myCachedFixes.contains(o1);
+          boolean isFix2 = myCachedFixes.contains(o2);
           if (isFix1 != isFix2) {
             return isFix1 ? -1 : 1;
           }
@@ -182,7 +209,7 @@ public class IntentionHintComponent extends JPanel {
       final IntentionAction action = value.getAction();
 
       if (mySettings.isShowLightBulb(action)) {
-        if (myQuickFixes.contains(action)) {
+        if (myCachedFixes.contains(value)) {
           return ourQuickFixIcon;
         }
         else {
@@ -190,7 +217,7 @@ public class IntentionHintComponent extends JPanel {
         }
       }
       else {
-        if (myQuickFixes.contains(action)) {
+        if (myCachedFixes.contains(value)) {
           return ourQuickFixOffIcon;
         }
         else {
@@ -213,30 +240,14 @@ public class IntentionHintComponent extends JPanel {
     public boolean isSpeedSearchEnabled() { return false; }
     public boolean isAutoSelectionEnabled() { return false; }
     public SpeedSearchFilter<IntentionActionWithTextCaching> getSpeedSearchFilter() { return null; }
-
-    public void updateActions(final List<HighlightInfo.IntentionActionDescriptor> quickFixes,
-                              final List<HighlightInfo.IntentionActionDescriptor> intentions) {
-      Set<HighlightInfo.IntentionActionDescriptor> allActions = new THashSet<HighlightInfo.IntentionActionDescriptor>(quickFixes);
-      allActions.addAll(intentions);
-      List<IntentionAction> actions = new ArrayList<IntentionAction>();
-      for (HighlightInfo.IntentionActionDescriptor pair : quickFixes) {
-        actions.add(pair.getAction());
-        if (pair.getOptions() != null) {
-          actions.addAll(pair.getOptions());
-        }
-      }
-      myQuickFixes.addAll(actions);
-      myActions.addAll(wrapActions(allActions));
-      myPopup = JBPopupFactory.getInstance().createListPopup(this);
-    }
   }
 
   private static class IntentionActionWithTextCaching {
-    private ArrayList<IntentionAction> myOptionIntentions;
-    private ArrayList<IntentionAction> myOptionFixes;
-    private String myText = null;
-    private IntentionAction myAction;
-    private String myDisplayName;
+    private final List<IntentionAction> myOptionIntentions;
+    private final List<IntentionAction> myOptionFixes;
+    private final String myText;
+    private final IntentionAction myAction;
+    private final String myDisplayName;
 
     public IntentionActionWithTextCaching(IntentionAction action, String displayName) {
       myOptionIntentions = new ArrayList<IntentionAction>();
@@ -283,12 +294,11 @@ public class IntentionHintComponent extends JPanel {
     }
   }
 
-  public static IntentionHintComponent showIntentionHint(Project project,
-                                                         Editor view,
+  public static IntentionHintComponent showIntentionHint(Project project, final PsiFile file, Editor editor,
                                                          List<HighlightInfo.IntentionActionDescriptor> intentions,
                                                          List<HighlightInfo.IntentionActionDescriptor> quickFixes,
                                                          boolean showExpanded) {
-    final IntentionHintComponent component = new IntentionHintComponent(project, view, intentions, quickFixes);
+    final IntentionHintComponent component = new IntentionHintComponent(project, file, editor, intentions, quickFixes);
 
     if (showExpanded) {
       component.showIntentionHintImpl(false);
@@ -304,27 +314,34 @@ public class IntentionHintComponent extends JPanel {
 
     return component;
   }
-
-  public void updateIfNotShowingPopup(List<HighlightInfo.IntentionActionDescriptor> quickfixes,
+  public boolean canBeUpdated() {
+    return myComponentHint.isVisible() && !myPopupShown;
+  }
+  //true if success
+  public boolean updateActions(List<HighlightInfo.IntentionActionDescriptor> quickfixes,
                                       List<HighlightInfo.IntentionActionDescriptor> intentions) {
-    if (!myPopupShown) {
-      if (myPopup.getListStep() instanceof IntentionListStep) {
-        IntentionListStep step = (IntentionListStep)myPopup.getListStep();
-        step.updateActions(quickfixes, intentions);
-      }
-      else {
-       myPopup = JBPopupFactory.getInstance().createListPopup(new IntentionListStep(quickfixes, intentions));
-      }
+    if (myPopup.getContent() == null) {
+      // already disposed
+      return false;
     }
+    IntentionListStep step = (IntentionListStep)myPopup.getListStep();
+    if (!step.updateActions(quickfixes, intentions)) {
+      if (!myPopupShown) {
+        myPopup = JBPopupFactory.getInstance().createListPopup(step);
+        return true;
+      }
+      return false;
+    }
+
+    return true;
   }
 
   private void showIntentionHintImpl(final boolean delay) {
     final int offset = myEditor.getCaretModel().getOffset();
-    final HintManager hintManager = HintManager.getInstance();
 
     myComponentHint.setShouldDelay(delay);
 
-    hintManager.showQuestionHint(myEditor,
+    HintManager.getInstance().showQuestionHint(myEditor,
                                  getHintPosition(myEditor, offset),
                                  offset,
                                  offset,
@@ -353,11 +370,13 @@ public class IntentionHintComponent extends JPanel {
     return new Point(location.x, location.y);
   }
 
-  public IntentionHintComponent(Project project,
-                                Editor editor,
-                                List<HighlightInfo.IntentionActionDescriptor> intentions,
-                                List<HighlightInfo.IntentionActionDescriptor> quickFixes) {
+  private IntentionHintComponent(@NotNull Project project,
+                                @NotNull PsiFile file,
+                                @NotNull Editor editor,
+                                @NotNull List<HighlightInfo.IntentionActionDescriptor> intentions,
+                                @NotNull List<HighlightInfo.IntentionActionDescriptor> quickFixes) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
+    myFile = file;
     myProject = project;
     myEditor = editor;
 
@@ -405,6 +424,13 @@ public class IntentionHintComponent extends JPanel {
 
     myComponentHint = new MyComponentHint(this);
     myPopup = JBPopupFactory.getInstance().createListPopup(new IntentionListStep(quickFixes, intentions));
+  }
+
+  @Deprecated
+  public void hide() {
+    closePopup();
+    myComponentHint.hide();
+    super.hide();
   }
 
   private void onMouseExit() {
@@ -498,39 +524,40 @@ public class IntentionHintComponent extends JPanel {
     }
   }
 
-  private void applyAction(final IntentionAction action) {
+  private void applyAction(final IntentionActionWithTextCaching cachedAction) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        HintManager hintManager = HintManager.getInstance();
-        hintManager.hideAllHints();
+        HintManager.getInstance().hideAllHints();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+            final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+            final IntentionAction action = cachedAction.getAction();
+            if (file == null || !action.isAvailable(myProject, myEditor, file)) {
+              return;
+            }
+            Runnable runnable = new Runnable() {
+              public void run() {
+                try {
+                  action.invoke(myProject, myEditor, file);
+                }
+                catch (IncorrectOperationException e) {
+                  LOG.error(e);
+                }
+                DaemonCodeAnalyzer.getInstance(myProject).updateVisibleHighlighters(myEditor);
+              }
+            };
 
-            if (action.isAvailable(myProject, myEditor, file)) {
-              Runnable runnable = new Runnable() {
+            if (action.startInWriteAction()) {
+              final Runnable _runnable = runnable;
+              runnable = new Runnable() {
                 public void run() {
-                  try {
-                    action.invoke(myProject, myEditor, file);
-                  } catch (IncorrectOperationException e1) {
-                    LOG.error(e1);
-                  }
-                  DaemonCodeAnalyzer.getInstance(myProject).updateVisibleHighlighters(myEditor);
+                  ApplicationManager.getApplication().runWriteAction(_runnable);
                 }
               };
-
-              if (action.startInWriteAction()) {
-                final Runnable _runnable = runnable;
-                runnable = new Runnable() {
-                  public void run() {
-                    ApplicationManager.getApplication().runWriteAction(_runnable);
-                  }
-                };
-              }
-
-              CommandProcessor.getInstance().executeCommand(myProject, runnable, action.getText(), null);
             }
+
+            CommandProcessor.getInstance().executeCommand(myProject, runnable, cachedAction.getText(), null);
           }
         });
       }

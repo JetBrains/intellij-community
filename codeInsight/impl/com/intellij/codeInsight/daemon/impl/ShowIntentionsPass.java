@@ -138,14 +138,14 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     List<HighlightInfo.IntentionActionDescriptor> fixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
     int offset = myEditor.getCaretModel().getOffset();
+    HighlightInfo infoAtCursor = codeAnalyzer.findHighlightByOffset(myEditor.getDocument(), offset, true);
     for (IntentionAction action : myIntentionActions) {
       if (action instanceof IntentionActionComposite) {
-        if (action instanceof QuickFixAction/* || action instanceof PostIntentionsQuickFixAction && showPostIntentions*/) {
+        if (action instanceof QuickFixAction) {
           List<HighlightInfo.IntentionActionDescriptor> availableActions =
             ((IntentionActionComposite)action).getAvailableActions(myEditor, myFile, myPassIdToShowIntentionsFor);
 
-          HighlightInfo info = codeAnalyzer.findHighlightByOffset(myEditor.getDocument(), offset, true);
-          if (info == null || info.getSeverity() == HighlightSeverity.ERROR) {
+          if (infoAtCursor == null || infoAtCursor.getSeverity() == HighlightSeverity.ERROR) {
             fixesToShow.addAll(availableActions);
           }
           else {
@@ -181,11 +181,16 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
       if (showBulb) {
         IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
+
         if (hintComponent != null) {
-          hintComponent.updateIfNotShowingPopup(fixesToShow, intentionsToShow);
+          if (hintComponent.updateActions(fixesToShow, intentionsToShow)) {
+            return;
+          }
+          hintComponent.hide();
+          codeAnalyzer.setLastIntentionHint(null);
         }
-        else if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
-          hintComponent = IntentionHintComponent.showIntentionHint(myProject, injectedEditor, intentionsToShow, fixesToShow, false);
+        if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
+          hintComponent = IntentionHintComponent.showIntentionHint(myProject, injectedFile, injectedEditor, intentionsToShow, fixesToShow, false);
           codeAnalyzer.setLastIntentionHint(hintComponent);
         }
       }
@@ -215,7 +220,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     element = element.getParent();
     if (!(element instanceof PsiJavaCodeReferenceElement)) return false;
-
+                                       
     final HighlightInfoType infoType = info.type;
     return isWrongRef(infoType) && showAddImportHint(myEditor, (PsiJavaCodeReferenceElement)element);
   }

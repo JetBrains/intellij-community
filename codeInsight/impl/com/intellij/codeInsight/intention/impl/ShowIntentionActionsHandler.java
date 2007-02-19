@@ -65,7 +65,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     }
 
     if (!intentionsToShow.isEmpty() || !fixesToShow.isEmpty()) {
-      IntentionHintComponent.showIntentionHint(project, editor, intentionsToShow, fixesToShow, true);
+      IntentionHintComponent.showIntentionHint(project, file, editor, intentionsToShow, fixesToShow, true);
     }
     else {
 //      Toolkit.getDefaultToolkit().beep();

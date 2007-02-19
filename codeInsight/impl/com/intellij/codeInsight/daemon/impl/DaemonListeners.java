@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
@@ -62,6 +63,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 
+
 /**
  * @author cdr
  */
@@ -79,17 +81,17 @@ public class DaemonListeners {
   private final EditorMouseListener myEditorMouseListener = new MyEditorMouseListener();
   private final ProfileChangeAdapter myProfileChangeListener = new MyProfileChangeListener();
 
-  private DocumentListener myDocumentListener;
-  private VirtualFileAdapter myVirtualFileListener;
-  private EditorFactoryListener myEditorFactoryListener;
+  private final DocumentListener myDocumentListener;
+  private final VirtualFileAdapter myVirtualFileListener;
+  private final EditorFactoryListener myEditorFactoryListener;
 
-  private CaretListener myCaretListener;
+  private final CaretListener myCaretListener;
   private final Project myProject;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
 
   private boolean myEscPressed;
 
-  private ErrorStripeHandler myErrorStripeHandler;
+  private final ErrorStripeHandler myErrorStripeHandler;
 
   private volatile boolean cutOperationJustHappened;
   private final EditorTracker myEditorTracker;
@@ -113,6 +115,11 @@ public class DaemonListeners {
     myCaretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {
         stopDaemon(true);
+        IntentionHintComponent component = myDaemonCodeAnalyzer.getLastIntentionHint();
+        if (component != null) {
+          component.hide();
+          myDaemonCodeAnalyzer.setLastIntentionHint(null);
+        }
       }
     };
     eventMulticaster.addCaretListener(myCaretListener);
@@ -126,7 +133,6 @@ public class DaemonListeners {
         if (editors.length > 0) {
           stopDaemon(true);  // do not stop daemon if idea loses focus
         }
-        List<Editor> list = Arrays.asList(editors);
       }
     };
     myEditorTracker.addEditorTrackerListener(myEditorTrackerListener);

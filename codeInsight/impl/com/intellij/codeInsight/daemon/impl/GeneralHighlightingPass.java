@@ -53,8 +53,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   @NotNull private final HighlightVisitor[] myHighlightVisitors;
 
-  private Collection<HighlightInfo> myHighlights = Collections.emptyList();
-  private Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
+  private volatile Collection<HighlightInfo> myHighlights = Collections.emptyList();
+  private volatile Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
 
   private final DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
   protected boolean myHasErrorElement;
@@ -109,9 +109,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
+    RefCountHolder refCountHolder = null;
     if (myUpdateAll) {
       DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-      RefCountHolder refCountHolder = daemonCodeAnalyzer.getFileStatusMap().getRefCountHolder(myDocument, myFile);
+      refCountHolder = daemonCodeAnalyzer.getFileStatusMap().getRefCountHolder(myDocument, myFile);
       setRefCountHolders(refCountHolder);
 
       PsiElement dirtyScope = daemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(myDocument, Pass.UPDATE_ALL);
@@ -150,9 +151,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
     }
     finally {
-      if (myHighlightVisitors != null) {
-        setRefCountHolders(null);
-        releaseHighlightVisitors();
+      setRefCountHolders(null);
+      releaseHighlightVisitors();
+      if (refCountHolder != null) {
+        refCountHolder.touch(); //assertions
       }
     }
     myHighlights = result;
@@ -176,7 +178,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     try {
       if (myFile.getNode() == null) {
         // binary file? see IDEADEV-2809
-        return new ArrayList<LineMarkerInfo>();
+        return Collections.emptyList();
       }
       return collectLineMarkers(CodeInsightUtil.getElementsInRange(myFile, myStartOffset, myEndOffset));
     }
@@ -209,6 +211,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final boolean isAntFile = CodeInsightUtil.isAntFile(myFile);
 
     final HighlightInfoHolder holder = createInfoHolder();
+    holder.setWritable(true);
     ProgressManager progressManager = ProgressManager.getInstance();
     setProgressLimit((long)elements.size() * visitors.size());
 
@@ -227,21 +230,15 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       if (element instanceof PsiErrorElement) {
         myHasErrorElement = true;
       }
-      try {
-        holder.setWritable(true);
-        holder.clear();
-        //noinspection ForLoopReplaceableByForEach
-        for (int j = 0; j < visitors.size(); j++) {
-          HighlightVisitor visitor = visitors.get(j);
-          visitor.visit(element, holder);
-        }
-        if (i == nextLimit) {
-          advanceProgress(chunkSize * visitors.size());
-          nextLimit = i + chunkSize;
-        }
+      holder.clear();
+      //noinspection ForLoopReplaceableByForEach
+      for (int j = 0; j < visitors.size(); j++) {
+        HighlightVisitor visitor = visitors.get(j);
+        visitor.visit(element, holder);
       }
-      finally {
-        holder.setWritable(false);
+      if (i == nextLimit) {
+        advanceProgress(chunkSize * visitors.size());
+        nextLimit = i + chunkSize;
       }
 
       //noinspection ForLoopReplaceableByForEach

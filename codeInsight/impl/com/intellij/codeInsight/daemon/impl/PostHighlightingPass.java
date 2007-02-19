@@ -122,7 +122,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     }
     collectHighlights(elementSet, highlights);
 
-    PsiNamedElement[] unusedDcls = myRefCountHolder.getUnusedDcls();
+    List<PsiNamedElement> unusedDcls = myRefCountHolder.getUnusedDcls();
     for (PsiNamedElement unusedDcl : unusedDcls) {
       String dclType = UsageViewUtil.capitalize(UsageViewUtil.getType(unusedDcl));
       if (dclType == null || dclType.length() == 0) dclType = LangBundle.message("java.terms.symbol");
@@ -179,11 +179,15 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private void collectHighlights(Collection<PsiElement> elements, List<HighlightInfo> array) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
+    if (!profile.isToolEnabled(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME))) return;
+    final UnusedSymbolLocalInspection unusedSymbolInspection = (UnusedSymbolLocalInspection)((LocalInspectionToolWrapper)profile.getInspectionTool(UnusedSymbolLocalInspection.SHORT_NAME)).getTool();
+
     for (PsiElement element : elements) {
       ProgressManager.getInstance().checkCanceled();
 
       if (element instanceof PsiIdentifier) {
-        final HighlightInfo highlightInfo = processIdentifier((PsiIdentifier)element);
+        final HighlightInfo highlightInfo = processIdentifier((PsiIdentifier)element,unusedSymbolInspection);
         if (highlightInfo != null) array.add(highlightInfo);
       }
       else if (element instanceof PsiImportList) {
@@ -201,10 +205,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   @Nullable
-  private HighlightInfo processIdentifier(PsiIdentifier identifier) {
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(identifier);
-    if (!profile.isToolEnabled(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME))) return null;
-    final UnusedSymbolLocalInspection unusedSymbolInspection = (UnusedSymbolLocalInspection)((LocalInspectionToolWrapper)profile.getInspectionTool(UnusedSymbolLocalInspection.SHORT_NAME)).getTool();
+  private HighlightInfo processIdentifier(PsiIdentifier identifier, final UnusedSymbolLocalInspection unusedSymbolInspection) {
     if (InspectionManagerEx.inspectionResultSuppressed(identifier, unusedSymbolInspection)) return null;
     PsiElement parent = identifier.getParent();
     if (PsiUtil.hasErrorElementChild(parent)) return null;
@@ -465,8 +466,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   @Nullable
   private HighlightInfo processImport(PsiImportStatementBase importStatement) {
-    if (!InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(importStatement).isToolEnabled(HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME))) return null;
-
     // jsp include directive hack
     if (importStatement instanceof JspxImportStatement && ((JspxImportStatement)importStatement).isForeignFileImport()) return null;
 

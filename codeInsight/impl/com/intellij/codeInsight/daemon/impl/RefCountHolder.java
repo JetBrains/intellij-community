@@ -26,12 +26,14 @@ public class RefCountHolder {
   private final Map<String, XmlAttribute> myXmlId2AttributeMap = new THashMap<String, XmlAttribute>();
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new THashMap<PsiReference, PsiImportStatementBase>();
   private final Set<PsiNamedElement> myUsedElements = new THashSet<PsiNamedElement>();
+  private boolean myTouched;
 
   public RefCountHolder(PsiFile file) {
     myFile = file;
   }
 
   public synchronized void clear() {
+    myTouched=false;
     myLocalRefsMap.clear();
     myImportStatements.clear();
     myDclsUsedMap.clear();
@@ -41,11 +43,7 @@ public class RefCountHolder {
 
   public synchronized void registerLocallyReferenced(@NotNull PsiNamedElement result) {
     myDclsUsedMap.put(result,Boolean.TRUE);
-  }
-
-  public synchronized void registerLocalDcl(@NotNull PsiNamedElement dcl) {
-    myDclsUsedMap.put(dcl,Boolean.FALSE);
-    addStatistics(dcl);
+    myTouched = true;
   }
 
   private static void addStatistics(final PsiNamedElement dcl) {
@@ -57,18 +55,21 @@ public class RefCountHolder {
   }
 
   public synchronized void registerAttributeWithId(@NotNull String id, XmlAttribute attr) {
+    myTouched = true;
     myXmlId2AttributeMap.put(id,attr);
   }
 
   public synchronized XmlAttribute getAttributeById(String id) {
+    LOG.assertTrue(myTouched);
     return myXmlId2AttributeMap.get(id);
   }
 
   public synchronized void registerReference(@NotNull PsiJavaReference ref, JavaResolveResult resolveResult) {
+    myTouched = true;
     PsiElement refElement = resolveResult.getElement();
     PsiFile psiFile = refElement == null ? null : refElement.getContainingFile();
     if (psiFile != null) psiFile = (PsiFile)psiFile.getNavigationElement(); // look at navigation elements because all references resolve into Cls elements when highlighting library source
-    if (refElement != null && psiFile != null && getFile().getViewProvider().equals(psiFile.getViewProvider())) {
+    if (refElement != null && psiFile != null && myFile.getViewProvider().equals(psiFile.getViewProvider())) {
       registerLocalRef(ref, refElement.getNavigationElement());
     }
 
@@ -83,6 +84,7 @@ public class RefCountHolder {
   }
 
   public synchronized boolean isRedundant(PsiImportStatementBase importStatement) {
+    LOG.assertTrue(myTouched);
     return !myImportStatements.containsValue(importStatement);
   }
 
@@ -126,8 +128,9 @@ public class RefCountHolder {
   }
 
   public synchronized boolean isReferenced(PsiNamedElement element) {
+    LOG.assertTrue(myTouched);
     List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
-    if(array != null && !array.isEmpty() && !isParameterUsedRecursively(element, array)) return true;
+    if (array != null && !array.isEmpty() && !isParameterUsedRecursively(element, array)) return true;
 
     Boolean usedStatus = myDclsUsedMap.get(element);
     return usedStatus == Boolean.TRUE;
@@ -163,6 +166,7 @@ public class RefCountHolder {
   }
 
   public synchronized boolean isReferencedForRead(PsiElement element) {
+    LOG.assertTrue(myTouched);
     LOG.assertTrue(element instanceof PsiVariable);
     List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
     if (array == null) return false;
@@ -184,6 +188,7 @@ public class RefCountHolder {
   }
 
   public synchronized boolean isReferencedForWrite(PsiElement element) {
+    LOG.assertTrue(myTouched);
     LOG.assertTrue(element instanceof PsiVariable);
     List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
     if (array == null) return false;
@@ -199,18 +204,19 @@ public class RefCountHolder {
     return false;
   }
 
-  public PsiFile getFile() {
-    return myFile;
-  }
-
-  public synchronized PsiNamedElement[] getUnusedDcls() {
-    List<PsiNamedElement> result = new LinkedList<PsiNamedElement>();
+  public synchronized List<PsiNamedElement> getUnusedDcls() {
+    LOG.assertTrue(myTouched);
+    List<PsiNamedElement> result = new ArrayList<PsiNamedElement>();
     Set<Map.Entry<PsiNamedElement, Boolean>> entries = myDclsUsedMap.entrySet();
 
     for (final Map.Entry<PsiNamedElement, Boolean> entry : entries) {
       if (entry.getValue() == Boolean.FALSE) result.add(entry.getKey());
     }
 
-    return result.toArray(new PsiNamedElement[result.size()]);
+    return result;
+  }
+
+  public synchronized void touch() {
+    myTouched = true;
   }
 }

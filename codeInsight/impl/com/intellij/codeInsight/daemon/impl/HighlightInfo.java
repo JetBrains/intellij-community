@@ -245,12 +245,13 @@ public class HighlightInfo {
     private final List<IntentionAction> myOptions;
     private final String myDisplayName;
 
-    public IntentionActionDescriptor(final IntentionAction action, final List<IntentionAction> options, final String displayName) {
+    public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName) {
       myAction = action;
       myOptions = options;
       myDisplayName = displayName;
     }
 
+    @NotNull
     public IntentionAction getAction() {
       return myAction;
     }
