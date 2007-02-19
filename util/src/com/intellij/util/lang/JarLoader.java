@@ -1,12 +1,13 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.TimedReference;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
 import java.io.*;
-import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -18,7 +19,22 @@ class JarLoader extends Loader {
   private URL myURL;
   private final boolean myCanLockJar;
   private final boolean myUseCache;
-  private SoftReference<ZipFile> myZipFileRef;
+
+  //private SoftReference<ZipFile> myZipFileRef;
+  private TimedReference<ZipFile> myZipFileRef = new TimedReference<ZipFile>(null) {
+    @NotNull
+    protected ZipFile calc() {
+      try {
+        final ZipFile zipFile = _getZipFile();
+        if (zipFile == null) throw new RuntimeException("Can't load zip file");
+        return zipFile;
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  };
+
   private Map<String,Boolean> myDirectories = null;
   @NonNls private static final String JAR_PROTOCOL = "jar";
   @NonNls private static final String FILE_PROTOCOL = "file";
@@ -32,13 +48,20 @@ class JarLoader extends Loader {
 
   @Nullable
   private ZipFile getZipFile() throws IOException {
+    /*
     ZipFile zipFile = myZipFileRef != null ? myZipFileRef.get() : null;
     if (zipFile != null) return zipFile;
+    */
+
     if (myCanLockJar) {
+      return myZipFileRef.acquire();
+      /*
       zipFile = _getZipFile();
       myZipFileRef = new SoftReference<ZipFile>(zipFile);
       return zipFile;
+      */
     }
+
 
     return _getZipFile();
   }
@@ -88,6 +111,9 @@ class JarLoader extends Loader {
   private void releaseZipFile(final ZipFile zipFile) throws IOException {
     if (!myCanLockJar) {
       zipFile.close();
+    }
+    else {
+      myZipFileRef.release();
     }
   }
 
