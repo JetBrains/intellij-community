@@ -27,8 +27,8 @@ public class CaptionPanel extends JPanel {
   private final static Color CNT_COLOR = new Color(240, 240, 240);
   private final static Color BND_COLOR = new Color(240, 240, 240);
 
-  private final static Color CNT_ACTIVE_COLOR = new Color(0xcacaca);
-  private final static Color BND_ACTIVE_COLOR = new Color(0xefefef);
+  public final static Color CNT_ACTIVE_COLOR = new Color(0xcacaca);
+  public final static Color BND_ACTIVE_COLOR = new Color(0xefefef);
 
   private boolean myActive = false;
   private ActiveComponent myButtonComponent;
