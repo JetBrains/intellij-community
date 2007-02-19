@@ -180,17 +180,19 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
-    if (!profile.isToolEnabled(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME))) return;
-    final UnusedSymbolLocalInspection unusedSymbolInspection = (UnusedSymbolLocalInspection)((LocalInspectionToolWrapper)profile.getInspectionTool(UnusedSymbolLocalInspection.SHORT_NAME)).getTool();
+    boolean unusedSymbolEnabled = profile.isToolEnabled(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME));
+    boolean unusedImportEnabled = profile.isToolEnabled(HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME));
+    LocalInspectionToolWrapper unusedSymbolTool = (LocalInspectionToolWrapper)profile.getInspectionTool(UnusedSymbolLocalInspection.SHORT_NAME);
+    final UnusedSymbolLocalInspection unusedSymbolInspection = unusedSymbolTool == null ? null : (UnusedSymbolLocalInspection)unusedSymbolTool.getTool();
 
     for (PsiElement element : elements) {
       ProgressManager.getInstance().checkCanceled();
 
-      if (element instanceof PsiIdentifier) {
+      if (element instanceof PsiIdentifier && unusedSymbolEnabled) {
         final HighlightInfo highlightInfo = processIdentifier((PsiIdentifier)element,unusedSymbolInspection);
         if (highlightInfo != null) array.add(highlightInfo);
       }
-      else if (element instanceof PsiImportList) {
+      else if (element instanceof PsiImportList && unusedImportEnabled) {
         final PsiImportStatementBase[] imports = ((PsiImportList)element).getAllImportStatements();
         for (PsiImportStatementBase statement : imports) {
           final HighlightInfo highlightInfo = processImport(statement);
