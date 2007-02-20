@@ -4,21 +4,20 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public abstract class TimedReference<T> implements Disposable {
-  private static final List<TimedReference> ourReferences = Collections.synchronizedList(new ArrayList<TimedReference>());
+  private static final Set<TimedReference> ourReferences = Collections.synchronizedSet(new HashSet<TimedReference>());
   private T t;
   private int myAcquireCount = 0;
   private int myAccessCount = 0;
   private int myLastCheckedAccessCount = 0;
 
   public TimedReference(Disposable parentDisposable) {
-    ourReferences.add(this);
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, this);
     }

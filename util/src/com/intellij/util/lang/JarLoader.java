@@ -21,7 +21,7 @@ class JarLoader extends Loader {
   private final boolean myUseCache;
 
   //private SoftReference<ZipFile> myZipFileRef;
-  private TimedReference<ZipFile> myZipFileRef = new TimedReference<ZipFile>(null) {
+  private final TimedReference<ZipFile> myZipFileRef = new TimedReference<ZipFile>(null) {
     @NotNull
     protected ZipFile calc() {
       try {
@@ -48,22 +48,12 @@ class JarLoader extends Loader {
 
   @Nullable
   private ZipFile getZipFile() throws IOException {
-    /*
-    ZipFile zipFile = myZipFileRef != null ? myZipFileRef.get() : null;
-    if (zipFile != null) return zipFile;
-    */
-
     if (myCanLockJar) {
       return myZipFileRef.acquire();
-      /*
-      zipFile = _getZipFile();
-      myZipFileRef = new SoftReference<ZipFile>(zipFile);
-      return zipFile;
-      */
     }
-
-
-    return _getZipFile();
+    else {
+      return _getZipFile();
+    }
   }
 
   @Nullable
@@ -109,11 +99,11 @@ class JarLoader extends Loader {
   }
 
   private void releaseZipFile(final ZipFile zipFile) throws IOException {
-    if (!myCanLockJar) {
-      zipFile.close();
+    if (myCanLockJar) {
+      myZipFileRef.release();
     }
     else {
-      myZipFileRef.release();
+      zipFile.close();
     }
   }
 
@@ -128,9 +118,7 @@ class JarLoader extends Loader {
         final Boolean hasClassFiles = myDirectories.get(packageName);
         if (hasClassFiles == null) return null;
 
-        if ( name.endsWith(UrlClassLoader.CLASS_EXTENSION) &&
-              !hasClassFiles.booleanValue()
-            ) {
+        if (name.endsWith(UrlClassLoader.CLASS_EXTENSION) && !hasClassFiles.booleanValue()) {
           return null;
         }
       }
@@ -185,16 +173,27 @@ class JarLoader extends Loader {
       final ZipFile file = getZipFile();
       if (file == null) return null;
 
+      final boolean[] wasReleased = new boolean[]{false};
+
       try {
+
         final InputStream inputStream = file.getInputStream(myEntry);
         return new FilterInputStream(inputStream) {
+          private boolean myClosed = false;
+
           public void close() throws IOException {
             super.close();
-            releaseZipFile(file);
+            if (!myClosed) {
+              releaseZipFile(file);
+            }
+            myClosed = true;
+            wasReleased[0] = true;
           }
         };
       }
       catch (IOException e) {
+        e.printStackTrace();
+        assert !wasReleased[0];
         releaseZipFile(file);
         return null;
       }
