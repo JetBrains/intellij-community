@@ -66,7 +66,19 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons {
       return new ColoredTableCellRenderer() {
         protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
           final String vcsName = p0.getVcs();
-          String text = vcsName.length() == 0 ? VcsBundle.message("none.vcs.presentation") : myVcsManager.findVcsByName(vcsName).getDisplayName();
+          String text;
+          if (vcsName.length() == 0) {
+            text = VcsBundle.message("none.vcs.presentation");
+          }
+          else {
+            final AbstractVcs vcs = myVcsManager.findVcsByName(vcsName);
+            if (vcs != null) {
+              text = vcs.getDisplayName();
+            }
+            else {
+              text = VcsBundle.message("unknown.vcs.presentation", vcsName);
+            }
+          }
           append(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, table.getForeground()));
         }
       };
