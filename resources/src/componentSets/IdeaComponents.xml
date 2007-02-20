@@ -36,7 +36,6 @@
   <xi:include href="Compiler.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Execution.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="VCS.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="J2EE.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="ErrorReport.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Http.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Util.xml" xpointer="xpointer(/components/*)"/>

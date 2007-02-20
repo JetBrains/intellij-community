@@ -8,6 +8,7 @@ import com.intellij.lang.ant.psi.changes.AntChangeVisitor;
 import com.intellij.lang.ant.validation.AntDuplicateImportedTargetsInspection;
 import com.intellij.lang.ant.validation.AntDuplicateTargetsInspection;
 import com.intellij.lang.ant.validation.AntMissingPropertiesFileInspection;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -27,9 +28,16 @@ public class AntSupport implements ApplicationComponent, InspectionToolProvider 
   private static AntChangeVisitor ourChangeVisitor = null;
   private static Map<AntFile, WeakHashMap<AntFile, Boolean>> ourFileDependencies;
 
-  public AntSupport(FileTypeManager fileTypeManager) {
+  public AntSupport(FileTypeManager fileTypeManager, ActionManager actionManager) {
     fileTypeManager.getRegisteredFileTypes();
     ((CompositeLanguage)StdLanguages.XML).registerLanguageExtension(new AntLanguageExtension());
+
+    final AnAction addAntBuildFile = actionManager.getAction("AddAntBuildFile");
+    assert addAntBuildFile != null;
+    final DefaultActionGroup group = (DefaultActionGroup)actionManager.getAction("J2EEViewPopupMenu");
+    if (group != null) {
+      group.add(addAntBuildFile, new Constraints(Anchor.AFTER, "ValidateXml"));
+    }
   }
 
   public static AntLanguage getLanguage() {

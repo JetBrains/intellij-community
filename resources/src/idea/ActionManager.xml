@@ -119,58 +119,6 @@
     <action id="CollapseTreeNode" class="com.intellij.ide.actions.tree.CollapseTreeNodeAction"/>
     <action id="FullyExpandTreeNode" class="com.intellij.ide.actions.tree.FullyExpandTreeNodeAction"/>
 
-    <group id="JavaeeMigrationGroup">
-      <action id="ApplyJavaeeStyle" class="com.intellij.javaee.module.view.ApplyJavaeeStyleAction"/>
-      <group id="GeneratePersistenceMapping" class="com.intellij.jpa.actions.GenerateJpaMappingActionGroup"
-             popup="true"/>
-    </group>
-    <group id="JavaeeEditorGenerateGroup">
-      <action id="GenerateEJBReference" class="com.intellij.codeInsight.generation.actions.GenerateEJBReference"/>
-      <action id="GenerateResourceReference" class="com.intellij.codeInsight.generation.actions.GenerateResourceReference"/>
-      <action id="GeneratePersistenceContextReference"
-              class="com.intellij.codeInsight.generation.actions.GeneratePersistenceContextReference"/>
-      <action id="GenerateInterceptorMethods" class="com.intellij.codeInsight.generation.actions.GenerateInterceptorMethods"/>
-      <action id="GenerateEntityListenerMethods" class="com.intellij.jpa.actions.GenerateEntityListenerMethods"/>
-
-      <action id="GenerateEJBFinderOrSelectorMethod" class="com.intellij.codeInsight.generation.actions.GenerateEJBFinderOrSelectorMethod"/>
-    </group>
-
-    <group id="J2EEGenerateGroup">
-      <action id="CreatePersistenceUnit" class="com.intellij.jpa.actions.CreatePersistenceUnitAction"
-              icon="/javaee/persistenceUnit.png"/>
-      <action id="CreateEntityListener" class="com.intellij.jpa.actions.CreateEntityListenerAction"
-              icon="/javaee/persistenceEntityListener.png"/>
-
-      <action id="CreatePersistentEntity" class="com.intellij.jpa.actions.CreatePersistentEntity"
-              icon="/javaee/persistenceEntity.png"/>
-      <action id="CreateMappedSuperclass" class="com.intellij.jpa.actions.CreateMappedSuperclass"
-              icon="/javaee/persistenceMappedSuperclass.png"/>
-      <action id="CreateEmbeddable" class="com.intellij.jpa.actions.CreateEmbeddable"
-              icon="/javaee/persistenceEmbeddable.png"/>
-
-      <action id="CreateSessionBean" class="com.intellij.javaee.module.view.ejb.actions.CreateSessionBeanAction"
-              icon="/javaee/sessionBean.png"/>
-      <action id="CreateMessageBean" class="com.intellij.javaee.module.view.ejb.actions.CreateMessageBeanAction"
-              icon="/javaee/messageBean.png"/>
-      <action id="CreateBeanManagedEntityBeanAction" class="com.intellij.javaee.module.view.ejb.actions.CreateBMPEntityBeanAction"
-              icon="/javaee/entityBean.png"/>
-      <action id="CreateContainerManagedEntityBeanAction" class="com.intellij.javaee.module.view.ejb.actions.CreateCMPEntityBeanAction"
-              icon="/javaee/entityBean.png"/>
-      <action id="CreateTransferObject" class="com.intellij.javaee.module.view.ejb.actions.CreateTransferObjectAction"
-              icon="/nodes/class.png"/>
-      <action id="CreateCMPField" class="com.intellij.javaee.module.view.ejb.actions.CreateCmpFieldAction" icon="/nodes/ejbCmpField.png"/>
-      <action id="CreateEJBRelationship" class="com.intellij.javaee.module.view.ejb.actions.CreateEjbRelationshipAction"
-              icon="/nodes/ejbCmrField.png"/>
-      <action id="CreateEJBInterceptor" class="com.intellij.javaee.module.view.ejb.actions.CreateInterceptorAction"
-              icon="/javaee/interceptorClass.png"/>
-
-      <action id="CreateJSPAction" class="com.intellij.javaee.module.view.web.CreateJspAction" icon="/fileTypes/jsp.png"/>
-      <action id="CreateJSPXAction" class="com.intellij.javaee.module.view.web.CreateJspxAction" icon="/fileTypes/jspx.png"/>
-      <action id="CreateServletAction" class="com.intellij.javaee.module.view.web.servlet.CreateServletAction" icon="/nodes/servlet.png"/>
-      <action id="CreateFilterAction" class="com.intellij.javaee.module.view.web.filter.CreateFilterAction" icon="/ant/filter.png"/>
-      <action id="CreateListenerAction" class="com.intellij.javaee.module.view.web.listener.CreateListenerAction" icon="/ant/filter.png"/>
-
-    </group>
     <group id="GenerateGroup">
       <action id="GenerateConstructor" class="com.intellij.codeInsight.generation.actions.GenerateConstructorAction"/>
       <action id="GenerateGetter" class="com.intellij.codeInsight.generation.actions.GenerateGetterAction"/>
@@ -181,7 +129,6 @@
       <action id="ImplementMethods" class="com.intellij.codeInsight.generation.actions.ImplementMethodsAction"/>
       <action id="DelegateMethods" class="com.intellij.codeInsight.generation.actions.GenerateDelegateAction"/>
       <action id="GenerateSuperMethodCall" class="com.intellij.codeInsight.generation.actions.GenerateSuperMethodCallAction"/>
-      <reference ref="JavaeeEditorGenerateGroup"/>
     </group>
 
     <action id="NextDiff" class="com.intellij.openapi.diff.actions.NextDiffAction" icon="/actions/moveDown.png"/>
@@ -214,7 +161,6 @@
       <separator/>
       <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
       <separator/>
-      <reference ref="J2EEGenerateGroup"/>
     </group>
 
     <action id="CompareTwoFiles" class="com.intellij.openapi.diff.actions.CompareFiles"/>
@@ -372,7 +318,6 @@
         <separator/>
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction"/>
         <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
-        <action id="OpenInBrowser" class="com.intellij.javaee.actions.OpenFileInBrowserAction"/>
         <separator/>
         <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction"/>
         <action id="RecentFiles" class="com.intellij.ide.actions.ShowRecentFilesAction"/>
@@ -605,8 +550,6 @@
         <separator/>
         <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup"/>
         <separator/>
-        <action id="DataSources" class="com.intellij.javaee.dataSource.DataSourcesManagementAction"/>
-        <separator/>
 
         <group text="Internal Actions" internal="true" popup="true">
           <action id="PsiViewer" internal="true" class="com.intellij.internal.psiView.ViewerAction"/>
@@ -787,7 +730,6 @@
     <group id="EditorPopupMenu" configurable="true">
       <action id="Add to migration roots" internal="true" class="com.intellij.refactoring.actions.TypeMigrationAddRootAction"/>
       <reference ref="CutCopyPasteGroup"/>
-      <reference ref="OpenInBrowser"/>
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="AnalyzeMenu"/>
@@ -819,16 +761,12 @@
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
       <reference ref="ValidateXml"/>
-      <action id="ValidateJsp" class="com.intellij.javaee.module.view.web.ValidateJSPAction"/>
-      <action id="PackageFile" class="com.intellij.javaee.module.view.web.PackageFileAction"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
       <action id="CompareClipboardWithSelection" class="com.intellij.openapi.diff.actions.CompareClipboardWithSelection"/>
       <reference ref="ExternalToolsGroup"/>
       <action id="ShowAppliedStylesAction" class="com.intellij.psi.css.actions.ShowAppliedStylesAction"/>
-      <separator/>
-      <reference ref="JavaeeMigrationGroup"/>
     </group>
 
     <group id="ChangeScheme">
@@ -882,7 +820,6 @@
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
       <reference ref="EditSource"/>
-      <reference ref="OpenInBrowser"/>
       <reference ref="ChangesView.ApplyPatch"/>
       <separator/>
       <reference ref="FindUsages"/>
@@ -903,8 +840,6 @@
       <reference ref="ToggleMethodBreakpoint"/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <reference ref="ValidateJsp"/>
-      <reference ref="PackageFile"/>
       <reference ref="MakeModule"/>
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
@@ -918,66 +853,14 @@
       <separator/>
       <reference ref="ModuleSettings"/>
       <reference ref="MoveModuleToGroup"/>
-      <separator/>
-      <reference ref="JavaeeMigrationGroup"/>
-    </group>
-
-    <group id="J2EEViewPopupMenu">
-      <action id="OpenCustomEditor" class="com.intellij.ide.actions.EditSourceAction"/>
-      <action id="OpenPersistenceERDiagramAction" class="com.intellij.jpa.actions.OpenJpaERDiagramAction"/>
-      <action id="EditEntityListenerBindingsAction" class="com.intellij.jpa.actions.EditEntityListenerBindingsAction"/>
-      <action id="EditInterceptorBindingsAction" class="com.intellij.javaee.module.view.ejb.actions.EditInterceptorBindingsAction"/>
-      <reference ref="NewGroup"/>
-      <reference ref="CutCopyPasteGroup"/>
-      <separator/>
-      <reference ref="OpenInBrowser"/>
-      <separator/>
-
-      <reference ref="AssociateWithFileType"/>
-      <separator/>
-      <reference ref="FindUsages"/>
-      <reference ref="FindInPath"/>
-      <reference ref="ReplaceInPath"/>
-      <reference ref="InspectCode"/>
-      <reference ref="ShowPackageDeps"/>
-      <reference ref="RefactoringMenu"/>
-      <reference ref="ValidateXml"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
-      <separator/>
-      <reference ref="TypeHierarchy"/>
-      <reference ref="ReformatCode"/>
-      <reference ref="OptimizeImports"/>
-      <reference ref="$Delete"/>
-      <separator/>
-      <reference ref="ToggleMethodBreakpoint"/>
-      <reference ref="ToggleFieldBreakpoint"/>
-      <separator/>
-      <reference ref="ValidateJsp"/>
-      <reference ref="MakeModule"/>
-      <reference ref="PackageFile"/>
-      <reference ref="Compile"/>
-      <reference ref="RunContextPopupGroup"/>
-      <separator/>
-      <reference ref="VersionControlsGroup"/>
-      <reference ref="CompareTwoFiles"/>
-      <reference ref="CompareFileWithEditor"/>
-      <separator/>
-      <reference ref="ExternalToolsGroup"/>
-      <separator/>
-      <reference ref="ModuleSettings"/>
-      <separator/>
-      <reference ref="JavaeeMigrationGroup"/>
     </group>
 
     <group id="FavoritesViewPopupMenu">
       <reference ref="NewGroup"/>
-      <reference ref="OpenCustomEditor"/>
+      <reference ref="EditSource"/>
       <reference ref="AssociateWithFileType"/>
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
-      <reference ref="EditSource"/>
       <separator/>
       <action id="RenameFavoritesList" class="com.intellij.ide.favoritesTreeView.RenameFavoritesListAction"/>
       <action id="RemoveFromFavorites" class="com.intellij.ide.favoritesTreeView.DeleteFromFavoritesAction"/>
@@ -1000,8 +883,6 @@
       <reference ref="ToggleMethodBreakpoint"/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <reference ref="ValidateJsp"/>
-      <reference ref="PackageFile"/>
       <reference ref="MakeModule"/>
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
@@ -1014,17 +895,14 @@
       <reference ref="ExternalToolsGroup"/>
       <separator/>
       <reference ref="ModuleSettings"/>
-      <separator/>
-      <reference ref="JavaeeMigrationGroup"/>
     </group>
 
     <group id="ScopeViewPopupMenu">
       <reference ref="NewGroup"/>
-      <reference ref="OpenCustomEditor"/>
+      <reference ref="EditSource"/>
       <reference ref="AssociateWithFileType"/>
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
-      <reference ref="EditSource"/>
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
@@ -1041,8 +919,6 @@
       <reference ref="ToggleMethodBreakpoint"/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <reference ref="ValidateJsp"/>
-      <reference ref="PackageFile"/>
       <reference ref="MakeModule"/>
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
@@ -1055,8 +931,6 @@
       <reference ref="ExternalToolsGroup"/>
       <separator/>
       <reference ref="ModuleSettings"/>
-      <separator/>
-      <reference ref="JavaeeMigrationGroup"/>
       <separator/>
       <action id="ScopeView.EditScopes" class="com.intellij.ide.scopeView.EditScopesAction"/>
     </group>
@@ -1082,8 +956,6 @@
       <reference ref="VersionControlsGroup"/>
       <separator/>
       <reference ref="CompareTwoFiles"/>
-      <separator/>
-      <reference ref="JavaeeMigrationGroup"/>
     </group>
 
     <group id="TypeHierarchyPopupMenu">
@@ -1393,12 +1265,6 @@
       <action id="Vcs.ShowMessageHistory"
               class="com.intellij.openapi.vcs.actions.ShowMessageHistoryAction"
               icon="/debugger/console.png"/>
-    </group>
-
-    <group id="AddSupportGroup" popup="true" class="com.intellij.javaee.actions.AddSupportActionGroup">
-
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-      <add-to-group group-id="J2EEViewPopupMenu" anchor="last"/>
     </group>
 
     <!-- ***** yFiles actions *************************************** -->

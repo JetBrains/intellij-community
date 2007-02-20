@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Represents constraints for some action. Constraints are used to specify
  * action's position in the default group, see {@link DefaultActionGroup}.
@@ -44,7 +46,7 @@ public class Constraints implements Cloneable {
    * @param anchor anchor
    * @param relativeToActionId Id of the relative action
    */
-  public Constraints(Anchor anchor, String relativeToActionId){
+  public Constraints(Anchor anchor, @NonNls String relativeToActionId){
     myAnchor = anchor;
     myRelativeToActionId = relativeToActionId;
   }
