@@ -31,19 +31,24 @@ public abstract class LocalVcsTestCase extends Assert {
     return new ChangeSet(timestamp, Arrays.asList(changes));
   }
 
-  @SuppressWarnings("unchecked")
   protected static void assertEquals(Object[] expected, Collection actual) {
     List<Object> expectedList = Arrays.asList(expected);
-    String message = "elements are not equal:\n" + "\texpected: " + expectedList + "\n" + "\tactual: " + actual;
+    String message = notEqualsMessage(expectedList, actual);
 
     assertTrue(message, expectedList.size() == actual.size());
     assertTrue(message, actual.containsAll(expectedList));
   }
 
   protected static void assertEquals(byte[] expected, byte[] actual) {
-    assertEquals(expected.length, actual.length);
+    String message = notEqualsMessage(expected, actual);
+
+    assertTrue(message, expected.length == actual.length);
     for (int i = 0; i < expected.length; i++) {
-      assertEquals(expected[i], actual[i]);
+      assertTrue(message, expected[i] == actual[i]);
     }
+  }
+
+  private static String notEqualsMessage(Object expected, Object actual) {
+    return "elements are not equal:\n" + "\texpected: " + expected + "\n" + "\tactual: " + actual;
   }
 }

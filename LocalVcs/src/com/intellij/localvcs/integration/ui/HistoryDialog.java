@@ -3,12 +3,17 @@ package com.intellij.localvcs.integration.ui;
 import com.intellij.localvcs.Content;
 import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.integration.LocalVcsComponent;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.diff.SimpleContent;
+import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diff.SimpleDiffRequest;
-import com.intellij.openapi.diff.SimpleContent;
+import com.intellij.ui.PopupHandler;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -51,8 +56,8 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   protected abstract JComponent createDiffPanel();
 
-  private JComponent createLabelsTable() {
-    HistoryDialog.MyTableModel m = new HistoryDialog.MyTableModel();
+  protected JComponent createLabelsTable() {
+    MyTableModel m = new MyTableModel();
 
     JTable t = new JTable(m);
 
@@ -70,14 +75,27 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     return new JScrollPane(t);
   }
 
+  protected void addPopupMenuToComponent(JComponent comp, final ActionGroup ag) {
+    comp.addMouseListener(new PopupHandler() {
+      public void invokePopup(Component c, int x, int y) {
+        ActionPopupMenu m = createPopupMenu(ag);
+        m.getComponent().show(c, x, y);
+      }
+    });
+  }
+
+  private ActionPopupMenu createPopupMenu(ActionGroup ag) {
+    ActionManager m = ActionManager.getInstance();
+    return m.createActionPopupMenu(ActionPlaces.UNKNOWN, ag);
+  }
+
   protected abstract void updateDiffs();
 
   protected SimpleDiffRequest createDiffRequest(Content left, Content right) {
     // todo add timestamps
     SimpleDiffRequest r = new SimpleDiffRequest(null, "title");
     // todo review byte conversion
-    r.setContents(new SimpleContent(new String(left.getBytes())),
-                  new SimpleContent(new String(right.getBytes())));
+    r.setContents(new SimpleContent(new String(left.getBytes())), new SimpleContent(new String(right.getBytes())));
     return r;
   }
 

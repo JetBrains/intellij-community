@@ -2,6 +2,7 @@ package com.intellij.localvcs;
 
 public class TestLocalVcs extends LocalVcs {
   private long myTimestamp;
+  private long myPurgingInterval;
 
   public TestLocalVcs() {
     this(new TestStorage());
@@ -12,11 +13,20 @@ public class TestLocalVcs extends LocalVcs {
   }
 
   @Override
-  public long getTimestamp() {
+  public long getCurrentTimestamp() {
     return myTimestamp;
   }
 
-  public void setTimestamp(long t) {
+  public void setCurrentTimestamp(long t) {
     myTimestamp = t;
+  }
+
+  @Override
+  public long getPurgingInterval() {
+    return myPurgingInterval;
+  }
+
+  public void setPurgingInterval(long i) {
+    myPurgingInterval = i;
   }
 }

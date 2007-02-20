@@ -7,7 +7,7 @@ import java.util.List;
 
 // todo catch exceptions...
 public class Storage {
-  private static final int VERSION = 5;
+  private static final int VERSION = 6;
 
   private File myDir;
   private IContentStorage myContentStorage;
@@ -21,11 +21,13 @@ public class Storage {
     checkVersionAndCreateDir();
 
     try {
+      // todo move to factory method
       myContentStorage = new ContentStorage(new File(myDir, "contents"));
       myContentStorage = new CachingContentStorage(myContentStorage);
+      myContentStorage = new CompressingContentStorage(myContentStorage);
       myContentStorage = new ThreadSafeContentStorage(myContentStorage);
     }
-    catch (Exception e) {
+    catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
@@ -52,21 +54,11 @@ public class Storage {
   }
 
   public void close() {
-    try {
-      myContentStorage.close();
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    myContentStorage.close();
   }
 
   public void save() {
-    try {
-      myContentStorage.save();
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    myContentStorage.save();
   }
 
   public ChangeList loadChangeList() {
@@ -177,23 +169,13 @@ public class Storage {
   }
 
   public void purgeContents(List<Content> contents) {
-    try {
-      for (Content c : contents) {
-        myContentStorage.remove(c.getId());
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    for (Content c : contents) {
+      myContentStorage.remove(c.getId());
     }
   }
 
-  public boolean hasContent(Content c) {
-    try {
-      return myContentStorage.has(c.getId());
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  public boolean isContentPurged(Content c) {
+    return myContentStorage.isRemoved(c.getId());
   }
 
   private static interface Loader<T> {

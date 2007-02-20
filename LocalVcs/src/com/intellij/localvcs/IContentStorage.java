@@ -2,16 +2,19 @@ package com.intellij.localvcs;
 
 import java.io.IOException;
 
-public interface IContentStorage {
-  void close() throws IOException;
+// todo get rid of has()
 
-  void save() throws IOException;
+// todo get rid of exceptions
+public interface IContentStorage {
+  void close();
+
+  void save();
 
   int store(byte[] content) throws IOException;
 
   byte[] load(int id) throws IOException;
 
-  void remove(int id) throws IOException;
+  void remove(int id);
 
-  boolean has(int id) throws IOException;
+  boolean isRemoved(int id);
 }

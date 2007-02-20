@@ -1,12 +1,9 @@
 package com.intellij.localvcs.integration.ui;
 
-import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.LocalVcsTestCase;
 import com.intellij.localvcs.TestLocalVcs;
+import com.intellij.localvcs.integration.TestIdeaGateway;
 import com.intellij.localvcs.integration.TestVirtualFile;
-import com.intellij.localvcs.integration.stubs.StubFileDocumentManager;
-import com.intellij.mock.MockDocument;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
 import static org.easymock.classextension.EasyMock.*;
 import org.junit.Test;
@@ -14,8 +11,7 @@ import org.junit.Test;
 import java.util.List;
 
 public class FileHistoryDialogModelTest extends LocalVcsTestCase {
-  private LocalVcs vcs = new TestLocalVcs();
-  private MyFileDocumentManager dm = new MyFileDocumentManager();
+  private TestLocalVcs vcs = new TestLocalVcs();
   private FileHistoryDialogModel m;
 
   @Test
@@ -29,27 +25,51 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
     vcs.putLabel("2");
 
     initModelFor("f");
-    List<String> l = m.getLabels();
+    List<String> ll = m.getLabels();
 
-    assertEquals(2, l.size());
-    assertEquals("2", l.get(0));
-    assertEquals("1", l.get(1));
+    assertEquals(2, ll.size());
+    assertEquals("2", ll.get(0));
+    assertEquals("1", ll.get(1));
   }
 
   @Test
-  public void testIncludingCurrentUnsavedVersionInLabels() {
+  public void testIncludingUnsavedVersionInLabels() {
     vcs.createFile("f", b("old"), null);
     vcs.apply();
     vcs.putLabel("1");
 
-    dm.setCurrentContent("new");
+    initModelFor("f", "new");
+
+    List<String> ll = m.getLabels();
+
+    assertEquals(2, ll.size());
+    assertEquals("not saved", ll.get(0));
+    assertEquals("1", ll.get(1));
+  }
+
+  @Test
+  public void testDoesNotIncludeUnsavedVersionDifferentOnlyInLineSeparator() {
+    vcs.createFile("f", b("one\r\ntwo\r\n"), null);
+    vcs.apply();
+
+    initModelFor("f", "one\ntwo\n");
+
+    assertEquals(1, m.getLabels().size());
+  }
+
+  @Test
+  public void testLabelsListAfterPurgeConteinsOnlyCurrentVersion() {
+    vcs.setCurrentTimestamp(10);
+    vcs.createFile("f", b(""), null);
+    vcs.apply();
+    vcs.purgeUpTo(20);
+
     initModelFor("f");
 
-    List<String> l = m.getLabels();
+    List<String> ll = m.getLabels();
 
-    assertEquals(2, l.size());
-    assertEquals("current", l.get(0));
-    assertEquals("1", l.get(1));
+    assertEquals(1, ll.size());
+    assertEquals("current", ll.get(0));
   }
 
   @Test
@@ -81,12 +101,11 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testContentForCurrentUnsavedVersion() {
+  public void testContentForUnsavedVersion() {
     vcs.createFile("f", b("old"), null);
     vcs.apply();
 
-    dm.setCurrentContent("new");
-    initModelFor("f");
+    initModelFor("f", "new");
 
     m.selectLabels(0, 1);
 
@@ -102,13 +121,14 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
     vcs.apply();
 
     VirtualFile f = createMock(VirtualFile.class);
+    expect(f.contentsToByteArray()).andReturn(b("new"));
     expect(f.getPath()).andStubReturn("file");
     expect(f.getName()).andStubReturn("file");
     expect(f.getTimeStamp()).andStubReturn(2L);
     f.setBinaryContent(aryEq(b("old")), eq(-1L), eq(1L));
     replay(f);
 
-    m = new FileHistoryDialogModel(f, vcs, dm);
+    m = new FileHistoryDialogModel(f, vcs, new TestIdeaGateway());
     m.selectLabels(1, 1);
 
     m.revert();
@@ -116,30 +136,11 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   }
 
   private void initModelFor(String path) {
-    TestVirtualFile f = new TestVirtualFile(path, null, null);
-    m = new FileHistoryDialogModel(f, vcs, dm);
+    initModelFor(path, new String(vcs.getEntry(path).getContent().getBytes()));
   }
 
-  private class MyFileDocumentManager extends StubFileDocumentManager {
-    private String myContent;
-
-    @Override
-    public Document getDocument(final VirtualFile f) {
-      return new MockDocument() {
-        @Override
-        public String getText() {
-          return myContent == null ? getContent(f) : myContent;
-        }
-      };
-    }
-
-    private String getContent(VirtualFile f) {
-      // todo review conversion (charsets)
-      return new String(vcs.getEntry(f.getPath()).getContent().getBytes());
-    }
-
-    private void setCurrentContent(String s) {
-      myContent = s;
-    }
+  private void initModelFor(String path, String content) {
+    TestVirtualFile f = new TestVirtualFile(path, content, null);
+    m = new FileHistoryDialogModel(f, vcs, new TestIdeaGateway());
   }
 }

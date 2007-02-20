@@ -1,8 +1,6 @@
 package com.intellij.localvcs;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 // todo bulk update support - add startAction method
 public class LocalVcs implements ILocalVcs {
@@ -28,6 +26,8 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void save() {
+    purgeUpTo(getCurrentTimestamp() - getPurgingInterval());
+
     myStorage.storeChangeList(myChangeList);
     myStorage.storeRootEntry(myRoot);
     myStorage.storeCounter(myEntryCounter);
@@ -100,13 +100,13 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void apply() {
-    ChangeSet cs = new ChangeSet(getTimestamp(), myPendingChanges);
+    ChangeSet cs = new ChangeSet(getCurrentTimestamp(), myPendingChanges);
 
     myChangeList.applyChangeSetTo(myRoot, cs);
     clearPendingChanges();
   }
 
-  protected long getTimestamp() {
+  public long getCurrentTimestamp() {
     return System.currentTimeMillis();
   }
 
@@ -124,6 +124,10 @@ public class LocalVcs implements ILocalVcs {
       result.add(new Label(e, myRoot, myChangeList, cs));
     }
 
+    if (result.isEmpty()) {
+      result.add(new CurrentLabel(e, getCurrentTimestamp()));
+    }
+
     Collections.reverse(result);
     return result;
   }
@@ -131,5 +135,12 @@ public class LocalVcs implements ILocalVcs {
   public void purgeUpTo(long timestamp) {
     List<Content> contentsToPurge = myChangeList.purgeUpTo(timestamp);
     myStorage.purgeContents(contentsToPurge);
+  }
+
+  protected long getPurgingInterval() {
+    GregorianCalendar c = new GregorianCalendar();
+    c.setTimeInMillis(0);
+    c.add(Calendar.DAY_OF_YEAR, 5);
+    return c.getTimeInMillis();
   }
 }

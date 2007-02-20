@@ -45,7 +45,7 @@ public class CachingContentStorageTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testSaveAndClose() throws Exception {
+  public void testSaveAndClose() {
     subject.save();
     subject.close();
     replay(subject);

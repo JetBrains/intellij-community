@@ -2,42 +2,23 @@ package com.intellij.localvcslong;
 
 
 import com.intellij.localvcs.*;
+import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.LocalVcsAction;
-import com.intellij.localvcs.integration.LocalVcsComponent;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.localvcs.integration.ui.FileHistoryDialogModel;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ui.UIUtil;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-public class LocalVcsComponentTest extends IdeaTestCase {
-  private VirtualFile root;
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        root = addContentRoot();
-      }
-    });
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-  }
-
+public class LocalVcsComponentTest extends LocalVcsComponentTestCase {
   public void testComponentInitialization() {
     assertNotNull(getVcsComponent());
   }
@@ -229,6 +210,17 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     assertFalse(vcsHasEntry(filtered));
   }
 
+  public void testDeletionOfFilteredDirectoryDoesNotThrowsException() throws Exception {
+    VirtualFile f = root.createChildDirectory(null, "CVS");
+
+    String filtered = Paths.appended(root.getPath(), "CVS");
+
+    assertFalse(vcsHasEntry(filtered));
+    f.delete(null);
+
+    assertFalse(vcsHasEntry(filtered));
+  }
+
   public void testDeletingBigFiles() throws Exception {
     File tempDir = createTempDirectory();
     File tempFile = new File(tempDir, "bigFile.java");
@@ -292,26 +284,18 @@ public class LocalVcsComponentTest extends IdeaTestCase {
   }
 
   private void doTestRefreshing(boolean async) throws Exception {
-    // todo figure out why this test fail on server... 
+    String path1 = createFileExternally("f1.java");
+    String path2 = createFileExternally("f2.java");
 
-    //String path1 = createFileExternally("f1.java");
-    //String path2 = createFileExternally("f2.java");
-    //
-    //assertFalse(vcsHasEntry(path1));
-    //assertFalse(vcsHasEntry(path2));
-    //
-    //forceRefreshVFS(async);
-    //
-    //assertTrue(vcsHasEntry(path1));
-    //assertTrue(vcsHasEntry(path2));
-    //
-    //assertEquals(2, getVcs().getLabelsFor(root.getPath()).size());
-  }
+    assertFalse(vcsHasEntry(path1));
+    assertFalse(vcsHasEntry(path2));
 
-  private String createFileExternally(String name) throws Exception {
-    File f = new File(root.getPath(), name);
-    f.createNewFile();
-    return FileUtil.toSystemIndependentName(f.getPath());
+    forceRefreshVFS(async);
+
+    assertTrue(vcsHasEntry(path1));
+    assertTrue(vcsHasEntry(path2));
+
+    assertEquals(2, getVcs().getLabelsFor(root.getPath()).size());
   }
 
   private void forceRefreshVFS(boolean async) {
@@ -349,7 +333,7 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     forceRefreshVFS(false);
   }
 
-  public void testContentOfFileCreatedDuringRefresh() throws Exception {
+  public void testFileCreationDuringRefresh() throws Exception {
     final String path = createFileExternally("f.java");
     changeContentExternally(path, "content");
 
@@ -366,13 +350,26 @@ public class LocalVcsComponentTest extends IdeaTestCase {
         }
       }
     };
+
     addFileListenerDuring(l, new Callable() {
       public Object call() throws Exception {
-        VirtualFileManager.getInstance().refresh(false);
+        forceRefreshVFS(false);
         return null;
       }
     });
     assertEquals("content", content[0]);
+  }
+
+  public void testDeletionOfFilteredDirectoryExternallyDoesNotThrowExceptionDuringRefresh() throws Exception {
+    VirtualFile f = root.createChildDirectory(null, "CVS");
+    String path = Paths.appended(root.getPath(), "CVS");
+
+    assertFalse(vcsHasEntry(path));
+
+    new File(path).delete();
+    forceRefreshVFS(false);
+
+    assertFalse(vcsHasEntry(path));
   }
 
   private void addFileListenerDuring(VirtualFileListener l, Callable task) throws Exception {
@@ -420,13 +417,7 @@ public class LocalVcsComponentTest extends IdeaTestCase {
         throw new RuntimeException(ex);
       }
     }
-  }
 
-  private void changeContentExternally(String path, String content) throws IOException {
-    File iof = new File(path);
-    FileWriter w = new FileWriter(iof);
-    w.write(content);
-    w.close();
   }
 
   public void testSaving() throws Exception {
@@ -489,56 +480,17 @@ public class LocalVcsComponentTest extends IdeaTestCase {
     assertNull(l.get(1).getName());
   }
 
-  private void setDocumentTextFor(VirtualFile f, byte[] bytes) {
-    Document d = FileDocumentManager.getInstance().getDocument(f);
-    String t = new String(bytes);
-    d.setText(t);
-  }
+  public void testRevertion() throws Exception {
+    VirtualFile f = root.createChildData(null, "f.java");
+    f.setBinaryContent(new byte[]{1}, -1, 123);
+    f.setBinaryContent(new byte[]{2}, -1, 456);
 
-  private byte[] vcsContentOf(VirtualFile f) {
-    return getVcs().getEntry(f.getPath()).getContent().getBytes();
-  }
+    FileHistoryDialogModel d = new FileHistoryDialogModel(f, getVcs(), new IdeaGateway());
+    assertEquals(3, d.getLabels().size());
+    d.selectLabels(0, 1);
+    d.revert();
 
-  private boolean vcsHasEntryFor(VirtualFile f) {
-    return vcsHasEntry(f.getPath());
-  }
-
-  private boolean vcsHasEntry(String path) {
-    return getVcs().hasEntry(path);
-  }
-
-  private ILocalVcs getVcs() {
-    return LocalVcsComponent.getLocalVcsFor(getProject());
-  }
-
-  private LocalVcsComponent getVcsComponent() {
-    return (LocalVcsComponent)LocalVcsComponent.getInstance(getProject());
-  }
-
-  private VirtualFile addContentRoot() {
-    return addContentRoot(myModule);
-  }
-
-  private VirtualFile addContentRoot(Module m) {
-    return addContentRootWithFile(null, m);
-  }
-
-  private VirtualFile addContentRootWithFile(String fileName, Module module) {
-    try {
-      LocalFileSystem fs = LocalFileSystem.getInstance();
-      File dir = createTempDirectory();
-
-      if (fileName != null) {
-        File f = new File(dir, fileName);
-        f.createNewFile();
-      }
-
-      VirtualFile root = fs.findFileByIoFile(dir);
-      PsiTestUtil.addContentRoot(module, root);
-      return root;
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    assertEquals(1, f.contentsToByteArray()[0]);
+    assertEquals(1, vcsContentOf(f)[0]);
   }
 }

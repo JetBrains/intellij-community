@@ -30,13 +30,13 @@ public abstract class HistoryDialogModel {
   protected List<Label> getVcsLabels() {
     List<Label> result = new ArrayList<Label>();
 
-    addCurrentVersionTo(result);
+    addNotSavedVersionTo(result);
     result.addAll(myVcs.getLabelsFor(myFile.getPath()));
 
     return result;
   }
 
-  protected void addCurrentVersionTo(List<Label> l) {
+  protected void addNotSavedVersionTo(List<Label> l) {
   }
 
   protected Label getLeftLabel() {

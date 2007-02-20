@@ -9,11 +9,11 @@ public class ThreadSafeContentStorage implements IContentStorage {
     mySubject = s;
   }
 
-  public synchronized void close() throws IOException {
+  public synchronized void close() {
     mySubject.close();
   }
 
-  public synchronized void save() throws IOException {
+  public synchronized void save() {
     mySubject.save();
   }
 
@@ -25,11 +25,11 @@ public class ThreadSafeContentStorage implements IContentStorage {
     return mySubject.load(id);
   }
 
-  public synchronized void remove(int id) throws IOException {
+  public synchronized void remove(int id) {
     mySubject.remove(id);
   }
 
-  public synchronized boolean has(int id) throws IOException {
-    return mySubject.has(id);
+  public synchronized boolean isRemoved(int id) {
+    return mySubject.isRemoved(id);
   }
 }

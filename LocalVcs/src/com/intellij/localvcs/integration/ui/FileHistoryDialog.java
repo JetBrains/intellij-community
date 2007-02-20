@@ -2,17 +2,17 @@ package com.intellij.localvcs.integration.ui;
 
 import com.intellij.localvcs.Content;
 import com.intellij.localvcs.ILocalVcs;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.localvcs.integration.IdeaGateway;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffPanel;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.PopupHandler;
 
 import javax.swing.*;
-import java.awt.*;
-import java.io.IOException;
 
 public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   private DiffPanel myDiffPanel;
@@ -29,31 +29,21 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   @Override
   protected FileHistoryDialogModel createModelFor(VirtualFile f, ILocalVcs vcs) {
-    FileDocumentManager dm = FileDocumentManager.getInstance();
-    return new FileHistoryDialogModel(f, vcs, dm);
+    return new FileHistoryDialogModel(f, vcs, new IdeaGateway());
   }
 
   @Override
   protected JComponent createDiffPanel() {
     myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myProject);
-    addPopupMenuToDiffPanel();
     updateDiffs();
     return myDiffPanel.getComponent();
   }
 
-  private void addPopupMenuToDiffPanel() {
-    myDiffPanel.getComponent().addMouseListener(new PopupHandler() {
-      public void invokePopup(Component c, int x, int y) {
-        ActionPopupMenu m = createPopupMenu();
-        m.getComponent().show(c, x, y);
-      }
-    });
-  }
-
-  private ActionPopupMenu createPopupMenu() {
-    ActionGroup g = createActionGroup();
-    ActionManager m = ActionManager.getInstance();
-    return m.createActionPopupMenu(ActionPlaces.UNKNOWN, g);
+  @Override
+  protected JComponent createLabelsTable() {
+    JScrollPane t = (JScrollPane)super.createLabelsTable();
+    addPopupMenuToComponent((JComponent)t.getViewport().getView(), createActionGroup());
+    return t;
   }
 
   private ActionGroup createActionGroup() {
@@ -61,12 +51,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     DefaultActionGroup result = new DefaultActionGroup();
     result.add(new AnAction("revert") {
       public void actionPerformed(AnActionEvent e) {
-        try {
-          myModel.revert();
-        }
-        catch (IOException ex) {
-          throw new RuntimeException(ex);
-        }
+        myModel.revert();
       }
     });
     return result;

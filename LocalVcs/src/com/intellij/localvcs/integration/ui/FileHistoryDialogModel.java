@@ -2,29 +2,41 @@ package com.intellij.localvcs.integration.ui;
 
 import com.intellij.localvcs.*;
 import com.intellij.localvcs.integration.FileReverter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.localvcs.integration.IdeaGateway;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 public class FileHistoryDialogModel extends HistoryDialogModel {
-  private FileDocumentManager myDocumentManager;
+  private IdeaGateway myIdeaGateway;
 
-  public FileHistoryDialogModel(VirtualFile f, ILocalVcs vcs, FileDocumentManager dm) {
+  public FileHistoryDialogModel(VirtualFile f, ILocalVcs vcs, IdeaGateway gw) {
     super(f, vcs);
-    myDocumentManager = dm;
+    myIdeaGateway = gw;
   }
 
   @Override
-  protected void addCurrentVersionTo(List<Label> l) {
-    if (getCurrentContent().equals(getVcsContent())) return;
-    l.add(new CurrentLabel());
+  protected void addNotSavedVersionTo(List<Label> l) {
+    if (hasModifiedUnsavedContent()) return;
+    l.add(new NotSavedLabel());
+  }
+
+  private boolean hasModifiedUnsavedContent() {
+    byte[] current = stantartizeLineSeparators(getCurrentContent());
+    byte[] vcs = stantartizeLineSeparators(getVcsContent());
+    return Arrays.equals(current, vcs);
+  }
+
+  private byte[] stantartizeLineSeparators(Content current) {
+    String s = new String(current.getBytes());
+    return StringUtil.convertLineSeparators(s).getBytes();
   }
 
   private Content getCurrentContent() {
-    // todo review byte conversion
-    byte[] b = myDocumentManager.getDocument(myFile).getText().getBytes();
+    byte[] b = myIdeaGateway.getDocumentByteContent(myFile);
     return new ByteContent(b);
   }
 
@@ -44,18 +56,23 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
     return getRightLabel().getEntry().getContent();
   }
 
-  public void revert() throws IOException {
-    FileReverter.revert(myFile, getLeftEntry());
+  public void revert() {
+    myIdeaGateway.runWriteAction(new Callable() {
+      public Object call() throws Exception {
+        FileReverter.revert(myFile, getLeftEntry());
+        return null;
+      }
+    });
   }
 
-  private class CurrentLabel extends Label {
-    public CurrentLabel() {
+  private class NotSavedLabel extends Label {
+    public NotSavedLabel() {
       super(null, null, null, null);
     }
 
     @Override
     public String getName() {
-      return "current";
+      return "not saved";
     }
 
     @Override

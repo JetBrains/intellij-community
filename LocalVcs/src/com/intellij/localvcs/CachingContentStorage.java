@@ -13,11 +13,11 @@ public class CachingContentStorage implements IContentStorage {
     myCache = new IntObjectCache<byte[]>(200);
   }
 
-  public void close() throws IOException {
+  public void close() {
     mySubject.close();
   }
 
-  public void save() throws IOException {
+  public void save() {
     mySubject.save();
   }
 
@@ -40,12 +40,12 @@ public class CachingContentStorage implements IContentStorage {
     return myCache.tryKey(id);
   }
 
-  public void remove(int id) throws IOException {
+  public void remove(int id) {
     mySubject.remove(id);
     myCache.remove(id);
   }
 
-  public boolean has(int id) throws IOException {
-    return mySubject.has(id);
+  public boolean isRemoved(int id) {
+    return mySubject.isRemoved(id);
   }
 }

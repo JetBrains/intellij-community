@@ -15,6 +15,10 @@ public class TestStorage extends Storage {
   }
 
   @Override
+  public void save() {
+  }
+
+  @Override
   public ChangeList loadChangeList() {
     return new ChangeList();
   }

@@ -19,7 +19,7 @@ public class ContentStorageTest extends TempDirTestCase {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     s.close();
   }
 
@@ -33,11 +33,6 @@ public class ContentStorageTest extends TempDirTestCase {
 
     assertEquals(c1, s.load(id1));
     assertEquals(c2, s.load(id2));
-  }
-
-  @Test(expected = AssertionError.class)
-  public void testLoadingUnexistingContentThrowsException() throws Exception {
-    s.load(666);
   }
 
   @Test
@@ -58,7 +53,7 @@ public class ContentStorageTest extends TempDirTestCase {
     int id = s.store(c);
     s.save();
 
-    ContentStorage another = createStorage();
+    IContentStorage another = createStorage();
     try {
       assertEquals(c, another.load(id));
     }
@@ -70,27 +65,7 @@ public class ContentStorageTest extends TempDirTestCase {
   @Test
   public void testRemoving() throws Exception {
     int id = s.store(new byte[]{1});
-    assertTrue(s.has(id));
-
     s.remove(id);
-    assertFalse(s.has(id));
-  }
-
-  @Test(expected = AssertionError.class)
-  public void testLoadingRemovedContentThrowsException() throws Exception {
-    int id = s.store(new byte[]{1});
-    s.remove(id);
-
-    s.load(id);
-  }
-
-  @Test
-  public void testSavingWithRemovedContent() throws Exception {
-    int id = s.store(new byte[]{1});
-    s.remove(id);
-    s.close();
-
-    s = createStorage();
-    assertFalse(s.has(id));
+    assertEquals(id, s.store(new byte[]{1}));
   }
 }

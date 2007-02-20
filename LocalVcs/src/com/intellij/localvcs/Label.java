@@ -1,10 +1,10 @@
 package com.intellij.localvcs;
 
 public class Label {
-  private Entry myEntry;
-  private ChangeList myChangeList;
-  private ChangeSet myChangeSet;
-  private RootEntry myRoot;
+  protected Entry myEntry;
+  protected ChangeList myChangeList;
+  protected ChangeSet myChangeSet;
+  protected RootEntry myRoot;
 
   public Label(Entry e, RootEntry r, ChangeList cl, ChangeSet cs) {
     myEntry = e;

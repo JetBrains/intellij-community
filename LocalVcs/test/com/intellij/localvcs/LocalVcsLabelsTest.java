@@ -3,12 +3,11 @@ package com.intellij.localvcs;
 import static com.intellij.localvcs.Difference.Kind.*;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class LocalVcsLabelsTest extends LocalVcsTestCase {
   // todo difference on root does not work!!!
-  private TestLocalVcs vcs = new TestLocalVcs();
+  TestLocalVcs vcs = new TestLocalVcs();
 
   @Test
   public void testLabelingEmptyLocalVcsThrowsException() {
@@ -30,67 +29,53 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
     vcs.changeFileContent("file", null, null);
     vcs.apply();
 
-    List<Label> labels = vcs.getLabelsFor("file");
-    assertEquals(2, labels.size());
+    List<Label> ll = vcs.getLabelsFor("file");
+    assertEquals(2, ll.size());
 
-    assertNull(labels.get(0).getName());
-    assertEquals("label", labels.get(1).getName());
+    assertNull(ll.get(0).getName());
+    assertEquals("label", ll.get(1).getName());
+  }
+
+  @Test
+  public void testIncludingCurrentVersionAfterPurge() {
+    vcs.setCurrentTimestamp(10);
+    vcs.createFile("file", null, null);
+    vcs.apply();
+    vcs.purgeUpTo(20);
+
+    List<Label> ll = vcs.getLabelsFor("file");
+    assertEquals(1, ll.size());
+
+    assertEquals("file", ll.get(0).getEntry().getName());
+  }
+
+  @Test
+  public void testTakingTimestampForCurrentLabelAtMomentOfGettingLabels() {
+    vcs.setCurrentTimestamp(10);
+    vcs.createFile("file", null, null);
+    vcs.apply();
+    vcs.purgeUpTo(20);
+
+    vcs.setCurrentTimestamp(20);
+    List<Label> ll = vcs.getLabelsFor("file");
+
+    vcs.setCurrentTimestamp(30);
+    assertEquals(20L, ll.get(0).getTimestamp());
   }
 
   @Test
   public void testLabelsTimestamp() {
-    vcs.setTimestamp(10);
+    vcs.setCurrentTimestamp(10);
     vcs.createFile("file", null, null);
     vcs.apply();
 
-    vcs.setTimestamp(20);
+    vcs.setCurrentTimestamp(20);
     vcs.changeFileContent("file", null, null);
     vcs.apply();
 
     List<Label> labels = vcs.getLabelsFor("file");
     assertEquals(20L, labels.get(0).getTimestamp());
     assertEquals(10L, labels.get(1).getTimestamp());
-  }
-
-  @Test
-  public void testPurging() {
-    vcs.setTimestamp(10);
-    vcs.createFile("file", null, null);
-    vcs.apply();
-
-    vcs.setTimestamp(20);
-    vcs.changeFileContent("file", null, null);
-    vcs.apply();
-
-    vcs.purgeUpTo(15);
-
-    List<Label> labels = vcs.getLabelsFor("file");
-    assertEquals(1, labels.size());
-    assertEquals(20L, labels.get(0).getTimestamp());
-  }
-
-  @Test
-  public void testPurgingContents() {
-    final List<List<Content>> invocationParam = new ArrayList<List<Content>>();
-    vcs = new TestLocalVcs(new TestStorage() {
-      @Override
-      public void purgeContents(List<Content> contents) {
-        invocationParam.add(contents);
-      }
-    });
-
-    vcs.setTimestamp(10);
-    vcs.createFile("file", b("content"), null);
-    vcs.apply();
-
-    vcs.delete("file");
-    vcs.apply();
-
-    vcs.purgeUpTo(20);
-
-    assertEquals(1, invocationParam.size());
-    assertEquals(1, invocationParam.get(0).size());
-    assertEquals(c("content"), invocationParam.get(0).get(0));
   }
 
   @Test

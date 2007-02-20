@@ -103,8 +103,8 @@ public class StorageTest extends TempDirTestCase {
     Content c3 = s.createContent(b("3"));
     s.purgeContents(Arrays.asList(c1, c3));
 
-    assertFalse(s.hasContent(c1));
-    assertTrue(s.hasContent(c2));
-    assertFalse(s.hasContent(c3));
+    assertTrue(s.isContentPurged(c1));
+    assertFalse(s.isContentPurged(c2));
+    assertTrue(s.isContentPurged(c3));
   }
 }

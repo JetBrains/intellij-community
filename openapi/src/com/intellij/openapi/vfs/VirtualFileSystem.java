@@ -126,7 +126,7 @@ public abstract class VirtualFileSystem {
   }
 
   protected void firePropertyChanged(Object requestor, VirtualFile file, String propertyName, Object oldValue, Object newValue) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
       VirtualFilePropertyEvent event = new VirtualFilePropertyEvent(requestor, file, propertyName, oldValue, newValue);
@@ -137,7 +137,7 @@ public abstract class VirtualFileSystem {
   }
 
   protected void fireContentsChanged(Object requestor, VirtualFile file, long oldModificationStamp) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
       VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getParent(), oldModificationStamp, file.getModificationStamp());
@@ -148,7 +148,7 @@ public abstract class VirtualFileSystem {
   }
 
   protected void fireFileCreated(Object requestor, VirtualFile file) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
       VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.getParent());
@@ -159,7 +159,7 @@ public abstract class VirtualFileSystem {
   }
 
   protected void fireFileDeleted(Object requestor, VirtualFile file, String fileName, VirtualFile parent) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
       VirtualFileEvent event = new VirtualFileEvent(requestor, file, fileName, parent);
@@ -170,7 +170,7 @@ public abstract class VirtualFileSystem {
   }
 
   protected void fireFileMoved(Object requestor, VirtualFile file, VirtualFile oldParent) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
       VirtualFileMoveEvent event = new VirtualFileMoveEvent(requestor, file, oldParent, file.getParent());
@@ -181,7 +181,7 @@ public abstract class VirtualFileSystem {
   }
 
   protected void fireFileCopied(@Nullable Object requestor, @NotNull VirtualFile originalFile, @NotNull final VirtualFile createdFile) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
       VirtualFileCopyEvent event = new VirtualFileCopyEvent(requestor, originalFile, createdFile);
@@ -197,7 +197,7 @@ public abstract class VirtualFileSystem {
   }
 
   protected void fireBeforePropertyChange(Object requestor, VirtualFile file, String propertyName, Object oldValue, Object newValue) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
       VirtualFilePropertyEvent event = new VirtualFilePropertyEvent(requestor, file, propertyName, oldValue, newValue);
@@ -208,7 +208,7 @@ public abstract class VirtualFileSystem {
   }
 
   protected void fireBeforeContentsChange(Object requestor, VirtualFile file) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
       VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.getParent());
@@ -219,7 +219,7 @@ public abstract class VirtualFileSystem {
   }
 
   protected void fireBeforeFileDeletion(Object requestor, VirtualFile file) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
       VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.getParent());
@@ -230,7 +230,7 @@ public abstract class VirtualFileSystem {
   }
 
   protected void fireBeforeFileMovement(Object requestor, VirtualFile file, VirtualFile newParent) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
       VirtualFileMoveEvent event = new VirtualFileMoveEvent(requestor, file, file.getParent(), newParent);
@@ -238,6 +238,10 @@ public abstract class VirtualFileSystem {
         listener.beforeFileMovement(event);
       }
     }
+  }
+
+  protected void assertWriteAccessAllowed() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
   }
 
   public void forceRefreshFile(final boolean asynchronous, @NotNull VirtualFile file) {
@@ -263,28 +267,28 @@ public abstract class VirtualFileSystem {
   /**
    * Implementation of moving files in this file system
    *
-   * @see VirtualFile#move(Object, VirtualFile)
+   * @see VirtualFile#move(Object,VirtualFile)
    */
   protected abstract void moveFile(Object requestor, VirtualFile vFile, VirtualFile newParent) throws IOException;
 
   /**
    * Implementation of renaming files in this file system
    *
-   * @see VirtualFile#rename(Object, String)
+   * @see VirtualFile#rename(Object,String)
    */
   protected abstract void renameFile(Object requestor, VirtualFile vFile, String newName) throws IOException;
 
   /**
    * Implementation of adding files in this file system
    *
-   * @see VirtualFile#createChildData(Object, String)
+   * @see VirtualFile#createChildData(Object,String)
    */
   protected abstract VirtualFile createChildFile(Object requestor, VirtualFile vDir, String fileName) throws IOException;
 
   /**
    * Implementation of adding directories in this file system
    *
-   * @see VirtualFile#createChildDirectory(Object, String)
+   * @see VirtualFile#createChildDirectory(Object,String)
    */
   protected abstract VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException;
 
@@ -293,6 +297,8 @@ public abstract class VirtualFileSystem {
    *
    * @see VirtualFile#copy(Object,VirtualFile,String)
    */
-  protected abstract VirtualFile copyFile(final Object requestor, final VirtualFile virtualFile, final VirtualFile newParent,
+  protected abstract VirtualFile copyFile(final Object requestor,
+                                          final VirtualFile virtualFile,
+                                          final VirtualFile newParent,
                                           final String copyName) throws IOException;
 }
