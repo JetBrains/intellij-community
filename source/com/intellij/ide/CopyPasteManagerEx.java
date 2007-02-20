@@ -20,7 +20,6 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.UIHelper;
 import com.intellij.util.EventDispatcher;
 
@@ -29,7 +28,6 @@ import java.awt.*;
 import java.awt.datatransfer.*;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -245,7 +243,11 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
         if (elements == null) {
           return;
         }
-        if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(myProject, Arrays.asList(elements))) return;
+        if ( MoveHandler.adjustForMove(myProject, elements) == null ) {
+          return;
+        }
+        // 'elements' passed instead of result of 'adjustForMove' because otherwise ProjectView would
+        // not recognize adjusted elements when graying them
         ((CopyPasteManagerEx)CopyPasteManager.getInstance()).setElements(elements, false);
         updateView();
       }

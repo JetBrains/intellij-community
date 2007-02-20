@@ -27,9 +27,11 @@ import com.intellij.refactoring.move.moveMembers.MoveMembersImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 
 public class MoveHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.MoveHandler");
@@ -163,7 +165,7 @@ public class MoveHandler implements RefactoringActionHandler {
 
     MoveType moveType = getMoveType(elements);
     if (moveType == MoveType.CLASSES || moveType == MoveType.PACKAGES) {
-      if (tryDirectoryMove ( elements, targetContainer)) {
+      if (tryDirectoryMove ( project, elements, targetContainer, callback)) {
         return;
       }
       if (tryPackageRearrange(project, elements, targetContainer, moveType)) {
@@ -202,36 +204,17 @@ public class MoveHandler implements RefactoringActionHandler {
     }
   }
 
-  private static boolean tryDirectoryMove(final PsiElement[] sourceElements, final PsiElement targetElement) {
+  private static boolean tryDirectoryMove(Project project, final PsiElement[] sourceElements, final PsiElement targetElement, final MoveCallback callback) {
     if (targetElement instanceof PsiDirectory) {
-      final PsiDirectory directory = (PsiDirectory)targetElement;
-      if (directory.getPackage() != null) {
-        final PsiElement[] resolvedElements = resolveToPackages(sourceElements);
-        if (resolvedElements != null) {
-          new MoveClassesOrPackagesToNewDirectoryDialog(directory, resolvedElements).show();
-          return true;
+      final PsiElement[] adjustedElements = MoveClassesOrPackagesImpl.adjustForMove(project, sourceElements);
+      if (adjustedElements != null) {
+        if ( CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(adjustedElements),true) ) {
+          new MoveClassesOrPackagesToNewDirectoryDialog((PsiDirectory)targetElement, adjustedElements, callback).show();
         }
       }
+      return true;
     }
     return false;
-  }
-
-  private static PsiElement[] resolveToPackages(final PsiElement[] sourceElements) {
-    final PsiElement[] resolved = new PsiElement[sourceElements.length];
-    for (int i = 0; i < sourceElements.length; i++) {
-      final PsiElement sourceElement = sourceElements[i];
-      if (sourceElement instanceof PsiDirectory) {
-        final PsiPackage psiPackage = ((PsiDirectory)sourceElement).getPackage();
-        if (psiPackage == null || psiPackage.getDirectories().length != 1) {
-          return null;
-        }
-        resolved[i] = psiPackage;
-      }
-      else {
-        resolved[i] = sourceElement;
-      }
-    }
-    return resolved;
   }
 
   private static boolean tryPackageRearrange(final Project project, final PsiElement[] elements,
@@ -242,14 +225,26 @@ public class MoveHandler implements RefactoringActionHandler {
       SelectMoveOrRearrangePackageDialog dialog = new SelectMoveOrRearrangePackageDialog(project, directories);
       dialog.show();
       if (!dialog.isOK()) return true;
-      moveType = dialog.getRefactoringType();
-      if (moveType != MoveType.PACKAGES) {
+      if (dialog.isPackageRearrageSelected()) {
         MoveClassesOrPackagesImpl.doRearrangePackage(project, directories);
         return true;
       }
     }
     return false;
   }
+
+/**
+ * Performs some extra checks (that canMove does not)
+ * May replace some elements with others which actulaly shall be moved (e.g. directory->package)
+ */
+@Nullable
+public static PsiElement[] adjustForMove(Project project, final PsiElement[] sourceElements) {
+  final MoveType type = getMoveType(sourceElements);
+  if ( type == MoveType.CLASSES || type == MoveType.PACKAGES ) {
+    return MoveClassesOrPackagesImpl.adjustForMove(project,sourceElements);
+  }
+  return sourceElements;
+}
 
   /**
    * Must be invoked in AtomicAction
@@ -446,14 +441,8 @@ public class MoveHandler implements RefactoringActionHandler {
       return panel;
     }
 
-    public MoveType getRefactoringType() {
-      if (myRbMovePackage.isSelected()) {
-        return MoveType.PACKAGES;
-      }
-      if (myRbRearrangePackage.isSelected()) {
-        return MoveType.MOVE_OR_REARRANGE_PACKAGE;
-      }
-      return MoveType.NOT_SUPPORTED;
+    public boolean isPackageRearrageSelected() {
+      return myRbRearrangePackage.isSelected();
     }
   }
 

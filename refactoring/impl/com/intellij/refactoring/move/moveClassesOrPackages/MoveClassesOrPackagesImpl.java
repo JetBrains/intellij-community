@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
@@ -24,14 +23,14 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 public class MoveClassesOrPackagesImpl {
   private static final Logger LOG = Logger.getInstance(
@@ -41,67 +40,13 @@ public class MoveClassesOrPackagesImpl {
                             PsiElement[] elements,
                             PsiElement initialTargetElement,
                             final MoveCallback moveCallback) {
-    final PsiElement[] psiElements = new PsiElement[elements.length];
-    List<VirtualFile> readOnly = new ArrayList<VirtualFile>();
-    List<String> names = new ArrayList<String>();
-    for (int idx = 0; idx < elements.length; idx++) {
-      PsiElement element = elements[idx];
-      if (element instanceof PsiDirectory) {
-        PsiPackage aPackage = ((PsiDirectory)element).getPackage();
-        LOG.assertTrue(aPackage != null);
-        if (aPackage.getQualifiedName().length() == 0) { //is default package
-          String message = RefactoringBundle.message("move.package.refactoring.cannot.be.applied.to.default.package");
-          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
-                                                  message, HelpID.getMoveHelpID(element), project);
-          return;
-        }
-        element = checkMovePackage(project, aPackage, readOnly);
-        if (element == null) return;
-      }
-      else if (element instanceof PsiPackage) {
-        element = checkMovePackage(project, (PsiPackage)element, readOnly);
-        if (element == null) return;
-      }
-      else if (element instanceof PsiClass) {
-        PsiClass aClass = (PsiClass)element;
-        if (aClass instanceof PsiAnonymousClass) {
-          String message = RefactoringBundle.message("move.class.refactoring.cannot.be.applied.to.anonymous.classes");
-          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"), message, HelpID.getMoveHelpID(element), project);
-          return;
-        }
-        if (!(aClass.getParent() instanceof PsiFile)) {
-          String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("moving.local.classes.is.not.supported"));
-          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
-                                                  message, HelpID.getMoveHelpID(element), project);
-          return;
-        }
-
-        final PsiFile file = aClass.getContainingFile();
-        String name = file instanceof PsiJavaFile && ((PsiJavaFile)file).getClasses().length > 1 ?
-                      aClass.getName() + "." + StdFileTypes.JAVA.getDefaultExtension() :
-                      file.getName();
-        if (names.contains(name)) {
-           String message = RefactoringBundle.getCannotRefactorMessage(
-             RefactoringBundle.message("there.are.going.to.be.multiple.destination.files.with.the.same.name"));
-          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
-                                                  message, HelpID.getMoveHelpID(element), project);
-          return;
-        }
-        names.add(name);
-
-        if (!aClass.isWritable()) {
-          readOnly.add(aClass.getContainingFile().getVirtualFile());
-        }
-      }
-      psiElements[idx] = element;
+    final PsiElement[] psiElements = adjustForMove(project, elements);
+    if ( psiElements == null ) {
+      return;
     }
 
-    if (!readOnly.isEmpty()) {
-      if (!successfullyCheckedOut(project, readOnly)) {
-        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("some.files.or.directories.are.read.only"));
-        Messages.showErrorDialog(project, message, RefactoringBundle.message("move.tltle"));
-        return;
-      }
+    if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(psiElements), true)) {
+      return;
     }
 
     final String initialTargetPackageName = getInitialTargetPackageName(initialTargetElement, psiElements);
@@ -128,17 +73,85 @@ public class MoveClassesOrPackagesImpl {
     moveDialog.show();
   }
 
-  private static boolean successfullyCheckedOut(final Project project, final List<VirtualFile> readOnly) {
-    final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project)
-      .ensureFilesWritable(readOnly.toArray(new VirtualFile[readOnly.size()]));
-    return !operationStatus.hasReadonlyFiles();
+  @Nullable
+  public static PsiElement[] adjustForMove(final Project project, final PsiElement[] elements) {
+    final PsiElement[] psiElements = new PsiElement[elements.length];
+//    List<VirtualFile> readOnly = new ArrayList<VirtualFile>();
+    List<String> names = new ArrayList<String>();
+    for (int idx = 0; idx < elements.length; idx++) {
+      PsiElement element = elements[idx];
+      if (element instanceof PsiDirectory) {
+        PsiPackage aPackage = ((PsiDirectory)element).getPackage();
+        LOG.assertTrue(aPackage != null);
+        if (aPackage.getQualifiedName().length() == 0) { //is default package
+          String message = RefactoringBundle.message("move.package.refactoring.cannot.be.applied.to.default.package");
+          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
+                                                  message, HelpID.getMoveHelpID(element), project);
+          return null;
+        }
+        if (!checkMovePackage(project, aPackage)) return null;
+        element = aPackage;
+//        collectReadOnlyFiles(element, readOnly);
+      }
+      else if (element instanceof PsiPackage) {
+        if ( !checkMovePackage(project, (PsiPackage)element) ) return null;
+//        collectReadOnlyFiles(element, readOnly);
+      }
+      else if (element instanceof PsiClass) {
+        PsiClass aClass = (PsiClass)element;
+        if (aClass instanceof PsiAnonymousClass) {
+          String message = RefactoringBundle.message("move.class.refactoring.cannot.be.applied.to.anonymous.classes");
+          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"), message, HelpID.getMoveHelpID(element), project);
+          return null;
+        }
+        if (!(aClass.getParent() instanceof PsiFile)) {
+          String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("moving.local.classes.is.not.supported"));
+          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
+                                                  message, HelpID.getMoveHelpID(element), project);
+          return null;
+        }
+
+        final PsiFile file = aClass.getContainingFile();
+        String name = file instanceof PsiJavaFile && ((PsiJavaFile)file).getClasses().length > 1 ?
+                      aClass.getName() + "." + StdFileTypes.JAVA.getDefaultExtension() :
+                      file.getName();
+        if (names.contains(name)) {
+           String message = RefactoringBundle.getCannotRefactorMessage(
+             RefactoringBundle.message("there.are.going.to.be.multiple.destination.files.with.the.same.name"));
+          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
+                                                  message, HelpID.getMoveHelpID(element), project);
+          return null;
+        }
+
+        names.add(name);
+
+//        collectReadOnlyFiles(file, readOnly);
+        //if (!aClass.isWritable()) {
+        //  readOnly.add(aClass.getContainingFile().getVirtualFile());
+        //}
+      }
+      psiElements[idx] = element;
+    }
+
+    //if (!readOnly.isEmpty()) {
+    //  if (!successfullyCheckedOut(project, readOnly)) {
+    //    String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("some.files.or.directories.are.read.only"));
+    //    Messages.showErrorDialog(project, message, RefactoringBundle.message("move.tltle"));
+    //    return null;
+    //  }
+    //}
+    return psiElements;
   }
 
+  //private static boolean successfullyCheckedOut(final Project project, final List<VirtualFile> readOnly) {
+  //  final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project)
+  //    .ensureFilesWritable(readOnly.toArray(new VirtualFile[readOnly.size()]));
+  //  return !operationStatus.hasReadonlyFiles();
+  //}
+  //
 
 
-  @Nullable
-  private static PsiElement checkMovePackage(Project project, PsiPackage aPackage, List<VirtualFile> readOnly) {
-    PsiElement element;
+  private static boolean checkMovePackage(Project project, PsiPackage aPackage) {
     final PsiDirectory[] directories = aPackage.getDirectories();
     final VirtualFile[] virtualFiles = aPackage.occursInPackagePrefixes();
     if (directories.length > 1 || virtualFiles.length > 0) {
@@ -157,12 +170,10 @@ public class MoveClassesOrPackagesImpl {
                                          RefactoringBundle.message("warning.title"),
                                          Messages.getWarningIcon());
       if (ret != 0) {
-        return null;
+        return false;
       }
     }
-    checkMove(aPackage, readOnly);
-    element = aPackage;
-    return element;
+    return true;
   }
 
   private static String getInitialTargetPackageName(PsiElement initialTargetElement, final PsiElement[] movedElements) {
@@ -266,11 +277,11 @@ public class MoveClassesOrPackagesImpl {
     return initialTargetDirectory;
   }
 
-  private static void checkMove(PsiElement elementToMove, List<VirtualFile> readOnly) {
+  private static void collectReadOnlyFiles(PsiElement elementToMove, List<VirtualFile> readOnly) {
     if (elementToMove instanceof PsiPackage) {
       final PsiDirectory[] directories = ((PsiPackage)elementToMove).getDirectories();
       for (PsiDirectory directory : directories) {
-        checkMove(directory, readOnly);
+        collectReadOnlyFiles(directory, readOnly);
       }
     }
     else if (elementToMove instanceof PsiDirectory) {
@@ -280,11 +291,11 @@ public class MoveClassesOrPackagesImpl {
         return;
       }
       for (PsiFile file : files) {
-        checkMove(file, readOnly);
+        collectReadOnlyFiles(file, readOnly);
       }
       final PsiDirectory[] subdirectories = ((PsiDirectory)elementToMove).getSubdirectories();
       for (PsiDirectory subdirectory : subdirectories) {
-        checkMove(subdirectory, readOnly);
+        collectReadOnlyFiles(subdirectory, readOnly);
       }
     }
     else if (elementToMove instanceof PsiJavaFile) { //package statement will need to be corrected
@@ -311,17 +322,22 @@ public class MoveClassesOrPackagesImpl {
   }
 
   public static void doRearrangePackage(final Project project, final PsiDirectory[] directories) {
-    final ArrayList<VirtualFile> readOnly = new ArrayList<VirtualFile>();
-    for (PsiDirectory directory : directories) {
-      checkMove(directory, readOnly);
+
+    if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(directories), true)) {
+      return;
     }
-    if (!readOnly.isEmpty()) {
-      if (!successfullyCheckedOut(project, readOnly)) {
-        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("some.files.or.directories.are.read.only"));
-        Messages.showErrorDialog(project, message, RefactoringBundle.message("move.tltle"));
-        return;
-      }
-    }
+    //final ArrayList<VirtualFile> readOnly = new ArrayList<VirtualFile>();
+    //for (PsiDirectory directory : directories) {
+    //  collectReadOnlyFiles(directory, readOnly);
+    //}
+    //if (!readOnly.isEmpty()) {
+    //  if (!successfullyCheckedOut(project, readOnly)) {
+    //    String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("some.files.or.directories.are.read.only"));
+    //    Messages.showErrorDialog(project, message, RefactoringBundle.message("move.tltle"));
+    //    return;
+    //  }
+    //}
+
     List<PsiDirectory> sourceRootDirectories = buildRearrangeTargetsList(project, directories);
     DirectoryChooser chooser = new DirectoryChooser(project);
     chooser.setTitle(RefactoringBundle.message("select.source.root.chooser.title"));

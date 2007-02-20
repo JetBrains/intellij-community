@@ -13,13 +13,19 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.refactoring.*;
+import com.intellij.refactoring.MoveDestination;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.RefactoringFactory;
+import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -31,12 +37,15 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
 
   private PsiDirectory myDirectory;
   private PsiElement[] myElementsToMove;
+  private MoveCallback myMoveCallback;
 
-  public MoveClassesOrPackagesToNewDirectoryDialog(final PsiDirectory directory, PsiElement[] elementsToMove) {
+  public MoveClassesOrPackagesToNewDirectoryDialog(final PsiDirectory directory, PsiElement[] elementsToMove,
+                                                   final MoveCallback moveCallback) {
     super(false);
     setTitle(MoveHandler.REFACTORING_NAME);
     myDirectory = directory;
     myElementsToMove = elementsToMove;
+    myMoveCallback = moveCallback;
     myDestDirectoryField.setText(directory.getVirtualFile().getPath());
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
     myDestDirectoryField.getButton().addActionListener(new ActionListener() {
@@ -60,6 +69,12 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
     final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
     mySearchInCommentsAndStringsCheckBox.setSelected(refactoringSettings.MOVE_SEARCH_IN_COMMENTS);
     mySearchForTextOccurrencesCheckBox.setSelected(refactoringSettings.MOVE_SEARCH_FOR_TEXT);
+
+    myDestDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      public void textChanged(DocumentEvent event) {
+        setOKActionEnabled(myDestDirectoryField.getText().length() > 0);
+      }
+    });
 
     init();
   }
@@ -123,10 +138,13 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
         ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(directory.getVirtualFile());
     final RefactoringFactory factory = RefactoringFactory.getInstance(project);
     final MoveDestination destination = factory.createSourceRootMoveDestination(aPackage.getQualifiedName(), sourceRoot);
-    final MoveClassesOrPackagesRefactoring refactoring = factory.createMoveClassesOrPackages(myElementsToMove, destination);
-    refactoring.setSearchInComments(searchInComments);
-    refactoring.setSearchInNonJavaFiles(searchForTextOccurences);
-    refactoring.run();
+
+    new MoveClassesOrPackagesProcessor(
+        myDirectory.getProject(),
+        myElementsToMove,
+        destination, searchInComments,
+        searchForTextOccurences,
+        myMoveCallback).run();
   }
 }
 
