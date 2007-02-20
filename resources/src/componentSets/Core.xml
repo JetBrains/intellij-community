@@ -115,6 +115,10 @@
       <implementation-class>com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl</implementation-class>
     </component>
     <component>
+      <interface-class>com.intellij.facet.pointers.FacetPointersManager</interface-class>
+      <implementation-class>com.intellij.facet.impl.pointers.FacetPointersManagerImpl</implementation-class>
+    </component>
+    <component>
       <interface-class>com.intellij.formatting.FormatterEx</interface-class>
       <implementation-class>com.intellij.formatting.FormatterImpl</implementation-class>
     </component>

@@ -25,6 +25,7 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
   public void registerFacetType(FacetType facetType) {
     final FacetTypeId typeId = facetType.getId();
     String id = facetType.getStringId();
+    LOG.assertTrue(!id.contains("/"), "Facet type id '" + id + "' contains illegal character '/'");
     LOG.assertTrue(!myFacetTypes.containsKey(typeId), "Facet type '" + id + "' is already registered");
     myFacetTypes.put(typeId, facetType);
 
