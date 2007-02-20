@@ -2,20 +2,14 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
-import com.intellij.util.DOMUtil;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.xmlb.SerializationFilter;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.output.DOMOutputter;
 import org.jetbrains.annotations.Nullable;
 
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -28,14 +22,14 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentStoreImpl");
   private Map<String, Object> myComponents = new TreeMap<String, Object>();
-  private SerializationFilter mySerializationFilter = new SkipDefaultValuesSerializationFilters();
   private List<SettingsSavingComponent> mySettingsSavingComponents = new ArrayList<SettingsSavingComponent>();
 
-  protected StateStorage getStateStorage(final Storage storageSpec) {
+  @Nullable
+  protected StateStorage getStateStorage(final Storage storageSpec) throws StateStorage.StateStorageException {
     throw new UnsupportedOperationException("Method getStateStorage is not supported in " + getClass());
   }
 
-  protected StateStorage getOldStorage(final Object component) {
+  protected StateStorage getOldStorage(final Object component) throws StateStorage.StateStorageException {
     throw new UnsupportedOperationException("Method getOldStorage is not supported in " + getClass());
   }
 
@@ -71,7 +65,6 @@ abstract class ComponentStoreImpl implements IComponentStore {
           doSave();
         }
         catch (SaveCancelledException e) {
-          return;
         }
       }
       finally {
@@ -116,16 +109,14 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
   private void savePersistentComponent(final PersistentStateComponent<Object> persistentStateComponent) {
     try {
-      Storage storageSpec = getComponentStorage(persistentStateComponent);
+      Storage storageSpec = getComponentStorage(persistentStateComponent, StateStorageChooser.Operation.WRITE);
       StateStorage stateStorage = getStateStorage(storageSpec);
 
       if (stateStorage == null) return;
 
-      org.w3c.dom.Element elementState = XmlSerializer.serialize(persistentStateComponent.getState(), DOMUtil.createDocument(), mySerializationFilter);
-      stateStorage.setState(persistentStateComponent, getComponentName(persistentStateComponent), elementState);
-    }
-    catch (ParserConfigurationException e) {
-      LOG.error(e);
+      final Object state = persistentStateComponent.getState();
+
+      stateStorage.setState(persistentStateComponent, getComponentName(persistentStateComponent), state);
     }
     catch (StateStorage.StateStorageException e) {
       LOG.error(e);
@@ -134,24 +125,10 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
   private void saveJdomExternalizable(final JDOMExternalizable component) {
     final String componentName = getComponentName(component);
-    StateStorage stateStorage = getOldStorage(component);
 
     try {
-      final Element element = new Element("temp_element");
-      component.writeExternal(element);
-      final org.w3c.dom.Element domElement;
-      try {
-        final Document d = new Document();
-        d.addContent(element);
-        domElement = new DOMOutputter().output(d).getDocumentElement();
-      }
-      catch (JDOMException e1) {
-        throw new RuntimeException(e1);
-      }
-      stateStorage.setState(component, componentName, domElement);
-    }
-    catch (WriteExternalException ex) {
-      LOG.debug(ex);
+      StateStorage stateStorage = getOldStorage(component);
+      stateStorage.setState(component, componentName, component);
     }
     catch (StateStorage.StateStorageException e) {
       LOG.error(e);
@@ -166,12 +143,12 @@ abstract class ComponentStoreImpl implements IComponentStore {
     if (optimizeTestLoading()) return;
 
     loadJdomDefaults(component, componentName);
-    StateStorage stateStorage = getOldStorage(component);
-
-    if (stateStorage == null) return;
 
     Element element = null;
     try {
+      StateStorage stateStorage = getOldStorage(component);
+
+      if (stateStorage == null) return;
       element = getJdomState(component, componentName, stateStorage);
     }
     catch (StateStorage.StateStorageException e) {
@@ -191,7 +168,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     }
   }
 
-  private String getComponentName(final JDOMExternalizable component) {
+  private static String getComponentName(final JDOMExternalizable component) {
     final String componentName;
 
     if (!(component instanceof BaseComponent)) {
@@ -220,9 +197,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
   @Nullable
   private static Element getJdomState(final Object component, final String componentName, final StateStorage defaultsStorage) throws StateStorage.StateStorageException {
-    final org.w3c.dom.Element domState = defaultsStorage.getState(component, componentName);
-    if (domState == null) return null;
-    return JDOMUtil.convertFromDOM(domState);
+    return defaultsStorage.getState(component, componentName, Element.class, null);
   }
 
   private void initPersistentComponent(final PersistentStateComponent<Object> component) {
@@ -236,13 +211,9 @@ abstract class ComponentStoreImpl implements IComponentStore {
     final StateStorage defaultsStorage = getDefaultsStorage();
     if (defaultsStorage != null) {
       try {
-        final org.w3c.dom.Element defaultState =
-          defaultsStorage.getState(component, name);
-        if (defaultState != null) {
-          Class stateClass = getComponentStateClass(component);
 
-          state = XmlSerializer.deserialize(defaultState, stateClass);
-        }
+        Class stateClass = getComponentStateClass(component);
+        state = defaultsStorage.getState(component, name, stateClass, null);
       }
       catch (StateStorage.StateStorageException e) {
         LOG.error(e);
@@ -250,23 +221,13 @@ abstract class ComponentStoreImpl implements IComponentStore {
     }
 
     try {
-      Storage storageSpec = getComponentStorage(component);
+      Storage storageSpec = getComponentStorage(component, StateStorageChooser.Operation.READ);
       StateStorage stateStorage = getStateStorage(storageSpec);
 
       if (stateStorage == null) return;
-      
-      org.w3c.dom.Element elementState = stateStorage.getState(component, name);
 
-      if (elementState != null) {
-        Class stateClass = getComponentStateClass(component);
-
-        if (state == null) {
-          state = XmlSerializer.deserialize(elementState, stateClass);
-        }
-        else {
-          XmlSerializer.deserializeInto(state, elementState);
-        }
-      }
+      Class stateClass = getComponentStateClass(component);
+      state = stateStorage.getState(component, name, stateClass, state);
     }
     catch (StateStorage.StateStorageException e) {
       LOG.error(e);
@@ -309,7 +270,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     return stateSpec.name();
   }
 
-  private static State getStateSpec(final PersistentStateComponent<Object> persistentStateComponent) {
+  private static <T> State getStateSpec(final PersistentStateComponent<T> persistentStateComponent) {
     final State stateSpec = persistentStateComponent.getClass().getAnnotation(State.class);
     assert stateSpec != null : "No State annotation found in " + persistentStateComponent.getClass();
     return stateSpec;
@@ -317,12 +278,30 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
 
   @Nullable
-  private static Storage getComponentStorage(final PersistentStateComponent<Object> persistentStateComponent) {
+  private static <T> Storage getComponentStorage(final PersistentStateComponent<T> persistentStateComponent,
+                                                 final StateStorageChooser.Operation operation) throws StateStorage.StateStorageException {
     final State stateSpec = getStateSpec(persistentStateComponent);
 
     final Storage[] storages = stateSpec.storages();
-    assert storages.length <= 1 : "Multiple storage specs not supported: " + persistentStateComponent.getClass();
-    return storages.length > 0 ? storages[0] : null;
+
+    if (storages.length == 1) return storages[0];
+
+    assert storages.length > 0;
+
+
+    final Class<? extends StateStorageChooser> storageChooserClass = stateSpec.storageChooser();
+    assert storageChooserClass != StorageAnnotationsDefaultValues.NullStateStorageChooser.class : "State chooser not specified for: " + persistentStateComponent.getClass();
+
+    try {
+      final StateStorageChooser<PersistentStateComponent<T>> storageChooser = storageChooserClass.newInstance();
+      return storageChooser.selectStorage(storages, persistentStateComponent, operation);
+    }
+    catch (InstantiationException e) {
+      throw new StateStorage.StateStorageException(e);
+    }
+    catch (IllegalAccessException e) {
+      throw new StateStorage.StateStorageException(e);
+    }
   }
 
   protected boolean optimizeTestLoading() {

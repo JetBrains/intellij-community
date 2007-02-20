@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -256,7 +257,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     if (myProject.isDefault()) return null;
 
     try {
-      return ((FileBasedStorage)getStateStorageManager().getStateStorage(PROJECT_FILE_STORAGE)).getVirtualFile();
+      return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE)).getVirtualFile();
     }
     catch (IOException e) {
       LOG.error(e);
@@ -269,7 +270,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     if (myProject.isDefault()) return null;
     
     try {
-      return ((FileBasedStorage)getStateStorageManager().getStateStorage(WS_FILE_STORAGE)).getVirtualFile();
+      return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(WS_FILE_STORAGE)).getVirtualFile();
     }
     catch (IOException e) {
       LOG.error(e);
@@ -282,19 +283,19 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @NotNull
   public String getProjectFileName() {
-    return ((FileBasedStorage)getStateStorageManager().getStateStorage(PROJECT_FILE_STORAGE)).getFileName();
+    return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE)).getFileName();
   }
 
   @NotNull
   public String getProjectFilePath() {
     if (myProject.isDefault()) return "";
 
-    return ((FileBasedStorage)getStateStorageManager().getStateStorage(PROJECT_FILE_STORAGE)).getFilePath();
+    return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE)).getFilePath();
   }
 
 
   protected XmlElementStorage getMainStorage() {
-    return (XmlElementStorage)getStateStorageManager().getStateStorage(DEFAULT_STATE_STORAGE);
+    return (XmlElementStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
   }
 
   protected VirtualFile getComponentConfigurationFile(ComponentConfig componentConfig) {
@@ -365,7 +366,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     if (isWorkspace(config.options)) {
       macro = WS_FILE_MACRO;
     }
-    return getStateStorageManager().getStateStorage("$" + macro + "$");
+    return getStateStorageManager().getFileStateStorage("$" + macro + "$");
   }
 
   protected StateStorageManager createStateStorageManager() {

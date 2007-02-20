@@ -1,6 +1,8 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.impl.stores.FileBasedStorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -33,12 +35,26 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 
-/**
- * @author dsl
- */
-public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleComponent, JDOMExternalizable {
+
+@State(
+  name = "NewModuleRootManager",
+  storages = {
+    @Storage(
+      id = ModuleRootManagerImpl.StorageChooser.DEFAULT_STORAGE,
+      file = "$MODULE_FILE$"
+    ),
+
+    @Storage(
+          id = ModuleRootManagerImpl.StorageChooser.TEST_STORAGE,
+          storageClass = ModuleRootManagerImpl.TestStorage.class
+    )
+  },
+  storageChooser = ModuleRootManagerImpl.StorageChooser.class
+)
+public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleComponent, PersistentStateComponent<ModuleRootManagerImpl.ModuleRootManagerState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
 
   private final Module myModule;
@@ -124,26 +140,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
   public String getExplodedDirectoryUrl() {
     return myRootModel.getExplodedDirectoryUrl();
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    final Attribute langLevelAttribute = element.getAttribute(LANGUAGE_LEVEL_ELEMENT_NAME);
-    if (langLevelAttribute != null) {
-      try {
-        myLanguageLevel = LanguageLevel.valueOf(langLevelAttribute.getValue());
-      }
-      catch (IllegalArgumentException e) {
-        //bad value was stored
-      }
-    }
-    setModel(new RootModelImpl(element, this, myProjectRootManager, myFilePointerManager));
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    if (myLanguageLevel != null) {
-      element.setAttribute(LANGUAGE_LEVEL_ELEMENT_NAME, myLanguageLevel.toString());
-    }
-    myRootModel.writeExternal(element);
   }
 
   @NotNull
@@ -584,5 +580,128 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   @Nullable
   public LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
+  }
+
+  public ModuleRootManagerState getState() {
+    return new ModuleRootManagerState(myRootModel, getLanguageLevel());
+  }
+
+  public void loadState(ModuleRootManagerState object) {
+    try {
+      myLanguageLevel = object.getLanguageLevel();
+      myRootModel = new RootModelImpl(object.getRootModelElement(), this, myProjectRootManager, myFilePointerManager);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
+  }
+
+  public static class ModuleRootManagerState implements JDOMExternalizable {
+    private RootModelImpl myRootModel;
+    private LanguageLevel myLanguageLevel;
+    private Element myRootModelElement = null;
+
+
+    public ModuleRootManagerState() {
+    }
+
+    public ModuleRootManagerState(final RootModelImpl rootModel, final LanguageLevel languageLevel) {
+      myRootModel = rootModel;
+      myLanguageLevel = languageLevel;
+    }
+
+    public void readExternal(Element element) throws InvalidDataException {
+      final Attribute langLevelAttribute = element.getAttribute(LANGUAGE_LEVEL_ELEMENT_NAME);
+      if (langLevelAttribute != null) {
+        try {
+          myLanguageLevel = LanguageLevel.valueOf(langLevelAttribute.getValue());
+        }
+        catch (IllegalArgumentException e) {
+          //bad value was stored
+        }
+      }
+
+      myRootModelElement = element;
+    }
+
+    public void writeExternal(Element element) throws WriteExternalException {
+      if (myLanguageLevel != null) {
+        element.setAttribute(LANGUAGE_LEVEL_ELEMENT_NAME, myLanguageLevel.toString());
+      }
+      myRootModel.writeExternal(element);
+    }
+
+    public LanguageLevel getLanguageLevel() {
+      return myLanguageLevel;
+    }
+
+    public Element getRootModelElement() {
+      return myRootModelElement;
+    }
+  }
+
+  public static class TestStorage implements StateStorage {
+    private StateStorage myDelegate;
+
+
+    @Nullable
+    public <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto)
+    throws StateStorageException {
+      return getDelegate(component).getState(component, componentName, stateClass, mergeInto);
+    }
+
+    public void setState(Object component, final String componentName, Object state) throws StateStorageException {
+      getDelegate(component).setState(component, componentName, state);
+    }
+
+    public List<VirtualFile> getAllStorageFiles() {
+      return getDelegate(null).getAllStorageFiles();
+    }
+
+    public boolean needsSave() throws StateStorageException {
+      return getDelegate(null).needsSave();
+    }
+
+    public void save() throws StateStorageException {
+      getDelegate(null).save();
+    }
+
+    private StateStorage getDelegate(Object component) {
+      if (myDelegate == null) {
+        assert component != null;
+        ModuleRootManagerImpl moduleRootManager = (ModuleRootManagerImpl)component;
+        myDelegate = new FileBasedStorage(null, getTestStorageFile(moduleRootManager.getModule()).getAbsolutePath(), "roots");
+      }
+
+      return myDelegate;
+    }
+  }
+
+  public static class StorageChooser implements StateStorageChooser<ModuleRootManagerImpl> {
+    public static final String DEFAULT_STORAGE = "default";
+    public static final String TEST_STORAGE = "test";
+
+    public Storage selectStorage(Storage[] storages, ModuleRootManagerImpl moduleRootManager, final Operation operation) {
+      String id = DEFAULT_STORAGE;
+
+      final Module module = moduleRootManager.getModule();
+
+      if (module.getOptionValue("test_storage") != null) {
+        if (operation == Operation.WRITE || getTestStorageFile(module).exists()) id = TEST_STORAGE;
+      }
+
+
+      for (Storage storage : storages) {
+        if (storage.id().equals(id)) return storage;
+      }
+
+      throw new IllegalArgumentException();
+    }
+  }
+
+  private static File getTestStorageFile(Module module) {
+    final File moduleBaseDir = new File(module.getModuleFilePath()).getParentFile();
+
+    return new File(new File(moduleBaseDir, ".module"), "classpath.xml");
   }
 }

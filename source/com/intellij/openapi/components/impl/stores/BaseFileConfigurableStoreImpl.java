@@ -2,6 +2,7 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -184,8 +185,8 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   }
 
   @Override
-  protected StateStorage getStateStorage(final Storage storageSpec) {
-    return getStateStorageManager().getStateStorage(storageSpec.file());
+  protected StateStorage getStateStorage(final Storage storageSpec) throws StateStorage.StateStorageException {
+    return getStateStorageManager().getStateStorage(storageSpec);
   }
 
   public StateStorageManager getStateStorageManager() {

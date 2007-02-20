@@ -3,6 +3,7 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -50,7 +51,7 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
   }
 
   protected XmlElementStorage getMainStorage() {
-    return (XmlElementStorage)getStateStorageManager().getStateStorage(DEFAULT_STATE_STORAGE);
+    return (XmlElementStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
   }
 
   @Override
@@ -58,7 +59,7 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
     super.load();
 
     try {
-      final StateStorage stateStorage = getStateStorageManager().getStateStorage(DEFAULT_STATE_STORAGE);
+      final StateStorage stateStorage = getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
       assert stateStorage instanceof FileBasedStorage;
       FileBasedStorage fileBasedStorage = (FileBasedStorage)stateStorage;
 
@@ -102,7 +103,7 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
   @Nullable
   public VirtualFile getModuleFile() {
     try {
-      return ((FileBasedStorage)getStateStorageManager().getStateStorage(DEFAULT_STATE_STORAGE)).getVirtualFile();
+      return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE)).getVirtualFile();
     }
     catch (IOException e) {
       LOG.error(e);
@@ -112,12 +113,12 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
 
   @NotNull
   public String getModuleFilePath() {
-    return ((FileBasedStorage)getStateStorageManager().getStateStorage(DEFAULT_STATE_STORAGE)).getFilePath();
+    return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE)).getFilePath();
   }
 
   @NotNull
   public String getModuleFileName() {
-    return ((FileBasedStorage)getStateStorageManager().getStateStorage(DEFAULT_STATE_STORAGE)).getFileName();
+    return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE)).getFileName();
   }
 
   @Override
@@ -152,7 +153,7 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
 
   @Override
   protected StateStorage getOldStorage(final Object component) {
-    return getStateStorageManager().getStateStorage(DEFAULT_STATE_STORAGE);
+    return getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE);
   }
 
   protected StateStorageManager createStateStorageManager() {

@@ -2,6 +2,7 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
@@ -73,10 +74,11 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
 
   public static final String DEFAULT_STORAGE_SPEC = "$" + APP_CONFIG_STORAGE_MACRO + "$/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + XML_EXTENSION;
 
+  @Nullable
   @Override
-  protected StateStorage getStateStorage(@Nullable final Storage storageSpec) {
+  protected StateStorage getStateStorage(@Nullable final Storage storageSpec) throws StateStorage.StateStorageException {
     assert storageSpec != null;
-    return myStateStorageManager.getStateStorage(storageSpec.file());
+    return myStateStorageManager.getStateStorage(storageSpec);
   }
 
   @Override
@@ -85,8 +87,8 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   }
 
   @Override
-  protected StateStorage getOldStorage(final Object component) {
-    String fileName;
+  protected StateStorage getOldStorage(final Object component) throws StateStorage.StateStorageException {
+    final String fileName;
 
     if (component instanceof NamedJDOMExternalizable) {
       fileName = "$" + APP_CONFIG_STORAGE_MACRO + "$/" + ((NamedJDOMExternalizable)component).getExternalFileName() + XML_EXTENSION;
@@ -95,7 +97,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
       fileName = DEFAULT_STORAGE_SPEC;
     }
 
-    return myStateStorageManager.getStateStorage(fileName);
+    return myStateStorageManager.getFileStateStorage(fileName);
   }
 
 }

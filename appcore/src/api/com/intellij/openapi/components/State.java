@@ -7,4 +7,5 @@ import java.lang.annotation.RetentionPolicy;
 public @interface State {
   String name();
   Storage[] storages();
+  Class<? extends StateStorageChooser> storageChooser() default StorageAnnotationsDefaultValues.NullStateStorageChooser.class;
 }

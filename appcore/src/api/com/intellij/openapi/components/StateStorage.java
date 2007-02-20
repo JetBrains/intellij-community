@@ -1,22 +1,21 @@
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.openapi.components;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Element;
 
 import java.util.List;
 
-interface StateStorage {
+public interface StateStorage {
   @Nullable
-  Element getState(final Object component, final String componentName) throws StateStorageException;
+  <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException;
+  void setState(Object component, final String componentName, Object state) throws StateStorageException;
 
-  void setState(final Object component, final String componentName, final Element domElement) throws StateStorageException;
-
-  void save() throws StateStorageException;
-
-  boolean needsSave() throws StateStorageException;
 
   List<VirtualFile> getAllStorageFiles();
+
+  boolean needsSave() throws StateStorageException;
+  void save() throws StateStorageException;
+
 
   class StateStorageException extends Exception {
     public StateStorageException() {

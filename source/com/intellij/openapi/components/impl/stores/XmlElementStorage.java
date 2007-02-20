@@ -1,15 +1,21 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.PathMacroSubstitutor;
+import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.DOMUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.*;
 
+import javax.xml.parsers.ParserConfigurationException;
 import java.util.Arrays;
 import java.util.Comparator;
 
 abstract class XmlElementStorage implements StateStorage {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.XmlElementStorage");
+
   @NonNls private static final String COMPONENT = "component";
   @NonNls private static final String ATTR_NAME = "name";
   @NonNls private static final String NAME = ATTR_NAME;
@@ -24,8 +30,7 @@ abstract class XmlElementStorage implements StateStorage {
   protected abstract Element getRootElement() throws StateStorageException;
 
   @Nullable
-  public Element getState(final Object component, final String componentName) throws StateStorageException {
-
+  private Element getState(final String componentName) throws StateStorageException {
     final Element rootElement = getRootElement();
     if (rootElement == null) return null;
 
@@ -44,7 +49,7 @@ abstract class XmlElementStorage implements StateStorage {
     return null;
   }
 
-  public void setState(final Object component, final String componentName, final Element element) throws StateStorageException {
+  private void setState(final String componentName, final Element element) throws StateStorageException {
     final Element rootElement = getRootElement();
     if (rootElement == null) return;
 
@@ -75,6 +80,24 @@ abstract class XmlElementStorage implements StateStorage {
     }
 
     rootElement.appendChild(newComponentElement);
+  }
+
+  public void setState(final Object component, final String componentName, final Object state) throws StateStorageException {
+    try {
+      setState(componentName,  DefaultStateSerializer.serializeState(state));
+    }
+    catch (ParserConfigurationException e) {
+      LOG.error(e);
+    }
+    catch (WriteExternalException e) {
+      LOG.debug(e);
+    }
+  }
+
+  @Nullable
+  public <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException {
+    final Element element = getState(componentName);
+    return DefaultStateSerializer.deserializeState(element, stateClass, mergeInto);
   }
 
   protected void sort() throws StateStorageException {

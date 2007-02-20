@@ -1,6 +1,8 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
@@ -58,10 +60,15 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
     return new StateStorageManager(pathMacroManager, "project") {
       @Override
-      public synchronized StateStorage getStateStorage(final String file) {
+      public synchronized StateStorage getStateStorage(final Storage storageSpec) {
         return storage;
       }
 
+      @Override
+      @Nullable
+      public StateStorage getFileStateStorage(final String fileName) {
+        return storage;
+      }
 
       @Override
       public synchronized void save() throws StateStorage.StateStorageException, IOException {

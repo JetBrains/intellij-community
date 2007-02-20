@@ -1,6 +1,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -37,7 +38,7 @@ class ProjectStateStorageManager extends StateStorageManager {
       ((ModuleImpl)module).getStateStore().save();
     }
 
-    final StateStorage defaultStateStorage = getStateStorage(ProjectStoreImpl.DEFAULT_STATE_STORAGE);
+    final StateStorage defaultStateStorage = getFileStateStorage(ProjectStoreImpl.DEFAULT_STATE_STORAGE);
     final Element element = ((XmlElementStorage)defaultStateStorage).getRootElement();
 
     if (element != null) {
