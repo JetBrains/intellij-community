@@ -57,7 +57,7 @@ public abstract class LanguageFileType implements FileType{
    */
 
   @NotNull
-  public final SyntaxHighlighter getHighlighter(@Nullable Project project, @Nullable final VirtualFile virtualFile) {
+  public SyntaxHighlighter getHighlighter(@Nullable Project project, @Nullable final VirtualFile virtualFile) {
     return myLanguage.getSyntaxHighlighter(project, virtualFile);
   }
 
