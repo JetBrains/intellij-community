@@ -11,7 +11,6 @@
     <action id="ShowPopupMenu" class="com.intellij.ide.actions.ShowPopupMenuAction"/>
     <action id="CloseWindow" class="com.intellij.ide.actions.CloseWindowAction"/>
 
-    <action id="Vcs.ShowHistory" class="com.intellij.openapi.vcs.actions.FileHistoryAction"/>
     <action id="Vcs.ShowHistoryForBlock" class="com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction"/>
     <action id="Vcs.ShowTabbedFileHistory" class="com.intellij.openapi.vcs.actions.TabbedShowHistoryAction"/>
 
