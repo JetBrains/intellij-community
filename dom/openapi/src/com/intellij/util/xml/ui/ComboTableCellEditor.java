@@ -21,10 +21,10 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.HashMap;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.Map;
-import javax.swing.*;
 
 /**
  * @author peter
@@ -41,6 +41,7 @@ public class ComboTableCellEditor extends DefaultCellEditor {
     myNullable = nullable;
     setClickCountToStart(2);
     JComboBox comboBox = (JComboBox)editorComponent;
+    comboBox.setBorder(null);
     ComboControl.initComboBox(comboBox, new Condition<String>() {
       public boolean value(final String object) {
         return myData != null && myData.containsKey(object) || myNullable && EMPTY.first == object;

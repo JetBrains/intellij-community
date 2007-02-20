@@ -18,10 +18,12 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.*;
 
 public class JDOMExternalizer {
   private JDOMExternalizer() {
@@ -63,5 +65,45 @@ public class JDOMExternalizer {
       }
     }
     return null;
+  }
+
+  public static void writeMap(Element root, Map<String, String>map, @Nullable String rootName, String entryName) {
+    Element mapRoot;
+    if (StringUtil.isNotEmpty(rootName)) {
+      mapRoot = new Element(rootName);
+      root.addContent(mapRoot);
+    }
+    else {
+      mapRoot = root;
+    }
+    final String[] names = map.keySet().toArray(new String[0]);
+    Arrays.sort(names);
+    for (String name : names) {
+      @NonNls final Element element = new Element(entryName);
+      element.setAttribute("name", name);
+      final String value = map.get(name);
+      if (value != null) {
+        element.setAttribute("value", value);
+      }
+      mapRoot.addContent(element);
+    }
+  }
+
+  public static void readMap(Element root, Map<String, String> map, @Nullable String rootName, String entryName) {
+    Element mapRoot;
+    if (StringUtil.isNotEmpty(rootName)) {
+      mapRoot = root.getChild(rootName);
+    }
+    else {
+      mapRoot = root;
+    }
+    if (mapRoot == null) return;
+    for (@NonNls Element element : (List<Element>)mapRoot.getChildren(entryName)) {
+      final String name = element.getAttributeValue("name");
+      if (name != null) {
+        final String value = element.getAttributeValue("value");
+        map.put(name, value);
+      }
+    }
   }
 }

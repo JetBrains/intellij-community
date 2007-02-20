@@ -44,7 +44,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
   protected abstract Object[] getReferenceVariants(final ConvertContext context, GenericDomValue<List<T>> genericDomValue);
 
   @Nullable
-  protected abstract PsiElement resolveReference(@Nullable final T t);
+  protected abstract PsiElement resolveReference(@Nullable final T t, final ConvertContext context);
 
   protected abstract String getUnresolvedMessage(String value);
 
@@ -168,7 +168,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     @Nullable
     public PsiElement resolve() {
       final String value = getValue();
-      return resolveReference(convertString(value, myContext));
+      return resolveReference(convertString(value, myContext), myContext);
     }
 
     public Object[] getVariants() {
