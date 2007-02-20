@@ -206,6 +206,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
     myUpdateAlarm.addRequest(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) {
+          return;
+        }
         final boolean refresh = myHistorySession.refresh();
         myUpdateAlarm.cancelAllRequests();
         myUpdateAlarm.addRequest(this, 10000);
