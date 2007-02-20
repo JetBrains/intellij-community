@@ -70,7 +70,8 @@ public class SvnFileRevision implements VcsFileRevision {
   public SvnFileRevision(SvnVcs vcs,
                          SVNRevision pegRevision,
                          SVNLogEntry logEntry,
-                         String url) {
+                         String url,
+                         String copyFromPath) {
     final SVNRevision revision = SVNRevision.create(logEntry.getRevision());
     myRevisionNumber = new SvnRevisionNumber(revision);
     myPegRevision = pegRevision;
@@ -78,6 +79,7 @@ public class SvnFileRevision implements VcsFileRevision {
     myAuthor = logEntry.getAuthor();
     myDate = logEntry.getDate();
     myCommitMessage = logEntry.getMessage();
+    myCopyFromPath = copyFromPath;
     myVCS = vcs;
     myURL = url;
   }

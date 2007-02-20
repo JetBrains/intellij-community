@@ -19,11 +19,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.ui.ColoredTableCellRenderer;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
@@ -36,6 +37,8 @@ import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
+import javax.swing.table.TableCellRenderer;
+import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -64,13 +67,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
   }
 
   public ColumnInfo[] getRevisionColumns() {
-    return new ColumnInfo[] {
-      new ColumnInfo<SvnFileRevision, String>("Copy From") {
-        public String valueOf(final SvnFileRevision o) {
-          return o.getCopyFromPath();
-        }
-      }
-    };
+    return new ColumnInfo[] {new CopyFromColumnInfo()};
   }
 
   public VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
@@ -137,67 +134,37 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     if (url != null && url.startsWith(root)) {
       relativeUrl = url.substring(root.length());
     }
-    final Ref<String> lastPath = new Ref<String>(relativeUrl);
     if (indicator != null) {
       indicator.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", url));
     }
     final SVNRevision pegRevision = info.getRevision();
     SVNLogClient client = myVcs.createLogClient();
     client.doLog(new File[]{new File(file.getIOFile().getAbsolutePath())}, SVNRevision.HEAD, SVNRevision.create(1), false, true, 0,
-                 new ISVNLogEntryHandler() {
-                   public void handleLogEntry(SVNLogEntry logEntry) {
-                     if (indicator != null) {
-                       indicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
-                     }
-                     Date date = logEntry.getDate();
-                     String author = logEntry.getAuthor();
-                     String message = logEntry.getMessage();
-                     SVNRevision rev = SVNRevision.create(logEntry.getRevision());
-                     String copyPath = null;
-                     SVNLogEntryPath entryPath = (SVNLogEntryPath)logEntry.getChangedPaths().get(lastPath.get());
-                     if (entryPath != null) {
-                       copyPath = entryPath.getCopyPath();
-                     }
-                     else {
-                       String path = SVNPathUtil.removeTail(lastPath.get());
-                       while(path.length() > 0) {
-                         entryPath = (SVNLogEntryPath) logEntry.getChangedPaths().get(path);
-                         if (entryPath != null) {
-                           String relativePath = lastPath.get().substring(entryPath.getPath().length());
-                           copyPath = entryPath.getCopyPath() + relativePath;
-                           break;
-                         }
-                         path = SVNPathUtil.removeTail(path);
-                       }
-                     }
-                     if (copyPath != null) {
-                       lastPath.set(copyPath);
-                     }
-                     result.add(new SvnFileRevision(myVcs, pegRevision, rev, url, author, date, message, copyPath));
-                   }
-                 });
+                 new MyLogEntryHandler(url, pegRevision, relativeUrl, result));
   }
 
   private void collectLogEntriesForRepository(final ProgressIndicator indicator, final ArrayList<VcsFileRevision> result) throws SVNException {
     if (indicator != null) {
       indicator.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myURL.toString()));
     }
+    SVNWCClient wcClient = myVcs.createWCClient();
+    SVNInfo info = wcClient.doInfo(myURL, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+    final String root = info.getRepositoryRootURL().toString();
+    String url = myURL.toString();
+    String relativeUrl = url;
+    if (url.startsWith(root)) {
+      relativeUrl = url.substring(root.length());
+    }
     SVNLogClient client = myVcs.createLogClient();
     client.doLog(myURL, new String[] {}, SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNRevision.create(1), false, true, 0,
-                 new ISVNLogEntryHandler() {
-                   public void handleLogEntry(SVNLogEntry logEntry) {
-                     if (indicator != null) {
-                       indicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
-                     }
-                     result.add(new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, myURL.toString()));
-                   }
-                 });
+                 new RepositoryLogEntryHandler(url, SVNRevision.UNDEFINED, relativeUrl, result));
   }
 
   public String getHelpId() {
     return null;
   }
 
+  @Nullable
   public VcsRevisionNumber getCurrentRevision(FilePath file) {
     if (myRevision != null) {
       return new SvnRevisionNumber(myRevision);
@@ -218,5 +185,105 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
 
   public AnAction[] getAdditionalActions(final FileHistoryPanel panel) {
     return new AnAction[]{new ShowAllSubmittedFilesAction()};
+  }
+
+  private class MyLogEntryHandler implements ISVNLogEntryHandler {
+    private final ProgressIndicator myIndicator;
+    private String myLastPath;
+    protected final ArrayList<VcsFileRevision> myResult;
+    private final SVNRevision myPegRevision;
+    private final String myUrl;
+
+    public MyLogEntryHandler(final String url, final SVNRevision pegRevision, String lastPath, final ArrayList<VcsFileRevision> result) {
+      myLastPath = lastPath;
+      myIndicator = ProgressManager.getInstance().getProgressIndicator();
+      myResult = result;
+      myPegRevision = pegRevision;
+      myUrl = url;
+    }
+
+    public void handleLogEntry(SVNLogEntry logEntry) {
+      if (myIndicator != null) {
+        myIndicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
+      }
+      String copyPath = null;
+      SVNLogEntryPath entryPath = (SVNLogEntryPath)logEntry.getChangedPaths().get(myLastPath);
+      if (entryPath != null) {
+        copyPath = entryPath.getCopyPath();
+      }
+      else {
+        String path = SVNPathUtil.removeTail(myLastPath);
+        while(path.length() > 0) {
+          entryPath = (SVNLogEntryPath) logEntry.getChangedPaths().get(path);
+          if (entryPath != null) {
+            String relativePath = myLastPath.substring(entryPath.getPath().length());
+            copyPath = entryPath.getCopyPath() + relativePath;
+            break;
+          }
+          path = SVNPathUtil.removeTail(path);
+        }
+      }
+      if (copyPath != null) {
+        myLastPath = copyPath;
+      }
+      addResultRevision(logEntry, copyPath);
+    }
+
+    protected void addResultRevision(final SVNLogEntry logEntry, final String copyPath) {
+      Date date = logEntry.getDate();
+      String author = logEntry.getAuthor();
+      String message = logEntry.getMessage();
+      SVNRevision rev = SVNRevision.create(logEntry.getRevision());
+      myResult.add(new SvnFileRevision(myVcs, myPegRevision, rev, myUrl, author, date, message, copyPath));
+    }
+  }
+
+  private class RepositoryLogEntryHandler extends MyLogEntryHandler {
+    public RepositoryLogEntryHandler(final String url, final SVNRevision pegRevision, String lastPath, final ArrayList<VcsFileRevision> result) {
+      super(url, pegRevision, lastPath, result);
+    }
+
+    @Override
+    protected void addResultRevision(final SVNLogEntry logEntry, final String copyPath) {
+      myResult.add(new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, myURL.toString(), copyPath));
+    }
+  }
+
+  private static class CopyFromColumnInfo extends ColumnInfo<VcsFileRevision, String> {
+    private Icon myIcon = IconLoader.getIcon("/actions/menu-copy.png");
+    private ColoredTableCellRenderer myRenderer = new ColoredTableCellRenderer() {
+      protected void customizeCellRenderer(final JTable table, final Object value, final boolean selected, final boolean hasFocus, final int row, final int column) {
+        if (value instanceof String && ((String) value).length() > 0) {
+          setIcon(myIcon);
+          setToolTipText(SvnBundle.message("copy.column.tooltip", value));
+        }
+        else {
+          setToolTipText("");
+        }
+      }
+    };
+
+    public CopyFromColumnInfo() {
+      super(SvnBundle.message("copy.column.title"));
+    }
+
+    public String valueOf(final VcsFileRevision o) {
+      return o instanceof SvnFileRevision ? ((SvnFileRevision) o).getCopyFromPath() : "";
+    }
+
+    @Override
+    public TableCellRenderer getRenderer(final VcsFileRevision vcsFileRevision) {
+      return myRenderer;
+    }
+
+    @Override
+    public String getMaxStringValue() {
+      return SvnBundle.message("copy.column.title");
+    }
+
+    @Override
+    public int getAdditionalWidth() {
+      return 6;
+    }
   }
 }

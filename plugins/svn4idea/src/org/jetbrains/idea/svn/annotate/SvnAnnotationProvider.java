@@ -84,7 +84,7 @@ public class SvnAnnotationProvider implements AnnotationProvider {
                            if (progress != null) {
                              progress.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
                            }
-                           result.setRevision(logEntry.getRevision(), new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, url));
+                           result.setRevision(logEntry.getRevision(), new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, url, ""));
                          }
                        });
 
