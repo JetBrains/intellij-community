@@ -2,7 +2,7 @@
 <idea-plugin>
     <name>TestNG-J</name>
     <description>TestNG Integration</description>
-    <version>0.5.6</version>
+    <version>1.0.0</version>
     <vendor logo="/resources/testng.gif">Theory In Practice</vendor>
     <idea-version since-build="5594"/>
     <application-components>
@@ -36,8 +36,7 @@
     </project-components>
     <change-notes>
         <![CDATA[
-        <li>Updated to TestNG 5.5</li>
-        <li>Configuration editor uses SettingsGroup instead of the original hacky approach.</li>
+            Fix for convert JUnit test case intention not showing up
         ]]>
     </change-notes>
 </idea-plugin>
