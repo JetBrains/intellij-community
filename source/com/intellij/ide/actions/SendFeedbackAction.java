@@ -28,7 +28,7 @@ public class SendFeedbackAction extends AnAction {
       BrowserUtil.launchBrowser("http://jetbrains.net/jira");
     }
     else {
-      @NonNls StringBuffer url = new StringBuffer("http://www.jetbrains.com/feedback.html?");
+      @NonNls StringBuffer url = new StringBuffer("http://www.jetbrains.com/feedback/feedback.jsp?");
       url.append("product=");
       url.append(ApplicationNamesInfo.getInstance().getProductName());
 
