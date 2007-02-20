@@ -558,43 +558,36 @@ public class EnterHandler extends EditorWriteActionHandler {
       CodeInsightSettings settings = CodeInsightSettings.getInstance();
       StringBuffer buffer = new StringBuffer();
       final String docCommentLinePrefix = commenter.getDocumentationCommentLinePrefix();
+      buffer.append(docCommentLinePrefix);
       buffer.append(LINE_SEPARATOR);
       buffer.append(commenter.getDocumentationCommentSuffix());
 
-      PsiComment comment = createComment(docCommentLinePrefix, buffer, settings);
+      PsiComment comment = createComment(buffer, settings);
 
       myOffset = comment.getTextRange().getStartOffset();
       myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
       myOffset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
-      myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, docCommentLinePrefix);
-      myOffset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), myOffset, docCommentLinePrefix);
+      myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
       removeTrailingSpaces(myDocument, myOffset);
 
-      LOG.assertTrue(CharArrayUtil.regionMatches(myDocument.getCharsSequence(),myOffset - docCommentLinePrefix.length(), docCommentLinePrefix));
       if (!CodeStyleSettingsManager.getSettings(getProject()).JD_LEADING_ASTERISKS_ARE_ENABLED) {
+        LOG.assertTrue(CharArrayUtil.regionMatches(myDocument.getCharsSequence(),myOffset - docCommentLinePrefix.length(), docCommentLinePrefix));
         myDocument.deleteString(myOffset - docCommentLinePrefix.length(), myOffset);
-        myOffset-=docCommentLinePrefix.length();
+        myOffset--;
       } else {
         myDocument.insertString(myOffset, " ");
         myOffset++;
       }
 
-      myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
-
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     }
 
-    private PsiComment createComment(final String docCommentLinePrefix, final StringBuffer buffer, final CodeInsightSettings settings)
+    private PsiComment createComment(final StringBuffer buffer, final CodeInsightSettings settings)
       throws IncorrectOperationException {
-
-      final int endOfLineOffset = myDocument.getLineEndOffset(myDocument.getLineNumber(myOffset));
-      myDocument.insertString(endOfLineOffset, buffer);
-      myDocument.insertString(myOffset, docCommentLinePrefix);
-      myCaretAdvance =  myOffset - endOfLineOffset;
-      final int nextLineStartOffset = endOfLineOffset + docCommentLinePrefix.length() + LINE_SEPARATOR.length();
+      myDocument.insertString(myOffset, buffer.toString());
 
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      CodeStyleManager.getInstance(getProject()).adjustLineIndent(myFile, nextLineStartOffset);
+      CodeStyleManager.getInstance(getProject()).adjustLineIndent(myFile, myOffset + buffer.length() - 2);
 
       PsiComment comment = PsiTreeUtil.getNonStrictParentOfType(myFile.findElementAt(myOffset),
                                                           PsiDocComment.class, PsiComment.class);
