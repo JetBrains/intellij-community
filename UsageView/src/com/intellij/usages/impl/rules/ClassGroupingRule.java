@@ -112,7 +112,7 @@ public class ClassGroupingRule implements UsageGroupingRule {
       }
     }
 
-    private String createText(PsiClass aClass) {
+    private static String createText(PsiClass aClass) {
       String text = aClass.getName();
       PsiClass containingClass = aClass.getContainingClass();
       while (containingClass != null) {
@@ -147,7 +147,7 @@ public class ClassGroupingRule implements UsageGroupingRule {
     }
 
     public boolean equals(Object object) {
-      return myQName.equals(((ClassUsageGroup)object).myQName);
+      return object instanceof ClassUsageGroup && myQName.equals(((ClassUsageGroup)object).myQName);
     }
 
     public void navigate(boolean focus) throws UnsupportedOperationException {
