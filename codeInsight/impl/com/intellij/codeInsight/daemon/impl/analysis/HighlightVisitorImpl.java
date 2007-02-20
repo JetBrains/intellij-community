@@ -11,6 +11,11 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.injected.DocumentRange;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.util.Pair;
@@ -19,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
@@ -34,12 +40,14 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.lexer.Lexer;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.awt.*;
 
 public class HighlightVisitorImpl extends PsiElementVisitor implements HighlightVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl");
@@ -143,28 +151,32 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
       SyntaxHighlighter syntaxHighlighter = injectedLanguage.getSyntaxHighlighter(element.getProject(), virtualFile);
       final List<Annotator> annotators = injectedLanguage.getAnnotators();
-      final SyntaxHighlighterAsAnnotator syntaxAnnotator = new SyntaxHighlighterAsAnnotator(syntaxHighlighter);
-      PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
-        final AnnotationHolderImpl fixingAnnotationHolder = new AnnotationHolderImpl() {
-          protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
-            TextRange editable = documentRange.intersectWithEditable(range);
-            boolean shouldHighlight = editable != null;
-            if (editable == null) editable = new TextRange(0,0);
-            TextRange patched = new TextRange(documentRange.injectedToHost(editable.getStartOffset()), documentRange.injectedToHost(editable.getEndOffset()));
-            Annotation annotation = super.createAnnotation(patched, severity, message);
-            if (shouldHighlight) { //do not highlight generated header/footer
-              myAnnotationHolder.add(annotation);
-            }
-            return annotation;
+      Lexer lexer = syntaxHighlighter.getHighlightingLexer();
+
+      final AnnotationHolderImpl fixingOffsetsHolder = new AnnotationHolderImpl() {
+        public boolean add(final Annotation annotation) {
+          return true; // we are going to hand off the annotation to the myAnnotationHolder anyway
+        }
+
+        protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
+          TextRange editable = documentRange.intersectWithEditable(range);
+          boolean shouldHighlight = editable != null;
+          if (editable == null) editable = new TextRange(0,0);
+          TextRange patched = new TextRange(documentRange.injectedToHost(editable.getStartOffset()), documentRange.injectedToHost(editable.getEndOffset()));
+          Annotation annotation = super.createAnnotation(patched, severity, message);
+          if (shouldHighlight) { //do not highlight generated header/footer
+            myAnnotationHolder.add(annotation);
           }
-        };
+          return annotation;
+        }
+      };
+      PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
         public void visitElement(PsiElement element) {
           super.visitElement(element);
-          syntaxAnnotator.annotate(element, fixingAnnotationHolder);
           //noinspection ForLoopReplaceableByForEach
           for (int i = 0; i < annotators.size(); i++) {
             Annotator annotator = annotators.get(i);
-            annotator.annotate(element, fixingAnnotationHolder);
+            annotator.annotate(element, fixingOffsetsHolder);
           }
         }
 
@@ -177,6 +189,36 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
           myHolder.add(fixed);
         }
       };
+      lexer.start(documentRange.getCharsSequence(), 0, documentRange.getTextLength(), 0);
+
+      for (IElementType tokenType; (tokenType = lexer.getTokenType()) != null; lexer.advance()) {
+        TextAttributesKey[] keys = syntaxHighlighter.getTokenHighlights(tokenType);
+        if (keys.length == 0) continue;
+        TextRange textRange = new TextRange(lexer.getTokenStart(), lexer.getTokenEnd());
+        if (textRange.getLength() == 0) continue;
+        Annotation annotation = fixingOffsetsHolder.createInfoAnnotation(textRange, null);
+        if (annotation == null) continue; // maybe out of highlightable range
+        // force attribute colors to override host' ones
+
+        if (keys.length == 0) {
+          annotation.setEnforcedTextAttributes(TextAttributes.ERASE_MARKER);
+        }
+        else {
+          EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+          TextAttributes attributes = globalScheme.getAttributes(keys[0]);
+          final TextAttributes defaultAttrs = globalScheme.getAttributes(HighlighterColors.TEXT);
+          if (attributes.isEmpty() || attributes.equals(defaultAttrs)) {
+            annotation.setEnforcedTextAttributes(TextAttributes.ERASE_MARKER);
+          }
+          else {
+            Color back = attributes.getBackgroundColor() == null ? globalScheme.getDefaultBackground() : attributes.getBackgroundColor();
+            Color fore = attributes.getForegroundColor() == null ? globalScheme.getDefaultForeground() : attributes.getForegroundColor();
+            TextAttributes forced =
+              new TextAttributes(fore, back, attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
+            annotation.setEnforcedTextAttributes(forced);
+          }
+        }
+      }
 
       injectedPsi.accept(visitor);
     }
@@ -346,7 +388,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     myHolder.add(info);
   }
 
-  private HighlightInfo createErrorElementInfo(final PsiErrorElement element) {
+  private static HighlightInfo createErrorElementInfo(final PsiErrorElement element) {
     TextRange range = element.getTextRange();
     if (range.getLength() > 0) {
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range, element.getErrorDescription());

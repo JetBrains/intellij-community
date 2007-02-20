@@ -207,14 +207,13 @@ public class ExpectedHighlightingData {
         int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
         int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
 
-        Assert.assertTrue(fileName + "Extra text fragment highlighted " +
+        Assert.fail(fileName + "Extra text fragment highlighted " +
                           "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
                           "(" + (x2 + 1) + ", " + (y2 + 1) + ")" +
                           " :'" +
                           s +
                           "'" + (desc == null ? "" : " (" + desc + ")")
-                          + " [" + info.type + "]",
-                          false);
+                          + " [" + info.type + "]");
       }
     }
     final Collection<ExpectedHighlightingSet> expectedHighlights = highlightingTypes.values();
