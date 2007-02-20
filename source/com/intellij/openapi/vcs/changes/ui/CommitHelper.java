@@ -255,8 +255,7 @@ public class CommitHelper {
       failedListName = newChangelistName + " (" + index + ")";
     }
 
-    final LocalChangeList failedList =
-      changeListManager.addChangeList(newChangelistName, commitMessage);
+    final LocalChangeList failedList = changeListManager.addChangeList(failedListName, commitMessage);
     changeListManager.moveChangesTo(failedList, failedChanges.toArray(new Change[failedChanges.size()]));
   }
   
