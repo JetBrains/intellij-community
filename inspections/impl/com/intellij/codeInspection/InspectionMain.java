@@ -25,7 +25,7 @@ public class InspectionMain implements ApplicationStarter {
       printHelp();
     }
 
-    System.setProperty("idea.load.plugins.category", "inspection");
+    //System.setProperty("idea.load.plugins.category", "inspection");
     myApplication = new InspectionApplication();
 
     myApplication.myProjectPath = args[1];
