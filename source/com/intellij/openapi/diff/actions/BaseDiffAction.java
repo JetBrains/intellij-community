@@ -53,9 +53,11 @@ abstract class BaseDiffAction extends AnAction {
     final FileDocumentManager documentManager = FileDocumentManager.getInstance();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        for (int i = 0; i < contents.length; i++) {
-          DiffContent content = contents[i];
-          if (content.getFile() != null) documentManager.saveDocument(content.getDocument());
+        for (DiffContent content : contents) {
+          Document document = content.getDocument();
+          if (document != null) {
+            documentManager.saveDocument(content.getDocument());
+          }
         }
       }
     });
