@@ -48,9 +48,26 @@ public class AdvancedProxy {
     return createProxy(superClass, otherInterfaces, handler, Collections.<JavaMethodSignature>emptySet(), ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 
+  public static <T> T createProxy(final Class<T> superClass, final Class... otherInterfaces) {
+    return createProxy(superClass, otherInterfaces, new InvocationHandler() {
+      public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
+        throw new AbstractMethodError(method.toString());
+      }
+    }, false, Collections.<JavaMethodSignature>emptySet(), ArrayUtil.EMPTY_OBJECT_ARRAY);
+  }
+
   public static <T> T createProxy(final Class<T> superClass,
                                   final Class[] interfaces,
                                   final InvocationHandler handler,
+                                  final Set<JavaMethodSignature> additionalMethods,
+                                  final Object... constructorArgs) {
+    return createProxy(superClass, interfaces, handler, true, additionalMethods, constructorArgs);
+  }
+
+  public static <T> T createProxy(final Class<T> superClass,
+                                  final Class[] interfaces,
+                                  final InvocationHandler handler,
+                                  final boolean interceptObjectMethods,
                                   final Set<JavaMethodSignature> additionalMethods,
                                   final Object... constructorArgs) {
     try {
@@ -64,6 +81,7 @@ public class AdvancedProxy {
 
       AdvancedEnhancer e = new AdvancedEnhancer();
       e.setAdditionalMethods(additionalMethods);
+      e.setInterceptObjectMethodsFlag(interceptObjectMethods);
       e.setInterfaces(interfaces);
       e.setCallbacks(callbacks);
       if (superClass != null) {

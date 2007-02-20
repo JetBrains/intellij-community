@@ -16,6 +16,7 @@
 package net.sf.cglib.proxy;
 
 import com.intellij.util.xml.JavaMethodSignature;
+import com.intellij.util.ReflectionCache;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import net.sf.cglib.asm.ClassVisitor;
 import net.sf.cglib.asm.Label;
@@ -147,7 +148,12 @@ public class AdvancedEnhancer extends AbstractClassGenerator
 
   //Changes by Peter Gromov
   private Set<JavaMethodSignature> myAdditionalMethods = Collections.emptySet();
+  //Changes by Gregory Shrago
+  private boolean myInterceptObjectMethodsFlag = true;
 
+  public void setInterceptObjectMethodsFlag(final boolean interceptObjectMethodsFlag) {
+    myInterceptObjectMethodsFlag = interceptObjectMethodsFlag;
+  }
 
   /**
    * Create a new <code>Enhancer</code>. A new <code>Enhancer</code>
@@ -465,42 +471,27 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     // its superinterfaces.
     final Set forcePublic = new HashSet();
     List<Method> actualMethods = new ArrayList<Method>();
+    final Map<Method, Method> covariantMethods = new HashMap<Method, Method>();
     getMethods(sc, interfaces, actualMethods, new ArrayList<Method>(), forcePublic);
 
     //Changes by Peter Gromov
 
     final Set<JavaMethodSignature> finalMethods = new HashSet<JavaMethodSignature>();
-    Class aClass = sc;
-    while (!Object.class.equals(aClass)) {
+    for(Class aClass = sc; aClass != null; aClass = aClass.getSuperclass()) {
+      if (myInterceptObjectMethodsFlag && Object.class.equals(aClass)) continue;
       for (final Method method : aClass.getDeclaredMethods()) {
         final int modifiers = method.getModifiers();
         final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
         if ((modifiers & Constants.ACC_FINAL) != 0) {
           finalMethods.add(signature);
-          actualMethods.remove(method);
+          removeAllCovariantMethods(actualMethods, method, covariantMethods);
         } else if ((modifiers & Constants.ACC_ABSTRACT) == 0 && !(myAdditionalMethods.contains(signature))
                    || finalMethods.contains(signature)) {
-          actualMethods.remove(method);
+          removeAllCovariantMethods(actualMethods, method, covariantMethods);
         }
       }
-      aClass = aClass.getSuperclass();
     }
 
-
-    List methods = CollectionUtils.transform(actualMethods, new Transformer() {
-      public Object transform(Object value) {
-        Method method = (Method)value;
-        int modifiers = Constants.ACC_FINAL
-                        | (method.getModifiers()
-                           & ~Constants.ACC_ABSTRACT
-                           & ~Constants.ACC_NATIVE
-                           & ~Constants.ACC_SYNCHRONIZED);
-        if (forcePublic.contains(MethodWrapper.create(method))) {
-          modifiers = (modifiers & ~Constants.ACC_PROTECTED) | Constants.ACC_PUBLIC;
-        }
-        return ReflectUtils.getMethodInfo(method, modifiers);
-      }
-    });
 
     ClassEmitter e = new ClassEmitter(v);
     e.begin_class(Constants.V1_2,
@@ -526,8 +517,20 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     for (int i = 0; i < callbackTypes.length; i++) {
       e.declare_field(Constants.ACC_PRIVATE, getCallbackField(i), callbackTypes[i], null, null);
     }
+    final Map<Method, MethodInfo> methodInfoMap = new HashMap<Method, MethodInfo>();
+    for (Method method : actualMethods) {
+      int modifiers =
+        Constants.ACC_FINAL | (method.getModifiers() & ~Constants.ACC_ABSTRACT & ~Constants.ACC_NATIVE & ~Constants.ACC_SYNCHRONIZED);
+      if (forcePublic.contains(MethodWrapper.create(method))) {
+        modifiers = (modifiers & ~Constants.ACC_PROTECTED) | Constants.ACC_PUBLIC;
+      }
+      if (covariantMethods.containsKey(method)) {
+        modifiers = modifiers | Constants.ACC_BRIDGE;
+      }
+      methodInfoMap.put(method, ReflectUtils.getMethodInfo(method, modifiers));
+    }
 
-    emitMethods(e, methods, actualMethods);
+    emitMethods(e, methodInfoMap, covariantMethods);
     emitConstructors(e, constructorInfo);
     emitSetThreadCallbacks(e);
     emitSetStaticCallbacks(e);
@@ -545,6 +548,25 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     }
 
     e.end_class();
+  }
+
+  private static void removeAllCovariantMethods(final List<Method> actualMethods, final Method method, final Map<Method, Method> covariantMethods) {
+    for (Iterator<Method> it = actualMethods.iterator(); it.hasNext();) {
+      Method actualMethod = it.next();
+      if (actualMethod.equals(method)) {
+        it.remove();
+      }
+      else if (actualMethod.getName().equals(method.getName())
+               && Arrays.equals(actualMethod.getParameterTypes(), method.getParameterTypes())
+               && ReflectionCache.isAssignable(actualMethod.getReturnType(), method.getReturnType())) {
+        if ((actualMethod.getModifiers() & Constants.ACC_ABSTRACT) != 0) {
+          covariantMethods.put(actualMethod, method);
+        }
+        else {
+          it.remove();
+        }
+      }
+    }
   }
 
   /**
@@ -901,34 +923,38 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     e.end_method();
   }
 
-  private void emitMethods(final ClassEmitter ce, List methods, List<Method> actualMethods) {
+  private void emitMethods(final ClassEmitter ce, Map<Method, MethodInfo> methodMap, final Map<Method, Method> covariantMethods) {
     CallbackGenerator[] generators = CallbackInfo.getGenerators(callbackTypes);
+    Map<MethodInfo, MethodInfo> covariantInfoMap = new HashMap<MethodInfo, MethodInfo>();
+    for (Method method : methodMap.keySet()) {
+      final Method delegate = covariantMethods.get(method);
+      if (delegate != null) {
+        covariantInfoMap.put(methodMap.get(method), ReflectUtils.getMethodInfo(delegate, delegate.getModifiers()));
+      }
+    }
+    BridgeMethodGenerator bridgeMethodGenerator = new BridgeMethodGenerator(covariantInfoMap);
 
     Map<CallbackGenerator,List<MethodInfo>> groups = new HashMap<CallbackGenerator, List<MethodInfo>>();
     final Map<MethodInfo,Integer> indexes = new HashMap<MethodInfo, Integer>();
     final Map<MethodInfo,Integer> originalModifiers = new HashMap<MethodInfo, Integer>();
-    final Map positions = CollectionUtils.getIndexMap(methods);
+    final Map positions = CollectionUtils.getIndexMap(new ArrayList<MethodInfo>(methodMap.values()));
 
-    Iterator it1 = methods.iterator();
-    Iterator<Method> it2 = (actualMethods != null) ? actualMethods.iterator() : null;
-
-    while (it1.hasNext()) {
-      MethodInfo method = (MethodInfo)it1.next();
-      Method actualMethod = (it2 != null) ? it2.next() : null;
+    for (Method actualMethod : methodMap.keySet()) {
+      MethodInfo method = methodMap.get(actualMethod);
       int index = filter.accept(actualMethod);
       if (index >= callbackTypes.length) {
         throw new IllegalArgumentException("Callback filter returned an index that is too large: " + index);
       }
       originalModifiers.put(method, (actualMethod != null) ? actualMethod.getModifiers() : method.getModifiers());
       indexes.put(method, index);
-      List<MethodInfo> group = groups.get(generators[index]);
+      final CallbackGenerator generator = covariantMethods.containsKey(actualMethod)? bridgeMethodGenerator : generators[index];
+      List<MethodInfo> group = groups.get(generator);
       if (group == null) {
-        groups.put(generators[index], group = new ArrayList<MethodInfo>(methods.size()));
+        groups.put(generator, group = new ArrayList<MethodInfo>(methodMap.size()));
       }
       group.add(method);
     }
 
-    Set<CallbackGenerator> seenGen = new HashSet<CallbackGenerator>();
     CodeEmitter se = ce.getStaticHook();
     se.new_instance(THREAD_LOCAL);
     se.dup();
@@ -965,8 +991,9 @@ public class AdvancedEnhancer extends AbstractClassGenerator
         return e;
       }
     };
-    for (int i = 0; i < callbackTypes.length; i++) {
-      CallbackGenerator gen = generators[i];
+    Set<CallbackGenerator> seenGen = new HashSet<CallbackGenerator>();
+    for (int i = 0; i < callbackTypes.length + 1; i++) {
+      CallbackGenerator gen = i == callbackTypes.length? bridgeMethodGenerator : generators[i];
       if (!seenGen.contains(gen)) {
         seenGen.add(gen);
         final List<MethodInfo> fmethods = groups.get(gen);
