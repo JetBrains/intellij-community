@@ -58,7 +58,6 @@ public abstract class ProgressManager {
    * @param canBeCanceled whether "Cancel" button is shown on the progress window.
    * @param project       the project in the context of which the operation is executed.
    * @return true if the operation completed successfully, false if it was cancelled.
-   * @deprecated use {@link #run(com.intellij.openapi.progress.Task)}
    */
   public abstract boolean runProcessWithProgressSynchronously(Runnable process,
                                                               String progressTitle,
