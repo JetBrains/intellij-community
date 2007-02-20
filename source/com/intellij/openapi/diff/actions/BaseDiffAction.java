@@ -56,7 +56,7 @@ abstract class BaseDiffAction extends AnAction {
         for (DiffContent content : contents) {
           Document document = content.getDocument();
           if (document != null) {
-            documentManager.saveDocument(content.getDocument());
+            documentManager.saveDocument(document);
           }
         }
       }
