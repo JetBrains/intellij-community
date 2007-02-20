@@ -43,7 +43,6 @@ public class RefCountHolder {
 
   public synchronized void registerLocallyReferenced(@NotNull PsiNamedElement result) {
     myDclsUsedMap.put(result,Boolean.TRUE);
-    myTouched = true;
   }
 
   private static void addStatistics(final PsiNamedElement dcl) {
@@ -55,7 +54,6 @@ public class RefCountHolder {
   }
 
   public synchronized void registerAttributeWithId(@NotNull String id, XmlAttribute attr) {
-    myTouched = true;
     myXmlId2AttributeMap.put(id,attr);
   }
 
@@ -67,7 +65,6 @@ public class RefCountHolder {
   }
 
   public synchronized void registerReference(@NotNull PsiJavaReference ref, JavaResolveResult resolveResult) {
-    myTouched = true;
     PsiElement refElement = resolveResult.getElement();
     PsiFile psiFile = refElement == null ? null : refElement.getContainingFile();
     if (psiFile != null) psiFile = (PsiFile)psiFile.getNavigationElement(); // look at navigation elements because all references resolve into Cls elements when highlighting library source
