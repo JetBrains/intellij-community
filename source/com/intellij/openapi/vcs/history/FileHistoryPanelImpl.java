@@ -37,6 +37,7 @@ import com.intellij.util.Icons;
 import com.intellij.util.TreeItem;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -78,13 +79,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
 
-  public static final DualViewColumnInfo REVISION = new VcsColumnInfo(VcsBundle.message("column.name.revision.version")) {
-    protected Comparable getDataOf(Object object) {
-      return ((VcsFileRevision)object).getRevisionNumber();
+  public static final DualViewColumnInfo REVISION = new VcsColumnInfo<VcsRevisionNumber>(VcsBundle.message("column.name.revision.version")) {
+    protected VcsRevisionNumber getDataOf(VcsFileRevision object) {
+      return object.getRevisionNumber();
     }
 
-    public Object valueOf(Object object) {
-      return ((VcsFileRevision)object).getRevisionNumber().asString();
+    public String valueOf(VcsFileRevision object) {
+      return object.getRevisionNumber().asString();
     }
 
     @Override
@@ -93,16 +94,15 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   };
 
-  public static final DualViewColumnInfo DATE = new VcsColumnInfo(VcsBundle.message("column.name.revision.date")) {
-    protected Comparable getDataOf(Object object) {
-      Date date = ((VcsFileRevision)object).getRevisionDate();
+  public static final DualViewColumnInfo DATE = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.date")) {
+    protected String getDataOf(VcsFileRevision object) {
+      Date date = object.getRevisionDate();
       if (date == null) return "";
       return DATE_FORMAT.format(date);
     }
 
-    public int compare(Object o1, Object o2) {
-      return ((VcsFileRevision)o1).getRevisionDate()
-        .compareTo(((VcsFileRevision)o2).getRevisionDate());
+    public int compare(VcsFileRevision o1, VcsFileRevision o2) {
+      return o1.getRevisionDate().compareTo(o2.getRevisionDate());
     }
 
     @Override
@@ -111,9 +111,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   };
 
-  public static final DualViewColumnInfo AUTHOR = new VcsColumnInfo(VcsBundle.message("column.name.revision.list.author")) {
-    protected Comparable getDataOf(Object object) {
-      return ((VcsFileRevision)object).getAuthor();
+  public static final DualViewColumnInfo AUTHOR = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.list.author")) {
+    protected String getDataOf(VcsFileRevision object) {
+      return object.getAuthor();
     }
 
     @Override @NonNls
@@ -122,9 +122,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   };
 
-  public static final DualViewColumnInfo MESSAGE = new VcsColumnInfo(COMMIT_MESSAGE_TITLE) {
-    protected Comparable getDataOf(Object object) {
-      final String originalMessage = ((VcsFileRevision)object).getCommitMessage();
+  public static final DualViewColumnInfo MESSAGE = new VcsColumnInfo<String>(COMMIT_MESSAGE_TITLE) {
+    protected String getDataOf(VcsFileRevision object) {
+      final String originalMessage = object.getCommitMessage();
       if (originalMessage != null) {
         String commitMessage = originalMessage.trim();
         int index13 = commitMessage.indexOf('\r');
@@ -157,7 +157,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       return StringUtil.repeatSymbol('a', 125);
     }
 
-    public TableCellRenderer getRenderer(Object p0) {
+    public TableCellRenderer getRenderer(VcsFileRevision p0) {
       return new LabelWithTooltip();
     }
   };
@@ -230,11 +230,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return columns.toArray(new DualViewColumnInfo[columns.size()]);
   }
 
-  private static Collection<DualViewColumnInfo> wrapAdditionalColumns(ColumnInfo[] additionalColunms) {
+  private static Collection<DualViewColumnInfo> wrapAdditionalColumns(ColumnInfo[] additionalColumns) {
     ArrayList<DualViewColumnInfo> result = new ArrayList<DualViewColumnInfo>();
-    if (additionalColunms != null) {
-      for (ColumnInfo additionalColunm : additionalColunms) {
-        result.add(new MyColumnWrapper(additionalColunm));
+    if (additionalColumns != null) {
+      for (ColumnInfo additionalColumn : additionalColumns) {
+        result.add(new MyColumnWrapper(additionalColumn));
       }
     }
     return result;
@@ -827,12 +827,14 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return myDualView.getSelection();
   }
 
+  @Nullable
   private VcsFileRevision getFirstSelectedRevision() {
     List selection = getSelection();
     if (selection.isEmpty()) return null;
     return ((TreeNodeOnVcsRevision)selection.get(0)).myRevision;
   }
 
+  @Nullable
   private VcsFileRevision getSelectedRevision(int index) {
     List selection = getSelection();
     if (selection.isEmpty()) return null;
@@ -927,23 +929,23 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
-  abstract static class VcsColumnInfo extends DualViewColumnInfo implements Comparator {
+  abstract static class VcsColumnInfo<T extends Comparable> extends DualViewColumnInfo<VcsFileRevision, String> implements Comparator<VcsFileRevision> {
     public VcsColumnInfo(String name) {
       super(name);
     }
 
-    protected abstract Comparable getDataOf(Object o);
+    protected abstract T getDataOf(VcsFileRevision o);
 
-    public Comparator getComparator() {
+    public Comparator<VcsFileRevision> getComparator() {
       return this;
     }
 
-    public Object valueOf(Object object) {
-      Comparable result = getDataOf(object);
+    public String valueOf(VcsFileRevision object) {
+      T result = getDataOf(object);
       return result == null ? "" : result.toString();
     }
 
-    public int compare(Object o1, Object o2) {
+    public int compare(VcsFileRevision o1, VcsFileRevision o2) {
       return compareObjects(getDataOf(o1), getDataOf(o2));
     }
 
@@ -964,8 +966,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   }
 
-  private static class MyColumnWrapper extends DualViewColumnInfo<TreeNodeOnVcsRevision, Object> {
-    private final ColumnInfo myBaseColumn;
+  private static class MyColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOnVcsRevision, Object> {
+    private final ColumnInfo<VcsFileRevision, T> myBaseColumn;
 
     public Comparator<TreeNodeOnVcsRevision> getComparator() {
       final Comparator comparator = myBaseColumn.getComparator();
@@ -996,7 +998,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     public void setValue(TreeNodeOnVcsRevision o, Object aValue) {
-      myBaseColumn.setValue(o.myRevision, aValue);
+      //noinspection unchecked
+      myBaseColumn.setValue(o.myRevision, (T) aValue);
     }
 
     public TableCellRenderer getRenderer(TreeNodeOnVcsRevision p0) {
@@ -1023,7 +1026,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       myBaseColumn.setName(s);
     }
 
-    public MyColumnWrapper(ColumnInfo additionalColunm) {
+    public MyColumnWrapper(ColumnInfo<VcsFileRevision, T> additionalColunm) {
       super(additionalColunm.getName());
       myBaseColumn = additionalColunm;
     }
