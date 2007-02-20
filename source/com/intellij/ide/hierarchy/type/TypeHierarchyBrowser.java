@@ -110,7 +110,8 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
           TypeHierarchyNodeDescriptor nodeDescriptor = (TypeHierarchyNodeDescriptor)userObject;
           final PsiElement psiElement = nodeDescriptor.getPsiClass();
           if (psiElement == null || !psiElement.isValid()) return null;
-          return new OpenFileDescriptor(psiElement.getProject(), psiElement.getContainingFile().getVirtualFile(), psiElement.getTextOffset());
+          PsiElement navigationElement = psiElement.getNavigationElement();
+          return new OpenFileDescriptor(psiElement.getProject(), navigationElement.getContainingFile().getVirtualFile(), navigationElement.getTextOffset());
         }
 
         public String getNextOccurenceActionName() {
