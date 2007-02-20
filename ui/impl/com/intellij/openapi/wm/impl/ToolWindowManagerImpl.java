@@ -122,7 +122,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     final VirtualFile baseDir = myProject.getBaseDir();
     if (baseDir != null) {
-      myFrame.setTitle(baseDir.getName() + " - [" + baseDir.getPresentableUrl() + "]");
+      myFrame.setTitle(myProject.getName() + " - [" + baseDir.getPresentableUrl() + "]");
     }
     else {
       myFrame.setTitle(myProject.getName());
