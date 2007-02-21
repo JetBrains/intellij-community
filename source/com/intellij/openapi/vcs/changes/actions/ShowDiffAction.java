@@ -49,7 +49,7 @@ public class ShowDiffAction extends AnAction {
     if (project == null || changes == null) return;
 
     changes = checkLoadFakeRevisions(project, changes);
-    if (changes == null) {
+    if (changes == null || changes.length == 0) {
       // VCS synchronization was cancelled
       return;
     }
