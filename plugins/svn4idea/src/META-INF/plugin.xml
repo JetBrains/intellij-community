@@ -58,6 +58,7 @@
       <reference id="Compare.SameVersion" text="Compare with BASE revision"/>
       <reference id="Compare.LastVersion" text="Compare with revision at HEAD"/>
       <reference id="Compare.Selected"/>
+      <action id="Subversion.CompareWithBranch" class="org.jetbrains.idea.svn.actions.CompareWithBranchAction"/>
       <reference id="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>
       <reference id="Annotate"/>
