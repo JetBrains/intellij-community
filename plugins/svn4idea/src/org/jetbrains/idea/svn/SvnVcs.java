@@ -324,7 +324,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   public DiffProvider getDiffProvider() {
     if (mySvnDiffProvider == null) {
-      mySvnDiffProvider = new SvnDiffProvider(this);
+      mySvnDiffProvider = new SvnDiffProvider();
     }
     return mySvnDiffProvider;
   }

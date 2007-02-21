@@ -62,12 +62,12 @@ public class SvnChangeList implements CommittedChangeList {
     myChanges = new ArrayList<Change>();
     for(Object o: myLogEntry.getChangedPaths().values()) {
       SVNLogEntryPath entry = (SVNLogEntryPath) o;
-      SvnContentRevision beforeRevision = (entry.getType() == 'A')
+      SvnRepositoryContentRevision beforeRevision = (entry.getType() == 'A')
                                           ? null
-                                          : new SvnContentRevision(myRepository, entry, myLogEntry.getRevision()-1);
-      SvnContentRevision afterRevision = (entry.getType() == 'D')
+                                          : new SvnRepositoryContentRevision(myRepository, entry, myLogEntry.getRevision()-1);
+      SvnRepositoryContentRevision afterRevision = (entry.getType() == 'D')
                                          ? null
-                                         : new SvnContentRevision(myRepository, entry, myLogEntry.getRevision());
+                                         : new SvnRepositoryContentRevision(myRepository, entry, myLogEntry.getRevision());
       myChanges.add(new Change(beforeRevision, afterRevision));
     }
   }

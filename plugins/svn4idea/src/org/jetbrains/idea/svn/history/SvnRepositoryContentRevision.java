@@ -42,13 +42,13 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 
-public class SvnContentRevision implements ContentRevision {
+public class SvnRepositoryContentRevision implements ContentRevision {
   private SVNRepository myRepository;
   private SVNLogEntryPath myLogEntryPath;
   private long myRevision;
   private String myContent;
 
-  public SvnContentRevision(final SVNRepository repository, final SVNLogEntryPath logEntryPath, final long revision) {
+  public SvnRepositoryContentRevision(final SVNRepository repository, final SVNLogEntryPath logEntryPath, final long revision) {
     myLogEntryPath = logEntryPath;
     myRepository = repository;
     myRevision = revision;
