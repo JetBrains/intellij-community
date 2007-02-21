@@ -121,6 +121,8 @@ public abstract class ModuleManager {
    *
    * @param module the module for which the list of dependent modules is requested.
    * @return list of <i>modules that depend on</i> given module.
+   *
+   * @see ModuleUtil#getAllDependentModules(Module)
    */
   @NotNull public abstract List<Module> getModuleDependentModules(@NotNull Module module);
 
@@ -133,6 +135,13 @@ public abstract class ModuleManager {
    */
   public abstract boolean isModuleDependent(@NotNull Module module, @NotNull Module onModule);
 
+  /**
+   * Returns the graph of dependencies between modules in the project.
+   *
+   * @return the module dependency graph.
+   */
+  @NotNull public abstract Graph<Module> moduleGraph();
+  
   /**
    * Adds a listener for receiving notifications to the module structure of the project.
    *
@@ -157,13 +166,6 @@ public abstract class ModuleManager {
    * @deprecated Subscribe to {@link com.intellij.ProjectTopics#MODULES} on project bus or lower.
    */
   public abstract void removeModuleListener(@NotNull ModuleListener listener);
-
-  /**
-   * Returns the graph of dependencies between modules in the project.
-   *
-   * @return the module dependency graph.
-   */
-  @NotNull public abstract Graph<Module> moduleGraph();
 
   /**
    * Returns the model for the list of modules in the project, which can be used to add,

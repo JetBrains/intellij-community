@@ -79,6 +79,7 @@ public abstract class ModuleRootManager implements ModuleRootModel {
   /**
    * Checks if the current module directly depends on the specified module.
    *
+   * @param module the module to ckeck.
    * @return true if <code>module</code> is contained in the list of dependencies for the current module, false otherwise.
    */
   public abstract boolean isDependsOn(Module module);

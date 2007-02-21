@@ -33,6 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.FilteredQuery;
+import com.intellij.util.graph.Graph;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -208,6 +209,16 @@ public class ModuleUtil {
       result.addAll(moduleManager.getModuleDependentModules(module));
     }
     return result;
+  }
+
+  @NotNull
+  public static List<Module> getAllDependentModules(@NotNull Module module) {
+    final ArrayList<Module> list = new ArrayList<Module>();
+    final Graph<Module> graph = ModuleManager.getInstance(module.getProject()).moduleGraph();
+    for (Iterator<Module> i = graph.getOut(module); i.hasNext();) {
+      list.add(i.next());
+    }
+    return list;
   }
 
   public static boolean containsPackagePrefix(Module module, String packageFQName) {
