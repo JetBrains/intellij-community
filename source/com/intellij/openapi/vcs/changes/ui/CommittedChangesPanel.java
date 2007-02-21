@@ -72,16 +72,16 @@ public class CommittedChangesPanel extends JPanel {
 
   public void refreshChanges() {
     final Ref<VcsException> refEx = new Ref<VcsException>();
+    final Ref<List<CommittedChangeList>> changes = new Ref<List<CommittedChangeList>>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         try {
           if (myRoot == null) {
-            myChangesFromProvider = myProvider.getAllCommittedChanges(mySettings, 50);
+            changes.set(myProvider.getAllCommittedChanges(mySettings, 50));
           }
           else {
-            myChangesFromProvider = myProvider.getCommittedChanges(mySettings, myRoot, myMaxCount);
+            changes.set(myProvider.getCommittedChanges(mySettings, myRoot, myMaxCount));
           }
-          updateFilteredModel();
         }
         catch (VcsException ex) {
           refEx.set(ex);
@@ -91,6 +91,10 @@ public class CommittedChangesPanel extends JPanel {
     if (!refEx.isNull()) {
       LOG.info(refEx.get());
       Messages.showErrorDialog(myProject, "Error refreshing view: " + StringUtil.join(refEx.get().getMessages(), "\n"), "Committed Changes");
+    }
+    else {
+      myChangesFromProvider = changes.get();
+      updateFilteredModel();
     }
   }
 
