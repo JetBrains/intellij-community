@@ -35,8 +35,8 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Future;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * @author Eugene Zhuravlev
@@ -362,9 +362,17 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     final StringBuilder classpathBuffer = StringBuilderSpinAllocator.alloc();
     try {
       final OrderEntry[] orderEntries = CompilerPathsEx.getOrderEntries(module);
+      final Set<VirtualFile> processedFiles = new HashSet<VirtualFile>();
       for (final OrderEntry orderEntry : orderEntries) {
+        if (orderEntry instanceof JdkOrderEntry) {
+          continue;
+        }
         final VirtualFile[] files = orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES);
         for (VirtualFile file : files) {
+          if (processedFiles.contains(file)) {
+            continue;
+          }
+          processedFiles.add(file);
           final String path = PathUtil.getLocalPath(file);
           if (path == null) {
             continue;
