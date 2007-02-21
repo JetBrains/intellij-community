@@ -26,18 +26,14 @@ import java.util.List;
  * @author nik
  */
 public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
+  private FacetPointersManagerImpl myManager;
   private String myModuleName;
   private String myFacetTypeId;
   private String myFacetName;
   private F myFacet;
 
-  public FacetPointerImpl(final String moduleName, final String facetTypeId, final String facetName) {
-    myModuleName = moduleName;
-    myFacetTypeId = facetTypeId;
-    myFacetName = facetName;
-  }
-
-  public FacetPointerImpl(String id) {
+  public FacetPointerImpl(FacetPointersManagerImpl manager, String id) {
+    myManager = manager;
     final int i = id.indexOf('/');
     myModuleName = id.substring(0, i);
 
@@ -46,7 +42,8 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
     myFacetName = id.substring(j+1);
   }
 
-  public FacetPointerImpl(final @NotNull F facet) {
+  public FacetPointerImpl(FacetPointersManagerImpl manager, final @NotNull F facet) {
+    myManager = manager;
     myFacet = facet;
     updateInfo(myFacet);
     registerDisposable();
@@ -72,7 +69,7 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
   private void registerDisposable() {
     Disposer.register(myFacet, new Disposable() {
       public void dispose() {
-        FacetPointersManager.getInstance().dispose(FacetPointerImpl.this);
+        myManager.dispose(FacetPointerImpl.this);
       }
     });
   }

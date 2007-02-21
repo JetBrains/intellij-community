@@ -33,13 +33,7 @@ public abstract class FacetPointersManager {
 
 
   public abstract <F extends Facet> FacetPointer<F> create(F facet);
-
   public abstract <F extends Facet> FacetPointer<F> create(String id);
-
-  public abstract <F extends Facet> FacetPointer<F> create(String id, Disposable parentDisposable);
-
-  public abstract <F extends Facet> void dispose(FacetPointer<F> pointer);
-
 
   public abstract void addListener(FacetPointerListener<Facet> listener);
   public abstract void addListener(FacetPointerListener<Facet> listener, Disposable parentDisposable);

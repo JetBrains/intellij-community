@@ -34,9 +34,10 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Ap
 
   public <F extends Facet> FacetPointer<F> create(final F facet) {
     String id = constructId(facet);
+    //noinspection unchecked
     FacetPointerImpl<F> pointer = myPointers.get(id);
     if (pointer == null) {
-      pointer = new FacetPointerImpl<F>(facet);
+      pointer = new FacetPointerImpl<F>(this, facet);
       myPointers.put(id, pointer);
     }
     return pointer;
@@ -45,23 +46,13 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Ap
   public <F extends Facet> FacetPointer<F> create(final String id) {
     FacetPointerImpl<F> pointer = myPointers.get(id);
     if (pointer == null) {
-      pointer = new FacetPointerImpl<F>(id);
+      pointer = new FacetPointerImpl<F>(this, id);
       myPointers.put(id, pointer);
     }
     return pointer;
   }
 
-  public <F extends Facet> FacetPointer<F> create(final String id, final Disposable parentDisposable) {
-    final FacetPointer<F> pointer = create(id);
-    Disposer.register(parentDisposable, new Disposable() {
-      public void dispose() {
-        FacetPointersManagerImpl.this.dispose(pointer);
-      }
-    });
-    return pointer;
-  }
-
-  public <F extends Facet> void dispose(final FacetPointer<F> pointer) {
+  <F extends Facet> void dispose(final FacetPointer<F> pointer) {
     myPointers.remove(pointer.getId());
   }
 
