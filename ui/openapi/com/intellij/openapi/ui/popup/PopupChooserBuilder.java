@@ -104,7 +104,7 @@ public class PopupChooserBuilder {
     return this;
   }
 
-  public PopupChooserBuilder setDimensionServiceKey(String key){
+  public PopupChooserBuilder setDimensionServiceKey(@NonNls String key){
     myDimensionServiceKey = key;
     return this;
   }
