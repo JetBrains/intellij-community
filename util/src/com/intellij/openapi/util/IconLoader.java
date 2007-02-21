@@ -113,15 +113,15 @@ public final class IconLoader {
   @Nullable
   public static Icon findIcon(final String path, final Class aClass) {
     URL url = aClass.getResource(path);
-    return findIcon(url, path, aClass.getClassLoader());
+    return findIcon(url);
   }
 
   @Nullable
-  private static Icon findIcon(URL url, String resourcePath, ClassLoader classLoader) {
+  private static Icon findIcon(URL url) {
     if (url == null) return null;
       Icon icon = ourIconsCache.get(url);
       if (icon == null) {
-        icon = new CachedImageIcon(resourcePath, classLoader);
+        icon = new CachedImageIcon(url);
         icon = ourIconsCache.cacheOrGet(url, icon);
       }
       return icon;
@@ -132,18 +132,18 @@ public final class IconLoader {
     if (!path.startsWith("/")) return null;
 
     final URL url = aClassLoader.getResource(path.substring(1));
-    return findIcon(url, path, aClassLoader);
+    return findIcon(url);
   }
 
   @Nullable
-  private static Icon checkIcon(final Image image, final String path) {
+  private static Icon checkIcon(final Image image, URL url) {
     if (image == null || image.getHeight(ourFakeComponent) < 1) { // image wasn't loaded or broken
       return null;
     }
 
     final Icon icon = getIcon(image);
     if (icon != null && !ImageLoader.isGoodSize(icon)) {
-      LOG.error("Invalid icon: " + path); // # 22481
+      LOG.error("Invalid icon: " + url); // # 22481
       return EMPTY_ICON;
     }
     return icon;
@@ -206,13 +206,11 @@ public final class IconLoader {
   }
 
   private static final class CachedImageIcon implements Icon {
-    private String myResourcePath;
-    private ClassLoader myClassLoader;
     private Object myRealIcon;
+    private URL myUrl;
 
-    public CachedImageIcon(String resourcePath, ClassLoader classLoader) {
-      myResourcePath = resourcePath;
-      myClassLoader = classLoader;
+    public CachedImageIcon(URL url) {
+      myUrl = url;
     }
 
     private synchronized Icon getRealIcon() {
@@ -226,8 +224,8 @@ public final class IconLoader {
         if (icon != null) return icon;
       }
 
-      Image image = ImageLoader.loadFromStream(myClassLoader.getResourceAsStream(myResourcePath));
-      icon = checkIcon(image, myResourcePath);
+      Image image = ImageLoader.loadFromUrl(myUrl);
+      icon = checkIcon(image, myUrl);
 
       if (icon != null) {
         if (icon.getIconWidth() < 50 && icon.getIconHeight() < 50) {

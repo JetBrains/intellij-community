@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import sun.reflect.Reflection;
@@ -23,8 +24,10 @@ import sun.reflect.Reflection;
 import javax.swing.*;
 import java.awt.*;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.net.URL;
 
 @Deprecated
 public class ImageLoader implements Serializable {
@@ -89,6 +92,16 @@ public class ImageLoader implements Serializable {
     }
 
     return null;
+  }
+
+  public static Image loadFromUrl(URL url) {
+    try {
+      return loadFromStream(URLUtil.openStream(url));
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   public static boolean isGoodSize(Icon icon) {
