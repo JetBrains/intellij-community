@@ -31,6 +31,7 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
 
   public void actionPerformed(final AnActionEvent e) {
     final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    if ( project == null ) return;
 
     List<Module> pluginModules = new ArrayList<Module>();
     for (Module aModule : ModuleManager.getInstance(project).getModules()) {
@@ -51,9 +52,11 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
   public void update(AnActionEvent e) {
     boolean enabled = false;
     final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-    for (Module aModule : (ModuleManager.getInstance(project).getModules())) {
-      if (aModule.getModuleType() instanceof PluginModuleType) {
-        enabled = true;
+    if (project != null) {
+      for (Module aModule : (ModuleManager.getInstance(project).getModules())) {
+        if (aModule.getModuleType() instanceof PluginModuleType) {
+          enabled = true;
+        }
       }
     }
     e.getPresentation().setVisible(enabled);
