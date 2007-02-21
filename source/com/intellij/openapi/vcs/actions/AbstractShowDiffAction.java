@@ -107,7 +107,7 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
               ex.set(e);
             }
           }
-        }, "Loading content...", true, project);
+        }, VcsBundle.message("show.diff.progress.title"), true, project);
         if (!ex.isNull()) {
           AbstractVcsHelper.getInstance(project).showError(ex.get(), VcsBundle.message("message.title.diff"));
           return;

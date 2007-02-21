@@ -22,8 +22,10 @@ import org.jetbrains.annotations.Nullable;
 
 public interface DiffProvider {
 
+  @Nullable
   VcsRevisionNumber getCurrentRevision(VirtualFile file);
 
+  @Nullable
   VcsRevisionNumber getLastRevision(VirtualFile virtualFile);
 
   @Nullable

@@ -9,6 +9,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -311,10 +313,16 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
       if (selectedModifiedWithoutEditing != null && selectedModifiedWithoutEditing.size() > 0) {
         for(VirtualFile file: selectedModifiedWithoutEditing) {
           AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
-          ContentRevision beforeRevision = vcs.createUpToDateRevision(file);
-          if (beforeRevision != null) {
-            ContentRevision afterRevision = new CurrentContentRevision(new FilePathImpl(file));
-            changes.add(new Change(beforeRevision, afterRevision));
+          final DiffProvider diffProvider = vcs.getDiffProvider();
+          if (diffProvider != null) {
+            final VcsRevisionNumber currentRevision = diffProvider.getCurrentRevision(file);
+            if (currentRevision != null) {
+              ContentRevision beforeRevision = diffProvider.createFileContent(currentRevision, file);
+              if (beforeRevision != null) {
+                ContentRevision afterRevision = new CurrentContentRevision(new FilePathImpl(file));
+                changes.add(new Change(beforeRevision, afterRevision));
+              }
+            }
           }
         }
       }
