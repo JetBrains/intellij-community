@@ -107,22 +107,24 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     }
     else {
       final AntConfiguration antConfiguration = AntConfiguration.getInstance(file.getProject());
-      for (final AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
-        if (file.equals(buildFile.getAntFile())) {
-          myDirtyFiles.add(buildFile);
-          myAlarm.cancelAllRequests();
-          myAlarm.addRequest(new Runnable() {
-            public void run() {
-              final int size = myDirtyFiles.size();
-              if (size > 0) {
-                for (final AntBuildFile dirtyFile : myDirtyFiles) {
-                  antConfiguration.updateBuildFile(dirtyFile);
+      if (antConfiguration != null) {
+        for (final AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
+          if (file.equals(buildFile.getAntFile())) {
+            myDirtyFiles.add(buildFile);
+            myAlarm.cancelAllRequests();
+            myAlarm.addRequest(new Runnable() {
+              public void run() {
+                final int size = myDirtyFiles.size();
+                if (size > 0) {
+                  for (final AntBuildFile dirtyFile : myDirtyFiles) {
+                    antConfiguration.updateBuildFile(dirtyFile);
+                  }
+                  myDirtyFiles.clear();
                 }
-                myDirtyFiles.clear();
               }
-            }
-          }, 300);
-          break;
+            }, 300);
+            break;
+          }
         }
       }
     }
