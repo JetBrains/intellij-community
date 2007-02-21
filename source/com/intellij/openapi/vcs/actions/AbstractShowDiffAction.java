@@ -5,11 +5,14 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.BinaryContentRevision;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
-import com.intellij.openapi.vcs.history.VcsFileContent;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -92,12 +95,26 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
                         final VirtualFile selectedFile,
                         final Project project) {
     try {
-      final VcsFileContent fileRevision = diffProvider.createFileContent(revisionNumber, selectedFile);
+      final ContentRevision fileRevision = diffProvider.createFileContent(revisionNumber, selectedFile);
       if (fileRevision != null) {
-        fileRevision.loadContent();
+        final Ref<VcsException> ex = new Ref<VcsException>();
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+          public void run() {
+            try {
+              fileRevision.getContent();
+            }
+            catch (VcsException e) {
+              ex.set(e);
+            }
+          }
+        }, "Loading content...", true, project);
+        if (!ex.isNull()) {
+          AbstractVcsHelper.getInstance(project).showError(ex.get(), VcsBundle.message("message.title.diff"));
+          return;
+        }
 
-        if (selectedFile.getFileType().isBinary()) {
-          if (Arrays.equals(selectedFile.contentsToByteArray(), fileRevision.getContent())) {
+        if (fileRevision instanceof BinaryContentRevision) {
+          if (Arrays.equals(selectedFile.contentsToByteArray(), ((BinaryContentRevision) fileRevision).getBinaryContent())) {
             Messages.showInfoMessage(VcsBundle.message("message.text.binary.versions.are.identical"), VcsBundle.message("message.title.diff"));
           } else {
             Messages.showInfoMessage(VcsBundle.message("message.text.binary.versions.are.different"), VcsBundle.message("message.title.diff"));
@@ -107,7 +124,7 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
 
         final SimpleDiffRequest request =
         new SimpleDiffRequest(project, selectedFile.getPresentableUrl());
-        final SimpleContent content1 = new SimpleContent(new String(fileRevision.getContent(), selectedFile.getCharset().name()), selectedFile.getFileType());
+        final SimpleContent content1 = new SimpleContent(fileRevision.getContent(), selectedFile.getFileType());
         final DocumentContent content2 = new DocumentContent(project, FileDocumentManager.getInstance().getDocument(selectedFile));
 
         final VcsRevisionNumber currentRevision = diffProvider.getCurrentRevision(selectedFile);

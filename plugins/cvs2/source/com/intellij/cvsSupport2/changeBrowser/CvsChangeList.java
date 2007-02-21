@@ -12,6 +12,7 @@ package com.intellij.cvsSupport2.changeBrowser;
 
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
+import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -78,11 +79,14 @@ public class CvsChangeList implements CommittedChangeList {
         final String state = revision.getState();
         ContentRevision beforeRevision = isAdded(revision)
           ? null
-          : new CvsContentRevision(new File(wrapper.getFile()), new CvsRevisionNumber(revision.getNumber()).getPrevNumber().asString(),
+          : new CvsContentRevision(new File(wrapper.getFile()),
+                                   new SimpleRevision(new CvsRevisionNumber(revision.getNumber()).getPrevNumber().asString()),
                                    myEnvironment, myProject);
         ContentRevision afterRevision = (DEAD_STATE.equals(state))
           ? null
-          : new CvsContentRevision(new File(wrapper.getFile()), revision.getNumber(), myEnvironment, myProject);
+          : new CvsContentRevision(new File(wrapper.getFile()),
+                                   new SimpleRevision(revision.getNumber()),
+                                   myEnvironment, myProject);
         myChanges.add(new Change(beforeRevision, afterRevision));
       }
     }

@@ -8,6 +8,7 @@ import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.Command;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * author: lesya
@@ -37,6 +38,7 @@ public class RevisionOrDateImpl implements RevisionOrDate {
     result.setStickyInfo(stickyTagFromConfig, stickyDateFromConfig);
   }
 
+  @NotNull
   public static RevisionOrDate createOn(DateOrRevisionSettings config) {
     RevisionOrDateImpl result = new RevisionOrDateImpl();
     updateOn(result, config);
