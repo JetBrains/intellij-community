@@ -63,11 +63,11 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   public abstract F createFacet(@NotNull Module module, final String name, @NotNull C configuration, @Nullable Facet underlyingFacet);
 
   public boolean isOnlyOneFacetAllowed() {
-    return false;
+    return true;
   }
 
   public boolean isSuitableModuleType(ModuleType moduleType) {
-    return true;
+    return moduleType == ModuleType.JAVA;
   }
 
   @Nullable
