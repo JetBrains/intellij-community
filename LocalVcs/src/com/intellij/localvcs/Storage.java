@@ -169,9 +169,11 @@ public class Storage {
   }
 
   public void purgeContents(List<Content> contents) {
-    for (Content c : contents) {
-      myContentStorage.remove(c.getId());
-    }
+    for (Content c : contents) c.purge();
+  }
+
+  protected void purgeContent(Content c) {
+    myContentStorage.remove(c.getId());
   }
 
   public boolean isContentPurged(Content c) {

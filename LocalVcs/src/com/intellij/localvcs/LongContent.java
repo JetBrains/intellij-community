@@ -31,4 +31,8 @@ public class LongContent extends Content {
   public boolean isTooLong() {
     return true;
   }
+
+  @Override
+  public void purge() {
+  }
 }

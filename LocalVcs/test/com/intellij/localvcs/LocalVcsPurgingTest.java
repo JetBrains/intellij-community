@@ -3,11 +3,12 @@ package com.intellij.localvcs;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class LocalVcsPurgingTest extends LocalVcsTestCase {
   TestLocalVcs vcs = new TestLocalVcs(new PurgingLoggingStorage());
-  List<Content> purgedContent;
+  List<Content> purgedContent = new ArrayList<Content>();
 
   @Before
   public void setUp() {
@@ -22,11 +23,13 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
 
   @Test
   public void testPurging() {
+    assertEquals(2, vcs.getLabelsFor("file").size());
+
     vcs.purgeUpTo(15);
 
-    List<Label> labels = vcs.getLabelsFor("file");
-    assertEquals(1, labels.size());
-    assertEquals(20L, labels.get(0).getTimestamp());
+    List<Label> ll = vcs.getLabelsFor("file");
+    assertEquals(1, ll.size());
+    assertEquals(20L, ll.get(0).getTimestamp());
   }
 
   @Test
@@ -35,6 +38,21 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
 
     assertEquals(1, purgedContent.size());
     assertEquals(c("content"), purgedContent.get(0));
+  }
+
+  @Test
+  public void testDoesNotPurgeLongContentFromContentStorage() {
+    vcs = new TestLocalVcs(new PurgingLoggingStorage());
+    vcs.setCurrentTimestamp(10);
+
+    vcs.createFile("file", new byte[LongContent.MAX_LENGTH + 1], null);
+    vcs.apply();
+    vcs.changeFileContent("file", b("new content"), null);
+    vcs.apply();
+
+    vcs.purgeUpTo(20);
+
+    assertTrue(purgedContent.isEmpty());
   }
 
   @Test
@@ -59,8 +77,8 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
 
   class PurgingLoggingStorage extends TestStorage {
     @Override
-    public void purgeContents(List<Content> cc) {
-      purgedContent = cc;
+    public void purgeContent(Content c) {
+      purgedContent.add(c);
     }
   }
 }

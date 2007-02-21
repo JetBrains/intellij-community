@@ -44,6 +44,10 @@ public class Content {
     return myId;
   }
 
+  public void purge() {
+    myStorage.purgeContent(this);
+  }
+
   @Override
   public String toString() {
     return new String(getBytes());
