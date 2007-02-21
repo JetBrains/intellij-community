@@ -2,15 +2,13 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
@@ -27,6 +25,29 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
     super(XML_DOCTYPE);
   }
 
+  public void clearCaches() {
+    final XmlDocument doc = getContainingDocument();
+    if (doc != null) {
+      final XmlTag rootTag = doc.getRootTag();
+      if (rootTag instanceof TreeElement) {
+        ((TreeElement)rootTag).clearCaches();
+      }
+    }
+    super.clearCaches();
+  }
+
+  private XmlDocument getContainingDocument() {
+    for (PsiElement elem = getParent(); elem != null; elem = elem.getParent()) {
+      if (elem instanceof XmlDocument) {
+        return (XmlDocument)elem;
+      }
+      if (elem instanceof PsiFile) {
+        break; // optimization
+      }
+    }
+    return null;
+  }
+  
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
