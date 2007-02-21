@@ -3,41 +3,24 @@ package com.intellij.ide.actions;
 
 
 import com.intellij.ide.FileEditorProvider;
-
 import com.intellij.ide.SelectInContext;
-
 import com.intellij.openapi.actionSystem.AnActionEvent;
-
 import com.intellij.openapi.actionSystem.DataConstants;
-
 import com.intellij.openapi.actionSystem.DataContext;
-
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-
 import com.intellij.openapi.editor.Document;
-
 import com.intellij.openapi.fileEditor.*;
-
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-
 import com.intellij.openapi.project.Project;
-
 import com.intellij.openapi.vfs.VirtualFile;
-
 import com.intellij.pom.Navigatable;
-
 import com.intellij.psi.*;
-
-import com.intellij.psi.util.PsiUtil;
-
+import com.intellij.psi.jsp.JspFile;
+import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NotNull;
-
 import org.jetbrains.annotations.Nullable;
 
-
-
 import javax.swing.*;
-
 import java.awt.event.InputEvent;
 
 
@@ -295,21 +278,15 @@ abstract class SelectInContextImpl implements SelectInContext {
 
 
     public Object getSelectorInFile() {
-
+      if (myPsiFile instanceof JspFile) return super.getSelectorInFile();
       final int offset = myEditor.getEditor().getCaretModel().getOffset();
 
-      if (myPsiFile instanceof PsiJavaFile && !(PsiUtil.isInJspFile(myPsiFile))
-
-          && offset >= 0 && offset < myPsiFile.getTextLength()) {
-
-        return myPsiFile.findElementAt(offset);
-
-      } else {
-
-        return super.getSelectorInFile();
-
+      if (offset >= 0 && offset < myPsiFile.getTextLength()) {
+        PsiElement javaPsi = myPsiFile.getViewProvider().findElementAt(offset, StdLanguages.JAVA);
+        if (javaPsi != null) return javaPsi;
       }
 
+      return super.getSelectorInFile();
     }
 
   }
