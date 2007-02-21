@@ -38,7 +38,6 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   private volatile int myLastFoundElementOffset = -1;
   private volatile AntElement myLastFoundElement;
   private volatile boolean myIsImported;
-  private volatile boolean myComputingAttrValue;
   protected volatile boolean myInGettingChildren;
   @NonNls private static final String ANTLIB_NS_PREFIX = "antlib:";
   @NonNls private static final String ANTLIB_XML = "antlib.xml";
@@ -216,19 +215,17 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
 
   @Nullable
   public String computeAttributeValue(final String value) {
-    synchronized (PsiLock.LOCK) {
-      if (value != null && !myComputingAttrValue) {
-        myComputingAttrValue = true;
-        final Set<PsiElement> set = PsiElementSetSpinAllocator.alloc();
-        try {
-          return computeAttributeValue(value, set);
-        }
-        finally {
-          PsiElementSetSpinAllocator.dispose(set);
-          myComputingAttrValue = false;
-        }
-      }
+    if (value == null) {
       return null;
+    }
+    synchronized (PsiLock.LOCK) {
+      final Set<PsiElement> set = PsiElementSetSpinAllocator.alloc();
+      try {
+        return computeAttributeValue(value, set);
+      }
+      finally {
+        PsiElementSetSpinAllocator.dispose(set);
+      }
     }
   }
 
