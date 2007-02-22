@@ -5,6 +5,7 @@ package com.intellij.concurrency;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.impl.search.CachesBasedRefSearcher;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,6 +62,9 @@ public class JobImpl<T> implements Job<T> {
   public List<T> scheduleAndWaitForResults() throws Throwable {
     // Don't bother scheduling if we only have one processor.
     if (JobSchedulerImpl.CORES_COUNT < 2) {
+      if (CachesBasedRefSearcher.DEBUG) {
+        System.out.println("Having one core");
+      }
       List<T> results = new ArrayList<T>(myTasks.size());
       for (Callable<T> task : myTasks) {
         myLock.lock();
@@ -137,6 +141,9 @@ public class JobImpl<T> implements Job<T> {
     try {
       if (myCanceled) return;
       myCanceled = true;
+      if (CachesBasedRefSearcher.DEBUG) {
+        System.out.println("Cancelled task");
+      }
 
       if (myFutures == null) {
         if (JobSchedulerImpl.CORES_COUNT < 2) return; // Futures are not created for single core.
