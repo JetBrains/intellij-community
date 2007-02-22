@@ -142,6 +142,11 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
     return myTitle;
   }
 
+  @Nullable
+  public String getTooltip() {
+    return myPath;
+  }
+
   public String getPath() {
     return myPath;
   }

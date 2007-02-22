@@ -217,7 +217,7 @@ public class RunContentBuilder implements LogConsoleManager {
       }
       ((JTabbedPane)myComponent).addTab(ExecutionBundle.message("run.configuration.console.tab"), component);
     }
-    ((JTabbedPane)myComponent).addTab(tabComponent.getTabTitle(), tabComponent.getComponent());
+    ((JTabbedPane)myComponent).addTab(tabComponent.getTabTitle(), null, tabComponent.getComponent(), tabComponent.getTooltip());
   }
 
   public void removeAdditionalTabComponent(AdditionalTabComponent component) {

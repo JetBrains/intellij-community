@@ -5,6 +5,7 @@
 package com.intellij.diagnostic.logging;
 
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,6 +23,11 @@ public abstract class AdditionalTabComponent extends JPanel implements Disposabl
   }
 
   public abstract String getTabTitle();
+
+  @Nullable
+  public String getTooltip() {
+    return null;
+  }
 
   public JComponent getComponent(){
     return this;
