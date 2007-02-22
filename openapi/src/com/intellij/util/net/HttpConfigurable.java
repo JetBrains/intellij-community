@@ -17,6 +17,7 @@ package com.intellij.util.net;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -46,7 +47,7 @@ public class HttpConfigurable implements JDOMExternalizable, ApplicationComponen
   public boolean KEEP_PROXY_PASSWORD = false;
 
   public static HttpConfigurable getInstance() {
-    return ApplicationManager.getApplication().getComponent(HttpConfigurable.class);
+    return ServiceManager.getService(HttpConfigurable.class);
   }
 
   public void readExternal(Element element) throws InvalidDataException {
