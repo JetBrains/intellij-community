@@ -19,9 +19,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtractIncrementIntention extends MutablyNamedIntention {
@@ -54,15 +54,34 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
         if (operand == null) {
             return;
         }
-        final PsiStatement statement =
-                PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+        PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
         assert statement != null;
-        final PsiElement parent = statement.getParent();
+        PsiElement parent = statement.getParent();
         if (parent == null) {
             return;
         }
+
         final PsiManager manager = element.getManager();
         final PsiElementFactory factory = manager.getElementFactory();
+
+        if (parent instanceof PsiIfStatement || parent instanceof PsiLoopStatement) {
+            int elementOffsetInStatement = element.getTextRange().getStartOffset() - statement.getTextRange().getStartOffset();
+            int elementLength = element.getTextLength();
+
+            assert elementOffsetInStatement >= 0;
+            assert elementLength > 0;
+
+            PsiCodeBlock codeBlock = factory.createCodeBlockFromText("{ " + statement.getText() + "}", parent);
+            codeBlock = (PsiCodeBlock) statement.replace(codeBlock);
+            statement = codeBlock.getStatements()[0];
+            parent = statement.getParent();
+
+            element = statement.getContainingFile().findElementAt(statement.getTextRange().getStartOffset() + elementOffsetInStatement);
+
+            while (element != null && element.getTextLength() < elementLength) element = element.getParent();
+            if (element == null) return; // Shall not happen BTW
+        }
+      
         final String newStatementText = element.getText() + ';';
         final PsiStatement newCall =
                 factory.createStatementFromText(newStatementText, null);
