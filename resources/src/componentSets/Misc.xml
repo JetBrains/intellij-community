@@ -37,15 +37,6 @@
     <component>
       <implementation-class>com.intellij.ide.ui.customization.CustomizableActionsSchemas</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.ide.util.projectWizard.JBuilderApplicationProjectImportHelper</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.ide.util.projectWizard.j2ee.JBuilderEjbImportHelper</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.ide.util.projectWizard.j2ee.JBuilderWebProjectImportHelper</implementation-class>
-    </component>
   </application-components>
 
   <project-components>
