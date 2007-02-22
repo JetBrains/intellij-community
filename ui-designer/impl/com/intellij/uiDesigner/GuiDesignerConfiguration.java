@@ -1,21 +1,27 @@
 package com.intellij.uiDesigner;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class GuiDesignerConfiguration implements ProjectComponent, JDOMExternalizable{
+@State(
+  name = "uidesigner-configuration",
+  storages = {
+    @Storage(
+      id ="other",
+      file = "$PROJECT_FILE$"
+    )}
+)
+public final class GuiDesignerConfiguration implements PersistentStateComponent<GuiDesignerConfiguration> {
   public static GuiDesignerConfiguration getInstance(final Project project){
-    return project.getComponent(GuiDesignerConfiguration.class);
+    return ServiceManager.getService(project, GuiDesignerConfiguration.class);
   }
 
   /**
@@ -27,24 +33,12 @@ public final class GuiDesignerConfiguration implements ProjectComponent, JDOMExt
 
   public String DEFAULT_LAYOUT_MANAGER = UIFormXmlConstants.LAYOUT_INTELLIJ;
 
-  public void projectOpened() {}
 
-  public void projectClosed() {}
-
-  @NotNull
-  public String getComponentName() {
-    return "uidesigner-configuration";
+  public GuiDesignerConfiguration getState() {
+    return this;
   }
 
-  public void initComponent() {}
-
-  public void disposeComponent() {}
-
-  public void readExternal(final Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(final Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+  public void loadState(GuiDesignerConfiguration object) {
+    XmlSerializerUtil.copyBean(object, this);
   }
 }

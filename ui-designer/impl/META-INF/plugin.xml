@@ -81,6 +81,8 @@
     <projectService serviceInterface="com.intellij.uiDesigner.LoaderFactory"
                serviceImplementation="com.intellij.uiDesigner.LoaderFactory"/>
 
+    <projectService serviceInterface="com.intellij.uiDesigner.GuiDesignerConfiguration"
+               serviceImplementation="com.intellij.uiDesigner.GuiDesignerConfiguration"/>
     <annotator>
       <language>JAVA</language>
       <annotatorClass>com.intellij.uiDesigner.binding.FormClassAnnotator</annotatorClass>
@@ -98,10 +100,6 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.uiDesigner.palette.Palette</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.GuiDesignerConfiguration</implementation-class>
       <skipForDummyProject/>
     </component>
     <component>
