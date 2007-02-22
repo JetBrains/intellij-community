@@ -156,7 +156,7 @@ public class StringUtil {
   }
 
   public static boolean charsEqualIgnoreCase(char a, char b) {
-    return a == b || toUpperCase(a) == toUpperCase(b);
+    return a == b || toUpperCase(a) == toUpperCase(b) || toLowerCase(a) == toLowerCase(b);
   }
 
   public static char toUpperCase(char a) {
@@ -343,7 +343,7 @@ public class StringUtil {
               if (buffer == null) {
                 buffer = new StringBuffer(s);
               }
-              buffer.setCharAt(i, Character.toUpperCase(currChar));
+              buffer.setCharAt(i, toUpperCase(currChar));
             }
           }
         }
@@ -575,7 +575,7 @@ public class StringUtil {
 
     // Optimization
     if (Character.isUpperCase(s.charAt(0)) ) return s;
-    return Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    return toUpperCase(s.charAt(0)) + s.substring(1);
   }
 
   public static int stringHashCode(CharSequence chars) {
@@ -983,7 +983,7 @@ public class StringUtil {
   public static String firstLetterToUpperCase(final String displayString) {
     if (displayString == null || displayString.length() == 0) return displayString;
     char firstChar = displayString.charAt(0);
-    char uppedFirstChar = Character.toUpperCase(firstChar);
+    char uppedFirstChar = toUpperCase(firstChar);
 
     if (uppedFirstChar == firstChar) return displayString;
 

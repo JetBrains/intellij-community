@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -68,12 +70,7 @@ public class Comparing {
       if (c1 == c2) {
         continue;
       }
-      if (!caseSensitive) {
-        char u1 = Character.toUpperCase(c1);
-        char u2 = Character.toUpperCase(c2);
-        if (u1 == u2) continue;
-        if (Character.toLowerCase(u1) == Character.toLowerCase(u2)) continue;
-      }
+      if (!caseSensitive && StringUtil.charsEqualIgnoreCase(c1, c2)) continue;
       return false;
     }
 

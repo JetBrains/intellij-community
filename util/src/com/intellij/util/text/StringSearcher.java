@@ -15,6 +15,8 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 import java.util.Arrays;
 
 /**
@@ -82,14 +84,14 @@ public class StringSearcher {
         int i = myPatternLength - 1;
         char lastChar = text.charAt(start + i);
         if (!myCaseSensitive){
-          lastChar = Character.toLowerCase(lastChar);
+          lastChar = StringUtil.toLowerCase(lastChar);
         }
         if (myPatternArray[i] == lastChar){
           i--;
           while(i >= 0){
             char c = text.charAt(start + i);
             if (!myCaseSensitive){
-              c = Character.toLowerCase(c);
+              c = StringUtil.toLowerCase(c);
             }
             if (myPatternArray[i] != c) break;
             i--;
@@ -125,14 +127,14 @@ public class StringSearcher {
         int i = myPatternLength - 1;
         char lastChar = text.charAt(text.length() - (start + i));
         if (!myCaseSensitive){
-          lastChar = Character.toLowerCase(lastChar);
+          lastChar = StringUtil.toLowerCase(lastChar);
         }
         if (myPatternArray[myPatternLength - 1 - i] == lastChar){
           i--;
           while(i >= 0){
             char c = text.charAt(text.length() - (start + i));
             if (!myCaseSensitive){
-              c = Character.toLowerCase(c);
+              c = StringUtil.toLowerCase(c);
             }
             if (myPatternArray[myPatternLength - 1 - i] != c) break;
             i--;
