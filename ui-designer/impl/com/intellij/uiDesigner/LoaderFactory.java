@@ -1,20 +1,20 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.ProjectTopics;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
-import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.messages.MessageBusConnection;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,7 +27,7 @@ import java.util.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class LoaderFactory implements ProjectComponent, JDOMExternalizable{
+public final class LoaderFactory {
   private final Project myProject;
 
   private final WeakHashMap<Module, ClassLoader> myModule2ClassLoader;
@@ -35,10 +35,10 @@ public final class LoaderFactory implements ProjectComponent, JDOMExternalizable
   private final MessageBusConnection myConnection;
 
   public static LoaderFactory getInstance(final Project project) {
-    return project.getComponent(LoaderFactory.class);
+    return ServiceManager.getService(project, LoaderFactory.class);
   }
   
-  LoaderFactory(final Project project) {
+  public LoaderFactory(final Project project) {
     myProject = project;
     myModule2ClassLoader = new WeakHashMap<Module, ClassLoader>();
     myConnection = myProject.getMessageBus().connect();
@@ -48,31 +48,13 @@ public final class LoaderFactory implements ProjectComponent, JDOMExternalizable
         clearClassLoaderCache();
       }
     });
-  }
 
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "GUI Designer component loader factory";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-    myConnection.disconnect();
-    myModule2ClassLoader.clear();
-  }
-
-  public void readExternal(final Element element) {
-  }
-
-  public void writeExternal(final Element element) {
+    Disposer.register(project, new Disposable() {
+      public void dispose() {
+        myConnection.disconnect();
+        myModule2ClassLoader.clear();
+      }
+    });
   }
 
   @NotNull public ClassLoader getLoader(final VirtualFile formFile) {

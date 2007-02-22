@@ -78,6 +78,9 @@
     <moduleService serviceInterface="com.intellij.uiDesigner.StringDescriptorManager"
                    serviceImplementation="com.intellij.uiDesigner.StringDescriptorManager"/>
 
+    <projectService serviceInterface="com.intellij.uiDesigner.LoaderFactory"
+               serviceImplementation="com.intellij.uiDesigner.LoaderFactory"/>
+
     <annotator>
       <language>JAVA</language>
       <annotatorClass>com.intellij.uiDesigner.binding.FormClassAnnotator</annotatorClass>
@@ -95,10 +98,6 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.uiDesigner.palette.Palette</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.LoaderFactory</implementation-class>
       <skipForDummyProject/>
     </component>
     <component>
