@@ -76,10 +76,6 @@
       <implementation-class>com.intellij.ide.todo.TodoConfiguration</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.ide.fileTemplates.FileTemplateManager</interface-class>
-      <implementation-class>com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.project.ProjectManager</interface-class>
       <implementation-class>com.intellij.openapi.project.impl.ProjectManagerImpl</implementation-class>
     </component>

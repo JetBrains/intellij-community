@@ -1,6 +1,6 @@
 package com.intellij.ide.fileTemplates;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +31,7 @@ public abstract class FileTemplateManager{
   @NonNls public static final String FILE_HEADER_TEMPLATE_NAME = "File Header";
 
   public static FileTemplateManager getInstance(){
-    return ApplicationManager.getApplication().getComponent(FileTemplateManager.class);
+    return ServiceManager.getService(FileTemplateManager.class);
   }
 
   @NotNull public abstract FileTemplate[] getAllTemplates();

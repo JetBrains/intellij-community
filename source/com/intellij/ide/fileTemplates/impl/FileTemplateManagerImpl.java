@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
@@ -67,7 +68,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   private Map<String, String> myLocalizedTemplateNames = new HashMap<String, String>();
 
   public static FileTemplateManagerImpl getInstance(){
-    return (FileTemplateManagerImpl)ApplicationManager.getApplication().getComponent(FileTemplateManager.class);
+    return (FileTemplateManagerImpl)ServiceManager.getService(FileTemplateManager.class);
   }
 
   public FileTemplateManagerImpl(VirtualFileManager virtualFileManager, FileTypeManagerEx fileTypeManagerEx) {
