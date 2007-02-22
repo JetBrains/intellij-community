@@ -823,16 +823,19 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           }
         });
         try {
-            EntryPointsManager.getInstance(getProject()).resolveEntryPoints(getRefManager());
-            List<InspectionTool> needRepeatSearchRequest = new ArrayList<InspectionTool>();
-            runTools(needRepeatSearchRequest, scope, manager);
-          }
-          catch (ProcessCanceledException e) {
-            cleanup((InspectionManagerEx)manager);
-            throw e;
-          } catch (Exception e){
-            LOG.error(e);
-          }
+          EntryPointsManager.getInstance(getProject()).resolveEntryPoints(getRefManager());
+          BUILD_GRAPH.setTotalAmount(scope.getFileCount());
+          LOCAL_ANALYSIS.setTotalAmount(scope.getFileCount());
+          List<InspectionTool> needRepeatSearchRequest = new ArrayList<InspectionTool>();
+          runTools(needRepeatSearchRequest, scope, manager);
+        }
+        catch (ProcessCanceledException e) {
+          cleanup((InspectionManagerEx)manager);
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
       finally {
         application.runReadAction(new Runnable(){
@@ -966,9 +969,6 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         }
       });
     }
-
-    BUILD_GRAPH.setTotalAmount(scope.getFileCount());
-    LOCAL_ANALYSIS.setTotalAmount(scope.getFileCount());
   }
 
   private void processProfileTools(final InspectionProfileWrapper inspectionProfile,
