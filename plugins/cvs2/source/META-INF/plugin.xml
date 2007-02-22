@@ -20,10 +20,6 @@
       <implementation-class>com.intellij.cvsSupport2.CvsVcs2</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.cvsSupport2.ui.CvsTabbedWindow</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-    <component>
       <implementation-class>com.intellij.cvsSupport2.application.CvsStorageSupportingDeletionComponent</implementation-class>
     </component>
 
@@ -122,15 +118,17 @@
     <checkoutProvider implementation="com.intellij.cvsSupport2.checkout.CvsCheckoutProvider"/>
 
     <applicationService serviceInterface="com.intellij.openapi.cvsIntegration.CvsServices"
-                        serviceImplementation="com.intellij.cvsSupport2.impl.CvsServicesImpl"/>
+                   serviceImplementation="com.intellij.cvsSupport2.impl.CvsServicesImpl"/>
     <applicationService serviceInterface="com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration"
-                        serviceImplementation="com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration"/>
+                   serviceImplementation="com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration"/>
     <applicationService serviceInterface="com.intellij.cvsSupport2.application.CvsEntriesManager"
-                        serviceImplementation="com.intellij.cvsSupport2.application.CvsEntriesManager"/>
+                   serviceImplementation="com.intellij.cvsSupport2.application.CvsEntriesManager"/>
     <applicationService serviceInterface="com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl"
-                        serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl"/>
+                   serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl"/>
     <applicationService serviceInterface="com.intellij.cvsSupport2.config.ImportConfiguration"
-                        serviceImplementation="com.intellij.cvsSupport2.config.ImportConfiguration"/>
+                   serviceImplementation="com.intellij.cvsSupport2.config.ImportConfiguration"/>
 
+    <projectService serviceInterface="com.intellij.cvsSupport2.ui.CvsTabbedWindow"
+               serviceImplementation="com.intellij.cvsSupport2.ui.CvsTabbedWindow"/>
   </extensions>
 </idea-plugin>

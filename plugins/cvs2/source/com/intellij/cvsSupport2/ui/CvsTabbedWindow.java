@@ -1,11 +1,13 @@
 package com.intellij.cvsSupport2.ui;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -17,15 +19,15 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ui.ErrorTreeView;
+import com.intellij.CvsBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
  */
-public class CvsTabbedWindow implements ProjectComponent {
+public class CvsTabbedWindow {
   private Project myProject;
   private Editor myOutput = null;
   private ErrorTreeView myErrorsView;
@@ -53,40 +55,8 @@ public class CvsTabbedWindow implements ProjectComponent {
         }
       }
     });
-  }
 
-  public static CvsTabbedWindow getInstance(Project project) {
-    return project.getComponent(CvsTabbedWindow.class);
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-    if (myOutput != null) {
-      EditorFactory.getInstance().releaseEditor(myOutput);
-      myOutput = null;
-    }
-  }
-
-  public void projectClosed() {
-    LOG.assertTrue(!myIsDisposed);
-    try {
-      if (!myIsInitialized) return;
-      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      toolWindowManager.unregisterToolWindow(ToolWindowId.CVS);
-    }
-    finally {
-      myIsDisposed = true;
-    }
-
-  }
-
-  public String getComponentName() {
-    return "CvsTabbedWindow";
-  }
-
-  public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
       public void run() {
         myIsInitialized = true;
         myIsDisposed = false;
@@ -96,6 +66,29 @@ public class CvsTabbedWindow implements ProjectComponent {
         toolWindow.setIcon(IconLoader.getIcon("/_cvs/cvs.png"));
         toolWindow.installWatcher(myContentManager);
       }});
+
+    Disposer.register(project, new Disposable() {
+      public void dispose() {
+        if (myOutput != null) {
+          EditorFactory.getInstance().releaseEditor(myOutput);
+          myOutput = null;
+        }
+
+        LOG.assertTrue(!myIsDisposed);
+        try {
+          if (!myIsInitialized) return;
+          ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+          toolWindowManager.unregisterToolWindow(ToolWindowId.CVS);
+        }
+        finally {
+          myIsDisposed = true;
+        }
+      }
+    });
+  }
+
+  public static CvsTabbedWindow getInstance(Project project) {
+    return ServiceManager.getService(project, CvsTabbedWindow.class);
   }
 
   private int getComponentAt(int i, boolean select) {
@@ -144,7 +137,7 @@ public class CvsTabbedWindow implements ProjectComponent {
   public Editor addOutput(Editor output) {
     LOG.assertTrue(myOutput == null);
     if (myOutput == null) {
-      addTab(com.intellij.CvsBundle.message("tab.title.cvs.output"), output.getComponent(), false, false, false, true, "cvs.cvsOutput");
+      addTab(CvsBundle.message("tab.title.cvs.output"), output.getComponent(), false, false, false, true, "cvs.cvsOutput");
       myOutput = output;
     }
     return myOutput;
@@ -152,7 +145,7 @@ public class CvsTabbedWindow implements ProjectComponent {
 
   public ErrorTreeView addErrorsTreeView(ErrorTreeView view) {
     if (myErrorsView == null) {
-      addTab(com.intellij.CvsBundle.message("tab.title.errors"), view.getComponent(), true, false, true, false, "cvs.errors");
+      addTab(CvsBundle.message("tab.title.errors"), view.getComponent(), true, false, true, false, "cvs.errors");
       myErrorsView = view;
     }
     return myErrorsView;
