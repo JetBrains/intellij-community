@@ -123,6 +123,15 @@ public interface ModifiableRootModel extends ModuleRootModel {
   void setJdk(ProjectJdk jdk);
 
   /**
+   * Sets JDK name and type for this module.
+   * To be used when JDK with this name and type does not exist (e.g. when importing module configuration).
+   *
+   * @param jdkName JDK name
+   * @param jdkType JDK type
+   */
+  void setInvalidJdk(String jdkName, String jdkType);
+
+  /**
    * Makes this module inheriting JDK from its project
    */
   void inheritJdk();

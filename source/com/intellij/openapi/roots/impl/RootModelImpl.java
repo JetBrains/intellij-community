@@ -552,6 +552,11 @@ class RootModelImpl implements ModifiableRootModel {
 
   }
 
+  public void setInvalidJdk(String jdkName, String jdkType) {
+    assertWritable();
+    replaceJdkEntry(new ModuleJdkOrderEntryImpl(jdkName, jdkType, this, myProjectRootManager, myFilePointerManager));
+  }
+
   private void replaceJdkEntry(final JdkOrderEntry jdkLibraryEntry) {
     for (int i = 0; i < myOrderEntries.size(); i++) {
       OrderEntry orderEntry = myOrderEntries.get(i);

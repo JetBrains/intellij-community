@@ -39,11 +39,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
                           VirtualFilePointerManager filePointerManager) {
     super(rootModel, projectRootManager, filePointerManager);
     LOG.assertTrue(projectJdk != null);
-    myJdk = projectJdk;
-    setJdkName(null);
-    setJdkType(null);
-    init(getRootProvider());
-    addListener();
+    init(projectJdk, null, null);
   }
 
   ModuleJdkOrderEntryImpl(Element element,
@@ -64,17 +60,11 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     final ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
     final ProjectJdk jdkByName = projectJdkTable.findJdk(jdkName, jdkType);
     if (jdkByName == null) {
-      myJdk = null;
-      setJdkName(jdkName);
-      setJdkType(jdkType);
+      init ( null, jdkName, jdkType);
     }
     else {
-      myJdk = jdkByName;
-      setJdkName(null);
-      setJdkType(null);
+      init ( jdkByName, null, null);
     }
-    init(getRootProvider());
-    addListener();
   }
 
 
@@ -84,9 +74,22 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
                                   ProjectRootManagerImpl projectRootManager,
                                   VirtualFilePointerManager filePointerManager) {
     super(rootModel, projectRootManager, filePointerManager);
-    myJdk = that.myJdk;
-    setJdkName(that.getJdkName());
-    setJdkType(that.getJdkType());
+    init(that.myJdk, that.getJdkName(), that.getJdkType());
+  }
+
+  public ModuleJdkOrderEntryImpl(final String jdkName,
+                                 final String jdkType,
+                                 final RootModelImpl rootModel,
+                                 final ProjectRootManagerImpl projectRootManager,
+                                 final VirtualFilePointerManager filePointerManager) {
+    super(rootModel, projectRootManager, filePointerManager);
+    init(null, jdkName, jdkType);
+  }
+
+  private void init(final ProjectJdk jdk, final String jdkName, final String jdkType) {
+    myJdk = jdk;
+    setJdkName(jdkName);
+    setJdkType(jdkType);
     init(getRootProvider());
     addListener();
   }
