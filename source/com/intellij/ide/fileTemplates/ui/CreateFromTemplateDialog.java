@@ -42,22 +42,33 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     myDefaultProperties = FileTemplateManager.getInstance().getDefaultProperties();
     myDefaultProperties.setProperty(FileTemplateUtil.PACKAGE_ATTR, packageName);
 
+    String[] unsetAttributes = null;
     try {
-      myAttrPanel = new CreateFromTemplatePanel(myTemplate.getUnsetAttributes(myDefaultProperties), !myTemplate.isJavaClassTemplate());
-    } catch (ParseException e) {
-      throw new RuntimeException(IdeBundle.message("error.unable.to.parse.template", myTemplate.getName()), e);
+      unsetAttributes = myTemplate.getUnsetAttributes(myDefaultProperties);
+    }
+    catch (ParseException e) {
+      showErrorDialog(e);
     }
 
-    myAttrComponent = myAttrPanel.getComponent();
-    init();
+    if (unsetAttributes != null) {
+      myAttrPanel = new CreateFromTemplatePanel(unsetAttributes, !myTemplate.isJavaClassTemplate());
+      myAttrComponent = myAttrPanel.getComponent();
+      init();
+    }
+    else {
+      myAttrPanel = null;
+      myAttrComponent = null;
+    }
   }
 
   public PsiElement create(){
-    if(myAttrPanel.hasSomethingToAsk()){
-      show();
-    }
-    else{
-      doCreate( null );
+    if (myAttrPanel != null) {
+      if (myAttrPanel.hasSomethingToAsk()) {
+        show();
+      }
+      else {
+        doCreate(null);
+      }
     }
     return myCreatedElement;
   }
@@ -80,8 +91,12 @@ public class CreateFromTemplateDialog extends DialogWrapper {
       myCreatedElement = FileTemplateUtil.createFromTemplate(myTemplate, fileName, myAttrPanel.getProperties(myDefaultProperties), myProject, myDirectory);
     }
     catch (Exception e) {
-      Messages.showMessageDialog(myProject, filterMessage(e.getMessage()), getErrorMessage(), Messages.getErrorIcon());
+      showErrorDialog(e);
     }
+  }
+
+  private void showErrorDialog(final Exception e) {
+    Messages.showMessageDialog(myProject, filterMessage(e.getMessage()), getErrorMessage(), Messages.getErrorIcon());
   }
 
   private String getErrorMessage() {
@@ -95,7 +110,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     if (message.startsWith(ioExceptionPrefix)){
       message = message.substring(ioExceptionPrefix.length());
     }
-    return message;
+    return IdeBundle.message("error.parsing.template") + ":\n" + message;
   }
 
   protected JComponent createCenterPanel(){
