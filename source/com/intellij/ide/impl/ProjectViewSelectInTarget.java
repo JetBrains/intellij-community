@@ -80,14 +80,8 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
       return false;
     }
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiFile)) {
-      return false;
-    }
-    final VirtualFile virtualFile = ((PsiFile)parent).getVirtualFile();
-    if (virtualFile == null) {
-      return false;
-    }
-    return virtualFile.getFileType() == StdFileTypes.JAVA || virtualFile.getFileType() == StdFileTypes.CLASS;
+    
+    return parent instanceof PsiJavaFile && !PsiUtil.isInJspFile(element);
   }
 
   public final String getToolWindowId() {
