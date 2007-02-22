@@ -23,6 +23,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -158,6 +159,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     @NonNls private static final String SIMPLE_TYPE_TAG_NAME = "simpleType";
     @NonNls private static final String COMPLEX_TYPE_TAG_NAME = "complexType";
     @NonNls private static final String REF_ATTR_NAME = "ref";
+    private static final String TARGET_NAMESPACE = "targetNamespace";
 
     enum ReferenceType {
       ElementReference, AttributeReference, GroupReference, AttributeGroupReference, TypeReference
@@ -318,12 +320,33 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
           }
         }
       }
-      XmlNSDescriptor nsDescriptor = nsDescriptor = tag.getNSDescriptor(getNamespace(tag, text),
-        true
-      );
+
+      final String namespace = getNamespace(tag, text);
+      XmlNSDescriptor nsDescriptor = tag.getNSDescriptor(namespace,true);
+
+      final XmlDocument document = ((XmlFile)tag.getContainingFile()).getDocument();
 
       if (nsDescriptor == null) { // import
-        nsDescriptor = (XmlNSDescriptor)((XmlFile)tag.getContainingFile()).getDocument().getMetaData();
+        nsDescriptor = (XmlNSDescriptor)document.getMetaData();
+      }
+
+      if (nsDescriptor == null) {
+        final XmlNSDescriptor[] descrs = new XmlNSDescriptor[1];
+
+        URIReferenceProvider.processWsdlSchemas(
+          document.getRootTag(),
+          new Processor<XmlTag>() {
+            public boolean process(final XmlTag xmlTag) {
+              if (namespace.equals(xmlTag.getAttributeValue(TARGET_NAMESPACE))) {
+                descrs[0] = (XmlNSDescriptor)xmlTag.getMetaData();
+                return false;
+              }
+              return true;
+            }
+          }
+        );
+
+        if (descrs[0] instanceof XmlNSDescriptorImpl) return (XmlNSDescriptorImpl)descrs[0];
       }
 
       return nsDescriptor instanceof XmlNSDescriptorImpl ? (XmlNSDescriptorImpl)nsDescriptor:null;
@@ -337,7 +360,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       if (rootTag != null &&
           "schema".equals(rootTag.getLocalName()) &&
           Arrays.asList(MetaRegistry.SCHEMA_URIS).indexOf(rootTag.getNamespace()) != -1 ) {
-        final String targetNS = rootTag.getAttributeValue("targetNamespace");
+        final String targetNS = rootTag.getAttributeValue(TARGET_NAMESPACE);
         if (targetNS != null) return targetNS;
       }
       return namespaceByPrefix;
@@ -411,7 +434,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
 
       XmlDocument document = ((XmlFile)myElement.getContainingFile()).getDocument();
       final XmlTag rootTag = document.getRootTag();
-      String ourNamespace = rootTag != null ? rootTag.getAttributeValue("targetNamespace") : "";
+      String ourNamespace = rootTag != null ? rootTag.getAttributeValue(TARGET_NAMESPACE) : "";
       if (ourNamespace == null) ourNamespace = "";
 
       for(String namespace:tag.knownNamespaces()) {

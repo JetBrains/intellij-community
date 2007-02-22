@@ -19,11 +19,15 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -82,6 +86,19 @@ public class URIReferenceProvider implements PsiReferenceProvider {
         if (rootTag == null) return null;
         final XmlNSDescriptor nsDescriptor = rootTag.getNSDescriptor(canonicalText, true);
         if (nsDescriptor != null) return nsDescriptor.getDescriptorFile();
+
+        final PsiElement[] result = new PsiElement[1];
+        processWsdlSchemas(rootTag,new Processor<XmlTag>() {
+          public boolean process(final XmlTag t) {
+            if (canonicalText.equals(t.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME))) {
+              result[0] = t;
+              return false;
+            }
+            return true;
+          }
+        });
+
+        return result[0];
       }
       return null;
     }
@@ -105,7 +122,7 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     }
 
     public Object[] getVariants() {
-      final String[] resourceUrls = ExternalResourceManager.getInstance().getResourceUrls(null, true);
+      String[] resourceUrls = ExternalResourceManager.getInstance().getResourceUrls(null, true);
       final PsiFile containingFile = myElement.getContainingFile();
 
       if (PsiUtil.isInJspFile(containingFile)) {
@@ -119,6 +136,17 @@ public class URIReferenceProvider implements PsiReferenceProvider {
           result[result.length - 1] = JspManager.TAG_DIR_NS_PREFIX + "/WEB-INF/tags";
           return result;
         }
+      } else if (containingFile instanceof XmlFile) {
+        XmlTag rootTag = ((XmlFile)containingFile).getDocument().getRootTag();
+        final ArrayList<String> additionalNs = new ArrayList<String>();
+        processWsdlSchemas(rootTag, new Processor<XmlTag>() {
+          public boolean process(final XmlTag xmlTag) {
+            final String s = xmlTag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME);
+            if (s != null) { additionalNs.add(s); }
+            return true;
+          }
+        });
+        resourceUrls = ArrayUtil.mergeArrays(resourceUrls, additionalNs.toArray(new String[additionalNs.size()]), String.class);
       }
       return resourceUrls;
     }
@@ -128,6 +156,18 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     }
   }
 
+  public static void processWsdlSchemas(final XmlTag rootTag, Processor<XmlTag> processor) {
+    if ("definitions".equals(rootTag.getLocalName())) {
+      final XmlTag subTag = rootTag.findFirstSubTag(rootTag.getNamespacePrefix() + ":" + "types");
+
+      if (subTag != null) {
+        final XmlTag[] tags = subTag.findSubTags("xsd:schema");
+        for(XmlTag t:tags) {
+          if (!processor.process(t)) return;
+        }
+      }
+    }
+  }
   @NotNull
   @SuppressWarnings({"HardCodedStringLiteral"})
   public PsiReference[] getReferencesByElement(PsiElement element) {
