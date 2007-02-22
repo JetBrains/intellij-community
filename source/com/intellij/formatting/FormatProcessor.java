@@ -472,7 +472,7 @@ class FormatProcessor {
       }
     }
 
-    if (!whiteSpace.containsLineFeeds() && lineOver() && myWrapCandidate != null && !whiteSpace.isReadOnly()) {
+    if (!whiteSpace.containsLineFeeds() && myWrapCandidate != null && !whiteSpace.isReadOnly() && lineOver()) {
       myCurrentBlock = myWrapCandidate;
       return true;
     }

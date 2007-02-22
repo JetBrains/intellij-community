@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -506,6 +507,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitExpression(PsiExpression expression) {
+    ProgressManager.getInstance().checkCanceled(); // visitLiteralExpression is invoked very often in array initializers
+    
     super.visitExpression(expression);
     if (myHolder.add(HighlightUtil.checkMustBeBoolean(expression))) return;
     if (expression instanceof PsiArrayAccessExpression

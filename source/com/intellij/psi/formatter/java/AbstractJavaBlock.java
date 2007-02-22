@@ -48,6 +48,16 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                       final Indent indent,
                                       Wrap wrap,
                                       Alignment alignment) {
+    return createJavaBlock(child, settings, indent, wrap, alignment, -1);
+  }
+
+  public static Block createJavaBlock(final ASTNode child,
+                                      final CodeStyleSettings settings,
+                                      final Indent indent,
+                                      Wrap wrap,
+                                      Alignment alignment,
+                                      int startOffset
+                                     ) {
     Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child) : indent;
     final IElementType elementType = child.getElementType();
     if (child.getPsi() instanceof PsiWhiteSpace) {
@@ -68,7 +78,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return new CodeBlockBlock(child, wrap, alignment, actualIndent, settings);
     }
     if (child instanceof LeafElement) {
-      return new LeafBlock(child, wrap, alignment, actualIndent);
+      final LeafBlock block = new LeafBlock(child, wrap, alignment, actualIndent);
+      block.setStartOffset(startOffset);
+      return block;
     }
     else if (isLikeExtendsList(elementType)) {
       return new ExtendsListBlock(child, wrap, alignment, settings);
@@ -83,7 +95,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return new DocCommentBlock(child, wrap, alignment, actualIndent, settings);
     }
     else {
-      return new SimpleJavaBlock(child, wrap, alignment, actualIndent, settings);
+      final SimpleJavaBlock simpleJavaBlock = new SimpleJavaBlock(child, wrap, alignment, actualIndent, settings);
+      simpleJavaBlock.setStartOffset(startOffset);
+      return simpleJavaBlock;
     }
   }
 
@@ -303,6 +317,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                  Alignment defaultAlignment,
                                  final Wrap defaultWrap,
                                  final Indent childIndent) {
+    return processChild(result, child, defaultAlignment, defaultWrap, childIndent, -1);
+  }
+
+  protected ASTNode processChild(final ArrayList<Block> result,
+                                 ASTNode child,
+                                 Alignment defaultAlignment,
+                                 final Wrap defaultWrap,
+                                 final Indent childIndent,
+                                 int childOffset) {
     if (child.getElementType() == ElementType.CLASS_KEYWORD || child.getElementType() == ElementType.INTERFACE_KEYWORD) {
       myIsAfterClassKeyword = true;
     }
@@ -360,7 +383,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     else {
       final Block block =
         createJavaBlock(child, mySettings, childIndent, arrangeChildWrap(child, defaultWrap),
-                        arrangeChildAlignment(child, defaultAlignment));
+                        arrangeChildAlignment(child, defaultAlignment), childOffset);
 
       if (child.getElementType() == ElementType.MODIFIER_LIST && containsAnnotations(child)) {
         myAnnotationWrap = Wrap.createWrap(getWrapType(getAnnotationWrapType()), true);
@@ -885,6 +908,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     boolean isAfterIncomplete = false;
 
     ASTNode prev = child;
+    int startOffset = child.getTextRange().getStartOffset();
     while (child != null) {
       isAfterIncomplete = isAfterIncomplete || child.getElementType() == ElementType.ERROR_ELEMENT ||
                           child.getElementType() == ElementType.EMPTY_EXPRESSION;
@@ -903,7 +927,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
           final IElementType elementType = child.getElementType();
           result.add(createJavaBlock(child, mySettings, internalIndent,
                                      wrappingStrategy.getWrap(elementType),
-                                     alignmentStrategy.getAlignment(elementType)));
+                                     alignmentStrategy.getAlignment(elementType),
+                                     startOffset));
           if (to == null) {//process only one statement
             return child;
           }
@@ -911,6 +936,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         isAfterIncomplete = false;
       }
       prev = child;
+      startOffset += child.getTextLength();
       child = child.getTreeNext();
     }
 

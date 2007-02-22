@@ -4,14 +4,13 @@ import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.codeStyle.Helper;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jetbrains.annotations.NotNull;
-
 public class LeafBlock implements Block{
-
+  private int myStartOffset = -1;
   private final ASTNode myNode;
   private final Wrap myWrap;
   private final Alignment myAlignment;
@@ -29,8 +28,12 @@ public class LeafBlock implements Block{
     myIndent = indent;
   }
 
+
   @NotNull
   public TextRange getTextRange() {
+    if (myStartOffset != -1) {
+      return new TextRange(myStartOffset, myStartOffset + myNode.getTextLength());
+    }
     return myNode.getTextRange();
   }
 
@@ -72,4 +75,8 @@ public class LeafBlock implements Block{
     return Helper.mayShiftIndentInside(myNode);
   }
 
+  public void setStartOffset(final int startOffset) {
+    myStartOffset = startOffset;
+   // if (startOffset != -1) assert startOffset == myNode.getTextRange().getStartOffset();
+  }
 }

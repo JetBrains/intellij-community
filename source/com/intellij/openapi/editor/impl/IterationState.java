@@ -19,44 +19,44 @@ import java.util.Comparator;
 import java.util.List;
 
 @SuppressWarnings({"ForLoopReplaceableByForEach"}) // Way too many garbage in AbrstractList.iterator() produced otherwise.
-public class IterationState {
+public final class IterationState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.IterationState");
-  private TextAttributes myMergedAttributes = new TextAttributes();
+  private final TextAttributes myMergedAttributes = new TextAttributes();
 
-  private HighlighterIterator myHighlighterIterator;
-  private ArrayList<RangeHighlighterImpl> myViewHighlighters;
+  private final HighlighterIterator myHighlighterIterator;
+  private final ArrayList<RangeHighlighterImpl> myViewHighlighters;
   private int myCurrentViewHighlighterIdx;
 
-  private ArrayList<RangeHighlighterImpl> myDocumentHighlighters;
+  private final ArrayList<RangeHighlighterImpl> myDocumentHighlighters;
   private int myCurrentDocHighlighterIdx;
 
   private int myStartOffset;
   private int myEndOffset;
-  private int myEnd;
+  private final int myEnd;
 
-  private int mySelectionStart;
-  private int mySelectionEnd;
+  private final int mySelectionStart;
+  private final int mySelectionEnd;
 
   private ArrayList<RangeHighlighterImpl> myCurrentHighlighters;
 
   private RangeHighlighterImpl myNextViewHighlighter = null;
   private RangeHighlighterImpl myNextDocumentHighlighter = null;
 
-  private FoldingModelImpl myFoldingModel = null;
+  private final FoldingModelImpl myFoldingModel;
 
-  private boolean hasSelection = false;
+  private final boolean hasSelection;
   private FoldRegion myCurrentFold = null;
-  private TextAttributes myFoldTextAttributes = null;
-  private TextAttributes mySelectionAttributes = null;
-  private TextAttributes myCaretRowAttributes = null;
-  private Color myDefaultBackground = null;
-  private Color myDefaultForeground = null;
-  private int myCaretRowStart;
-  private int myCaretRowEnd;
-  private ArrayList<TextAttributes> myCachedAttributesList;
-  private DocumentImpl myDocument;
-  private EditorImpl myEditor;
-  private Color myReadOnlyColor;
+  private final TextAttributes myFoldTextAttributes;
+  private final TextAttributes mySelectionAttributes;
+  private final TextAttributes myCaretRowAttributes;
+  private final Color myDefaultBackground;
+  private final Color myDefaultForeground;
+  private final int myCaretRowStart;
+  private final int myCaretRowEnd;
+  private final ArrayList<TextAttributes> myCachedAttributesList;
+  private final DocumentImpl myDocument;
+  private final EditorImpl myEditor;
+  private final Color myReadOnlyColor;
 
   public IterationState(EditorImpl editor, int start, boolean useCaretAndSelection) {
     myDocument = (DocumentImpl)editor.getDocument();

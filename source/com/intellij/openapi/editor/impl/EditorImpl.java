@@ -1700,7 +1700,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return ComplementaryFontsRegistry.getFontAbleToDisplay(c, myScheme.getEditorFontSize(), style, myScheme.getEditorFontName());
   }
 
-  public int charWidth(char c, int fontType) {
+  public final int charWidth(char c, int fontType) {
     return fontForChar(c, fontType).charWidth(c, myEditorComponent);
   }
 
