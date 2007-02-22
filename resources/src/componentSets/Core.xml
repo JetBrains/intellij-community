@@ -1,10 +1,6 @@
 <components>
   <application-components>
     <component>
-      <interface-class>com.intellij.psi.jsp.JspSpiUtil</interface-class>
-      <implementation-class>com.intellij.jsp.impl.JspSpiUtilImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.util.xml.impl.DomApplicationComponent</implementation-class>
     </component>
 
