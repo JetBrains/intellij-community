@@ -22,9 +22,20 @@ public class StringUtilTest extends TestCase {
     assertEquals('K', StringUtil.toUpperCase('k'));
     assertEquals('K', StringUtil.toUpperCase('K'));
     
-    assertEquals('À', StringUtil.toUpperCase(Character.toLowerCase('À')));
+    assertEquals('ï¿½', StringUtil.toUpperCase(Character.toLowerCase('ï¿½')));
   }
   
+  public void testToLowerCase() {
+    assertEquals('/', StringUtil.toLowerCase('/'));
+    assertEquals(':', StringUtil.toLowerCase(':'));
+    assertEquals('a', StringUtil.toLowerCase('a'));
+    assertEquals('a', StringUtil.toLowerCase('A'));
+    assertEquals('k', StringUtil.toLowerCase('k'));
+    assertEquals('k', StringUtil.toLowerCase('K'));
+
+    assertEquals('ï¿½', StringUtil.toUpperCase(Character.toLowerCase('ï¿½')));
+  }
+
   public void testSplitWithQuotes() {
     final List<String> strings = StringUtil.splitHonorQuotes("aaa bbb   ccc \"ddd\" \"e\\\"e\\\"e\"  ", ' ');
     assertEquals(5, strings.size());

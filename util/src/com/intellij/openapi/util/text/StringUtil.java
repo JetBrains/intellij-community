@@ -169,6 +169,18 @@ public class StringUtil {
     return Character.toUpperCase(a);
   }
 
+  public static char toLowerCase(final char a) {
+    if (a < 'A' || a >= 'a' && a <= 'z') {
+      return a;
+    }
+    
+    if (a >= 'A' && a <= 'Z') {
+      return (char)(a + ('a' - 'A'));
+    }
+
+    return Character.toLowerCase(a);
+  }
+
   @NotNull public static String getShortName(@NotNull String fqName, char separator) {
     int lastPointIdx = fqName.lastIndexOf(separator);
     if (lastPointIdx >= 0) {
@@ -355,7 +367,7 @@ public class StringUtil {
       if (lastChar - firstChar + 1 == preposition.length()) {
         found = true;
         for (int j = 0; j < preposition.length(); j++) {
-          if (!(Character.toLowerCase(s.charAt(firstChar + j)) == preposition.charAt(j))) {
+          if (!(toLowerCase(s.charAt(firstChar + j)) == preposition.charAt(j))) {
             found = false;
           }
         }
@@ -598,7 +610,7 @@ public class StringUtil {
   public static int stringHashCodeInsensitive(char[] chars, int from, int to) {
     int h = 0;
     for (int off = from; off < to; off++) {
-      h = 31 * h + Character.toLowerCase(chars[off]);
+      h = 31 * h + toLowerCase(chars[off]);
     }
     return h;
   }
@@ -606,7 +618,7 @@ public class StringUtil {
   public static int stringHashCodeInsensitive(CharSequence chars, int from, int to) {
     int h = 0;
     for (int off = from; off < to; off++) {
-      h = 31 * h + Character.toLowerCase(chars.charAt(off));
+      h = 31 * h + toLowerCase(chars.charAt(off));
     }
     return h;
   }
@@ -615,7 +627,7 @@ public class StringUtil {
     int h = 0;
     final int len = chars.length();
     for (int i = 0; i < len; i++) {
-      h = 31 * h + Character.toLowerCase(chars.charAt(i));
+      h = 31 * h + toLowerCase(chars.charAt(i));
     }
     return h;
   }
