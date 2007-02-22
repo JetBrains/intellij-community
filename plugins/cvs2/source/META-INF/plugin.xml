@@ -12,11 +12,6 @@
 
   <project-components>
     <component>
-      <implementation-class>com.intellij.cvsSupport2.config.CvsConfiguration</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.cvsSupport2.CvsVcs2</implementation-class>
     </component>
     <component>
@@ -130,5 +125,7 @@
 
     <projectService serviceInterface="com.intellij.cvsSupport2.ui.CvsTabbedWindow"
                serviceImplementation="com.intellij.cvsSupport2.ui.CvsTabbedWindow"/>
+    <projectService serviceInterface="com.intellij.cvsSupport2.config.CvsConfiguration"
+               serviceImplementation="com.intellij.cvsSupport2.config.CvsConfiguration"/>
   </extensions>
 </idea-plugin>

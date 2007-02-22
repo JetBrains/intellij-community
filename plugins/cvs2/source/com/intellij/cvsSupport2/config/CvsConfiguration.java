@@ -2,15 +2,14 @@ package com.intellij.cvsSupport2.config;
 
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.util.Options;
-import org.jdom.Element;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.netbeans.lib.cvsclient.command.Watch;
 
 import java.util.Arrays;
@@ -20,7 +19,15 @@ import java.util.List;
  * author: lesya
  */
 
-public class CvsConfiguration implements ProjectComponent, JDOMExternalizable {
+@State(
+  name="Cvs2Configuration",
+  storages= {
+    @Storage(
+      id="other",
+      file = "$WORKSPACE_FILE$"
+    )}
+)
+public class CvsConfiguration implements PersistentStateComponent<CvsConfiguration> {
 
   public static final int DO_NOT_MERGE = 0;
   public static final int MERGE_WITH_BRANCH = 1;
@@ -41,13 +48,12 @@ public class CvsConfiguration implements ProjectComponent, JDOMExternalizable {
   public boolean PROCESS_IGNORED_FILES;
 
   public boolean RESERVED_EDIT;
-  private final Project myProject;
   public DateOrRevisionSettings CHECKOUT_DATE_OR_REVISION_SETTINGS = new DateOrRevisionSettings();
   public DateOrRevisionSettings UPDATE_DATE_OR_REVISION_SETTINGS = new DateOrRevisionSettings();
   public DateOrRevisionSettings SHOW_CHANGES_REVISION_SETTINGS = new DateOrRevisionSettings();
   public boolean SHOW_OUTPUT = false;
   public int ADD_WATCH_INDEX = 0;
-  public List<Watch> WATCHERS = Arrays.asList(new Watch[]{Watch.ALL, Watch.EDIT, Watch.UNEDIT, Watch.COMMIT});
+  public List<Watch> WATCHERS = Arrays.asList(Watch.ALL, Watch.EDIT, Watch.UNEDIT, Watch.COMMIT);
   public int REMOVE_WATCH_INDEX = 0;
   public String UPDATE_KEYWORD_SUBSTITUTION = null;
 
@@ -61,33 +67,8 @@ public class CvsConfiguration implements ProjectComponent, JDOMExternalizable {
 
 
   public static CvsConfiguration getInstance(Project project) {
-    return project.getComponent(CvsConfiguration.class);
+    return ServiceManager.getService(project, CvsConfiguration.class);
   }
-
-  public CvsConfiguration(Project project) {
-    myProject = project;
-  }
-
-  public Project getProject() {
-    return myProject;
-  }
-
-  public String getComponentName() {
-    return "Cvs2Configuration";
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void projectOpened() {
-
-  }
-
-  public void projectClosed() {
-
-  }
-
-  public void initComponent() { }
 
   public static VcsShowConfirmationOption.Value convertToEnumValue(boolean value, boolean onOk) {
     if (value) {
@@ -101,11 +82,11 @@ public class CvsConfiguration implements ProjectComponent, JDOMExternalizable {
     }
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
+  public CvsConfiguration getState() {
+    return this;
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+  public void loadState(CvsConfiguration object) {
+    XmlSerializerUtil.copyBean(object, this);
   }
 }

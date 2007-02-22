@@ -63,10 +63,10 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
   private static final Icon OPEN_ICON = IconLoader.getIcon("/nodes/folderOpen.png");
   private static final Icon COLLAPSED_ICON = IconLoader.getIcon("/nodes/folder.png");
 
-  public AddedFileInfo(VirtualFile addedFile, CvsConfiguration config) {
+  public AddedFileInfo(VirtualFile addedFile, Project project, CvsConfiguration config) {
     myAddedFile = addedFile;
     mySubstitution = KeywordSubstitutionListWithSelection.createOnFileName(myAddedFile.getName(), config);
-    myProject = config.getProject();
+    myProject = project;
   }
 
   public KeywordSubstitution getKeywordSubstitution() {

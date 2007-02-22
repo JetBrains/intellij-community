@@ -210,7 +210,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
 
     private void fillFileToInfoMap() {
       for (final VirtualFile file : myFiles) {
-        myResult.put(file, new AddedFileInfo(file, CvsConfiguration.getInstance(myProject)));
+        myResult.put(file, new AddedFileInfo(file, myProject, CvsConfiguration.getInstance(myProject)));
       }
     }
 
