@@ -22,7 +22,7 @@ public class StringUtilTest extends TestCase {
     assertEquals('K', StringUtil.toUpperCase('k'));
     assertEquals('K', StringUtil.toUpperCase('K'));
     
-    assertEquals('�', StringUtil.toUpperCase(Character.toLowerCase('�')));
+    assertEquals('\u2567', StringUtil.toUpperCase(Character.toLowerCase('\u2567')));
   }
   
   public void testToLowerCase() {
@@ -33,7 +33,7 @@ public class StringUtilTest extends TestCase {
     assertEquals('k', StringUtil.toLowerCase('k'));
     assertEquals('k', StringUtil.toLowerCase('K'));
 
-    assertEquals('�', StringUtil.toUpperCase(Character.toLowerCase('�')));
+    assertEquals('\u2567', StringUtil.toUpperCase(Character.toLowerCase('\u2567')));
   }
 
   public void testSplitWithQuotes() {
