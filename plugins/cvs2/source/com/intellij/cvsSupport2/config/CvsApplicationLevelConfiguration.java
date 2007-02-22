@@ -1,7 +1,7 @@
 package com.intellij.cvsSupport2.config;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,7 +54,7 @@ public class CvsApplicationLevelConfiguration implements ApplicationComponent, J
 
 
   public static CvsApplicationLevelConfiguration getInstance() {
-    return ApplicationManager.getApplication().getComponent(CvsApplicationLevelConfiguration.class);
+    return ServiceManager.getService(CvsApplicationLevelConfiguration.class);
   }
 
   public String getComponentName() {

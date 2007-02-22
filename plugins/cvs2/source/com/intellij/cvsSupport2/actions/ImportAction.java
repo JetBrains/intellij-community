@@ -44,7 +44,7 @@ public class ImportAction extends ActionOnSelectedElement {
                                    boolean successfully,
                                    CvsHandler handler) {
     super.onActionPerformed(context, tabbedWindow, successfully, handler);
-    ImportConfiguration importConfiguration = ImportConfiguration.getInstanse();
+    ImportConfiguration importConfiguration = ImportConfiguration.getInstance();
     if (successfully && importConfiguration.CHECKOUT_AFTER_IMPORT) {
       createCheckoutAction(importConfiguration.MAKE_NEW_FILES_READ_ONLY).actionPerformed(context);
     }

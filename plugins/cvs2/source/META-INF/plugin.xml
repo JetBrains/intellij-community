@@ -10,24 +10,6 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
 
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.cvsSupport2.application.CvsEntriesManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.cvsSupport2.config.ImportConfiguration</implementation-class>
-    </component>
-
-  </application-components>
-
   <project-components>
     <component>
       <implementation-class>com.intellij.cvsSupport2.config.CvsConfiguration</implementation-class>
@@ -141,6 +123,14 @@
 
     <applicationService serviceInterface="com.intellij.openapi.cvsIntegration.CvsServices"
                         serviceImplementation="com.intellij.cvsSupport2.impl.CvsServicesImpl"/>
+    <applicationService serviceInterface="com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration"
+                        serviceImplementation="com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration"/>
+    <applicationService serviceInterface="com.intellij.cvsSupport2.application.CvsEntriesManager"
+                        serviceImplementation="com.intellij.cvsSupport2.application.CvsEntriesManager"/>
+    <applicationService serviceInterface="com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl"
+                        serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl"/>
+    <applicationService serviceInterface="com.intellij.cvsSupport2.config.ImportConfiguration"
+                        serviceImplementation="com.intellij.cvsSupport2.config.ImportConfiguration"/>
 
   </extensions>
 </idea-plugin>

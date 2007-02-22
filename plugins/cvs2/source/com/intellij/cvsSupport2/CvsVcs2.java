@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
@@ -73,7 +74,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
   private final CvsStandardOperationsProvider myCvsStandardOperationsProvider;
   private final CvsUpdateEnvironment myCvsUpdateEnvironment;
   private final CvsStatusEnvironment myCvsStatusEnvironment;
-  private final CvsUpToDateRevisionProvider myUpToDateRevisionProvider;
+  private CvsUpToDateRevisionProvider myUpToDateRevisionProvider;
   private final CvsAnnotationProvider myCvsAnnotationProvider;
   private final CvsDiffProvider myDiffProvider;
   private final CvsCommittedChangesProvider myCommittedChangesProvider;
@@ -85,7 +86,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
   private VcsShowConfirmationOption myAddConfirmation;
   private VcsShowConfirmationOption myRemoveConfirmation;
 
-  private CvsChangeProvider myChangeProvider;
+  private ChangeProvider myChangeProvider;
 
   public CvsVcs2(Project project, CvsStorageComponent cvsStorageComponent) {
     super(project);
@@ -100,8 +101,6 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     myFileViewEnvironment = new CvsFileViewEnvironment(getProject());
     myCvsAnnotationProvider = new CvsAnnotationProvider(myProject);
     myDiffProvider = new CvsDiffProvider(myProject);
-    myChangeProvider = new CvsChangeProvider(this, CvsEntriesManager.getInstance());
-    myUpToDateRevisionProvider = new CvsUpToDateRevisionProvider(myChangeProvider);
     myCommittedChangesProvider = new CvsCommittedChangesProvider(myProject);
   }
 
@@ -258,11 +257,17 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
   }
 
   public LocalVcsItemsLocker getItemsLocker() {
+    if (myUpToDateRevisionProvider == null) {
+      myUpToDateRevisionProvider = new CvsUpToDateRevisionProvider((CvsChangeProvider) getChangeProvider());
+    }
     return myUpToDateRevisionProvider;
   }
 
 
-  public CvsChangeProvider getChangeProvider() {
+  public ChangeProvider getChangeProvider() {
+    if (myChangeProvider == null) {
+      myChangeProvider = new CvsChangeProvider(this, CvsEntriesManager.getInstance());
+    }
     return myChangeProvider;
   }
 

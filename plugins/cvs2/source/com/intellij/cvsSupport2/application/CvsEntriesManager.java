@@ -10,7 +10,7 @@ import com.intellij.cvsSupport2.cvsIgnore.UserDirIgnores;
 import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -19,9 +19,8 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import org.netbeans.lib.cvsclient.admin.Entry;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
+import org.netbeans.lib.cvsclient.admin.Entry;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -32,7 +31,7 @@ import java.util.Map;
  * author: lesya
  */
 
-public class CvsEntriesManager extends VirtualFileAdapter implements ApplicationComponent {
+public class CvsEntriesManager extends VirtualFileAdapter {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.application.CvsEntriesManager");
 
@@ -50,11 +49,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
   private MyVirtualFileManagerListener myVirtualFileManagerListener = new MyVirtualFileManagerListener();
 
   public static CvsEntriesManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(CvsEntriesManager.class);
-  }
-
-  public CvsEntriesManager() {
-    myEntriesListeners = new ArrayList<CvsEntriesListener>();
+    return ServiceManager.getService(CvsEntriesManager.class);
   }
 
   private class MyVirtualFileManagerListener implements VirtualFileManagerListener {
@@ -64,17 +59,6 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
 
     public void beforeRefreshStart(boolean asynchonous) {
     }
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "CvsEntriesAdapter";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-    myInfoByParentDirectoryPath = new HashMap<VirtualFile, CvsInfo>();
   }
 
   public void registerAsVirtualFileListener() {
@@ -311,7 +295,7 @@ public class CvsEntriesManager extends VirtualFileAdapter implements Application
 
   private CvsInfo getCvsInfo(VirtualFile parent) {
     LOG.assertTrue(isActive());
-    if (parent == null) return CvsInfo.DUMMY;
+    if (parent == null) return CvsInfo.getDummyCvsInfo();
     return getInfoFor(parent);
   }
 

@@ -27,7 +27,7 @@ import java.util.Collection;
  */
 public class CvsInfo {
 
-  public static CvsConnectionSettings ABSENT_SETTINGS = new MyInvalidCvsConnectionSettings();
+  private static CvsConnectionSettings ABSENT_SETTINGS;
 
   private IgnoredFilesInfo myIgnoreFilter;
   private CvsConnectionSettings myConnectionSettings;
@@ -42,41 +42,7 @@ public class CvsInfo {
   private final CvsEntriesManager myCvsEntriesManager;
   private static final VirtualFile DUMMY_ROOT = null;
 
-  public static final CvsInfo DUMMY = new CvsInfo(null, null) {
-    public CvsConnectionSettings getConnectionSettings() {
-      return ABSENT_SETTINGS;
-    }
-
-    public IgnoredFilesInfo getIgnoreFilter() {
-      return IgnoredFilesInfoImpl.EMPTY_FILTER;
-    }
-
-    public Collection getEntries() {
-      return new ArrayList();
-    }
-
-    public void clearFilter() {
-    }
-
-    public boolean isLoaded() {
-      return true;
-    }
-
-    public Entry setEntryAndReturnReplacedEntry(Entry entry) {
-      return null;
-    }
-
-    public void removeEntryNamed(String fileName) {
-    }
-
-    public VirtualFile getKey() {
-      return null;
-    }
-
-    public Entry getEntryNamed(String name) {
-      return null;
-    }
-  };
+  private static CvsInfo DUMMY;
   private boolean myStickyTagIsLoaded = false;
 
   public CvsInfo(VirtualFile parent, CvsEntriesManager cvsEntriesManager) {
@@ -121,7 +87,7 @@ public class CvsInfo {
     String cvsRoot = CvsUtil.loadRootFrom(getParentFile());
     try {
       if (cvsRoot == null) {
-        myConnectionSettings = ABSENT_SETTINGS;
+        myConnectionSettings = getAbsentSettings();
       }
       else {
         myConnectionSettings = myCvsEntriesManager.createConnectionSettingsOn(cvsRoot);
@@ -254,6 +220,20 @@ public class CvsInfo {
     myStickyTagIsLoaded = false;
   }
 
+  public static CvsConnectionSettings getAbsentSettings() {
+    if (ABSENT_SETTINGS == null) {
+      ABSENT_SETTINGS = new MyInvalidCvsConnectionSettings();
+    }
+    return ABSENT_SETTINGS;
+  }
+
+  public static CvsInfo getDummyCvsInfo() {
+    if (DUMMY == null) {
+      DUMMY = new DummyCvsInfo();
+    }
+    return DUMMY;
+  }
+
   private static class MyInvalidCvsConnectionSettings extends CvsConnectionSettings {
     public MyInvalidCvsConnectionSettings() {
       super(CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance()));
@@ -288,4 +268,43 @@ public class CvsInfo {
     }
   }
 
+  private static class DummyCvsInfo extends CvsInfo {
+    public DummyCvsInfo() {
+      super(null, null);
+    }
+
+    public CvsConnectionSettings getConnectionSettings() {
+      return getAbsentSettings();
+    }
+
+    public IgnoredFilesInfo getIgnoreFilter() {
+      return IgnoredFilesInfoImpl.EMPTY_FILTER;
+    }
+
+    public Collection<Entry> getEntries() {
+      return new ArrayList<Entry>();
+    }
+
+    public void clearFilter() {
+    }
+
+    public boolean isLoaded() {
+      return true;
+    }
+
+    public Entry setEntryAndReturnReplacedEntry(Entry entry) {
+      return null;
+    }
+
+    public void removeEntryNamed(String fileName) {
+    }
+
+    public VirtualFile getKey() {
+      return null;
+    }
+
+    public Entry getEntryNamed(String name) {
+      return null;
+    }
+  }
 }

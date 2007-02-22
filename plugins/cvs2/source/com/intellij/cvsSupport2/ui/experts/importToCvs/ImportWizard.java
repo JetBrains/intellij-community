@@ -23,7 +23,7 @@ public class ImportWizard extends CvsWizard{
 
   public ImportWizard(Project project, VirtualFile selectedFile) {
     super(com.intellij.CvsBundle.message("dialog.title.import.into.cvs"), project);
-    ImportConfiguration importConfig = ImportConfiguration.getInstanse();
+    ImportConfiguration importConfig = ImportConfiguration.getInstance();
     mySelectCVSConfigurationStep = new SelectCVSConfigurationStep(project, this);
     mySelectCvsElementStep = new SelectCvsElementStep(com.intellij.CvsBundle.message("dialog.title.select.directory.to.import.into"),this,
                                                       project,

@@ -1,8 +1,8 @@
 package com.intellij.cvsSupport2.config;
 
 import com.intellij.cvsSupport2.ui.experts.importToCvs.FileExtension;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,8 +21,8 @@ public class ImportConfiguration extends AbstractConfiguration implements Applic
   public String KEYWORD_SUBSTITUTION_WRAPPERS = "";
   public boolean MAKE_NEW_FILES_READ_ONLY = false;
 
-  public static ImportConfiguration getInstanse(){
-    return ApplicationManager.getApplication().getComponent(ImportConfiguration.class);
+  public static ImportConfiguration getInstance(){
+    return ServiceManager.getService(ImportConfiguration.class);
   }
 
   public ImportConfiguration() {

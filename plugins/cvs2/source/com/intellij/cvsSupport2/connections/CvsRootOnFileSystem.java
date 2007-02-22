@@ -23,7 +23,7 @@ public class CvsRootOnFileSystem extends CvsRootProvider {
     File nearestRoot = getRootFor(file);
     if (nearestRoot == null) throw new CannotFindCvsRootException(file);
     CvsConnectionSettings cvsRoot = getCvsRootFor(nearestRoot);
-    if (cvsRoot == CvsInfo.ABSENT_SETTINGS) throw new CannotFindCvsRootException(file);
+    if (cvsRoot == CvsInfo.getAbsentSettings()) throw new CannotFindCvsRootException(file);
     File commonRoot = getCommonRoot(nearestRoot, cvsRoot);
     return new CvsRootOnFileSystem(getCvsEntriesManager().getCvsConnectionSettingsFor(commonRoot), commonRoot);
   }

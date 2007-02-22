@@ -1,7 +1,7 @@
 package com.intellij.cvsSupport2.connections.ssh;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -35,7 +35,7 @@ public class SSHPasswordProviderImpl implements ApplicationComponent, JDOMExtern
   @NonNls private static final String PASSWORD_ATTR = "PASSWORD";
 
   public static SSHPasswordProviderImpl getInstance() {
-    return ApplicationManager.getApplication().getComponent(SSHPasswordProviderImpl.class);
+    return ServiceManager.getService(SSHPasswordProviderImpl.class);
   }
 
   @NotNull
@@ -46,10 +46,6 @@ public class SSHPasswordProviderImpl implements ApplicationComponent, JDOMExtern
   public void initComponent() { }
 
   public void disposeComponent() {
-    myCvsRootToPasswordMap.clear();
-    myCvsRootToStoringPasswordMap.clear();
-    myCvsRootToPPKPasswordMap.clear();
-    myCvsRootToStoringPPKPasswordMap.clear();
   }
 
   @Nullable
