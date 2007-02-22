@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author nik
@@ -39,6 +40,11 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
     LOG.assertTrue(myFacetTypes.remove(id) != null, "Facet type '" + stringId + "' is not registered");
     myFacetTypes.remove(id);
     myTypeIds.remove(stringId);
+  }
+
+  public FacetTypeId[] getFacetTypeIds() {
+    final Set<FacetTypeId> ids = myFacetTypes.keySet();
+    return ids.toArray(new FacetTypeId[ids.size()]);
   }
 
   public FacetType[] getFacetTypes() {

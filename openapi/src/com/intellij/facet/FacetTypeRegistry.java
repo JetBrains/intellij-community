@@ -19,6 +19,8 @@ public abstract class FacetTypeRegistry {
   public abstract void registerFacetType(FacetType facetType);
   public abstract void unregisterFacetType(FacetType facetType);
 
+  public abstract FacetTypeId[] getFacetTypeIds();
+
   public abstract FacetType[] getFacetTypes();
 
   @Nullable
