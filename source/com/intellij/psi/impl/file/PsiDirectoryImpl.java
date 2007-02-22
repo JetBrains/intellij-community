@@ -461,7 +461,12 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     try {
       final VirtualFile vFile = originalFile.getVirtualFile();
       if (vFile == null) throw new IncorrectOperationException("Cannot copy nonphysical file");
-      final VirtualFile copyVFile = vFile.copy(this, parent, newName);
+      VirtualFile copyVFile;
+      if (parent.getFileSystem() == vFile.getFileSystem()) {
+        copyVFile = vFile.copy(this, parent, newName);
+      } else {
+        copyVFile = VfsUtil.copyFile(this, vFile, parent, newName);
+      }
       final PsiFile copyPsi = myManager.findFile(copyVFile);
       LOG.assertTrue(copyPsi != null);
       if (copyPsi instanceof PsiFileImpl) {
