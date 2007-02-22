@@ -88,7 +88,7 @@ public class FileTemplateUtil{
       else return null;
     }
     if (!StringUtil.startsWithChar(attrib, '$')) {
-      LOG.error("Invalid attribute: " + attrib);
+      return null;
     }
     attrib = attrib.substring(1);
     if (StringUtil.startsWithChar(attrib, '{')) {
