@@ -28,6 +28,4 @@
     </component>
   </module-components>
 
-  <xi:include href="ErrorReport.xml"/>
-
 </components>
