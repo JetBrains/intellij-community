@@ -14,6 +14,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -53,13 +54,13 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     CUSTOM_FILTER = customFilter;
   }
 
-  public boolean isApplicable(String text, String prevType){
+  public boolean isApplicable(@NotNull String text, String prevType){
     if (CUSTOM_FILTER != null) {
-      if (!Pattern.compile(".*" + CUSTOM_FILTER + ".*").matcher(text).matches()) return false;
+      if (!Pattern.compile(".*" + CUSTOM_FILTER.toUpperCase() + ".*").matcher(text.toUpperCase()).matches()) return false;
     }
-    if (ERROR_PATTERN.matcher(text).matches() && FILTER_ERRORS) return false;
-    if (WARNING_PATTERN.matcher(text).matches() && FILTER_WARNINGS) return false;
-    if (INFO_PATTERN.matcher(text).matches() && FILTER_INFO) return false;
+    if (ERROR_PATTERN.matcher(text.toUpperCase()).matches() && FILTER_ERRORS) return false;
+    if (WARNING_PATTERN.matcher(text.toUpperCase()).matches() && FILTER_WARNINGS) return false;
+    if (INFO_PATTERN.matcher(text.toUpperCase()).matches() && FILTER_INFO) return false;
     for (LogFilter filter : myRegisteredLogFilters.keySet()) {
       if (myRegisteredLogFilters.get(filter).booleanValue() && !filter.isAcceptable(text)) return false;
     }
@@ -80,14 +81,14 @@ public class LogConsolePreferences extends LogFilterRegistrar {
 
   public static ConsoleViewContentType getContentType(String type){
     if (type.equals(ERROR)) return ConsoleViewContentType.ERROR_OUTPUT;
-    if (type.equals(WARNING) || type.equals(INFO)) return ConsoleViewContentType.NORMAL_OUTPUT;
-    return null;
+    return ConsoleViewContentType.NORMAL_OUTPUT;
   }
 
-  public static String getType(String text){
-    if (ERROR_PATTERN.matcher(text).matches()) return ERROR;
-    if (WARNING_PATTERN.matcher(text).matches()) return WARNING;
-    if (INFO_PATTERN.matcher(text).matches()) return INFO;
+  @Nullable
+  public static String getType(@NotNull String text){
+    if (ERROR_PATTERN.matcher(text.toUpperCase()).matches()) return ERROR;
+    if (WARNING_PATTERN.matcher(text.toUpperCase()).matches()) return WARNING;
+    if (INFO_PATTERN.matcher(text.toUpperCase()).matches()) return INFO;
     return null;
   }
 
