@@ -68,12 +68,21 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
     });
     final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
+        if (CachesBasedRefSearcher.DEBUG) {
+          System.out.println("!!! About to check "+element);
+        }
         final PsiReference[] refs = element.getReferences();
         for (PsiReference ref : refs) {
+          if (CachesBasedRefSearcher.DEBUG) {
+            System.out.println("!!!!!!!!!!!!!! Ref "+ref);
+          }
           if (ref.getRangeInElement().contains(offsetInElement)) {
+            if (CachesBasedRefSearcher.DEBUG) {
+              System.out.println("!!!!!!!!!!!!!!!!!!!!! Ref "+ref + " contains");
+            }
             if (ref.isReferenceTo(refElement)) {
               if (CachesBasedRefSearcher.DEBUG) {
-                System.out.println("Found ref "+ref);
+                System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   Found ref "+ref);
               }
               return consumer.process(ref);
             }

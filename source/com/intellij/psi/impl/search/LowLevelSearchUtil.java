@@ -44,6 +44,7 @@ public class LowLevelSearchUtil {
                                                                StringSearcher searcher) {
     ProgressManager.getInstance().checkCanceled();
     final CharSequence buffer = scope instanceof PsiFile ? ((PsiFile)scope).getViewProvider().getContents():new CharArrayCharSequence(scope.textToCharArray());
+    System.out.println("---------------  Searching in '" + buffer.toString() + "' ---------------------");
     int startOffset = 0;
     int endOffset = buffer.length();
     final int patternLength = searcher.getPatternLength();
@@ -53,12 +54,18 @@ public class LowLevelSearchUtil {
     do {
       int i = searchWord(buffer, startOffset, endOffset, searcher);
       if (i >= 0) {
+        if (CachesBasedRefSearcher.DEBUG) {
+          System.out.println(">>>>>>>>>>>>>>>>>>> found word:" + i + " in " + scope + "," + scope.getContainingFile().getName());
+        }
         if (scopeNode != null) {
           LeafElement leafNode = (LeafElement)scopeNode.findLeafElementAt(i);
           if (leafNode == null) return true;
           int start = i - leafNode.getStartOffset() + scopeStartOffset;
           LOG.assertTrue(start >= 0);
           boolean contains = leafNode.getTextLength() - start >= patternLength;
+          if (CachesBasedRefSearcher.DEBUG) {
+            System.out.println(">>>>>>>>>>>>>>>>  contains:" + contains + " in " + scope + "," + scope.getContainingFile().getName());
+          }
           if (contains && !processor.execute(leafNode.getPsi(), start)) return false;
           Boolean result = processInjectedFile(leafNode.getPsi(), processor, searcher);
           if (result != null && !result.booleanValue()) return false;
