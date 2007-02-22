@@ -535,7 +535,8 @@ class LookupCellRenderer implements ListCellRenderer {
   }
 
   private String getTemplateDescriptionString(Template template) {
-    int max = MAX_LENGTH - TemplateSettings.getInstance().getMaxKeyLength();
+    final int KEY_LENGTH_LIMIT = 10; // longer keys are not really useful, but make popup ugly
+    int max = MAX_LENGTH - Math.min(KEY_LENGTH_LIMIT, TemplateSettings.getInstance().getMaxKeyLength());
     max = Math.min(max, myMaxTemplateDescriptionLength + 1);
 
     StringBuilder buffer = new StringBuilder(max);
