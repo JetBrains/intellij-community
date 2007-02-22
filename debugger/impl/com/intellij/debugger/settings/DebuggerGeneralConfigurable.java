@@ -129,7 +129,7 @@ public class DebuggerGeneralConfigurable implements Configurable{
     if (myBaseRenderersConfigurable.isModified()) {
       return true;
     }
-    final DebuggerSettings debuggerSettings = new DebuggerSettings(null);
+    final DebuggerSettings debuggerSettings = new DebuggerSettings();
     getSettingsTo(debuggerSettings);
     return !debuggerSettings.equals(DebuggerSettings.getInstance());
   }

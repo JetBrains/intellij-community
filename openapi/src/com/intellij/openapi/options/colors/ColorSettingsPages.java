@@ -34,6 +34,8 @@ public abstract class ColorSettingsPages {
    * Registers a custom page for the "Colors and Fonts" settings dialog.
    *
    * @param page the instance of the page to register.
+   *
+   * @deprecated Color settings pages should be registered as extensions with {@link com.intellij.openapi.options.colors.ColorSettingsPage#EP_NAME}
    */
   public abstract void registerPage(ColorSettingsPage page);
 

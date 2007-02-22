@@ -17,6 +17,7 @@ package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -26,10 +27,10 @@ import java.util.Map;
 
 /**
  * Interface for a custom page shown in the "Colors and Fonts" settings dialog.
- *
- * @see ColorSettingsPages#registerPage(ColorSettingsPage)
  */
 public interface ColorSettingsPage {
+  ExtensionPointName<ColorSettingsPage> EP_NAME = ExtensionPointName.create("com.intellij.colorSettingsPage");
+
   /**
    * Returns the title of the page, shown as text in the dialog tab.
    *

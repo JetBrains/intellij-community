@@ -3,7 +3,6 @@ package com.intellij.debugger.settings;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.options.colors.ColorSettingsPages;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -55,12 +54,6 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public volatile boolean AUTO_VARIABLES_MODE = false;
 
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
-
-  public DebuggerSettings(ColorSettingsPages pages) {
-    if (pages != null) {
-      pages.registerPage(new DebuggerColorsPage());
-    }
-  }
 
   public void disposeComponent() {
   }

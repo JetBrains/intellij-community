@@ -33,12 +33,15 @@ package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.options.colors.ColorSettingsPages;
+import com.intellij.openapi.extensions.Extensions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 
 public class ColorSettingsPagesImpl extends ColorSettingsPages {
   private List<ColorSettingsPage> myPages = new ArrayList<ColorSettingsPage>();
+  private boolean myExtensionsLoaded = false;
 
   public ColorSettingsPagesImpl() {
     registerStandardPages();
@@ -58,6 +61,10 @@ public class ColorSettingsPagesImpl extends ColorSettingsPages {
   }
 
   public ColorSettingsPage[] getRegisteredPages() {
+    if (!myExtensionsLoaded) {
+      myExtensionsLoaded = true;
+      Collections.addAll(myPages, Extensions.getExtensions(ColorSettingsPage.EP_NAME));
+    }
     return myPages.toArray(new ColorSettingsPage[myPages.size()]);
   }
 }
