@@ -257,8 +257,14 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       PsiType type1 = params1[Math.min(i, params1.length - 1)].getType();
       PsiType type2 = params2[Math.min(i, params2.length - 1)].getType();
       if (applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
-        type1 = type1 instanceof PsiEllipsisType ? ((PsiArrayType)type1).getComponentType() : type1;
-        type2 = type2 instanceof PsiEllipsisType ? ((PsiArrayType)type2).getComponentType() : type2;
+        if (type1 instanceof PsiEllipsisType && type2 instanceof PsiEllipsisType) {
+          type1 = ((PsiEllipsisType)type1).toArrayType();
+          type2 = ((PsiEllipsisType)type2).toArrayType();
+        }
+        else {
+          type1 = type1 instanceof PsiEllipsisType ? ((PsiArrayType)type1).getComponentType() : type1;
+          type2 = type2 instanceof PsiEllipsisType ? ((PsiArrayType)type2).getComponentType() : type2;
+        }
       }
 
       types1[i] = type1;
