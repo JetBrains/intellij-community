@@ -758,6 +758,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   public static boolean validElement(PsiElement element) {
     if (element instanceof PsiFile) return true;
+    if (!element.isPhysical()) return false;
     final RefactoringSupportProvider provider = element.getLanguage().getRefactoringSupportProvider();
     if (provider.isSafeDeleteAvailable(element)) return true;
     return false;
