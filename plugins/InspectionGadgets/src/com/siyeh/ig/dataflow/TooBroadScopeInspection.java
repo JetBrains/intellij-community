@@ -477,7 +477,8 @@ public class TooBroadScopeInspection extends BaseInspection
             {
                 return true;
             }
-            if (PsiUtil.isConstantExpression(expression))
+            if (PsiUtil.isConstantExpression(expression) ||
+                    PsiKeyword.NULL.equals(expression.getText()))
             {
                 return true;
             }
