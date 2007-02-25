@@ -19,8 +19,9 @@ package com.intellij.lang;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The IDEA side of a custom language parser. Provides lexing results to the
@@ -151,6 +152,12 @@ public interface PsiBuilder extends UserDataHolder {
    * @return the built tree.
    */
   ASTNode getTreeBuilt();
+
+  /**
+   * Same as {@link #getTreeBuilt()} but returns a light tree, which is build faster, produces less garbage but is uncapable of creating a PSI over.
+   * @return the light tree built.
+   */
+  FlyweightCapableTreeStructure<LighterASTNode> getLightTree();
 
   /**
    * Enables or disables the builder debug mode. In debug mode, the builder will print stack trace

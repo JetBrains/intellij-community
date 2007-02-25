@@ -1028,4 +1028,26 @@ public class StringUtil {
   @NotNull public static String replaceSubstring(@NotNull String string, @NotNull TextRange range, @NotNull String replacement) {
     return string.substring(0, range.getStartOffset()) + replacement + string.substring(range.getEndOffset());
   }
+
+  public static boolean startsWith(final CharSequence s1, final CharSequence s2) {
+    int l1 = s1.length();
+    int l2 = s2.length();
+    if (l1 < l2) return false;
+
+    for (int i = 0; i < l2; i++) {
+      if (s1.charAt(i) != s2.charAt(i)) return false;
+    }
+
+    return true;
+  }
+
+
+  public static int indexOf(CharSequence s, char c) {
+    int l = s.length();
+    for (int i = 0; i < l; i++) {
+      if (s.charAt(i) == c) return i;
+    }
+
+    return -1;
+  }
 }

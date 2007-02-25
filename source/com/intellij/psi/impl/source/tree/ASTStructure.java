@@ -3,15 +3,15 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.util.diff.DiffTreeStructure;
+import com.intellij.util.diff.FlyweightCapableTreeStructure;
 
 /**
  * @author max
  */
-public class ASTDiffTreeStructure implements DiffTreeStructure<ASTNode> {
+public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
   private ASTNode myRoot;
 
-  public ASTDiffTreeStructure(final ASTNode root) {
+  public ASTStructure(final ASTNode root) {
     ChameleonTransforming.transformChildren(root);
     myRoot = root;
   }

@@ -15,9 +15,9 @@ import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.CodeFragmentElement;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -280,7 +280,7 @@ public class BlockSupportImpl extends BlockSupport {
         model.runTransaction(new PomTransactionBase(file, model.getModelAspect(TreeAspect.class)) {
           public PomModelEvent runInner() throws IncorrectOperationException {
             final ASTDiffBuilder builder = new ASTDiffBuilder(file);
-            DiffTree.diff(new ASTDiffTreeStructure(oldRoot), new ASTDiffTreeStructure(newRoot), new ASTShallowComparator(), builder);
+            DiffTree.diff(new ASTStructure(oldRoot), new ASTStructure(newRoot), new ASTShallowComparator(), builder);
             file.subtreeChanged();
 
             return new TreeAspectEvent(model, builder.getEvent());

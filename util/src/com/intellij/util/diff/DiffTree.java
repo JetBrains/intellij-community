@@ -13,16 +13,16 @@ import java.util.List;
 public class DiffTree<OT, NT> {
   private static final int CHANGE_PARENT_VERSUS_CHILDREN_THRESHOLD = 20;
 
-  private final DiffTreeStructure<OT> myOldTree;
-  private final DiffTreeStructure<NT> myNewTree;
+  private final FlyweightCapableTreeStructure<OT> myOldTree;
+  private final FlyweightCapableTreeStructure<NT> myNewTree;
   private final ShallowNodeComparator<OT, NT> myComparator;
   private final DiffTreeChangeBuilder<OT, NT> myConsumer;
   private final List<Ref<OT[]>> myOldChildrenLists = new ArrayList<Ref<OT[]>>();
   private final List<Ref<NT[]>> myNewChildrenLists = new ArrayList<Ref<NT[]>>();
   private final List<ThreeState[]> myDeepStates = new ArrayList<ThreeState[]>();
 
-  public DiffTree(final DiffTreeStructure<OT> oldTree,
-                  final DiffTreeStructure<NT> newTree,
+  public DiffTree(final FlyweightCapableTreeStructure<OT> oldTree,
+                  final FlyweightCapableTreeStructure<NT> newTree,
                   final ShallowNodeComparator<OT, NT> comparator,
                   final DiffTreeChangeBuilder<OT, NT> consumer) {
 
@@ -32,7 +32,7 @@ public class DiffTree<OT, NT> {
     myConsumer = consumer;
   }
 
-  public static <OT, NT> void diff(DiffTreeStructure<OT> oldTree, DiffTreeStructure<NT> newTree, ShallowNodeComparator<OT, NT> comparator, DiffTreeChangeBuilder<OT, NT> consumer) {
+  public static <OT, NT> void diff(FlyweightCapableTreeStructure<OT> oldTree, FlyweightCapableTreeStructure<NT> newTree, ShallowNodeComparator<OT, NT> comparator, DiffTreeChangeBuilder<OT, NT> consumer) {
     new DiffTree<OT, NT>(oldTree, newTree, comparator, consumer).build(oldTree.getRoot(), newTree.getRoot(), 0);
   }
 
