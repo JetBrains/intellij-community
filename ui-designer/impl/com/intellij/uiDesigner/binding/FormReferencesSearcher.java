@@ -152,7 +152,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     return true;
   }
 
-  private static boolean processReferences(Processor<PsiReference> processor, final PsiFile file, String name, PsiElement element,
+  private static boolean processReferences(Processor<PsiReference> processor, final PsiFile file, String name, final PsiElement element,
                                            final LocalSearchScope filterScope) {
     if (filterScope != null) {
       boolean isInScope = false;
@@ -174,9 +174,16 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
       index = CharArrayUtil.indexOf(chars, name, index);
 
       if (index < 0) break;
-      PsiReference ref = file.findReferenceAt(index + offset + 1);
-      if (ref != null && ref.isReferenceTo(element)){
-        if (!processor.process(ref)) return false;
+      final PsiReference ref = file.findReferenceAt(index + offset + 1);
+      if (ref != null) {
+        final boolean isReferenceTo = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          public Boolean compute() {
+            return ref.isReferenceTo(element);
+          }
+        }).booleanValue();
+        if (isReferenceTo){
+          if (!processor.process(ref)) return false;
+        }
       }
       index++;
     }
