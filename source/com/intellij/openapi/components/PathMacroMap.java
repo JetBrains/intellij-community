@@ -46,6 +46,7 @@ public abstract class PathMacroMap {
     myMacroMap.put(fromText, toText);
   }
 
+  @SuppressWarnings({"WeakerAccess"})
   public abstract String substitute(String text, boolean caseSensitive, @Nullable final Set<String> usedMacros);
 
   public final void substitute(Element e, boolean caseSensitive, @Nullable final Set<String> usedMacros) {
