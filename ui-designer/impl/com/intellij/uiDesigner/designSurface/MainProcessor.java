@@ -30,7 +30,7 @@ public final class MainProcessor extends EventProcessor{
   @NotNull private final InsertComponentProcessor myInsertComponentProcessor;
   @NotNull private final GuiEditor myEditor;
   private boolean myInsertFeedbackEnabled = true;
-  private Point myLastMousePosition;
+  private Point myLastMousePosition = new Point(0, 0);
 
   public MainProcessor(@NotNull final GuiEditor editor){
     myEditor = editor;
