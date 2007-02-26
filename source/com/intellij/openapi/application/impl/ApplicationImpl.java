@@ -614,6 +614,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     assertCanRunWriteAction();
     fireBeforeWriteActionStart(action);
 
+    LOG.assertTrue(myActionsLock.isWriteLockAcquired(Thread.currentThread()) || !Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing writeAction");
     myIsWaitingForWriteAction = true;
     try {
       myActionsLock.writeLock().acquire();
