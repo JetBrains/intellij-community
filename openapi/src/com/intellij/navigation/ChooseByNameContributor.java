@@ -16,6 +16,7 @@
 package com.intellij.navigation;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
  * Allows a plugin to add items to "Goto Class" and "Goto Symbol" lists.
@@ -24,6 +25,9 @@ import com.intellij.openapi.project.Project;
  */
 
 public interface ChooseByNameContributor {
+  ExtensionPointName<ChooseByNameContributor> CLASS_EP_NAME = ExtensionPointName.create("com.intellij.gotoClassContributor");
+  ExtensionPointName<ChooseByNameContributor> SYMBOL_EP_NAME = ExtensionPointName.create("com.intellij.gotoSymbolContributor");
+
   /**
    * Returns the list of names for the specified project to which it is possible to navigate
    * by name.

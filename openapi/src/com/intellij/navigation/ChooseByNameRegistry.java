@@ -16,9 +16,11 @@
 package com.intellij.navigation;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.Extensions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 
 /**
  * Registry of components which contribute items to "Goto Class" and "Goto Symbol" lists.
@@ -27,6 +29,8 @@ import java.util.List;
 public class ChooseByNameRegistry {
   private List<ChooseByNameContributor> myGotoClassContributors = new ArrayList<ChooseByNameContributor>();
   private List<ChooseByNameContributor> myGotoSymbolContributors = new ArrayList<ChooseByNameContributor>();
+  private boolean myGotoClassExtensionsLoaded = false;
+  private boolean myGotoSymbolExtensionsLoaded = false;
 
   /**
    * Returns the singleton instance of the registry.
@@ -42,6 +46,7 @@ public class ChooseByNameRegistry {
    *
    * @param contributor the contributor instance.
    * @see #removeContributor(ChooseByNameContributor)
+   * @deprecated use {@link com.intellij.navigation.ChooseByNameContributor#CLASS_EP_NAME} extension point instead
    */
   public void contributeToClasses(ChooseByNameContributor contributor) {
     myGotoClassContributors.add(contributor);
@@ -52,6 +57,7 @@ public class ChooseByNameRegistry {
    *
    * @param contributor the contributor instance.
    * @see #removeContributor(ChooseByNameContributor)
+   * @deprecated use {@link com.intellij.navigation.ChooseByNameContributor#SYMBOL_EP_NAME} extension point instead
    */
   public void contributeToSymbols(ChooseByNameContributor contributor) {
     myGotoSymbolContributors.add(contributor);
@@ -73,6 +79,10 @@ public class ChooseByNameRegistry {
    * @return the array of contributors.
    */
   public ChooseByNameContributor[] getClassModelContributors() {
+    if (!myGotoClassExtensionsLoaded) {
+      myGotoClassExtensionsLoaded = true;
+      Collections.addAll(myGotoClassContributors, Extensions.getExtensions(ChooseByNameContributor.CLASS_EP_NAME));
+    }
     return myGotoClassContributors.toArray(new ChooseByNameContributor[myGotoClassContributors.size()]);
   }
 
@@ -82,6 +92,10 @@ public class ChooseByNameRegistry {
    * @return the array of contributors.
    */
   public ChooseByNameContributor[] getSymbolModelContributors() {
+    if (!myGotoSymbolExtensionsLoaded) {
+      myGotoSymbolExtensionsLoaded = true;
+      Collections.addAll(myGotoSymbolContributors, Extensions.getExtensions(ChooseByNameContributor.SYMBOL_EP_NAME));
+    }
     return myGotoSymbolContributors.toArray(new ChooseByNameContributor[myGotoSymbolContributors.size()]);
   }
 
