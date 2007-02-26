@@ -17,10 +17,6 @@
       <implementation-class>org.jetbrains.idea.svn.SvnConfiguration</implementation-class>
       <option name="workspace" value="true"/>
     </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.svn.history.SvnChangesBrowserSettings</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
   </project-components>
 
   <actions>
