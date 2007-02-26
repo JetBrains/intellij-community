@@ -34,9 +34,6 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
     boolean accepts(CommittedChangeList change);
   }
 
-  public float MAIN_SPLITTER_PROPORTION = 0.3f;
-  public float MESSAGES_SPLITTER_PROPORTION = 0.8f;
-
   public boolean USE_DATE_BEFORE_FILTER = false;
   public boolean USE_DATE_AFTER_FILTER = false;
   public boolean USE_CHANGE_BEFORE_FILTER = false;
