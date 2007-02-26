@@ -434,6 +434,7 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
           validateContentEntriesCandidates(files);
         }
       };
+      myDescriptor.setContextModule(getModule());
       myDescriptor.setTitle(ProjectBundle.message("module.paths.add.content.title"));
       myDescriptor.setDescription(ProjectBundle.message("module.paths.add.content.prompt"));
     }
