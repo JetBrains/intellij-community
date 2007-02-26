@@ -73,19 +73,21 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   }
 
   public long getRepositoryId() {
-    long id = super.getRepositoryId();
-    if (id == -2) {
-      RepositoryManager repositoryManager = getRepositoryManager();
-      if (repositoryManager != null) {
-        id = repositoryManager.getFileId(getVirtualFile());
-      }
-      else {
-        id = -1;
-      }
+    synchronized (PsiLock.LOCK) {
+      long id = super.getRepositoryId();
+      if (id == -2) {
+        RepositoryManager repositoryManager = getRepositoryManager();
+        if (repositoryManager != null) {
+          id = repositoryManager.getFileId(getVirtualFile());
+        }
+        else {
+          id = -1;
+        }
 
-      super.setRepositoryId(id);
+        super.setRepositoryId(id);
+      }
+      return id;
     }
-    return id;
   }
 
   public boolean isRepositoryIdInitialized() {

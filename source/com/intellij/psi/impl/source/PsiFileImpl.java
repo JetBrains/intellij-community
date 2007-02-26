@@ -25,15 +25,15 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.List;
-import java.util.ArrayList;
-import java.lang.reflect.Array;
 
 public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implements PsiFileEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileImpl");
@@ -85,18 +85,20 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public long getRepositoryId() {
-    long id = super.getRepositoryId();
-    if (id == -2) {
-      RepositoryManager repositoryManager = getRepositoryManager();
-      if (repositoryManager != null) {
-        id = repositoryManager.getFileId(getViewProvider().getVirtualFile());
+    synchronized (PsiLock.LOCK) {
+      long id = super.getRepositoryId();
+      if (id == -2) {
+        RepositoryManager repositoryManager = getRepositoryManager();
+        if (repositoryManager != null) {
+          id = repositoryManager.getFileId(getViewProvider().getVirtualFile());
+        }
+        else {
+          id = -1;
+        }
+        super.setRepositoryId(id); // super is important here!
       }
-      else {
-        id = -1;
-      }
-      super.setRepositoryId(id); // super is important here!
+      return id;
     }
-    return id;
   }
 
   public boolean isDirectory() {
@@ -107,11 +109,13 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return super.getRepositoryId() != -2;
   }
 
-  public synchronized FileElement getTreeElement() {
-    if (!getViewProvider().isPhysical() && _getTreeElement() == null) {
-      setTreeElement(loadTreeElement());
+  public FileElement getTreeElement() {
+    synchronized (PsiLock.LOCK) {
+      if (!getViewProvider().isPhysical() && _getTreeElement() == null) {
+        setTreeElement(loadTreeElement());
+      }
+      return (FileElement)_getTreeElement();
     }
-    return (FileElement)_getTreeElement();
   }
 
   public void prepareToRepositoryIdInvalidation() {

@@ -182,14 +182,16 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     return parserDefinition.createLexer(getManager().getProject());
   }
 
-  public synchronized FileElement getTreeElement() {
-    if(myFileElement == null){
-      myFileElement = new FileElement(DUMMY_HOLDER);
-      myFileElement.setPsiElement(this);
-      if(myTable != null) myFileElement.setCharTable(myTable);
-      clearCaches();
+  public FileElement getTreeElement() {
+    synchronized (PsiLock.LOCK) {
+      if(myFileElement == null){
+        myFileElement = new FileElement(DUMMY_HOLDER);
+        myFileElement.setPsiElement(this);
+        if(myTable != null) myFileElement.setCharTable(myTable);
+        clearCaches();
+      }
+      return myFileElement;
     }
-    return myFileElement;
   }
 
   @NotNull
