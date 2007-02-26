@@ -179,7 +179,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
       return events;
     }
 
-    final XmlName xmlName = XmlName.create(description.getRootTagName(), description.getRootElementClass());
+    final XmlName xmlName = XmlName.create(description.getRootTagName(), description.getRootElementClass(), null);
     assert xmlName != null;
     final EvaluatedXmlName rootTagName = xmlName.createEvaluatedXmlName(null);
     myLastResult = new DomFileElementImpl<T>(myXmlFile, description.getRootElementClass(), rootTagName, myDomManager);

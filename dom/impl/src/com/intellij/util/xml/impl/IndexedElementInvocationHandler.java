@@ -103,7 +103,10 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
   }
 
   public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-    return getChildDescription().getAnnotation(myIndex, annotationClass);
+    final T annotation = getChildDescription().getAnnotation(myIndex, annotationClass);
+    if (annotation != null) return annotation;
+
+    return getRawType().getAnnotation(annotationClass);
   }
 
   public final <T extends DomElement> T createStableCopy() {
@@ -117,7 +120,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler{
   }
 
   @NotNull
-  private FixedChildDescriptionImpl getChildDescription() {
+  protected final FixedChildDescriptionImpl getChildDescription() {
     final FixedChildDescriptionImpl description = getParentHandler().getGenericInfo().getFixedChildDescription(getXmlName().getXmlName());
     assert description != null;
     return description;

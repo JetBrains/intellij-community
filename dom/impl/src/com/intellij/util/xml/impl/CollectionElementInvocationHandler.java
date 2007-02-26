@@ -5,12 +5,12 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.AnnotatedElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.events.CollectionElementRemovedEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.List;
 
@@ -52,8 +52,8 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler{
   }
 
   @Nullable
-  public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-    return getParentHandler().getGenericInfo().getCollectionChildDescription(getXmlName().getXmlName()).getAnnotation(annotationClass);
+  protected AnnotatedElement getChildDescription() {
+    return getParentHandler().getGenericInfo().getCollectionChildDescription(getXmlName().getXmlName());
   }
 
   public <T extends DomElement> T createStableCopy() {

@@ -41,6 +41,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.lang.annotation.Annotation;
 import java.util.*;
 
 /**
@@ -100,10 +101,10 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     myAbstractType = type;
 
     final Type concreteInterface = manager.getTypeChooserManager().getTypeChooser(type).chooseType(tag);
-    final Converter converter = getConverter(this, DomUtil.getGenericValueParameter(concreteInterface), Factory.NULL_FACTORY);
-
     myGenericInfo = manager.getGenericInfo(concreteInterface);
     myType = concreteInterface;
+
+    final Converter converter = getConverter(this, DomUtil.getGenericValueParameter(concreteInterface), Factory.NULL_FACTORY);
     myGenericConverter = converter;
     myInvocationCache =
       manager.getInvocationCache(new Pair<Type, Type>(concreteInterface, converter == null ? null : converter.getClass()));
@@ -400,6 +401,20 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   @Nullable
+  protected abstract AnnotatedElement getChildDescription();
+
+  @Nullable
+  public <T extends Annotation> T getAnnotation(final Class<T> annotationClass) {
+    final AnnotatedElement childDescription = getChildDescription();
+    if (childDescription != null) {
+      final T annotation = childDescription.getAnnotation(annotationClass);
+      if (annotation != null) return annotation;
+    }
+
+    return getRawType().getAnnotation(annotationClass);
+  }
+
+  @Nullable
   private Converter getConverter(final AnnotatedElement annotationProvider,
                                  Class parameter,
                                  final Factory<Converter> continuation) {
@@ -654,7 +669,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return type;
   }
 
-  private Class<?> getRawType() {
+  protected final Class<?> getRawType() {
     return ReflectionUtil.getRawType(myType);
   }
 

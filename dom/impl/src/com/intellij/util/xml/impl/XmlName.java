@@ -10,10 +10,7 @@ import com.intellij.util.xml.Namespace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
+import java.lang.reflect.*;
 
 /**
  * @author peter
@@ -70,10 +67,19 @@ public class XmlName {
   }
 
   @Nullable
-  public static XmlName create(@NotNull String name, Type type) {
+  public static XmlName create(@NotNull String name, Type type, @Nullable JavaMethod javaMethod) {
     final Class<?> type1 = getErasure(type);
     if (type1 == null) return null;
-    return new XmlName(name, getNamespaceKey(type1));
+    String key = getNamespaceKey(type1);
+    if (key == null && javaMethod != null) {
+      for (final Method method : javaMethod.getSignature().getAllMethods(javaMethod.getDeclaringClass())) {
+        final String key1 = getNamespaceKey(method.getDeclaringClass());
+        if (key1 != null) {
+          key = key1;
+        }
+      }
+    }
+    return new XmlName(name, key);
   }
 
   @Nullable
@@ -113,6 +119,6 @@ public class XmlName {
 
   @Nullable
   public static XmlName create(@NotNull final String name, final JavaMethod method) {
-    return create(name, method.getGenericReturnType());
+    return create(name, method.getGenericReturnType(), method);
   }
 }

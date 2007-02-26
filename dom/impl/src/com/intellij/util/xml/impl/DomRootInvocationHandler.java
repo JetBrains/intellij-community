@@ -10,13 +10,11 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.xml.AnnotatedElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
-
-import java.lang.annotation.Annotation;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -57,11 +55,6 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
     return getXmlName().getNamespace(getFile());
   }
 
-  @Nullable
-  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-    return null;
-  }
-
   @NotNull
   public <T extends DomElement> DomFileElementImpl<T> getRoot() {
     LOG.assertTrue(super.isValid());
@@ -99,6 +92,10 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
       }
     });
     return result[0];
+  }
+
+  protected AnnotatedElement getChildDescription() {
+    return null;
   }
 
 }

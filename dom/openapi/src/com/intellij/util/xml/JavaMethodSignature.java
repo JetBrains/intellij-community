@@ -4,8 +4,10 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.SmartList;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
@@ -112,6 +114,16 @@ public class JavaMethodSignature {
       }
     }
     return null;
+  }
+
+  public final synchronized List<Method> getAllMethods(final Class startFrom) {
+    addMethodsIfNeeded(startFrom);
+    final List<Method> list = ContainerUtil.findAll(myAllMethods, new Condition<Method>() {
+      public boolean value(final Method method) {
+        return method.getDeclaringClass().isAssignableFrom(startFrom);
+      }
+    });
+    return list;
   }
 
   @Nullable

@@ -288,7 +288,7 @@ public class GenericInfoImpl implements DomGenericInfo {
 
       final String qname = getSubTagNameForCollection(signature);
       if (qname != null) {
-        XmlName xmlName = XmlName.create(qname, type);
+        XmlName xmlName = XmlName.create(qname, type, method);
         assert !isFixedChild(xmlName) : "Collection and fixed children cannot intersect: " + qname;
         myCollectionChildrenClasses.put(xmlName, type);
         myCollectionChildrenGetterMethods.put(signature, xmlName);

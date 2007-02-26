@@ -15,7 +15,6 @@ import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
 /**
@@ -80,7 +79,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
     });
   }
 
-  private AttributeChildDescriptionImpl getChildDescription() {
+  protected AttributeChildDescriptionImpl getChildDescription() {
     return getParentHandler().getGenericInfo().getAttributeChildDescription(getXmlName().getXmlName());
   }
 
@@ -123,10 +122,6 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler {
       });
       fireUndefinedEvent();
     }
-  }
-
-  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-    return getChildDescription().getAnnotation(annotationClass);
   }
 
   @Nullable
