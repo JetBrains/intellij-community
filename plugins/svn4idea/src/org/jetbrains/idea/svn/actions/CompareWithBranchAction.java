@@ -36,6 +36,8 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
@@ -85,6 +87,24 @@ public class CompareWithBranchAction extends AnAction {
 
     BranchBasesPopupStep step = new BranchBasesPopupStep(project, virtualFile, vcsRoot, configuration);
     JBPopupFactory.getInstance().createListPopup(step).showCenteredInCurrentWindow(project);
+  }
+
+  @Override
+  public void update(final AnActionEvent e) {
+    Project project = e.getData(DataKeys.PROJECT);
+    VirtualFile virtualFile = e.getData(DataKeys.VIRTUAL_FILE);
+    e.getPresentation().setEnabled(isEnabled(project, virtualFile));
+  }
+
+  private static boolean isEnabled(final Project project, final VirtualFile virtualFile) {
+    if (project == null || virtualFile == null || virtualFile.isDirectory()) {
+      return false;
+    }
+    final FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(virtualFile);
+    if (fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.ADDED) {
+      return false;
+    }
+    return true;
   }
 
   private class BranchBasesPopupStep extends BaseListPopupStep<String> {
