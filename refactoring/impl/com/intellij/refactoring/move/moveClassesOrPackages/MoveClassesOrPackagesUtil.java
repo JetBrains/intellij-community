@@ -155,6 +155,7 @@ public class MoveClassesOrPackagesUtil {
 
   public static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination)
     throws IncorrectOperationException {
+    if ( dir.getParentDirectory() == destination ) return;
     moveDirectoryRecursively(dir, destination, new HashSet<VirtualFile>());
   }
 
