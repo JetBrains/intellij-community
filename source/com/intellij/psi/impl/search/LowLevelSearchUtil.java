@@ -44,9 +44,6 @@ public class LowLevelSearchUtil {
                                                                StringSearcher searcher) {
     ProgressManager.getInstance().checkCanceled();
     final CharSequence buffer = scope instanceof PsiFile ? ((PsiFile)scope).getViewProvider().getContents():new CharArrayCharSequence(scope.textToCharArray());
-    if (CachesBasedRefSearcher.DEBUG) {
-      System.out.println("---------------  Searching in '" + buffer.toString() + "' ---------------------");
-    }
     int startOffset = 0;
     int endOffset = buffer.length();
     final int patternLength = searcher.getPatternLength();
