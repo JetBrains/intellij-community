@@ -17,10 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import org.jdom.Element;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.List;
-import java.util.Collections;
+import java.util.*;
 
 /**
  * @author nik
@@ -126,11 +123,15 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(final Element element) throws WriteExternalException {
+    TreeMap<String, Collection<ConfigFileInfo>> sortedConfigFiles = new TreeMap<String, Collection<ConfigFileInfo>>();
     for (Map.Entry<ConfigFileMetaData,Collection<ConfigFileInfo>> entry : myConfigFiles.entrySet()) {
       String id = entry.getKey().getId();
+      sortedConfigFiles.put(id, entry.getValue());
+    }
+    for (Map.Entry<String, Collection<ConfigFileInfo>> entry : sortedConfigFiles.entrySet()) {
       for (ConfigFileInfo configuration : entry.getValue()) {
         final Element child = new Element(ELEMENT_NAME);
-        child.setAttribute(ID_AATRIBUTE, id);
+        child.setAttribute(ID_AATRIBUTE, entry.getKey());
         child.setAttribute(URL_ATTRIBUTE, configuration.getUrl());
         //for backward compatibility
         child.setAttribute("optional", "false");
