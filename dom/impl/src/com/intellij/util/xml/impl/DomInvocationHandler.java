@@ -509,7 +509,9 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
 
   @NotNull
   final IndexedElementInvocationHandler getFixedChild(final Pair<EvaluatedXmlName, Integer> info) {
-    return myFixedChildren.get(info);
+    final IndexedElementInvocationHandler handler = myFixedChildren.get(info);
+    LOG.assertTrue(handler != null, this + " " + info.toString());
+    return handler;
   }
 
   final Collection<IndexedElementInvocationHandler> getFixedChildren() {
