@@ -81,10 +81,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <interface-class>com.intellij.codeInsight.intention.IntentionManager</interface-class>
-      <implementation-class>com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.codeInsight.daemon.DaemonCodeAnalyzer</interface-class>
       <implementation-class>com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl</implementation-class>
       <option name="workspace" value="true"/>

@@ -17,6 +17,7 @@ package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -35,9 +36,10 @@ public abstract class IntentionManager implements ProjectComponent {
    * Returns instance of <code>IntentionManager</code> for given project.
    *
    * @param project the project for which the instance is returned.
+   * @return instance of the <code>IntentionManager</code> assigned for given project.
    */
-  public static IntentionManager getInstance(Project project){
-    return project.getComponent(IntentionManager.class);
+  public static IntentionManager getInstance(Project project) {
+    return ServiceManager.getService(project, IntentionManager.class);
   }
 
   /**
