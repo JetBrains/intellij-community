@@ -12,6 +12,7 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Matcher;
+import org.jetbrains.annotations.Nullable;
 
 public class CompletionContext implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionContext");
@@ -172,6 +173,10 @@ public class CompletionContext implements Cloneable {
 
   public String getPrefix() {
     return myPrefix;
+  }
+
+  public void setPrefix(PsiElement insertedElement, int offset, @Nullable CompletionData completionData) {
+    setPrefix(completionData == null ? CompletionData.findPrefixStatic(insertedElement, offset) : completionData.findPrefix(insertedElement, offset));
   }
 
   public void setPrefix(final String prefix) {

@@ -137,11 +137,11 @@ public class CompletionVariant {
     addCompletionFilter(filter, TailType.NONE);
   }
 
-  public void addCompletion(String keyword){
+  public void addCompletion(@NonNls String keyword){
     addCompletion(keyword, DEFAULT_TAIL_TYPE);
   }
 
-  public void addCompletion(String keyword, int tailType){
+  public void addCompletion(@NonNls String keyword, int tailType){
     addCompletion((Object)keyword, tailType);
   }
 

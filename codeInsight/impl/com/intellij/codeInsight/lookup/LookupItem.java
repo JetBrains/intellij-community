@@ -10,13 +10,14 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Map;
 
 /**
  * This class represents an item of a lookup list.
  */
-public final class LookupItem implements Comparable{
+public class LookupItem implements Comparable{
   public static final Object HIGHLIGHTED_ATTR = Key.create("highlighted");
   public static final Object TYPE_ATTR = Key.create("type");
   public static final Object ICON_ATTR = Key.create("icon");
@@ -45,7 +46,7 @@ public final class LookupItem implements Comparable{
   private Map<Object,Object> myAttributes = null;
   public static final LookupItem[] EMPTY_ARRAY = new LookupItem[0];
 
-  public LookupItem(Object o, @NotNull String lookupString){
+  public LookupItem(Object o, @NotNull @NonNls String lookupString){
     setObject(o);
     myLookupString = lookupString;
   }

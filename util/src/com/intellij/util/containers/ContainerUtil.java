@@ -446,6 +446,10 @@ public class ContainerUtil {
     return true;
   }
 
+  public static <T> boolean or(T[] iterable, Condition<T> condition) {
+    return or(Arrays.asList(iterable), condition);
+  }
+  
   public static <T> boolean or(Iterable<T> iterable, Condition<T> condition) {
     for (final T t : iterable) {
       if (condition.value(t)) return true;

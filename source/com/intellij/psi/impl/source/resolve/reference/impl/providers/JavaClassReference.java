@@ -62,23 +62,23 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   public void processVariants(final PsiScopeProcessor processor) {
-
     if (processor instanceof CompletionProcessor && JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(getOptions()) != null) {
       ((CompletionProcessor)processor).setCompletionElements(getVariants());
       return;
     }
-    PsiScopeProcessor processorToUse = processor;
 
+    PsiScopeProcessor processorToUse = processor;
     if (myInStaticImport) {
       // allows to complete members
       processor.handleEvent(PsiScopeProcessor.Event.CHANGE_LEVEL, null);
     }
-    else if (isStaticClassReference()) {
-      processor.handleEvent(PsiScopeProcessor.Event.START_STATIC, null);
+    else {
+      if (isStaticClassReference()) {
+        processor.handleEvent(PsiScopeProcessor.Event.START_STATIC, null);
+      }
       processorToUse = new PsiScopeProcessor() {
         public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
-          if (element instanceof PsiClass) processor.execute(element, substitutor);
-          return true;
+          return !(element instanceof PsiClass || element instanceof PsiPackage) || processor.execute(element, substitutor);
         }
 
         public <V> V getHint(Class<V> hintClass) {

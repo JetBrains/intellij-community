@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -307,7 +308,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     CompletionData completionData = getCompletionData(context, lastElement);
 
-    context.setPrefix(findPrefix(insertedElement, context.startOffset, CompletionUtil.DUMMY_IDENTIFIER, completionData));
+    context.setPrefix(insertedElement, context.startOffset, completionData);
     if (completionData == null) {
       // some completion data may depend on prefix
       completionData = getCompletionData(context, lastElement);
@@ -335,9 +336,11 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   private static Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context) {
+    final FileType fileType = context.file.getFileType();
+    final CompletionData completionData = CompletionUtil.getCompletionDataByFileType(fileType);
     final PsiFile fileCopy = createFileCopy(context.file);
     Document oldDoc = fileCopy.getViewProvider().getDocument();
-    oldDoc.insertString(context.startOffset, CompletionUtil.DUMMY_IDENTIFIER);
+    oldDoc.insertString(context.startOffset, completionData == null ? CompletionUtil.DUMMY_IDENTIFIER : completionData.getDummyIdentifier(context));
     PsiDocumentManager.getInstance(fileCopy.getProject()).commitDocument(oldDoc);
     context.offset = context.startOffset;
 
@@ -422,14 +425,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         handler.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
       }
     });
-  }
-
-  static String findPrefix(PsiElement insertedElement, int offset, String dummyIdentifier, CompletionData completionData) {
-    final String result = completionData == null
-                          ? CompletionData.findPrefixStatic(insertedElement, offset)
-                          : completionData.findPrefix(insertedElement, offset);
-
-    return result.endsWith(dummyIdentifier) ? result.substring(0, result.length() - dummyIdentifier.length()) : result;
   }
 
   public boolean startInWriteAction() {

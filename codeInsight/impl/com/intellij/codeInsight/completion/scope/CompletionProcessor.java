@@ -124,7 +124,7 @@ public class CompletionProcessor extends BaseScopeProcessor
 
   public void setCompletionElements(@NotNull Object[] elements) {
     for (Object element: elements) {
-      myResults.add(new CompletionElement(null, element, null));
+      myResults.add(new CompletionElement(null, element, PsiSubstitutor.EMPTY));
     }
   }
 

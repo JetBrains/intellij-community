@@ -7,20 +7,22 @@ import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.impl.Pattern;
+import static com.intellij.patterns.impl.StandardPatterns.character;
+import static com.intellij.patterns.impl.StandardPatterns.not;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
-import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
 import org.jdom.Namespace;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -244,19 +246,11 @@ public class CompletionData {
     }
   };
 
-  public static String findPrefixStatic(PsiElement insertedElement, int offset) {
-    if(insertedElement == null) return "";
+  @Nullable
+  public static String getReferencePrefix(@NotNull PsiElement insertedElement, int offset) {
     int offsetInElement = offset - insertedElement.getTextRange().getStartOffset();
     //final PsiReference ref = insertedElement.findReferenceAt(offsetInElement);
     final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(insertedElement.getTextRange().getStartOffset() + offsetInElement);
-
-    // TODO: need to add more separators here. Such as #, $ etc... Think on centralizing their location.
-    final String text = insertedElement.getText();
-    if(ref == null && (StringUtil.endsWithChar(text, '#') ||
-                       StringUtil.endsWithChar(text, '.') && !(insertedElement instanceof Property))){
-      return "";
-    }
-
     if(ref instanceof PsiJavaCodeReferenceElement) {
       final PsiElement name = ((PsiJavaCodeReferenceElement)ref).getReferenceNameElement();
       if(name != null){
@@ -272,35 +266,39 @@ public class CompletionData {
       if(result.indexOf('(') > 0){
         result = result.substring(0, result.indexOf('('));
       }
-      
+
       if (ref.getElement() instanceof PsiNameValuePair && StringUtil.startsWithChar(result,'{')) {
         result = result.substring(1); // PsiNameValuePair reference without name span all content of the element
       }
       return result;
     }
 
-    if (insertedElement instanceof PsiIdentifier || insertedElement instanceof PsiKeyword
-        || PsiKeyword.NULL.equals(text)
-        || PsiKeyword.TRUE.equals(text)
-        || PsiKeyword.FALSE.equals(text)
-        || (insertedElement instanceof XmlToken
-            && (((XmlToken)insertedElement).getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
-                ((XmlToken)insertedElement).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS ||
-                ((XmlToken)insertedElement).getTokenType() == XmlTokenType.XML_NAME))
-        ){
-      return text.substring(0, offsetInElement).trim();
-    }
+    return null;
+  }
 
-    if (insertedElement instanceof PsiDocToken) {
-      final PsiDocToken token = (PsiDocToken)insertedElement;
-      if (token.getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
-        return text.substring(0, offsetInElement).trim();
-      }
-      else if (token.getTokenType() == JavaDocTokenType.DOC_TAG_NAME) {
-        return text.substring(1, offsetInElement).trim();
+  public static String findPrefixStatic(PsiElement insertedElement, int offset) {
+    if(insertedElement == null) return "";
+
+    final String prefix = getReferencePrefix(insertedElement, offset);
+    if (prefix != null) return prefix;
+
+    if (insertedElement instanceof PsiPlainText) return "";
+
+    return findPrefixDefault(insertedElement, offset, not(character().javaIdentifierPart()));
+  }
+
+  protected static String findPrefixDefault(final PsiElement insertedElement, final int offset, @NotNull final Pattern<Character, ?> trimStart) {
+    final String substr = insertedElement.getText().substring(0, offset - insertedElement.getTextRange().getStartOffset()).trim();
+    if (substr.length() > 0) {
+      if (trimStart.accepts(substr.charAt(0))) {
+        return substr.substring(1);
       }
     }
+    return substr;
+  }
 
-    return "";
+  @NonNls
+  public String getDummyIdentifier(final CompletionContext context) {
+    return CompletionUtil.DUMMY_IDENTIFIER;
   }
 }
