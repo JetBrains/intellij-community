@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Disposer;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -60,8 +61,7 @@ final class ImageFileEditorProvider implements ApplicationComponent, FileEditorP
     }
 
     public void disposeEditor(@NotNull FileEditor editor) {
-        ImageFileEditorImpl fileEditor = (ImageFileEditorImpl)editor;
-        fileEditor.dispose();
+      Disposer.dispose(editor);
     }
 
     @NotNull

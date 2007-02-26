@@ -134,7 +134,7 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
         return null;
     }
 
-    void dispose() {
+    public void dispose() {
         VirtualFileManager.getInstance().removeVirtualFileListener(imageEditor);
         ImageEditorManager imageEditorManager = getImageEditorManager();
         imageEditorManager.releaseImageEditor(imageEditor);
