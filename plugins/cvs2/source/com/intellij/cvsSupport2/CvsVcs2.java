@@ -2,11 +2,11 @@ package com.intellij.cvsSupport2;
 
 
 import com.intellij.CvsBundle;
-import com.intellij.peer.PeerFactory;
 import com.intellij.cvsSupport2.annotate.CvsAnnotationProvider;
 import com.intellij.cvsSupport2.annotate.CvsFileAnnotation;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsStorageComponent;
+import com.intellij.cvsSupport2.changeBrowser.CvsCommittedChangesProvider;
 import com.intellij.cvsSupport2.checkinProject.AdditionalOptionsPanel;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinEnvironment;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
@@ -21,10 +21,8 @@ import com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui.EditOptionsDialog;
 import com.intellij.cvsSupport2.cvsstatuses.CvsChangeProvider;
 import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
 import com.intellij.cvsSupport2.cvsstatuses.CvsUpToDateRevisionProvider;
-import com.intellij.cvsSupport2.fileView.CvsFileViewEnvironment;
 import com.intellij.cvsSupport2.history.CvsHistoryProvider;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
-import com.intellij.cvsSupport2.changeBrowser.CvsCommittedChangesProvider;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.cvsIntegration.CvsResult;
@@ -34,20 +32,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
-import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +68,6 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
   private final CvsHistoryProvider myCvsHistoryProvider;
   private boolean myProjectIsOpened = false;
   private final CvsCheckinEnvironment myCvsCheckinEnvironment;
-  private CvsFileViewEnvironment myFileViewEnvironment;
   private final CvsStandardOperationsProvider myCvsStandardOperationsProvider;
   private final CvsUpdateEnvironment myCvsUpdateEnvironment;
   private final CvsStatusEnvironment myCvsStatusEnvironment;
@@ -98,7 +95,6 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
 
     myConfigurable = new Cvs2Configurable(getProject());
     myStorageComponent = cvsStorageComponent;
-    myFileViewEnvironment = new CvsFileViewEnvironment(getProject());
     myCvsAnnotationProvider = new CvsAnnotationProvider(myProject);
     myDiffProvider = new CvsDiffProvider(myProject);
     myCommittedChangesProvider = new CvsCommittedChangesProvider(myProject);
@@ -306,10 +302,6 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
 
   private void fireFileStatusChanged(final VirtualFile file) {
     FileStatusManager.getInstance(getProject()).fileStatusChanged(file);
-  }
-
-  public FileViewEnvironment getFileViewEnvironment() {
-    return myFileViewEnvironment;
   }
 
   @NotNull
