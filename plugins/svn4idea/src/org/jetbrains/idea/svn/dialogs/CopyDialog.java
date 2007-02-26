@@ -175,11 +175,13 @@ public class CopyDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         BranchConfigurationDialog.configureBranches(project, mySrcVirtualFile);
         updateBranchTagBases();
+        updateControls();
       }
     });
     myBranchTagBaseComboBox.getComboBox().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         updateToURL();
+        updateControls();
       }
     });
   }
@@ -205,8 +207,9 @@ public class CopyDialog extends DialogWrapper {
       relativeUrl = myBranchConfiguration.getRelativeUrl(myRepositoryField.getText());
     }
 
-    if (relativeUrl != null) {
-      myToURLText.setText(myBranchTagBaseComboBox.getComboBox().getSelectedItem().toString() + "/" + myBranchTextField.getText() + relativeUrl);
+    final Object selectedBranch = myBranchTagBaseComboBox.getComboBox().getSelectedItem();
+    if (relativeUrl != null && selectedBranch != null) {
+      myToURLText.setText(selectedBranch.toString() + "/" + myBranchTextField.getText() + relativeUrl);
     }
   }
 
@@ -302,6 +305,10 @@ public class CopyDialog extends DialogWrapper {
     if (myURL == null) {
       return false;
     }
+    if (myBranchOrTagRadioButton.isSelected() && myBranchTagBaseComboBox.getComboBox().getSelectedItem() == null) {
+      myErrorLabel.setText(SvnBundle.message("create.branch.no.base.location.error"));
+      return false;
+    }
     String url = myToURLText.getText();
     if (url != null && url.trim().length() > 0) {
       if (myRepositoryRadioButton.isSelected()) {
@@ -313,16 +320,12 @@ public class CopyDialog extends DialogWrapper {
           revision = SVNRevision.UNDEFINED;
         }
         if (!revision.isValid() || revision.isLocal()) {
-          myErrorLabel.setText("Invalid revision '" + myRevisionPanel.getRevisionText() + "'");
+          myErrorLabel.setText(SvnBundle.message("create.branch.invalid.revision.error", myRevisionPanel.getRevisionText()));
           return false;
         }
         return true;
       }
       else if (myWorkingCopyRadioButton.isSelected()) {
-        File wcFile = new File(myWorkingCopyField.getText());
-        if (wcFile.isFile()) {
-          wcFile = wcFile.getParentFile();
-        }
         try {
           SVNWCClient client = SvnVcs.getInstance(myProject).createWCClient();
           SVNInfo info = client.doInfo(mySrcFile, SVNRevision.WORKING);
@@ -332,7 +335,7 @@ public class CopyDialog extends DialogWrapper {
           mySrcURL = null;
         }
         if (mySrcURL == null) {
-          myErrorLabel.setText("No working copy found at " + myWorkingCopyField.getText());
+          myErrorLabel.setText(SvnBundle.message("create.branch.no.working.copy.error", myWorkingCopyField.getText()));
           return false;
         }
         return true;
