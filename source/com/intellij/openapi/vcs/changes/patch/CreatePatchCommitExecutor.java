@@ -134,7 +134,7 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             Messages.showInfoMessage(myProject, VcsBundle.message("create.patch.all.binary"),
-                                     VcsBundle.message("create.patch.commit.action.text"));
+                                     VcsBundle.message("create.patch.commit.action.title"));
           }
         });
         return;
@@ -155,7 +155,7 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               Messages.showInfoMessage(myProject, VcsBundle.message("create.patch.success.confirmation", file.getPath()),
-                                       VcsBundle.message("create.patch.commit.action.text"));
+                                       VcsBundle.message("create.patch.commit.action.title"));
             }
           });
         }
@@ -165,7 +165,7 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
             public void run() {
               Messages.showInfoMessage(myProject, VcsBundle.message("create.patch.partial.success.confirmation", file.getPath(),
                                                                     binaryCount1),
-                                       VcsBundle.message("create.patch.commit.action.text"));
+                                       VcsBundle.message("create.patch.commit.action.title"));
             }
           });
         }

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class CreatePatchAction extends AbstractCommonCheckinAction {
   protected String getActionName(VcsContext dataContext) {
-    return VcsBundle.message("create.patch.commit.action.text");
+    return VcsBundle.message("create.patch.commit.action.title");
   }
 
   protected FilePath[] getRoots(VcsContext context) {

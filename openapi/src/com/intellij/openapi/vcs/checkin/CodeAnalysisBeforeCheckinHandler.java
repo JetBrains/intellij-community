@@ -69,7 +69,9 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
     int errorCount = collectErrors(codeSmells);
     int warningCount = codeSmells.size() - errorCount;
     String commitButtonText = executor != null ? executor.getActionText() : myCheckinPanel.getCommitActionName();
-
+    if (commitButtonText.endsWith("...")) {
+      commitButtonText = commitButtonText.substring(0, commitButtonText.length()-3);
+    }
 
     final int answer = Messages.showDialog(
       VcsBundle.message("before.commit.files.contain.code.smells.edit.them.confirm.text", errorCount, warningCount),
