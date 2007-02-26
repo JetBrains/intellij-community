@@ -17,7 +17,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
@@ -32,7 +35,7 @@ import java.util.List;
  * User: Sergey.Vasiliev
  */
 public class DomElementsHighlightingUtil {
-  
+
   private static final AnnotationHolderImpl EMPTY_ANNOTATION_HOLDER = new AnnotationHolderImpl() {
     public boolean add(final Annotation annotation) {
       return false;
@@ -42,11 +45,13 @@ public class DomElementsHighlightingUtil {
   private DomElementsHighlightingUtil() {
   }
 
-  public static List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, final DomElementProblemDescriptor problemDescriptor) {
+  public static List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager,
+                                                                 final DomElementProblemDescriptor problemDescriptor) {
     final ProblemHighlightType type = getProblemHighlightType(problemDescriptor);
     return createProblemDescriptors(problemDescriptor, new Function<Pair<TextRange, PsiElement>, ProblemDescriptor>() {
       public ProblemDescriptor fun(final Pair<TextRange, PsiElement> s) {
-        return manager.createProblemDescriptor(s.second, s.first, problemDescriptor.getDescriptionTemplate(), type, problemDescriptor.getFixes());
+        return manager
+          .createProblemDescriptor(s.second, s.first, problemDescriptor.getDescriptionTemplate(), type, problemDescriptor.getFixes());
       }
     });
   }
@@ -81,7 +86,9 @@ public class DomElementsHighlightingUtil {
     });
   }
 
-  private static Annotation createAnnotation(final HighlightSeverity severity, final AnnotationHolderImpl holder, final TextRange range,
+  private static Annotation createAnnotation(final HighlightSeverity severity,
+                                             final AnnotationHolderImpl holder,
+                                             final TextRange range,
                                              final String text) {
     if (severity.compareTo(HighlightSeverity.ERROR) >= 0) return holder.createErrorAnnotation(range, text);
     if (severity.compareTo(HighlightSeverity.WARNING) >= 0) return holder.createWarningAnnotation(range, text);
@@ -89,7 +96,8 @@ public class DomElementsHighlightingUtil {
     return holder.createInfoAnnotation(range, text);
   }
 
-  private static <T> List<T> createProblemDescriptors(final DomElementProblemDescriptor problemDescriptor, final Function<Pair<TextRange, PsiElement>, T> creator) {
+  private static <T> List<T> createProblemDescriptors(final DomElementProblemDescriptor problemDescriptor,
+                                                      final Function<Pair<TextRange, PsiElement>, T> creator) {
     final List<T> descriptors = new SmartList<T>();
 
     if (problemDescriptor instanceof DomElementResolveProblemDescriptor) {
@@ -104,7 +112,8 @@ public class DomElementsHighlightingUtil {
         else {
           errorRange = TextRange.from(referenceRange.getStartOffset(), 1);
         }
-      } else {
+      }
+      else {
         errorRange = referenceRange;
       }
       descriptors.add(creator.fun(Pair.create(errorRange, element)));
@@ -119,13 +128,14 @@ public class DomElementsHighlightingUtil {
       if (psiElement instanceof XmlAttributeValue) {
         final PsiElement attr = psiElement.getParent();
         descriptors.add(creator.fun(Pair.create(new TextRange(0, attr.getTextLength()), attr)));
-      } else {
+      }
+      else {
         final XmlTag tag = (XmlTag)(psiElement instanceof XmlTag ? psiElement : psiElement.getParent());
         descriptors.add(creator.fun(Pair.create(new TextRange(0, tag.getTextLength()), (PsiElement)tag)));
       }
       return descriptors;
     }
-    
+
     if (psiElement != null && StringUtil.isNotEmpty(psiElement.getText())) {
       if (psiElement instanceof XmlTag) {
         final XmlTag tag = (XmlTag)psiElement;
@@ -140,16 +150,23 @@ public class DomElementsHighlightingUtil {
 
         return descriptors;
       }
-      int start = 0;
-      int length = psiElement.getTextRange().getLength();
-      if (psiElement instanceof XmlAttributeValue) {
-        String value = ((XmlAttributeValue)psiElement).getValue();
-        if (StringUtil.isNotEmpty(value)) {
-          start = psiElement.getText().indexOf(value);
-          length = value.length();
+
+
+      TextRange textRange = problemDescriptor.getTextRange();
+
+      if (textRange == null) {
+        int start = 0;
+        int length = psiElement.getTextRange().getLength();
+        if (psiElement instanceof XmlAttributeValue) {
+          String value = ((XmlAttributeValue)psiElement).getValue();
+          if (StringUtil.isNotEmpty(value)) {
+            start = psiElement.getText().indexOf(value);
+            length = value.length();
+          }
         }
+        textRange = TextRange.from(start, length);
       }
-      return Arrays.asList(creator.fun(Pair.create(TextRange.from(start, length), psiElement)));
+      return Arrays.asList(creator.fun(Pair.create(textRange, psiElement)));
     }
 
     final XmlTag tag = getParentXmlTag(domElement);
@@ -159,7 +176,9 @@ public class DomElementsHighlightingUtil {
     return descriptors;
   }
 
-  private static <T> void addDescriptionsToTagEnds(final XmlTag tag, final List<T> descriptors, Function<Pair<TextRange, PsiElement>, T> creator) {
+  private static <T> void addDescriptionsToTagEnds(final XmlTag tag,
+                                                   final List<T> descriptors,
+                                                   Function<Pair<TextRange, PsiElement>, T> creator) {
     final ASTNode node = tag.getNode();
     assert node != null;
     final ASTNode startNode = XmlChildRole.START_TAG_NAME_FINDER.findChild(node);

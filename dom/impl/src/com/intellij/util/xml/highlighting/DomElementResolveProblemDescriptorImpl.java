@@ -4,11 +4,11 @@
  */
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.util.xml.GenericDomValue;
-import com.intellij.psi.PsiReference;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.psi.PsiReference;
+import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 
 /**

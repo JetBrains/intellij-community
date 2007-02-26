@@ -23,8 +23,8 @@ import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 
 public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemDescriptor> implements DomElementAnnotationHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementAnnotationHolderImpl");
@@ -36,7 +36,9 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
   }
 
   @NotNull
-  public DomElementProblemDescriptor createProblem(DomElement domElement, DomCollectionChildDescription childDescription, @Nullable String message) {
+  public DomElementProblemDescriptor createProblem(DomElement domElement,
+                                                   DomCollectionChildDescription childDescription,
+                                                   @Nullable String message) {
     return addProblem(new DomCollectionProblemDescriptorImpl(domElement, message, HighlightSeverity.ERROR, childDescription));
   }
 
@@ -45,9 +47,19 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
     return createProblem(domElement, highlightType, message, LocalQuickFix.EMPTY_ARRAY);
   }
 
-  public DomElementProblemDescriptor createProblem(final DomElement domElement, final HighlightSeverity highlightType, final String message,
+  public DomElementProblemDescriptor createProblem(final DomElement domElement,
+                                                   final HighlightSeverity highlightType,
+                                                   final String message,
                                                    final LocalQuickFix[] fixes) {
-    return addProblem(new DomElementProblemDescriptorImpl(domElement, message, highlightType, fixes));
+    return createProblem(domElement, highlightType, message, null, fixes);
+  }
+
+  public DomElementProblemDescriptor createProblem(final DomElement domElement,
+                                                   final HighlightSeverity highlightType,
+                                                   final String message,
+                                                   final TextRange textRange,
+                                                   final LocalQuickFix... fixes) {
+    return addProblem(new DomElementProblemDescriptorImpl(domElement, message, highlightType, textRange, fixes));
   }
 
   @NotNull
@@ -78,10 +90,10 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
   private static LocalQuickFix[] getQuickFixes(final GenericDomValue element, PsiReference reference) {
     final List<LocalQuickFix> result = new SmartList<LocalQuickFix>();
     final Converter converter = element.getConverter();
-    if (reference instanceof GenericDomValueReference
-        && converter instanceof ResolvingConverter) {
+    if (reference instanceof GenericDomValueReference && converter instanceof ResolvingConverter) {
       final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
-      result.addAll(Arrays.asList(resolvingConverter.getQuickFixes(new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element)))));
+      result
+        .addAll(Arrays.asList(resolvingConverter.getQuickFixes(new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element)))));
     }
     if (reference instanceof LocalQuickFixProvider) {
       result.addAll(Arrays.asList(((LocalQuickFixProvider)reference).getQuickFixes()));
