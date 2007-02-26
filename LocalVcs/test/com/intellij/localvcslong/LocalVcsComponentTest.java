@@ -4,7 +4,7 @@ package com.intellij.localvcslong;
 import com.intellij.localvcs.*;
 import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.LocalVcsAction;
-import com.intellij.localvcs.integration.ui.FileHistoryDialogModel;
+import com.intellij.localvcs.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;

@@ -106,8 +106,8 @@ public class LocalVcs implements ILocalVcs {
     clearPendingChanges();
   }
 
-  public long getCurrentTimestamp() {
-    return System.currentTimeMillis();
+  private long getCurrentTimestamp() {
+    return Clock.getCurrentTimestamp();
   }
 
   public void putLabel(String label) {

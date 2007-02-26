@@ -12,11 +12,11 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
 
   @Before
   public void setUp() {
-    vcs.setCurrentTimestamp(10);
+    setCurrentTimestamp(10);
     vcs.createFile("file", b("content"), null);
     vcs.apply();
 
-    vcs.setCurrentTimestamp(20);
+    setCurrentTimestamp(20);
     vcs.changeFileContent("file", b("new content"), null);
     vcs.apply();
   }
@@ -43,7 +43,7 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
   @Test
   public void testDoesNotPurgeLongContentFromContentStorage() {
     vcs = new TestLocalVcs(new PurgingLoggingStorage());
-    vcs.setCurrentTimestamp(10);
+    setCurrentTimestamp(20);
 
     vcs.createFile("file", new byte[LongContent.MAX_LENGTH + 1], null);
     vcs.apply();
@@ -70,7 +70,7 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
   }
 
   private void assertLabelsCountAfterPurgeOnSave(long timestamp, int count) {
-    vcs.setCurrentTimestamp(timestamp);
+    setCurrentTimestamp(timestamp);
     vcs.save();
     assertEquals(count, vcs.getLabelsFor("file").size());
   }

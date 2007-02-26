@@ -1,13 +1,19 @@
-package com.intellij.localvcs.integration.ui;
+package com.intellij.localvcs.integration.ui.models;
 
+import com.intellij.localvcs.Label;
 import com.intellij.localvcs.LocalVcsTestCase;
 import com.intellij.localvcs.TestLocalVcs;
 import com.intellij.localvcs.integration.TestIdeaGateway;
 import com.intellij.localvcs.integration.TestVirtualFile;
+import com.intellij.mock.MockEditorFactory;
+import com.intellij.mock.MockFileTypeManager;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import static org.easymock.classextension.EasyMock.*;
 import org.junit.Test;
 
+import java.util.Date;
 import java.util.List;
 
 public class FileHistoryDialogModelTest extends LocalVcsTestCase {
@@ -25,11 +31,11 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
     vcs.putLabel("2");
 
     initModelFor("f");
-    List<String> ll = m.getLabels();
+    List<Label> ll = m.getLabels();
 
     assertEquals(2, ll.size());
-    assertEquals("2", ll.get(0));
-    assertEquals("1", ll.get(1));
+    assertEquals("2", ll.get(0).getName());
+    assertEquals("1", ll.get(1).getName());
   }
 
   @Test
@@ -40,11 +46,26 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
     initModelFor("f", "new");
 
-    List<String> ll = m.getLabels();
+    List<Label> ll = m.getLabels();
 
     assertEquals(2, ll.size());
-    assertEquals("not saved", ll.get(0));
-    assertEquals("1", ll.get(1));
+    assertEquals("not saved", ll.get(0).getName());
+    assertEquals("1", ll.get(1).getName());
+  }
+
+  @Test
+  public void testUnsavedVersionTimestampMemorizedTheModelCreationTime() {
+    setCurrentTimestamp(123);
+    vcs.createFile("f", b("old"), null);
+    vcs.apply();
+
+    setCurrentTimestamp(456);
+    initModelFor("f", "new");
+
+    assertEquals(456L, m.getLabels().get(0).getTimestamp());
+
+    setCurrentTimestamp(789);
+    assertEquals(456L, m.getLabels().get(0).getTimestamp());
   }
 
   @Test
@@ -59,21 +80,36 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testLabelsListAfterPurgeConteinsOnlyCurrentVersion() {
-    vcs.setCurrentTimestamp(10);
+    setCurrentTimestamp(10);
     vcs.createFile("f", b(""), null);
     vcs.apply();
     vcs.purgeUpTo(20);
 
     initModelFor("f");
 
-    List<String> ll = m.getLabels();
+    List<Label> ll = m.getLabels();
 
     assertEquals(1, ll.size());
-    assertEquals("current", ll.get(0));
+    assertEquals("current", ll.get(0).getName());
   }
 
   @Test
-  public void testContentForLabels() {
+  public void testDifferenceModelTitles() {
+    vcs.createFile("old", b(""), 123L);
+    vcs.apply();
+    vcs.rename("old", "new");
+    vcs.apply();
+
+    initModelFor("new");
+    m.selectLabels(0, 1);
+
+    FileDifferenceModel dm = m.getDifferenceModel();
+    assertTrue(dm.getLeftTitle().endsWith("old"));
+    assertTrue(dm.getRightTitle().endsWith("new"));
+  }
+
+  @Test
+  public void testDifferenceModelContents() {
     vcs.createFile("f", b("old"), null);
     vcs.apply();
     vcs.changeFileContent("f", b("new"), null);
@@ -82,12 +118,11 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
     initModelFor("f");
     m.selectLabels(0, 1);
 
-    assertEquals(c("old"), m.getLeftContent());
-    assertEquals(c("new"), m.getRightContent());
+    assertDifferenceModelContents("old", "new");
   }
 
   @Test
-  public void testContentWhenOnlyOneLabelSelected() {
+  public void testContentsWhenOnlyOneLabelSelected() {
     vcs.createFile("f", b("old"), null);
     vcs.apply();
     vcs.changeFileContent("f", b("new"), null);
@@ -96,21 +131,43 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
     initModelFor("f");
     m.selectLabels(1, 1);
 
-    assertEquals(c("old"), m.getLeftContent());
-    assertEquals(c("new"), m.getRightContent());
+    assertDifferenceModelContents("old", "new");
   }
 
   @Test
-  public void testContentForUnsavedVersion() {
+  public void testContentsForUnsavedVersion() {
     vcs.createFile("f", b("old"), null);
     vcs.apply();
 
-    initModelFor("f", "new");
-
+    initModelFor("f", "unsaved");
     m.selectLabels(0, 1);
 
-    assertEquals(c("old"), m.getLeftContent());
-    assertEquals(c("new"), m.getRightContent());
+    assertDifferenceModelContents("old", "unsaved");
+  }
+
+  @Test
+  public void testTitlesForUnsavedEntry() {
+    vcs.createDirectory("dir", null);
+    vcs.createFile("dir/f", b("old"), null);
+    vcs.apply();
+
+    setCurrentTimestamp(new Date(2003, 01, 01).getTime());
+    initModelFor("dir/f", "unsaved");
+    m.selectLabels(0, 1);
+
+    FileDifferenceModel dm = m.getDifferenceModel();
+    assertEquals("dir/f", dm.getTitle());
+    assertEquals("01.02.03 0:00 - f", dm.getRightTitle());
+  }
+
+  private void assertDifferenceModelContents(String left, String right) {
+    FileDifferenceModel dm = m.getDifferenceModel();
+
+    FileTypeManager tm = new MockFileTypeManager();
+    EditorFactory ef = new MockEditorFactory();
+
+    assertEquals(left, dm.getLeftDiffContent(tm, ef).getText());
+    assertEquals(right, dm.getRightDiffContent(tm, ef).getText());
   }
 
   @Test

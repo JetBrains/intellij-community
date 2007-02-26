@@ -1,4 +1,4 @@
-package com.intellij.localvcs.integration.ui;
+package com.intellij.localvcs.integration.ui.models;
 
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.ILocalVcs;
@@ -13,42 +13,41 @@ public abstract class HistoryDialogModel {
   protected VirtualFile myFile;
   private int myRightLabel;
   private int myLeftLabel;
+  private List<Label> myLabelsCache;
 
   public HistoryDialogModel(VirtualFile f, ILocalVcs vcs) {
     myVcs = vcs;
     myFile = f;
   }
 
-  public List<String> getLabels() {
-    List<String> result = new ArrayList<String>();
-    for (Label l : getVcsLabels()) {
-      result.add(l.getName());
-    }
-    return result;
+  private void initLabelsCache() {
+    myLabelsCache = new ArrayList<Label>();
+    addNotSavedVersionTo(myLabelsCache);
+    myLabelsCache.addAll(myVcs.getLabelsFor(myFile.getPath()));
   }
 
-  protected List<Label> getVcsLabels() {
-    List<Label> result = new ArrayList<Label>();
-
-    addNotSavedVersionTo(result);
-    result.addAll(myVcs.getLabelsFor(myFile.getPath()));
-
-    return result;
+  public List<Label> getLabels() {
+    if (myLabelsCache == null) initLabelsCache();
+    return myLabelsCache;
   }
 
   protected void addNotSavedVersionTo(List<Label> l) {
   }
 
   protected Label getLeftLabel() {
-    return getVcsLabels().get(myLeftLabel);
+    return getLabels().get(myLeftLabel);
   }
 
   protected Label getRightLabel() {
-    return getVcsLabels().get(myRightLabel);
+    return getLabels().get(myRightLabel);
   }
 
   protected Entry getLeftEntry() {
     return getLeftLabel().getEntry();
+  }
+
+  protected Entry getRightEntry() {
+    return getRightLabel().getEntry();
   }
 
   public void selectLabels(int first, int second) {

@@ -31,6 +31,10 @@ public abstract class LocalVcsTestCase extends Assert {
     return new ChangeSet(timestamp, Arrays.asList(changes));
   }
 
+  protected void setCurrentTimestamp(long t) {
+    Clock.setCurrentTimestamp(t);
+  }
+
   protected static void assertEquals(Object[] expected, Collection actual) {
     List<Object> expectedList = Arrays.asList(expected);
     String message = notEqualsMessage(expectedList, actual);

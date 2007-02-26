@@ -29,6 +29,7 @@ import java.io.*;
 
 /**
  * Allows to compare some text not associated with file or document.
+ *
  * @see #getText()
  * @see #setReadOnly(boolean)
  */
@@ -48,9 +49,13 @@ public class SimpleContent extends DiffContent {
   }
 
   public SimpleContent(String text, FileType type) {
+    this(text, type, EditorFactory.getInstance());
+  }
+
+  public SimpleContent(String text, FileType type, EditorFactory f) {
     myOriginalBytes = text.getBytes();
     myOriginalText = myLineSeparators.correctText(text);
-    myDocument = EditorFactory.getInstance().createDocument(myOriginalText);
+    myDocument = f.createDocument(myOriginalText);
     setReadOnly(true);
     myType = type;
   }
@@ -58,25 +63,39 @@ public class SimpleContent extends DiffContent {
   /**
    * Make this content editable or not. By default SimpleContent isn't editable.
    */
-  public void setReadOnly(boolean readOnly) { myDocument.setReadOnly(readOnly); }
+  public void setReadOnly(boolean readOnly) {
+    myDocument.setReadOnly(readOnly);
+  }
 
   /**
    * @return modified text.
    * @see #setReadOnly(boolean)
    */
-  public String getText() { return myLineSeparators.restoreText(myDocument.getText()); }
-  public Document getDocument() { return myDocument; }
+  public String getText() {
+    return myLineSeparators.restoreText(myDocument.getText());
+  }
+
+  public Document getDocument() {
+    return myDocument;
+  }
 
   /**
    * @return null
    */
-  public OpenFileDescriptor getOpenFileDescriptor(int offset) { return null; }
+  public OpenFileDescriptor getOpenFileDescriptor(int offset) {
+    return null;
+  }
 
   /**
    * @return null
    */
-  public VirtualFile getFile() { return null; }
-  public FileType getContentType() { return myType; }
+  public VirtualFile getFile() {
+    return null;
+  }
+
+  public FileType getContentType() {
+    return myType;
+  }
 
   /**
    * @return Encodes using default encoding
@@ -84,27 +103,33 @@ public class SimpleContent extends DiffContent {
    */
   public byte[] getBytes() throws IOException {
     String currentText = getText();
-    if (myOriginalText.equals(myDocument.getText())) return myOriginalBytes; 
-    else return currentText.getBytes();
+    if (myOriginalText.equals(myDocument.getText())) {
+      return myOriginalBytes;
+    }
+    else {
+      return currentText.getBytes();
+    }
   }
 
   /**
-   *
-   * @param text text of content
+   * @param text     text of content
    * @param fileName used to determine content type
    * @return
    */
   public static SimpleContent forFileContent(String text, String fileName) {
     FileType fileType;
-    if (fileName != null) fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-    else fileType = null;
+    if (fileName != null) {
+      fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
+    }
+    else {
+      fileType = null;
+    }
     return new SimpleContent(text, fileType);
   }
 
   /**
-   *
-   * @param bytes binary text representaion
-   * @param charset name of charset. If null IDE default charset will be used
+   * @param bytes    binary text representaion
+   * @param charset  name of charset. If null IDE default charset will be used
    * @param fileType content type. If null file name will be used to select file type
    * @return content representing bytes as text
    * @throws UnsupportedEncodingException
@@ -115,9 +140,8 @@ public class SimpleContent extends DiffContent {
   }
 
   /**
-   *
-   * @param file should exist and not to be a directory
-   * @param charset name of file charset. If null IDE default charset will be used
+   * @param file     should exist and not to be a directory
+   * @param charset  name of file charset. If null IDE default charset will be used
    * @param fileType content type. If null file name will be used to select file type
    * @return Content representing text in file
    * @throws IOException
@@ -131,7 +155,10 @@ public class SimpleContent extends DiffContent {
       int bytesRead = stream.read(bytes, 0, bytes.length);
       LOG.assertTrue(file.length() == bytesRead);
       return fromBytes(bytes, charset, fileType);
-    } finally { stream.close(); }
+    }
+    finally {
+      stream.close();
+    }
   }
 
   private static class LineSeparators {

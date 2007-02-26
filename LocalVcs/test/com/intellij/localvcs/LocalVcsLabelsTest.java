@@ -38,7 +38,7 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
 
   @Test
   public void testIncludingCurrentVersionAfterPurge() {
-    vcs.setCurrentTimestamp(10);
+    setCurrentTimestamp(10);
     vcs.createFile("file", null, null);
     vcs.apply();
     vcs.purgeUpTo(20);
@@ -51,25 +51,25 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
 
   @Test
   public void testTakingTimestampForCurrentLabelAtMomentOfGettingLabels() {
-    vcs.setCurrentTimestamp(10);
+    setCurrentTimestamp(10);
     vcs.createFile("file", null, null);
     vcs.apply();
     vcs.purgeUpTo(20);
 
-    vcs.setCurrentTimestamp(20);
+    setCurrentTimestamp(20);
     List<Label> ll = vcs.getLabelsFor("file");
 
-    vcs.setCurrentTimestamp(30);
+    setCurrentTimestamp(30);
     assertEquals(20L, ll.get(0).getTimestamp());
   }
 
   @Test
   public void testLabelsTimestamp() {
-    vcs.setCurrentTimestamp(10);
+    setCurrentTimestamp(10);
     vcs.createFile("file", null, null);
     vcs.apply();
 
-    vcs.setCurrentTimestamp(20);
+    setCurrentTimestamp(20);
     vcs.changeFileContent("file", null, null);
     vcs.apply();
 

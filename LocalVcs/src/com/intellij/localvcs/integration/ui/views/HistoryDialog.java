@@ -1,14 +1,17 @@
-package com.intellij.localvcs.integration.ui;
+package com.intellij.localvcs.integration.ui.views;
 
-import com.intellij.localvcs.Content;
 import com.intellij.localvcs.ILocalVcs;
+import com.intellij.localvcs.Label;
 import com.intellij.localvcs.integration.LocalVcsComponent;
+import com.intellij.localvcs.integration.ui.models.FileDifferenceModel;
+import com.intellij.localvcs.integration.ui.models.HistoryDialogModel;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.diff.SimpleDiffRequest;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
@@ -20,6 +23,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
+import java.text.DateFormat;
+import java.util.Date;
 
 // todo it seems that this class spreads memory leaks
 public abstract class HistoryDialog<T extends HistoryDialogModel> extends DialogWrapper {
@@ -57,22 +62,27 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   protected abstract JComponent createDiffPanel();
 
   protected JComponent createLabelsTable() {
-    MyTableModel m = new MyTableModel();
+    JTable t = new JTable(new LabelsTableModel());
+    addSelectionListener(t);
+    t.getColumnModel().getColumn(0).setMinWidth(150);
+    t.getColumnModel().getColumn(0).setMaxWidth(150);
 
-    JTable t = new JTable(m);
+    t.getColumnModel().getColumn(0).setResizable(false);
+    t.getColumnModel().getColumn(1).setResizable(false);
+    return new JScrollPane(t);
+  }
 
+  private void addSelectionListener(JTable t) {
     final ListSelectionModel selectionModel = t.getSelectionModel();
     selectionModel.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
-        // todo do always selection
+        // todo do always-selected selection
         int first = selectionModel.getMinSelectionIndex();
         int last = selectionModel.getMaxSelectionIndex();
         myModel.selectLabels(first, last);
         updateDiffs();
       }
     });
-
-    return new JScrollPane(t);
   }
 
   protected void addPopupMenuToComponent(JComponent comp, final ActionGroup ag) {
@@ -91,24 +101,46 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   protected abstract void updateDiffs();
 
-  protected SimpleDiffRequest createDiffRequest(Content left, Content right) {
-    // todo add timestamps
-    SimpleDiffRequest r = new SimpleDiffRequest(null, "title");
-    // todo review byte conversion
-    r.setContents(new SimpleContent(new String(left.getBytes())), new SimpleContent(new String(right.getBytes())));
+  protected SimpleDiffRequest createDifference(FileDifferenceModel m) {
+    FileTypeManager tm = FileTypeManager.getInstance();
+    EditorFactory ef = EditorFactory.getInstance();
+
+    SimpleDiffRequest r = new SimpleDiffRequest(myProject, m.getTitle());
+    r.setContents(m.getLeftDiffContent(tm, ef), m.getRightDiffContent(tm, ef));
+    r.setContentTitles(m.getLeftTitle(), m.getRightTitle());
+
     return r;
   }
 
-  private class MyTableModel extends AbstractTableModel {
+  private class LabelsTableModel extends AbstractTableModel {
+    //todo uncomment after transition to jdk6: @Override
+    public int getColumnCount() {
+      return 2;
+    }
+
+    //todo uncomment after transition to jdk6: @Override
     public int getRowCount() {
       return myModel.getLabels().size();
     }
 
-    public int getColumnCount() {
-      return 1;
+    @Override
+    public String getColumnName(int column) {
+      if (column == 0) return "Date";
+      if (column == 1) return "Label";
+      return null;
     }
 
+    //todo uncomment after transition to jdk6: @Override
     public Object getValueAt(int row, int column) {
+      if (column == 0) {
+        DateFormat f = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+        return f.format(new Date(getLabelFor(row).getTimestamp()));
+      }
+      if (column == 1) return getLabelFor(row).getName();
+      return null;
+    }
+
+    private Label getLabelFor(int row) {
       return myModel.getLabels().get(row);
     }
   }

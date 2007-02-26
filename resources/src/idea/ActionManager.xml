@@ -170,7 +170,7 @@
       <action id="LocalVcs.ShowHistory" class="com.intellij.localVcs.actions.ShowHistoryAction"/>
       <action id="LocalVcs.HistoryForBlock" class="com.intellij.localVcs.actions.HistoryForSelectedBlockAction"/>
       <action id="LocalVcs.AddLabel" class="com.intellij.localVcs.actions.AddLabelAction"/>
-      <action id="NewLocalVcs.ShowHistory" class="com.intellij.localvcs.integration.ui.ShowHistoryAction"/>
+      <action id="NewLocalVcs.ShowHistory" class="com.intellij.localvcs.integration.ui.views.ShowHistoryAction"/>
     </group>
 
     <group id="VcsGroups" popup="true">
@@ -569,10 +569,13 @@
           <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
           <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.diagnostic.DumpInspectionDescriptionsAction"/>
           <separator/>
-          <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction" text="Add Test Process"/>
-          <action id="AddTestProcessActionIndefinte" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessActionIndefinite" text="Add Test Process Indefinite"/>
+          <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction"
+                  text="Add Test Process"/>
+          <action id="AddTestProcessActionIndefinte" internal="true"
+                  class="com.intellij.openapi.wm.impl.status.AddTestProcessActionIndefinite" text="Add Test Process Indefinite"/>
           <separator/>
-          <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction" text="Mark File Dirty"/>
+          <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction"
+                  text="Mark File Dirty"/>
         </group>
       </group>
 

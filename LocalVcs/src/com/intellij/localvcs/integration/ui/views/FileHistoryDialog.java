@@ -1,8 +1,8 @@
-package com.intellij.localvcs.integration.ui;
+package com.intellij.localvcs.integration.ui.views;
 
-import com.intellij.localvcs.Content;
 import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.integration.IdeaGateway;
+import com.intellij.localvcs.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -59,9 +59,6 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   @Override
   protected void updateDiffs() {
-    Content left = myModel.getLeftContent();
-    Content right = myModel.getRightContent();
-
-    myDiffPanel.setDiffRequest(createDiffRequest(left, right));
+    myDiffPanel.setDiffRequest(createDifference(myModel.getDifferenceModel()));
   }
 }

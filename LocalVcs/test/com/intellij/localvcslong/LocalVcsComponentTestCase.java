@@ -1,5 +1,6 @@
 package com.intellij.localvcslong;
 
+import com.intellij.localvcs.Clock;
 import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.integration.LocalVcsComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +23,7 @@ public abstract class LocalVcsComponentTestCase extends IdeaTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
+    Clock.useRealClock();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         root = addContentRoot();

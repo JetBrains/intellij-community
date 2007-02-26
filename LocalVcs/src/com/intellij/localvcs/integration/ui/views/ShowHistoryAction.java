@@ -1,4 +1,4 @@
-package com.intellij.localvcs.integration.ui;
+package com.intellij.localvcs.integration.ui.views;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;

@@ -1,4 +1,4 @@
-package com.intellij.localvcs.integration.ui;
+package com.intellij.localvcs.integration.ui.models;
 
 import com.intellij.localvcs.*;
 import com.intellij.localvcs.integration.FileReverter;
@@ -48,12 +48,8 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
     return myVcs.getEntry(myFile.getPath());
   }
 
-  public Content getLeftContent() {
-    return getLeftLabel().getEntry().getContent();
-  }
-
-  public Content getRightContent() {
-    return getRightLabel().getEntry().getContent();
+  public FileDifferenceModel getDifferenceModel() {
+    return new FileDifferenceModel(getLeftEntry(), getRightEntry());
   }
 
   public void revert() {
@@ -66,8 +62,11 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
   }
 
   private class NotSavedLabel extends Label {
+    private long myTimestamp;
+
     public NotSavedLabel() {
       super(null, null, null, null);
+      myTimestamp = Clock.getCurrentTimestamp();
     }
 
     @Override
@@ -77,19 +76,20 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
 
     @Override
     public long getTimestamp() {
-      throw new RuntimeException("not yet implemented");
+      return myTimestamp;
     }
 
     @Override
     public Entry getEntry() {
-      // todo what about timestamp?
       // todo review content stuff
-
-      // todo test copying
       // todo it seems ugly
-      Entry e = getVcsEntry().copy();
-      e.changeContent(getCurrentContent(), null);
-      return e;
+      final Entry e = getVcsEntry();
+      return new FileEntry(null, e.getName(), getCurrentContent(), myTimestamp) {
+        @Override
+        public String getPath() {
+          return e.getPath();
+        }
+      };
     }
   }
 }
