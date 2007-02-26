@@ -455,7 +455,9 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     checkCreateFile(newName);
 
     final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(originalFile);
-    FileDocumentManager.getInstance().saveDocument(document);
+    if (document != null) {
+      FileDocumentManager.getInstance().saveDocument(document);
+    }
 
     final VirtualFile parent = getVirtualFile();
     try {
