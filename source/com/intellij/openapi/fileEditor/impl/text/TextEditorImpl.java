@@ -37,7 +37,7 @@ public final class TextEditorImpl extends UserDataHolderBase implements TextEdit
     myComponent = new TextEditorComponent(project, file, this);
   }
 
-  void dispose(){
+  public void dispose(){
     myComponent.dispose();
   }
 

@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jdom.Element;
@@ -52,7 +53,7 @@ public class ResoureBundleEditorProvider implements FileEditorProvider, Applicat
   }
 
   public void disposeEditor(@NotNull FileEditor editor) {
-    ((ResourceBundleEditor)editor).dispose();
+    Disposer.dispose(editor);
   }
 
   @NotNull

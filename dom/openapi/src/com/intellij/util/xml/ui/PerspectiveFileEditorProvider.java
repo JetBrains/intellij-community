@@ -18,8 +18,8 @@ public abstract class PerspectiveFileEditorProvider extends WeighedFileEditorPro
   @NotNull
   public abstract PerspectiveFileEditor createEditor(Project project, VirtualFile file);
 
-  public void disposeEditor(FileEditor editor) {
-    Disposer.dispose((PerspectiveFileEditor)editor);
+  public void disposeEditor(@NotNull FileEditor editor) {
+    Disposer.dispose(editor);
   }
 
   @NotNull

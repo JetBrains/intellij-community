@@ -17,6 +17,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import org.jdom.Element;
@@ -61,7 +62,7 @@ public final class TextEditorProvider implements FileEditorProvider {
   }
 
   public void disposeEditor(@NotNull FileEditor editor) {
-    ((TextEditorImpl)editor).dispose();
+    Disposer.dispose(editor);
   }
 
   @NotNull
@@ -227,6 +228,8 @@ public final class TextEditorProvider implements FileEditorProvider {
     public boolean isValid() {
       return true;
     }
+
+    public void dispose() { }
 
     public void selectNotify() { }
 

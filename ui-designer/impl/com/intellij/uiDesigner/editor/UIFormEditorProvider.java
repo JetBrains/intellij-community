@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ public final class UIFormEditorProvider implements FileEditorProvider {
   }
 
   public void disposeEditor(@NotNull final FileEditor editor){
-    ((UIFormEditor)editor).dispose();
+    Disposer.dispose(editor);
   }
 
   @NotNull

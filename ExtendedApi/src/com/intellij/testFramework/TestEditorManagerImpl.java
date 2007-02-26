@@ -132,7 +132,7 @@ import java.util.Map;
       }
 
       public void disposeEditor(FileEditor editor) {
-
+        //Disposer.dispose(editor);
       }
 
       @NotNull

@@ -47,7 +47,7 @@ public final class UIFormEditor extends UserDataHolderBase implements /*Navigata
     return myEditor;
   }
 
-  void dispose() {
+  public void dispose() {
     myEditor.dispose();
   }
 
