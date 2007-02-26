@@ -384,6 +384,12 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     return null;
   }
 
+  public int getOffsetInElement(final PsiElement element) {
+    final ElementManipulator<PsiElement> manipulator = getManipulator(element);
+    assert manipulator != null;
+    return manipulator.getRangeInElement(element).getStartOffset();
+  }
+
   public <T extends PsiElement> void registerManipulator(@NotNull Class<T> elementClass, @NotNull ElementManipulator<T> manipulator) {
     myManipulators.add(new Pair<Class<?>, ElementManipulator<?>>(elementClass, manipulator));
   }
