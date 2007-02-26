@@ -262,13 +262,7 @@ public class CompareWithBranchAction extends AnAction {
               info = client.doInfo(VfsUtil.virtualToIoFile(myVirtualFile), infoRevision);
             }
             catch (SVNException ex) {
-              if (ex.getErrorMessage().getErrorCode().equals(SVNErrorCode.RA_ILLEGAL_URL) ||
-                  ex.getErrorMessage().getErrorCode().equals(SVNErrorCode.CLIENT_UNRELATED_RESOURCES)) {
-                reportNotFound(baseUrl);
-              }
-              else {
-                LOG.error(ex);
-              }
+              reportException(ex, baseUrl);
               return;
             }
             if (info == null) {
@@ -279,11 +273,11 @@ public class CompareWithBranchAction extends AnAction {
             final SVNURL svnurl = SVNURL.parseURIEncoded(baseUrl).appendPath(fileUrl, true);
             remoteTitleBuilder.append(svnurl.toString());
             client.doGetFileContents(svnurl, SVNRevision.UNDEFINED, SVNRevision.HEAD, true, baos);
+            success.set(true);
           }
-          catch (SVNException e) {
-            LOG.error(e);
+          catch (SVNException ex) {
+            reportException(ex, baseUrl);
           }
-          success.set(true);
         }
       }, SvnBundle.message("compare.with.branch.progress.loading.content"), true, myProject);
       if (success.isNull()) {
@@ -295,6 +289,17 @@ public class CompareWithBranchAction extends AnAction {
                       new FileContent(myProject, myVirtualFile));
       req.setContentTitles(remoteTitleBuilder.toString(), myVirtualFile.getPresentableUrl());
       DiffManager.getInstance().getDiffTool().show(req);
+    }
+
+    private void reportException(final SVNException ex, final String baseUrl) {
+      if (ex.getErrorMessage().getErrorCode().equals(SVNErrorCode.RA_ILLEGAL_URL) ||
+          ex.getErrorMessage().getErrorCode().equals(SVNErrorCode.CLIENT_UNRELATED_RESOURCES) ||
+          ex.getErrorMessage().getErrorCode().equals(SVNErrorCode.RA_DAV_PATH_NOT_FOUND)) {
+        reportNotFound(baseUrl);
+      }
+      else {
+        LOG.error(ex);
+      }
     }
 
     private void reportNotFound(final String baseUrl) {
