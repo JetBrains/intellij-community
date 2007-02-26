@@ -5,7 +5,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.CommonBundle;
 
 public abstract class ElementPresentation {
   private final Noun myKind;
@@ -16,14 +15,14 @@ public abstract class ElementPresentation {
 
   public static ElementPresentation forElement(PsiElement psiElement) {
     if (psiElement == null || !psiElement.isValid()) return new InvalidPresentation();
-    if (psiElement instanceof PsiDirectory) return new ForDirectory(((PsiDirectory)psiElement));
-    if (psiElement instanceof PsiFile) return new ForFile(((PsiFile)psiElement));
-    if (psiElement instanceof PsiPackage) return new ForPackage(((PsiPackage)psiElement));
-    if (psiElement instanceof XmlTag) return new ForXmlTag(((XmlTag)psiElement));
-    if (psiElement instanceof PsiAnonymousClass) return new ForAnonymousClass(((PsiAnonymousClass)psiElement));
-    if (psiElement instanceof PsiClass) return new ForClass(((PsiClass)psiElement));
-    if (psiElement instanceof PsiMethod) return new ForMethod(((PsiMethod)psiElement));
-    if (psiElement instanceof PsiField) return new ForField(((PsiField)psiElement));
+    if (psiElement instanceof PsiDirectory) return new ForDirectory((PsiDirectory)psiElement);
+    if (psiElement instanceof PsiFile) return new ForFile((PsiFile)psiElement);
+    if (psiElement instanceof PsiPackage) return new ForPackage((PsiPackage)psiElement);
+    if (psiElement instanceof XmlTag) return new ForXmlTag((XmlTag)psiElement);
+    if (psiElement instanceof PsiAnonymousClass) return new ForAnonymousClass((PsiAnonymousClass)psiElement);
+    if (psiElement instanceof PsiClass) return new ForClass((PsiClass)psiElement);
+    if (psiElement instanceof PsiMethod) return new ForMethod((PsiMethod)psiElement);
+    if (psiElement instanceof PsiField) return new ForField((PsiField)psiElement);
     return new ForGeneralElement(psiElement);
   }
 
@@ -82,7 +81,6 @@ public abstract class ElementPresentation {
       return "";
     }
 
-    @SuppressWarnings({"HardCodedStringLiteral"})
     public String getName() {
       return "INVALID";
     }

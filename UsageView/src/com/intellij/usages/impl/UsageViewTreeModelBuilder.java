@@ -40,11 +40,20 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
     myTargets = targets;
     myTargetsNodeText = presentation.getTargetsNodeText();
     if (myTargetsNodeText != null) {
-      myTargetsNode = new DefaultMutableTreeNode(myTargetsNodeText);
+      myTargetsNode = new TargetsRootNode(targets, myTargetsNodeText);
       addTargetNodes();
     }
     else {
       myTargetsNode = null;
+    }
+  }
+
+  public static class TargetsRootNode extends DefaultMutableTreeNode {
+    private final UsageTarget[] myTargets;
+
+    public TargetsRootNode(UsageTarget[] targets, String name) {
+      super(name);
+      myTargets = targets;
     }
   }
 

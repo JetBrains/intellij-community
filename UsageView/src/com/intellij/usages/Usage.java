@@ -19,13 +19,11 @@ import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.pom.Navigatable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 16, 2004
- * Time: 4:19:07 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public interface Usage extends Navigatable {
+  Usage[] EMPTY_ARRAY = new Usage[0];
+
   UsagePresentation getPresentation();
   boolean isValid();
   boolean isReadOnly();

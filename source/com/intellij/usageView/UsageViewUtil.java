@@ -44,7 +44,7 @@ public class UsageViewUtil {
       final XmlTag xmlTag = (XmlTag)element;
       final PsiMetaDataBase metaData = xmlTag.getMetaData();
       final String name = metaData != null ? getMetaDataName(metaData) : xmlTag.getName();
-      return UsageViewBundle.message("usage.target.xml.tag.of.file", ((metaData == null) ? "<" + name + ">" : name), xmlTag.getContainingFile().getName());
+      return UsageViewBundle.message("usage.target.xml.tag.of.file", metaData == null ? "<" + name + ">" : name, xmlTag.getContainingFile().getName());
     }
     else if (element instanceof XmlAttributeValue) {
       return ((XmlAttributeValue)element).getValue();
@@ -124,12 +124,12 @@ public class UsageViewUtil {
 
   public static String getShortName(final PsiElement psiElement) {
     LOG.assertTrue(psiElement.isValid());
-    String ret = "";
     if (psiElement instanceof PsiMetaBaseOwner) {
       PsiMetaDataBase metaData = ((PsiMetaBaseOwner)psiElement).getMetaData();
       if (metaData!=null) return getMetaDataName(metaData);
     }
 
+    String ret = "";
     if (psiElement instanceof PsiNamedElement) {
       ret = ((PsiNamedElement)psiElement).getName();
     }

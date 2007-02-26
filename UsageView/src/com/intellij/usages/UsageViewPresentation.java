@@ -23,11 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 21, 2004
- * Time: 9:15:39 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class UsageViewPresentation {
   private String myTabText;

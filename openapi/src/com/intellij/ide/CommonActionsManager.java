@@ -22,11 +22,7 @@ import com.intellij.openapi.project.Project;
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 20, 2004
- * Time: 9:39:48 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public abstract class CommonActionsManager {
   public static CommonActionsManager getInstance() {

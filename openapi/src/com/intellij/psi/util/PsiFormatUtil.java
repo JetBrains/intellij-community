@@ -41,7 +41,7 @@ public class PsiFormatUtil {
   public static final int MAX_PARAMS_TO_SHOW = 7;
 
   public static String formatVariable(PsiVariable variable, int options, PsiSubstitutor substitutor){
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     if ((options & SHOW_MODIFIERS) != 0 && (options & MODIFIERS_AFTER) == 0){
       buffer.append(formatModifiers(variable, options));
     }
@@ -308,8 +308,7 @@ public class PsiFormatUtil {
       throw new IllegalArgumentException();
     }
     if (list == null) return "";
-    PsiClass parentClass = element.getParent() instanceof PsiClass ? (PsiClass)element.getParent() : null;
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     if ((options & SHOW_REDUNDANT_MODIFIERS) != 0
         ? list.hasModifierProperty(PsiModifier.PUBLIC)
         : list.hasExplicitModifier(PsiModifier.PUBLIC)) appendModifier(buffer, PsiModifier.PUBLIC);
@@ -367,13 +366,13 @@ public class PsiFormatUtil {
     return buffer.toString();
   }
 
-  private static void appendModifier(final StringBuffer buffer, final String modifier) {
+  private static void appendModifier(final StringBuilder buffer, final String modifier) {
     buffer.append(modifier);
     buffer.append(' ');
   }
 
   public static String formatReferenceList(PsiReferenceList list, int options){
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     PsiJavaCodeReferenceElement[] refs = list.getReferenceElements();
     for(int i = 0; i < refs.length; i++) {
       PsiJavaCodeReferenceElement ref = refs[i];

@@ -16,6 +16,7 @@
 package com.intellij.usageView;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 public interface UsageViewDescriptor {
   String OCCURRENCE_WORD= UsageViewBundle.message("terms.occurrence");
@@ -24,8 +25,9 @@ public interface UsageViewDescriptor {
   String INVOCATION_WORD= UsageViewBundle.message("terms.invocation");
 
   /**
-   * @return an array of elements whose usages were searched or null if not available
+   * @return an array of elements whose usages were searched or {@link com.intellij.psi.PsiElement#EMPTY_ARRAY} if not available
    */
+  @NotNull
   PsiElement[] getElements();
 
   String getProcessedElementsHeader();
@@ -33,5 +35,4 @@ public interface UsageViewDescriptor {
   String getCodeReferencesText(int usagesCount, int filesCount);
 
   String getCommentReferencesText(int usagesCount, int filesCount);
-
 }

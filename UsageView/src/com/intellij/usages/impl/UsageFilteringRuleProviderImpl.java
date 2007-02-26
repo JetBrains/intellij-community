@@ -30,23 +30,22 @@ import com.intellij.usages.impl.rules.WriteAccessFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 27, 2004
- * Time: 8:20:57 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvider, JDOMExternalizable {
   public boolean SHOW_IMPORTS = true;
   private ReadWriteState myReadWriteState = new ReadWriteState();
 
+  @NotNull
   public UsageFilteringRule[] getActiveRules(Project project) {
     final List<UsageFilteringRule> rules = new ArrayList<UsageFilteringRule>();
     if (!SHOW_IMPORTS) {
@@ -61,6 +60,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     return rules.toArray(new UsageFilteringRule[rules.size()]);
   }
 
+  @NotNull
   public AnAction[] createFilteringActions(UsageView view) {
     final UsageViewImpl impl = (UsageViewImpl)view;
     myReadWriteState = new ReadWriteState();
@@ -68,13 +68,15 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
       final JComponent component = view.getComponent();
 
       final ShowImportsAction showImportsAction = new ShowImportsAction(impl);
-      showImportsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, KeyEvent.CTRL_DOWN_MASK)), component);
+      showImportsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK)), component);
 
       final ShowReadAccessUsagesAction showReadAccessUsagesAction = new ShowReadAccessUsagesAction(impl);
-      showReadAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK)), component);
+      showReadAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R,
+                                                                                                        InputEvent.CTRL_DOWN_MASK)), component);
 
       final ShowWriteAccessUsagesAction showWriteAccessUsagesAction = new ShowWriteAccessUsagesAction(impl);
-      showWriteAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W, KeyEvent.CTRL_DOWN_MASK)), component);
+      showWriteAccessUsagesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W,
+                                                                                                         InputEvent.CTRL_DOWN_MASK)), component);
 
       impl.scheduleDisposeOnClose(new Disposable() {
         public void dispose() {
@@ -167,6 +169,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     }
   }
 
+  @NotNull
   public String getComponentName() {
     return "UsageFilteringRuleProvider";
   }

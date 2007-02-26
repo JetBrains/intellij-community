@@ -48,16 +48,16 @@ import java.util.regex.PatternSyntaxException;
 public class FindManagerImpl extends FindManager implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindManagerImpl");
 
-  private FindUsagesManager myFindUsagesManager;
+  private final FindUsagesManager myFindUsagesManager;
   private boolean isFindWasPerformed = false;
   private Point myReplaceInFilePromptPos = new Point(-1, -1);
   private Point myReplaceInProjectPromptPos = new Point(-1, -1);
-  private FindModel myFindInProjectModel = new FindModel();
-  private FindModel myFindInFileModel = new FindModel();
+  private final FindModel myFindInProjectModel = new FindModel();
+  private final FindModel myFindInFileModel = new FindModel();
   private FindModel myFindNextModel = null;
-  private static FindResultImpl NOT_FOUND_RESULT = new FindResultImpl();
-  private Project myProject;
-  private Key<Boolean> HIGHLIGHTER_WAS_NOT_FOUND_KEY = Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
+  private static final FindResultImpl NOT_FOUND_RESULT = new FindResultImpl();
+  private final Project myProject;
+  private static final Key<Boolean> HIGHLIGHTER_WAS_NOT_FOUND_KEY = Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
   @NonNls private static final String FIND_USAGES_MANAGER_ELEMENT = "FindUsagesManager";
 
   public FindManagerImpl(Project project, FindSettings findSettings, UsageViewManager anotherManager) {
@@ -334,7 +334,7 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
 
   private static String replaceWithCaseRespect(String toReplace, String foundString) {
     if (foundString.length() == 0 || toReplace.length() == 0) return toReplace;
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
 
     if (Character.isUpperCase(foundString.charAt(0))) {
       buffer.append(Character.toUpperCase(toReplace.charAt(0)));
@@ -404,7 +404,7 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
     return myFindUsagesManager.findNextUsageInFile(fileEditor);
   }
 
-  private boolean highlightNextHighlighter(RangeHighlighter[] highlighters, Editor editor, int offset, boolean isForward, boolean secondPass) {
+  private static boolean highlightNextHighlighter(RangeHighlighter[] highlighters, Editor editor, int offset, boolean isForward, boolean secondPass) {
     RangeHighlighter highlighterToSelect = null;
     Object wasNotFound = editor.getUserData(HIGHLIGHTER_WAS_NOT_FOUND_KEY);
     for (RangeHighlighter highlighter : highlighters) {

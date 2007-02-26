@@ -19,16 +19,14 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.usages.UsageView;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 27, 2004
- * Time: 8:19:16 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public interface UsageGroupingRuleProvider extends ApplicationComponent{
-  UsageGroupingRule[] getActiveRules(Project project);
+  @NotNull UsageGroupingRule[] getActiveRules(Project project);
 
+  @NotNull
   AnAction[] createGroupingActions(UsageView view);
 }

@@ -26,16 +26,11 @@ import com.intellij.usages.rules.UsageGroupingRule;
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 23, 2004
- * Time: 2:41:52 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class NonCodeUsageGroupingRule implements UsageGroupingRule {
   private static class CodeUsageGroup implements UsageGroup {
     public static final UsageGroup INSTANCE = new CodeUsageGroup();
-    private CodeUsageGroup() {}
 
     public String getText(UsageView view) {
       return view == null ? UsageViewBundle.message("node.group.code.usages") : view.getPresentation().getCodeUsagesString();
@@ -63,7 +58,6 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
 
   private static class NonCodeUsageGroup implements UsageGroup {
     public static final UsageGroup INSTANCE = new NonCodeUsageGroup();
-    private NonCodeUsageGroup() {}
 
     public String getText(UsageView view) {
       return view == null ? UsageViewBundle.message("node.group.code.usages") : view.getPresentation().getNonCodeUsagesString();

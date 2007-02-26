@@ -6,7 +6,7 @@ import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -22,10 +22,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
   public boolean canFindUsagesFor(PsiElement element) {
     if (element instanceof PsiDirectory) {
       PsiPackage psiPackage = ((PsiDirectory)element).getPackage();
-      if (psiPackage == null) {
-        return false;
-      }
-      return psiPackage.getQualifiedName().length() != 0;
+      return psiPackage != null && psiPackage.getQualifiedName().length() != 0;
     }
 
     return element instanceof PsiClass ||
@@ -36,7 +33,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
            ThrowSearchUtil.isSearchable(element);
   }
 
-  public String getHelpId(PsiElement element) {
+  public String getHelpId(@NotNull PsiElement element) {
     if (element instanceof PsiPackage) {
       return HelpID.FIND_PACKAGE_USAGES;
     }
@@ -57,7 +54,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
   }
 
   @NotNull
-  public String getType(PsiElement element) {
+  public String getType(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) {
       return LangBundle.message("terms.directory");
     }
@@ -111,7 +108,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
   }
 
   @NotNull
-  public String getDescriptiveName(final PsiElement element) {
+  public String getDescriptiveName(@NotNull final PsiElement element) {
     if (ThrowSearchUtil.isSearchable(element)) {
       return ThrowSearchUtil.getSearchableTypeName(element);
     }
@@ -166,18 +163,20 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     return "";
   }
 
-  private String getContainingClassDescription(PsiClass aClass, String formatted) {
+  private static String getContainingClassDescription(PsiClass aClass, String formatted) {
     if (aClass instanceof PsiAnonymousClass) {
       return LangBundle.message("java.terms.of.anonymous.class", formatted);
     }
     else {
       String className = aClass.getName();
       if (aClass.isInterface()) {
-          return LangBundle.message("java.terms.of.interface", formatted, className);
-      } else if (aClass.isEnum()) {
-          return LangBundle.message("java.terms.of.enum", formatted, className);
-      } else if (aClass.isAnnotationType()) {
-          return LangBundle.message("java.terms.of.annotation.type", formatted, className);
+        return LangBundle.message("java.terms.of.interface", formatted, className);
+      }
+      else if (aClass.isEnum()) {
+        return LangBundle.message("java.terms.of.enum", formatted, className);
+      }
+      else if (aClass.isAnnotationType()) {
+        return LangBundle.message("java.terms.of.annotation.type", formatted, className);
       }
       else {
         return LangBundle.message("java.terms.of.class", formatted, className);
@@ -186,7 +185,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
   }
 
   @NotNull
-  public String getNodeText(PsiElement element, boolean useFullName) {
+  public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
     if (element instanceof PsiDirectory) {
       return UsageViewUtil.getPackageName((PsiDirectory)element, false);
     }
@@ -290,10 +289,8 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
   }
 
   private static class Inner {
-    private static final TokenSet COMMENT_BIT_SET = TokenSet.create(ElementType.DOC_COMMENT_DATA,
-                                                                    ElementType.DOC_TAG_VALUE_TOKEN,
-                                                                    ElementType.C_STYLE_COMMENT,
-                                                                    ElementType.END_OF_LINE_COMMENT);
+    private static final TokenSet COMMENT_BIT_SET = TokenSet.create(JavaDocTokenType.DOC_COMMENT_DATA, JavaDocTokenType.DOC_TAG_VALUE_TOKEN,
+                                                                    JavaTokenType.C_STYLE_COMMENT, JavaTokenType.END_OF_LINE_COMMENT);
   }
 
   public WordsScanner getWordsScanner() {
@@ -301,13 +298,13 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
   }
 
   public static boolean mayHaveReferencesImpl(final IElementType token, final short searchContext) {
-    if ((searchContext & UsageSearchContext.IN_STRINGS) != 0 && token == ElementType.LITERAL_EXPRESSION) return true;
+    if ((searchContext & UsageSearchContext.IN_STRINGS) != 0 && token == JavaElementType.LITERAL_EXPRESSION) return true;
     if ((searchContext & UsageSearchContext.IN_COMMENTS) != 0 && Inner.COMMENT_BIT_SET.contains(token)) return true;
-    if ((searchContext & UsageSearchContext.IN_CODE) != 0 && (token == ElementType.IDENTIFIER || token == ElementType.DOC_TAG_VALUE_TOKEN)) {
+    if ((searchContext & UsageSearchContext.IN_CODE) != 0 && (token == JavaTokenType.IDENTIFIER || token == JavaDocTokenType
+      .DOC_TAG_VALUE_TOKEN)) {
       return true;
     }
     // Java string literal to properties file
-    if ((searchContext & UsageSearchContext.IN_FOREIGN_LANGUAGES) != 0 && token == ElementType.LITERAL_EXPRESSION) return true;
-    return false;
+    return (searchContext & UsageSearchContext.IN_FOREIGN_LANGUAGES) != 0 && token == JavaElementType.LITERAL_EXPRESSION;
   }
 }

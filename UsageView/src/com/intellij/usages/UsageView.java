@@ -16,6 +16,7 @@
 package com.intellij.usages;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -23,27 +24,23 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 16, 2004
- * Time: 4:13:28 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public interface UsageView extends Disposable {
   /**
    * Returns {@link com.intellij.usages.UsageTarget} to look usages for
    */
-  @NonNls
-  String USAGE_TARGETS = "usageTarget";
+  @NonNls String USAGE_TARGETS = "usageTarget";
+  DataKey<UsageTarget[]> USAGE_TARGETS_KEY = DataKey.create("usageTarget");
 
   /**
    * Returns {@link com.intellij.usages.Usage} which are selected in usage view
    */
-  @NonNls
-  String USAGES = "usages";
+  @NonNls String USAGES = "usages";
+  DataKey<Usage[]> USAGES_KEY = DataKey.create("usages");
 
-  @NonNls
-  String USAGE_VIEW = "UsageView.new";
+  @NonNls String USAGE_VIEW = "UsageView.new";
+  DataKey<UsageView> USAGE_VIEW_KEY = DataKey.create("UsageView.new");
 
   void appendUsage(Usage usage);
   void removeUsage(Usage usage);

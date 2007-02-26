@@ -278,6 +278,7 @@
         <action id="FindUsages" class="com.intellij.find.actions.FindUsagesAction"/>
         <action id="FindUsagesInFile" class="com.intellij.find.actions.FindUsagesInFileAction"/>
         <action id="HighlightUsagesInFile" class="com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction"/>
+        <group id="ShowRecentFindUsagesGroup" class="com.intellij.find.impl.ShowRecentFindUsagesGroup" popup="true"/>
         <separator/>
         <action id="FindInPath" class="com.intellij.find.actions.FindInPathAction"/>
         <action id="ReplaceInPath" class="com.intellij.find.actions.ReplaceInPathAction"/>
@@ -1235,11 +1236,11 @@
       <reference ref="EditSource"/>
       <action id="UsageView.Include" class="com.intellij.usages.actions.IncludeUsageAction"/>
       <action id="UsageView.Exclude" class="com.intellij.usages.actions.ExcludeUsageAction"/>
-      <!--todo: include/exclude-->
       <separator/>
       <reference ref="AddToFavorites"/>
       <reference ref="MoveToChangeList"/>
       <reference ref="FindUsages"/>
+      <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" icon="/actions/back.png"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>

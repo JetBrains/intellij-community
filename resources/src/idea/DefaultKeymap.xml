@@ -71,6 +71,9 @@
     <action id="UsageView.Exclude">
       <keyboard-shortcut first-keystroke="DELETE"/>
     </action>
+    <action id="UsageView.ShowRecentFindUsages">
+      <keyboard-shortcut first-keystroke="control E"/>
+    </action>
     <action id="EditorJoinLines">
       <keyboard-shortcut first-keystroke="control shift J"/>
     </action>

@@ -50,7 +50,7 @@ public class ShowRecentFilesAction extends AnAction {
 
     for(int i=files.length-1; i>= 0; i--){ // reverse order of files
       VirtualFile file = files[i];
-      if(ArrayUtil.find(selectedFiles, file) != 0 && editorProviderManager.getProviders(project, file).length > 0){
+      if(ArrayUtil.find(selectedFiles, file) == -1 && editorProviderManager.getProviders(project, file).length > 0){
         // 1. do not put currently selected file
         // 2. do not include file with no corresponding editor providers
         model.addElement(file);

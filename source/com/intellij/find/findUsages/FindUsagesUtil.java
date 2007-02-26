@@ -60,7 +60,11 @@ public class FindUsagesUtil {
     }
 
     if (ThrowSearchUtil.isSearchable (element) && options.isThrowUsages) {
-      ThrowSearchUtil.addThrowUsages(processor, options.myThrowRoot, options);
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          ThrowSearchUtil.addThrowUsages(processor, options.myThrowRoot, options);
+        }
+      });
     }
 
     if (element instanceof PsiPackage && options.isClassesUsages){
@@ -276,19 +280,19 @@ public class FindUsagesUtil {
     }, parentClass, searchScope, false);
   }
 
-  private static void addClassesUsages(PsiPackage aPackage, Processor<UsageInfo> results, FindUsagesOptions options) {
-    PsiSearchHelper helper = aPackage.getManager().getSearchHelper();
-
-    PsiReference[] refs = helper.findReferences(aPackage, options.searchScope, false);
-    HashSet<PsiFile> filesSet = new HashSet<PsiFile>();
-    ArrayList<PsiFile> files = new ArrayList<PsiFile>();
-    for (PsiReference psiReference : refs) {
-      PsiElement ref = psiReference.getElement();
-      PsiFile file = ref.getContainingFile();
-      if (filesSet.add(file)) {
-        files.add(file);
+  private static void addClassesUsages(PsiPackage aPackage, final Processor<UsageInfo> results, final FindUsagesOptions options) {
+    final HashSet<PsiFile> filesSet = new HashSet<PsiFile>();
+    final ArrayList<PsiFile> files = new ArrayList<PsiFile>();
+    ReferencesSearch.search(aPackage, options.searchScope, false).forEach(new ReadActionProcessor<PsiReference>() {
+      public boolean processInReadAction(final PsiReference psiReference) {
+        PsiElement ref = psiReference.getElement();
+        PsiFile file = ref.getContainingFile();
+        if (filesSet.add(file)) {
+          files.add(file);
+        }
+        return true;
       }
-    }
+    });
 
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null){
@@ -297,28 +301,22 @@ public class FindUsagesUtil {
 
     ArrayList<PsiClass> classes = new ArrayList<PsiClass>();
     addClassesInPackage(aPackage, options.isIncludeSubpackages, classes);
-    for (PsiClass aClass : classes) {
+    for (final PsiClass aClass : classes) {
       if (progress != null) {
         progress.setText(FindBundle.message("find.searching.for.references.to.class.progress", aClass.getName()));
       }
       for (PsiFile file : files) {
         ProgressManager.getInstance().checkCanceled();
-        refs = helper.findReferences(aClass, new LocalSearchScope(file), false);
-        addResults(results, refs, options, aClass);
+        ReferencesSearch.search(aClass, new LocalSearchScope(file), false).forEach(new ReadActionProcessor<PsiReference>() {
+          public boolean processInReadAction(final PsiReference psiReference) {
+            return addResult(results, psiReference, options, aClass);
+          }
+        });
       }
     }
 
     if (progress != null){
       progress.popState();
-    }
-  }
-
-  private static void addResults(Processor<UsageInfo> results, PsiReference[] refs, FindUsagesOptions options, PsiElement element) {
-    for (PsiReference psiReference : refs) {
-      final boolean shouldContinue = addResult(results, psiReference, options, element);
-      if (!shouldContinue) {
-        break;
-      }
     }
   }
 

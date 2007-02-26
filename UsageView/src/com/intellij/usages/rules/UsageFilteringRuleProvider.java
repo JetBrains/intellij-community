@@ -19,9 +19,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.usages.UsageView;
+import org.jetbrains.annotations.NotNull;
 
 public interface UsageFilteringRuleProvider extends ApplicationComponent{
+  @NotNull
   UsageFilteringRule[] getActiveRules(Project project);
 
+  @NotNull
   AnAction[] createFilteringActions(UsageView view);
 }

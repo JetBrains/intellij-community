@@ -2,6 +2,7 @@ package com.intellij.find;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -26,27 +27,26 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.usages.*;
-import com.intellij.find.impl.FindInProjectUtil;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  */
 public class FindUtil {
-  private static Key KEY = Key.create("FindUtil.KEY");
-  @NonNls private static String UP = "UP";
-  @NonNls private static String DOWN = "DOWN";
+  private static Key<Direction> KEY = Key.create("FindUtil.KEY");
+  private static enum Direction {
+    UP, DOWN;
+  }
 
   public static void findWordAtCaret(Project project, Editor editor) {
     int caretOffset = editor.getCaretModel().getOffset();
@@ -192,8 +192,7 @@ public class FindUtil {
     }
     final UsageTarget[] usageTargets = new UsageTarget[]{ new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind()) };
     final UsageViewPresentation usageViewPresentation = FindInProjectUtil.setupViewPresentation(false, findModel);
-    UsageViewManager.getInstance(project).showUsages(usageTargets, usages.toArray(new Usage[0]),
-                                                     usageViewPresentation);
+    UsageViewManager.getInstance(project).showUsages(usageTargets, usages.toArray(new Usage[usages.size()]), usageViewPresentation);
   }
 
   public static void searchBack(Project project, FileEditor fileEditor) {
@@ -218,10 +217,10 @@ public class FindUtil {
     }
 
     int offset;
-    if (UP.equals(editor.getUserData(KEY)) && !model.isForward()) {
+    if (Direction.UP.equals(editor.getUserData(KEY)) && !model.isForward()) {
       offset = editor.getDocument().getTextLength();
     }
-    else if (DOWN.equals(editor.getUserData(KEY)) && model.isForward()) {
+    else if (Direction.DOWN.equals(editor.getUserData(KEY)) && model.isForward()) {
       offset = 0;
     }
     else {
@@ -252,10 +251,10 @@ public class FindUtil {
     model = (FindModel)model.clone();
 
     int offset;
-    if (DOWN.equals(editor.getUserData(KEY)) && model.isForward()) {
+    if (Direction.DOWN.equals(editor.getUserData(KEY)) && model.isForward()) {
       offset = 0;
     }
-    else if (UP.equals(editor.getUserData(KEY)) && !model.isForward()) {
+    else if (Direction.UP.equals(editor.getUserData(KEY)) && !model.isForward()) {
       offset = editor.getDocument().getTextLength();
     }
     else {
@@ -361,7 +360,6 @@ public class FindUtil {
   }
 
   private static boolean replace(Project project, Editor editor, int offset, FindModel model) {
-    boolean isReplaced = false;
     Document document = editor.getDocument();
     int caretOffset = offset;
 
@@ -372,6 +370,7 @@ public class FindUtil {
     }
 
     document.startGuardedBlockChecking();
+    boolean isReplaced = false;
     try {
       FindManager findManager = FindManager.getInstance(project);
       boolean toPrompt = model.isPromptOnReplace();
@@ -533,7 +532,6 @@ public class FindUtil {
   }
 
   private static void processNotFound(final Editor editor, String stringToFind, FindModel model, Project project) {
-    FindResult result;
 
     String message = FindBundle.message("find.search.string.not.found.message", stringToFind);
 
@@ -541,6 +539,7 @@ public class FindUtil {
       final FindModel newModel = (FindModel)model.clone();
       FindManager findManager = FindManager.getInstance(project);
       Document document = editor.getDocument();
+      FindResult result;
       if (newModel.isForward()) {
         result = findManager.findString(document.getCharsSequence(), 0, model);
       }
@@ -568,7 +567,7 @@ public class FindUtil {
           else {
             message = FindBundle.message("find.search.again.from.top.action.message", message);
           }
-          editor.putUserData(KEY, DOWN);
+          editor.putUserData(KEY, Direction.DOWN);
         }
         else {
           AnAction action = ActionManager.getInstance().getAction(
@@ -580,7 +579,7 @@ public class FindUtil {
           else {
             message = FindBundle.message("find.search.again.from.bottom.action.message", message);
           }
-          editor.putUserData(KEY, UP);
+          editor.putUserData(KEY, Direction.UP);
         }
       }
       CaretListener listener = new CaretListener() {

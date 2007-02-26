@@ -41,7 +41,7 @@ public class ThrowSearchUtil {
    * @param root
    */
 
-  private static boolean processExn(final PsiParameter aCatch, Processor processor, Root root) {
+  private static boolean processExn(final PsiParameter aCatch, Processor<UsageInfo> processor, Root root) {
     final PsiType type = aCatch.getType();
     if (type.isAssignableFrom(root.myType)) {
       processor.process (new UsageInfo (aCatch));
@@ -55,7 +55,7 @@ public class ThrowSearchUtil {
   }
 
   private static void scanCatches(PsiElement elem,
-                                  Processor processor,
+                                  Processor<UsageInfo> processor,
                                   Root root,
                                   FindUsagesOptions options,
                                   Set<PsiMethod> processed)
@@ -64,7 +64,7 @@ public class ThrowSearchUtil {
       final PsiElement parent = elem.getParent();
       if (elem instanceof PsiMethod) {
         final PsiMethod deepestSuperMethod = ((PsiMethod) elem).findDeepestSuperMethod();
-        final PsiMethod method = deepestSuperMethod != null ? deepestSuperMethod : ((PsiMethod)elem);
+        final PsiMethod method = deepestSuperMethod != null ? deepestSuperMethod : (PsiMethod)elem;
         if (!processed.contains(method)) {
           processed.add(method);
           PsiSearchHelper helper = method.getManager().getSearchHelper();
@@ -95,7 +95,7 @@ public class ThrowSearchUtil {
     }
   }
 
-  public static void addThrowUsages(Processor processor, Root root, FindUsagesOptions options) {
+  public static void addThrowUsages(Processor<UsageInfo> processor, Root root, FindUsagesOptions options) {
     Set<PsiMethod> processed = new HashSet<PsiMethod>();
     scanCatches (root.myElement, processor, root, options, processed);
   }
@@ -107,12 +107,7 @@ public class ThrowSearchUtil {
    */
 
   public static boolean isExactExnType(final PsiExpression exn) {
-    if (exn instanceof PsiNewExpression) {
-      return true;
-    }
-    else {
-      return false;
-    }
+    return exn instanceof PsiNewExpression;
   }
 
   public static Root [] getSearchRoots (final PsiElement element) {

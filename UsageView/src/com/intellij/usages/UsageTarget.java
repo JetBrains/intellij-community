@@ -21,11 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 16, 2004
- * Time: 4:15:46 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public interface UsageTarget extends NavigationItem {
   /**
@@ -43,7 +39,7 @@ public interface UsageTarget extends NavigationItem {
   boolean isReadOnly();
 
   /**
-   * @return the files this usage target is in. Might be null is usage target is not file-based
+   * @return the files this usage target is in. Might be null if usage target is not file-based
    */
   @Nullable
   VirtualFile[] getFiles();

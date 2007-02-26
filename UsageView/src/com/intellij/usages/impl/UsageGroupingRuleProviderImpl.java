@@ -27,18 +27,16 @@ import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
 import com.intellij.util.Icons;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 27, 2004
- * Time: 8:20:57 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider, JDOMExternalizable {
   public boolean GROUP_BY_USAGE_TYPE = true;
@@ -46,6 +44,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
   public boolean GROUP_BY_PACKAGE = true;
   public boolean GROUP_BY_FILE_STRUCTURE = true;
 
+  @NotNull
   public UsageGroupingRule[] getActiveRules(Project project) {
     List<UsageGroupingRule> rules = new ArrayList<UsageGroupingRule>();
     rules.add(new NonCodeUsageGroupingRule());
@@ -70,15 +69,17 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
     return rules.toArray(new UsageGroupingRule[rules.size()]);
   }
 
+  @NotNull
   public AnAction[] createGroupingActions(UsageView view) {
     final UsageViewImpl impl = (UsageViewImpl)view;
     final JComponent component = impl.getComponent();
 
     final GroupByModuleTypeAction groupByModuleTypeAction = new GroupByModuleTypeAction(impl);
-    groupByModuleTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_DOWN_MASK)), component);
+    groupByModuleTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK)), component);
 
     final GroupByFileStructureAction groupByFileStructureAction = new GroupByFileStructureAction(impl);
-    groupByFileStructureAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_M, KeyEvent.CTRL_DOWN_MASK)), component);
+    groupByFileStructureAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_M,
+                                                                                                      InputEvent.CTRL_DOWN_MASK)), component);
 
     impl.scheduleDisposeOnClose(new Disposable() {
       public void dispose() {
@@ -89,10 +90,10 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
 
     if(view.getPresentation().isCodeUsages()) {
       final GroupByUsageTypeAction groupByUsageTypeAction = new GroupByUsageTypeAction(impl);
-      groupByUsageTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, KeyEvent.CTRL_DOWN_MASK)), component);
+      groupByUsageTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK)), component);
 
       final GroupByPackageAction groupByPackageAction = new GroupByPackageAction(impl);
-      groupByPackageAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, KeyEvent.CTRL_DOWN_MASK)), component);
+      groupByPackageAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK)), component);
 
       impl.scheduleDisposeOnClose(new Disposable() {
         public void dispose() {
@@ -166,6 +167,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
     }
   }
 
+  @NotNull
   public String getComponentName() {
     return "UsageGroupingRuleProvider";
   }

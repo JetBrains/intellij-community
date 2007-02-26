@@ -135,7 +135,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
     return original;
   }
 
-  public String getTooltipText(final Object value) {
+  public static String getTooltipText(final Object value) {
     if (value instanceof DefaultMutableTreeNode) {
       DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
       if (treeNode instanceof UsageNode) {

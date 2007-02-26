@@ -82,5 +82,4 @@ public abstract class FindUsagesDialog extends AbstractFindUsagesDialog {
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(FindUsagesManager.getHelpID(myPsiElement));
   }
-
 }

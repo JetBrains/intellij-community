@@ -52,7 +52,7 @@ public interface FindUsagesProvider {
    * @return the help topic ID, or null if no help is available.
    */
   @Nullable
-  String getHelpId(PsiElement psiElement);
+  String getHelpId(@NotNull PsiElement psiElement);
 
   /**
    * Returns the user-visible type of the specified element, shown in the "Find Usages"
@@ -62,7 +62,7 @@ public interface FindUsagesProvider {
    * @return the type of the element.
    */
   @NotNull
-  String getType(PsiElement element);
+  String getType(@NotNull PsiElement element);
 
   /**
    * Returns an expanded user-visible name of the specified element, shown in the "Find Usages"
@@ -73,7 +73,7 @@ public interface FindUsagesProvider {
    * @return the user-visible name.
    */
   @NotNull
-  String getDescriptiveName(PsiElement element);
+  String getDescriptiveName(@NotNull PsiElement element);
 
   /**
    * Returns the text representing the specified PSI element in the Find Usages tree.
@@ -83,5 +83,5 @@ public interface FindUsagesProvider {
    * @return the text representing the element.
    */
   @NotNull
-  String getNodeText(PsiElement element, boolean useFullName);
+  String getNodeText(@NotNull PsiElement element, boolean useFullName);
 }

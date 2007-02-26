@@ -67,23 +67,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * @author max
  */
 public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTrackerListener {
+  @NonNls public static final String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
+
   private final UsageNodeTreeBuilder myBuilder;
   private final MyPanel myRootPanel;
-  private final JTree myTree = new Tree() {
-    {
-      ToolTipManager.sharedInstance().registerComponent(this);
-    }
-    public String getToolTipText(MouseEvent e) {
-      TreePath path = getPathForLocation(e.getX(), e.getY());
-      if (path != null) {
-        if (getCellRenderer() instanceof UsageViewTreeCellRenderer) {
-          final UsageViewTreeCellRenderer usageViewTreeCellRenderer = (UsageViewTreeCellRenderer)getCellRenderer();
-          return usageViewTreeCellRenderer.getTooltipText(path.getLastPathComponent());
-        }
-      }
-      return null;
-    }
-  };
+  private final JTree myTree;
   private Content myContent;
 
   private final UsageViewPresentation myPresentation;
@@ -140,6 +128,24 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     myTargets = targets;
     myUsageSearcherFactory = usageSearcherFactory;
     myProject = project;
+    myTree = new Tree() {
+      {
+        ToolTipManager.sharedInstance().registerComponent(this);
+      }
+      public String getToolTipText(MouseEvent e) {
+        TreePath path = getPathForLocation(e.getX(), e.getY());
+        if (path != null) {
+          if (getCellRenderer() instanceof UsageViewTreeCellRenderer) {
+            return UsageViewTreeCellRenderer.getTooltipText(path.getLastPathComponent());
+          }
+        }
+        return null;
+      }
+
+      public boolean isPathEditable(final TreePath path) {
+        return path.getLastPathComponent() instanceof UsageViewTreeModelBuilder.TargetsRootNode;
+      }
+    };
     myRootPanel = new MyPanel(myTree);
     myModelTracker = new UsageModelTracker(project);
 
@@ -157,10 +163,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         myRootPanel.add(centralPanel, BorderLayout.CENTER);
 
         JPanel toolbarPanel = new JPanel(new BorderLayout());
-        toolbarPanel.add(createToolbar(), BorderLayout.WEST);
+        toolbarPanel.add(createActionsToolbar(), BorderLayout.WEST);
         toolbarPanel.add(createFiltersToolbar(), BorderLayout.CENTER);
         myRootPanel.add(toolbarPanel, BorderLayout.WEST);
 
+        //Splitter splitter = new Splitter(false, 0.5f);
+        //splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
+        //splitter.setSecondComponent(new UsagePreviewPanel(myTree, UsageViewImpl.this));
+        //centralPanel.add(splitter, BorderLayout.CENTER);
         centralPanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
         centralPanel.add(myButtonPanel, BorderLayout.SOUTH);
 
@@ -239,7 +249,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     //TODO: install speed search. Not in openapi though. It makes sense to create a common TreeEnchancer service.
   }
 
-  private JComponent createToolbar() {
+  private JComponent createActionsToolbar() {
     DefaultActionGroup group = new DefaultActionGroup() {
       public void update(AnActionEvent e) {
         super.update(e);
@@ -253,10 +263,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         group.add(action);
       }
     }
-    return createUsageViewToolbar(group);
+    return toUsageViewToolbar(group);
   }
 
-  private static JComponent createUsageViewToolbar(final DefaultActionGroup group) {
+  private static JComponent toUsageViewToolbar(final DefaultActionGroup group) {
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR,
                                                                                   group, false);
     return actionToolbar.getComponent();
@@ -285,7 +295,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     for (AnAction filteringAction : filteringActions) {
       group.add(filteringAction);
     }
-    return createUsageViewToolbar(group);
+    return toUsageViewToolbar(group);
   }
 
   public void scheduleDisposeOnClose(final Disposable disposable) {
@@ -330,6 +340,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return new AnAction[]{
       canPerformReRun() ? new ReRunAction() : null,
       new CloseAction(),
+      createRecentFindUsagesAction(),
       expandAllAction,
       collapseAllAction,
       actionsManager.createPrevOccurenceAction(myRootPanel),
@@ -338,6 +349,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       actionsManager.createExportToTextFileAction(myTextFileExporter),
       actionsManager.createHelpAction(HELP_ID)
     };
+  }
+
+  private AnAction createRecentFindUsagesAction() {
+    AnAction action = ActionManager.getInstance().getAction(SHOW_RECENT_FIND_USAGES_ACTION_ID);
+    action.registerCustomShortcutSet(action.getShortcutSet(), getComponent());
+    return action;
   }
 
   private AnAction[] createGroupingActions() {
@@ -908,7 +925,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return ((UsageViewTreeModelBuilder)myTree.getModel()).areTargetsValid();
   }
 
-  private class MyPanel extends JPanel implements DataProvider, OccurenceNavigator {
+  private class MyPanel extends JPanel implements TypeSafeDataProvider, OccurenceNavigator {
     private @Nullable OccurenceNavigatorSupport mySupport;
 
     public MyPanel(JTree tree) {
@@ -957,48 +974,50 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       return mySupport != null ? mySupport.getPreviousOccurenceActionName() : "";
     }
 
-    public Object getData(String dataId) {
+    public void calcData(final DataKey key, final DataSink sink) {
       Node node = getSelectedNode();
 
-      if (dataId.equals(USAGE_VIEW)) {
-        return UsageViewImpl.this;
+      if (key == USAGE_VIEW_KEY) {
+        sink.put(USAGE_VIEW_KEY, UsageViewImpl.this);
       }
 
-      if (dataId.equals(DataConstants.NAVIGATABLE_ARRAY)) {
-        return getNavigatablesForNodes(getSelectedNodes());
+      if (key == DataKeys.NAVIGATABLE_ARRAY) {
+        sink.put(DataKeys.NAVIGATABLE_ARRAY, getNavigatablesForNodes(getSelectedNodes()));
       }
 
-      if (dataId.equals(DataConstants.EXPORTER_TO_TEXT_FILE)) {
-        return myTextFileExporter;
+      if (key == DataKeys.EXPORTER_TO_TEXT_FILE) {
+        sink.put(DataKeys.EXPORTER_TO_TEXT_FILE, myTextFileExporter);
       }
 
-      if (dataId.equals(USAGES)) {
+      if (key == USAGES_KEY) {
         final Set<Usage> selectedUsages = getSelectedUsages();
-        return selectedUsages != null ? selectedUsages.toArray(new Usage[selectedUsages.size()]) : null;
+        sink.put(USAGES_KEY, selectedUsages != null ? selectedUsages.toArray(new Usage[selectedUsages.size()]) : null);
       }
 
-      if (dataId.equals(USAGE_TARGETS)) {
-        return getSelectedUsageTargets();
+      if (key == USAGE_TARGETS_KEY) {
+        sink.put(USAGE_TARGETS_KEY, getSelectedUsageTargets());
       }
 
-      if (dataId.equals(DataConstants.VIRTUAL_FILE_ARRAY)) {
+      if (key == DataKeys.VIRTUAL_FILE_ARRAY) {
         final Set<Usage> usages = getSelectedUsages();
-        return provideVirtualFileArray(usages != null ? usages.toArray(new Usage[usages.size()]) : null, getSelectedUsageTargets());
+        VirtualFile[] data = provideVirtualFileArray(usages != null ? usages.toArray(new Usage[usages.size()]) : null, getSelectedUsageTargets());
+        sink.put(DataKeys.VIRTUAL_FILE_ARRAY, data);
       }
 
-      if (dataId.equals(DataConstants.HELP_ID)) {
-        return HELP_ID;
+      if (key == DataKeys.HELP_ID) {
+        sink.put(DataKeys.HELP_ID, HELP_ID);
       }
 
       if (node != null) {
         Object userObject = node.getUserObject();
         if (userObject instanceof DataProvider) {
           DataProvider dataProvider = (DataProvider)userObject;
-          return dataProvider.getData(dataId);
+          Object data = dataProvider.getData(key.getName());
+          if (data != null) {
+            sink.put(key, data);
+          }
         }
       }
-
-      return null;
     }
 
     private VirtualFile[] provideVirtualFileArray(Usage[] usages, UsageTarget[] usageTargets) {
@@ -1162,6 +1181,5 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       );
 
     }
-
   }
 }

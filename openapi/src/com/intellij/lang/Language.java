@@ -44,6 +44,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -315,7 +316,7 @@ public abstract class Language {
       return myCachedAnnotators;
     }
     myLastAnnotator = annotator;
-    myCachedAnnotators = new ArrayList<Annotator>();
+    myCachedAnnotators = new SmartList<Annotator>();
     if (annotator != null) {
       myCachedAnnotators.add(annotator);
     }
