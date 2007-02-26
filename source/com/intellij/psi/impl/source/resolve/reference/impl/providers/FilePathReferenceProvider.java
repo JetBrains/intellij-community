@@ -21,21 +21,10 @@ import java.util.*;
  */
 public class FilePathReferenceProvider implements PsiReferenceProvider {
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element) {
-    String text = null;
-    if (element instanceof PsiLiteralExpression) {
-      Object value = ((PsiLiteralExpression)element).getValue();
-      if (value instanceof String) {
-        text = (String)value;
-      }
-    }
-    //else if (element instanceof XmlAttributeValue) {
-    //  text = ((XmlAttributeValue)element).getValue();
-    //}
-    if (text == null) return PsiReference.EMPTY_ARRAY;
-    return new FileReferenceSet(text, element, 1, ReferenceType.FILE_TYPE, this, true) {
+  public PsiReference[] getReferencesByElement(PsiElement element, String text, int offset, final boolean soft) {
+    return new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this, true) {
       protected boolean isSoft() {
-        return true;
+        return soft;
       }
 
       @NotNull public Collection<PsiFileSystemItem> getDefaultContexts(PsiElement position) {
@@ -61,6 +50,23 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
         };
       }
     }.getAllReferences();
+
+  }
+
+  @NotNull
+  public PsiReference[] getReferencesByElement(PsiElement element) {
+    String text = null;
+    if (element instanceof PsiLiteralExpression) {
+      Object value = ((PsiLiteralExpression)element).getValue();
+      if (value instanceof String) {
+        text = (String)value;
+      }
+    }
+    //else if (element instanceof XmlAttributeValue) {
+    //  text = ((XmlAttributeValue)element).getValue();
+    //}
+    if (text == null) return PsiReference.EMPTY_ARRAY;
+    return getReferencesByElement(element, text, 1, true);
   }
 
   @NotNull
