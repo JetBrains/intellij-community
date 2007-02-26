@@ -1,5 +1,6 @@
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
@@ -38,16 +39,20 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   public void initComponent(final Object component) {
-    if (component instanceof JDOMExternalizable) {
-      initJdomExternalizable((JDOMExternalizable)component);
-    }
-    else if (component instanceof PersistentStateComponent) {
-      initPersistentComponent((PersistentStateComponent<Object>)component);
-    }
-    else if (component instanceof SettingsSavingComponent) {
-      SettingsSavingComponent settingsSavingComponent = (SettingsSavingComponent)component;
-      mySettingsSavingComponents.add(settingsSavingComponent);
-    }
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        if (component instanceof JDOMExternalizable) {
+          initJdomExternalizable((JDOMExternalizable)component);
+        }
+        else if (component instanceof PersistentStateComponent) {
+          initPersistentComponent((PersistentStateComponent<Object>)component);
+        }
+        else if (component instanceof SettingsSavingComponent) {
+          SettingsSavingComponent settingsSavingComponent = (SettingsSavingComponent)component;
+          mySettingsSavingComponents.add(settingsSavingComponent);
+        }
+      }
+    });
   }
 
 
