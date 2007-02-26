@@ -111,7 +111,7 @@ public abstract class AbstractVcs {
   }
 
   public void shutdown() throws VcsException {
-    LOG.assertTrue(myIsStarted);
+    LOG.assertTrue(myIsStarted, "Attempt to shut down VCS " + getClass().getName() + " which was not started");
     myIsStarted = false;
   }
 

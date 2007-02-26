@@ -78,6 +78,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -199,18 +200,33 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public AbstractVcs findVcsByName(String name) {
     if (name == null) return null;
 
-    final AbstractVcs[] allActiveVcss = getAllVcss();
-    for (AbstractVcs vcs : allActiveVcss) {
+    for (AbstractVcs vcs : myVcss) {
       if (vcs.getName().equals(name)) {
         return vcs;
       }
-
+    }
+    final VcsEP[] vcsEPs = Extensions.getExtensions(VcsEP.EP_NAME, myProject);
+    for(VcsEP ep: vcsEPs) {
+      if (ep.getName().equals(name)) {
+        AbstractVcs vcs = ep.getVcs(myProject);
+        if (!myVcss.contains(vcs)) {
+          registerVcs(vcs);
+        }
+        return vcs;
+      }
     }
 
     return null;
   }
 
   public AbstractVcs[] getAllVcss() {
+    final VcsEP[] vcsEPs = Extensions.getExtensions(VcsEP.EP_NAME, myProject);
+    for(VcsEP ep: vcsEPs) {
+      AbstractVcs vcs = ep.getVcs(myProject);
+      if (!myVcss.contains(vcs)) {
+        registerVcs(vcs);
+      }
+    }
     if (myCachedVCSs == null) {
       Collections.sort(myVcss, new Comparator<AbstractVcs>() {
         public int compare(final AbstractVcs o1, final AbstractVcs o2) {
@@ -278,8 +294,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public void initialize() {
     final AbstractVcs[] abstractVcses = myVcss.toArray(new AbstractVcs[myVcss.size()]);
-    for (AbstractVcs abstractVcse : abstractVcses) {
-      registerVcs(abstractVcse);
+    for (AbstractVcs abstractVcs : abstractVcses) {
+      registerVcs(abstractVcs);
     }
   }
 
@@ -405,7 +421,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       vcs.deactivate();
     }
     myActiveVcss.clear();
-    AbstractVcs[] allVcss = getAllVcss();
+    AbstractVcs[] allVcss = myVcss.toArray(new AbstractVcs[myVcss.size()]);
     for (AbstractVcs allVcs : allVcss) {
       unregisterVcs(allVcs);
     }
