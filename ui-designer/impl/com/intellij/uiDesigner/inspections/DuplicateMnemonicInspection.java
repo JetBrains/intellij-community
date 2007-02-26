@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.StringDescriptorManager;
 import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -9,20 +10,24 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class DuplicateMnemonicInspection extends BaseFormInspection {
-  private Map<MnemonicKey, IComponent> myMnemonicToComponentMap;
+  private ThreadLocal<HashMap<IRootContainer, MnemonicMap>> myContainerMnemonicMap = new ThreadLocal<HashMap<IRootContainer, MnemonicMap>>() {
+    @Override
+    protected HashMap<IRootContainer, MnemonicMap> initialValue() {
+      return new HashMap<IRootContainer, MnemonicMap>();
+    }
+  };
 
   public DuplicateMnemonicInspection() {
     super("DuplicateMnemonic");
@@ -35,11 +40,11 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
   }
 
   @Override public void startCheckForm(IRootContainer radRootContainer) {
-    myMnemonicToComponentMap = new HashMap<MnemonicKey, IComponent>();
+    myContainerMnemonicMap.get().put(radRootContainer, new MnemonicMap());
   }
 
   @Override public void doneCheckForm(IRootContainer rootContainer) {
-    myMnemonicToComponentMap = null;
+    myContainerMnemonicMap.get().remove(rootContainer);
   }
 
   protected void checkComponentProperties(Module module, IComponent component, FormErrorCollector collector) {
@@ -77,11 +82,12 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
                                      final IComponent component,
                                      final SupportCode.TextWithMnemonic twm,
                                      final FormErrorCollector collector) {
-
+    IRootContainer root = FormEditingUtil.getRoot(component);
+    MnemonicMap map = myContainerMnemonicMap.get().get(root);
     MnemonicKey key = buildMnemonicKey(twm, component);
-    if (myMnemonicToComponentMap.containsKey(key)) {
+    if (map.containsKey(key)) {
       IProperty prop = FormInspectionUtil.findProperty(component, SwingProperties.TEXT);
-      IComponent oldComponent = myMnemonicToComponentMap.get(key);
+      IComponent oldComponent = map.get(key);
       collector.addError(getID(), component, prop,
                          UIDesignerBundle.message("inspection.duplicate.mnemonics.message",
                                                   FormInspectionUtil.getText(module, oldComponent),
@@ -94,7 +100,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
                          });
     }
     else {
-      myMnemonicToComponentMap.put(key, component);
+      map.put(key, component);
     }
   }
 
@@ -139,5 +145,8 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
       result = 31 * result + myExclusiveContainerStack.hashCode();
       return result;
     }
+  }
+
+  private static class MnemonicMap extends HashMap<MnemonicKey, IComponent> {
   }
 }

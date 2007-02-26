@@ -172,7 +172,7 @@ public final class UIFormEditor extends UserDataHolderBase implements /*Navigata
 
     @NotNull
     public HighlightingPass[] createPassesForVisibleArea() {
-      return createPassesForEditor();
+      return HighlightingPass.EMPTY_ARRAY;
     }
   }
 }
