@@ -41,6 +41,7 @@ public class ReformatCodeAction extends AnAction {
       if (!operationStatus.hasReadonlyFiles()) {
         final ReformatFilesDialog reformatFilesDialog = new ReformatFilesDialog(project);
         reformatFilesDialog.show();
+        if (!reformatFilesDialog.isOK()) return;
         if (reformatFilesDialog.optimizeImports()) {
           new ReformatAndOptimizeImportsProcessor(project, convertToPsiFiles(files, project)).run();
         }
