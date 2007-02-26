@@ -33,7 +33,9 @@ class OptionTagBinding implements Binding {
       targetElement.setAttribute(Constants.VALUE, text.getWholeText());
     }
     else {
-      targetElement.appendChild(node);
+      if (targetElement != node) {
+        targetElement.appendChild(node);
+      }
     }
 
     return targetElement;

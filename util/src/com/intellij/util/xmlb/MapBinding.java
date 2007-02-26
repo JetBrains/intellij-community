@@ -7,12 +7,26 @@ import org.w3c.dom.*;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Map;
+import java.util.Set;
 
 class MapBinding implements Binding {
   private Binding myKeyBinding;
   private Binding myValueBinding;
   private MapAnnotation myMapAnnotation;
+  private static final Comparator<Object> KEY_COMPARATOR = new Comparator<Object>() {
+    public int compare(final Object o1, final Object o2) {
+      if (o1 instanceof Comparable && o2 instanceof Comparable) {
+        Comparable c1 = (Comparable)o1;
+        Comparable c2 = (Comparable)o2;
+        return c1.compareTo(c2);
+      }
+
+      return 0;
+    }
+  };
 
 
   public MapBinding(ParameterizedType type, XmlSerializerImpl serializer, Accessor accessor) {
@@ -39,33 +53,46 @@ class MapBinding implements Binding {
       m = (Element)context;
     }
 
-    for (Object k : map.keySet()) {
+    final Set keySet = map.keySet();
+    final Object[] keys = keySet.toArray(new Object[keySet.size()]);
+    Arrays.sort(keys, KEY_COMPARATOR);
+    for (Object k : keys) {
       Object v = map.get(k);
 
       Element entry = ownerDocument.createElement(getEntryAttributeName());
       m.appendChild(entry);
 
       Node kNode = myKeyBinding.serialize(k, entry);
-      Node vNode = myValueBinding.serialize(v, entry);
 
       if (kNode instanceof Text) {
         Text text = (Text)kNode;
         entry.setAttribute(getKeyAttributeValue(), text.getWholeText());
       }
       else {
-        Element key = ownerDocument.createElement(getKeyAttributeValue());
-        entry.appendChild(key);
-        key.appendChild(kNode);
+        if (myMapAnnotation != null && !myMapAnnotation.surroundKeyWithTag()) {
+          entry.appendChild(kNode);
+        }
+        else {
+          Element key = ownerDocument.createElement(getKeyAttributeValue());
+          entry.appendChild(key);
+          key.appendChild(kNode);
+        }
       }
 
+      Node vNode = myValueBinding.serialize(v, entry);
       if (vNode instanceof Text) {
         Text text = (Text)vNode;
         entry.setAttribute(getValueAttributeName(), text.getWholeText());
       }
       else {
-        Element value = ownerDocument.createElement(getValueAttributeName());
-        entry.appendChild(value);
-        value.appendChild(vNode);
+        if (myMapAnnotation != null && !myMapAnnotation.surroundValueWithTag()) {
+          entry.appendChild(vNode);
+        }
+        else {
+          Element value = ownerDocument.createElement(getValueAttributeName());
+          entry.appendChild(value);
+          value.appendChild(vNode);
+        }
       }
     }
 
@@ -105,8 +132,8 @@ class MapBinding implements Binding {
       
       Element entry = (Element)childNode;
 
-      Object k;
-      Object v;
+      Object k = null;
+      Object v = null;
 
       assert entry.getNodeName().equals(getEntryAttributeName());
 
@@ -115,8 +142,21 @@ class MapBinding implements Binding {
         k = myKeyBinding.deserialize(o, keyAttr);
       }
       else {
-        final Node keyNode = entry.getElementsByTagName(getKeyAttributeValue()).item(0);
-        k = myKeyBinding.deserialize(o, DOMUtil.getChildNodes(keyNode));
+        if (myMapAnnotation != null && !myMapAnnotation.surroundKeyWithTag()) {
+          final Node[] children = DOMUtil.getChildNodes(entry);
+          for (Node child : children) {
+            if (myKeyBinding.isBoundTo(child)) {
+              k = myKeyBinding.deserialize(o, child);
+              break;
+            }
+          }
+
+          assert k != null : "no key found";
+        }
+        else {
+          final Node keyNode = entry.getElementsByTagName(getKeyAttributeValue()).item(0);
+          k = myKeyBinding.deserialize(o, DOMUtil.getChildNodes(keyNode));
+        }
       }
 
       Attr valueAttr = entry.getAttributeNode(getValueAttributeName());
@@ -124,8 +164,21 @@ class MapBinding implements Binding {
         v = myValueBinding.deserialize(o, valueAttr);
       }
       else {
-        final Node valueNode = entry.getElementsByTagName(getValueAttributeName()).item(0);
-        v = myValueBinding.deserialize(o, DOMUtil.getChildNodes(valueNode));
+        if (myMapAnnotation != null && !myMapAnnotation.surroundValueWithTag()) {
+          final Node[] children = DOMUtil.getChildNodes(entry);
+          for (Node child : children) {
+            if (myValueBinding.isBoundTo(child)) {
+              v = myValueBinding.deserialize(o, child);
+              break;
+            }
+          }
+
+          assert v != null : "no value found";
+        }
+        else {
+          final Node valueNode = entry.getElementsByTagName(getValueAttributeName()).item(0);
+          v = myValueBinding.deserialize(o, DOMUtil.getChildNodes(valueNode));
+        }
       }
 
       //noinspection unchecked

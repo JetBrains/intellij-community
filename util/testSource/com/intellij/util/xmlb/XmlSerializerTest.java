@@ -38,9 +38,21 @@ public class XmlSerializerTest extends TestCase {
   }
 
 
-  public static class BeanWithPublicFields {
+  public static class BeanWithPublicFields implements Comparable<BeanWithPublicFields> {
     public int INT_V = 1;
     public String STRING_V = "hello";
+
+    public BeanWithPublicFields(final int INT_V, final String STRING_V) {
+      this.INT_V = INT_V;
+      this.STRING_V = STRING_V;
+    }
+
+    public BeanWithPublicFields() {
+    }
+
+    public int compareTo(final BeanWithPublicFields o) {
+      return STRING_V.compareTo(o.STRING_V);
+    }
   }
 
   public void testPublicFieldSerialization() throws Exception {
@@ -161,7 +173,7 @@ public class XmlSerializerTest extends TestCase {
   public void testMapSerialization() throws Exception {
     BeanWithMap bean = new BeanWithMap();
     doSerializerTest(
-      "<BeanWithMap><option name=\"VALUES\"><map><entry key=\"a\" value=\"1\"/><entry key=\"c\" value=\"3\"/><entry key=\"b\" value=\"2\"/></map></option></BeanWithMap>",
+      "<BeanWithMap><option name=\"VALUES\"><map><entry key=\"a\" value=\"1\"/><entry key=\"b\" value=\"2\"/><entry key=\"c\" value=\"3\"/></map></option></BeanWithMap>",
       bean);
     bean.VALUES.clear();
     bean.VALUES.put("1", "a");
@@ -169,7 +181,7 @@ public class XmlSerializerTest extends TestCase {
     bean.VALUES.put("3", "c");
 
     doSerializerTest(
-      "<BeanWithMap><option name=\"VALUES\"><map><entry key=\"3\" value=\"c\"/><entry key=\"2\" value=\"b\"/><entry key=\"1\" value=\"a\"/></map></option></BeanWithMap>",
+      "<BeanWithMap><option name=\"VALUES\"><map><entry key=\"1\" value=\"a\"/><entry key=\"2\" value=\"b\"/><entry key=\"3\" value=\"c\"/></map></option></BeanWithMap>",
       bean);
   }
 
@@ -194,7 +206,7 @@ public class XmlSerializerTest extends TestCase {
   public void testMapSerializationWithAnnotations() throws Exception {
     BeanWithMapWithAnnotations bean = new BeanWithMapWithAnnotations();
     doSerializerTest(
-      "<BeanWithMapWithAnnotations><option name=\"a\" value=\"1\"/><option name=\"c\" value=\"3\"/><option name=\"b\" value=\"2\"/></BeanWithMapWithAnnotations>",
+      "<BeanWithMapWithAnnotations><option name=\"a\" value=\"1\"/><option name=\"b\" value=\"2\"/><option name=\"c\" value=\"3\"/></BeanWithMapWithAnnotations>",
       bean);
     bean.VALUES.clear();
     bean.VALUES.put("1", "a");
@@ -202,7 +214,7 @@ public class XmlSerializerTest extends TestCase {
     bean.VALUES.put("3", "c");
 
     doSerializerTest(
-      "<BeanWithMapWithAnnotations><option name=\"3\" value=\"c\"/><option name=\"2\" value=\"b\"/><option name=\"1\" value=\"a\"/></BeanWithMapWithAnnotations>",
+      "<BeanWithMapWithAnnotations><option name=\"1\" value=\"a\"/><option name=\"2\" value=\"b\"/><option name=\"3\" value=\"c\"/></BeanWithMapWithAnnotations>",
       bean);
   }
 
@@ -219,7 +231,7 @@ public class XmlSerializerTest extends TestCase {
     bean.VALUES.put("c", new BeanWithProperty("Bill"));
 
     doSerializerTest(
-      "<BeanWithMapWithBeanValue><option name=\"VALUES\"><map><entry key=\"a\"><value><BeanWithProperty><option name=\"name\" value=\"James\"/></BeanWithProperty></value></entry><entry key=\"c\"><value><BeanWithProperty><option name=\"name\" value=\"Bill\"/></BeanWithProperty></value></entry><entry key=\"b\"><value><BeanWithProperty><option name=\"name\" value=\"Bond\"/></BeanWithProperty></value></entry></map></option></BeanWithMapWithBeanValue>",
+      "<BeanWithMapWithBeanValue><option name=\"VALUES\"><map><entry key=\"a\"><value><BeanWithProperty><option name=\"name\" value=\"James\"/></BeanWithProperty></value></entry><entry key=\"b\"><value><BeanWithProperty><option name=\"name\" value=\"Bond\"/></BeanWithProperty></value></entry><entry key=\"c\"><value><BeanWithProperty><option name=\"name\" value=\"Bill\"/></BeanWithProperty></value></entry></map></option></BeanWithMapWithBeanValue>",
       bean);
   }
   public static class BeanWithProperty {                                
@@ -549,6 +561,14 @@ public class XmlSerializerTest extends TestCase {
     public int INT_V = 1;
     @Text
     public String STRING_V = "hello";
+
+    public BeanWithTextAnnotation(final int INT_V, final String STRING_V) {
+      this.INT_V = INT_V;
+      this.STRING_V = STRING_V;
+    }
+
+    public BeanWithTextAnnotation() {
+    }
   }
 
   public void testTextAnnotation() throws Exception {
@@ -575,6 +595,25 @@ public class XmlSerializerTest extends TestCase {
     assertEquals(999, bean.INT_V);
     assertEquals("zzz", bean.STRING_V);
   }
+
+  public static class BeanWithMapWithoutSurround {
+    @Tag("map")
+    @MapAnnotation(surroundWithTag = false, entryTagName = "pair", surroundKeyWithTag = false, surroundValueWithTag = false)
+    public Map<BeanWithPublicFields, BeanWithTextAnnotation> MAP = new HashMap<BeanWithPublicFields, BeanWithTextAnnotation>();
+  }
+
+  public void testMapWithNotSurroundingKeyAndValue() throws Exception {
+    BeanWithMapWithoutSurround bean = new BeanWithMapWithoutSurround();
+
+    bean.MAP.put(new BeanWithPublicFields(1, "a"), new BeanWithTextAnnotation(2, "b"));
+    bean.MAP.put(new BeanWithPublicFields(3, "c"), new BeanWithTextAnnotation(4, "d"));
+    bean.MAP.put(new BeanWithPublicFields(5, "e"), new BeanWithTextAnnotation(6, "f"));
+
+    doSerializerTest(
+      "<BeanWithMapWithoutSurround><map><pair><BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"a\"/></BeanWithPublicFields><BeanWithTextAnnotation><option name=\"INT_V\" value=\"2\"/>b</BeanWithTextAnnotation></pair><pair><BeanWithPublicFields><option name=\"INT_V\" value=\"3\"/><option name=\"STRING_V\" value=\"c\"/></BeanWithPublicFields><BeanWithTextAnnotation><option name=\"INT_V\" value=\"4\"/>d</BeanWithTextAnnotation></pair><pair><BeanWithPublicFields><option name=\"INT_V\" value=\"5\"/><option name=\"STRING_V\" value=\"e\"/></BeanWithPublicFields><BeanWithTextAnnotation><option name=\"INT_V\" value=\"6\"/>f</BeanWithTextAnnotation></pair></map></BeanWithMapWithoutSurround>",
+      bean);
+  }
+
 
   //---------------------------------------------------------------------------------------------------
   private void assertSerializer(Object bean, String expected, SerializationFilter filter)

@@ -15,4 +15,7 @@ public @interface MapAnnotation  {
   String keyAttributeName() default Constants.KEY;
   String valueAttributeName() default Constants.VALUE;
   String entryTagName() default Constants.ENTRY;
+
+  boolean surroundKeyWithTag() default true;
+  boolean surroundValueWithTag() default true;
 }

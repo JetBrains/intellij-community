@@ -31,7 +31,9 @@ class TagBinding implements Binding {
     Element v = ownerDocument.createElement(myTagName);
 
     Node node = binding.serialize(value, v);
-    v.appendChild(node);
+    if (node != v) {
+      v.appendChild(node);
+    }
 
     return v;
   }
@@ -57,7 +59,7 @@ class TagBinding implements Binding {
       children = new Node[] {document.createTextNode(myTagAnnotation.textIfEmpty())};
     }
 
-    Object v = binding.deserialize(o, children);
+    Object v = binding.deserialize(accessor.read(o), children);
     Object value = XmlSerializerImpl.convert(v, accessor.getValueClass());
     accessor.write(o, value);
     return o;
