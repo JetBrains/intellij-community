@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -278,7 +279,10 @@ public class SvnChangeProvider implements ChangeProvider {
           childURL = wcAccess.getEntry(file, false).getURL();
         }
         if (parentDir != null) {
-          parentURL = parentDir.getEntry("", false).getURL();
+          final SVNEntry parentDirEntry = parentDir.getEntry("", false);
+          if (parentDirEntry != null) {
+            parentURL = parentDirEntry.getURL();
+          }
         }
       }
       finally {
