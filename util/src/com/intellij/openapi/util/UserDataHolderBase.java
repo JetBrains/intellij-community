@@ -19,71 +19,89 @@ import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.THashMap;
 
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class UserDataHolderBase implements UserDataHolder, Cloneable{
+public class UserDataHolderBase implements UserDataHolder, Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.UserDataHolderBase");
 
-  private Map<Key,Object> myUserMap = null;
+  private Map<Key, Object> myUserMap = null;
 
-  private static final Object USER_MAP_LOCK = new Object();
-  protected static final Key<Map<Key,Object>> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
+  private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+  private static final Lock r = rwl.readLock();
+  private static final Lock w = rwl.writeLock();
 
-  protected Object clone(){
-    try{
+  protected static final Key<Map<Key, Object>> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
+
+  protected Object clone() {
+    try {
       UserDataHolderBase clone = (UserDataHolderBase)super.clone();
-      Map<Key,Object> copyableMap = clone.getUserData(COPYABLE_USER_MAP_KEY);
+      Map<Key, Object> copyableMap = clone.getUserData(COPYABLE_USER_MAP_KEY);
       clone.myUserMap = null;
-      if (copyableMap != null){
-        final Map<Key,Object> mapclone = ((THashMap<Key, Object>)copyableMap).clone();
+      if (copyableMap != null) {
+        final Map<Key, Object> mapclone = ((THashMap<Key, Object>)copyableMap).clone();
         clone.putUserData(COPYABLE_USER_MAP_KEY, mapclone);
       }
       return clone;
     }
-    catch(CloneNotSupportedException e){
+    catch (CloneNotSupportedException e) {
       LOG.error(e);
       return null;
     }
   }
 
   public String getUserDataString() {
-    synchronized(USER_MAP_LOCK) {
+    r.lock();
+    try {
       if (myUserMap != null) {
         final Map copyableMap = (Map)myUserMap.get(COPYABLE_USER_MAP_KEY);
         if (copyableMap == null) {
           return myUserMap.toString();
-        } else {
+        }
+        else {
           return myUserMap.toString() + copyableMap.toString();
         }
-      } else {
+      }
+      else {
         return "";
       }
     }
+    finally {
+      r.unlock();
+    }
   }
 
-
-
   public <T> T getUserData(Key<T> key) {
-    synchronized(USER_MAP_LOCK){
-      if (myUserMap == null) return null;
+    if (myUserMap == null) return null;
+
+    r.lock();
+    try {
       return (T)myUserMap.get(key);
+    }
+    finally {
+      r.unlock();
     }
   }
 
   public <T> void putUserData(Key<T> key, T value) {
-    synchronized(USER_MAP_LOCK){
-      if (myUserMap == null){
+    w.lock();
+    try {
+      if (myUserMap == null) {
         if (value == null) return;
         myUserMap = new THashMap<Key, Object>(2, 0.9f);
       }
-      if (value != null){
+      if (value != null) {
         myUserMap.put(key, value);
       }
-      else{
+      else {
         myUserMap.remove(key);
-        if (myUserMap.size() == 0){
+        if (myUserMap.size() == 0) {
           myUserMap = null;
         }
       }
+    }
+    finally {
+      w.unlock();
     }
   }
 
@@ -92,10 +110,14 @@ public class UserDataHolderBase implements UserDataHolder, Cloneable{
   }
 
   protected <T> T getCopyableUserDataImpl(Key<T> key) {
-    synchronized(USER_MAP_LOCK){
+    r.lock();
+    try {
       Map map = getUserData(COPYABLE_USER_MAP_KEY);
       if (map == null) return null;
       return (T)map.get(key);
+    }
+    finally {
+      r.unlock();
     }
   }
 
@@ -104,27 +126,27 @@ public class UserDataHolderBase implements UserDataHolder, Cloneable{
   }
 
   protected <T> void putCopyableUserDataImpl(Key<T> key, T value) {
-    synchronized(USER_MAP_LOCK){
-      Map<Key,Object> map = getUserData(COPYABLE_USER_MAP_KEY);
-      if (map == null){
+    w.lock();
+    try {
+      Map<Key, Object> map = getUserData(COPYABLE_USER_MAP_KEY);
+      if (map == null) {
         if (value == null) return;
         map = new THashMap<Key, Object>(1, 0.9f);
         putUserData(COPYABLE_USER_MAP_KEY, map);
       }
 
-
-
-      if (value != null){
-
-        
+      if (value != null) {
         map.put(key, value);
       }
-      else{
+      else {
         map.remove(key);
-        if (map.size() == 0){
+        if (map.size() == 0) {
           putUserData(COPYABLE_USER_MAP_KEY, null);
         }
       }
+    }
+    finally {
+      w.unlock();
     }
   }
 }
