@@ -41,5 +41,6 @@
   <xi:include href="Css.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="PropertiesFile.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Profiles.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Xml.xml" xpointer="xpointer(/components/*)"/>
 
 </components>
