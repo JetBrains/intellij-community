@@ -206,7 +206,7 @@ public class MoveHandler implements RefactoringActionHandler {
 
   private static boolean tryDirectoryMove(Project project, final PsiElement[] sourceElements, final PsiElement targetElement, final MoveCallback callback) {
     if (targetElement instanceof PsiDirectory) {
-      final PsiElement[] adjustedElements = MoveClassesOrPackagesImpl.adjustForMove(project, sourceElements);
+      final PsiElement[] adjustedElements = MoveClassesOrPackagesImpl.adjustForMove(project, sourceElements, targetElement);
       if (adjustedElements != null) {
         if ( CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(adjustedElements),true) ) {
           new MoveClassesOrPackagesToNewDirectoryDialog((PsiDirectory)targetElement, adjustedElements, callback).show();
@@ -238,10 +238,10 @@ public class MoveHandler implements RefactoringActionHandler {
  * May replace some elements with others which actulaly shall be moved (e.g. directory->package)
  */
 @Nullable
-public static PsiElement[] adjustForMove(Project project, final PsiElement[] sourceElements) {
+public static PsiElement[] adjustForMove(Project project, final PsiElement[] sourceElements, final PsiElement targetElement) {
   final MoveType type = getMoveType(sourceElements);
   if ( type == MoveType.CLASSES || type == MoveType.PACKAGES ) {
-    return MoveClassesOrPackagesImpl.adjustForMove(project,sourceElements);
+    return MoveClassesOrPackagesImpl.adjustForMove(project,sourceElements, targetElement);
   }
   return sourceElements;
 }

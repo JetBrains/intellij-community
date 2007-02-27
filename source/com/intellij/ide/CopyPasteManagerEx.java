@@ -243,7 +243,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
         if (elements == null) {
           return;
         }
-        if ( MoveHandler.adjustForMove(myProject, elements) == null ) {
+        if ( MoveHandler.adjustForMove(myProject, elements, null) == null ) {
           return;
         }
         // 'elements' passed instead of result of 'adjustForMove' because otherwise ProjectView would
