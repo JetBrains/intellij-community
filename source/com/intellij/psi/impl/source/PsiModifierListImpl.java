@@ -112,7 +112,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
         }
         if (((PsiClass)parent).isEnum()){
           if (type == STATIC_KEYWORD) {
-            return true;
+            if (!(pparent instanceof PsiFile)) return true;
           }
           else if (type == FINAL_KEYWORD) {
             final PsiField[] fields = ((PsiClass)parent).getFields();
