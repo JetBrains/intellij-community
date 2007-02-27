@@ -111,6 +111,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
   private void releaseEditor() {
     if (myEditor != null) {
       EditorFactory.getInstance().releaseEditor(myEditor);
+      myEditor = null;
     }
   }
 }
