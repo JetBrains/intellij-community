@@ -49,10 +49,6 @@ public class VcsGroupsWrapper extends DefaultActionGroup {
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
   private AnAction[] myChildren;
 
-  public VcsGroupsWrapper() {
-    super();
-  }
-
   public void update(AnActionEvent e) {
     VcsContext dataContext = VcsContextWrapper.createInstanceOn(e);
     if (myChildren == null) {
@@ -84,26 +80,25 @@ public class VcsGroupsWrapper extends DefaultActionGroup {
       return;
     }
 
-    Collection<AbstractVcs> currentVcses = new HashSet<AbstractVcs>();
+    Collection<String> currentVcses = new HashSet<String>();
 
     VirtualFile[] selectedFiles = dataContext.getSelectedFiles();
 
     ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project);
 
-    Map<AbstractVcs, AnAction> vcsToActionMap = new HashMap<AbstractVcs, AnAction>();
+    Map<String, AnAction> vcsToActionMap = new HashMap<String, AnAction>();
 
-    for (int i = 0; i < myChildren.length; i++) {
-      StandardVcsGroup child = (StandardVcsGroup)myChildren[i];
-      AbstractVcs vcs = child.getVcs(project);
-      vcsToActionMap.put(vcs, child);
+    for (AnAction aMyChildren : myChildren) {
+      StandardVcsGroup child = (StandardVcsGroup)aMyChildren;
+      String vcsName = child.getVcsName(project);
+      vcsToActionMap.put(vcsName, child);
     }
 
     if (selectedFiles != null) {
-      for (int i = 0; i < selectedFiles.length; i++) {
-        VirtualFile selectedFile = selectedFiles[i];
+      for (VirtualFile selectedFile : selectedFiles) {
         AbstractVcs vcs = projectLevelVcsManager.getVcsFor(selectedFile);
         if (vcs != null) {
-          currentVcses.add(vcs);
+          currentVcses.add(vcs.getName());
         }
       }
     }
@@ -114,10 +109,10 @@ public class VcsGroupsWrapper extends DefaultActionGroup {
     }
     else {
       DefaultActionGroup composite = new DefaultActionGroup(VcsBundle.message("group.name.version.control"), true);
-      for (int i = 0; i < myChildren.length; i++) {
-        StandardVcsGroup child = (StandardVcsGroup)myChildren[i];
-        AbstractVcs vcs = child.getVcs(project);
-        if (currentVcses.contains(vcs)) {
+      for (AnAction aMyChildren : myChildren) {
+        StandardVcsGroup child = (StandardVcsGroup)aMyChildren;
+        String vcsName = child.getVcsName(project);
+        if (currentVcses.contains(vcsName)) {
           composite.add(child);
         }
       }

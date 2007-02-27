@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class StandardVcsGroup extends DefaultActionGroup {
   public abstract AbstractVcs getVcs(Project project);
@@ -27,11 +28,13 @@ public abstract class StandardVcsGroup extends DefaultActionGroup {
     Presentation presentation = e.getPresentation();
 
     Project project = e.getData(DataKeys.PROJECT);
-    presentation.setVisible(project != null && isVcsActive(project));
+    presentation.setVisible(project != null &&
+                            ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(getVcsName(project)));
     presentation.setEnabled(presentation.isVisible());
   }
 
-  protected boolean isVcsActive(final Project project) {
-    return ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(getVcs(project));
+  @NonNls
+  public String getVcsName(Project project) {
+    return getVcs(project).getName();
   }
 }
