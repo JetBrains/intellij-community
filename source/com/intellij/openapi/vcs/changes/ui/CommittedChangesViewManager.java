@@ -68,6 +68,7 @@ public class CommittedChangesViewManager implements ProjectComponent {
         vcsWithProviders.add(vcs);
       }
     }
+    CommittedChangesProvider oldProvider = myProvider;
     if (vcsWithProviders.size() == 0) {
       myProvider = null;
     }
@@ -88,6 +89,9 @@ public class CommittedChangesViewManager implements ProjectComponent {
       if (myContent == null) {
         if (myComponent == null) {
           myComponent = new CommittedChangesPanel(myProject, myProvider, myProvider.createDefaultSettings());
+        }
+        else {
+          myComponent.setProvider(myProvider);
         }
         myContent = PeerFactory.getInstance().getContentFactory().createContent(myComponent, "Committed", false);
         myContent.setCloseable(false);

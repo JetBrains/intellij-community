@@ -70,6 +70,13 @@ public class CommittedChangesPanel extends JPanel {
     myMaxCount = maxCount;
   }
 
+  public void setProvider(final CommittedChangesProvider provider) {
+    if (myProvider != provider) {
+      myProvider = provider;
+      mySettings = provider.createDefaultSettings(); 
+    }
+  }
+
   public void refreshChanges() {
     final Ref<VcsException> refEx = new Ref<VcsException>();
     final Ref<List<CommittedChangeList>> changes = new Ref<List<CommittedChangeList>>();
