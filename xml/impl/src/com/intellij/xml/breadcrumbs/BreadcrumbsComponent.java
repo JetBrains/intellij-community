@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomChangeSet;
 import com.intellij.pom.event.PomModelEvent;
@@ -245,11 +246,13 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       final Graphics2D g2 = ((Graphics2D)g);
       final Dimension d = getSize();
 
+      final FontMetrics fm = g2.getFontMetrics();
+
       boolean veryDirty = (myCrumbs == null);
-      final List<Crumb> crumbList = veryDirty ? createCrumbList(myElementList, g2, d.width) : myCrumbs;
+      final List<Crumb> crumbList = veryDirty ? createCrumbList(fm, myElementList, d.width) : myCrumbs;
       if (crumbList != null) {
         if (myDirty) { // TODO[spLeaner]: make buffer operations faster by redrawing only changed crumbs!!!
-          myBuffer = createBuffer(crumbList, d.height);
+          myBuffer = createBuffer(this, crumbList, d.height);
           myDirty = false;
         }
 
@@ -293,13 +296,13 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     }
 
     @Nullable
-    private List<Crumb> createCrumbList(@NotNull final List<XmlElement> elements, @NotNull final Graphics2D g2, final int width) {
+    private List<Crumb> createCrumbList(@NotNull final FontMetrics fm, @NotNull final List<XmlElement> elements, final int width) {
       if (elements.size() == 0) {
         return null;
       }
 
-      final NavigationCrumb forward = new NavigationCrumb(this, g2, true);
-      final NavigationCrumb backward = new NavigationCrumb(this, g2, false);
+      final NavigationCrumb forward = new NavigationCrumb(this, fm, true);
+      final NavigationCrumb backward = new NavigationCrumb(this, fm, false);
 
       final LinkedList<Crumb> result = new LinkedList<Crumb>();
       int screenWidth = 0;
@@ -310,7 +313,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       for (int i = lastIndex; i >= 0; i--) {
         final XmlTag tag = (XmlTag)elements.get(i);
         final String s = prepareString(tag);
-        final Dimension d = CrumbPainter.getSize(s, g2);
+        final Dimension d = CrumbPainter.getSize(s, fm);
         final Crumb crumb = new Crumb(this, s, d.width, tag, i == lastIndex);
         if (screenWidth + d.width > width) {
 
@@ -383,7 +386,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     }
 
     @NotNull
-    private static BufferedImage createBuffer(@NotNull final List<Crumb> crumbList, final int height) {
+    private static BufferedImage createBuffer(@NotNull final JComponent parent, @NotNull final List<Crumb> crumbList, final int height) {
       int totalWidth = 0;
       for (final Crumb each : crumbList) {
         totalWidth += each.getWidth();
@@ -391,6 +394,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
       final BufferedImage result = new BufferedImage(totalWidth, height, BufferedImage.TYPE_INT_ARGB);
       final Graphics2D g2 = (Graphics2D) result.getGraphics();
+      g2.setFont(parent.getFont());
       for (final Crumb each : crumbList) {
         each.paint(g2, height);
       }
@@ -404,7 +408,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
     public Dimension getPreferredSize() {
       final Graphics2D g2 = (Graphics2D)getGraphics();
-      return new Dimension(Integer.MAX_VALUE, CrumbPainter.getSize("dummy", g2).height);
+      return new Dimension(Integer.MAX_VALUE, CrumbPainter.getSize("dummy", g2.getFontMetrics()).height);
     }
 
     public Dimension getMaximumSize() {
@@ -522,8 +526,8 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     private boolean myForward;
     private CrumbLine myLine;
 
-    public NavigationCrumb(@NotNull final CrumbLine line, @NotNull final Graphics2D g2, final boolean forward) {
-      super(TEXT, CrumbPainter.getSize(TEXT, g2).width);
+    public NavigationCrumb(@NotNull final CrumbLine line, @NotNull final FontMetrics fm, final boolean forward) {
+      super(TEXT, CrumbPainter.getSize(TEXT, fm).width);
       myForward = forward;
       myLine = line;
     }
@@ -560,20 +564,22 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     public static void paint(@NotNull final Crumb c,
                              final int height,
                              @NotNull final Graphics2D g2) {
+
+      int roundValue = SystemInfo.isMac ? 5 : 2;
+
       g2.setColor(c.getBackgroundColor());
-      g2.fillRoundRect(c.getOffset() + 2, 2, c.getWidth() - 4, height - 4, 5, 5);
+      g2.fillRoundRect(c.getOffset() + 2, 2, c.getWidth() - 4, height - 4, roundValue, roundValue);
 
       g2.setColor(BreadcrumbsComponent.BORDER_COLOR);
-      g2.drawRoundRect(c.getOffset() + 2, 2, c.getWidth() - 4, height - 4, 5, 5);
+      g2.drawRoundRect(c.getOffset() + 2, 2, c.getWidth() - 4, height - 4, roundValue, roundValue);
 
       g2.setColor(c.getTextColor());
       g2.drawString(c.getString(), c.getOffset() + 4, 2 + g2.getFontMetrics().getAscent());
     }
 
     @NotNull
-    public static Dimension getSize(@NonNls @NotNull final String s, @NotNull final Graphics2D g2) {
-      final Dimension size = g2.getFontMetrics().getStringBounds(s, g2).getBounds().getSize();
-      return new Dimension(size.width + 8, size.height + 4);
+    public static Dimension getSize(@NonNls @NotNull final String s, @NotNull final FontMetrics fm) {
+      return new Dimension(fm.stringWidth(s) + 8, fm.getHeight() + 4);
     }
   }
 
