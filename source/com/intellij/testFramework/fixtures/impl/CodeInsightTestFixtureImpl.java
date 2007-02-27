@@ -210,7 +210,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           }
         }
 
-        final IntentionAction[] intentionActions = IntentionManager.getInstance(getProject()).getIntentionActions();
+        final IntentionAction[] intentionActions = IntentionManager.getInstance().getIntentionActions();
         for (IntentionAction intentionAction : intentionActions) {
           if (intentionAction.isAvailable(getProject(), getEditor(), getFile())) {
             availableActions.add(intentionAction);

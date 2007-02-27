@@ -10,6 +10,13 @@
     <idea-version since-build="2000"/>
     <is-internal/>
 
+    <extensions xmlns="com.intellij">
+      <intentionAction>
+        <className>com.intellij.codeInsight.intention.ConditionalOperatorConvertor</className>
+        <category>Conditional Operator</category>
+      </intentionAction>
+    </extensions>
+
     <project-components>
         <component>
             <implementation-class>com.intellij.codeInsight.intention.ConditionalOperatorConvertor</implementation-class>

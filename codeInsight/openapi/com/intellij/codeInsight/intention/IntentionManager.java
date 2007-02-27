@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -29,17 +28,23 @@ import java.util.List;
  *
  * @see IntentionAction
  */
-public abstract class IntentionManager implements ProjectComponent {
+public abstract class IntentionManager  {
   public static final ExtensionPointName<IntentionActionBean> EP_INTENTION_ACTIONS = new ExtensionPointName<IntentionActionBean>("com.intellij.intentionAction");
 
   /**
+   * @deprecated User {@link #getInstance()} unstead.
    * Returns instance of <code>IntentionManager</code> for given project.
    *
    * @param project the project for which the instance is returned.
    * @return instance of the <code>IntentionManager</code> assigned for given project.
    */
+  @Deprecated
   public static IntentionManager getInstance(Project project) {
-    return ServiceManager.getService(project, IntentionManager.class);
+    return ServiceManager.getService(IntentionManager.class);
+  }
+
+  public static IntentionManager getInstance() {
+    return ServiceManager.getService(IntentionManager.class);
   }
 
   /**

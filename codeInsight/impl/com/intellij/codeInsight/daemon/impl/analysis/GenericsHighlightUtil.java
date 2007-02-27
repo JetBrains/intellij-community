@@ -427,7 +427,7 @@ public class GenericsHighlightUtil {
     HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
                                                                     elementToHighlight,
                                                                     description);
-    List<IntentionAction> options = IntentionManager.getInstance(elementToHighlight.getProject()).getStandardIntentionOptions(key,elementToHighlight);
+    List<IntentionAction> options = IntentionManager.getInstance().getStandardIntentionOptions(key,elementToHighlight);
     String displayName = UncheckedWarningLocalInspection.DISPLAY_NAME;
     QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(elementToHighlight.getContainingFile()), options, displayName);
     return highlightInfo;
@@ -531,7 +531,7 @@ public class GenericsHighlightUtil {
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
                                                                       typeCast,
                                                                       description);
-      List<IntentionAction> options = IntentionManager.getInstance(expression.getProject()).getStandardIntentionOptions(key,expression);
+      List<IntentionAction> options = IntentionManager.getInstance().getStandardIntentionOptions(key,expression);
       String displayName = UncheckedWarningLocalInspection.DISPLAY_NAME;
       QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(expression.getContainingFile()), options, displayName);
       return highlightInfo;
@@ -655,7 +655,7 @@ public class GenericsHighlightUtil {
                              : call;
         if (InspectionManagerEx.inspectionResultSuppressed(call, UncheckedWarningLocalInspection.ID)) return null;
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, element, description);
-        List<IntentionAction> options = IntentionManager.getInstance(call.getProject()).getStandardIntentionOptions(key,call);
+        List<IntentionAction> options = IntentionManager.getInstance().getStandardIntentionOptions(key,call);
         String displayName = UncheckedWarningLocalInspection.DISPLAY_NAME;
         QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(element.getContainingFile()), options, displayName);
         return highlightInfo;
@@ -1067,7 +1067,7 @@ public class GenericsHighlightUtil {
         final PsiTypeElement returnTypeElement = overrider.getReturnTypeElement();
         LOG.assertTrue(returnTypeElement != null);
         final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, returnTypeElement, message);
-        List<IntentionAction> options = IntentionManager.getInstance(overrider.getProject()).getStandardIntentionOptions(key,returnTypeElement);
+        List<IntentionAction> options = IntentionManager.getInstance().getStandardIntentionOptions(key,returnTypeElement);
         String displayName = UncheckedWarningLocalInspection.DISPLAY_NAME;
         QuickFixAction.registerQuickFixAction(highlightInfo,
                                               new EmptyIntentionAction(JavaErrorMessages.message("unchecked.overriding"), options),

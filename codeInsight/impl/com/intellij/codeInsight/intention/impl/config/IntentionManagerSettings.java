@@ -9,6 +9,7 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -80,6 +81,7 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
   }
 
   @NotNull public List<IntentionActionMetaData> getMetaData() {
+    IntentionManager.getInstance(); // TODO: Hack to make IntentionManager actually register metadata here. Dependencies between IntentionManager and IntentionManagerSettings should be revised.
     return new ArrayList<IntentionActionMetaData>(myMetaData.values());
   }
 

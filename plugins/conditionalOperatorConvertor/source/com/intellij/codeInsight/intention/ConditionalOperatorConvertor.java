@@ -1,7 +1,5 @@
 package com.intellij.codeInsight.intention;
 
-import com.intellij.psi.JavaTokenType;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -9,38 +7,13 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dsl
  */
-@NonNls public class ConditionalOperatorConvertor extends PsiElementBaseIntentionAction implements ProjectComponent, IntentionAction {
-
-  public static ConditionalOperatorConvertor getInstance(Project project) {
-    return project.getComponent(ConditionalOperatorConvertor.class);
-  }
-
-  public ConditionalOperatorConvertor(IntentionManager intentionManager) {
-    intentionManager.registerIntentionAndMetaData(this, "Conditional Operator");
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "TernaryOperatorConverter";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
+@NonNls public class ConditionalOperatorConvertor extends PsiElementBaseIntentionAction implements IntentionAction {
 
   @NotNull
   public String getText() {

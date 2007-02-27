@@ -36,11 +36,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -211,7 +211,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (InspectionManagerEx.inspectionResultSuppressed(identifier, unusedSymbolInspection)) return null;
     PsiElement parent = identifier.getParent();
     if (PsiUtil.hasErrorElementChild(parent)) return null;
-    List<IntentionAction> options = IntentionManager.getInstance(myProject).getStandardIntentionOptions(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME), identifier);
+    List<IntentionAction> options = IntentionManager.getInstance().getStandardIntentionOptions(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME), identifier);
     String displayName  = UnusedSymbolLocalInspection.DISPLAY_NAME;
     HighlightInfo info;
 

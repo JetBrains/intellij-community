@@ -9,7 +9,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.intention.ConditionalOperatorConvertor;
-import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.LightCodeInsightTestCase;
@@ -22,8 +21,7 @@ public class ConditionalToIfTest extends LightCodeInsightTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    myAction = new ConditionalOperatorConvertor(IntentionManager.getInstance(getProject()));
-    myAction.initComponent();
+    myAction = new ConditionalOperatorConvertor();
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     myElseOnNewLine = settings.ELSE_ON_NEW_LINE;
     settings.ELSE_ON_NEW_LINE = true;

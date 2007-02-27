@@ -15,6 +15,7 @@ import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsInSuppressedPlaceIntention;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -69,34 +70,43 @@ public class IntentionManagerImpl extends IntentionManager {
     addAction(new EditFoldingOptionsAction());
     addAction(new EditInspectionToolsSettingsInSuppressedPlaceIntention());
 
-    Extensions.getArea(null).getExtensionPoint(EP_INTENTION_ACTIONS).addExtensionPointListener(new ExtensionPointListener<IntentionActionBean>() {
+    final ExtensionPoint<IntentionActionBean> point = Extensions.getArea(null).getExtensionPoint(EP_INTENTION_ACTIONS);
+    for (IntentionActionBean bean : point.getExtensions()) {
+      registerIntentionFromBean(bean, bean.getPluginDescriptor());
+    }
+
+    point.addExtensionPointListener(new ExtensionPointListener<IntentionActionBean>() {
       public void extensionAdded(final IntentionActionBean extension, @Nullable final PluginDescriptor pluginDescriptor) {
-        ClassLoader classLoader = pluginDescriptor != null ? pluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
-        try {
-          final Class<?> aClass = Class.forName(extension.getClassName(), true, classLoader);
-          final String descriptionDirectoryName = extension.getDescriptionDirectoryName();
-          if (descriptionDirectoryName != null) {
-            registerIntentionAndMetaData((IntentionAction)aClass.newInstance(), extension.getClassName(), descriptionDirectoryName);
-          }
-          else {
-            registerIntentionAndMetaData((IntentionAction)aClass.newInstance(), extension.getCategories());
-          }
-        }
-        catch (ClassNotFoundException e) {
-          LOG.error(e);
-        }
-        catch (IllegalAccessException e) {
-          LOG.error(e);
-        }
-        catch (InstantiationException e) {
-          LOG.error(e);
-        }
+        registerIntentionFromBean(extension, pluginDescriptor);
       }
 
       public void extensionRemoved(final IntentionActionBean extension, @Nullable final PluginDescriptor pluginDescriptor) {
         throw new UnsupportedOperationException("Method extensionRemoved is not supported in " + getClass());
       }
     });
+  }
+
+  private void registerIntentionFromBean(final IntentionActionBean extension, final PluginDescriptor pluginDescriptor) {
+    ClassLoader classLoader = pluginDescriptor != null ? pluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
+    try {
+      final Class<?> aClass = Class.forName(extension.getClassName(), true, classLoader);
+      final String descriptionDirectoryName = extension.getDescriptionDirectoryName();
+      if (descriptionDirectoryName != null) {
+        registerIntentionAndMetaData((IntentionAction)aClass.newInstance(), extension.getClassName(), descriptionDirectoryName);
+      }
+      else {
+        registerIntentionAndMetaData((IntentionAction)aClass.newInstance(), extension.getCategories());
+      }
+    }
+    catch (ClassNotFoundException e) {
+      LOG.error(e);
+    }
+    catch (IllegalAccessException e) {
+      LOG.error(e);
+    }
+    catch (InstantiationException e) {
+      LOG.error(e);
+    }
   }
 
   public void registerIntentionAndMetaData(IntentionAction action, String... category) {
@@ -128,22 +138,6 @@ public class IntentionManagerImpl extends IntentionManager {
     return options;
   }
 
-  public void initComponent() { }
-
-  public void disposeComponent(){
-  }
-
-  @NotNull
-  public String getComponentName(){
-    return "IntentionManager";
-  }
-
-  public void projectOpened(){
-  }
-
-  public void projectClosed(){
-  }
-
   public void addAction(IntentionAction action) {
     myActions.add(action);
   }
@@ -151,5 +145,4 @@ public class IntentionManagerImpl extends IntentionManager {
   public IntentionAction[] getIntentionActions() {
     return myActions.toArray(new IntentionAction[myActions.size()]);
   }
-
 }
