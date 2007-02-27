@@ -104,13 +104,13 @@ public class CreateFromTemplateDialog extends DialogWrapper {
   }
 
   @Nullable
-  private static String filterMessage(String message){
+  private String filterMessage(String message){
     if (message == null) return null;
     @NonNls String ioExceptionPrefix = "java.io.IOException:";
     if (message.startsWith(ioExceptionPrefix)){
       message = message.substring(ioExceptionPrefix.length());
     }
-    return IdeBundle.message("error.parsing.template") + ":\n" + message;
+    return IdeBundle.message("error.unable.to.parse.template.message", myTemplate.getName(), message);
   }
 
   protected JComponent createCenterPanel(){

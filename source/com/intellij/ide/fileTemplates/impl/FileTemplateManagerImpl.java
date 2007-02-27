@@ -233,6 +233,9 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       String name = file.getName();
       String extension = myTypeManager.getExtension(name);
       name = name.substring(0, name.length() - extension.length() - 1);
+      if ( file.isHidden() || name.length() == 0 ) {
+        continue;
+      }
       FileTemplate existing = myTemplates.findByName(name);
       if (existing == null || existing.isDefault()) {
         if (existing != null) {

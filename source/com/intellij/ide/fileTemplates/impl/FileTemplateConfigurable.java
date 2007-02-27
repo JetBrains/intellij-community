@@ -264,11 +264,25 @@ public class FileTemplateConfigurable implements Configurable {
         name += extension.substring(0, lastDotIndex + 1);
         extension = extension.substring(lastDotIndex + 1);
       }
+      if (name.length() == 0 || !isValidFilename(name + "." + extension)) {
+        throw new ConfigurationException(IdeBundle.message("error.invalid.template.file.name.or.extension"));
+      }
       myTemplate.setName(name);
       myTemplate.setExtension(extension);
       myTemplate.setAdjust(myAdjustBox.isSelected());
     }
     myModified = false;
+  }
+
+  // TODO: needs to be generalized someday for other profiles
+  private static boolean isValidFilename(final String filename) {
+    for (int i = 0; i != filename.length(); i++) {
+      final char ch = filename.charAt(i);
+      if (ch !='.' && !Character.isJavaIdentifierPart(ch)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public void reset() {
