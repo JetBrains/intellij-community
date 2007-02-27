@@ -135,7 +135,7 @@ public class TestRunnerUtil {
 
   private static Class loadTestClass(IdeaTestRunner runner, String suiteClassName) {
     try {
-      return runner.loadSuiteClass(suiteClassName);
+      return Class.forName(suiteClassName);
     }
     catch (ClassNotFoundException e) {
       String clazz = e.getMessage();
@@ -145,7 +145,7 @@ public class TestRunnerUtil {
       runner.runFailed(MessageFormat.format(ourBundle.getString("junit.class.not.found"), new Object[] {clazz}));
     }
     catch (Exception e) {
-      runner.runFailed(MessageFormat.format(ourBundle.getString("junit.cannot.instantiate.tests"), new Object[] {e.toString()}));
+      runner.runFailed(MessageFormat.format(ourBundle.getString("junit.cannot.instantiate.tests"), new Object[]{e.toString()}));
     }
     return null;
   }

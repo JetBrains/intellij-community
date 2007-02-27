@@ -37,10 +37,6 @@ public class IdeaTestRunner extends TestRunner {
     super.clearStatus();
   }
 
-  public Class loadSuiteClass(String suiteClassName) throws ClassNotFoundException {
-    return super.loadSuiteClass(suiteClassName);
-  }
-
   public void runFailed(String message) {
     super.runFailed(message);
   }
