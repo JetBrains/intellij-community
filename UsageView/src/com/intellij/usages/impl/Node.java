@@ -19,11 +19,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 16, 2004
- * Time: 5:38:12 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 abstract class Node extends DefaultMutableTreeNode {
   private boolean myIsValid = true;
@@ -37,14 +33,8 @@ abstract class Node extends DefaultMutableTreeNode {
 
   /**
    * debug method for producing string tree presentation
-   * @param indent
-   * @param lineSeparator
    */
   public abstract String tree2string(int indent, String lineSeparator);
-
-  void appendSpaces(StringBuffer s, int spaces) {
-    for (int i = 0; i < spaces; i++) s.append(' ');
-  }
 
   protected abstract boolean isDataValid();
   protected abstract boolean isDataReadOnly();

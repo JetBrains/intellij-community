@@ -20,6 +20,7 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.rules.MergeableUsage;
+import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -186,7 +187,7 @@ class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
 
   public String tree2string(int indent, String lineSeparator) {
     StringBuffer result = new StringBuffer();
-    appendSpaces(result, indent);
+    StringUtil.repeatSymbol(result, ' ', indent);
 
     if (myGroup != null) result.append(myGroup.toString());
     result.append("[");
@@ -199,7 +200,7 @@ class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
       result.append(lineSeparator);
     }
 
-    appendSpaces(result, indent);
+    StringUtil.repeatSymbol(result, ' ', indent);
     result.append("]");
     result.append(lineSeparator);
 

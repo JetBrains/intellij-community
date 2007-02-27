@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.usages.Usage;
 
@@ -39,7 +40,7 @@ class UsageNode extends Node implements Comparable<UsageNode>, Navigatable {
 
   public String tree2string(int indent, String lineSeparator) {
     StringBuffer result = new StringBuffer();
-    appendSpaces(result, indent);
+    StringUtil.repeatSymbol(result, ' ', indent);
     result.append(myUsage.toString());
     return result.toString();
   }

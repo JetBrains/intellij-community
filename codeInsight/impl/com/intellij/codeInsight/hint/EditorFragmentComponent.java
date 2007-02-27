@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -28,7 +27,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class EditorFragmentComponent extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.EditorFragmentComponent");
 
   private EditorFragmentComponent(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
     Document doc = editor.getDocument();
@@ -59,7 +57,7 @@ public class EditorFragmentComponent extends JPanel {
     final Image markersImage;
     if (showGutter) {
       rowHeader = editor.getGutterComponentEx();
-      markersImage = new BufferedImage(rowHeader.getWidth(), y2 - y1, BufferedImage.TYPE_INT_RGB);
+      markersImage = new BufferedImage(Math.max(1, rowHeader.getWidth()), y2 - y1, BufferedImage.TYPE_INT_RGB);
       Graphics markerGraphics = markersImage.getGraphics();
 
       markerGraphics.translate(0, -y1);

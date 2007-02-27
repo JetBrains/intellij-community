@@ -16,6 +16,11 @@ public class TitledSeparator extends JPanel {
     add(separator, new GridBagConstraints(1,0,GridBagConstraints.REMAINDER,0,1,0,GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,5), 0,0));
   }
 
+  public TitledSeparator(String text) {
+    this();
+    setText(text);
+  }
+
   public String getText() {
     return myLabel.getText();
   }

@@ -3,6 +3,8 @@ package com.intellij.find.findUsages;
 import com.intellij.find.FindManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.vcs.FileStatus;
@@ -16,17 +18,15 @@ import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.UsageTarget;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 17, 2004
- * Time: 4:46:38 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
-public class PsiElement2UsageTargetAdapter implements UsageTarget {
+public class PsiElement2UsageTargetAdapter implements UsageTarget, DataProvider {
   private SmartPsiElementPointer myPointer;
   private MyItemPresentation myPresentation;
 
@@ -116,6 +116,14 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
     }
 
     return targets;
+  }
+
+  @Nullable
+  public Object getData(@NonNls final String dataId) {
+    if (DataConstants.PSI_ELEMENT.equals(dataId)) {
+      return getElement();
+    }
+    return null;
   }
 
   private class MyItemPresentation implements ItemPresentation {

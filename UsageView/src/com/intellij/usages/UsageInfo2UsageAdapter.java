@@ -16,6 +16,9 @@
 package com.intellij.usages;
 
 import com.intellij.ide.SelectInEditorManager;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -27,11 +30,12 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.rules.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -40,7 +44,8 @@ import java.util.List;
 /**
  * @author max
  */
-public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, UsageInFile, PsiElementUsage, MergeableUsage, Comparable<UsageInfo2UsageAdapter>, RenameableUsage {
+public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, UsageInFile, PsiElementUsage, MergeableUsage, Comparable<UsageInfo2UsageAdapter>, RenameableUsage,
+                                               DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.UsageInfo2UsageAdapter");
 
   private final UsageInfo myUsageInfo;
@@ -254,8 +259,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
     final PsiFile containingFile = element == null ? null : element.getContainingFile();
     final PsiElement oElement = o.getElement();
     final PsiFile oContainingFile = oElement == null ? null : oElement.getContainingFile();
-    if ((containingFile == null && oContainingFile == null) ||
-        !Comparing.equal(containingFile, oContainingFile)) {
+    if (containingFile == null && oContainingFile == null
+        || !Comparing.equal(containingFile, oContainingFile)) {
       return 0;
     }
     return getRangeMarker().getStartOffset() - o.getRangeMarker().getStartOffset();
@@ -307,5 +312,13 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
     }
 
     return result;
+  }
+
+  @Nullable
+  public Object getData(@NonNls final String dataId) {
+    if (DataConstants.PSI_ELEMENT.equals(dataId)) {
+      return getElement();
+    }
+    return null;
   }
 }

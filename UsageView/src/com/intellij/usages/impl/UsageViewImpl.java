@@ -24,12 +24,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SmartExpander;
@@ -118,6 +120,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   };
   @NonNls private static final String HELP_ID = "ideaInterface.find";
+  private UsagePreviewPanel myUsagePreviewPanel;
+  private JPanel myCentralPanel;
+  private static final Icon PREVIEW_ICON = IconLoader.getIcon("/actions/preview.png");
 
   public UsageViewImpl(UsageViewPresentation presentation,
                        UsageTarget[] targets,
@@ -158,21 +163,15 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
         myRootPanel.setLayout(new BorderLayout());
 
-        JPanel centralPanel = new JPanel();
-        centralPanel.setLayout(new BorderLayout());
-        myRootPanel.add(centralPanel, BorderLayout.CENTER);
-
         JPanel toolbarPanel = new JPanel(new BorderLayout());
         toolbarPanel.add(createActionsToolbar(), BorderLayout.WEST);
         toolbarPanel.add(createFiltersToolbar(), BorderLayout.CENTER);
         myRootPanel.add(toolbarPanel, BorderLayout.WEST);
 
-        //Splitter splitter = new Splitter(false, 0.5f);
-        //splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
-        //splitter.setSecondComponent(new UsagePreviewPanel(myTree, UsageViewImpl.this));
-        //centralPanel.add(splitter, BorderLayout.CENTER);
-        centralPanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
-        centralPanel.add(myButtonPanel, BorderLayout.SOUTH);
+        myCentralPanel = new JPanel();
+        myCentralPanel.setLayout(new BorderLayout());
+        myRootPanel.add(myCentralPanel, BorderLayout.CENTER);
+        setupCentralPanel();
 
         initTree();
 
@@ -190,6 +189,27 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         }
       }
     });
+  }
+
+  private void setupCentralPanel() {
+    myCentralPanel.removeAll();
+    if (myUsagePreviewPanel != null) {
+      myUsagePreviewPanel.dispose();
+      myUsagePreviewPanel = null;
+    }
+    if (UsageViewSettings.getInstance().IS_PREVIEW_USAGES) {
+      Splitter splitter = new Splitter(false, UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS);
+      splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
+      myUsagePreviewPanel = new UsagePreviewPanel(myTree, this);
+      splitter.setSecondComponent(myUsagePreviewPanel);
+      myCentralPanel.add(splitter, BorderLayout.CENTER);
+    }
+    else {
+      myCentralPanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
+    }
+    myCentralPanel.add(myButtonPanel, BorderLayout.SOUTH);
+
+    myRootPanel.revalidate();
   }
 
   private static UsageFilteringRule[] getActiveFilteringRules(final Project project) {
@@ -295,6 +315,16 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     for (AnAction filteringAction : filteringActions) {
       group.add(filteringAction);
     }
+    group.add(new RuleAction(this, UsageViewBundle.message("preview.usages.action.text"), PREVIEW_ICON) {
+      protected boolean getOptionValue() {
+        return UsageViewSettings.getInstance().IS_PREVIEW_USAGES;
+      }
+
+      protected void setOptionValue(final boolean value) {
+        UsageViewSettings.getInstance().IS_PREVIEW_USAGES = value;
+      }
+    });
+
     return toUsageViewToolbar(group);
   }
 
@@ -398,6 +428,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         }
       }
     });
+    setupCentralPanel();
     restoreUsageExpandState(states);
   }
 
@@ -684,6 +715,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     myModelTracker.dispose();
     myUpdateAlarm.cancelAllRequests();
     myRootPanel.dispose();
+    if (myUsagePreviewPanel != null) {
+      UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS = ((Splitter)myUsagePreviewPanel.getParent()).getProportion();
+      myUsagePreviewPanel.dispose();
+    }
   }
 
   public boolean isSearchInProgress() {
@@ -946,7 +981,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       };
     }
 
-    void dispose() {
+    private void dispose() {
       mySupport = null;
     }
 
@@ -1181,5 +1216,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       );
 
     }
+  }
+
+  public PsiElement getSelectedPsiElement() {
+    return (PsiElement)DataManager.getInstance().getDataContext(myRootPanel).getData(DataConstants.PSI_ELEMENT);
   }
 }

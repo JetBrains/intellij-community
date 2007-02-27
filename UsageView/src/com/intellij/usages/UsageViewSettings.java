@@ -15,45 +15,37 @@
 */
 package com.intellij.usages;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
-public class UsageViewSettings implements JDOMExternalizable, ApplicationComponent{
-  public String EXPORT_FILE_NAME;
+@State(
+  name = "UsageViewSettings",
+  storages = {
+    @Storage(
+      id ="other",
+      file = "$APP_CONFIG$/other.xml"
+    )}
+)
+public class UsageViewSettings implements PersistentStateComponent<UsageViewSettings> {
+  @NonNls public String EXPORT_FILE_NAME = "$PROJECT_DIR$/report.txt";
   public boolean IS_EXPANDED = false;
   public boolean IS_SHOW_PACKAGES = true;
   public boolean IS_SHOW_METHODS = false;
   public boolean IS_AUTOSCROLL_TO_SOURCE = false;
   public boolean IS_FILTER_DUPLICATED_LINE = false;
   public boolean IS_SHOW_MODULES = false;
+  public boolean IS_PREVIEW_USAGES = false;
+  public float PREVIEW_USAGES_SPLITTER_PROPORTIONS = 0.5f;
 
   public static UsageViewSettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(UsageViewSettings.class);
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
-  }
-
-  public String getComponentName() {
-    return "UsageViewSettings";
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    return ServiceManager.getService(UsageViewSettings.class);
   }
 
   public boolean isExpanded() {
@@ -96,6 +88,7 @@ public class UsageViewSettings implements JDOMExternalizable, ApplicationCompone
     IS_FILTER_DUPLICATED_LINE = val;
   }
 
+  @Transient
   public String getExportFileName() {
     return EXPORT_FILE_NAME != null ? EXPORT_FILE_NAME.replace('/', File.separatorChar) : null;
   }
@@ -107,4 +100,11 @@ public class UsageViewSettings implements JDOMExternalizable, ApplicationCompone
     EXPORT_FILE_NAME = s;
   }
 
+  public UsageViewSettings getState() {
+    return this;
+  }
+
+  public void loadState(final UsageViewSettings object) {
+    XmlSerializerUtil.copyBean(object, this);
+  }
 }

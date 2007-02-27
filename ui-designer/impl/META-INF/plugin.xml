@@ -139,7 +139,7 @@
     <group id="GuiDesigner.MainToolbarActions">
       <separator/>
       <action id="GuiDesigner.PreviewForm" class="com.intellij.uiDesigner.actions.PreviewFormAction"
-              icon="/com/intellij/uiDesigner/icons/preview.png"/>
+              icon="/actions/preview.png"/>
       <action id="GuiDesigner.DataBindingWizard" class="com.intellij.uiDesigner.actions.DataBindingWizardAction"
               icon="/com/intellij/uiDesigner/icons/dataBindingWizard.png"/>
       <action id="GuiDesigner.ReloadCustomComponents" class="com.intellij.uiDesigner.actions.ReloadCustomComponentsAction"

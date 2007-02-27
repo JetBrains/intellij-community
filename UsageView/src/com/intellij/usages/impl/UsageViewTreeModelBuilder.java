@@ -17,11 +17,12 @@ package com.intellij.usages.impl;
 
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewPresentation;
+import org.jetbrains.annotations.NonNls;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
-import javax.swing.*;
 
 public class UsageViewTreeModelBuilder extends DefaultTreeModel {
   private final RootGroupNode myRootNode;
@@ -40,7 +41,7 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
     myTargets = targets;
     myTargetsNodeText = presentation.getTargetsNodeText();
     if (myTargetsNodeText != null) {
-      myTargetsNode = new TargetsRootNode(targets, myTargetsNodeText);
+      myTargetsNode = new TargetsRootNode(myTargetsNodeText);
       addTargetNodes();
     }
     else {
@@ -49,11 +50,8 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
   }
 
   public static class TargetsRootNode extends DefaultMutableTreeNode {
-    private final UsageTarget[] myTargets;
-
-    public TargetsRootNode(UsageTarget[] targets, String name) {
+    public TargetsRootNode(String name) {
       super(name);
-      myTargets = targets;
     }
   }
 
@@ -117,6 +115,7 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
       });
     }
 
+    @NonNls
     public String toString() {
       return "Root "+super.toString();
     }

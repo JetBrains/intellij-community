@@ -16,20 +16,17 @@
 package com.intellij.usages.impl;
 
 import com.intellij.usages.UsageTarget;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultTreeModel;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 22, 2004
- * Time: 1:08:42 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class UsageTargetNode extends Node {
   private UsageTarget myTarget;
 
-  public UsageTargetNode(UsageTarget target, DefaultTreeModel model) {
+  public UsageTargetNode(@NotNull UsageTarget target, @NotNull DefaultTreeModel model) {
     super(model);
     myTarget = target;
     setUserObject(target);

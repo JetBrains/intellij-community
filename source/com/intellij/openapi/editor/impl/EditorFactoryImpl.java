@@ -15,8 +15,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.ide.highlighter.HighlighterFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -82,12 +84,12 @@ public class EditorFactoryImpl extends EditorFactory {
   }
 
   @NotNull
-  public Document createDocument(char[] text) {
+  public Document createDocument(@NotNull char[] text) {
     return createDocument(new CharArrayCharSequence(text));
   }
 
   @NotNull
-  public Document createDocument(CharSequence text) {
+  public Document createDocument(@NotNull CharSequence text) {
     DocumentImpl document = new DocumentImpl(text);
     myEditorEventMulticaster.registerDocument(document);
     return document;
@@ -100,20 +102,26 @@ public class EditorFactoryImpl extends EditorFactory {
     }
   }
 
-  public Editor createEditor(Document document) {
+  public Editor createEditor(@NotNull Document document) {
     return createEditor(document, false, null);
   }
 
-  public Editor createViewer(Document document) {
+  public Editor createViewer(@NotNull Document document) {
     return createEditor(document, true, null);
   }
 
-  public Editor createEditor(Document document, Project project) {
+  public Editor createEditor(@NotNull Document document, Project project) {
     return createEditor(document, false, project);
   }
 
-  public Editor createViewer(Document document, Project project) {
+  public Editor createViewer(@NotNull Document document, Project project) {
     return createEditor(document, true, project);
+  }
+
+  public Editor createEditor(@NotNull final Document document, final Project project, @NotNull final FileType fileType, final boolean isViewer) {
+    Editor editor = createEditor(document, isViewer, project);
+    ((EditorEx)editor).setHighlighter(HighlighterFactory.createHighlighter(project, fileType));
+    return editor;
   }
 
   private Editor createEditor(Document document, boolean isViewer, Project project) {
@@ -137,7 +145,7 @@ public class EditorFactoryImpl extends EditorFactory {
     return editor;
   }
 
-  public void releaseEditor(Editor editor) {
+  public void releaseEditor(@NotNull Editor editor) {
     editor.putUserData(EDITOR_CREATOR, null);
     ((EditorImpl)editor).release();
     myEditors.remove(editor);
@@ -149,7 +157,8 @@ public class EditorFactoryImpl extends EditorFactory {
     }
   }
 
-  public Editor[] getEditors(Document document, Project project) {
+  @NotNull
+  public Editor[] getEditors(@NotNull Document document, Project project) {
     ArrayList<Editor> list = new ArrayList<Editor>();
     for (Editor editor : myEditors) {
       Project project1 = editor.getProject();
@@ -160,19 +169,21 @@ public class EditorFactoryImpl extends EditorFactory {
     return list.toArray(new Editor[list.size()]);
   }
 
-  public Editor[] getEditors(Document document) {
+  @NotNull
+  public Editor[] getEditors(@NotNull Document document) {
     return getEditors(document, null);
   }
 
+  @NotNull
   public Editor[] getAllEditors() {
     return myEditors.toArray(new Editor[myEditors.size()]);
   }
 
-  public void addEditorFactoryListener(EditorFactoryListener listener) {
+  public void addEditorFactoryListener(@NotNull EditorFactoryListener listener) {
     myEditorFactoryEventDispatcher.addListener(listener);
   }
 
-  public void removeEditorFactoryListener(EditorFactoryListener listener) {
+  public void removeEditorFactoryListener(@NotNull EditorFactoryListener listener) {
     myEditorFactoryEventDispatcher.removeListener(listener);
   }
 
