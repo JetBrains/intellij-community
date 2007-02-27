@@ -139,10 +139,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.util.xml.ui.CommittableUtil</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <interface-class>com.intellij.ide.util.PropertiesComponent</interface-class>
       <implementation-class>com.intellij.ide.util.PropertiesComponentImpl</implementation-class>
       <option name="workspace" value="true"/>

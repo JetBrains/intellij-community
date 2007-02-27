@@ -14,6 +14,8 @@ import java.lang.reflect.Type;
  * @author peter
  */
 public final class JavaMethod implements AnnotatedElement{
+  public static final JavaMethod[] EMPTY_ARRAY = new JavaMethod[0];
+
   private static final FactoryMap<JavaMethodSignature,FactoryMap<Class,JavaMethod>> ourMethods = new FactoryMap<JavaMethodSignature, FactoryMap<Class, JavaMethod>>() {
     protected FactoryMap<Class, JavaMethod> create(final JavaMethodSignature signature) {
       return new FactoryMap<Class, JavaMethod>() {

@@ -495,7 +495,7 @@ public class GenericInfoImpl implements DomGenericInfo {
   @Deprecated
   @Nullable
   public FixedChildDescriptionImpl getFixedChildDescription(String tagName) {
-    return getFixedChildDescription(new XmlName(tagName));
+    return findChildDescription(tagName, getFixedChildrenDescriptions());
   }
 
   @Nullable
@@ -517,7 +517,7 @@ public class GenericInfoImpl implements DomGenericInfo {
 
   @Deprecated
   @Nullable public CollectionChildDescriptionImpl getCollectionChildDescription(String tagName) {
-    return getCollectionChildDescription(new XmlName(tagName));
+    return findChildDescription(tagName, getCollectionChildrenDescriptions());
   }
 
   @Nullable
@@ -536,7 +536,14 @@ public class GenericInfoImpl implements DomGenericInfo {
 
   @Deprecated
   @Nullable public AttributeChildDescriptionImpl getAttributeChildDescription(String attributeName) {
-    return getAttributeChildDescription(new XmlName(attributeName));
+    return findChildDescription(attributeName, getAttributeChildrenDescriptions());
+  }
+
+  private static <T extends DomChildrenDescription> T findChildDescription(final String localName, final List<T> list) {
+    for (final T description : list) {
+      if (description.getXmlElementName().equals(localName)) return description;
+    }
+    return null;
   }
 
   @Nullable

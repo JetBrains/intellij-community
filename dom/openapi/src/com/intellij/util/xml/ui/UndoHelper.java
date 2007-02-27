@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiDocumentManager;
 
 import java.util.HashSet;
@@ -34,7 +35,7 @@ public class UndoHelper {
   public UndoHelper(final Project project, final Committable committable) {
     myProject = project;
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-    final CommittableUtil committableUtil = project.getComponent(CommittableUtil.class);
+    final CommittableUtil committableUtil = ServiceManager.getService(project, CommittableUtil.class);
     CommandProcessor.getInstance().addCommandListener(new CommandAdapter() {
       public void commandStarted(CommandEvent event) {
         undoTransparentActionStarted();

@@ -6,6 +6,7 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
@@ -55,7 +56,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
 
   public void commit() {
     if (checkIsValid()) {
-      getProject().getComponent(CommittableUtil.class).commit(myComponent);
+      ServiceManager.getService(getProject(), CommittableUtil.class).commit(myComponent);
     }
   }
 

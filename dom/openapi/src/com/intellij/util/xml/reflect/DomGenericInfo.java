@@ -39,17 +39,17 @@ public interface DomGenericInfo {
 
   @Nullable DomFixedChildDescription getFixedChildDescription(@NonNls String tagName);
 
-  @Nullable DomFixedChildDescription getFixedChildDescription(@NonNls String tagName, @NonNls String namespace);
+  @Nullable DomFixedChildDescription getFixedChildDescription(@NonNls String tagName, @NonNls String namespaceKey);
 
   @Nullable DomCollectionChildDescription getCollectionChildDescription(@NonNls String tagName);
 
-  @Nullable DomCollectionChildDescription getCollectionChildDescription(@NonNls String tagName, @NonNls String namespace);
+  @Nullable DomCollectionChildDescription getCollectionChildDescription(@NonNls String tagName, @NonNls String namespaceKey);
 
   @Nullable
   DomAttributeChildDescription getAttributeChildDescription(@NonNls String attributeName);
 
   @Nullable
-  DomAttributeChildDescription getAttributeChildDescription(@NonNls String attributeName, @NonNls String namespace);
+  DomAttributeChildDescription getAttributeChildDescription(@NonNls String attributeName, @NonNls String namespaceKey);
 
   Type[] getConcreteInterfaceVariants();
 

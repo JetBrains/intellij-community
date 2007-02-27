@@ -7,7 +7,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ProjectComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +16,7 @@ import java.util.LinkedHashSet;
 /**
  * @author peter
  */
-public class CommittableUtil implements ProjectComponent {
+public class CommittableUtil {
   private final Application myApplication;
   private final LinkedHashSet<Committable> myResetQueue = new LinkedHashSet<Committable>();
   private boolean myResetting;
@@ -29,7 +28,7 @@ public class CommittableUtil implements ProjectComponent {
       public void commandFinished(CommandEvent event) {
         undoTransparentActionFinished();
       }
-
+     
       public void undoTransparentActionFinished() {
         if (myResetting || myCommitting) return;
         flushResetQueue();

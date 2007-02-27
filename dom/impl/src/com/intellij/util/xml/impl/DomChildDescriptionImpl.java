@@ -24,7 +24,7 @@ public abstract class DomChildDescriptionImpl implements DomChildrenDescription 
   private final XmlName myTagName;
   private final Type myType;
 
-  protected DomChildDescriptionImpl(final XmlName tagName, final Type type) {
+  protected DomChildDescriptionImpl(final XmlName tagName, @NotNull final Type type) {
     myTagName = tagName;
     myType = type;
   }

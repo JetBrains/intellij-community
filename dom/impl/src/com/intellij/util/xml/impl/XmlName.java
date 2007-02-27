@@ -4,6 +4,7 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.JavaMethod;
 import com.intellij.util.xml.Namespace;
@@ -45,6 +46,8 @@ public class XmlName {
     final XmlName xmlName = (XmlName)o;
 
     if (!myLocalName.equals(xmlName.myLocalName)) return false;
+    if (Comparing.equal(myNamespaceKey, xmlName.myNamespaceKey)) return true;
+
     if (myNamespaceKey != null ? !myNamespaceKey.equals(xmlName.myNamespaceKey) : xmlName.myNamespaceKey != null) return false;
 
     return true;
@@ -68,9 +71,9 @@ public class XmlName {
 
   @Nullable
   public static XmlName create(@NotNull String name, Type type, @Nullable JavaMethod javaMethod) {
-    final Class<?> type1 = getErasure(type);
-    if (type1 == null) return null;
-    String key = getNamespaceKey(type1);
+    final Class<?> aClass = getErasure(type);
+    if (aClass == null) return null;
+    String key = getNamespaceKey(aClass);
     if (key == null && javaMethod != null) {
       for (final Method method : javaMethod.getSignature().getAllMethods(javaMethod.getDeclaringClass())) {
         final String key1 = getNamespaceKey(method.getDeclaringClass());

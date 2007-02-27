@@ -20,6 +20,7 @@ package com.intellij.util.xml.ui;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.util.Alarm;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -74,7 +75,7 @@ public class CommitablePanelUserActivityListener implements UserActivityListener
   }
 
   protected final void commit(final Committable panel) {
-    getProject().getComponent(CommittableUtil.class).commit(panel);
+    ServiceManager.getService(getProject(), CommittableUtil.class).commit(panel);
   }
 
   protected final Project getProject() {
