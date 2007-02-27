@@ -56,11 +56,11 @@ public class DefaultActionGroup extends ActionGroup {
    *
    * @param action Action to be added
    */
-  public final void add(AnAction action, ActionManager actionManager){
+  public final void add(@NotNull AnAction action, @NotNull ActionManager actionManager){
     add(action, new Constraints(Anchor.LAST, null), actionManager);
   }
 
-  public final void add(AnAction action){
+  public final void add(@NotNull AnAction action){
     add(action, new Constraints(Anchor.LAST, null));
   }
 
@@ -85,7 +85,7 @@ public class DefaultActionGroup extends ActionGroup {
     add(action, constraint, ActionManager.getInstance());
   }
 
-  public final void add(@NotNull AnAction action, @NotNull Constraints constraint, ActionManager actionManager){
+  public final void add(@NotNull AnAction action, @NotNull Constraints constraint, @NotNull ActionManager actionManager){
     // Check that action isn't already registered
     if (!(action instanceof Separator)) {
       if (mySortedChildren.contains(action)){
@@ -100,14 +100,17 @@ public class DefaultActionGroup extends ActionGroup {
 
     constraint = (Constraints)constraint.clone();
 
-    if (constraint.myAnchor == Anchor.FIRST){
+    if (constraint.myAnchor == Anchor.FIRST) {
       mySortedChildren.add(0, action);
-    }else if (constraint.myAnchor == Anchor.LAST){
+    }
+    else if (constraint.myAnchor == Anchor.LAST) {
       mySortedChildren.add(action);
-    }else{
-      if (addToSortedList(action, constraint, actionManager)){
+    }
+    else {
+      if (addToSortedList(action, constraint, actionManager)) {
         actionAdded(action, actionManager);
-      }else{
+      }
+      else {
         myPairs.add(new Pair<AnAction, Constraints>(action, constraint));
       }
     }
@@ -149,16 +152,17 @@ public class DefaultActionGroup extends ActionGroup {
     return true;
   }
 
-  private int findIndex(String actionId, ArrayList<AnAction> actions, ActionManager actionManager){
-    for(int i = 0; i < actions.size(); i++){
+  private static int findIndex(String actionId, ArrayList<AnAction> actions, ActionManager actionManager) {
+    for (int i = 0; i < actions.size(); i++) {
       AnAction action = actions.get(i);
-      if(action instanceof ActionStub){
-        if(((ActionStub)action).getId().equals(actionId)){
+      if (action instanceof ActionStub) {
+        if (((ActionStub)action).getId().equals(actionId)) {
           return i;
         }
-      }else{
+      }
+      else {
         String id = actionManager.getId(action);
-        if (id != null && id.equals(actionId)){
+        if (id != null && id.equals(actionId)) {
           return i;
         }
       }
@@ -198,6 +202,7 @@ public class DefaultActionGroup extends ActionGroup {
    *
    * @return An array of children actions
    */
+  @NotNull
   public final AnAction[] getChildren(@Nullable AnActionEvent e){
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
@@ -249,6 +254,7 @@ public class DefaultActionGroup extends ActionGroup {
     return mySortedChildren.size() + myPairs.size();
   }
 
+  @NotNull
   public final AnAction[] getChildActionsOrStubs(@Nullable AnActionEvent e){
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
@@ -263,8 +269,7 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   public final void addAll(ActionGroup group) {
-    final AnAction[] actions = group.getChildren(null);
-    for (AnAction each : actions) {
+    for (AnAction each : group.getChildren(null)) {
       add(each);
     }
   }

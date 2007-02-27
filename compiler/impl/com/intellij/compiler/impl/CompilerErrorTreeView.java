@@ -33,8 +33,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
     group.add(new ExcludeFromCompileAction());
     ActionGroup popupGroup = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_COMPILER_ERROR_VIEW_POPUP);
     if (popupGroup != null) {
-      final AnAction[] children = popupGroup.getChildren(null);
-      for (AnAction action : children) {
+      for (AnAction action : popupGroup.getChildren(null)) {
         group.add(action);
       }
     }

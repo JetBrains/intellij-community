@@ -12,8 +12,7 @@ public class DiffToolbarImpl implements DiffToolbar {
 
   public void registerKeyboardActions(JComponent registerActionsTo) {
     AnAction[] actions = getAllActions();
-    for (int i = 0; i < actions.length; i++) {
-      AnAction action = actions[i];
+    for (AnAction action : actions) {
       action.registerCustomShortcutSet(action.getShortcutSet(), registerActionsTo);
     }
   }
@@ -24,8 +23,7 @@ public class DiffToolbarImpl implements DiffToolbar {
 
   public boolean removeActionById(String actionId) {
     AnAction[] allActions = getAllActions();
-    for (int i = 0; i < allActions.length; i++) {
-      AnAction action = allActions[i];
+    for (AnAction action : allActions) {
       if (actionId.equals(ActionManager.getInstance().getId(action))) {
         removeAction(action);
         return true;

@@ -62,17 +62,13 @@ public class VcsGroupsWrapper extends DefaultActionGroup {
         vcsGroupsGroup),
                                                                          ActionManager.getInstance(),
                                                                          0));
-      for (int i = 0; i < children.length; i++) {
-        AnAction child = children[i];
+      for (AnAction child : children) {
         if (!(child instanceof StandardVcsGroup)) {
           LOG.assertTrue(false,
                          "Any version control group should extends com.intellij.openapi.vcs.actions.StandardVcsGroup class. Groupd class: " +
-                         child.getClass().getName() +
-                         ", group ID: " +
-                         ActionManager.getInstance().getId(child));
+                         child.getClass().getName() + ", group ID: " + ActionManager.getInstance().getId(child));
         }
-        else
-        {
+        else {
           validChildren.add(child);
         }
       }
@@ -141,9 +137,8 @@ public class VcsGroupsWrapper extends DefaultActionGroup {
     presentation.setEnabled(wrappedActionPresentation.isEnabled());
     removeAll();
     DefaultActionGroup wrappedGroup = (DefaultActionGroup)action;
-    AnAction[] children = wrappedGroup.getChildren(null);
-    for (int i = 0; i < children.length; i++) {
-      add(children[i]);
+    for (AnAction aChildren : wrappedGroup.getChildren(null)) {
+      add(aChildren);
     }
 
   }

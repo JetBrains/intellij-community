@@ -10,8 +10,8 @@ import com.intellij.openapi.project.Project;
 public class QuickChangeSchemesAction extends QuickSwitchSchemeAction {
   protected void fillActions(Project project, DefaultActionGroup group) {
     final AnAction[] actions = getGroup().getChildren(null);
-    for (int i = 0; i < actions.length; i++) {
-      group.add(actions[i]);
+    for (AnAction action : actions) {
+      group.add(action);
     }
   }
 

@@ -24,6 +24,7 @@ public class ShowRecentFindUsagesGroup extends ActionGroup {
   }
 
   public AnAction[] getChildren(@Nullable final AnActionEvent e) {
+    if (e == null) return EMPTY_ARRAY;
     Project project = e.getData(DataKeys.PROJECT);
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     List<FindUsagesManager.SearchData> history = new ArrayList<FindUsagesManager.SearchData>(findUsagesManager.getFindUsageHistory());
