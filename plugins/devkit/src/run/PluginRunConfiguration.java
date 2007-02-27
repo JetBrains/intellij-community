@@ -133,6 +133,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
         params.getClassPath().addFirst(libPath + File.separator + "openapi.jar");
         params.getClassPath().addFirst(libPath + File.separator + "extensions.jar");
         params.getClassPath().addFirst(libPath + File.separator + "bootstrap.jar");
+        params.getClassPath().addFirst(libPath + File.separator + "idea.jar");
         params.getClassPath().addFirst(ideaJdk.getToolsPath());
 
         Sdk run = jdk;
