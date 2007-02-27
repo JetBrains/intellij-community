@@ -16,6 +16,7 @@
 package com.intellij.ui.content;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NonNls;
 
@@ -81,4 +82,9 @@ public interface Content extends UserDataHolder {
 
   boolean isCloseable();
   void setCloseable(boolean closeable);
+
+  void setActions(ActionGroup actions, String place);
+  ActionGroup getActions();
+  String getPlace();
+  
 }

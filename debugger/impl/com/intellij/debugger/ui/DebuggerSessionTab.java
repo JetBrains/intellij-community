@@ -2,6 +2,7 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
+import com.intellij.debugger.actions.ExportThreadsAction;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
@@ -71,7 +72,6 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
 
   private JPanel myToolBarPanel;
   private ActionToolbar myFirstToolbar;
-  private ActionToolbar mySecondToolbar;
 
   private final JPanel myContentPanel;
   private final FramePanel myFramePanel;
@@ -111,7 +111,6 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
               DebuggerSettings settings = debuggerSettings;
 
               myFirstToolbar.updateActionsImmediately();
-              mySecondToolbar.updateActionsImmediately();
 
               if (settings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION) {
                 try {
@@ -141,7 +140,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
         }
       });
     }
-    myViewsContentManager = getContentFactory().createContentManager(new DebuggerContentUI(this), false, getProject());
+    myViewsContentManager = getContentFactory().createContentManager(new DebuggerContentUI(this, ActionManager.getInstance()), false, getProject());
 
     myWatchPanel = new MainWatchPanel(getProject(), getContextManager());
     myWatchPanel.setUpdateEnabled(debuggerSettings.WATCHES_VISIBLE);
@@ -154,16 +153,42 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     myFramePanel.getFrameTree().setAutoVariablesMode(debuggerSettings.AUTO_VARIABLES_MODE);
 
     myWatchesContent = createContent(myWatchPanel, DebuggerBundle.message("debugger.session.tab.watches.title"), WATCHES_ICON, WATCHES_CONTENT);
+    final DefaultActionGroup watchesGroup = new DefaultActionGroup();
+    addAction(watchesGroup, DebuggerActions.NEW_WATCH);
+    addAction(watchesGroup, DebuggerActions.ADD_TO_WATCH);
+    addAction(watchesGroup, DebuggerActions.REMOVE_WATCH);
+    myWatchesContent.setActions(watchesGroup, ActionPlaces.DEBUGGER_TOOLBAR);
+
     if (debuggerSettings.WATCHES_VISIBLE) {
       myViewsContentManager.addContent(myWatchesContent);
     }
 
-
     myFramesContent = createContent(myFramePanel, DebuggerBundle.message("debugger.session.tab.frames.title"), IconLoader.getIcon("/debugger/frame.png"), FRAME_CONTENT);
+    final DefaultActionGroup framesGroup = new DefaultActionGroup();
+
+    addAction(framesGroup, DebuggerActions.SHOW_EXECUTION_POINT);
+    framesGroup.addSeparator();
+    addAction(framesGroup, DebuggerActions.STEP_OVER);
+    addAction(framesGroup, DebuggerActions.STEP_INTO);
+    addAction(framesGroup, DebuggerActions.STEP_OUT);
+    addAction(framesGroup, DebuggerActions.FORCE_STEP_INTO);
+    framesGroup.addSeparator();
+    addAction(framesGroup, IdeActions.ACTION_PREVIOUS_OCCURENCE);
+    addAction(framesGroup, IdeActions.ACTION_NEXT_OCCURENCE);
+    addAction(framesGroup, DebuggerActions.POP_FRAME);
+    addAction(framesGroup, DebuggerActions.RUN_TO_CURSOR);
+    myFramesContent.setActions(framesGroup, ActionPlaces.DEBUGGER_TOOLBAR);
+
     myViewsContentManager.addContent(myFramesContent);
 
-
     myVarsContent = createContent(myFramePanel.getVarsPanel(), DebuggerBundle.message("debugger.session.tab.variables.title"), IconLoader.getIcon("/debugger/value.png"), VARIABLES_CONTENT);
+    final DefaultActionGroup varsGroup = new DefaultActionGroup();
+    addAction(varsGroup, DebuggerActions.EVALUATE_EXPRESSION);
+    varsGroup.add(new WatchLastMethodReturnValueAction());
+    varsGroup.add(new AutoVarsSwitchAction());
+    varsGroup.addSeparator();
+    varsGroup.add(new ShowWatchesAction());
+    myVarsContent.setActions(varsGroup, ActionPlaces.DEBUGGER_TOOLBAR);
     myViewsContentManager.addContent(myVarsContent);
 
     myViewsContentManager.addContentManagerListener(new ContentManagerAdapter() {
@@ -216,6 +241,10 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     content = createContent(myConsole.getComponent(), DebuggerBundle.message(
       "debugger.session.tab.console.content.name"), IconLoader.getIcon("/debugger/console.png"), CONSOLE_CONTENT);
 
+    final DefaultActionGroup consoleActions = new DefaultActionGroup();
+    addAction(consoleActions, DebuggerActions.EXPORT_THREADS);
+    content.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR);
+
     Content[] contents = myViewsContentManager.getContents();
     myViewsContentManager.removeAllContents();
 
@@ -233,14 +262,16 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     }
 
     myFirstToolbar  = createFirstToolbar(myRunContentDescriptor, myContentPanel);
-    mySecondToolbar = createSecondToolbar();
 
-    myToolBarPanel = new JPanel(new GridLayout(1, 2));
+    myToolBarPanel = new JPanel(new GridLayout(1, 1));
     myToolBarPanel.add(myFirstToolbar.getComponent());
-    myToolBarPanel.add(mySecondToolbar.getComponent());
     myContentPanel.add(myToolBarPanel, BorderLayout.WEST);
 
     return myRunContentDescriptor;
+  }
+
+  private void addAction(DefaultActionGroup group, String actionId) {
+    group.add(ActionManager.getInstance().getAction(actionId));
   }
 
   private void initAdditionalTabs() {
@@ -295,25 +326,6 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     }
   }
 
-  private ActionToolbar createSecondToolbar() {
-    DefaultActionGroup group = new DefaultActionGroup();
-
-    addActionToGroup(group, DebuggerActions.SHOW_EXECUTION_POINT);
-    addActionToGroup(group, DebuggerActions.STEP_OVER);
-    addActionToGroup(group, DebuggerActions.STEP_INTO);
-    addActionToGroup(group, DebuggerActions.STEP_OUT);
-    addActionToGroup(group, DebuggerActions.FORCE_STEP_INTO);
-    addActionToGroup(group, DebuggerActions.POP_FRAME);
-    addActionToGroup(group, DebuggerActions.RUN_TO_CURSOR);
-    addActionToGroup(group, DebuggerActions.VIEW_BREAKPOINTS);
-    addActionToGroup(group, DebuggerActions.MUTE_BREAKPOINTS);
-    group.add(new ShowWatchesAction());
-    group.add(new WatchLastMethodReturnValueAction());
-    group.add(new AutoVarsSwitchAction());
-
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
-  }
-
   private static void addActionToGroup(final DefaultActionGroup group, final String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
     if (action != null) group.add(action);
@@ -330,13 +342,14 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     addActionToGroup(group, DebuggerActions.PAUSE);
     addActionToGroup(group, IdeActions.ACTION_STOP_PROGRAM);
 
-    group.add(new CloseAction(myRunner, contentDescriptor, getProject()));
-    
-    addActionToGroup(group, IdeActions.ACTION_PREVIOUS_OCCURENCE);
-    addActionToGroup(group, IdeActions.ACTION_NEXT_OCCURENCE);
+    group.addSeparator();
 
-    addActionToGroup(group, DebuggerActions.EXPORT_THREADS);
-    addActionToGroup(group, DebuggerActions.EVALUATE_EXPRESSION);
+    addActionToGroup(group, DebuggerActions.VIEW_BREAKPOINTS);
+    addActionToGroup(group, DebuggerActions.MUTE_BREAKPOINTS);
+
+    group.addSeparator();
+
+    group.add(new CloseAction(myRunner, contentDescriptor, getProject()));
 
     group.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction(myRunner.getInfo().getHelpId()));
 

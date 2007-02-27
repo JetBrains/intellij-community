@@ -3,6 +3,7 @@ package com.intellij.ui.content.impl;
 
 import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.LayeredIcon;
@@ -30,6 +31,8 @@ public class ContentImpl implements Content {
   private String myTabName;
   private String myToolwindowTitle;
   private boolean myCloseable = true;
+  private ActionGroup myActions;
+  private String myPlace;
 
   public ContentImpl(JComponent component, String displayName, boolean isPinnable) {
     myComponent = component;
@@ -187,5 +190,18 @@ public class ContentImpl implements Content {
 
   public void setCloseable(final boolean closeable) {
     myCloseable = closeable;
+  }
+
+  public void setActions(final ActionGroup actions, String place) {
+    myActions = actions;
+    myPlace = place;
+  }
+
+  public ActionGroup getActions() {
+    return myActions;
+  }
+
+  public String getPlace() {
+    return myPlace;
   }
 }

@@ -33,6 +33,8 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
   private Dimension myHeaderFitSize;
   private Rectangle mySelectedBounds;
 
+  private static final int INNER = 1;
+
   public TabsWithActions(ActionManager actionManager) {
     myActionManager = actionManager;
   }
@@ -70,8 +72,10 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
         remove(old);
       }
       final JComponent toolbar = createToolbarComponent(tabInfo);
-      myInfo2Toolbar.put(tabInfo, toolbar);
-      add(toolbar);
+      if (toolbar != null) {
+        myInfo2Toolbar.put(tabInfo, toolbar);
+        add(toolbar);
+      }
     } else if (TabInfo.TEXT.equals(evt.getPropertyName())) {
       myInfo2Label.get(tabInfo).setText(tabInfo.getText());
     } else if (TabInfo.ICON.equals(evt.getPropertyName())) {
@@ -87,6 +91,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
   }
 
   protected JComponent createToolbarComponent(final TabInfo tabInfo) {
+    if (tabInfo.getGroup() == null) return null;
     return myActionManager.createActionToolbar(tabInfo.getPlace(), tabInfo.getGroup(), true).getComponent();
   }
 
@@ -108,8 +113,10 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
 
       final JComponent comp = eachInfo.getComponent();
       if (selected == eachInfo) {
-        comp.setBounds(insets.left, myHeaderFitSize.height + insets.top, getWidth() - insets.left - insets.right, getHeight() - insets.top - insets.bottom - myHeaderFitSize
-          .height);
+        comp.setBounds(insets.left + INNER,
+                       myHeaderFitSize.height + insets.top,
+                       getWidth() - insets.left - insets.right - INNER * 2,
+                       getHeight() - insets.top - insets.bottom - myHeaderFitSize.height - 1);
         mySelectedBounds = label.getBounds();
       } else {
         comp.setBounds(0, 0, 0, 0);
@@ -169,12 +176,13 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     path.lineTo(getWidth() - insets.right, bottomY);
     path.closePath();
 
-    g2d.setPaint(new GradientPaint(mySelectedBounds.x, topY, CaptionPanel.BND_ACTIVE_COLOR, mySelectedBounds.x, bottomY, 
+    g2d.setPaint(new GradientPaint(mySelectedBounds.x, topY, CaptionPanel.BND_ACTIVE_COLOR, mySelectedBounds.x, bottomY,
                                    CaptionPanel.CNT_ACTIVE_COLOR));
     g2d.fill(path);
     g2d.setColor(CaptionPanel.CNT_ACTIVE_COLOR.darker());
     g2d.draw(path);
 
+    g2d.drawRect(insets.left, bottomY, getWidth() - insets.left - insets.right - 1, getHeight() - bottomY - insets.bottom - 1);
 
     config.restore();
   }
@@ -191,7 +199,14 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
         max.myToolbar.width = Math.max(max.myToolbar.width, toolbar.getPreferredSize().width);
       }
     }
+
+    max.myToolbar.height++;
+    
     return max;
+  }
+
+  public int getTabCount() {
+    return myInfos.size();
   }
 
   private class Max {
@@ -225,7 +240,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     tabs.addTab(new JTree()).setText("Tree2");
     tabs.addTab(new JTable()).setText("Table").setActions(new DefaultActionGroup(), null);
 
-    tabs.setBorder(new EmptyBorder(6, 6, 6, 6));
+    //tabs.setBorder(new EmptyBorder(6, 6, 6, 6));
 
     frame.setBounds(200, 200, 300, 200);
     frame.show();

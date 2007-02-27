@@ -44,11 +44,9 @@ public class RemoveWatchAction extends DebuggerAction {
     DebuggerTreeNodeImpl[] nodes = getNodesToDelete(event);
     if (nodes != null && nodes.length > 0) {
       presentation.setEnabled(true);
-      presentation.setVisible(true);
     }
     else {
       presentation.setEnabled(false);
-      presentation.setVisible(false);
     }
     updatePresentation(presentation, nodes != null? nodes.length : 0);
   }

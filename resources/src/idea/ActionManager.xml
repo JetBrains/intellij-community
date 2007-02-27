@@ -707,14 +707,14 @@
       <action id="Debugger.CopyValue" class="com.intellij.debugger.actions.CopyValueAction"/>
       <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction"/>
       <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction"/>
-      <action id="Debugger.NewWatch" class="com.intellij.debugger.actions.NewWatchAction"/>
+      <action id="Debugger.NewWatch" class="com.intellij.debugger.actions.NewWatchAction" icon="/general/add.png"/>
       <action id="Debugger.EditWatch" class="com.intellij.debugger.actions.EditWatchAction"/>
       <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction"/>
       <action id="Debugger.EditNodeSource" class="com.intellij.debugger.actions.EditSourceAction"/>
       <action id="Debugger.EditTypeSource" class="com.intellij.debugger.actions.JumpToObjectAction"/>
       <reference ref="Debugger.PopFrame"/>
       <action id="Debugger.RemoveAllWatches" class="com.intellij.debugger.actions.RemoveAllWatchesAction"/>
-      <action id="Debugger.RemoveWatch" class="com.intellij.debugger.actions.RemoveWatchAction"/>
+      <action id="Debugger.RemoveWatch" class="com.intellij.debugger.actions.RemoveWatchAction" icon="/general/remove.png"/>
       <action id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup"/>
       <action id="Debugger.MarkObject" class="com.intellij.debugger.actions.MarkObjectAction"/>
       <action id="Debugger.SetValue" class="com.intellij.debugger.actions.SetValueAction"/>
@@ -724,7 +724,7 @@
       <action id="Debugger.FreezeThread" class="com.intellij.debugger.actions.FreezeThreadAction"/>
       <action id="Debugger.MuteBreakpoints" class="com.intellij.debugger.actions.MuteBreakpointsAction"
               icon="/debugger/muteBreakpoints.png"/>
-      <action id="Debugger.AddToWatch" class="com.intellij.debugger.actions.AddToWatchAction"/>
+      <action id="Debugger.AddToWatch" class="com.intellij.debugger.actions.AddToWatchAction" icon="/general/add.png"/>
     </group>
 
     <group id="Debugger.Representation">

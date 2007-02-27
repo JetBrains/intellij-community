@@ -72,7 +72,7 @@ public class AddToWatchAction extends DebuggerAction {
       final Editor editor  = (Editor)e.getDataContext().getData(DataConstants.EDITOR);
       enabled = DebuggerUtilsEx.getEditorText(editor) != null ;
     }
-    e.getPresentation().setVisible(enabled);
+    e.getPresentation().setEnabled(enabled);
   }
 
   private static void doAddWatch(final MainWatchPanel watchPanel, final TextWithImports expression, final NodeDescriptorImpl descriptor) {
