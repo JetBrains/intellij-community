@@ -57,7 +57,7 @@ public abstract class ProjectLevelVcsManager {
    * @param name the name of the VCS to find.
    * @return the VCS instance, or null if none is found.
    */
-  public abstract AbstractVcs findVcsByName(String name);
+  public abstract AbstractVcs findVcsByName(@NonNls String name);
 
   /**
    * Checks if all files in the specified array are managed by the specified VCS.

@@ -23,7 +23,6 @@ import com.intellij.cvsSupport2.cvsstatuses.CvsUpToDateRevisionProvider;
 import com.intellij.cvsSupport2.history.CvsHistoryProvider;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
 import com.intellij.openapi.options.Configurable;
@@ -55,7 +54,7 @@ import java.util.List;
  * @author lesya
  */
 
-public class CvsVcs2 extends AbstractVcs implements ProjectComponent, TransactionProvider, EditFileProvider, CvsEntriesListener {
+public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFileProvider, CvsEntriesListener {
 
   private Cvs2Configurable myConfigurable;
 
@@ -93,14 +92,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     myCvsAnnotationProvider = new CvsAnnotationProvider(myProject);
     myDiffProvider = new CvsDiffProvider(myProject);
     myCommittedChangesProvider = new CvsCommittedChangesProvider(myProject);
-  }
 
-  /* ======================================= ProjectComponent */
-
-  public void projectClosed() {
-  }
-
-  public void projectOpened() {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     myAddOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.ADD, this);
     myRemoveOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.ADD, this);
@@ -111,20 +103,10 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     myRemoveConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
   }
 
-  public void initComponent() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "CvsVcs2";
-  }
+  /* ======================================= ProjectComponent */
 
   public Project getProject() {
     return myProject;
-  }
-
-  public void disposeComponent() {
-
   }
 
   /* ======================================== AbstractVcs*/
@@ -170,7 +152,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
 
 
   public static CvsVcs2 getInstance(Project project) {
-    return project.getComponent(CvsVcs2.class);
+    return (CvsVcs2) ProjectLevelVcsManager.getInstance(project).findVcsByName("CVS");
   }
 
   public int getFilesToProcessCount() {

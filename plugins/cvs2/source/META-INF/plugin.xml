@@ -6,16 +6,35 @@
   <idea-version min="5.0" max="5.0"/>
   <resource-bundle>com.intellij.cvsSupport2.CvsBundle</resource-bundle>
 
-  <extensions xmlns="com.intellij">
+  <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <checkoutProvider implementation="com.intellij.cvsSupport2.checkout.CvsCheckoutProvider"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.cvsIntegration.CvsServices"
+                   serviceImplementation="com.intellij.cvsSupport2.impl.CvsServicesImpl"/>
+    <applicationService serviceInterface="com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration"
+                   serviceImplementation="com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration"/>
+    <applicationService serviceInterface="com.intellij.cvsSupport2.application.CvsEntriesManager"
+                   serviceImplementation="com.intellij.cvsSupport2.application.CvsEntriesManager"/>
+    <applicationService serviceInterface="com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl"
+                   serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl"/>
+    <applicationService serviceInterface="com.intellij.cvsSupport2.config.ImportConfiguration"
+                   serviceImplementation="com.intellij.cvsSupport2.config.ImportConfiguration"/>
+
+    <projectService serviceInterface="com.intellij.cvsSupport2.ui.CvsTabbedWindow"
+               serviceImplementation="com.intellij.cvsSupport2.ui.CvsTabbedWindow"/>
+    <projectService serviceInterface="com.intellij.cvsSupport2.config.CvsConfiguration"
+               serviceImplementation="com.intellij.cvsSupport2.config.CvsConfiguration"/>
+    <projectService serviceInterface="com.intellij.cvsSupport2.application.CvsStorageComponent"
+               serviceImplementation="com.intellij.cvsSupport2.application.CvsStorageSupportingDeletionComponent"/>
+
+    <checkinHandlerFactory implementation="com.intellij.cvsSupport2.CvsCheckinHandlerFactory"/>
+
+    <vcs>
+      <name>CVS</name>
+      <vcsClass>com.intellij.cvsSupport2.CvsVcs2</vcsClass>
+    </vcs>
   </extensions>
-
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.cvsSupport2.CvsVcs2</implementation-class>
-    </component>
-  </project-components>
-
 
   <actions>
 
@@ -105,27 +124,4 @@
     </group>
   </actions>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <checkoutProvider implementation="com.intellij.cvsSupport2.checkout.CvsCheckoutProvider"/>
-
-    <applicationService serviceInterface="com.intellij.openapi.cvsIntegration.CvsServices"
-                   serviceImplementation="com.intellij.cvsSupport2.impl.CvsServicesImpl"/>
-    <applicationService serviceInterface="com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration"
-                   serviceImplementation="com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration"/>
-    <applicationService serviceInterface="com.intellij.cvsSupport2.application.CvsEntriesManager"
-                   serviceImplementation="com.intellij.cvsSupport2.application.CvsEntriesManager"/>
-    <applicationService serviceInterface="com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl"
-                   serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl"/>
-    <applicationService serviceInterface="com.intellij.cvsSupport2.config.ImportConfiguration"
-                   serviceImplementation="com.intellij.cvsSupport2.config.ImportConfiguration"/>
-
-    <projectService serviceInterface="com.intellij.cvsSupport2.ui.CvsTabbedWindow"
-               serviceImplementation="com.intellij.cvsSupport2.ui.CvsTabbedWindow"/>
-    <projectService serviceInterface="com.intellij.cvsSupport2.config.CvsConfiguration"
-               serviceImplementation="com.intellij.cvsSupport2.config.CvsConfiguration"/>
-    <projectService serviceInterface="com.intellij.cvsSupport2.application.CvsStorageComponent"
-               serviceImplementation="com.intellij.cvsSupport2.application.CvsStorageSupportingDeletionComponent"/>
-
-    <checkinHandlerFactory implementation="com.intellij.cvsSupport2.CvsCheckinHandlerFactory"/>
-  </extensions>
 </idea-plugin>
