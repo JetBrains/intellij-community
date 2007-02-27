@@ -15,12 +15,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.components.ServiceManager;
 
 import java.io.File;
 import java.io.IOException;
 
-public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
-  implements CommandListener {
+public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent implements CommandListener {
   private static final Logger LOG = Logger.getInstance("#" + CvsStorageSupportingDeletionComponent.class.getName());
   private Project myProject;
 
@@ -69,12 +69,14 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
     VirtualFileManager.getInstance().addVirtualFileListener(this);
     CvsEntriesManager.getInstance().registerAsVirtualFileListener();
     CommandProcessor.getInstance().addCommandListener(this);
+    myIsActive = true;
   }
 
   public void dispose() {
     VirtualFileManager.getInstance().removeVirtualFileListener(this);
     CvsEntriesManager.getInstance().unregisterAsVirtualFileListener();
     CommandProcessor.getInstance().removeCommandListener(this);
+    myIsActive = false;
     myProject = null;
   }
 
@@ -226,7 +228,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
   }
 
   public static CvsStorageComponent getInstance(Project project) {
-    return project.getComponent(CvsStorageSupportingDeletionComponent.class);
+    return ServiceManager.getService(project, CvsStorageComponent.class);
   }
 
   public void deleteIfAdminDirCreated(VirtualFile addedFile) {
