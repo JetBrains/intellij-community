@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.vcs.CheckoutProvider;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.project.Project;
 import com.intellij.ide.impl.ProjectUtil;
@@ -26,10 +27,11 @@ public class CheckoutAction extends AnAction {
   }
 
   private static boolean processProject(final Project project, final File directory) {
+    //noinspection HardCodedStringLiteral
     File[] files = directory.listFiles((FilenameFilter) new GlobFilenameFilter("*.ipr"));
     if (files != null && files.length > 0) {
-      int rc = Messages.showYesNoDialog(project, "You have checked out an IntelliJ IDEA project file:\n" + files [0].getAbsolutePath() +
-                                                 "\nWould you like to open it?", "Checkout from Version Control", Messages.getQuestionIcon());
+      int rc = Messages.showYesNoDialog(project, VcsBundle.message("checkout.open.project.prompt", files[0].getAbsolutePath()),
+                                        VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
       if (rc == 0) {
         ProjectUtil.openProject(files [0].getAbsolutePath(), project, false);
       }
@@ -39,8 +41,8 @@ public class CheckoutAction extends AnAction {
   }
 
   private static void processNoProject(final Project project, final File directory) {
-    int rc = Messages.showYesNoDialog(project, "Would you like to create an IntelliJ IDEA project for the sources you have checked out to " +
-      directory.getAbsolutePath() + "?", "Checkout from Version Control", Messages.getQuestionIcon());
+    int rc = Messages.showYesNoDialog(project, VcsBundle.message("checkout.create.project.prompt", directory.getAbsolutePath()),
+                                      VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
     if (rc == 0) {
       ProjectUtil.createNewProject(project, directory.getAbsolutePath());
     }
