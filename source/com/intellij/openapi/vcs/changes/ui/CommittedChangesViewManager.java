@@ -68,7 +68,6 @@ public class CommittedChangesViewManager implements ProjectComponent {
         vcsWithProviders.add(vcs);
       }
     }
-    CommittedChangesProvider oldProvider = myProvider;
     if (vcsWithProviders.size() == 0) {
       myProvider = null;
     }
