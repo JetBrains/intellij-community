@@ -25,10 +25,12 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -44,6 +46,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
   public static void doCheckout(final Project project, final File target, final String url, final boolean recursive,
                                 final boolean ignoreExternals, @Nullable final Listener listener) {
+    final Ref<Boolean> checkoutSuccessful = new Ref<Boolean>();
     try {
       final SVNException[] exception = new SVNException[1];
       final SVNUpdateClient client = SvnVcs.getInstance(project).createUpdateClient();
@@ -56,6 +59,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
           try {
             progressIndicator.setText(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
             client.doCheckout(SVNURL.parseURIEncoded(url), target, SVNRevision.UNDEFINED, SVNRevision.HEAD, recursive);
+            progressIndicator.checkCanceled();
+            checkoutSuccessful.set(Boolean.TRUE);
           }
           catch (SVNException e) {
             exception[0] = e;
@@ -73,20 +78,24 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     catch (SVNException e1) {
       Messages.showErrorDialog(SvnBundle.message("message.text.cannot.checkout", e1.getMessage()), SvnBundle.message("message.title.check.out"));
     } finally {
-      String fileURL = "file://" + target.getAbsolutePath().replace(File.separatorChar, '/');
+      @NonNls String fileURL = "file://" + target.getAbsolutePath().replace(File.separatorChar, '/');
       VirtualFile vf = VirtualFileManager.getInstance().findFileByUrl(fileURL);
       if (vf != null) {
         vf.refresh(true, true, new Runnable() {
           public void run() {
             if (listener != null) {
-              listener.directoryCheckedOut(target);
+              if (!checkoutSuccessful.isNull()) {
+                listener.directoryCheckedOut(target);
+              }
               listener.checkoutCompleted();
             }
           }
         });
       }
       else if (listener != null) {
-        listener.directoryCheckedOut(target);
+        if (!checkoutSuccessful.isNull()) {
+          listener.directoryCheckedOut(target);
+        }
         listener.checkoutCompleted();
       }
     }
