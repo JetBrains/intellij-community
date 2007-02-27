@@ -8,9 +8,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vcs.AbstractVcs;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 /**
@@ -20,8 +19,11 @@ public class VcsEP implements PluginAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsEP");
 
   public static final ExtensionPointName<VcsEP> EP_NAME = ExtensionPointName.create("com.intellij.vcs");
-  private String name;
-  private String vcsClass;
+
+  // these must be public for scrambling compatibility
+  public String name;
+  public String vcsClass;
+  
   private AbstractVcs myVcs;
   private PluginDescriptor myPluginDescriptor;
 
