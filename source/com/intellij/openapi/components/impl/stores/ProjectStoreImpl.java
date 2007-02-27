@@ -359,7 +359,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @Override
   protected StateStorage getOldStorage(final Object component) {
     final ComponentConfig config = getComponentManager().getConfig(component.getClass());
-    assert config != null;
+    assert config != null: "Couldn't find old storage for " + component.getClass().getName();
 
     String macro = PROJECT_FILE_MACRO;
 
