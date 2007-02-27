@@ -46,6 +46,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   protected abstract T createModelFor(VirtualFile f, ILocalVcs vcs);
 
+  @Override
   protected JComponent createCenterPanel() {
     JComponent diff = createDiffPanel();
     JComponent labels = createLabelsTable();
@@ -97,6 +98,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   private ActionPopupMenu createPopupMenu(ActionGroup ag) {
     ActionManager m = ActionManager.getInstance();
     return m.createActionPopupMenu(ActionPlaces.UNKNOWN, ag);
+  }
+
+  @Override
+  protected Action[] createActions() {
+    return new Action[0];
   }
 
   protected abstract void updateDiffs();
