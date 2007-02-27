@@ -15,41 +15,23 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 
 public abstract class StandardVcsGroup extends DefaultActionGroup {
-  public StandardVcsGroup() {
-    super();
-  }
-
   public abstract AbstractVcs getVcs(Project project);
 
-    public void update(AnActionEvent e) {
-        Presentation presentation = e.getPresentation();
+  public void update(AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
 
-        Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
-        if (project == null) {
-            hide(presentation);
-            return;
-        }
+    Project project = e.getData(DataKeys.PROJECT);
+    presentation.setVisible(project != null && isVcsActive(project));
+    presentation.setEnabled(presentation.isVisible());
+  }
 
-        if (!ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(getVcs(project))) {
-            hide(presentation);
-            return;
-        }
-
-        presentation.setVisible(true);
-        presentation.setEnabled(true);
-    }
-
-    private void hide(Presentation presentation) {
-        presentation.setVisible(false);
-        presentation.setEnabled(false);
-    }
+  protected boolean isVcsActive(final Project project) {
+    return ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(getVcs(project));
+  }
 }

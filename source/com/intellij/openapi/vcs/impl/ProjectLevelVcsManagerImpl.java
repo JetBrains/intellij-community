@@ -487,8 +487,12 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public boolean checkVcsIsActive(AbstractVcs vcs) {
+    return checkVcsIsActive(vcs.getName());
+  }
+
+  public boolean checkVcsIsActive(final String vcsName) {
     for(VcsDirectoryMapping mapping: myDirectoryMappings) {
-      if (mapping.getVcs().equals(vcs.getName())) {
+      if (mapping.getVcs().equals(vcsName)) {
         return true;
       }
     }

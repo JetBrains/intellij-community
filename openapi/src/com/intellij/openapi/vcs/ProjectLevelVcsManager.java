@@ -115,6 +115,14 @@ public abstract class ProjectLevelVcsManager {
   public abstract boolean checkVcsIsActive(AbstractVcs vcs);
 
   /**
+   * Checks if the VCS with the specified name is used by any of the modules in the project.
+   *
+   * @param vcsName the name of the VCS to check.
+   * @return true if the VCS is used by any of the modules, false otherwise
+   */
+  public abstract boolean checkVcsIsActive(@NonNls String vcsName);
+
+  /**
    * Returns the user-visible relative path from the content root under which the
    * specified file is located to the file itself, prefixed by the module name in
    * angle brackets.
