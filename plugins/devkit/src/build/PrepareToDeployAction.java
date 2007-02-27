@@ -92,12 +92,12 @@ public class PrepareToDeployAction extends AnAction {
   }
 
   private boolean doPrepare(final Module module, final List<String> errorMessages, final List<String> successMessages) {
-    final String name = module.getName();
-    final String defaultPath = new File(module.getModuleFilePath()).getParent() + File.separator + name;
+    final String pluginName = module.getName();
+    final String defaultPath = new File(module.getModuleFilePath()).getParent() + File.separator + pluginName;
     final HashSet<Module> modules = new HashSet<Module>();
     PluginBuildUtil.getDependencies(module, modules);
     modules.add(module);
-    final HashSet<Library> libs = new HashSet<Library>();
+    final Set<Library> libs = new HashSet<Library>();
     for (Module module1 : modules) {
       PluginBuildUtil.getLibraries(module1, libs);
     }
@@ -125,48 +125,56 @@ public class PrepareToDeployAction extends AnAction {
           final File dstFile = new File(dstPath);
           File jarFile = preparePluginsJar(module, modules);
           if (isZip) {
-            processLibraries(jarFile, dstFile, name, libs, progressIndicator);
+            processLibraries(jarFile, dstFile, pluginName, libs, progressIndicator);
           }
           else {
             FileUtil.copy(jarFile, dstFile);
           }
-          successMessages.add(DevKitBundle.message("saved.message", isZip ? 1 : 2, module.getName(), dstPath));
+          successMessages.add(DevKitBundle.message("saved.message", isZip ? 1 : 2, pluginName, dstPath));
         }
         catch (final IOException e) {
           errorMessages.add(e.getMessage() + "\n(" + dstPath + ")");
         }
       }
-    }, DevKitBundle.message("prepare.for.deployment", module.getName()), true, module.getProject());
+    }, DevKitBundle.message("prepare.for.deployment", pluginName), true, module.getProject());
+  }
+
+  private static FileFilter createFilter(final ProgressIndicator progressIndicator, final FileTypeManager fileTypeManager) {
+    return new FileFilter() {
+      public boolean accept(File pathname) {
+        if (progressIndicator != null) {
+          progressIndicator.setText2("");
+        }
+        return fileTypeManager == null || !fileTypeManager.isFileIgnored(FileUtil.toSystemIndependentName(pathname.getName()));
+      }
+    };
   }
 
   private void processLibraries(final File jarFile,
                                 final File zipFile,
-                                final String name,
-                                final HashSet<Library> libs,
+                                final String pluginName,
+                                final Set<Library> libs,
                                 final ProgressIndicator progressIndicator) throws IOException {
     if (zipFile.exists() || zipFile.createNewFile()) {
       ZipOutputStream zos = null;
       try {
         zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
-        addStructure(name, zos);
-        addStructure(name + "/" + "lib", zos);
-        ZipUtil.addFileToZip(zos, jarFile, "/" + name + MIDDLE_LIB_DIR + name + JAR_EXTENSION, new HashSet<String>(), new FileFilter() {
-          public boolean accept(File pathname) {
-            if (progressIndicator != null) {
-              progressIndicator.setText2("");
-            }
-            return !myFileTypeManager.isFileIgnored(FileUtil.toSystemIndependentName(pathname.getName()));
-          }
-        });
-        Set<String> names = new HashSet<String>();
+        addStructure(pluginName, zos);
+        addStructure(pluginName + "/" + "lib", zos);
+        ZipUtil.addFileToZip(zos, jarFile, "/" + pluginName + MIDDLE_LIB_DIR + pluginName + JAR_EXTENSION, new HashSet<String>(),
+                             createFilter(progressIndicator, myFileTypeManager));
+        Set<String> usedJarNames = new HashSet<String>();
+        Set<VirtualFile> jarredVirtualFiles = new HashSet<VirtualFile>();
         for (Library library : libs) {
           final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
           for (VirtualFile virtualFile : files) {
-            if (virtualFile.getFileSystem() instanceof JarFileSystem) {
-              addLibraryJar(virtualFile, zipFile, name, zos, progressIndicator);
-            }
-            else {
-              makeAndAddLibraryJar(virtualFile, zos, zipFile, name, library, names, progressIndicator);
+            if (jarredVirtualFiles.add(virtualFile)) {
+              if (virtualFile.getFileSystem() instanceof JarFileSystem) {
+                addLibraryJar(virtualFile, zipFile, pluginName, zos, usedJarNames, progressIndicator);
+              }
+              else {
+                makeAndAddLibraryJar(virtualFile, zipFile, pluginName, zos, usedJarNames, progressIndicator, library.getName());
+              }
             }
           }
         }
@@ -177,75 +185,59 @@ public class PrepareToDeployAction extends AnAction {
     }
   }
 
-  private void makeAndAddLibraryJar(final VirtualFile virtualFile,
-                                    final ZipOutputStream zos,
-                                    final File zipFile,
-                                    final String name,
-                                    final Library library,
-                                    final Set<String> names,
-                                    final ProgressIndicator progressIndicator) throws IOException {
+  private void makeAndAddLibraryJar(final VirtualFile virtualFile, final File zipFile, final String pluginName, final ZipOutputStream zos,
+                                    final Set<String> usedJarNames, final ProgressIndicator progressIndicator,
+                                    final String preferredName) throws IOException {
     File libraryJar = FileUtil.createTempFile(TEMP_PREFIX, JAR_EXTENSION);
     libraryJar.deleteOnExit();
     ZipOutputStream jar = null;
     try {
       jar = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(libraryJar)));
-      ZipUtil.addFileOrDirRecursively(jar, libraryJar, VfsUtil.virtualToIoFile(virtualFile), "", new FileFilter() {
-        public boolean accept(File pathname) {
-          if (progressIndicator != null) {
-            progressIndicator.setText2("");
-          }
-          return !myFileTypeManager.isFileIgnored(FileUtil.toSystemIndependentName(pathname.getName()));
-        }
-      }, new HashSet<String>());
+      ZipUtil.addFileOrDirRecursively(jar, libraryJar, VfsUtil.virtualToIoFile(virtualFile), "",
+                                      createFilter(progressIndicator, myFileTypeManager), null);
     }
     finally {
       if (jar != null) jar.close();
     }
-    ZipUtil.addFileOrDirRecursively(zos, zipFile, libraryJar,
-                                    "/" + name + MIDDLE_LIB_DIR + getLibraryJarName(library, names, virtualFile) + JAR_EXTENSION,
-                                    new FileFilter() {
-                                      public boolean accept(File pathname) {
-                                        if (progressIndicator != null) {
-                                          progressIndicator.setText2("");
-                                        }
-                                        return true;
-                                      }
-                                    }, new HashSet<String>());
+    final String jarName =
+      getLibraryJarName(virtualFile.getName() + JAR_EXTENSION, usedJarNames, preferredName == null ? null : preferredName + JAR_EXTENSION);
+    ZipUtil.addFileOrDirRecursively(zos, zipFile, libraryJar, "/" + pluginName + MIDDLE_LIB_DIR + jarName,
+                                    createFilter(progressIndicator, null), null);
   }
 
-  private static String getLibraryJarName(Library library, Set<String> names, final VirtualFile virtualFile) {
-    final String name = library.getName();
-    if (name != null && !names.contains(name)) return name;
-    String libraryName = virtualFile.getName();
-    if (names.contains(libraryName)) {
-      int i = 1;
-      while (true) {
-        if (!names.contains(libraryName + i)) {
-          libraryName += i;
-          break;
+  private static String getLibraryJarName(final String fileName, Set<String> usedJarNames, final String preferredName) {
+    String uniqueName;
+    if (preferredName != null && !usedJarNames.contains(preferredName)) {
+      uniqueName = preferredName;
+    }
+    else {
+      uniqueName = fileName;
+      if (usedJarNames.contains(uniqueName)) {
+        final int dotPos = uniqueName.lastIndexOf(".");
+        final String name = dotPos < 0 ? uniqueName : uniqueName.substring(0, dotPos);
+        final String ext = dotPos < 0 ? "" : uniqueName.substring(dotPos);
+
+        int i = 0;
+        do {
+          i++;
+          uniqueName = name + i + ext;
         }
-        i++;
+        while (usedJarNames.contains(uniqueName));
       }
     }
-    names.add(libraryName);
-    return libraryName;
+    usedJarNames.add(uniqueName);
+    return uniqueName;
   }
 
   private static void addLibraryJar(final VirtualFile virtualFile,
                                     final File zipFile,
                                     final String name,
                                     final ZipOutputStream zos,
+                                    final Set<String> usedJarNames,
                                     final ProgressIndicator progressIndicator) throws IOException {
     File ioFile = VfsUtil.virtualToIoFile(virtualFile);
-    final FileFilter filter = new FileFilter() {
-      public boolean accept(File pathname) {
-        if (progressIndicator != null) {
-          progressIndicator.setText2("");
-        }
-        return true;
-      }
-    };
-    ZipUtil.addFileOrDirRecursively(zos, zipFile, ioFile, "/" + name + MIDDLE_LIB_DIR + ioFile.getName(), filter, null);
+    final String jarName = getLibraryJarName(ioFile.getName(), usedJarNames, null);
+    ZipUtil.addFileOrDirRecursively(zos, zipFile, ioFile, "/" + name + MIDDLE_LIB_DIR + jarName, createFilter(progressIndicator, null), null);
   }
 
   private static void addStructure(@NonNls final String relativePath, final ZipOutputStream zos) throws IOException {
@@ -270,26 +262,12 @@ public class PrepareToDeployAction extends AnAction {
       for (Module module1 : modules) {
         final VirtualFile compilerOutputPath = ModuleRootManager.getInstance(module1).getCompilerOutputPath();
         if (compilerOutputPath == null) continue; //pre-condition: output dirs for all modules are up-to-date
-        ZipUtil.addDirToZipRecursively(jarPlugin, jarFile, new File(compilerOutputPath.getPath()), "", new FileFilter() {
-          public boolean accept(File pathname) {
-            if (progressIndicator != null) {
-              progressIndicator.setText2("");
-            }
-            return !myFileTypeManager.isFileIgnored(FileUtil.toSystemIndependentName(pathname.getName()));
-          }
-        }, writtenItemRelativePaths);
+        ZipUtil.addDirToZipRecursively(jarPlugin, jarFile, new File(compilerOutputPath.getPath()), "",
+                                       createFilter(progressIndicator, myFileTypeManager), writtenItemRelativePaths);
       }
       final String pluginXmlPath = pluginModuleBuildProperties.getPluginXmlPath();
       @NonNls final String metainf = "/META-INF/plugin.xml";
-      ZipUtil.addFileToZip(jarPlugin, new File(pluginXmlPath), metainf, writtenItemRelativePaths, new FileFilter() {
-        public boolean accept(File pathname) {
-          if (progressIndicator != null) {
-            progressIndicator.setText2("");
-          }
-          return true;
-        }
-      });
-
+      ZipUtil.addFileToZip(jarPlugin, new File(pluginXmlPath), metainf, writtenItemRelativePaths, createFilter(progressIndicator, null));
     }
     finally {
       if (jarPlugin != null) jarPlugin.close();
