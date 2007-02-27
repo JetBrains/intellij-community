@@ -98,7 +98,7 @@ public class MethodEvaluator implements Evaluator {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.instance.method", methodName));
       }
       if (requiresSuperObject) {
-        return debugProcess.invokeMethodNonVirtual(context, objRef, jdiMethod, args);
+        return debugProcess.invokeInstanceMethod(context, objRef, jdiMethod, args, ObjectReference.INVOKE_NONVIRTUAL);
       }
       return debugProcess.invokeMethod(context, objRef, jdiMethod, args);
     }

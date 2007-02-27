@@ -14,6 +14,7 @@ import com.intellij.debugger.ui.tree.ThreadDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.util.IconLoader;
 import com.sun.jdi.ThreadReference;
+import com.sun.jdi.ObjectCollectedException;
 
 import javax.swing.*;
 
@@ -45,20 +46,21 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     ThreadReferenceProxyImpl thread = getThreadReference();
-    if (thread.isCollected()) {
+    try {
+      myName = thread.name();
+      ThreadGroupReferenceProxyImpl gr = getThreadReference().threadGroupProxy();
+      final String grname = (gr != null)? gr.name() : null;
+      final String threadStatusText = DebuggerUtilsEx.getThreadStatusText(getThreadReference().status());
+      //noinspection HardCodedStringLiteral
+      if (grname != null && !"SYSTEM".equalsIgnoreCase(grname)) {
+        return DebuggerBundle.message("label.thread.node.in.group", myName, thread.uniqueID(), threadStatusText, grname);
+      }
+
+      return DebuggerBundle.message("label.thread.node", myName, thread.uniqueID(), threadStatusText);
+    }
+    catch (ObjectCollectedException e) {
       return myName != null ? DebuggerBundle.message("label.thread.node.thread.collected", myName) : "";
     }
-
-    myName = thread.name();
-    ThreadGroupReferenceProxyImpl gr = getThreadReference().threadGroupProxy();
-    final String grname = (gr != null)? gr.name() : null;
-    final String threadStatusText = DebuggerUtilsEx.getThreadStatusText(getThreadReference().status());
-    //noinspection HardCodedStringLiteral
-    if (grname != null && !"SYSTEM".equalsIgnoreCase(grname)) {
-      return DebuggerBundle.message("label.thread.node.in.group", myName, thread.uniqueID(), threadStatusText, grname);
-    }
-
-    return DebuggerBundle.message("label.thread.node", myName, thread.uniqueID(), threadStatusText);
   }
 
   public ThreadReferenceProxyImpl getThreadReference() {

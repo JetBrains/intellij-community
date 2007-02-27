@@ -118,20 +118,22 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       value = calcValue(evaluationContext);
 
       if(!myIsNew) {
-        if (myValue instanceof ObjectReference && VirtualMachineProxyImpl.isCollected((ObjectReference)myValue)) {
+        try {
+          if (myValue instanceof DoubleValue && Double.isNaN(((DoubleValue)myValue).doubleValue())) {
+            myIsDirty = !(value instanceof DoubleValue);
+          }
+          else if (myValue instanceof FloatValue && Float.isNaN(((FloatValue)myValue).floatValue())) {
+            myIsDirty = !(value instanceof FloatValue);
+          }
+          else {
+            myIsDirty = (value == null) ? myValue != null : !value.equals(myValue);
+          }
+        }
+        catch (ObjectCollectedException e) {
           myIsDirty = true;
         }
-        else if (myValue instanceof DoubleValue && Double.isNaN(((DoubleValue)myValue).doubleValue())) {
-          myIsDirty = !(value instanceof DoubleValue);
-        }
-        else if (myValue instanceof FloatValue && Float.isNaN(((FloatValue)myValue).floatValue())) {
-          myIsDirty = !(value instanceof FloatValue);
-        }
-        else {
-          myIsDirty = (value == null) ? myValue != null : !value.equals(myValue);
-        }
       }
-      myValue = (value instanceof ObjectReference)? (ObjectReference)value : value;
+      myValue = value;
       myValueException = null;
     }
     catch (EvaluateException e) {

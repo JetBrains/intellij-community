@@ -106,10 +106,10 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
 
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (myObject == null || !VirtualMachineProxyImpl.isCollected(myObject)) {
+    try {
       return (myObject != null) ? myObject.getValue(myField) : myField.declaringType().getValue(myField);
     }
-    else {
+    catch (ObjectCollectedException e) {
       throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
     }
   }

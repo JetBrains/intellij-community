@@ -323,41 +323,46 @@ public abstract class DebugProcessImpl implements DebugProcess {
    * @param hint may be null
    */
   protected void doStep(final SuspendContextImpl suspendContext, final ThreadReferenceProxyImpl stepThread, int depth, RequestHint hint) {
-    if (stepThread == null || stepThread.isCollected()) {
+    if (stepThread == null) {
       return;
     }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("DO_STEP: creating step request for " + stepThread.getThreadReference());
-    }
-    deleteStepRequests();
-    EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
-    StepRequest stepRequest = requestManager.createStepRequest(stepThread.getThreadReference(), StepRequest.STEP_LINE, depth);
-    DebuggerSettings settings = DebuggerSettings.getInstance();
-    if (!(hint != null && hint.isIgnoreFilters()) /*&& depth == StepRequest.STEP_INTO*/) {
-      if (settings.TRACING_FILTERS_ENABLED) {
-        String currentClassName = getCurrentClassName(stepThread);
-        if (currentClassName == null || !settings.isNameFiltered(currentClassName)) {
-          // add class filters
-          ClassFilter[] filters = settings.getSteppingFilters();
-          for (ClassFilter filter : filters) {
-            if (filter.isEnabled()) {
-              stepRequest.addClassExclusionFilter(filter.getPattern());
+    try {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("DO_STEP: creating step request for " + stepThread.getThreadReference());
+      }
+      deleteStepRequests();
+      EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
+      StepRequest stepRequest = requestManager.createStepRequest(stepThread.getThreadReference(), StepRequest.STEP_LINE, depth);
+      DebuggerSettings settings = DebuggerSettings.getInstance();
+      if (!(hint != null && hint.isIgnoreFilters()) /*&& depth == StepRequest.STEP_INTO*/) {
+        if (settings.TRACING_FILTERS_ENABLED) {
+          String currentClassName = getCurrentClassName(stepThread);
+          if (currentClassName == null || !settings.isNameFiltered(currentClassName)) {
+            // add class filters
+            ClassFilter[] filters = settings.getSteppingFilters();
+            for (ClassFilter filter : filters) {
+              if (filter.isEnabled()) {
+                stepRequest.addClassExclusionFilter(filter.getPattern());
+              }
             }
           }
         }
       }
-    }
 
-    // suspend policy to match the suspend policy of the context:
-    // if all threads were suspended, then during stepping all the threads must be suspended
-    // if only event thread were suspended, then only this particular thread must be suspended during stepping
-    stepRequest.setSuspendPolicy(suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD? EventRequest.SUSPEND_EVENT_THREAD : EventRequest.SUSPEND_ALL);
+      // suspend policy to match the suspend policy of the context:
+      // if all threads were suspended, then during stepping all the threads must be suspended
+      // if only event thread were suspended, then only this particular thread must be suspended during stepping
+      stepRequest.setSuspendPolicy(suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD? EventRequest.SUSPEND_EVENT_THREAD : EventRequest.SUSPEND_ALL);
 
-    if (hint != null) {
-      //noinspection HardCodedStringLiteral
-      stepRequest.putProperty("hint", hint);
+      if (hint != null) {
+        //noinspection HardCodedStringLiteral
+        stepRequest.putProperty("hint", hint);
+      }
+      stepRequest.enable();
     }
-    stepRequest.enable();
+    catch (ObjectCollectedException ignored) {
+
+    }
   }
 
   void deleteStepRequests() {
@@ -878,27 +883,24 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
       Set<SuspendContextImpl> suspendingContexts = SuspendManagerUtil.getSuspendingContexts(getSuspendManager(), invokeThread);
       final ThreadReference invokeThreadRef = invokeThread.getThreadReference();
-      if (invokeThreadRef == null) {
-        // the thread has been collected
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("error.cannot.invoke.method.in.collected.thread"));
-      }
-      for (final SuspendContextImpl suspendingContext : suspendingContexts) {
-        final ThreadReferenceProxyImpl suspendContextThread = suspendingContext.getThread();
-        if (suspendContextThread != invokeThread) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Resuming " + invokeThread + " that is paused by " + suspendContextThread);
-          }
-          LOG.assertTrue(suspendContextThread == null || !invokeThreadRef.equals(suspendContextThread.getThreadReference()));
-          getSuspendManager().resumeThread(suspendingContext, invokeThread);
-        }
-      }
-
-      Object resumeData = SuspendManagerUtil.prepareForResume(suspendContext);
-      suspendContext.setIsEvaluating(evaluationContext);
-
-      getVirtualMachineProxy().clearCaches();
-
+      Object resumeData = null;
       try {
+        for (final SuspendContextImpl suspendingContext : suspendingContexts) {
+          final ThreadReferenceProxyImpl suspendContextThread = suspendingContext.getThread();
+          if (suspendContextThread != invokeThread) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Resuming " + invokeThread + " that is paused by " + suspendContextThread);
+            }
+            LOG.assertTrue(suspendContextThread == null || !invokeThreadRef.equals(suspendContextThread.getThreadReference()));
+            getSuspendManager().resumeThread(suspendingContext, invokeThread);
+          }
+        }
+
+        resumeData = SuspendManagerUtil.prepareForResume(suspendContext);
+        suspendContext.setIsEvaluating(evaluationContext);
+
+        getVirtualMachineProxy().clearCaches();
+
         while (true) {
           try {
             return invokeMethodAndFork(suspendContext);
@@ -934,7 +936,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
       }
       finally {
         suspendContext.setIsEvaluating(null);
-        SuspendManagerUtil.restoreAfterResume(suspendContext, resumeData);
+        if (resumeData != null) {
+          SuspendManagerUtil.restoreAfterResume(suspendContext, resumeData);
+        }
         for (SuspendContextImpl suspendingContext : mySuspendManager.getEventContexts()) {
           if (suspendingContexts.contains(suspendingContext) && !suspendingContext.isEvaluating() && !suspendingContext.suspends(invokeThread)) {
             mySuspendManager.suspendThread(suspendingContext, invokeThread);
@@ -1006,41 +1010,35 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
 
     private void assertThreadSuspended(final ThreadReferenceProxyImpl thread, final SuspendContextImpl context) {
+      LOG.assertTrue(context.isEvaluating());
       final boolean isSuspended = thread.isSuspended();
-      if (!thread.isCollected()) {
+      try {
         LOG.assertTrue(isSuspended, thread.toString());
       }
-      LOG.assertTrue(context.isEvaluating());
+      catch (ObjectCollectedException ignored) {
+      }
     }
   }
 
   public Value invokeMethod(final EvaluationContext evaluationContext, final ObjectReference objRef, final Method method, final List args) throws EvaluateException {
+    return invokeInstanceMethod(evaluationContext, objRef, method, args, 0);
+  }
+
+  public Value invokeInstanceMethod(final EvaluationContext evaluationContext, final ObjectReference objRef, final Method method,
+                                     final List args, final int invocationOptions) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
     InvokeCommand<Value> invokeCommand = new InvokeCommand<Value>(args) {
       protected Value invokeMethod(int invokePolicy, final List args) throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invoke " + method.name());
         }
-        return objRef.invokeMethod(thread, method, args, invokePolicy);
+        return objRef.invokeMethod(thread, method, args, invokePolicy | invocationOptions);
       }
     };
     return invokeCommand.start((EvaluationContextImpl)evaluationContext, method);
   }
 
-  public Value invokeMethodNonVirtual(final EvaluationContext evaluationContext, final ObjectReference objRef, final Method method, final List args) throws EvaluateException {
-    final ThreadReference thread = getEvaluationThread(evaluationContext);
-    InvokeCommand<Value> invokeCommand = new InvokeCommand<Value>(args) {
-      protected Value invokeMethod(int invokePolicy, final List args) throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Invoke " + method.name());
-        }
-        return objRef.invokeMethod(thread, method, args, invokePolicy | ObjectReference.INVOKE_NONVIRTUAL);
-      }
-    };
-    return invokeCommand.start((EvaluationContextImpl)evaluationContext, method);
-  }
-
-  private ThreadReference getEvaluationThread(final EvaluationContext evaluationContext) throws EvaluateException {
+  private static ThreadReference getEvaluationThread(final EvaluationContext evaluationContext) throws EvaluateException {
     ThreadReferenceProxy evaluationThread = evaluationContext.getSuspendContext().getThread();
     if(evaluationThread == null) {
       throw EvaluateExceptionUtil.NULL_STACK_FRAME;
@@ -1243,10 +1241,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
       ClassType classClassType = (ClassType)classClasses.get(0);
       final Method forNameMethod;
       if (classLoader != null) {
-        forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
+        //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
+        forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
       }
       else {
-        forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;)Ljava/lang/Class;");
+        //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;)Ljava/lang/Class;");
+        forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;)Ljava/lang/Class;");
       }
       final List args = new ArrayList(); // do not use unmodifiable lists because the list is modified by JPDA
       final StringReference qNameMirror = virtualMachine.mirrorOf(qName);

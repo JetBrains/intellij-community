@@ -53,7 +53,6 @@ public class BatchEvaluator {
   @SuppressWarnings({"HardCodedStringLiteral"}) public boolean hasBatchEvaluator(EvaluationContext evaluationContext) {
     if (!myBatchEvaluatorChecked) {
       myBatchEvaluatorChecked = true;
-
       final Boolean isRemote = myDebugProcess.getUserData(REMOTE_SESSION_KEY);
       if (isRemote != null && isRemote.booleanValue()) {
         // optimization: for remote sessions the BatchEvaluator is not there for sure

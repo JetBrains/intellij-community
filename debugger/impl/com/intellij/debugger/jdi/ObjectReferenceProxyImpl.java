@@ -29,7 +29,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
 
   public ObjectReference getObjectReference() {
     checkValid();
-    return isCollected() ? null : myObjectReference;
+    return myObjectReference;
   }
 
   public VirtualMachineProxyImpl getVirtualMachineProxy() {

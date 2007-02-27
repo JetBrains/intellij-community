@@ -16,6 +16,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.Value;
+import com.sun.jdi.ObjectCollectedException;
 import com.sun.tools.corba.se.idl.constExpr.EvaluationException;
 
 public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements ArrayElementDescriptor{
@@ -48,10 +49,10 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
   }
 
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
-    if (!VirtualMachineProxyImpl.isCollected(myArray)) {
+    try {
       return myArray.getValue(myIndex);
-    } 
-    else {
+    }
+    catch (ObjectCollectedException e) {
       throw EvaluateExceptionUtil.ARRAY_WAS_COLLECTED;
     }
   }

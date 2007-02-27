@@ -8,6 +8,7 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.tree.ThreadGroupDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.DebuggerBundle;
+import com.sun.jdi.ObjectCollectedException;
 
 public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements ThreadGroupDescriptor{
   private final ThreadGroupReferenceProxyImpl myThreadGroup;
@@ -34,12 +35,13 @@ public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements Thr
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     ThreadGroupReferenceProxyImpl group = getThreadGroupReference();
-    if (group.isCollected()) {
+    try {
+      myName = group.name();
+      return DebuggerBundle.message("label.thread.group.node", myName, group.uniqueID());
+    }
+    catch (ObjectCollectedException e) {
       return myName != null ? DebuggerBundle.message("label.thread.group.node.group.collected", myName) : "";
     }
-    myName = group.name();
-
-    return DebuggerBundle.message("label.thread.group.node", myName, group.uniqueID());
   }
 
   public boolean isExpandable() {
@@ -48,7 +50,7 @@ public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements Thr
 
   public void setContext(EvaluationContextImpl context) {
     ThreadReferenceProxyImpl threadProxy = context.getSuspendContext().getThread();
-    myIsCurrent = threadProxy != null && threadProxy.getThreadReference() != null && isDescendantGroup(threadProxy.threadGroupProxy());
+    myIsCurrent = threadProxy != null && isDescendantGroup(threadProxy.threadGroupProxy());
     myIsExpandable = calcExpandable();
   }
 

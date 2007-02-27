@@ -68,15 +68,19 @@ public interface DebugProcess {
                      Method method,
                      List args) throws EvaluateException;
 
-  Value invokeMethodNonVirtual(EvaluationContext evaluationContext, 
-                               ObjectReference objRef, 
-                               Method method, 
-                               List args) throws EvaluateException;
-
+  /**
+   * Is equivalent to invokeInstanceMethod(evaluationContext, classType, method, args, 0) 
+   */
   Value invokeMethod(EvaluationContext evaluationContext,
                      ClassType classType,
                      Method method,
                      List args) throws EvaluateException;
+
+  Value invokeInstanceMethod(EvaluationContext evaluationContext, 
+                             ObjectReference objRef, 
+                             Method method, 
+                             List args, 
+                             int invocationOptions) throws EvaluateException;
 
   ReferenceType findClass(EvaluationContext evaluationContext,
                           String name,

@@ -51,9 +51,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     checkValid();
     if (myName == null) {
       try {
-        final ThreadReference threadReference = getThreadReference();
-        // when thread ref is collected, the returned reference will be null
-        myName = threadReference == null? "" : threadReference.name();
+        myName = getThreadReference().name();
       }
       catch (ObjectCollectedException e) {
         myName = "";
@@ -65,23 +63,33 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   public int getSuspendCount() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     //LOG.assertTrue((mySuspendCount > 0) == suspends());
-    final ThreadReference threadRef = getThreadReference();
-    return threadRef != null? threadRef.suspendCount() : 0;
+    try {
+      return getThreadReference().suspendCount();
+    }
+    catch (ObjectCollectedException e) {
+      return 0;
+    }
   }
 
   public void suspend() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    final ThreadReference threadReference = getThreadReference();
-    if (threadReference != null) {
-      threadReference.suspend();
+    try {
+      getThreadReference().suspend();
+    }
+    catch (ObjectCollectedException ignored) {
     }
     clearCaches();
   }
 
   public @NonNls String toString() {
-    final ThreadReference threadRef = getThreadReference();
     //noinspection HardCodedStringLiteral
-    final String threadRefString = threadRef != null? threadRef.toString() : "[thread collected]";
+    @NonNls String threadRefString;
+    try {
+      threadRefString = getThreadReference().toString() ;
+    }
+    catch (ObjectCollectedException e) {
+      threadRefString = "[thread collected]";
+    }
     return "ThreadReferenceProxyImpl: " + threadRefString + " " + super.toString();
   }
 
@@ -93,8 +101,10 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       LOG.debug("before resume" + threadRef);
     }
     getVirtualMachineProxy().clearCaches();
-    if (threadRef != null) {
+    try {
       threadRef.resume();
+    }
+    catch (ObjectCollectedException ignored) {
     }
   }
 
@@ -106,16 +116,25 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   }
 
   public int status() {
-    final ThreadReference threadRef = getThreadReference();
-    return threadRef != null ? threadRef.status() : ThreadReference.THREAD_STATUS_ZOMBIE;
+    try {
+      return getThreadReference().status();
+    }
+    catch (ObjectCollectedException e) {
+      return ThreadReference.THREAD_STATUS_ZOMBIE;
+    }
   }
 
   public ThreadGroupReferenceProxyImpl threadGroupProxy() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     checkValid();
     if(myThreadGroupProxy == null) {
-      final ThreadReference threadRef = getThreadReference();
-      final ThreadGroupReference threadGroupRef = threadRef != null ? threadRef.threadGroup() : null;
+      ThreadGroupReference threadGroupRef;
+      try {
+        threadGroupRef = getThreadReference().threadGroup();
+      }
+      catch (ObjectCollectedException e) {
+        threadGroupRef = null;
+      }
       myThreadGroupProxy = getVirtualMachineProxy().getThreadGroupReferenceProxy(threadGroupRef);
     }
     return myThreadGroupProxy;
@@ -127,7 +146,10 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     if (myFrameCount == -1) {
       final ThreadReference threadReference = getThreadReference();
       try {
-        myFrameCount = threadReference != null? threadReference.frameCount() : 0;
+        myFrameCount = threadReference.frameCount();
+      }
+      catch(ObjectCollectedException e) {
+        myFrameCount = 0;
       }
       catch (IncompatibleThreadStateException e) {
         if (!threadReference.isSuspended()) {
@@ -148,20 +170,22 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   public List<StackFrameProxyImpl> frames() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final ThreadReference threadRef = getThreadReference();
-    if (threadRef == null) {
-      return Collections.emptyList();
-    }
-    LOG.assertTrue(threadRef.isSuspended());
-    checkValid();
+    try {
+      LOG.assertTrue(threadRef.isSuspended());
+      checkValid();
 
-    if(myFrames == null) {
-      checkFrames(threadRef);
-
-      myFrames = new ArrayList<StackFrameProxyImpl>(frameCount());
-      for (ListIterator<StackFrameProxyImpl> iterator = myFramesFromBottom.listIterator(frameCount()); iterator.hasPrevious();) {
-        StackFrameProxyImpl stackFrameProxy = iterator.previous();
-        myFrames.add(stackFrameProxy);
+      if(myFrames == null) {
+        checkFrames(threadRef);
+  
+        myFrames = new ArrayList<StackFrameProxyImpl>(frameCount());
+        for (ListIterator<StackFrameProxyImpl> iterator = myFramesFromBottom.listIterator(frameCount()); iterator.hasPrevious();) {
+          StackFrameProxyImpl stackFrameProxy = iterator.previous();
+          myFrames.add(stackFrameProxy);
+        }
       }
+    }
+    catch (ObjectCollectedException e) {
+      return Collections.emptyList();
     }
     return myFrames;
   }
@@ -192,21 +216,24 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   public StackFrameProxyImpl frame(int i) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final ThreadReference threadReference = getThreadReference();
-    if(threadReference == null || !threadReference.isSuspended()) {
+    try {
+      if(!threadReference.isSuspended()) {
+        return null;
+      }
+      checkFrames(threadReference);
+      return myFramesFromBottom.get(frameCount() - i  - 1);
+    }
+    catch (ObjectCollectedException e) {
       return null;
     }
-    checkFrames(threadReference);
-    return myFramesFromBottom.get(frameCount() - i  - 1);
   }
 
   public void popFrames(StackFrameProxyImpl stackFrame) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    final ThreadReference threadRef = getThreadReference();
-    if (threadRef == null) {
-      return;
-    }
     try {
-      threadRef.popFrames(stackFrame.getStackFrame());
+      getThreadReference().popFrames(stackFrame.getStackFrame());
+    }
+    catch (ObjectCollectedException ignored) {
     }
     catch (InternalException e) {
       throw EvaluateExceptionUtil.createEvaluateException(e);
@@ -222,7 +249,11 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
 
   public boolean isSuspended() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    final ThreadReference thread = getThreadReference();
-    return thread != null && thread.isSuspended();
+    try {
+      return getThreadReference().isSuspended();
+    }
+    catch (ObjectCollectedException e) {
+      return false;
+    }
   }
 }

@@ -80,10 +80,10 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     if(myStackFrame == null) {
       try {
         final ThreadReference threadRef = myThreadProxy.getThreadReference();
-        if (threadRef == null) {
-          throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.thread.collected"));
-        }
         myStackFrame = threadRef.frame(getFrameIndex());
+      }
+      catch (ObjectCollectedException e) {
+        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.thread.collected"));
       }
       catch (IncompatibleThreadStateException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);

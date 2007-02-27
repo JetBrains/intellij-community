@@ -31,6 +31,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
@@ -46,6 +47,7 @@ import java.util.List;
 
 public abstract class DebuggerUtils  implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebuggerUtils");
+  private static final Key<Method> TO_STRING_METHOD_KEY = new Key<Method>("CachedToStringMethod");
 
   @NonNls
   public static String getValueAsString(final EvaluationContext evaluationContext, Value value) throws EvaluateException {
@@ -74,27 +76,23 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
       }
       if (value instanceof ObjectReference) {
         final ObjectReference objRef = (ObjectReference)value;
-        ReferenceType refType = objRef.referenceType();
-        if(refType instanceof ArrayType) {
+        final DebugProcess debugProcess = evaluationContext.getDebugProcess();
+        Method toStringMethod = debugProcess.getUserData(TO_STRING_METHOD_KEY);
+        if (toStringMethod == null) {
           try {
-            refType = objRef.virtualMachine().classesByName("java.lang.Object").get(0);
+            ReferenceType refType = objRef.virtualMachine().classesByName("java.lang.Object").get(0);
+            toStringMethod = findMethod(refType, "toString", "()Ljava/lang/String;");
+            debugProcess.putUserData(TO_STRING_METHOD_KEY, toStringMethod);
           }
           catch (Exception e) {
             throw EvaluateExceptionUtil.createEvaluateException(
               DebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
           }
         }
-        final Method toStringMethod = findMethod(refType, "toString", "()Ljava/lang/String;");
         if (toStringMethod == null) {
           throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
         }
-
-        StringReference stringReference;
-        stringReference = (StringReference)evaluationContext.getDebugProcess().invokeMethod(
-          evaluationContext, objRef,
-          toStringMethod,
-          Collections.emptyList());
-
+        final StringReference stringReference = (StringReference)debugProcess.invokeInstanceMethod(evaluationContext, objRef, toStringMethod, Collections.emptyList(), ObjectReference.INVOKE_SINGLE_THREADED);
         return  stringReference == null ? "null" : stringReference.value();
       }
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.unsupported.expression.type"));
