@@ -19,10 +19,13 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.util.*;
+import java.awt.event.InputEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
@@ -71,9 +74,9 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
     String name = virtualFile.getPath();
     if (name == null) return;
     RangeHighlighter lineMarker = ((MarkupModelEx)document.getMarkupModel(myProject)).addPersistentLineHighlighter(
-      lineIndex, HighlighterLayer.ADDITIONAL_SYNTAX - 1, null);
+      lineIndex, HighlighterLayer.ERROR + 1, null);
     if (lineMarker == null) return;
-    EditorBookmark bookmark = new EditorBookmark(document, myProject, lineMarker, BookmarkManager.getAutoDescription(editor), number);
+    EditorBookmark bookmark = new EditorBookmark(document, myProject, lineMarker, getAutoDescription(editor), number);
     myEditorBookmarks.addBookmark(bookmark);
   }
 
@@ -126,8 +129,8 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    for (Iterator iterator = element.getChildren().iterator(); iterator.hasNext();) {
-      Element bookmarkElement = (Element)iterator.next();
+    for (final Object o : element.getChildren()) {
+      Element bookmarkElement = (Element)o;
 
       if (BookmarksCollection.ForEditors.ELEMENT_NAME.equals(bookmarkElement.getName())) {
         myEditorBookmarks.readBookmark(bookmarkElement, myProject);
@@ -178,8 +181,7 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
   public EditorBookmark getNextBookmark(Editor editor, boolean isWrapped) {
     EditorBookmark[] bookmarksForDocument = getBookmarksForDocument(editor.getDocument());
     int lineNumber = editor.getCaretModel().getLogicalPosition().line;
-    for (int i = 0; i < bookmarksForDocument.length; i++) {
-      EditorBookmark bookmark = bookmarksForDocument[i];
+    for (EditorBookmark bookmark : bookmarksForDocument) {
       if (bookmark.getLineIndex() > lineNumber) return bookmark;
     }
     if (isWrapped && bookmarksForDocument.length > 0) {
@@ -204,18 +206,15 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
   private EditorBookmark[] getBookmarksForDocument(Document document) {
     ArrayList<EditorBookmark> bookmarksVector = new ArrayList<EditorBookmark>();
     List<EditorBookmark> validEditorBookmarks = getValidEditorBookmarks();
-    for (Iterator<EditorBookmark> iterator = validEditorBookmarks.iterator(); iterator.hasNext();) {
-      EditorBookmark bookmark = iterator.next();
+    for (EditorBookmark bookmark : validEditorBookmarks) {
       if (document.equals(bookmark.getDocument())) {
         bookmarksVector.add(bookmark);
       }
     }
     EditorBookmark[] bookmarks = bookmarksVector.toArray(new EditorBookmark[bookmarksVector.size()]);
-    Arrays.sort(bookmarks, new Comparator() {
-      public int compare(Object o1, Object o2) {
-        EditorBookmark bookmark1 = (EditorBookmark)o1;
-        EditorBookmark bookmark2 = (EditorBookmark)o2;
-        return bookmark1.getLineIndex() - bookmark2.getLineIndex();
+    Arrays.sort(bookmarks, new Comparator<EditorBookmark>() {
+      public int compare(final EditorBookmark o1, final EditorBookmark o2) {
+        return o1.getLineIndex() - o2.getLineIndex();
       }
     });
     return bookmarks;
@@ -225,7 +224,7 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
     public void mouseClicked(final EditorMouseEvent e) {
       if (e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA) return;
       if (e.getMouseEvent().isPopupTrigger()) return;
-      if ((e.getMouseEvent().getModifiers() & MouseEvent.CTRL_MASK) == 0) return;
+      if ((e.getMouseEvent().getModifiers() & InputEvent.CTRL_MASK) == 0) return;
 
       Editor editor = e.getEditor();
       int line = editor.xyToLogicalPosition(new Point(e.getMouseEvent().getX(), e.getMouseEvent().getY())).line;
@@ -244,6 +243,7 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
     }
   }
 
+  @NotNull
   public String getComponentName() {
     return "BookmarkManager";
   }
