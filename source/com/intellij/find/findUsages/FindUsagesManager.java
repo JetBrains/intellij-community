@@ -303,8 +303,12 @@ public class FindUsagesManager implements JDOMExternalizable {
               return descriptor.getAllElements();
             }
           });
-        for (PsiElement element : elements) {
-          LOG.assertTrue(element.isValid());
+        for (final PsiElement element : elements) {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              LOG.assertTrue(element.isValid());
+            }
+          });
           FindUsagesUtil.processUsages(element, usageInfoProcessorToUsageProcessorAdapter, options);
         }
       }
