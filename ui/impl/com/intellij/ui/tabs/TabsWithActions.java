@@ -19,6 +19,7 @@ import java.awt.*;
 import java.awt.geom.GeneralPath;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,8 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
 
   private static final int INNER = 1;
 
+  private List<MouseListener> myTabListeners = new ArrayList<MouseListener>();
+
   public TabsWithActions(ActionManager actionManager) {
     myActionManager = actionManager;
   }
@@ -46,16 +49,19 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     final JLabel label = new JLabel("???");
     label.addMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
-        if (e.getClickCount() == 1) {
+        if (e.getClickCount() == 1 && e.getButton() == MouseEvent.BUTTON1) {
           setSelected(info);
         }
       }
     });
-    label.setBorder(new EmptyBorder(2, 8, 2, 8));
+    label.setBorder(new EmptyBorder(4, 8, 4, 8));
     myInfo2Label.put(info, label);
     myInfos.add(info);
     add(label);
     update();
+
+    updateListeners();
+
     return info;
   }
 
@@ -102,7 +108,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     if (insets == null) {
       insets = new Insets(0, 0, 0, 0);
     }
-    int currentX = insets.left + getArcSize();
+    int currentX = insets.left;
     final TabInfo selected = getSelectedInfo();
     mySelectedBounds = null;
     for (TabInfo eachInfo : myInfos) {
@@ -165,8 +171,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     int arc = getArcSize();
 
     path.moveTo(insets.left, bottomY);
-    path.lineTo(leftX - arc, bottomY);
-    path.quadTo(leftX, bottomY, leftX, bottomY - arc);
+    path.lineTo(leftX, bottomY);
     path.lineTo(leftX, topY + arc);
     path.quadTo(leftX, topY, leftX + arc, topY);
     path.lineTo(rightX - arc, topY);
@@ -223,6 +228,41 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     return myActionManager;
   }
 
+  public void addTabListener(MouseListener listener) {
+    removeListeners();
+    myTabListeners.add(listener);
+    addListeners();
+  }
+
+  public void removeTabListener(MouseListener listener) {
+    removeListeners();
+    myTabListeners.remove(listener);
+    addListeners();
+  }
+
+  private void addListeners() {
+    for (TabInfo eachInfo : myInfos) {
+      final JLabel label = myInfo2Label.get(eachInfo);
+      for (MouseListener eachListener : myTabListeners) {
+        label.addMouseListener(eachListener);
+      }
+    }
+  }
+
+  private void removeListeners() {
+    for (TabInfo eachInfo : myInfos) {
+      final JLabel label = myInfo2Label.get(eachInfo);
+      for (MouseListener eachListener : myTabListeners) {
+        label.removeMouseListener(eachListener);
+      }
+    }
+  }
+
+  private void updateListeners() {
+    removeListeners();
+    addListeners();
+  }
+
   public static void main(String[] args) {
     final JFrame frame = new JFrame();
     frame.getContentPane().setLayout(new BorderLayout());
@@ -240,7 +280,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     tabs.addTab(new JTree()).setText("Tree2");
     tabs.addTab(new JTable()).setText("Table").setActions(new DefaultActionGroup(), null);
 
-    //tabs.setBorder(new EmptyBorder(6, 6, 6, 6));
+    tabs.setBorder(new EmptyBorder(6, 6, 6, 6));
 
     frame.setBounds(200, 200, 300, 200);
     frame.show();
