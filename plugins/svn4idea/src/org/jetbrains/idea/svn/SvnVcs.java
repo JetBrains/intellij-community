@@ -102,7 +102,7 @@ public class SvnVcs extends AbstractVcs {
   private ChangeProvider myChangeProvider;
 
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
-  @NonNls private static final String VCS_NAME = "svn";
+  @NonNls public static final String VCS_NAME = "svn";
   public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
 
   static {

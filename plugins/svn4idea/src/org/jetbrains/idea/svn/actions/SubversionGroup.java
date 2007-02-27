@@ -17,11 +17,17 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.actions.StandardVcsGroup;
 import org.jetbrains.idea.svn.SvnVcs;
 
 public class SubversionGroup extends StandardVcsGroup {
   public AbstractVcs getVcs(Project project) {
     return SvnVcs.getInstance(project);
+  }
+
+  @Override
+  protected boolean isVcsActive(final Project project) {
+    return ProjectLevelVcsManager.getInstance(project).checkVcsIsActive("svn");
   }
 }
