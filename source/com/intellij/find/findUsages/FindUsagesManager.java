@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.ui.LightweightHint;
@@ -296,7 +297,13 @@ public class FindUsagesManager implements JDOMExternalizable {
             return processor.process(UsageInfoToUsageConverter.convert(descriptor, usageInfo));
           }
         };
-        for (PsiElement element : descriptor.getAllElements()) {
+        List<? extends PsiElement> elements =
+          ApplicationManager.getApplication().runReadAction(new Computable<List<? extends PsiElement>>() {
+            public List<? extends PsiElement> compute() {
+              return descriptor.getAllElements();
+            }
+          });
+        for (PsiElement element : elements) {
           LOG.assertTrue(element.isValid());
           FindUsagesUtil.processUsages(element, usageInfoProcessorToUsageProcessorAdapter, options);
         }
@@ -432,8 +439,6 @@ public class FindUsagesManager implements JDOMExternalizable {
                                  final FileEditorLocation currentLocation,
                                  final boolean[] usagesWereFound,
                                  FileEditor fileEditor) {
-    final Usage[] foundUsage = new Usage[]{null};
-
     if (fileEditor.getUserData(KEY_START_USAGE_AGAIN) != null) {
       if (dir == FileSearchScope.AFTER_CARET) {
         dir = FileSearchScope.FROM_START;
@@ -446,6 +451,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     final FileSearchScope direction = dir;
 
 
+    final Usage[] foundUsage = new Usage[]{null};
     usageSearcher.generate(new Processor<Usage>() {
       public boolean process(Usage usage) {
         usagesWereFound[0] = true;
