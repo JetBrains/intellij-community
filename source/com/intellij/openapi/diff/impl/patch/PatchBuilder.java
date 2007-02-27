@@ -68,7 +68,13 @@ public class PatchBuilder {
       }
 
       final String beforeContent = beforeRevision.getContent();
+      if (beforeContent == null) {
+        throw new VcsException("Failed to fetch old content for changed file " + beforeRevision.getFile().getPath());
+      }
       final String afterContent = afterRevision.getContent();
+      if (afterContent == null) {
+        throw new VcsException("Failed to fetch new content for changed file " + afterRevision.getFile().getPath());
+      }
       String[] beforeLines = DiffUtil.convertToLines(beforeContent);
       String[] afterLines = DiffUtil.convertToLines(afterContent);
 
@@ -132,7 +138,11 @@ public class PatchBuilder {
   }
 
   private static FilePatch buildAddedFile(final String basePath, final ContentRevision afterRevision) throws VcsException {
-    String[] lines = DiffUtil.convertToLines(afterRevision.getContent());
+    final String content = afterRevision.getContent();
+    if (content == null) {
+      throw new VcsException("Failed to fetch content for added file " + afterRevision.getFile().getPath());
+    }
+    String[] lines = DiffUtil.convertToLines(content);
     FilePatch result = buildPatchHeading(basePath, afterRevision, afterRevision);
     PatchHunk hunk = new PatchHunk(-1, -1, 0, lines.length);
     for(String line: lines) {
@@ -143,7 +153,11 @@ public class PatchBuilder {
   }
 
   private static FilePatch buildDeletedFile(String basePath, ContentRevision beforeRevision) throws VcsException {
-    String[] lines = DiffUtil.convertToLines(beforeRevision.getContent());
+    final String content = beforeRevision.getContent();
+    if (content == null) {
+      throw new VcsException("Failed to fetch old content for deleted file " + beforeRevision.getFile().getPath());
+    }
+    String[] lines = DiffUtil.convertToLines(content);
     FilePatch result = buildPatchHeading(basePath, beforeRevision, beforeRevision);
     PatchHunk hunk = new PatchHunk(0, lines.length, -1, -1);
     for(String line: lines) {

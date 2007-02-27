@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.CommitSession;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,8 @@ import javax.swing.*;
 import java.util.Collection;
 
 public class ShelveChangesCommitExecutor implements CommitExecutor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesCommitExecutor");
+
   private final Project myProject;
 
   public ShelveChangesCommitExecutor(final Project project) {
@@ -80,6 +83,7 @@ public class ShelveChangesCommitExecutor implements CommitExecutor {
         ShelvedChangesViewManager.getInstance(myProject).activateView(list);
       }
       catch (final Exception ex) {
+        LOG.info(ex);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle());

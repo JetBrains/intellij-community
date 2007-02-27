@@ -25,6 +25,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Icons;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -41,6 +42,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class CreatePatchCommitExecutor implements CommitExecutor, ProjectComponent, JDOMExternalizable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor");
+  
   private Project myProject;
   private ChangeListManager myChangeListManager;
 
@@ -171,6 +174,7 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
         }
       }
       catch (final Exception ex) {
+        LOG.info(ex);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle());

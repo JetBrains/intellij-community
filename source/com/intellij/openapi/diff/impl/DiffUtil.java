@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ImageLoader;
+import org.jetbrains.annotations.NotNull;
 
 public class DiffUtil {
   public static FrameWrapper initDiffFrame(FrameWrapper frameWrapper, final DiffPanelImpl diffPanel) {
@@ -31,7 +32,7 @@ public class DiffUtil {
     return (FocusDiffSide)dataContext.getData(FocusDiffSide.FOCUSED_DIFF_SIDE);
   }
 
-  public static String[] convertToLines(String text) {
+  public static String[] convertToLines(@NotNull String text) {
     return new LineTokenizer(text).execute();
   }
 
