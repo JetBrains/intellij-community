@@ -111,7 +111,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private ContentManager myContentManager;
   private EditorAdapter myEditorAdapter;
 
-  private boolean myIsBeforeProjectStarted = true;
   @NonNls private static final String OPTIONS_SETTING = "OptionsSetting";
   @NonNls private static final String CONFIRMATIONS_SETTING = "ConfirmationsSetting";
   @NonNls private static final String VALUE_ATTTIBUTE = "value";
@@ -273,7 +272,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     });
     manager.registerPostStartupActivity(new Runnable() {
       public void run() {
-        myIsBeforeProjectStarted = false;
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         if (toolWindowManager != null) { // Can be null in tests
           ToolWindow toolWindow =
@@ -581,7 +579,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @NotNull
   public VcsShowSettingOption getStandardOption(@NotNull VcsConfiguration.StandardOption option, @NotNull AbstractVcs vcs) {
-    LOG.assertTrue(myIsBeforeProjectStarted, "getStandardOption should be called from projectOpened only");
     final VcsShowOptionsSettingImpl options = myOptions.get(option.getId());
     options.addApplicableVcs(vcs);
     return options;
@@ -589,7 +586,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @NotNull
   public VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName, @NotNull AbstractVcs vcs) {
-    LOG.assertTrue(myIsBeforeProjectStarted, "getOrCreateCustomOption should be called from projectOpened only");
     final VcsShowOptionsSettingImpl option = getOrCreateOption(vcsActionName);
     option.addApplicableVcs(vcs);
     return option;
@@ -775,7 +771,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NotNull
   public VcsShowConfirmationOption getStandardConfirmation(@NotNull VcsConfiguration.StandardConfirmation option,
                                                            @NotNull AbstractVcs vcs) {
-    LOG.assertTrue(myIsBeforeProjectStarted, "VcsShowConfirmationOption should be called from projectOpened only");
     final VcsShowConfirmationOptionImpl result = myConfirmations.get(option.getId());
     result.addApplicableVcs(vcs);
     return result;
