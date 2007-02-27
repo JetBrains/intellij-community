@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBranchConfiguration;
@@ -30,6 +31,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -56,6 +58,11 @@ public class BranchConfigurationDialog extends DialogWrapper {
         if (dlg.isOK()) {
           myTrunkLocationTextField.setText(dlg.getSelectedURL());
         }
+      }
+    });
+    myTrunkLocationTextField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        configuration.setTrunkUrl(myTrunkLocationTextField.getText());
       }
     });
 
@@ -112,7 +119,8 @@ public class BranchConfigurationDialog extends DialogWrapper {
       configuration = SvnBranchConfigurationManager.getInstance(project).get(vcsRoot);
     }
     catch (VcsException ex) {
-      Messages.showErrorDialog(project, "Error loading branch configuration: " + ex.getMessages(), "Configure Branches");
+      Messages.showErrorDialog(project, "Error loading branch configuration: " + ex.getMessages(),
+                               SvnBundle.message("configure.branches.title"));
       return;
     }
 
