@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.vcs.CheckinProjectPanel;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
  * @since 5.1
  */
 public abstract class CheckinHandlerFactory {
+  public static final ExtensionPointName<CheckinHandlerFactory> EP_NAME = ExtensionPointName.create("com.intellij.checkinHandlerFactory");
+  
   /**
    * Creates a handler for a single Checkin Project or Checkin File operation.
    *

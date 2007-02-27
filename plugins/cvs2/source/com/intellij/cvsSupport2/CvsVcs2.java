@@ -7,7 +7,6 @@ import com.intellij.cvsSupport2.annotate.CvsFileAnnotation;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsStorageComponent;
 import com.intellij.cvsSupport2.changeBrowser.CvsCommittedChangesProvider;
-import com.intellij.cvsSupport2.checkinProject.AdditionalOptionsPanel;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinEnvironment;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
@@ -35,14 +34,11 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
@@ -66,7 +62,6 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
 
   private CvsStorageComponent myStorageComponent = CvsStorageComponent.ABSENT_STORAGE;
   private final CvsHistoryProvider myCvsHistoryProvider;
-  private boolean myProjectIsOpened = false;
   private final CvsCheckinEnvironment myCvsCheckinEnvironment;
   private final CvsStandardOperationsProvider myCvsStandardOperationsProvider;
   private final CvsUpdateEnvironment myCvsUpdateEnvironment;
@@ -103,7 +98,6 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
   /* ======================================= ProjectComponent */
 
   public void projectClosed() {
-    myProjectIsOpened = false;
   }
 
   public void projectOpened() {
@@ -115,27 +109,6 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
 
     myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
     myRemoveConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
-
-    vcsManager.registerCheckinHandlerFactory(new CheckinHandlerFactory() {
-      public
-      @NotNull
-      CheckinHandler createHandler(final CheckinProjectPanel panel) {
-        return new CheckinHandler() {
-          @Nullable
-          public RefreshableOnComponent getAfterCheckinConfigurationPanel() {
-            if (panel.getAffectedVcses().contains(CvsVcs2.this)) {
-              return new AdditionalOptionsPanel(true, CvsConfiguration.getInstance(myProject));
-            }
-            else {
-              return null;
-            }
-          }
-
-        };
-      }
-    });
-
-    myProjectIsOpened = true;
   }
 
   public void initComponent() {
@@ -271,18 +244,12 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     super.activate();
     myStorageComponent.init(getProject(), false);
     CvsEntriesManager.getInstance().addCvsEntriesListener(this);
-    VcsDirtyScopeManager.getInstance(getProject()).markEverythingDirty();
-    FileStatusManager.getInstance(getProject()).fileStatusesChanged();
   }
 
   public void deactivate() {
     super.deactivate();
     myStorageComponent.dispose();
     CvsEntriesManager.getInstance().removeCvsEntriesListener(this);
-    if (myProjectIsOpened) {
-      FileStatusManager.getInstance(getProject()).fileStatusesChanged();
-      VcsDirtyScopeManager.getInstance(getProject()).markEverythingDirty();
-    }
   }
 
   public void entriesChanged(VirtualFile parent) {
@@ -395,5 +362,6 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent, Transactio
     final VirtualFile child = dir.findChild("CVS");
     return child != null && child.isDirectory();
   }
+
 }
 

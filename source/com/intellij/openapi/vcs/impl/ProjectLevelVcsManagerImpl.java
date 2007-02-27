@@ -127,6 +127,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private Set<AbstractVcs> myActiveVcss = new HashSet<AbstractVcs>();
   private boolean myMappingsLoaded = false;
   private boolean myHaveLegacyVcsConfiguration = false;
+  private boolean myCheckinHandlerFactoriesLoaded = false;
 
   private volatile int myBackgroundOperationCounter = 0;
 
@@ -790,6 +791,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public List<CheckinHandlerFactory> getRegisteredCheckinHandlerFactories() {
+    if (!myCheckinHandlerFactoriesLoaded) {
+      myCheckinHandlerFactoriesLoaded = true;
+      Collections.addAll(myRegisteredBeforeCheckinHandlers, Extensions.getExtensions(CheckinHandlerFactory.EP_NAME, myProject));
+    }
     return Collections.unmodifiableList(myRegisteredBeforeCheckinHandlers);
   }
 
