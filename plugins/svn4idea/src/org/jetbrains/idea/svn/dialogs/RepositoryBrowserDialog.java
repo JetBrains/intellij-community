@@ -42,6 +42,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -83,6 +84,9 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   private RepositoryBrowserDialog.DeleteAction myDeleteAction = new DeleteAction();
 
+  @NonNls private static final String PLACE_TOOLBAR = "RepositoryBrowser.Toolbar";
+  @NonNls private static final String PLACE_MENU = "RepositoryBrowser.Menu";
+
   public RepositoryBrowserDialog(Project project) {
     super(project, true);
     myProject = project;
@@ -104,6 +108,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   protected String getDimensionServiceKey() {
     return "svn.repositoryBrowser";
+  }
+
+  protected boolean showImportAction() {
+    return true;
   }
 
   public JComponent createToolbar(boolean horizontal) {
@@ -158,7 +166,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         }
       });
     }
-    return ActionManager.getInstance().createActionToolbar("", group, horizontal).getComponent();
+    return ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, group, horizontal).getComponent();
   }
 
   protected JPopupMenu createPopup(boolean toolWindow) {
@@ -184,7 +192,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     group.addSeparator();
     group.add(new RefreshAction());
     group.add(new DiscardLocationAction());
-    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu("", group);
+    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(PLACE_MENU, group);
     return menu.getComponent();
   }
 
@@ -292,18 +300,26 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     return getRepositoryBrowser().getSelectedURL();
   }
 
+  @NotNull
+  private RepositoryTreeNode getNotNullSelectedNode() {
+    final RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
+    assert node != null;
+    return node;
+  }
+
   protected class HistoryAction extends AnAction {
     public void update(AnActionEvent e) {
-      e.getPresentation().setText("Show History");
-      e.getPresentation().setDescription("Show history");
-      e.getPresentation().setEnabled(getRepositoryBrowser().getSelectedNode() != null && getRepositoryBrowser().getSelectedNode().getURL() != null);
-    }
-    public void actionPerformed(AnActionEvent e) {
-      Project p = e.getData(DataKeys.PROJECT);
+      e.getPresentation().setText(SvnBundle.message("repository.browser.history.action"));
+      e.getPresentation().setDescription(SvnBundle.message("repository.browser.history.action"));
       final RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
+      e.getPresentation().setEnabled(node != null && node.getURL() != null && !myProject.isDefault());
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      final RepositoryTreeNode node = getNotNullSelectedNode();
       boolean isDirectory = node.getUserObject() instanceof SVNURL ||
                             (node.getSVNDirEntry() != null && node.getSVNDirEntry().getKind() == SVNNodeKind.DIR);
-      AbstractVcsHelper.getInstance(p).showFileHistory(
+      AbstractVcsHelper.getInstance(myProject).showFileHistory(
               new SvnHistoryProvider(myVCS, node.getURL(), SVNRevision.HEAD, isDirectory),
               VcsUtil.getFilePath(node.getURL().toString()));
       node.reload();
@@ -313,29 +329,33 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   protected class RefreshAction extends AnAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText(SvnBundle.message("action.name.refresh"));
-      e.getPresentation().setDescription("Refresh selected tree node");
+      e.getPresentation().setDescription(SvnBundle.message("repository.browser.refresh.action"));
       e.getPresentation().setIcon(IconLoader.findIcon("/actions/sync.png"));
       e.getPresentation().setEnabled(getRepositoryBrowser().getSelectedNode() != null);
     }
+
     public void actionPerformed(AnActionEvent e) {
-      getRepositoryBrowser().getSelectedNode().reload();
+      getNotNullSelectedNode().reload();
     }
   }
+
   protected class AddLocationAction extends AnAction {
 
     public AddLocationAction() {
-      super("_Repository Location...");
+      super(SvnBundle.message("repository.browser.add.location.menu.item"));
     }
 
     public void update(AnActionEvent e) {
-      e.getPresentation().setDescription("Add Repository Location");
-      e.getPresentation().setText("Add Repository Location");
-      e.getPresentation().setIcon(IconLoader.findIcon("/general/add.png"));
-      super.update(e);
+      if (e.getPlace().equals(PLACE_TOOLBAR)) {
+        e.getPresentation().setDescription(SvnBundle.message("repository.browser.add.location.action"));
+        e.getPresentation().setText(SvnBundle.message("repository.browser.add.location.action"));
+        e.getPresentation().setIcon(IconLoader.findIcon("/general/add.png"));
+      }
     }
 
     public void actionPerformed(AnActionEvent e) {
-      String url = Messages.showInputDialog(myProject, "Repository URL:", "New Repository Location", null, "http://", new InputValidator() {
+      String url = Messages.showInputDialog(myProject, SvnBundle.message("repository.browser.add.location.prompt"),
+                                            SvnBundle.message("repository.browser.add.location.title"), null, "http://", new InputValidator() {
         public boolean checkInput(String inputString) {
           if (inputString == null) {
             return false;
@@ -361,18 +381,17 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   protected class DiscardLocationAction extends AnAction {
     public void update(AnActionEvent e) {
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
-      e.getPresentation().setText("Discard _Location", true);
+      e.getPresentation().setText(SvnBundle.message("repository.browser.discard.location.action"), true);
       e.getPresentation().setIcon(IconLoader.findIcon("/general/remove.png"));
       e.getPresentation().setEnabled(node != null && node.getParent() instanceof RepositoryTreeRootNode);
     }
 
     public void actionPerformed(AnActionEvent e) {
-      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
+      RepositoryTreeNode node = getNotNullSelectedNode();
       SVNURL url = node.getURL();
       if (url != null) {
-        Project project = e.getData(DataKeys.PROJECT);
-        int rc = Messages.showYesNoDialog(project, "Would you like to discard the location '" + url.toString() + "'?",
-                                          "Discard Location", Messages.getQuestionIcon());
+        int rc = Messages.showYesNoDialog(myProject, SvnBundle.message("repository.browser.discard.location.prompt", url.toString()),
+                                          SvnBundle.message("repository.browser.discard.location.title"), Messages.getQuestionIcon());
         if (rc == 1) {
           return;
         }
@@ -381,10 +400,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
     }
   }
+
   protected class MkDirAction extends AnAction {
     public void update(AnActionEvent e) {
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
-      e.getPresentation().setText("Remote _Folder...", true);
+      e.getPresentation().setText(SvnBundle.message("repository.browser.new.folder.action"), true);
       if (node != null) {
         SVNDirEntry entry = node.getSVNDirEntry();
         e.getPresentation().setEnabled(entry == null || entry.getKind() == SVNNodeKind.DIR);
@@ -392,17 +412,18 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         e.getPresentation().setEnabled(false);
       }
     }
+
     public void actionPerformed(AnActionEvent e) {
       // show dialog for comment and folder name, then create folder
       // then refresh selected node.
-      Project p = e.getData(DataKeys.PROJECT);
-      MkdirOptionsDialog dialog = new MkdirOptionsDialog(p, getRepositoryBrowser().getSelectedNode().getURL());
+      final RepositoryTreeNode node = getNotNullSelectedNode();
+      MkdirOptionsDialog dialog = new MkdirOptionsDialog(myProject, node.getURL());
       dialog.show();
       if (dialog.isOK()) {
         SVNURL url = dialog.getURL();
         String message = dialog.getCommitMessage();
         doMkdir(url, message);
-        getRepositoryBrowser().getSelectedNode().reload();
+        node.reload();
       }
     }
   }
@@ -418,10 +439,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         e.getPresentation().setEnabled(false);
       }
     }
+
     public void actionPerformed(AnActionEvent e) {
       // show dialog for comment and folder name, then create folder
       // then refresh selected node.
-      Project p = e.getData(DataKeys.PROJECT);
       SVNURL root;
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       while (node.getSVNDirEntry() != null) {
@@ -429,7 +450,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
       root = node.getURL();
       SVNURL sourceURL = getRepositoryBrowser().getSelectedNode().getURL();
-      DiffOptionsDialog dialog = new DiffOptionsDialog(p, root, sourceURL);
+      DiffOptionsDialog dialog = new DiffOptionsDialog(myProject, root, sourceURL);
       dialog.show();
       if (dialog.isOK()) {
         SVNURL targetURL = dialog.getTargetURL();
@@ -474,14 +495,13 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       e.getPresentation().setEnabled(node != null && node.getSVNDirEntry() != null);
     }
     public void actionPerformed(AnActionEvent e) {
-      Project p = e.getData(DataKeys.PROJECT);
       SVNURL root;
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       while (node.getSVNDirEntry() != null) {
         node = (RepositoryTreeNode) node.getParent();
       }
       root = node.getURL();
-      CopyOptionsDialog dialog = new CopyOptionsDialog("Branch or Tag", p, root, getRepositoryBrowser().getSelectedNode().getURL());
+      CopyOptionsDialog dialog = new CopyOptionsDialog("Branch or Tag", myProject, root, getRepositoryBrowser().getSelectedNode().getURL());
       dialog.show();
       if (dialog.isOK()) {
         SVNURL dst = dialog.getTargetURL();
@@ -501,14 +521,13 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Project p = e.getData(DataKeys.PROJECT);
       SVNURL root;
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       while (node.getSVNDirEntry() != null) {
         node = (RepositoryTreeNode) node.getParent();
       }
       root = node.getURL();
-      CopyOptionsDialog dialog = new CopyOptionsDialog("Move or Rename", p, root, getRepositoryBrowser().getSelectedNode().getURL());
+      CopyOptionsDialog dialog = new CopyOptionsDialog("Move or Rename", myProject, root, getRepositoryBrowser().getSelectedNode().getURL());
       dialog.show();
       if (dialog.isOK()) {
         SVNURL dst = dialog.getTargetURL();
@@ -529,8 +548,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Project p = e.getData(DataKeys.PROJECT);
-      DeleteOptionsDialog dialog = new DeleteOptionsDialog(p);
+      DeleteOptionsDialog dialog = new DeleteOptionsDialog(myProject);
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       dialog.show();
       if (dialog.isOK()) {
@@ -544,7 +562,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   protected class ImportAction extends AnAction {
     public void update(AnActionEvent e) {
-      e.getPresentation().setText("_Import...");
+      e.getPresentation().setVisible(showImportAction());
+      e.getPresentation().setText(SvnBundle.message("repository.browser.import.action"));
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       if (node != null) {
         SVNDirEntry entry = node.getSVNDirEntry();
@@ -553,11 +572,13 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         e.getPresentation().setEnabled(false);
       }
     }
+
     public void actionPerformed(AnActionEvent e) {
       // get directory, then import.
       doImport();
     }
   }
+
   protected class ExportAction extends AnAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("_Export...");
@@ -573,7 +594,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       ExportOptionsDialog dialog = new ExportOptionsDialog(p, url, dir);
       dialog.show();
       if (dialog.isOK()) {
-        SvnCheckoutProvider.doExport(myVCS.getProject(), dir, url.toString(), dialog.isRecursive(),
+        SvnCheckoutProvider.doExport(myProject, dir, url.toString(), dialog.isRecursive(),
                 dialog.isIgnoreExternals(), dialog.isForce(), dialog.getEOLStyle());
       }
     }
@@ -597,6 +618,9 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   protected class OpenAction extends AnAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(false);
+      if (myVCS == null) {
+        return;
+      }
       e.getPresentation().setText("_Open", true);
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       if (node != null) {
@@ -626,8 +650,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     private boolean myIsSelected;
 
     public void update(final AnActionEvent e) {
-      e.getPresentation().setDescription("Show/Hide Details");
-      e.getPresentation().setText("Show/Hide Details");
+      e.getPresentation().setDescription(SvnBundle.message("repository.browser.details.action"));
+      e.getPresentation().setText(SvnBundle.message("repository.browser.details.action"));
       e.getPresentation().setIcon(IconLoader.findIcon("/actions/annotate.png"));
       super.update(e);
     }
@@ -742,7 +766,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     dialog.show();
     dir = dialog.getTarget();
     if (dialog.isOK()) {
-      SvnCheckoutProvider.doCheckout(myVCS.getProject(), dir, url.toString(), dialog.isRecursive(), dialog.isIgnoreExternals(), listener);
+      SvnCheckoutProvider.doCheckout(myProject, dir, url.toString(), dialog.isRecursive(), dialog.isIgnoreExternals(), listener);
     }
   }
 
@@ -765,6 +789,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
     }
   }
+
   private void doUnifiedDiff(File targetFile, SVNURL sourceURL, SVNURL targetURL) {
     OutputStream os = null;
     try {

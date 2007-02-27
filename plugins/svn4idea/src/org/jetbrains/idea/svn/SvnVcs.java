@@ -32,7 +32,6 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
@@ -50,13 +49,13 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.status.SvnStatusEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
-import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -79,7 +78,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-public class SvnVcs extends AbstractVcs implements ProjectComponent {
+public class SvnVcs extends AbstractVcs {
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnVcs");
   private final Map<VirtualFile, SVNStatusHolder> myStatuses = new HashMap<VirtualFile, SVNStatusHolder>();
@@ -100,11 +99,13 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   private VcsShowConfirmationOption myDeleteConfirmation;
   private EditFileProvider myEditFilesProvider;
   private CommittedChangesProvider myCommittedChangesProvider;
+  private ChangeProvider myChangeProvider;
 
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
+  @NonNls private static final String VCS_NAME = "svn";
   public static final String pathToEntries = SvnUtil.SVN_ADMIN_DIR_NAME + File.separatorChar + SvnUtil.ENTRIES_FILE_NAME;
 
-    static {
+  static {
     //noinspection UseOfArchaicSystemPropertyAccessors
     SVNDebugLog.setDefaultLog(new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), LOG));
     SVNAdminAreaFactory.setSelector(new SvnFormatSelector());
@@ -138,6 +139,10 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     dumpFileStatus(SvnFileStatus.OBSTRUCTED);
 
     myEntriesFileListener = new SvnEntriesFileListener(project);
+
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
+    myDeleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
   }
 
   @Override
@@ -151,6 +156,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   public void deactivate() {
     VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
     SvnApplicationSettings.getInstance().svnDeactivated();
+    new DefaultSVNRepositoryPool(null, null).shutdownConnections(true);
     super.deactivate();
   }
 
@@ -169,9 +175,11 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     return myEditFilesProvider;
   }
 
-
   public ChangeProvider getChangeProvider() {
-    return new SvnChangeProvider(this);
+    if (myChangeProvider == null) {
+      myChangeProvider = new SvnChangeProvider(this);
+    }
+    return myChangeProvider;
   }
 
   public SVNRepository createRepository(String url) throws SVNException {
@@ -238,7 +246,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
 
   public String getName() {
     LOG.debug("getName");
-    return "svn";
+    return VCS_NAME;
   }
 
   public String getDisplayName() {
@@ -251,28 +259,6 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     return new SvnConfigurable(myProject);
   }
 
-
-  public void projectClosed() {
-    new DefaultSVNRepositoryPool(null, null).shutdownConnections(true);
-  }
-
-  public void projectOpened() {
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(getProject());
-    myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
-    myDeleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "Subversion";
-  }
-
   public Project getProject() {
     return myProject;
   }
@@ -282,7 +268,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
   }
 
   public static SvnVcs getInstance(Project project) {
-    return project.getComponent(SvnVcs.class);
+    return (SvnVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(VCS_NAME);
   }
 
   @NotNull
@@ -329,6 +315,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     return mySvnDiffProvider;
   }
 
+  @Nullable
   public SVNStatusHolder getCachedStatus(VirtualFile vFile) {
     if (vFile == null) {
       return null;
@@ -353,6 +340,7 @@ public class SvnVcs extends AbstractVcs implements ProjectComponent {
     myStatuses.put(vFile, new SVNStatusHolder(entriesFile.lastModified(), vFile.getTimeStamp(), status));
   }
 
+  @Nullable
   public SVNInfoHolder getCachedInfo(VirtualFile vFile) {
     if (vFile == null) {
       return null;

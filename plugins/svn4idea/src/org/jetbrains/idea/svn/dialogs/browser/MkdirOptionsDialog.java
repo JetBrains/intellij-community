@@ -138,7 +138,10 @@ public class MkdirOptionsDialog extends DialogWrapper {
     panel.add(new JLabel("Recent Messages: "), gc);
     gc.gridy += 1;
 
-    ArrayList<String> messages = VcsConfiguration.getInstance(myProject).getRecentMessages();
+    ArrayList<String> messages = null;
+    if (!myProject.isDefault()) {
+      messages = VcsConfiguration.getInstance(myProject).getRecentMessages();
+    }
     if (messages != null) {
       Collections.reverse(messages);
     }

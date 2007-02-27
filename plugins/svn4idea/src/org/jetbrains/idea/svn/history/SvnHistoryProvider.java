@@ -26,6 +26,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.ui.ColoredTableCellRenderer;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -55,7 +56,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     this(vcs, null, null, false);
   }
 
-  public SvnHistoryProvider(SvnVcs vcs, SVNURL url, SVNRevision revision, boolean isDirectory) {
+  public SvnHistoryProvider(@NotNull SvnVcs vcs, SVNURL url, SVNRevision revision, boolean isDirectory) {
     myVcs = vcs;
     myURL = url;
     myRevision = revision;

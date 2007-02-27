@@ -10,10 +10,6 @@
 
   <project-components>
     <component>
-      <implementation-class>org.jetbrains.idea.svn.SvnVcs</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.idea.svn.SvnConfiguration</implementation-class>
       <option name="workspace" value="true"/>
     </component>
@@ -80,5 +76,10 @@
                         serviceImplementation="org.jetbrains.idea.svn.SvnApplicationSettings"/>
     <projectService serviceInterface="org.jetbrains.idea.svn.SvnBranchConfigurationManager"
                     serviceImplementation="org.jetbrains.idea.svn.SvnBranchConfigurationManager"/>
+
+    <vcs>
+      <name>svn</name>
+      <vcsClass>org.jetbrains.idea.svn.SvnVcs</vcsClass>
+    </vcs>
   </extensions>
 </idea-plugin>
