@@ -252,7 +252,8 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
       final Map<Key,Object> mapclone = ((THashMap<Key, Object>)copyableMap).clone();
       clone.putUserData(COPYABLE_USER_MAP_KEY, mapclone);
     }
-    if(myTreeElementPointer != null){
+    
+    if(getTreeElement() != null){
       // not set by provider in clone
       final FileElement treeClone = (FileElement)calcTreeElement().clone();
       clone.myTreeElementPointer = treeClone; // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
