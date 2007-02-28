@@ -15,7 +15,7 @@ import com.intellij.util.CharTable;
 
 public class Parsing implements Constants{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.Parsing");
-  public static /*final*/ boolean DEEP_PARSE_BLOCKS_IN_STATEMENTS = false;
+  public static final boolean DEEP_PARSE_BLOCKS_IN_STATEMENTS = false;
   protected final JavaParsingContext myContext;
 
   public Parsing(JavaParsingContext context) {
@@ -104,7 +104,13 @@ public class Parsing implements Constants{
         return refElement1;
       }
       TreeUtil.addChildren(refElement1, identifier);
-      CompositeElement parameterList1 = parseReferenceParameterList(lexer, true);
+      CompositeElement parameterList1;
+      if (parseParameterList) {
+        parameterList1 = parseReferenceParameterList(lexer, true);
+      }
+      else {
+        parameterList1 = Factory.createCompositeElement(REFERENCE_PARAMETER_LIST);
+      }
       TreeUtil.addChildren(refElement1, parameterList1);
       refElement = refElement1;
     }
@@ -284,4 +290,3 @@ public class Parsing implements Constants{
     return dummyRoot.getFirstChildNode();
  }
 }
-
