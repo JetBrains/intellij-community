@@ -49,6 +49,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     if (psiFile == null) return;
 
     Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
+    if (document == null) return;
     if (myEditor == null || document != myEditor.getDocument()) {
       releaseEditor();
       removeAll();
