@@ -32,9 +32,9 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
-import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -303,22 +303,19 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     return fileElement;
   }
 
+
+  private UserDataCache<FileDescriptionCachedValueProvider, XmlFile> ourCachedFileElementCache =
+    new UserDataCache<FileDescriptionCachedValueProvider, XmlFile>(CACHED_FILE_ELEMENT_PROVIDER) {
+      protected FileDescriptionCachedValueProvider compute(final XmlFile xmlFile) {
+        return new FileDescriptionCachedValueProvider(DomManagerImpl.this, xmlFile);
+      }
+    };
+
+
+  @SuppressWarnings({"unchecked"})
   @NotNull
   final <T extends DomElement> FileDescriptionCachedValueProvider<T> getOrCreateCachedValueProvider(XmlFile xmlFile) {
-    //noinspection unchecked
-    FileDescriptionCachedValueProvider<T> provider = xmlFile.getUserData(CACHED_FILE_ELEMENT_PROVIDER);
-    if (provider == null) {
-      synchronized (PsiLock.LOCK) {
-        //noinspection unchecked
-        final FileDescriptionCachedValueProvider<T> provider1 = xmlFile.getUserData(CACHED_FILE_ELEMENT_PROVIDER);
-        if (provider1 == null) {
-          xmlFile.putUserData(CACHED_FILE_ELEMENT_PROVIDER, provider = new FileDescriptionCachedValueProvider<T>(this, xmlFile));
-        } else {
-          provider = provider1;
-        }
-      }
-    }
-    return provider;
+    return (FileDescriptionCachedValueProvider<T>)ourCachedFileElementCache.get(xmlFile);
   }
 
   static void setCachedElement(final XmlTag tag, final DomInvocationHandler element) {
@@ -401,6 +398,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     if (virtualFile != null && virtualFile.isDirectory()) return null;
     return this.<T>getOrCreateCachedValueProvider(file).getFileElement();
   }
+
+
 
   @Nullable
   final <T extends DomElement> DomFileElementImpl<T> getCachedFileElement(XmlFile file) {
