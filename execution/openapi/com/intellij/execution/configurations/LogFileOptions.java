@@ -25,8 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -76,49 +75,31 @@ public class LogFileOptions implements JDOMExternalizable {
       result.add(myPathPattern);
       return result;
     }
-    try {
-      if (logFile.createNewFile()){
-        result.add(myPathPattern);
-        return result;
-      }
-    }
-    catch (IOException e) {
-      //do nothing
-    }
     final int dirIndex = myPathPattern.lastIndexOf(File.separator);
-    if (dirIndex != -1){
-      final File dir = new File(myPathPattern.substring(0, dirIndex));
-      if (dir.isDirectory()){
-        final Pattern pattern = Pattern.compile(myPathPattern.substring(dirIndex + File.separator.length()).replace("*", ".*"));
-        final File[] files = dir.listFiles(new FileFilter() {
-          public boolean accept(File pathname) {
-            try {
-              if (!FileUtil.isAncestor(dir, pathname, true)) return false;
-            }
-            catch (IOException e) {
-              return false;
-            }
-            return pattern.matcher(FileUtil.getRelativePath(dir, pathname)).matches();
-          }
-        });
-        if (files != null && files.length > 0){
-          if (myLast) {
-            File lastFile = null;
-            for (File file : files) {
-              if (lastFile != null){
-                if (file.lastModified() > lastFile.lastModified()){
-                  lastFile = file;
-                }
-              } else {
+    if (dirIndex != -1) {
+      final ArrayList<File> files = new ArrayList<File>();
+      final String basePath = myPathPattern.substring(0, dirIndex);
+      final String pattern = myPathPattern.substring(dirIndex + File.separator.length());
+      FileUtil.collectMatchedFiles(new File(basePath), Pattern.compile(FileUtil.convertAntToRegexp(pattern)), files);
+      if (!files.isEmpty()) {
+        if (myLast) {
+          File lastFile = null;
+          for (File file : files) {
+            if (lastFile != null) {
+              if (file.lastModified() > lastFile.lastModified()) {
                 lastFile = file;
               }
             }
-            assert lastFile != null;
-            result.add(lastFile.getPath());
-          } else {
-            for (File file : files) {
-              result.add(file.getPath());
+            else {
+              lastFile = file;
             }
+          }
+          assert lastFile != null;
+          result.add(lastFile.getPath());
+        }
+        else {
+          for (File file : files) {
+            result.add(file.getPath());
           }
         }
       }

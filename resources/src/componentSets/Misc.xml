@@ -63,9 +63,6 @@
       <option name="workspace" value="true"/>
     </component>
 
-    <component>
-      <implementation-class>com.intellij.diagnostic.logging.LogConsolePreferences</implementation-class>
-    </component>
   </project-components>
 
   <module-components>

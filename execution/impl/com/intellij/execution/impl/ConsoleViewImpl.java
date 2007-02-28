@@ -166,14 +166,10 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
   public void scrollTo(final int offset) {
     assertIsDispatchThread();
+    flushDeferredText();
     if (myEditor == null) return;
-    if (myState.isFinished() && !hasDeferredOutput()) {
-      myEditor.getCaretModel().moveToOffset(offset);
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    }
-    else {
-      myEditor.getScrollingModel().scrollTo(myEditor.offsetToLogicalPosition(offset), ScrollType.MAKE_VISIBLE);
-    }
+    myEditor.getCaretModel().moveToOffset(offset);
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
   }
 
   private static void assertIsDispatchThread() {

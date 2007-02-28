@@ -13,8 +13,10 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
@@ -32,7 +34,7 @@ import java.util.ArrayList;
  * User: anna
  * Date: Apr 19, 2005
  */
-public abstract class LogConsole extends AdditionalTabComponent implements ChangeListener {
+public abstract class LogConsole extends AdditionalTabComponent implements ChangeListener, LogConsolePreferences.FilterListener {
   private ConsoleView myConsole;
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();
   private ReaderThread myReaderThread;
@@ -41,16 +43,11 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
   private StringBuffer myOriginalDocument = null;
 
   private String myPrevType = null;
+  private String myLineUnderSelection = null;
 
   private FilterComponent myFilter = new FilterComponent("LOG_FILTER_HISTORY", 5) {
     public void filter() {
-      final LogConsolePreferences preferences = LogConsolePreferences.getInstanceEx(myProject);
-      preferences.updateCustomFilter(getFilter());
-      filterConsoleOutput(new Condition<String>() {
-        public boolean value(final String line) {
-          return preferences.isApplicable(line, myPrevType);
-        }
-      });
+      getPreferences().updateCustomFilter(getFilter());
     }
   };
 
@@ -68,11 +65,12 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     myConsole = builder.getConsole();
     myConsole.attachToProcess(myProcessHandler);
+    getPreferences().addFilterListener(this);
   }
 
   private JComponent createToolbar(){
     DefaultActionGroup group = new DefaultActionGroup();
-    final LogConsolePreferences registrar = myProject.getComponent(LogConsolePreferences.class);
+    final LogConsolePreferences registrar = getPreferences();
     final ArrayList<LogFilter> filters = new ArrayList<LogFilter>();
     filters.add(new LogFilter(DiagnosticBundle.message("log.console.filter.by.type", LogConsolePreferences.INFO), IconLoader.getIcon("/ant/filterInfo.png")){
       public boolean isAcceptable(String line) {
@@ -98,11 +96,6 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
 
         public void setSelected(AnActionEvent e, boolean state) {
           registrar.setFilterSelected(filter, state);
-          filterConsoleOutput(new Condition<String>() {
-            public boolean value(final String line) {
-              return filter.isAcceptable(line);
-            }
-          });
         }
       });
     }
@@ -110,10 +103,26 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(actionToolbar.getComponent(), BorderLayout.WEST);
     myFilter.reset();
+    myFilter.setSelectedItem(registrar.CUSTOM_FILTER != null ? registrar.CUSTOM_FILTER : "");
     panel.add(myFilter, BorderLayout.EAST);
     return panel;
   }
 
+  public void onFilterStateChange(final LogFilter filter, final boolean state) {
+    filterConsoleOutput(new Condition<String>() {
+      public boolean value(final String line) {
+        return filter.isAcceptable(line);
+      }
+    });
+  }
+
+  public void onTextFilterChange(final String newText) {
+    filterConsoleOutput(new Condition<String>() {
+      public boolean value(final String line) {
+        return getPreferences().isApplicable(line, myPrevType);
+      }
+    });
+  }
 
   public JComponent getComponent() {
     removeAll();
@@ -127,6 +136,7 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
   public void activate() {
     if (myReaderThread == null) return;
     if (isActive()) {
+      myFilter.setSelectedItem(getPreferences().CUSTOM_FILTER);
       myReaderThread.startRunning();
       ApplicationManager.getApplication().executeOnPooledThread(myReaderThread);     
     } else {
@@ -152,8 +162,8 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
   }
 
   public void dispose() {
-    myConsole.dispose();
-    if (myReaderThread.myFileStream != null) {
+    getPreferences().removeFilterListener(this);
+    if (myReaderThread != null && myReaderThread.myFileStream != null) {
       try {
         myReaderThread.myFileStream.close();
       }
@@ -161,14 +171,20 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
         LOG.error(e);
       }
       myReaderThread.myFileStream = null;
+      myReaderThread = null;
     }
-    myFilter.dispose();
-    myConsole = null;
-    myReaderThread = null;
-    myFilter = null;
+    if (myConsole != null) {
+      myConsole.dispose();
+      myConsole = null;
+    }
+    if (myFilter != null) {
+      myFilter.dispose();
+      myFilter = null;
+    }
+    myOriginalDocument = null;
   }
 
-  public void stopRunning(){
+  private void stopRunning(){
     if (myReaderThread != null && !isActive()) {
       myReaderThread.stopRunning();
     }
@@ -176,7 +192,7 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
 
   private void addMessage(final String text){
     final String key = LogConsolePreferences.getType(text);
-    if (LogConsolePreferences.getInstanceEx(myProject).isApplicable(text, myPrevType)){
+    if (getPreferences().isApplicable(text, myPrevType)){
       myProcessHandler.notifyTextAvailable(text + "\n", key != null ?
                                                         LogConsolePreferences.getProcessOutputTypes(key) :
                                                         (myPrevType == LogConsolePreferences.ERROR ? ProcessOutputTypes.STDERR : ProcessOutputTypes.STDOUT));
@@ -188,6 +204,10 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
     if (myOriginalDocument != null){
       myOriginalDocument.append(text).append("\n");
     }
+  }
+
+  private LogConsolePreferences getPreferences() {
+    return LogConsolePreferences.getInstance(myProject);
   }
 
   public void attachStopLogConsoleTrackingListener(final ProcessHandler process) {
@@ -204,7 +224,7 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
 
   private StringBuffer getOriginalDocument(){
     if (myOriginalDocument == null) {
-      final Editor editor = (Editor)((ConsoleViewImpl)myConsole).getData(DataConstants.EDITOR);
+      final Editor editor = getEditor();
       if (editor != null){
         myOriginalDocument = new StringBuffer(editor.getDocument().getText());
       }
@@ -212,11 +232,29 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
     return myOriginalDocument;
   }
 
+  @Nullable
+  private Editor getEditor() {
+    return myConsole != null ? (Editor)((ConsoleViewImpl)myConsole).getData(DataConstants.EDITOR) : null;
+  }
+
   private void filterConsoleOutput(Condition<String> isApplicable) {
     myOriginalDocument = getOriginalDocument();
     if (myOriginalDocument != null) {
+      final Editor editor = getEditor();
+      LOG.assertTrue(editor != null);
+      final Document document = editor.getDocument();
+      final int caretOffset = editor.getCaretModel().getOffset();
+      if (caretOffset > -1) {
+        int line = document.getLineNumber(caretOffset);
+        if (line > -1 && line < document.getLineCount()) {
+          myLineUnderSelection = document.getText().substring(document.getLineStartOffset(line),
+                                                              document.getLineEndOffset(line));
+        }
+      }
       myConsole.clear();
       final String[] lines = myOriginalDocument.toString().split("\n");
+      int offset = 0;
+      boolean caretPositioned = false;
       for (String line : lines) {
         final String contentType = LogConsolePreferences.getType(line);
         if (isApplicable.value(line)) {
@@ -225,10 +263,20 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
                                        : (myPrevType == LogConsolePreferences.ERROR
                                           ? ConsoleViewContentType.ERROR_OUTPUT
                                           : ConsoleViewContentType.NORMAL_OUTPUT));
+          if (!caretPositioned) {
+            if (Comparing.strEqual(myLineUnderSelection, line)) {
+              caretPositioned = true;
+            } else {
+              offset += line.length() + 1;
+            }
+          }
         }
         if (contentType != null) {
           myPrevType = contentType;
         }
+      }
+      if (caretPositioned) {
+        myConsole.scrollTo(offset);
       }
     }
   }
@@ -295,7 +343,7 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
           LOG.error(e);
         }
         catch (InterruptedException e) {
-          LOG.error(e);
+          dispose();
         }
       }
     }

@@ -16,8 +16,8 @@
 
 package com.intellij.diagnostic.logging;
 
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.components.PersistentStateComponent;
+import org.jdom.Element;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ import java.util.List;
  * User: anna
  * Date: 22-Mar-2006
  */
-public abstract class LogFilterRegistrar implements ProjectComponent, JDOMExternalizable {
+public abstract class LogFilterRegistrar implements PersistentStateComponent<Element> {
   public abstract void registerFilter(LogFilter filter);
 
   public abstract List<LogFilter> getRegisteredLogFilters();

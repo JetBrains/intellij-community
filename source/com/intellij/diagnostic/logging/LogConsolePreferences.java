@@ -11,6 +11,10 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +27,15 @@ import java.util.regex.Pattern;
  * User: anna
  * Date: 06-Feb-2006
  */
+@State(
+  name="LogFilters",
+  storages = {
+    @Storage(
+      id="LogFilters",
+      file="$WORKSPACE_FILE$"
+    )}
+)
+
 public class LogConsolePreferences extends LogFilterRegistrar {
   private SortedMap<LogFilter, Boolean> myRegisteredLogFilters = new TreeMap<LogFilter, Boolean>(new Comparator<LogFilter>() {
     public int compare(final LogFilter o1, final LogFilter o2) {
@@ -46,12 +59,16 @@ public class LogConsolePreferences extends LogFilterRegistrar {
   public final static Pattern INFO_PATTERN = Pattern.compile(".*" + INFO + ".*");
   @NonNls public final static Pattern EXCEPTION_PATTERN = Pattern.compile(".*at .*");
 
-  public static LogConsolePreferences getInstanceEx(Project project){
-    return project.getComponent(LogConsolePreferences.class);
+  private List<FilterListener> myListeners = new ArrayList<FilterListener>();
+  private static final Logger LOG = Logger.getInstance("#" + LogConsolePreferences.class.getName());
+
+  public static LogConsolePreferences getInstance(Project project){
+    return ServiceManager.getService(project, LogConsolePreferences.class);
   }
 
   public void updateCustomFilter(String customFilter) {
     CUSTOM_FILTER = customFilter;
+    fireStateChanged(customFilter);
   }
 
   public boolean isApplicable(@NotNull String text, String prevType){
@@ -98,25 +115,37 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     return null;
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    final List children = element.getChildren(FILTER);
-    for (Object child : children) {
-      Element filterElement = (Element)child;
-      final LogFilter filter = new LogFilter();
-      filter.readExternal(filterElement);
-      setFilterSelected(filter, Boolean.parseBoolean(filterElement.getAttributeValue(IS_ACTIVE)));
+  public Element getState() {
+    @NonNls Element element = new Element("LogFilters");
+    try {
+      for (LogFilter filter : myRegisteredLogFilters.keySet()) {
+        Element filterElement = new Element(FILTER);
+        filterElement.setAttribute(IS_ACTIVE, myRegisteredLogFilters.get(filter).toString());
+        filter.writeExternal(filterElement);
+        element.addContent(filterElement);
+      }
+      DefaultJDOMExternalizer.writeExternal(this, element);
     }
-     DefaultJDOMExternalizer.readExternal(this, element);
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+    return element;
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    for (LogFilter filter : myRegisteredLogFilters.keySet()) {
-      Element filterElement = new Element(FILTER);
-      filterElement.setAttribute(IS_ACTIVE, myRegisteredLogFilters.get(filter).toString());
-      filter.writeExternal(filterElement);
-      element.addContent(filterElement);
+  public void loadState(final Element object) {
+    try {
+      final List children = object.getChildren(FILTER);
+      for (Object child : children) {
+        Element filterElement = (Element)child;
+        final LogFilter filter = new LogFilter();
+        filter.readExternal(filterElement);
+        setFilterSelected(filter, Boolean.parseBoolean(filterElement.getAttributeValue(IS_ACTIVE)));
+      }
+      DefaultJDOMExternalizer.readExternal(this, object);
     }
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
   }
 
   public void registerFilter(LogFilter filter){
@@ -152,20 +181,31 @@ public class LogConsolePreferences extends LogFilterRegistrar {
         FILTER_INFO = state;
       }
     }
+    fireStateChanged(filter, state);
   }
 
-  public void projectOpened() {}
-
-  public void projectClosed() {}
-
-
-  @NotNull
-  @NonNls
-  public String getComponentName() {
-    return "LogConsolePreferences";
+  private void fireStateChanged(final LogFilter filter, final boolean state) {
+    for (FilterListener listener : myListeners) {
+      listener.onFilterStateChange(filter, state);
+    }
   }
 
-  public void initComponent() {}
+  private void fireStateChanged(final String customFilter) {
+    for (FilterListener listener : myListeners) {
+      listener.onTextFilterChange(customFilter);
+    }
+  }
 
-  public void disposeComponent() {}
+  public void addFilterListener(FilterListener l) {
+    myListeners.add(l);
+  }
+
+  public void removeFilterListener(FilterListener l) {
+    myListeners.remove(l);
+  }
+
+  public interface FilterListener {
+    void onFilterStateChange(LogFilter filter, boolean state);
+    void onTextFilterChange(String newText);
+  }
 }

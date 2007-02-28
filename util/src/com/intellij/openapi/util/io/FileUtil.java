@@ -17,6 +17,7 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.CommonBundle;
 import com.intellij.Patches;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
@@ -31,6 +32,7 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class FileUtil {
@@ -532,5 +534,59 @@ public class FileUtil {
       return new File(path.replace(File.separatorChar, '/')).getCanonicalPath();
     }
     return path;
+  }
+
+  public static void collectMatchedFiles(final File root, final Pattern pattern, final List<File> files) {
+    collectMatchedFiles(root, root, pattern, files);
+  }
+
+  private static void collectMatchedFiles(final File absoluteRoot, final File root, final Pattern pattern, final List<File> files) {
+    final File[] dirs = root.listFiles();
+    if (dirs == null) return;
+    for (File dir : dirs) {
+      if (dir.isFile()) {
+        final String path = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(absoluteRoot, dir));
+        if (pattern.matcher(path).matches()) {
+          files.add(dir);
+        }
+      } else {
+        collectMatchedFiles(absoluteRoot, dir, pattern, files);
+      }
+    }
+  }
+
+  public static String convertAntToRegexp(String pattern) {
+    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+    try {
+      buf.append(pattern);
+      int cur = 0;
+      boolean isAfterAsterix = false;
+      while (cur < pattern.length()) {
+        char curChar = pattern.charAt(cur);
+        if (curChar != '*' && isAfterAsterix) {
+          buf.append("[^\\/]*");
+          isAfterAsterix = false;
+        }
+
+        if (curChar == '*') {
+          if (!isAfterAsterix) {
+            isAfterAsterix = true;
+          } else {
+            buf.append(".*");
+            isAfterAsterix = false;
+          }
+        } else {
+          buf.append(curChar);
+        }
+        cur++;
+      }
+      if (isAfterAsterix) {
+        buf.append("[^\\/]*");
+      }
+      return buf.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(buf);
+    }
   }
 }

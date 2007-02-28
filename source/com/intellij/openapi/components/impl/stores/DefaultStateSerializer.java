@@ -26,7 +26,10 @@ class DefaultStateSerializer {
   }
 
   static Element serializeState(Object state) throws ParserConfigurationException, WriteExternalException {
-    if (state instanceof JDOMExternalizable) {
+    if (state instanceof org.jdom.Element) {
+      return JDOMUtil.convertToDOM((org.jdom.Element)state);
+    }
+    else if (state instanceof JDOMExternalizable) {
       JDOMExternalizable jdomExternalizable = (JDOMExternalizable)state;
 
       final org.jdom.Element element = new org.jdom.Element("temp_element");
