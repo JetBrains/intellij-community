@@ -166,8 +166,8 @@ public class AnnotationUtil {
   }
 
   public static boolean isAnnotatingApplicable(PsiElement elt) {
-    if (PsiUtil.getLanguageLevel(elt).compareTo(LanguageLevel.JDK_1_5) < 0) return false;
-    return elt.getManager().findClass(NULLABLE, elt.getResolveScope()) != null;
+    return PsiUtil.getLanguageLevel(elt).compareTo(LanguageLevel.JDK_1_5) >= 0 &&
+           elt.getManager().findClass(NULLABLE, elt.getResolveScope()) != null;
   }
 
   public static boolean isJetbrainsAnnotation(@NonNls final String simpleName) {

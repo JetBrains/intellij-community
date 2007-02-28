@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -21,11 +22,13 @@ public class AddAnnotationFix implements IntentionAction {
     myModifierListOwner = modifierListOwner;
   }
 
+  @NotNull
   public String getText() {
     String name = myFQN.substring(myFQN.lastIndexOf('.') + 1);
     return CodeInsightBundle.message("intention.add.annotation.text", name);
   }
 
+  @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.add.annotation.family");
   }

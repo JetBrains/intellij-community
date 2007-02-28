@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -16,10 +17,12 @@ import com.intellij.util.IncorrectOperationException;
 public class AddOverrideAnnotationAction implements IntentionAction {
   private static final String ourFQName = "java.lang.Override";
 
+  @NotNull
   public String getText() {
     return CodeInsightBundle.message("intention.add.override.annotation");
   }
 
+  @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.add.override.annotation.family");
   }

@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -35,11 +36,12 @@ public class AnnotateMethodFix implements LocalQuickFix {
 
   @NotNull
   public String getName() {
-    return MessageFormat.format(InspectionsBundle.message("inspection.annotate.quickfix.name"), ClassUtil.extractClassName(myAnnotation));
+    return InspectionsBundle.message("inspection.annotate.quickfix.name", ClassUtil.extractClassName(myAnnotation));
   }
 
   public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
     final PsiElement psiElement = descriptor.getPsiElement();
+
     PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
     if (method == null) return;
     List<PsiMethod> toAnnotate = new ArrayList<PsiMethod>();
@@ -47,21 +49,29 @@ public class AnnotateMethodFix implements LocalQuickFix {
     List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
-      if (superMethod != null && !AnnotationUtil.isAnnotated(superMethod, myAnnotation, false) &&
-          superMethod.getManager().isInProject(superMethod)) {
-        int ret = askUserWhetherToAnnotateBaseMethod(method, superMethod, project);
+      if (!AnnotationUtil.isAnnotated(superMethod, myAnnotation, false) && superMethod.getManager().isInProject(superMethod)) {
+        int ret = annotateBaseMethod(method, superMethod, project);
         if (ret != 0 && ret != 1) return;
         if (ret == 0) {
           toAnnotate.add(superMethod);
         }
       }
     }
+    if (annotateOverriddenMethods()) {
+      PsiMethod[] methods = method.getManager().getSearchHelper().findOverridingMethods(method, GlobalSearchScope.allScope(project), true);
+      for (PsiMethod psiMethod : methods) {
+        if (!AnnotationUtil.isAnnotated(psiMethod, myAnnotation, false) && psiMethod.getManager().isInProject(psiMethod)) {
+          toAnnotate.add(psiMethod);
+        }
+      }
+    }
+
     for (PsiMethod psiMethod : toAnnotate) {
       annotateMethod(psiMethod);
     }
   }
 
-  protected int askUserWhetherToAnnotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
+  protected int annotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
     String implement = !method.hasModifierProperty(PsiModifier.ABSTRACT) && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)
                   ? InspectionsBundle.message("inspection.annotate.quickfix.implements")
                   : InspectionsBundle.message("inspection.annotate.quickfix.overrides");
@@ -70,6 +80,10 @@ public class AnnotateMethodFix implements LocalQuickFix {
                                                UsageViewUtil.getDescriptiveName(superMethod));
     String title = InspectionsBundle.message("inspection.annotate.quickfix.overridden.method.warning");
     return Messages.showYesNoCancelDialog(project, message, title, Messages.getQuestionIcon());
+  }
+
+  protected boolean annotateOverriddenMethods() {
+    return false;
   }
 
   @NotNull

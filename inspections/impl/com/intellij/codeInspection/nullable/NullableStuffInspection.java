@@ -7,10 +7,12 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.AnnotateMethodFix;
+import com.intellij.codeInspection.dataFlow.AnnotateOverriddenMethodParameterFix;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -29,6 +31,19 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
   public boolean REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL = true;
   public boolean REPORT_NOT_ANNOTATED_GETTER = true;
   public boolean REPORT_NOT_ANNOTATED_SETTER_PARAMETER = true;
+  public boolean REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+  private static final AnnotateMethodFix ANNOTATE_OVERRIDDEN_METHODS_FIX = new AnnotateMethodFix(AnnotationUtil.NOT_NULL){
+    protected boolean annotateOverriddenMethods() {
+      return true;
+    }
+
+    @NotNull
+    public String getName() {
+      return InspectionsBundle.message("annotate.overridden.methods.as.notnull");
+    }
+  };
+  private static final AnnotateOverriddenMethodParameterFix ANNOTATE_OVERRIDDEN_METHODS_PARAMS_FIX =
+    new AnnotateOverriddenMethodParameterFix(AnnotationUtil.NOT_NULL);
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
@@ -50,7 +65,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
         if ((isDeclaredNotNull || isDeclaredNullable) && TypeConversionUtil.isPrimitive(field.getType().getCanonicalText())) {
           reportPrimitiveType(holder, field.getNameIdentifier());
         }
-        if ((isDeclaredNotNull || isDeclaredNullable)) {
+        if (isDeclaredNotNull || isDeclaredNullable) {
           final String anno = isDeclaredNotNull ? AnnotationUtil.NOT_NULL : AnnotationUtil.NULLABLE;
           final String simpleName = isDeclaredNotNull ? AnnotationUtil.NOT_NULL_SIMPLE_NAME : AnnotationUtil.NULLABLE_SIMPLE_NAME;
 
@@ -149,8 +164,8 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                                InspectionsBundle.message("inspection.nullable.problems.method.overrides.NotNull"),
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                new AnnotateMethodFix(AnnotationUtil.NOT_NULL){
-                                 protected int askUserWhetherToAnnotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
-                                   return NullableStuffInspection.this.askUserWhetherToAnnotateBaseMethod(method, superMethod, project);
+                                 protected int annotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
+                                   return NullableStuffInspection.this.annotateBaseMethod(method, superMethod, project);
                                  }
                                });
       }
@@ -181,14 +196,52 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
         }
       }
     }
+
+    if (REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS) {
+      boolean[] parameterAnnotated = new boolean[parameters.length];
+      boolean[] parameterQuickFixSuggested = new boolean[parameters.length];
+      boolean hasAnnotatedParameter = false;
+      for (int i = 0; i < parameters.length; i++) {
+        PsiParameter parameter = parameters[i];
+        parameterAnnotated[i] = AnnotationUtil.isAnnotated(parameter, AnnotationUtil.NOT_NULL, false);
+        hasAnnotatedParameter |= parameterAnnotated[i];
+      }
+      if (hasAnnotatedParameter || isDeclaredNotNull) {
+        PsiManager manager = method.getManager();
+        PsiMethod[] overridings = manager.getSearchHelper().findOverridingMethods(method, GlobalSearchScope.allScope(manager.getProject()), true);
+        boolean methodQuickFixSuggested = false;
+        for (PsiMethod overriding : overridings) {
+          if (!methodQuickFixSuggested && isDeclaredNotNull && !AnnotationUtil.isAnnotated(overriding, AnnotationUtil.NOT_NULL, false)) {
+            PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, AnnotationUtil.NOT_NULL);
+            holder.registerProblem(annotation, InspectionsBundle.message("nullable.stuff.problems.overridden.methods.are.not.annotated"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                   ANNOTATE_OVERRIDDEN_METHODS_FIX);
+            methodQuickFixSuggested = true;
+          }
+          if (hasAnnotatedParameter) {
+            PsiParameter[] psiParameters = overriding.getParameterList().getParameters();
+            for (int i = 0; i < psiParameters.length; i++) {
+              if (parameterQuickFixSuggested[i]) continue;
+              PsiParameter parameter = psiParameters[i];
+              if (parameterAnnotated[i] && !AnnotationUtil.isAnnotated(parameter, AnnotationUtil.NOT_NULL, false)) {
+                PsiAnnotation annotation = AnnotationUtil.findAnnotation(parameters[i], AnnotationUtil.NOT_NULL);
+                holder.registerProblem(annotation,
+                                       InspectionsBundle.message("nullable.stuff.problems.overridden.method.parameters.are.not.annotated"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                       ANNOTATE_OVERRIDDEN_METHODS_PARAMS_FIX);
+                parameterQuickFixSuggested[i] = true;
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
-  protected int askUserWhetherToAnnotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
+  protected int annotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
     return new AnnotateMethodFix(AnnotationUtil.NOT_NULL){
-      public int askUserWhetherToAnnotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
-        return super.askUserWhetherToAnnotateBaseMethod(method, superMethod, project);
+      public int annotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
+        return super.annotateBaseMethod(method, superMethod, project);
       }
-    }.askUserWhetherToAnnotateBaseMethod(method, superMethod, project);
+    }.annotateBaseMethod(method, superMethod, project);
   }
 
   private static void reportNullableNotNullConflict(final ProblemsHolder holder, PsiIdentifier psiElement) {
@@ -209,6 +262,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
     private JPanel myPanel;
     private JCheckBox myReportNotAnnotatedSetterParameter;
     private JCheckBox myReportNotAnnotatedGetter;
+    private JCheckBox myReportAnnotationNotPropagated;
 
     private OptionsPanel() {
       super(new BorderLayout());
@@ -233,6 +287,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       myNAParameterOverridesNN.setSelected(REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL);
       myReportNotAnnotatedGetter.setSelected(REPORT_NOT_ANNOTATED_GETTER);
       myReportNotAnnotatedSetterParameter.setSelected(REPORT_NOT_ANNOTATED_SETTER_PARAMETER);
+      myReportAnnotationNotPropagated.setSelected(REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS);
     }
 
     private void apply() {
@@ -242,6 +297,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL = myNAParameterOverridesNN.isSelected();
       REPORT_NOT_ANNOTATED_SETTER_PARAMETER = myReportNotAnnotatedSetterParameter.isSelected();
       REPORT_NOT_ANNOTATED_GETTER = myReportNotAnnotatedGetter.isSelected();
+      REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = myReportAnnotationNotPropagated.isSelected();
     }
   }
 }
