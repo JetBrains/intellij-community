@@ -30,7 +30,7 @@ abstract class XmlElementStorage implements StateStorage {
   protected abstract Element getRootElement() throws StateStorageException;
 
   @Nullable
-  private Element getState(final String componentName) throws StateStorageException {
+  private synchronized Element getState(final String componentName) throws StateStorageException {
     final Element rootElement = getRootElement();
     if (rootElement == null) return null;
 
@@ -49,7 +49,7 @@ abstract class XmlElementStorage implements StateStorage {
     return null;
   }
 
-  private void setState(final String componentName, final Element element) throws StateStorageException {
+  private synchronized void setState(final String componentName, final Element element) throws StateStorageException {
     final Element rootElement = getRootElement();
     if (rootElement == null) return;
 
