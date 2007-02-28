@@ -823,7 +823,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           }
         });
         try {
-          EntryPointsManager.getInstance(getProject()).resolveEntryPoints(getRefManager());
+          getRefManager().getEntryPointsManager().resolveEntryPoints(getRefManager());
           BUILD_GRAPH.setTotalAmount(scope.getFileCount());
           LOCAL_ANALYSIS.setTotalAmount(scope.getFileCount());
           List<InspectionTool> needRepeatSearchRequest = new ArrayList<InspectionTool>();

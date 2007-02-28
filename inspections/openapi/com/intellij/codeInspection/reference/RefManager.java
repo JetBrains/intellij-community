@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParameter;
+import com.intellij.codeInspection.ex.EntryPointsManager;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -96,4 +97,6 @@ public abstract class RefManager {
   public abstract RefParameter getParameterReference(PsiParameter param, int index);
 
   public abstract int getLastUsedMask();
+
+  public abstract EntryPointsManager getEntryPointsManager();
 }

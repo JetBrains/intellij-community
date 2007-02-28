@@ -13,7 +13,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -319,7 +318,7 @@ public class VisibilityInspection extends GlobalInspectionTool {
   public boolean queryExternalUsagesRequests(final InspectionManager manager,
                                              final GlobalInspectionContext globalContext,
                                              final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    for (SmartRefElementPointer entryPoint : EntryPointsManager.getInstance(globalContext.getProject()).getEntryPoints()) {
+    for (SmartRefElementPointer entryPoint : globalContext.getRefManager().getEntryPointsManager().getEntryPoints()) {
       final RefElement refElement = entryPoint.getRefElement();
       if (refElement != null) {
         ignoreElement(problemDescriptionsProcessor, refElement);

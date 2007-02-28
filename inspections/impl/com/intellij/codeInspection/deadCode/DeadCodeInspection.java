@@ -643,10 +643,6 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     }
   }
 
-  private static EntryPointsManager getEntryPointsManager(Project project) {
-    return EntryPointsManager.getInstance(project);
-  }
-
   @Nullable
   public IntentionAction findQuickFixes(final CommonProblemDescriptor descriptor, final String hint) {
     if (descriptor instanceof ProblemDescriptor) {
@@ -736,7 +732,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         RefUtil.getInstance().removeRefElement(refElement, deletedRefs);
       }
 
-      EntryPointsManager entryPointsManager = getEntryPointsManager(getContext().getProject());
+      EntryPointsManager entryPointsManager = getEntryPointsManager();
       for (RefElement refElement : deletedRefs) {
         entryPointsManager.removeEntryPoint(refElement);
       }
@@ -783,13 +779,20 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     }
 
     protected boolean applyFix(RefElement[] refElements) {
+      final EntryPointsManager entryPointsManager = getEntryPointsManager();
       for (RefElement refElement : refElements) {
-        EntryPointsManager.getInstance(getContext().getProject()).addEntryPoint(refElement, true);
+        entryPointsManager.addEntryPoint(refElement, true);
       }
 
       return true;
     }
+
+
   }
+
+   private EntryPointsManager getEntryPointsManager() {
+          return getContext().getRefManager().getEntryPointsManager();
+        }
 
   private void checkForReachables() {
     CodeScanner codeScanner = new CodeScanner();
@@ -948,18 +951,6 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         }
       }
     }
-  }
-
-  public void cleanup() {
-    super.cleanup();
-    final Project project = getContext().getProject();
-    if (!project.isDisposed()){
-      getEntryPointsManager().cleanup();
-    }
-  }
-
-  private EntryPointsManager getEntryPointsManager() {
-    return EntryPointsManager.getInstance(getContext().getProject());
   }
 
   public void updateContent() {

@@ -11,6 +11,8 @@ package com.intellij.codeInspection.reference;
 import com.intellij.ExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.EntryPointsManager;
+import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,6 +59,8 @@ public class RefManagerImpl extends RefManager {
 
   private List<RefGraphAnnotator> myGraphAnnotators = new ArrayList<RefGraphAnnotator>();
   private GlobalInspectionContextImpl myContext;
+
+  private EntryPointsManager myEntryPointsManager = null;
 
   public RefManagerImpl(Project project, AnalysisScope scope, GlobalInspectionContextImpl context) {
     myDeclarationsFound = false;
@@ -114,6 +118,9 @@ public class RefManagerImpl extends RefManager {
     myPackages = null;
     myModules = null;
     myContext = null;
+    if (myEntryPointsManager != null) {
+      myEntryPointsManager.cleanup();
+    }
     myGraphAnnotators.clear();
   }
 
@@ -149,6 +156,14 @@ public class RefManagerImpl extends RefManager {
   public int getLastUsedMask() {
     myLastUsedMask *= 2;
     return myLastUsedMask;
+  }
+
+  public EntryPointsManager getEntryPointsManager() {
+    if (myEntryPointsManager == null) {
+      myEntryPointsManager = new EntryPointsManagerImpl();
+      ((EntryPointsManagerImpl)myEntryPointsManager).addAllPersistentEntries(EntryPointsManagerImpl.getInstance(myContext.getProject()));
+    }
+    return myEntryPointsManager;
   }
 
   public void findAllDeclarations() {

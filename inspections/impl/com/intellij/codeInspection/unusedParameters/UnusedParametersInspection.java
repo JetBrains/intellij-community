@@ -11,7 +11,6 @@ package com.intellij.codeInspection.unusedParameters;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -74,7 +73,7 @@ public class UnusedParametersInspection extends GlobalInspectionTool {
   public boolean queryExternalUsagesRequests(final InspectionManager manager,
                                              final GlobalInspectionContext globalContext,
                                              final ProblemDescriptionsProcessor processor) {
-    for (SmartRefElementPointer entryPoint : EntryPointsManager.getInstance(globalContext.getProject()).getEntryPoints()) {
+    for (SmartRefElementPointer entryPoint : globalContext.getRefManager().getEntryPointsManager().getEntryPoints()) {
       final RefElement refElement = entryPoint.getRefElement();
       if (refElement != null) {
         processor.ignoreElement(refElement);
