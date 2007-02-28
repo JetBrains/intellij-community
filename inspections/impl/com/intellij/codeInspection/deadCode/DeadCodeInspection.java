@@ -66,7 +66,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   private int myPhase;
   private QuickFixAction[] myQuickFixActions;
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.dead.code.display.name");
-  private RefUnreferencedFilter myFilter;
+  private WeakUnreferencedFilter myFilter;
   private DeadHTMLComposer myComposer;
   @NonNls public static final String SHORT_NAME = "UnusedDeclaration";
 
@@ -405,28 +405,28 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     return false;
   }
 
-  private static class StrictUnreferencedFilter extends RefFilter {
-    private InspectionTool myTool;
-
+  private static class StrictUnreferencedFilter extends UnreferencedFilter {
     public StrictUnreferencedFilter(final InspectionTool tool) {
-      myTool = tool;
+      super(tool);
     }
 
     public int getElementProblemCount(RefElement refElement) {
-      if (refElement instanceof RefParameter) return 0;
-      if (refElement.isEntry() || !((RefElementImpl)refElement).isSuspicious() || refElement.isSyntheticJSP()) return 0;
-
-      final PsiElement element = refElement.getElement();
-      if (!(element instanceof PsiDocCommentOwner) || !myTool.getContext().isToCheckMember(refElement, myTool)) return 0;
-
-      if (refElement instanceof RefField) {
-        RefField refField = (RefField)refElement;
-        if (refField.isUsedForReading() && !refField.isUsedForWriting()) return 1;
-        if (refField.isUsedForWriting() && !refField.isUsedForReading()) return 1;
-      }
-
-      if (refElement instanceof RefClass && ((RefClass)refElement).isAnonymous()) return 0;
+      final int problemCount = super.getElementProblemCount(refElement);
+      if (problemCount > -1) return problemCount;
       return refElement.isReferenced() ? 0 : 1;
+    }
+  }
+
+  private static class WeakUnreferencedFilter extends UnreferencedFilter {
+    public WeakUnreferencedFilter(final InspectionTool tool) {
+      super(tool);
+    }
+
+    public int getElementProblemCount(final RefElement refElement) {
+      final int problemCount = super.getElementProblemCount(refElement);
+      if (problemCount > - 1) return problemCount;
+      if (!((RefElementImpl)refElement).hasSuspiciousCallers() || ((RefElementImpl)refElement).isSuspiciousRecursive()) return 1;
+      return 0;
     }
   }
 
@@ -540,7 +540,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   public RefFilter getFilter() {
     if (myFilter == null) {
-      myFilter = new RefUnreferencedFilter(this);
+      myFilter = new WeakUnreferencedFilter(this);
     }
     return myFilter;
   }
@@ -553,7 +553,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   public void exportResults(final Element parentNode) {
-    final RefUnreferencedFilter filter = new RefUnreferencedFilter(this);
+    final WeakUnreferencedFilter filter = new WeakUnreferencedFilter(this);
     getRefManager().iterate(new RefVisitor() {
       public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;

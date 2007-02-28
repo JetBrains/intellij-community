@@ -13,8 +13,8 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 
-public class RefUnreferencedFilter extends RefUnreachableFilter {
-  public RefUnreferencedFilter(final InspectionTool tool) {
+public class UnreferencedFilter extends RefUnreachableFilter {
+  public UnreferencedFilter(final InspectionTool tool) {
     super(tool);
   }
 
@@ -32,8 +32,6 @@ public class RefUnreferencedFilter extends RefUnreachableFilter {
     }
 
     if (refElement instanceof RefClass && ((RefClass)refElement).isAnonymous()) return 0;
-    if (!((RefElementImpl)refElement).hasSuspiciousCallers() || ((RefElementImpl)refElement).isSuspiciousRecursive()) return 1;
-
-    return 0;
+    return -1;
   }
 }

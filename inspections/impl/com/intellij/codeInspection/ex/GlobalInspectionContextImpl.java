@@ -259,7 +259,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
     myTools.clear();
 
-    EntryPointsManager.getInstance(getProject()).cleanup();
+    //EntryPointsManager.getInstance(getProject()).cleanup();
 
     if (myRefManager != null) {
       ((RefManagerImpl)myRefManager).cleanup();
