@@ -23,7 +23,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   private Alarm myWaiterForMerge = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private boolean myFlushing;
+  private volatile boolean myFlushing;
 
   private String myName;
   private int myMergingTimeSpan;
@@ -93,13 +93,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   public void flush() {
-    if (mySheduledUpdates.size() > 0) {
-      flush(true);
+    synchronized(mySheduledUpdates) {
+      if (mySheduledUpdates.isEmpty()) return;
     }
-  }
-
-  public boolean isFlushing() {
-    return myFlushing;
+    flush(true);
   }
 
   public void flush(boolean invokeLaterIfNotDispatch) {
@@ -168,7 +165,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
   }
 
-  protected void execute(final Update each) {
+  private static void execute(final Update each) {
     each.run();
   }
 
@@ -190,15 +187,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
         return;
       }
 
-      if (active) {
-        if (mySheduledUpdates.isEmpty()) {
-          restartTimer();
-        }
-        put(update);
+      if (active && mySheduledUpdates.isEmpty()) {
+        restartTimer();
       }
-      else {
-        put(update);
-      }
+      put(update);
     }
   }
 
@@ -248,16 +240,6 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "Merger: " + myName + " active=" + myActive + " sheduled=" + mySheduledUpdates;
-  }
-
-  public boolean containsUpdateOf(int priority) {
-    Update[] update = mySheduledUpdates.toArray(new Update[mySheduledUpdates.size()]);
-    for (Update each : update) {
-      if (each.getPriority() == priority) {
-        return true;
-      }
-    }
-    return false;
   }
 
   public ModalityState getModalityState() {
