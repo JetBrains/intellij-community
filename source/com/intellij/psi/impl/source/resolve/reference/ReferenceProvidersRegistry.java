@@ -357,7 +357,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
   }
 
   public @NotNull PsiReferenceProvider[] getProvidersByElement(@NotNull PsiElement element, @NotNull Class clazz) {
-    assert clazz.isInstance(element);
+    assert ReflectionCache.isInstance(element, clazz);
 
     List<PsiReferenceProvider> ret = new ArrayList<PsiReferenceProvider>(1);
     PsiElement current;
