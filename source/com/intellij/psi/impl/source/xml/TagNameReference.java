@@ -59,14 +59,14 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
       return new TextRange(parentOffset, parentOffset + nameElement.getTextLength());
     } else {
       final XmlTag element = getElement();
-      final TextRange textRange = element.getTextRange();
+      final int elementLength = element.getTextLength();
       int diffFromEnd = 0;
 
       for(ASTNode node = element.getNode().getLastChildNode(); node != nameElement; node = node.getTreePrev()) {
         diffFromEnd += node.getTextLength();
       }
 
-      final int nameEnd = textRange.getEndOffset() - textRange.getStartOffset() - diffFromEnd;
+      final int nameEnd = elementLength - diffFromEnd;
       return new TextRange(nameEnd - nameElement.getTextLength(), nameEnd);
     }
   }
