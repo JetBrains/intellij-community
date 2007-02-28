@@ -27,20 +27,17 @@ public interface XmlChildRole {
   RoleFinder CLOSING_TAG_NAME_FINDER = new RoleFinder() {
     @Nullable
     public ASTNode findChild(@NotNull ASTNode parent) {
-      //LOG.assertTrue(parent.getElementType() == XmlElementType.XML_TAG);
-      ASTNode current = parent.getFirstChildNode();
-      int state = 0;
+      ASTNode current = parent.getLastChildNode();
+      ASTNode prev = current;
+
       while(current != null){
-        final IElementType elementType = current.getElementType();
-        switch(state){
-          case 0:
-            if(elementType == XmlTokenType.XML_END_TAG_START) state = 1;
-            break;
-          case 1:
-            if(elementType == XmlTokenType.XML_NAME || elementType == XmlTokenType.XML_TAG_NAME)
-              return current;
+        final IElementType elementType = prev.getElementType();
+        if((elementType == XmlTokenType.XML_NAME || elementType == XmlTokenType.XML_TAG_NAME) && current.getElementType() == XmlTokenType.XML_END_TAG_START) {
+          return prev;
         }
-        current = current.getTreeNext();
+
+        prev = current;
+        current = current.getTreePrev();
       }
       return current;
     }
