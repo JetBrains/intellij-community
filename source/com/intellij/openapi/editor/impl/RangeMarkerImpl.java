@@ -2,14 +2,13 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
-import com.intellij.openapi.util.Key;
-import gnu.trove.THashMap;
+import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 
-public class RangeMarkerImpl extends DocumentAdapter implements RangeMarkerEx {
+public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx, DocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerImpl");
 
   protected Document myDocument;
@@ -21,8 +20,6 @@ public class RangeMarkerImpl extends DocumentAdapter implements RangeMarkerEx {
 
   private static long counter = 0;
   private long myId;
-
-  private THashMap myUserMap = null;
 
   public RangeMarkerImpl(Document document, int start, int end) {
     if (!(start <= end && start >= 0 && end <= document.getTextLength())) {
@@ -154,29 +151,8 @@ public class RangeMarkerImpl extends DocumentAdapter implements RangeMarkerEx {
     }
   }
 
-  public <T> T getUserData(Key<T> key){
-    synchronized(this){
-      if (myUserMap == null) return null;
-      return (T)myUserMap.get(key);
-    }
-  }
+  public void beforeDocumentChange(final DocumentEvent event) {
 
-  public <T> void putUserData(Key<T> key, T value){
-    synchronized(this){
-      if (myUserMap == null){
-        if (value == null) return;
-        myUserMap = new THashMap();
-      }
-      if (value != null){
-        myUserMap.put(key, value);
-      }
-      else{
-        myUserMap.remove(key);
-        if (myUserMap.isEmpty()){
-          myUserMap = null;
-        }
-      }
-    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

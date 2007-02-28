@@ -7,7 +7,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -20,11 +19,8 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFileEx {
 
@@ -83,11 +79,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     final FileViewProvider provider = getViewProvider().clone();
     final LightPsiFileImpl clone = (LightPsiFileImpl)provider.getPsi(getLanguage());
 
-    final Map<Key, Object> copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
-    if (copyableMap != null) {
-      final Map<Key, Object> mapclone = ((THashMap<Key, Object>)copyableMap).clone();
-      clone.putUserData(COPYABLE_USER_MAP_KEY, mapclone);
-    }
+    copyCopyableDataTo(clone);
 
     if (getViewProvider().isEventSystemEnabled()) {
       clone.myOriginalFile = this;
@@ -160,14 +152,6 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   @NotNull
   public PsiFile[] getPsiRoots() {
     return new PsiFile[]{this};
-  }
-
-  public <T> T getCopyableUserData(Key<T> key) {
-    return getCopyableUserDataImpl(key);
-  }
-
-  public <T> void putCopyableUserData(Key<T> key, T value) {
-    putCopyableUserDataImpl(key, value);
   }
 
   public boolean isPhysical() {

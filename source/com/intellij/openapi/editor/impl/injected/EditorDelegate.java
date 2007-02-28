@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.WeakList;
@@ -40,7 +41,7 @@ import java.util.Iterator;
 /**
  * @author Alexey
  */
-public class EditorDelegate implements EditorEx {
+public class EditorDelegate implements EditorEx, UserDataHolderEx {
   private final DocumentRange myDocument;
   private final EditorImpl myDelegate;
   private PsiFile myInjectedFile;
@@ -521,6 +522,10 @@ public class EditorDelegate implements EditorEx {
 
   public <T> void putUserData(final Key<T> key, final T value) {
     myDelegate.putUserData(key, value);
+  }
+
+  public <T> T putUserDataIfAbsent(@NotNull final Key<T> key, @NotNull final T value) {
+    return myDelegate.putUserDataIfAbsent(key, value);
   }
 
   public boolean equals(final Object o) {

@@ -1,6 +1,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
@@ -202,7 +203,8 @@ public class PsiSuperMethodImplUtil {
       value = aClass.getManager().getCachedValuesManager().createCachedValue(provider, false);
       //Do not cache for nonphysical elements
       if (aClass.isPhysical()) {
-        aClass.putUserData(SIGNATURES_KEY, value);
+        UserDataHolderEx dataHolder = (UserDataHolderEx)aClass;
+        value = dataHolder.putUserDataIfAbsent(SIGNATURES_KEY, value);
       }
     }
 

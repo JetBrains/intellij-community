@@ -89,7 +89,7 @@ public class CacheUtil {
     if (cached != null) return cached;
     try {
       cached = LoadTextUtil.getTextByBinaryPresentation(content.getBytes(), content.getVirtualFile(), false);
-      content.putUserData(CONTENT_KEY, cached);
+      cached = content.putUserDataIfAbsent(CONTENT_KEY, cached);
       return cached;
     }
     catch (IOException e) {

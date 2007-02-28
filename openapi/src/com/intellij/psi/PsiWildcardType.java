@@ -47,7 +47,7 @@ public class PsiWildcardType extends PsiType {
     PsiWildcardType unboundedWildcard = manager.getUserData(UNBOUNDED_WILDCARD);
     if (unboundedWildcard == null) {
       unboundedWildcard = new PsiWildcardType(manager, false, null);
-      manager.putUserData(UNBOUNDED_WILDCARD, unboundedWildcard);
+      unboundedWildcard = manager.putUserDataIfAbsent(UNBOUNDED_WILDCARD, unboundedWildcard);
     }
     return unboundedWildcard;
   }

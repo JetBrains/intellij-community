@@ -22,9 +22,8 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.THashMap;
+import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implements PsiFileEx {
@@ -144,9 +142,8 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   protected boolean isPsiUpToDate(VirtualFile vFile) {
     final FileViewProvider viewProvider = myManager.findViewProvider(vFile);
-    final boolean isValid = viewProvider.getPsi(viewProvider.getBaseLanguage()) == this;
 
-    return isValid;
+    return viewProvider.getPsi(viewProvider.getBaseLanguage()) == this;
   }
 
   public boolean isContentsLoaded() {
@@ -247,11 +244,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     FileViewProvider provider = getViewProvider().clone();
     PsiFileImpl clone = (PsiFileImpl)provider.getPsi(getLanguage());
 
-    Map<Key,Object> copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
-    if (copyableMap != null){
-      final Map<Key,Object> mapclone = ((THashMap<Key, Object>)copyableMap).clone();
-      clone.putUserData(COPYABLE_USER_MAP_KEY, mapclone);
-    }
+    copyCopyableDataTo(clone);
     
     if(getTreeElement() != null){
       // not set by provider in clone
@@ -274,7 +267,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return getViewProvider().getVirtualFile().getName();
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
     subtreeChanged();
     return PsiFileImplUtil.setName(this, name);

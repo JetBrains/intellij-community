@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -97,8 +98,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
   public Map<RangeHighlighter, HighlightInfo> getHighlightInfoMap(Editor editor, boolean toCreate) {
     Map<RangeHighlighter, HighlightInfo> map = editor.getUserData(HIGHLIGHT_INFO_MAP_KEY);
     if (map == null && toCreate) {
-      map = new HashMap<RangeHighlighter, HighlightInfo>();
-      editor.putUserData(HIGHLIGHT_INFO_MAP_KEY, map);
+      map = ((UserDataHolderEx)editor).putUserDataIfAbsent(HIGHLIGHT_INFO_MAP_KEY, new HashMap<RangeHighlighter, HighlightInfo>());
     }
     return map;
   }

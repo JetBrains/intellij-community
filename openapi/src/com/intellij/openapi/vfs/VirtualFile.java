@@ -22,7 +22,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.UserDataHolder;
-import gnu.trove.THashMap;
+import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +44,7 @@ import java.nio.charset.Charset;
  * @see VirtualFileSystem
  * @see VirtualFileManager
  */
-public abstract class VirtualFile implements UserDataHolder, ModificationTracker {
+public abstract class VirtualFile extends UserDataHolderBase implements ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VirtualFile");
   public static final Key<Object> REQUESTOR_MARKER = new Key<Object>("REQUESTOR_MARKER");
 
@@ -55,8 +55,6 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
 
   protected VirtualFile() {
   }
-
-  private THashMap myUserMap = null;
 
   /**
    * Gets the name of this file.
@@ -510,38 +508,10 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
   }
 
   /**
-   * The same as {@link #refresh(booleanasynchronous,booleanrecursive)} but also runs <code>postRunnable</code>
+   * The same as {@link #refresh(boolean asynchronous, boolean recursive)} but also runs <code>postRunnable</code>
    * after the operation is completed.
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable);
-
-  @Nullable
-  public <T> T getUserData(Key<T> key) {
-    synchronized (this) {
-      if (myUserMap == null) return null;
-      //noinspection unchecked
-      return (T)myUserMap.get(key);
-    }
-  }
-
-  public <T> void putUserData(Key<T> key, T value) {
-    synchronized (this) {
-      if (myUserMap == null) {
-        if (value == null) return;
-        myUserMap = new THashMap();
-      }
-      if (value != null) {
-        //noinspection unchecked
-        myUserMap.put(key, value);
-      }
-      else {
-        myUserMap.remove(key);
-        if (myUserMap.isEmpty()) {
-          myUserMap = null;
-        }
-      }
-    }
-  }
 
   public String getPresentableName() {
     return getName();
@@ -569,7 +539,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    */
   public abstract InputStream getInputStream() throws IOException;
 
-  public byte[] getBOM() {
+  protected byte[] getBOM() {
     return myBOM;
   }
 
