@@ -4,6 +4,7 @@ import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.Label;
 import com.intellij.localvcs.integration.LocalVcsComponent;
 import com.intellij.localvcs.integration.ui.models.FileDifferenceModel;
+import com.intellij.localvcs.integration.ui.models.FormatUtil;
 import com.intellij.localvcs.integration.ui.models.HistoryDialogModel;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -15,18 +16,18 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.peer.PeerFactory;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.UIHelper;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.text.DateFormat;
-import java.util.Date;
 
-// todo it seems that this class spreads memory leaks
 public abstract class HistoryDialog<T extends HistoryDialogModel> extends DialogWrapper {
   protected Project myProject;
   protected Splitter mySplitter;
@@ -54,10 +55,18 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     mySplitter = new Splitter(true);
     mySplitter.setFirstComponent(diff);
     mySplitter.setSecondComponent(labels);
-    mySplitter.setProportion(0.7f);
+
     mySplitter.setPreferredSize(new Dimension(700, 600));
+    mySplitter.setProportion(0.7f);
+    restoreSplitterProportion();
 
     return mySplitter;
+  }
+
+  @Override
+  protected void dispose() {
+    saveSplitterProportion();
+    super.dispose();
   }
 
   protected abstract JComponent createDiffPanel();
@@ -78,6 +87,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     selectionModel.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         // todo do always-selected selection
+        if (e.getValueIsAdjusting()) return;
         int first = selectionModel.getMinSelectionIndex();
         int last = selectionModel.getMaxSelectionIndex();
         myModel.selectLabels(first, last);
@@ -100,11 +110,6 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     return m.createActionPopupMenu(ActionPlaces.UNKNOWN, ag);
   }
 
-  @Override
-  protected Action[] createActions() {
-    return new Action[0];
-  }
-
   protected abstract void updateDiffs();
 
   protected SimpleDiffRequest createDifference(FileDifferenceModel m) {
@@ -118,13 +123,40 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     return r;
   }
 
+  private void restoreSplitterProportion() {
+    SplitterProportionsData d = createSplitterData();
+    d.externalizeFromDimensionService(getDimensionServiceKey());
+    d.restoreSplitterProportions(mySplitter);
+  }
+
+  private void saveSplitterProportion() {
+    SplitterProportionsData d = createSplitterData();
+    d.saveSplitterProportions(mySplitter);
+    d.externalizeToDimensionService(getDimensionServiceKey());
+  }
+
+  private SplitterProportionsData createSplitterData() {
+    UIHelper h = PeerFactory.getInstance().getUIHelper();
+    return h.createSplitterProportionsData();
+  }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    // enable size auto-save
+    return getClass().getName();
+  }
+
+  @Override
+  protected Action[] createActions() {
+    // remove ok/cancel buttons
+    return new Action[0];
+  }
+
   private class LabelsTableModel extends AbstractTableModel {
-    //todo uncomment after transition to jdk6: @Override
     public int getColumnCount() {
       return 2;
     }
 
-    //todo uncomment after transition to jdk6: @Override
     public int getRowCount() {
       return myModel.getLabels().size();
     }
@@ -136,14 +168,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
       return null;
     }
 
-    //todo uncomment after transition to jdk6: @Override
     public Object getValueAt(int row, int column) {
       if (column == 0) {
-        DateFormat f = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
-        return f.format(new Date(getLabelFor(row).getTimestamp()));
+        return FormatUtil.formatTimestamp(getLabelFor(row).getTimestamp());
       }
-      if (column == 1) return getLabelFor(row).getName();
-      return null;
+      return getLabelFor(row).getName();
     }
 
     private Label getLabelFor(int row) {

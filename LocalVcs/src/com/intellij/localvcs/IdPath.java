@@ -1,13 +1,8 @@
 package com.intellij.localvcs;
 
-import com.intellij.util.ArrayUtil;
-
 import java.io.IOException;
 import java.util.Arrays;
 
-// todo do something with this class - i dont like it
-
-// todo it also has very poor performance
 public class IdPath {
   private int[] myParts;
 
@@ -37,7 +32,7 @@ public class IdPath {
     if (myParts.length == 1) return null;
     int[] newPath = new int[myParts.length - 1];
     System.arraycopy(myParts, 0, newPath, 0, newPath.length);
-    return new IdPath(newPath);  
+    return new IdPath(newPath);
   }
 
   public IdPath appendedWith(Integer id) {

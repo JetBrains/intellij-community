@@ -7,8 +7,6 @@ import com.intellij.util.io.RecordDataOutput;
 import java.io.File;
 import java.io.IOException;
 
-// todo get rid of exception declarations
-
 // todo what about checking consistency?
 public class ContentStorage implements IContentStorage {
   private PagedMemoryMappedFile myStore;

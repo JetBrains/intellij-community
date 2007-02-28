@@ -2,9 +2,8 @@ package com.intellij.localvcs;
 
 import java.io.IOException;
 
-// todo get rid of has()
+// todo get rid of isRemoved()
 
-// todo get rid of exceptions
 public interface IContentStorage {
   void close();
 

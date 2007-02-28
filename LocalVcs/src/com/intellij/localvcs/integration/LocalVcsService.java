@@ -16,10 +16,8 @@ import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.Nullable;
 
+// todo test exceptions...
 public class LocalVcsService {
-  // todo test exceptions...
-  // todo extract inner classes
-
   private ILocalVcs myVcs;
   private StartupManager myStartupManager;
   private ProjectRootManagerEx myRootManager;

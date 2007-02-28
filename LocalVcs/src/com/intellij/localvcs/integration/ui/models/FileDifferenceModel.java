@@ -6,9 +6,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 
-import java.text.DateFormat;
-import java.util.Date;
-
 public class FileDifferenceModel {
   private Entry myLeft;
   private Entry myRight;
@@ -31,8 +28,7 @@ public class FileDifferenceModel {
   }
 
   private String formatTitle(Entry e) {
-    DateFormat f = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
-    return f.format(new Date(e.getTimestamp())) + " - " + e.getName();
+    return FormatUtil.formatTimestamp(e.getTimestamp()) + " - " + e.getName();
   }
 
   public SimpleContent getLeftDiffContent(FileTypeManager tm, EditorFactory ef) {
