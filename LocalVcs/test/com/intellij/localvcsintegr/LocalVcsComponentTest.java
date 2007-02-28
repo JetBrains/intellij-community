@@ -1,4 +1,4 @@
-package com.intellij.localvcslong;
+package com.intellij.localvcsintegr;
 
 
 import com.intellij.localvcs.*;
@@ -18,7 +18,7 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-public class LocalVcsComponentTest extends LocalVcsComponentTestCase {
+public class LocalVcsComponentTest extends IntegrationalTestCase {
   public void testComponentInitialization() {
     assertNotNull(getVcsComponent());
   }

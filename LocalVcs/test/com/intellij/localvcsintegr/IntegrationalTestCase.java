@@ -1,4 +1,4 @@
-package com.intellij.localvcslong;
+package com.intellij.localvcsintegr;
 
 import com.intellij.localvcs.Clock;
 import com.intellij.localvcs.ILocalVcs;
@@ -17,7 +17,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public abstract class LocalVcsComponentTestCase extends IdeaTestCase {
+public abstract class IntegrationalTestCase extends IdeaTestCase {
   protected VirtualFile root;
 
   @Override
