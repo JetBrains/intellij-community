@@ -192,7 +192,10 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     if (resolve != null && resolve.soft()) return true;
 
     final Convert convert = value.getAnnotation(Convert.class);
-    if (convert != null && convert.soft()) return true;
+    if (convert != null && convert.soft()) return true; 
+
+    final Referencing referencing = value.getAnnotation(Referencing.class);
+    if (referencing != null && referencing.soft()) return true;
 
     return false;
   }
