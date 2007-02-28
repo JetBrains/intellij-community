@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class CachedValueImpl<T> implements CachedValue<T> {
   private static final Object NULL = new Object();
@@ -40,6 +42,9 @@ public class CachedValueImpl<T> implements CachedValue<T> {
   private Object[] myDependencies = null;
   private long[] myTimeStamps;
   private long myLastPsiTimeStamp = -1;
+  private ReentrantReadWriteLock rw = new ReentrantReadWriteLock();
+  private Lock r = rw.readLock();
+  private Lock w = rw.writeLock();
 
   public CachedValueImpl(PsiManager manager, CachedValueProvider<T> provider, boolean trackValue) {
     myManager = manager;
@@ -48,25 +53,65 @@ public class CachedValueImpl<T> implements CachedValue<T> {
   }
 
   public void releaseValueIfOutdated() {
-    if (!myComputed || isUpToDate()) return;
-    myValue = null;
-    myComputed = false;
+    w.lock();
+
+    try {
+      if (!myComputed || isUpToDate()) return;
+      myValue = null;
+      myComputed = false;
+    }
+    finally {
+      w.unlock();
+    }
   }
 
   @Nullable
   public T getValue() {
-    T value = getUpToDateOrNull();
-    if (value != null) {
-      return value == NULL ? null : value;
+    r.lock();
+
+    try {
+      T value = getUpToDateOrNull();
+      if (value != null) {
+        return value == NULL ? null : value;
+      }
+
+      r.unlock();
+      w.lock();
+
+      try {
+        value = getUpToDateOrNull();
+        if (value != null) {
+          return value == NULL ? null : value;
+        }
+
+
+        CachedValueProvider.Result<T> result = myProvider.compute();
+        value = result == null ? null : result.getValue();
+        myValue = new SoftReference<T>(value == null ? (T) NULL : value);
+        computeTimeStamps(result == null ? null : result.getDependencyItems());
+
+        myComputed = true;
+        return value;
+      }
+      finally {
+        w.unlock();
+        r.lock();
+      }
     }
+    finally {
+      r.unlock();
+    }
+  }
 
-    CachedValueProvider.Result<T> result = myProvider.compute();
-    value = result == null ? null : result.getValue();
-    myValue = new SoftReference<T>(value == null ? (T) NULL : value);
-    computeTimeStamps(result == null ? null : result.getDependencyItems());
+  public boolean hasUpToDateValue() {
+    r.lock();
 
-    myComputed = true;
-    return value;
+    try {
+      return getUpToDateOrNull() != null;
+    }
+    finally {
+      r.unlock();
+    }
   }
 
   @Nullable
@@ -81,10 +126,6 @@ public class CachedValueImpl<T> implements CachedValue<T> {
       }
     }
     return null;
-  }
-
-  public boolean hasUpToDateValue() {
-    return getUpToDateOrNull() != null;
   }
 
   private boolean isUpToDate() {
