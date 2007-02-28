@@ -84,11 +84,9 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public void setRepositoryId(long repositoryId) {
-    synchronized (PsiLock.LOCK) {
-      super.setRepositoryId(repositoryId);
-      if (repositoryId >= 0) {
-        myClassFileData = null;
-      }
+    super.setRepositoryId(repositoryId);
+    if (repositoryId >= 0) {
+      myClassFileData = null;
     }
   }
 
