@@ -18,6 +18,7 @@ package com.intellij.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.reflect.Reflection;
 
@@ -67,7 +68,7 @@ public class ImageLoader implements Serializable {
     return stream != null ? loadFromStream(stream) : null;
   }
 
-  public static Image loadFromStream(final InputStream inputStream) {
+  public static Image loadFromStream(@NotNull final InputStream inputStream) {
     try {
 
       ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

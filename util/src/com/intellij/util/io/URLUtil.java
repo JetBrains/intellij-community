@@ -1,5 +1,7 @@
 package com.intellij.util.io;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.FileNotFoundException;
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -17,6 +19,7 @@ public class URLUtil {
    * separate method is needed, since jar URLs open jars via JarFactory and thus keep them
    * mapped into memory.
    */
+  @NotNull
   public static InputStream openStream(final URL url) throws IOException {
     final String protocol = url.getProtocol();
     if (protocol.equals("jar")) {
@@ -26,6 +29,7 @@ public class URLUtil {
     return url.openStream();
   }
 
+  @NotNull
   private static InputStream openJarStream(final URL url) throws IOException {
     String file = url.getFile();
     assert file.startsWith("file:");
