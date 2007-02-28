@@ -242,7 +242,7 @@ public class IntentionHintComponent extends JPanel {
     public SpeedSearchFilter<IntentionActionWithTextCaching> getSpeedSearchFilter() { return null; }
   }
 
-  private static class IntentionActionWithTextCaching {
+  private static class IntentionActionWithTextCaching implements Comparable {
     private final List<IntentionAction> myOptionIntentions;
     private final List<IntentionAction> myOptionFixes;
     private final String myText;
@@ -291,6 +291,16 @@ public class IntentionHintComponent extends JPanel {
 
     public String toString() {
       return getText();
+    }
+
+    public int compareTo(Object o) {
+      final IntentionActionWithTextCaching other = (IntentionActionWithTextCaching)o;
+      if (myAction instanceof Comparable) {
+        return ((Comparable)myAction).compareTo(other.getAction());
+      } else if (other.getAction() instanceof Comparable) {
+        return ((Comparable)other.getAction()).compareTo(myAction);
+      }
+      return Comparing.compare(getText(), other.getText());
     }
   }
 
