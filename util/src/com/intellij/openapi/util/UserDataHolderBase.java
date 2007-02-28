@@ -73,7 +73,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
 
     r.lock();
     try {
-      return (T)myUserMap.get(key);
+      return myUserMap == null ? null : (T)myUserMap.get(key);
     }
     finally {
       r.unlock();
