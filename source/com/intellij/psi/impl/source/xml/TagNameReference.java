@@ -49,11 +49,26 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
   }
 
   public TextRange getRangeInElement() {
-    if (getNameElement() == null){
+    final ASTNode nameElement = getNameElement();
+    if (nameElement == null){
       return new TextRange(0, 0);
     }
-    final int parentOffset = ((TreeElement)getNameElement()).getStartOffsetInParent();
-    return new TextRange(parentOffset, parentOffset + getNameElement().getTextLength());
+
+    if (myStartTagFlag) {
+      final int parentOffset = ((TreeElement)nameElement).getStartOffsetInParent();
+      return new TextRange(parentOffset, parentOffset + nameElement.getTextLength());
+    } else {
+      final XmlTag element = getElement();
+      final TextRange textRange = element.getTextRange();
+      int diffFromEnd = 0;
+
+      for(ASTNode node = element.getNode().getLastChildNode(); node != nameElement; node = node.getTreePrev()) {
+        diffFromEnd += node.getTextLength();
+      }
+
+      final int nameEnd = textRange.getEndOffset() - textRange.getStartOffset() - diffFromEnd;
+      return new TextRange(nameEnd - nameElement.getTextLength(), nameEnd);
+    }
   }
 
   private ASTNode getNameElement() {
