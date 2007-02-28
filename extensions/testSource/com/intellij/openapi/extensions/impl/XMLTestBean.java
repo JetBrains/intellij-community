@@ -7,7 +7,9 @@ package com.intellij.openapi.extensions.impl;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.xmlb.annotations.Tag;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -17,7 +19,7 @@ public class XMLTestBean implements PluginAware {
   private boolean otherProperty;
   private int prop1;
   private Object prop2;
-  private Collection collectionProperty;
+  private Collection<String> collectionProperty = new ArrayList<String>();
   private PluginId pluginId;
 
   public XMLTestBean() {
@@ -37,6 +39,7 @@ public class XMLTestBean implements PluginAware {
     this.otherProperty = otherProperty;
   }
 
+  @Tag("prop1")
   public int getProp1() {
     return prop1;
   }
@@ -53,11 +56,11 @@ public class XMLTestBean implements PluginAware {
     this.prop2 = prop2;
   }
 
-  public Collection getCollectionProperty() {
+  public Collection<String> getCollectionProperty() {
     return collectionProperty;
   }
 
-  public void setCollectionProperty(Collection collectionProperty) {
+  public void setCollectionProperty(Collection<String> collectionProperty) {
     this.collectionProperty = collectionProperty;
   }
 

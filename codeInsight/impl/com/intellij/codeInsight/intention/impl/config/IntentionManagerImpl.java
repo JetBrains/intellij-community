@@ -89,10 +89,10 @@ public class IntentionManagerImpl extends IntentionManager {
   private void registerIntentionFromBean(final IntentionActionBean extension, final PluginDescriptor pluginDescriptor) {
     ClassLoader classLoader = pluginDescriptor != null ? pluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
     try {
-      final Class<?> aClass = Class.forName(extension.getClassName(), true, classLoader);
+      final Class<?> aClass = Class.forName(extension.className, true, classLoader);
       final String descriptionDirectoryName = extension.getDescriptionDirectoryName();
       if (descriptionDirectoryName != null) {
-        registerIntentionAndMetaData((IntentionAction)aClass.newInstance(), extension.getClassName(), descriptionDirectoryName);
+        registerIntentionAndMetaData((IntentionAction)aClass.newInstance(), extension.className, descriptionDirectoryName);
       }
       else {
         registerIntentionAndMetaData((IntentionAction)aClass.newInstance(), extension.getCategories());

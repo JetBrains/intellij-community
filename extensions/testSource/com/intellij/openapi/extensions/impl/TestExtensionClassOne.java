@@ -4,14 +4,14 @@
  */
 package com.intellij.openapi.extensions.impl;
 
-import com.thoughtworks.xstream.annotations.XStreamAlias;
+import com.intellij.util.xmlb.annotations.Tag;
 
 /**
  * @author Alexander Kireyev
  */
 public class TestExtensionClassOne {
-  @XStreamAlias("text")
-  private String myText;
+  @Tag("text")
+  public String myText;
 
   public TestExtensionClassOne() {
   }

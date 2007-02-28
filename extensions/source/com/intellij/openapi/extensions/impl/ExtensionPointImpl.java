@@ -339,7 +339,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     private LoadingOrder myLoadingOrder;
 
     public ObjectComponentAdapter(Object extension, LoadingOrder loadingOrder) {
-      super(Object.class.getName(), null, null, null);
+      super(Object.class.getName(), null, null, null, false);
       myExtension = extension;
       myLoadingOrder = loadingOrder;
     }

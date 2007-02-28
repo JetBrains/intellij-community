@@ -119,17 +119,18 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     String implClass;
     Class extensionClass = getExtensionPoint(epName).getExtensionClass();
     implClass = extensionElement.getAttributeValue("implementation");
+
     if (extensionClass.isInterface() || Modifier.isAbstract(extensionClass.getModifiers())) {
       if (implClass == null) {
         throw new RuntimeException("Expected implementation for extension declaration (ep = " + epName + ")");
       }
     }
     if (implClass != null) {
-      adapter = new ExtensionComponentAdapter(implClass, extensionElement, getPluginContainer(pluginId.getIdString()), pluginDescriptor);
+      adapter = new ExtensionComponentAdapter(implClass, extensionElement, getPluginContainer(pluginId.getIdString()), pluginDescriptor, false);
     }
     else {
       final ExtensionPoint extensionPoint = getExtensionPoint(epName);
-      adapter = new ExtensionComponentAdapter(extensionPoint.getExtensionClass().getName(), extensionElement, getPluginContainer(pluginId.getIdString()), pluginDescriptor);
+      adapter = new ExtensionComponentAdapter(extensionPoint.getExtensionClass().getName(), extensionElement, getPluginContainer(pluginId.getIdString()), pluginDescriptor, true);
     }
     myExtensionElement2extension.put(extensionElement, adapter);
     internalGetPluginContainer().registerComponent(adapter);

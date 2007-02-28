@@ -51,7 +51,7 @@ public class ServiceManagerImpl implements BaseComponent {
       }
 
       public void extensionRemoved(final ServiceDescriptor extension, final PluginDescriptor pluginDescriptor) {
-        picoContainer.unregisterComponent(extension.getServiceInterface());
+        picoContainer.unregisterComponent(extension.serviceInterface);
       }
     };
     extensionPoint.addExtensionPointListener(myExtensionPointListener);
@@ -87,11 +87,11 @@ public class ServiceManagerImpl implements BaseComponent {
     }
 
     public Object getComponentKey() {
-      return myDescriptor.getServiceInterface();
+      return myDescriptor.serviceInterface;
     }
 
     public Class getComponentImplementation() {
-      return loadClass(myDescriptor.getServiceInterface());
+      return loadClass(myDescriptor.serviceInterface);
     }
 
     private Class loadClass(final String className) {
@@ -121,7 +121,7 @@ public class ServiceManagerImpl implements BaseComponent {
 
     private synchronized ComponentAdapter getDelegate() {
       if (myDelegate == null) {
-        myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), loadClass(myDescriptor.getServiceImplementation()), null, true));
+        myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), loadClass(myDescriptor.serviceImplementation), null, true));
       }
 
       return myDelegate;

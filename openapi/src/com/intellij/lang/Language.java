@@ -30,9 +30,9 @@ import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -326,12 +326,12 @@ public abstract class Language {
 
     final AnnotatorEP[] eps = Extensions.getExtensions(AnnotatorEP.EP_NAME);
     for(AnnotatorEP ep: eps) {
-      if (ep.getLanguage().equals(getID())) {
+      if (ep.language.equals(getID())) {
         try {
           Annotator epAnnotator = ep.getAnnotator();
           if (epAnnotator == null) {
             PluginDescriptor descriptor = ep.getPluginDescriptor();
-            epAnnotator = (Annotator)Class.forName(ep.getAnnotatorClass(), true,
+            epAnnotator = (Annotator)Class.forName(ep.annotatorClass, true,
                                         descriptor == null ? getClass().getClassLoader() : descriptor.getPluginClassLoader()).newInstance();
             ep.setAnnotator(epAnnotator);
           }

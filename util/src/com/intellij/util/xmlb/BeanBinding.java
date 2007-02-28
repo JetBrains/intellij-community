@@ -1,5 +1,6 @@
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.DOMUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.*;
@@ -22,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 
 class BeanBinding implements Binding {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xmlb.BeanBinding");
+
   private String myTagName;
   private Map<Binding, Accessor> myPropertyBindings = new HashMap<Binding, Accessor>();
   private List<Binding> myPropertyBindingsList = new ArrayList<Binding>();
@@ -128,8 +131,12 @@ class BeanBinding implements Binding {
         }
       }
 
-
-      throw new XmlSerializationException("Format error: no binding for " + child + " : " + child.getNodeValue() + " inside " + this);
+      {
+        final String message = "Format error: no binding for " + child + " : " + child.getNodeValue() + " inside " + this;
+        LOG.debug(message);
+        Logger.getInstance(myBeanClass.getName()).debug(message);
+        Logger.getInstance("#" + myBeanClass.getName()).debug(message);
+      }
     }
 
     for (Object o1 : data.keySet()) {
