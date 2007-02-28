@@ -29,7 +29,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
   private List<TabInfo> myInfos = new ArrayList<TabInfo>();
 
   private TabInfo mySelectedInfo;
-  private Map<TabInfo, JLabel> myInfo2Label = new HashMap<TabInfo, JLabel>();
+  private Map<TabInfo, TabLabel> myInfo2Label = new HashMap<TabInfo, TabLabel>();
   private Map<TabInfo, JComponent> myInfo2Toolbar = new HashMap<TabInfo, JComponent>();
   private Dimension myHeaderFitSize;
   private Rectangle mySelectedBounds;
@@ -42,27 +42,35 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     myActionManager = actionManager;
   }
 
-  public TabInfo addTab(JComponent component) {
+  public TabInfo addTab(JComponent component, int index) {
     final TabInfo info = new TabInfo(component);
     info.getChangeSupport().addPropertyChangeListener(this);
     add(component);
-    final JLabel label = new JLabel("???");
-    label.addMouseListener(new MouseAdapter() {
-      public void mousePressed(final MouseEvent e) {
-        if (e.getClickCount() == 1 && e.getButton() == MouseEvent.BUTTON1) {
-          setSelected(info);
-        }
-      }
-    });
-    label.setBorder(new EmptyBorder(4, 8, 4, 8));
+    final TabLabel label = new TabLabel(info);
     myInfo2Label.put(info, label);
-    myInfos.add(info);
-    add(label);
-    update();
 
-    updateListeners();
+    if (index < 0) {
+      myInfos.add(0, info);
+    } else if (index > myInfos.size() - 1) {
+      myInfos.add(info);
+    } else {
+      myInfos.add(index, info);
+    }
+
+    add(label);
+
+    updateAll();
 
     return info;
+  }
+  public TabInfo addTab(JComponent component) {
+    return addTab(component, -1);
+  }
+
+
+  private void updateAll() {
+    update();
+    updateListeners();
   }
 
   public void setSelected(final TabInfo info) {
@@ -91,8 +99,11 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     update();
   }
 
-  private @Nullable
-  TabInfo getSelectedInfo() {
+  @Nullable
+  public TabInfo getSelectedInfo() {
+    if (!myInfos.contains(mySelectedInfo)) {
+      mySelectedInfo = null;
+    }
     return mySelectedInfo != null ? mySelectedInfo : (myInfos.size() > 0 ? myInfos.get(0) : null);
   }
 
@@ -112,7 +123,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     final TabInfo selected = getSelectedInfo();
     mySelectedBounds = null;
     for (TabInfo eachInfo : myInfos) {
-      final JLabel label = myInfo2Label.get(eachInfo);
+      final TabLabel label = myInfo2Label.get(eachInfo);
       final Dimension eachSize = label.getPreferredSize();
       label.setBounds(currentX, insets.top, eachSize.width, myHeaderFitSize.height);
       currentX += eachSize.width;
@@ -195,7 +206,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
   private Max computeMaxSize() {
     Max max = new Max();
     for (TabInfo eachInfo : myInfos) {
-      final JLabel label = myInfo2Label.get(eachInfo);
+      final TabLabel label = myInfo2Label.get(eachInfo);
       max.myLabel.height = Math.max(max.myLabel.height, label.getPreferredSize().height);
       max.myLabel.width = Math.max(max.myLabel.width, label.getPreferredSize().width);
       final JComponent toolbar = myInfo2Toolbar.get(eachInfo);
@@ -212,6 +223,60 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
 
   public int getTabCount() {
     return myInfos.size();
+  }
+
+  public void removeTab(final JComponent component) {
+    removeTab(findInfo(component));
+  }
+
+  public void removeTab(TabInfo info) {
+    if (info == null) return;
+
+    remove(myInfo2Label.get(info));
+    final JComponent tb = myInfo2Toolbar.get(info);
+    if (tb != null) {
+      remove(tb);
+    }
+    remove(info.getComponent());
+
+    myInfos.remove(info);
+    myInfo2Label.remove(info);
+    myInfo2Toolbar.remove(info);
+
+    updateAll();
+  }
+
+  public TabInfo findInfo(Component component) {
+    for (TabInfo each : myInfos) {
+      if (each.getComponent() == component) return each;
+    }
+
+    return null;
+  }
+
+  public TabInfo findInfo(MouseEvent event) {
+    final Point src = event.getPoint();
+    final Point point = SwingUtilities.convertPoint(event.getComponent(), src, this);
+    Component component = findComponentAt(point);
+    if (component == null) return null;
+    while (component != this || component != null) {
+      if (component instanceof TabLabel) {
+        return ((TabLabel)component).getInfo();
+      } else {
+        final TabInfo info = findInfo(component);
+        if (info != null) return info;
+      }
+      component = component.getParent();
+    }
+
+    return null;
+  }
+
+  public void removeAllTabs() {
+    final TabInfo[] infos = (TabInfo[])myInfos.toArray(new TabInfo[myInfos.size()]);
+    for (TabInfo each : infos) {
+      removeTab(each);
+    }
   }
 
   private class Max {
@@ -242,7 +307,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
 
   private void addListeners() {
     for (TabInfo eachInfo : myInfos) {
-      final JLabel label = myInfo2Label.get(eachInfo);
+      final TabLabel label = myInfo2Label.get(eachInfo);
       for (MouseListener eachListener : myTabListeners) {
         label.addMouseListener(eachListener);
       }
@@ -251,7 +316,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
 
   private void removeListeners() {
     for (TabInfo eachInfo : myInfos) {
-      final JLabel label = myInfo2Label.get(eachInfo);
+      final TabLabel label = myInfo2Label.get(eachInfo);
       for (MouseListener eachListener : myTabListeners) {
         label.removeMouseListener(eachListener);
       }
@@ -261,6 +326,40 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
   private void updateListeners() {
     removeListeners();
     addListeners();
+  }
+
+
+  private class TabLabel extends JPanel {
+    private JLabel myLabel = new JLabel();
+    private TabInfo myInfo;
+
+    public TabLabel(final TabInfo info) {
+      myInfo = info;
+      setOpaque(false);
+      setLayout(new BorderLayout());
+      add(myLabel, BorderLayout.CENTER);
+
+      addMouseListener(new MouseAdapter() {
+        public void mousePressed(final MouseEvent e) {
+          if (e.getClickCount() == 1 && e.getButton() == MouseEvent.BUTTON1) {
+            setSelected(info);
+          }
+        }
+      });
+      setBorder(new EmptyBorder(4, 8, 4, 8));
+    }
+
+    public void setText(final String text) {
+      myLabel.setText(text);
+    }
+
+    public void setIcon(final Icon icon) {
+      myLabel.setIcon(icon);
+    }
+
+    public TabInfo getInfo() {
+      return myInfo;
+    }
   }
 
   public static void main(String[] args) {

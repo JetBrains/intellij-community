@@ -47,7 +47,7 @@ public final class TabInfo {
     return myGroup;
   }
 
-  JComponent getComponent() {
+  public JComponent getComponent() {
     return myComponent;
   }
 
