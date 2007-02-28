@@ -645,18 +645,18 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void selectUsages(Usage[] usages) {
     if (usages == null) return;
 
-    List<TreePath> pathes = new LinkedList<TreePath>();
+    List<TreePath> paths = new LinkedList<TreePath>();
 
     for (Usage usage : usages) {
       final UsageNode node = myUsageNodes.get(usage);
 
       if (node != NULL_NODE) {
-        pathes.add(new TreePath(node.getPath()));
+        paths.add(new TreePath(node.getPath()));
       }
     }
 
-    myTree.setSelectionPaths(pathes.toArray(new TreePath[pathes.size()]));
-    if (!pathes.isEmpty()) myTree.scrollPathToVisible(pathes.get(0));
+    myTree.setSelectionPaths(paths.toArray(new TreePath[paths.size()]));
+    if (!paths.isEmpty()) myTree.scrollPathToVisible(paths.get(0));
   }
 
   public JComponent getComponent() {
@@ -1150,7 +1150,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
     public void restore() {
       final UsageNode node = myUsageNodes.get(myUsage);
-      if (node == NULL_NODE) {
+      if (node == NULL_NODE || node == null) {
         return;
       }
       final DefaultMutableTreeNode parentGroupingNode = (DefaultMutableTreeNode)node.getParent();
