@@ -207,7 +207,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }
     final VcsEP[] vcsEPs = Extensions.getExtensions(VcsEP.EP_NAME, myProject);
     for(VcsEP ep: vcsEPs) {
-      if (ep.getName().equals(name)) {
+      if (ep.name.equals(name)) {
         AbstractVcs vcs = ep.getVcs(myProject);
         if (!myVcss.contains(vcs)) {
           registerVcs(vcs);

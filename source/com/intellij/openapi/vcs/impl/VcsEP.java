@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 /**
@@ -21,27 +22,13 @@ public class VcsEP implements PluginAware {
   public static final ExtensionPointName<VcsEP> EP_NAME = ExtensionPointName.create("com.intellij.vcs");
 
   // these must be public for scrambling compatibility
+  @Tag("name")
   public String name;
+  @Tag("vcsClass")
   public String vcsClass;
   
   private AbstractVcs myVcs;
   private PluginDescriptor myPluginDescriptor;
-
-  public String getName() {
-    return name;
-  }
-
-  public void setName(final String name) {
-    this.name = name;
-  }
-
-  public String getVcsClass() {
-    return vcsClass;
-  }
-
-  public void setVcsClass(final String vcsClass) {
-    this.vcsClass = vcsClass;
-  }
 
   public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
