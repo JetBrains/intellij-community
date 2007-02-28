@@ -1,57 +1,9 @@
 <!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin>
-  <id>org.intellij.scala</id>
-  <name>Scala language plugin</name>
-  <description>Plugin for scala language</description>
-  <version>1.0</version>
-  <vendor>YourCompany</vendor>
-  <idea-version since-build="6666"/>
-  <resource-bundle xmlns="">org.jetbrains.plugins.scala.ScalaBundle</resource-bundle>
-
-  <application-components>
-    <component>
-      <interface-class>org.jetbrains.plugins.scala.util.ScalaToolsFactory</interface-class>
-      <implementation-class>org.jetbrains.plugins.scala.util.ScalaToolsFactoryImpl</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.scala.ScalaLoader</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.scala.sdk.ScalaSdkType</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.scala.components.ScalaFileCreator</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.scala.components.ScalaIconProvider</implementation-class>
-    </component>
-  </application-components>
-
-
-  <module-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.scala.cache.module.ScalaModuleCachesManager</implementation-class>
-    </component>
-  </module-components>
-
-  <project-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.scala.cache.ScalaSDKCachesManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.scala.cache.ScalaLibraryCachesManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.scala.finder.ScalaPsiElementFinder</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.ide.projectView.TreeStructureProvider</interface-class>
-      <implementation-class>org.jetbrains.plugins.scala.components.ScalaDefsProjectViewProvider</implementation-class>
-    </component>
-
-  </project-components>
-
-
-  <actions>
-  </actions>
+  <id>org.intellij.groovy</id>
+  <name>JetGroovy</name>
+  <description>Plugin for Groovy language</description>
+  <version>0.01</version>
+  <vendor>JetBrains Inc.</vendor>
+  <idea-version since-build="6724"/>
 </idea-plugin>
