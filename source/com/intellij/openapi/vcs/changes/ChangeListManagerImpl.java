@@ -606,6 +606,20 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   }
 
   @Nullable
+  public LocalChangeList getIdentityChangeList(Change change) {
+    synchronized (myChangeLists) {
+      for (LocalChangeList list : myChangeLists) {
+        for(Change oldChange: list.getChanges()) {
+          if (oldChange == change) {
+            return list;
+          }
+        }
+      }
+      return null;
+    }
+  }
+
+  @Nullable
   public Change getChange(VirtualFile file) {
     synchronized (myChangeLists) {
       for (ChangeList list : myChangeLists) {

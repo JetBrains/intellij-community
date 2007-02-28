@@ -60,7 +60,7 @@ public class ShowDiffAction extends AnAction {
       if (checkNotifyBinaryDiff(selectedChange)) {
         return;
       }
-      ChangeList changeList = ChangeListManager.getInstance(project).getChangeList(selectedChange);
+      ChangeList changeList = ((ChangeListManagerImpl) ChangeListManager.getInstance(project)).getIdentityChangeList(selectedChange);
       if (changeList != null) {
         final ArrayList<Change> changesInList = new ArrayList<Change>(changeList.getChanges());
         Collections.sort(changesInList, new Comparator<Change>() {
