@@ -510,10 +510,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         VirtualFile contentRoot = fileIndex.getContentRootForFile(file);
         if (module == null) return file.getPresentableUrl();
         StringBuffer result = new StringBuffer();
-        result.append("<");
+        result.append("[");
         result.append(module.getName());
-        result.append(">");
-        result.append(File.separatorChar);
+        result.append("] ");
         result.append(contentRoot.getName());
         String relativePath = VfsUtil.getRelativePath(file, contentRoot, File.separatorChar);
         if (relativePath.length() > 0) {
