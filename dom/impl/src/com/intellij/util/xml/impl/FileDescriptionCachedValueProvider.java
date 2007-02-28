@@ -61,7 +61,10 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
 
   @Nullable
   public final DomFileDescription<T> getFileDescription() {
-    return myFileDescription;
+    r.lock();
+    final DomFileDescription<T> description = myFileDescription;
+    r.unlock();
+    return description;
   }
 
   @Nullable
@@ -247,7 +250,10 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
 
   @Nullable
   final DomFileElementImpl<T> getLastValue() {
-    return myLastResult;
+    r.lock();
+    final DomFileElementImpl<T> element = myLastResult;
+    r.unlock();
+    return element;
   }
 
   public long getModificationCount() {
