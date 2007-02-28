@@ -12,10 +12,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.highlighting.DomElementAnnotationHolderImpl;
-import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
-import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
-import com.intellij.util.xml.highlighting.DomElementsInspection;
+import com.intellij.util.xml.highlighting.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -27,8 +24,8 @@ public class DefaultDomAnnotator implements Annotator {
   private final DomElementAnnotationsManagerImpl myAnnotationsManager;
   private DomManagerImpl myDomManager;
 
-  public DefaultDomAnnotator(final DomManagerImpl domManager, final DomElementAnnotationsManagerImpl annotationsManager) {
-    myAnnotationsManager = annotationsManager;
+  public DefaultDomAnnotator(final DomManagerImpl domManager, final DomElementAnnotationsManager annotationsManager) {
+    myAnnotationsManager = (DomElementAnnotationsManagerImpl)annotationsManager;
     myDomManager = domManager;
   }
 

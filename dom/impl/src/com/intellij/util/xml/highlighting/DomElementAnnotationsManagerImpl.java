@@ -12,7 +12,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -34,19 +33,24 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
-import org.jetbrains.annotations.NonNls;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManager implements ProjectComponent {
+public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManager {
+  public static final Object LOCK = new Object();
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl");
   private static final Key<DomElementsProblemsHolderImpl> DOM_PROBLEM_HOLDER_KEY = Key.create("DomProblemHolder");
   private static final Key<CachedValue<Boolean>> CACHED_VALUE_KEY = Key.create("DomProblemHolderCachedValue");
   private final EventDispatcher<DomHighlightingListener> myDispatcher = EventDispatcher.create(DomHighlightingListener.class);
 
-  private final Map<Class, List<DomElementsAnnotator>> myClass2Annotator = new HashMap<Class, List<DomElementsAnnotator>>();
+  private final Map<Class, List<DomElementsAnnotator>> myClass2Annotator = new THashMap<Class, List<DomElementsAnnotator>>();
 
   private static final DomElementsProblemsHolder EMPTY_PROBLEMS_HOLDER = new DomElementsProblemsHolder() {
     @NotNull
@@ -120,7 +124,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
   public final List<DomElementProblemDescriptor> appendProblems(@NotNull DomFileElement element, @NotNull DomElementAnnotationHolder annotationHolder, Class<? extends DomElementsInspection> inspectionClass) {
     final DomElementAnnotationHolderImpl holderImpl = (DomElementAnnotationHolderImpl)annotationHolder;
-    synchronized (PsiLock.LOCK) {
+    synchronized (LOCK) {
       final DomElementsProblemsHolderImpl holder = _getOrCreateProblemsHolder(element);
       holder.appendProblems(holderImpl, inspectionClass);
     }
@@ -149,13 +153,13 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   }
 
   public static boolean isHolderUpToDate(DomElement element) {
-    synchronized (PsiLock.LOCK) {
+    synchronized (LOCK) {
       return !isHolderOutdated(element.getRoot());
     }
   }
 
   public static void outdateProblemHolder(final DomElement element) {
-    synchronized (PsiLock.LOCK) {
+    synchronized (LOCK) {
       element.getRoot().putUserData(CACHED_VALUE_KEY, null);
     }
   }
@@ -170,7 +174,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     if (element == null || !element.isValid()) return EMPTY_PROBLEMS_HOLDER;
     final DomFileElement<DomElement> fileElement = element.getRoot();
 
-    synchronized (PsiLock.LOCK) {
+    synchronized (LOCK) {
       final DomElementsProblemsHolder readyHolder = fileElement.getUserData(DOM_PROBLEM_HOLDER_KEY);
       return readyHolder == null ? EMPTY_PROBLEMS_HOLDER : readyHolder;
     }
@@ -242,27 +246,6 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     return appendProblems(domFileElement, holder, inspection.getClass());
   }
 
-
-  @NotNull
-  @NonNls
-  public String getComponentName() {
-    return "DomElementAnnotationsManager";
-  }
-
-  public void initComponent() {
-
-  }
-
-  public void disposeComponent() {
-
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
   public List<DomElementsInspection> getSuitableDomInspections(final DomFileElement fileElement, boolean enabledOnly) {
     Class rootType = fileElement.getRootElementClass();
     final InspectionProfile profile = getInspectionProfile(fileElement);
@@ -315,7 +298,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
   @NotNull
   public DomHighlightStatus getHighlightStatus(final DomElement element) {
-    synchronized (PsiLock.LOCK) {
+    synchronized (LOCK) {
       final DomFileElement<DomElement> root = element.getRoot();
       if (!isHolderOutdated(root)) {
         final DomElementsProblemsHolder holder = getProblemHolder(element);

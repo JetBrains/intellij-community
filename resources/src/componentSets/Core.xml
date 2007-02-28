@@ -134,11 +134,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <interface-class>com.intellij.util.xml.highlighting.DomElementAnnotationsManager</interface-class>
-      <implementation-class>com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <interface-class>com.intellij.ide.util.PropertiesComponent</interface-class>
       <implementation-class>com.intellij.ide.util.PropertiesComponentImpl</implementation-class>
       <option name="workspace" value="true"/>

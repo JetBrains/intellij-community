@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.Lock;
 
 /**
  * @author peter
@@ -47,6 +49,10 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   private final DomManagerImpl myDomManager;
   private int myModCount;
 
+  private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+  private static final Lock r = rwl.readLock();
+  private static final Lock w = rwl.writeLock();
+
   public FileDescriptionCachedValueProvider(final DomManagerImpl domManager, final XmlFile xmlFile) {
     myDomManager = domManager;
     myXmlFile = xmlFile;
@@ -60,14 +66,40 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
 
   @Nullable
   public final DomFileElementImpl<T> getFileElement() {
-    if (!myCachedValue.hasUpToDateValue()) {
-      computeFileElement(false);
+    r.lock();
+    try {
+      if (!myCachedValue.hasUpToDateValue()) {
+        r.unlock();
+        w.lock();
+        try {
+          if (!myCachedValue.hasUpToDateValue()) {
+            _computeFileElement(false);
+          }
+        }
+        finally{
+          r.lock();
+          w.unlock();
+        }
+      }
+      return myLastResult;
     }
-    return myLastResult;
+    finally {
+      r.unlock();
+    }
   }
 
   @NotNull
   public final List<DomEvent> computeFileElement(boolean fireEvents) {
+    w.lock();
+    try {
+      return _computeFileElement(fireEvents);
+    }
+    finally {
+      w.unlock();
+    }
+  }
+
+  private List<DomEvent> _computeFileElement(final boolean fireEvents) {
     if (myComputing || myDomManager.getProject().isDisposed()) return Collections.emptyList();
     myComputing = true;
     try {

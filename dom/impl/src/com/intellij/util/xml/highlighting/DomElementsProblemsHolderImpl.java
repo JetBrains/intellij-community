@@ -70,7 +70,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
   }
 
   public final boolean isInspectionCompleted(final Class<? extends DomElementsInspection> inspectionClass) {
-    synchronized (PsiLock.LOCK) {
+    synchronized (DomElementAnnotationsManagerImpl.LOCK) {
       return myPassedInspections.contains(inspectionClass);
     }
   }

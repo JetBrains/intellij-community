@@ -34,6 +34,7 @@ import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -121,11 +122,11 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
                         final PsiManager psiManager,
                         final XmlAspect xmlAspect,
                         final WolfTheProblemSolver solver,
-                        final DomElementAnnotationsManagerImpl annotationsManager,
+                        final DomElementAnnotationsManager annotationsManager,
                         final VirtualFileManager virtualFileManager,
                         final StartupManager startupManager) {
     myProject = project;
-    myAnnotationsManager = annotationsManager;
+    myAnnotationsManager = (DomElementAnnotationsManagerImpl)annotationsManager;
     pomModel.addModelListener(new PomModelListener() {
       public void modelChanged(PomModelEvent event) {
         final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(xmlAspect);
@@ -202,11 +203,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
 
   private void processFileChange(final PsiFile file) {
     if (file != null && StdFileTypes.XML.equals(file.getFileType()) && file instanceof XmlFile) {
-      final List<DomEvent> list;
-      synchronized (PsiLock.LOCK) {
-        list = getOrCreateCachedValueProvider((XmlFile)file).computeFileElement(true);
-      }
-      for (final DomEvent event : list) {
+      for (final DomEvent event : getOrCreateCachedValueProvider((XmlFile)file).computeFileElement(true)) {
         fireEvent(event);
       }
     }
@@ -311,7 +308,15 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     //noinspection unchecked
     FileDescriptionCachedValueProvider<T> provider = xmlFile.getUserData(CACHED_FILE_ELEMENT_PROVIDER);
     if (provider == null) {
-      xmlFile.putUserData(CACHED_FILE_ELEMENT_PROVIDER, provider = new FileDescriptionCachedValueProvider<T>(this, xmlFile));
+      synchronized (PsiLock.LOCK) {
+        //noinspection unchecked
+        final FileDescriptionCachedValueProvider<T> provider1 = xmlFile.getUserData(CACHED_FILE_ELEMENT_PROVIDER);
+        if (provider1 == null) {
+          xmlFile.putUserData(CACHED_FILE_ELEMENT_PROVIDER, provider = new FileDescriptionCachedValueProvider<T>(this, xmlFile));
+        } else {
+          provider = provider1;
+        }
+      }
     }
     return provider;
   }
@@ -394,9 +399,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     if (!StdFileTypes.XML.equals(file.getFileType())) return null;
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null && virtualFile.isDirectory()) return null;
-    synchronized (PsiLock.LOCK) {
-      return this.<T>getOrCreateCachedValueProvider(file).getFileElement();
-    }
+    return this.<T>getOrCreateCachedValueProvider(file).getFileElement();
   }
 
   @Nullable
@@ -405,9 +408,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     if (!StdFileTypes.XML.equals(file.getFileType())) return null;
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null && virtualFile.isDirectory()) return null;
-    synchronized (PsiLock.LOCK) {
-      return this.<T>getOrCreateCachedValueProvider(file).getLastValue();
-    }
+    return this.<T>getOrCreateCachedValueProvider(file).getLastValue();
   }
 
   @Nullable
@@ -599,10 +600,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
 
   @Nullable
   private DomFileDescription findFileDescription(DomElement element) {
-    final XmlFile file = element.getRoot().getFile();
-    synchronized (PsiLock.LOCK) {
-      return getOrCreateCachedValueProvider(file).getFileDescription();
-    }
+    return getOrCreateCachedValueProvider(element.getRoot().getFile()).getFileDescription();
   }
 
   public final DomElement getResolvingScope(GenericDomValue element) {

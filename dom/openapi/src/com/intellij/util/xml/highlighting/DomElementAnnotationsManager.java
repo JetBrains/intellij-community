@@ -20,6 +20,7 @@ package com.intellij.util.xml.highlighting;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
@@ -31,7 +32,7 @@ import java.util.List;
 public abstract class DomElementAnnotationsManager {
 
   public static DomElementAnnotationsManager getInstance(Project project) {
-    return project.getComponent(DomElementAnnotationsManager.class);
+    return ServiceManager.getService(project, DomElementAnnotationsManager.class);
   }
 
   @NotNull

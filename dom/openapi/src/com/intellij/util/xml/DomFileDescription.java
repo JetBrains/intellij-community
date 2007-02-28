@@ -143,6 +143,7 @@ public class DomFileDescription<T> {
     return myImplementations;
   }
 
+  @NotNull
   public final Class<T> getRootElementClass() {
     return myRootElementClass;
   }

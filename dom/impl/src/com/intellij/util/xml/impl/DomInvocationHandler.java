@@ -161,18 +161,16 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     if (!(this instanceof CollectionElementInvocationHandler)) {
       detach(false);
     }
-    synchronized (PsiLock.LOCK) {
-      myManager.runChange(new Runnable() {
-        public void run() {
-          try {
-            copyTags(fromTag, tag);
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
+    myManager.runChange(new Runnable() {
+      public void run() {
+        try {
+          copyTags(fromTag, tag);
         }
-      });
-    }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+    });
     attach(tag);
   }
 
