@@ -73,6 +73,8 @@ public class HighlightInfo {
   }
 
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull PsiElement element, String description, String toolTip) {
+    checkIfInReadOnly(type, element);
+
     TextRange range = element.getTextRange();
     int start = range.getStartOffset();
     int end = range.getEndOffset();
@@ -195,15 +197,13 @@ public class HighlightInfo {
   }
 
   public boolean equals(Object obj) {
-    return obj == this ||
-           (obj instanceof HighlightInfo &&
-            ((HighlightInfo)obj).getSeverity() == getSeverity() &&
-            ((HighlightInfo)obj).startOffset == startOffset &&
-            ((HighlightInfo)obj).endOffset == endOffset &&
-            ((HighlightInfo)obj).type == type &&
-            //Do not include fix offsets!!!
-            Comparing.strEqual(((HighlightInfo)obj).description, description)
-           );
+    if (obj == this) return true;
+    return obj instanceof HighlightInfo
+           && ((HighlightInfo)obj).getSeverity() == getSeverity()
+           && ((HighlightInfo)obj).startOffset == startOffset
+           && ((HighlightInfo)obj).endOffset == endOffset
+           && ((HighlightInfo)obj).type == type
+           && Comparing.strEqual(((HighlightInfo)obj).description, description);
   }
 
   public int hashCode() {
@@ -235,9 +235,17 @@ public class HighlightInfo {
                                                   @NotNull final PsiElement element,
                                                   final String message,
                                                   final TextAttributes attributes) {
+    checkIfInReadOnly(type, element);
     TextRange textRange = element.getTextRange();
     // do not use HighlightInfoFilter
-    return new HighlightInfo(attributes, type, textRange.getStartOffset(), textRange.getEndOffset(), message, htmlEscapeToolTip(message), type.getSeverity(element), false, false);
+    return new HighlightInfo(attributes, type, textRange.getStartOffset(), textRange.getEndOffset(), message, htmlEscapeToolTip(message),
+                             type.getSeverity(element), false, Boolean.FALSE);
+  }
+
+  private static void checkIfInReadOnly(final HighlightInfoType type, final PsiElement element) {
+    if (type != HighlightInfoType.ERROR) return;
+    if (element.isWritable()) return;
+    int i = 0;
   }
 
   public static class IntentionActionDescriptor {

@@ -110,6 +110,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
+    myRefCountHolder.assertIsTouched();
     List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
     final FileViewProvider viewProvider = myFile.getViewProvider();
     final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();

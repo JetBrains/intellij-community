@@ -26,7 +26,7 @@ public class RefCountHolder {
   private final Map<String, XmlAttribute> myXmlId2AttributeMap = new THashMap<String, XmlAttribute>();
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new THashMap<PsiReference, PsiImportStatementBase>();
   private final Set<PsiNamedElement> myUsedElements = new THashSet<PsiNamedElement>();
-  private boolean myTouched;
+  private volatile boolean myTouched;
 
   public RefCountHolder(PsiFile file) {
     myFile = file;
@@ -83,7 +83,7 @@ public class RefCountHolder {
   }
 
   public synchronized boolean isRedundant(PsiImportStatementBase importStatement) {
-    LOG.assertTrue(myTouched);
+    assertIsTouched();
     return !myImportStatements.containsValue(importStatement);
   }
 
@@ -127,7 +127,7 @@ public class RefCountHolder {
   }
 
   public synchronized boolean isReferenced(PsiNamedElement element) {
-    LOG.assertTrue(myTouched);
+    assertIsTouched();
     List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
     if (array != null && !array.isEmpty() && !isParameterUsedRecursively(element, array)) return true;
 
@@ -165,7 +165,7 @@ public class RefCountHolder {
   }
 
   public synchronized boolean isReferencedForRead(PsiElement element) {
-    LOG.assertTrue(myTouched);
+    assertIsTouched();
     LOG.assertTrue(element instanceof PsiVariable);
     List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
     if (array == null) return false;
@@ -187,7 +187,7 @@ public class RefCountHolder {
   }
 
   public synchronized boolean isReferencedForWrite(PsiElement element) {
-    LOG.assertTrue(myTouched);
+    assertIsTouched();
     LOG.assertTrue(element instanceof PsiVariable);
     List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
     if (array == null) return false;
@@ -204,7 +204,7 @@ public class RefCountHolder {
   }
 
   public synchronized List<PsiNamedElement> getUnusedDcls() {
-    LOG.assertTrue(myTouched);
+    assertIsTouched();
     List<PsiNamedElement> result = new ArrayList<PsiNamedElement>();
     Set<Map.Entry<PsiNamedElement, Boolean>> entries = myDclsUsedMap.entrySet();
 
@@ -215,7 +215,10 @@ public class RefCountHolder {
     return result;
   }
 
-  public synchronized void touch() {
+  public void touch() {
     myTouched = true;
+  }
+  public void assertIsTouched() {
+    LOG.assertTrue(myTouched);
   }
 }

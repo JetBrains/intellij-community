@@ -276,8 +276,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   public void restart() {
-    myFileStatusMap.markAllFilesDirty();
     stopProcess(true);
+    myFileStatusMap.markAllFilesDirty();
   }
 
   public List<TextEditorHighlightingPass> getPassesToShowProgressFor(PsiFile file) {
