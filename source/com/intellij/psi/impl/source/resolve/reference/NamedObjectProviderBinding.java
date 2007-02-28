@@ -4,6 +4,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,7 @@ abstract class NamedObjectProviderBinding implements ProviderBinding {
   }
 
   public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<PsiReferenceProvider> list) {
-    if (!myClass.isInstance(position)) return;
+    if (!ReflectionCache.isInstance(position, myClass)) return;
 
     String name = getName(position);
     if (name != null) {
