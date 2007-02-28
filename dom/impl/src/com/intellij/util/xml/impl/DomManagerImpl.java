@@ -304,9 +304,9 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
 
-  private UserDataCache<FileDescriptionCachedValueProvider, XmlFile> ourCachedFileElementCache =
-    new UserDataCache<FileDescriptionCachedValueProvider, XmlFile>(CACHED_FILE_ELEMENT_PROVIDER) {
-      protected FileDescriptionCachedValueProvider compute(final XmlFile xmlFile) {
+  private UserDataCache<FileDescriptionCachedValueProvider, XmlFile, Object> ourCachedFileElementCache =
+    new UserDataCache<FileDescriptionCachedValueProvider, XmlFile, Object>() {
+      protected FileDescriptionCachedValueProvider compute(final XmlFile xmlFile, Object o) {
         return new FileDescriptionCachedValueProvider(DomManagerImpl.this, xmlFile);
       }
     };
@@ -315,7 +315,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   @SuppressWarnings({"unchecked"})
   @NotNull
   final <T extends DomElement> FileDescriptionCachedValueProvider<T> getOrCreateCachedValueProvider(XmlFile xmlFile) {
-    return (FileDescriptionCachedValueProvider<T>)ourCachedFileElementCache.get(xmlFile);
+    return (FileDescriptionCachedValueProvider<T>)ourCachedFileElementCache.get(CACHED_FILE_ELEMENT_PROVIDER, xmlFile, null);
   }
 
   static void setCachedElement(final XmlTag tag, final DomInvocationHandler element) {
