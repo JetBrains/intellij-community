@@ -385,9 +385,10 @@ public class TreeModelBuilder {
     }
 
     DefaultMutableTreeNode node = dirNode;
-    DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)dirNode.getParent();
+    DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)node.getParent();
     while (node != null && node.getChildCount() == 0) {
       PsiDirectory directory = parent.getParentDirectory();
+      parentNode = (DefaultMutableTreeNode)node.getParent();
       node.removeFromParent();
       getMap(myModuleDirNodes, ScopeType.SOURCE).put(parent, null);
       node = getMap(myModuleDirNodes, ScopeType.SOURCE).get(directory);
@@ -426,13 +427,19 @@ public class TreeModelBuilder {
     final VirtualFile vFile = file.getVirtualFile();
     LOG.assertTrue(vFile != null);
     PsiDirectory dirToReload = file.getContainingDirectory();
-    PackageDependenciesNode rootToReload = getMap(myModuleDirNodes, getFileScopeType(vFile)).get(dirToReload);
+    final ScopeType scopeType = getFileScopeType(vFile);
+    PackageDependenciesNode rootToReload = getMap(myModuleDirNodes, scopeType).get(dirToReload);
     if (rootToReload == null && myFlattenPackages) {
-      rootToReload = getModuleNode(myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
+      final Module module = myFileIndex.getModuleForFile(vFile);
+      final boolean moduleNodeExist = getMap(myModuleNodes, scopeType).get(module) != null;
+      rootToReload = getModuleNode(module, scopeType);
+      if (!moduleNodeExist) {
+        rootToReload = null; //need to reload from parent / mostly for problems view
+      }
     } else {
       while (rootToReload == null && dirToReload != null){
         dirToReload = dirToReload.getParentDirectory();
-        rootToReload = getMap(myModuleDirNodes, getFileScopeType(vFile)).get(dirToReload);
+        rootToReload = getMap(myModuleDirNodes, scopeType).get(dirToReload);
       }
     }
 
