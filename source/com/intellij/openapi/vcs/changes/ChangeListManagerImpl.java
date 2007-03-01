@@ -971,16 +971,21 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       if (myFilesToIgnore.size() == 0) {
         return false;
       }
+      String filePath = null;
       // don't use VfsUtil.getRelativePath() here because it can't handle paths where one file is not a direct ancestor of another one
-      String filePath = FileUtil.getRelativePath(new File(myProject.getBaseDir().getPath()), new File(file.getPath()));
-      if (filePath == null) {
-        return false;
+      final VirtualFile baseDir = myProject.getBaseDir();
+      if (baseDir != null) {
+        filePath = FileUtil.getRelativePath(new File(baseDir.getPath()), new File(file.getPath()));
+        if (filePath != null) {
+          filePath = FileUtil.toSystemIndependentName(filePath);
+        }
       }
-      filePath = FileUtil.toSystemIndependentName(filePath);
       for(IgnoredFileBean bean: myFilesToIgnore) {
-        final String prefix = bean.getPath();
-        if (prefix != null && StringUtil.startsWithIgnoreCase(filePath, FileUtil.toSystemIndependentName(prefix))) {
-          return true;
+        if (filePath != null) {
+          final String prefix = bean.getPath();
+          if (prefix != null && StringUtil.startsWithIgnoreCase(filePath, FileUtil.toSystemIndependentName(prefix))) {
+            return true;
+          }
         }
         final Pattern pattern = bean.getPattern();
         if (pattern != null && pattern.matcher(file.getName()).matches()) {
