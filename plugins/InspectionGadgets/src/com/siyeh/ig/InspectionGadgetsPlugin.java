@@ -73,6 +73,10 @@ import com.siyeh.ig.style.*;
 import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
 import com.siyeh.ig.threading.*;
 import com.siyeh.ig.visibility.*;
+import com.siyeh.ig.javabeans.ClassWithoutConstructorInspection;
+import com.siyeh.ig.javabeans.ClassWithoutNoArgConstructorInspection;
+import com.siyeh.ig.javabeans.FieldHasSetterButNoGetterInspection;
+import com.siyeh.ig.inheritance.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

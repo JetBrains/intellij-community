@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.classlayout;
+package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.InheritanceUtil;
+import com.siyeh.ig.BaseInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class AbstractClassNeverImplementedInspection extends BaseInspection {
+public class AbstractClassExtendsConcreteClassInspection
+        extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
-                "abstract.class.never.implemented.display.name");
+                "abstract.class.extends.concrete.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -38,24 +38,33 @@ public class AbstractClassNeverImplementedInspection extends BaseInspection {
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
-                "abstract.class.never.implemented.problem.descriptor");
+                "abstract.class.extends.concrete.class.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new AbstractClassNeverImplementedVisitor();
+        return new AbstractClassExtendsConcreteClassVisitor();
     }
 
-    private static class AbstractClassNeverImplementedVisitor
+    private static class AbstractClassExtendsConcreteClassVisitor
             extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
+            // no call to super, so that it doesn't drill down to inner classes
             if (aClass.isInterface() || aClass.isAnnotationType()) {
                 return;
             }
             if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 return;
             }
-            if (InheritanceUtil.hasImplementation(aClass)) {
+            final PsiClass superClass = aClass.getSuperClass();
+            if (superClass == null) {
+                return;
+            }
+            if (superClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                return;
+            }
+            final String superclassName = superClass.getQualifiedName();
+            if ("java.lang.Object".equals(superclassName)) {
                 return;
             }
             registerClassError(aClass);

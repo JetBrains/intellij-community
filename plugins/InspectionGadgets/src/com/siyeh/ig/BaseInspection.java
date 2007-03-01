@@ -22,11 +22,13 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.ui.FormattedTextFieldMacFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.JFormattedTextField;
 import javax.swing.event.DocumentEvent;
@@ -35,13 +37,57 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.Map;
+import java.util.HashMap;
 
 public abstract class BaseInspection extends LocalInspectionTool {
 
     private static final Logger LOG = Logger.getInstance("#com.siyeh.ig.BaseInspection");
 
-    private String m_shortName = null;
     @NonNls private static final String INSPECTION = "Inspection";
+    private static final Map<String, String> packageGroupDisplayNameMap = new HashMap();
+    static {
+        packageGroupDisplayNameMap.put("abstraction", GroupNames.ABSTRACTION_GROUP_NAME);
+        packageGroupDisplayNameMap.put("assignment", GroupNames.ASSIGNMENT_GROUP_NAME);
+        packageGroupDisplayNameMap.put("bitwise", GroupNames.BITWISE_GROUP_NAME);
+        packageGroupDisplayNameMap.put("bugs", GroupNames.BUGS_GROUP_NAME);
+        packageGroupDisplayNameMap.put("classlayout", GroupNames.CLASSLAYOUT_GROUP_NAME);
+        packageGroupDisplayNameMap.put("classmetrics", GroupNames.CLASSMETRICS_GROUP_NAME);
+        packageGroupDisplayNameMap.put("cloneable", GroupNames.CLONEABLE_GROUP_NAME);
+        packageGroupDisplayNameMap.put("controlflow", GroupNames.CONTROL_FLOW_GROUP_NAME);
+        packageGroupDisplayNameMap.put("dataflow", GroupNames.DATA_FLOW_ISSUES);
+        packageGroupDisplayNameMap.put("dependency", GroupNames.DEPENDENCY_GROUP_NAME);
+        packageGroupDisplayNameMap.put("encapsulation", GroupNames.ENCAPSULATION_GROUP_NAME);
+        packageGroupDisplayNameMap.put("errorhandling", GroupNames.ERRORHANDLING_GROUP_NAME);
+        packageGroupDisplayNameMap.put("finalization", GroupNames.FINALIZATION_GROUP_NAME);
+        packageGroupDisplayNameMap.put("imports", GroupNames.IMPORTS_GROUP_NAME);
+        packageGroupDisplayNameMap.put("inheritance", GroupNames.INHERITANCE_GROUP_NAME);
+        packageGroupDisplayNameMap.put("initialization", GroupNames.INITIALIZATION_GROUP_NAME);
+        packageGroupDisplayNameMap.put("internationalization", GroupNames.INTERNATIONALIZATION_GROUP_NAME);
+        packageGroupDisplayNameMap.put("j2me", GroupNames.J2ME_GROUP_NAME);
+        packageGroupDisplayNameMap.put("javabeans", GroupNames.JAVABEANS_GROUP_NAME);
+        packageGroupDisplayNameMap.put("jdk", GroupNames.JDK_GROUP_NAME);
+        packageGroupDisplayNameMap.put("jdk15", GroupNames.JDK15_SPECIFIC_GROUP_NAME);
+        packageGroupDisplayNameMap.put("junit", GroupNames.JUNIT_GROUP_NAME);
+        packageGroupDisplayNameMap.put("logging", GroupNames.LOGGING_GROUP_NAME);
+        packageGroupDisplayNameMap.put("maturity", GroupNames.MATURITY_GROUP_NAME);
+        packageGroupDisplayNameMap.put("memory", GroupNames.MEMORY_GROUP_NAME);
+        packageGroupDisplayNameMap.put("methodmetrics", GroupNames.METHODMETRICS_GROUP_NAME);
+        packageGroupDisplayNameMap.put("modularization", GroupNames.MODULARIZATION_GROUP_NAME);
+        packageGroupDisplayNameMap.put("naming", GroupNames.NAMING_CONVENTIONS_GROUP_NAME);
+        packageGroupDisplayNameMap.put("numeric", GroupNames.NUMERIC_GROUP_NAME);
+        packageGroupDisplayNameMap.put("packaging", GroupNames.PACKAGING_GROUP_NAME);
+        packageGroupDisplayNameMap.put("performance", GroupNames.PERFORMANCE_GROUP_NAME);
+        packageGroupDisplayNameMap.put("portability", GroupNames.PORTABILITY_GROUP_NAME);
+        packageGroupDisplayNameMap.put("resources", GroupNames.RESOURCE_GROUP_NAME);
+        packageGroupDisplayNameMap.put("security", GroupNames.SECURITY_GROUP_NAME);
+        packageGroupDisplayNameMap.put("serialization", GroupNames.SERIALIZATION_GROUP_NAME);
+        packageGroupDisplayNameMap.put("style", GroupNames.STYLE_GROUP_NAME);
+        packageGroupDisplayNameMap.put("threading", GroupNames.THREADING_GROUP_NAME);
+        packageGroupDisplayNameMap.put("visibility", GroupNames.VISIBILITY_GROUP_NAME);
+    }
+
+    private String m_shortName = null;
 
     @NotNull
     public final String getShortName() {
@@ -55,6 +101,22 @@ public abstract class BaseInspection extends LocalInspectionTool {
         return m_shortName;
     }
 
+
+    @Nls @NotNull
+    public String getGroupDisplayName() {
+        final Class<? extends BaseInspection> thisClass = getClass();
+        final Package thisPackage = thisClass.getPackage();
+        assert thisPackage != null : "need package to determine group display name";
+        final String name = thisPackage.getName();
+        assert name != null :
+                "inspection has default package, group display name cannot be determined";
+        final int index = name.lastIndexOf('.');
+        final String key = name.substring(index + 1);
+        final String groupDisplayName = packageGroupDisplayNameMap.get(key);
+        assert groupDisplayName != null : "No display name found for " + key;
+        return groupDisplayName;
+    }
+
     @NotNull
     protected abstract String buildErrorString(Object... infos);
 
@@ -65,13 +127,6 @@ public abstract class BaseInspection extends LocalInspectionTool {
     @Nullable
     protected InspectionGadgetsFix buildFix(PsiElement location) {
         return null;
-    }
-
-    @Nullable
-    protected ProblemDescriptor[] doCheckFile(PsiFile file,
-                                              InspectionManager manager,
-                                              boolean isOnTheFly) {
-        return super.checkFile(file, manager, isOnTheFly);
     }
 
     @Nullable
@@ -183,14 +238,12 @@ public abstract class BaseInspection extends LocalInspectionTool {
                     }
                 }
             });
-
             return valueField;
         } catch (NoSuchFieldException e) {
             LOG.error(e);
         } catch (IllegalAccessException e) {
             LOG.error(e);
         }
-
         return null;
     }
 }

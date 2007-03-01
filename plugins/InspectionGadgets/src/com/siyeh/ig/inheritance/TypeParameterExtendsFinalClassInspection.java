@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Bas Leijdekkers
+ * Copyright 2006-2007 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.classlayout;
+package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -94,7 +94,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
             }
         }
 
-        private void replaceTypeParemeterAndReferencesWithType(
+        private static void replaceTypeParemeterAndReferencesWithType(
                 PsiTypeParameter typeParameter)
                 throws IncorrectOperationException {
             final PsiReferenceList extendsList =
@@ -124,7 +124,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
         return new TypeParameterExtendsFinalClassVisitor();
     }
 
-    private class TypeParameterExtendsFinalClassVisitor
+    private static class TypeParameterExtendsFinalClassVisitor
             extends BaseInspectionVisitor {
 
         public void visitTypeParameter(PsiTypeParameter classParameter) {

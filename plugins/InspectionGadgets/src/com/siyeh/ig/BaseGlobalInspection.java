@@ -22,15 +22,15 @@ import org.jetbrains.annotations.NonNls;
 
 public abstract class BaseGlobalInspection extends GlobalInspectionTool {
 
-    private final String shortName = null;
+    private String shortName = null;
     @NonNls private static final String INSPECTION = "Inspection";
 
     public String getShortName() {
         if (shortName == null) {
             final Class<? extends BaseGlobalInspection> aClass = getClass();
             final String name = aClass.getName();
-            return name.substring(name.lastIndexOf((int)'.') + 1,
-                    name.length() - BaseGlobalInspection.INSPECTION.length());
+            shortName = name.substring(name.lastIndexOf((int)'.') + 1,
+                    name.length() - INSPECTION.length());
         }
         return shortName;
     }
@@ -47,8 +47,7 @@ public abstract class BaseGlobalInspection extends GlobalInspectionTool {
             final char c = shortName.charAt(i);
             if (Character.isUpperCase(c)) {
                 builder.append('.').append(Character.toLowerCase(c));
-            }
-            else {
+            } else {
                 builder.append(c);
             }
         }

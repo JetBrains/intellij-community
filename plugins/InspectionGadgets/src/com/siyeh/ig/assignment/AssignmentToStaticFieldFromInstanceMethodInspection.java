@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.bugs;
+package com.siyeh.ig.assignment;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;

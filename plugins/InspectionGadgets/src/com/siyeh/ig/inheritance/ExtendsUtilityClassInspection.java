@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2007 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.classlayout;
+package com.siyeh.ig.inheritance;
 
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.UtilityClassUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.BaseInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class AbstractClassExtendsConcreteClassInspection
-        extends BaseInspection {
+public class ExtendsUtilityClassInspection extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
-                "abstract.class.extends.concrete.class.display.name");
+                "class.extends.utility.class.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -37,23 +37,22 @@ public class AbstractClassExtendsConcreteClassInspection
 
     @NotNull
     protected String buildErrorString(Object... infos) {
+        final PsiClass superClass = (PsiClass) infos[0];
+        final String superClassName = superClass.getName();
         return InspectionGadgetsBundle.message(
-                "abstract.class.extends.concrete.class.problem.descriptor");
+                "class.extends.utility.class.problem.descriptor", superClassName
+        );
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new AbstractClassExtendsConcreteClassVisitor();
+        return new ClassExtendsUtilityClassVisitor();
     }
 
-    private static class AbstractClassExtendsConcreteClassVisitor
+    private static class ClassExtendsUtilityClassVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so that it doesn't drill down to inner classes
+        public void visitClass(PsiClass aClass) {
             if (aClass.isInterface() || aClass.isAnnotationType()) {
-                return;
-            }
-            if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 return;
             }
             final PsiClass superClass = aClass.getSuperClass();
@@ -63,11 +62,10 @@ public class AbstractClassExtendsConcreteClassInspection
             if (superClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 return;
             }
-            final String superclassName = superClass.getQualifiedName();
-            if ("java.lang.Object".equals(superclassName)) {
+            if (!UtilityClassUtil.isUtilityClass(superClass)) {
                 return;
             }
-            registerClassError(aClass);
+            registerClassError(aClass, superClass);
         }
     }
 }

@@ -13,29 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.classlayout;
+package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.ReplaceInheritanceWithDelegationFix;
-import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.ig.psiutils.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtendsConcreteCollectionInspection extends BaseInspection {
+public class AbstractClassNeverImplementedInspection extends BaseInspection {
 
-    public String getID() {
-        return "ClassExtendsConcreteCollection";
-    }
-
-    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
-                "extends.concrete.collection.display.name");
+                "abstract.class.never.implemented.display.name");
     }
 
     public String getGroupDisplayName() {
@@ -43,37 +36,29 @@ public class ExtendsConcreteCollectionInspection extends BaseInspection {
     }
 
     @NotNull
-    public String buildErrorString(Object... infos) {
-        final PsiClass superClass = (PsiClass)infos[0];
+    protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
-                "extends.concrete.collection.problem.descriptor",
-                superClass.getQualifiedName());
-    }
-
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return new ReplaceInheritanceWithDelegationFix();
+                "abstract.class.never.implemented.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new ExtendsConcreteCollectionVisitor();
+        return new AbstractClassNeverImplementedVisitor();
     }
 
-    private static class ExtendsConcreteCollectionVisitor
+    private static class AbstractClassNeverImplementedVisitor
             extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
-            if (aClass.isInterface() || aClass.isAnnotationType() ||
-                    aClass.isEnum()) {
+            if (aClass.isInterface() || aClass.isAnnotationType()) {
                 return;
             }
-            final PsiClass superClass = aClass.getSuperClass();
-            if (superClass == null) {
+            if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 return;
             }
-            if (!CollectionUtils.isCollectionClass(superClass)) {
+            if (InheritanceUtil.hasImplementation(aClass)) {
                 return;
             }
-            registerClassError(aClass, superClass);
+            registerClassError(aClass);
         }
     }
 }
