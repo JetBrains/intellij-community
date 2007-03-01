@@ -31,7 +31,7 @@ public class ChameleonTransforming implements Constants {
     PsiFileImpl file = (PsiFileImpl)TreeUtil.getFileElement((TreeElement)parent).getPsi();
     if (file == null) return null;
 
-    TreeElement newElement = chameleon.transform(file.getTreeElement().getCharTable());
+    TreeElement newElement = chameleon.transform(file.getTreeElementNoLock().getCharTable());
     //LOG.assertTrue(newElement.getTreeParent().getTextLength() == chameleon.getTextLength());
     final TreeElement treeNext = chameleon.getTreeNext();
     TreeUtil.replaceWithList(chameleon, newElement);

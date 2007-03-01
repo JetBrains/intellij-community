@@ -22,8 +22,8 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,11 +109,15 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   public FileElement getTreeElement() {
     synchronized (PsiLock.LOCK) {
-      if (!getViewProvider().isPhysical() && _getTreeElement() == null) {
-        setTreeElement(loadTreeElement());
-      }
-      return (FileElement)_getTreeElement();
+      return getTreeElementNoLock();
     }
+  }
+
+  public FileElement getTreeElementNoLock() {
+    if (!getViewProvider().isPhysical() && _getTreeElement() == null) {
+      setTreeElement(loadTreeElement());
+    }
+    return (FileElement)_getTreeElement();
   }
 
   public void prepareToRepositoryIdInvalidation() {
