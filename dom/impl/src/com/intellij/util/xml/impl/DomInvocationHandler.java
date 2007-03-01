@@ -534,9 +534,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   @NotNull
   final AttributeChildInvocationHandler getAttributeChild(final JavaMethodSignature method) {
     myGenericInfo.buildMethodMaps();
-    final EvaluatedXmlName attributeName = myGenericInfo.getAttributeName(method).createEvaluatedXmlName(this);
-    assert attributeName != null : method.toString();
-    return getAttributeChild(attributeName);
+    return getAttributeChild(myGenericInfo.getAttributeName(method).createEvaluatedXmlName(this));
   }
 
   @NotNull

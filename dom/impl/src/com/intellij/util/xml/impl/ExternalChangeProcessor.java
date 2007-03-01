@@ -8,10 +8,7 @@ import com.intellij.pom.xml.XmlChangeVisitor;
 import com.intellij.pom.xml.events.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.*;
 import com.intellij.util.xml.events.ElementChangedEvent;
 
 import java.util.HashMap;
