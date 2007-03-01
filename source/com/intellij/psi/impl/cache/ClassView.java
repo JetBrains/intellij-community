@@ -13,9 +13,9 @@ public interface ClassView extends DeclarationView {
   String getParameterText(long classId, int parameterIdx);
 
   long[] getMethods(long classId);
-  long[] findMethodsByName(long classId, String name);
+
   long[] getFields(long classId);
-  long findFieldByName(long classId, String name);
+
   long[] getInitializers(long classId);
 
   String getBaseClassReferenceText(long classId);

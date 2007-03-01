@@ -21,6 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public abstract class MappedBufferWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.MappedBufferWrapper");
@@ -34,6 +37,10 @@ public abstract class MappedBufferWrapper {
   protected File myFile;
   protected long myPosition;
   protected long myLength;
+  private final ReadWriteLock rwl = new ReentrantReadWriteLock();
+  private final Lock r = rwl.readLock();
+  private final Lock w = rwl.writeLock();
+
 
   private volatile ByteBuffer myBuffer;
 
@@ -54,13 +61,17 @@ public abstract class MappedBufferWrapper {
         }
 
         for (MappedBufferWrapper wrapper : wrappers) {
-          synchronized (wrapper) {
+          wrapper.w.lock();
+          try {
             if (wrapper.myAccessCounter == wrapper.myAccessCounterDisposerLastCheckedMe) {
               wrapper.unmap();
             }
             else {
               wrapper.myAccessCounterDisposerLastCheckedMe = wrapper.myAccessCounter;
             }
+          }
+          finally {
+            wrapper.w.unlock();
           }
         }
       }
@@ -92,7 +103,8 @@ public abstract class MappedBufferWrapper {
    * An assumption made here that any retreiver of the buffer will not use it for time longer than 60 seconds.
    */
   public ByteBuffer buf() {
-    synchronized (this) {
+    r.lock();
+    try {
       myAccessCounter++;
 
       ByteBuffer buffer = myBuffer;
@@ -106,6 +118,9 @@ public abstract class MappedBufferWrapper {
       }
 
       return buffer;
+    }
+    finally {
+      r.unlock();
     }
   }
 
