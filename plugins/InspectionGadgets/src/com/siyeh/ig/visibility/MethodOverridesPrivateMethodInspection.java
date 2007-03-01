@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,18 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class MethodOverridesPrivateMethodInspection extends MethodInspection{
+public class MethodOverridesPrivateMethodInspection extends BaseInspection {
 
     public String getID(){
         return "MethodOverridesPrivateMethodOfSuperclass";
@@ -36,10 +35,6 @@ public class MethodOverridesPrivateMethodInspection extends MethodInspection{
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "method.overrides.private.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.VISIBILITY_GROUP_NAME;
     }
 
     @NotNull

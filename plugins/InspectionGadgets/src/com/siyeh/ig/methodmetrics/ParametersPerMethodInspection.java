@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.methodmetrics;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
@@ -33,10 +32,6 @@ public class ParametersPerMethodInspection extends MethodMetricInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "parameters.per.method.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.METHODMETRICS_GROUP_NAME;
     }
 
     @NotNull

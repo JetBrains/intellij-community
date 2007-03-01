@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,24 @@
  */
 package com.siyeh.ig.junit;
 
-import com.siyeh.ig.MethodInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.InspectionGadgetsBundle;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
-        extends MethodInspection {
+        extends BaseInspection {
 
     public String getID() {
         return "BeforeOrAfterWithIncorrectSignature";
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.JUNIT_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "before.class.or.after.class.is.public.static.void.no.arg.display.name");
     }
 
     @NotNull

@@ -15,11 +15,10 @@
  */
 package com.siyeh.ig.inheritance;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
@@ -27,17 +26,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 
-public class RefusedBequestInspection extends MethodInspection{
+public class RefusedBequestInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
     public boolean ignoreEmptySuperMethods = false;
 
     public String getDisplayName(){
         return InspectionGadgetsBundle.message("refused.bequest.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.INHERITANCE_GROUP_NAME;
     }
 
     @NotNull

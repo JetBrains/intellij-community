@@ -16,16 +16,15 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class TestMethodIsPublicVoidNoArgInspection extends MethodInspection {
+public class TestMethodIsPublicVoidNoArgInspection extends BaseInspection {
 
     @NotNull
     public String getDisplayName() {
@@ -35,10 +34,6 @@ public class TestMethodIsPublicVoidNoArgInspection extends MethodInspection {
 
     public String getID() {
         return "TestMethodWithIncorrectSignature";
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.JUNIT_GROUP_NAME;
     }
 
     @NotNull

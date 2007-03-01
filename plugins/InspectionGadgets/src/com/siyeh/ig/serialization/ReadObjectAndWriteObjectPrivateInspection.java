@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,20 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.MakePrivateFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ReadObjectAndWriteObjectPrivateInspection
-        extends MethodInspection {
+        extends BaseInspection {
 
     public String getID(){
         return "NonPrivateSerializationMethod";
@@ -37,10 +36,6 @@ public class ReadObjectAndWriteObjectPrivateInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "readwriteobject.private.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.SERIALIZATION_GROUP_NAME;
     }
 
     @NotNull

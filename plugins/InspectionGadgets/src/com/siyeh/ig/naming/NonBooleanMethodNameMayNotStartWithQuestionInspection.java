@@ -15,17 +15,15 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.MethodInspection;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jdom.Element;
@@ -35,7 +33,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.EventQueue;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -97,10 +97,6 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "non.boolean.method.name.must.not.start.with.question.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
     @NotNull

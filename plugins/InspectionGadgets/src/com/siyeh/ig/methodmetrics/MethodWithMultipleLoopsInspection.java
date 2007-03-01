@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,18 @@
  */
 package com.siyeh.ig.methodmetrics;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.MethodInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class MethodWithMultipleLoopsInspection extends MethodInspection {
+public class MethodWithMultipleLoopsInspection extends BaseInspection {
 
-    public String getGroupDisplayName() {
-        return GroupNames.METHODMETRICS_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "method.with.multiple.loops.display.name");
     }
 
     @NotNull

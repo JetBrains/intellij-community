@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,12 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
@@ -30,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.JComponent;
 
 public class LocalVariableHidingMemberVariableInspection
-        extends MethodInspection {
+        extends BaseInspection {
 
     /** @noinspection PublicField*/
     public boolean m_ignoreInvisibleFields = true;
@@ -44,10 +43,6 @@ public class LocalVariableHidingMemberVariableInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "local.variable.hides.member.variable.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.VISIBILITY_GROUP_NAME;
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {

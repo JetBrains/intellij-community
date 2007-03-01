@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,15 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiCatchSection;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiTypeElement;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.MethodInspection;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class ParameterOfConcreteClassInspection extends MethodInspection {
+public class ParameterOfConcreteClassInspection extends BaseInspection {
 
     public String getID() {
         return "MethodParameterOfConcreteClass";
@@ -33,10 +32,6 @@ public class ParameterOfConcreteClassInspection extends MethodInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "concrete.class.method.parameter.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.ABSTRACTION_GROUP_NAME;
     }
 
     @NotNull

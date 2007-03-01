@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,20 @@
  */
 package com.siyeh.ig.methodmetrics;
 
-import com.siyeh.ig.MethodInspection;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-public abstract class MethodMetricInspection extends MethodInspection {
+public abstract class MethodMetricInspection extends BaseInspection {
+
     public int m_limit = getDefaultLimit();  //this is public for the DefaultJDOMSerialization thingy
 
     protected abstract int getDefaultLimit();
 
     protected abstract String getConfigurationLabel();
 
-    protected int getLimit() {
+    protected final int getLimit() {
         return m_limit;
     }
 

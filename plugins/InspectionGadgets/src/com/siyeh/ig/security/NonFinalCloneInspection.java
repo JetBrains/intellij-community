@@ -15,18 +15,18 @@
  */
 package com.siyeh.ig.security;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.MethodInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class NonFinalCloneInspection extends MethodInspection {
+public class NonFinalCloneInspection extends BaseInspection {
 
-    public String getGroupDisplayName() {
-        return GroupNames.SECURITY_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message("non.final.clone.display.name");
     }
 
     @NotNull

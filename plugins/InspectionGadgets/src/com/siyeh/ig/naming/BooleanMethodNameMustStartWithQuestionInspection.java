@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,15 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jdom.Element;
@@ -44,7 +43,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class BooleanMethodNameMustStartWithQuestionInspection
-        extends MethodInspection{
+        extends BaseInspection {
 
     /** @noinspection PublicField*/
     @NonNls public String nameCheckString =
@@ -98,10 +97,6 @@ public class BooleanMethodNameMustStartWithQuestionInspection
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "boolean.method.name.must.start.with.question.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
     public JComponent createOptionsPanel(){

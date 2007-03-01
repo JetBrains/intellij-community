@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Bas Leijdekkers
+ * Copyright 2005-2007 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,14 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 
-public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
+public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
     public boolean ignoreMethodsAccessedFromAnonymousClass = false;
@@ -39,10 +38,6 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "method.only.used.from.inner.class.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.ABSTRACTION_GROUP_NAME;
     }
 
     @NotNull
@@ -131,7 +126,7 @@ public class MethodOnlyUsedFromInnerClassInspection extends MethodInspection {
         public boolean process(PsiReference reference) {
             final PsiElement element = reference.getElement();
             final PsiMethod containingMethod =
-                    PsiTreeUtil.getParentOfType(element, PsiMethod.class);;
+                    PsiTreeUtil.getParentOfType(element, PsiMethod.class);
             if (method.equals(containingMethod)) {
                 return true;
             }

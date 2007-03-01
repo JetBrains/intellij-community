@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,15 @@
  */
 package com.siyeh.ig.finalization;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameterList;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.MethodInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class FinalizeInspection extends MethodInspection {
+public class FinalizeInspection extends BaseInspection {
 
     public String getID(){
         return "FinalizeDeclaration";
@@ -33,10 +32,6 @@ public class FinalizeInspection extends MethodInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "finalize.declaration.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.FINALIZATION_GROUP_NAME;
     }
 
     @NotNull

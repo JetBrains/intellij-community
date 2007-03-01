@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,11 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
@@ -29,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 
-public class UnnecessaryFinalOnParameterInspection extends MethodInspection {
+public class UnnecessaryFinalOnParameterInspection extends BaseInspection {
 
     @SuppressWarnings({"PublicField"})
     public boolean onlyWarnOnAbstractMethods = false;
@@ -43,10 +42,6 @@ public class UnnecessaryFinalOnParameterInspection extends MethodInspection {
 
     public String getID() {
         return "UnnecessaryFinalForMethodParameter";
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.STYLE_GROUP_NAME;
     }
 
     @NotNull

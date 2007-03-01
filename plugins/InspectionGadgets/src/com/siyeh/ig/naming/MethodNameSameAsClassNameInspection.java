@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,50 +15,63 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiTypeElement;
-import com.intellij.openapi.project.Project;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MethodNameSameAsClassNameInspection extends MethodInspection {
+public class MethodNameSameAsClassNameInspection extends BaseInspection {
 
-    public String getGroupDisplayName() {
-        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "method.name.same.as.class.name.display.name");
     }
-
-  @Nullable
-  protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
-    return new InspectionGadgetsFix[]{new RenameFix(), new InspectionGadgetsFix() {
-      protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-        PsiElement element = descriptor.getPsiElement().getParent();
-        if (!(element instanceof PsiMethod)) return;
-        PsiTypeElement returnTypeElement = ((PsiMethod)element).getReturnTypeElement();
-        if (returnTypeElement != null) returnTypeElement.delete();
-      }
-
-      @NotNull
-      public String getName() {
-        return InspectionGadgetsBundle.message("make.method.ctr.quickfix");
-      }
-    }};
-  }
-
 
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "method.name.same.as.class.name.problem.descriptor");
+    }
+
+    @Nullable
+    protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
+        return new InspectionGadgetsFix[]{
+                new RenameFix(), new MethodNameSameAsClassNameFix()};
+    }
+
+    private static class MethodNameSameAsClassNameFix
+            extends InspectionGadgetsFix {
+
+        @NotNull
+        public String getName() {
+            return InspectionGadgetsBundle.message("make.method.ctr.quickfix");
+        }
+
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            PsiElement parent = element.getParent();
+            if (!(parent instanceof PsiMethod)) {
+                return;
+            }
+            final PsiMethod method = (PsiMethod)parent;
+            PsiTypeElement returnTypeElement = method.getReturnTypeElement();
+            if (returnTypeElement == null) {
+                return;
+            }
+            returnTypeElement.delete();
+        }
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {

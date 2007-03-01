@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.inheritance;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -24,24 +23,20 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.MethodInspection;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class AbstractMethodWithMissingImplementationsInspection
-        extends MethodInspection {
+        extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "abstract.method.with.missing.implementations.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.INHERITANCE_GROUP_NAME;
     }
 
     @NotNull

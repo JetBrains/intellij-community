@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Bas Leijdekkers
+ * Copyright 2006-2007 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,18 @@
  */
 package com.siyeh.ig.naming;
 
-import com.siyeh.ig.MethodInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class OverloadedVarargsMethodInspection extends MethodInspection {
+public class OverloadedVarargsMethodInspection extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "overloaded.vararg.method.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
     @NotNull

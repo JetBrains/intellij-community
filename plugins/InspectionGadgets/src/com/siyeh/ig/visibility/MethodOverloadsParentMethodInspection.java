@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,21 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.Query;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class MethodOverloadsParentMethodInspection extends MethodInspection{
+public class MethodOverloadsParentMethodInspection extends BaseInspection {
 
     public String getID(){
         return "MethodOverloadsMethodOfSuperclass";
@@ -38,10 +37,6 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection{
 
     public String getDisplayName(){
         return InspectionGadgetsBundle.message("method.overloads.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.VISIBILITY_GROUP_NAME;
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){

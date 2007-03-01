@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.MethodInspection;
-import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class TestMethodInProductCodeInspection extends MethodInspection {
+public class TestMethodInProductCodeInspection extends BaseInspection {
 
     @NotNull
     public String getDisplayName() {
@@ -36,11 +35,6 @@ public class TestMethodInProductCodeInspection extends MethodInspection {
     @NotNull
     public String getID() {
         return "JUnitTestMethodInProductSource";
-    }
-
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.JUNIT_GROUP_NAME;
     }
 
     @NotNull

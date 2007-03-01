@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,22 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class EqualsWhichDoesntCheckParameterClassInspection
-        extends MethodInspection{
+        extends BaseInspection {
 
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "equals.doesnt.check.class.parameter.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.BUGS_GROUP_NAME;
     }
 
     @NotNull

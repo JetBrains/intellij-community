@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.methodmetrics;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -24,7 +23,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public class MethodCouplingInspection extends MethodMetricInspection {
 
@@ -41,8 +41,9 @@ public class MethodCouplingInspection extends MethodMetricInspection {
         return "OverlyCoupledMethod";
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.METHODMETRICS_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message("method.coupling.display.name");
     }
 
     @NotNull

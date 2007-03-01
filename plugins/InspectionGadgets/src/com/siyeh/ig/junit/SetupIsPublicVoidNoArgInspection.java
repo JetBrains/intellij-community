@@ -15,16 +15,15 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class SetupIsPublicVoidNoArgInspection extends MethodInspection {
+public class SetupIsPublicVoidNoArgInspection extends BaseInspection {
 
     public String getID() {
         return "SetUpWithIncorrectSignature";
@@ -34,10 +33,6 @@ public class SetupIsPublicVoidNoArgInspection extends MethodInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "setup.is.public.void.no.arg.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.JUNIT_GROUP_NAME;
     }
 
     @NotNull

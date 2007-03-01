@@ -15,17 +15,16 @@
  */
 package com.siyeh.ig.cloneable;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.CloneUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class CloneCallsSuperCloneInspection extends MethodInspection {
+public class CloneCallsSuperCloneInspection extends BaseInspection {
 
     public String getID() {
         return "CloneDoesntCallSuperClone";
@@ -34,10 +33,6 @@ public class CloneCallsSuperCloneInspection extends MethodInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "clone.doesnt.call.super.clone.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.CLONEABLE_GROUP_NAME;
     }
 
     @NotNull

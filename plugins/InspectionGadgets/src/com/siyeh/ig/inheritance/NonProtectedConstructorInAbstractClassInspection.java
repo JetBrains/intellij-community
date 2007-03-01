@@ -15,23 +15,22 @@
  */
 package com.siyeh.ig.inheritance;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.MakeProtectedFix;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class NonProtectedConstructorInAbstractClassInspection
-        extends MethodInspection {
+        extends BaseInspection {
 
     /**
      * @noinspection PublicField
@@ -45,10 +44,6 @@ public class NonProtectedConstructorInAbstractClassInspection
 
     public String getID() {
         return "ConstructorNotProtectedInAbstractClass";
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.INHERITANCE_GROUP_NAME;
     }
 
     @NotNull
