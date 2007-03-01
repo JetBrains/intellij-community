@@ -61,7 +61,7 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
   public void disposeComponent() {
   }
 
-  public boolean isShowLightBulb(@NotNull IntentionAction action) {
+  public synchronized boolean isShowLightBulb(@NotNull IntentionAction action) {
     return !myIgnoredActions.contains(action.getFamilyName());
   }
 
@@ -80,15 +80,15 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
     }
   }
 
-  @NotNull public List<IntentionActionMetaData> getMetaData() {
+  @NotNull public synchronized List<IntentionActionMetaData> getMetaData() {
     IntentionManager.getInstance(); // TODO: Hack to make IntentionManager actually register metadata here. Dependencies between IntentionManager and IntentionManagerSettings should be revised.
     return new ArrayList<IntentionActionMetaData>(myMetaData.values());
   }
 
-  public boolean isEnabled(String family) {
+  public synchronized boolean isEnabled(String family) {
     return !myIgnoredActions.contains(family);
   }
-  public void setEnabled(String family, boolean enabled) {
+  public synchronized void setEnabled(String family, boolean enabled) {
     if (enabled) {
       myIgnoredActions.remove(family);
     }
@@ -111,7 +111,7 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
   }
 
 
-  public void buildIndex(){
+  public synchronized void buildIndex(){
     try {
       final List<IntentionActionMetaData> list = getMetaData();
       for (IntentionActionMetaData metaData : list) {
@@ -142,15 +142,15 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
     }
   }
 
-  public ArrayList<String> getIntentionNames(final String filtString) {
+  public synchronized ArrayList<String> getIntentionNames(final String filtString) {
     return myWords2DescriptorsMap.get(filtString);
   }
 
-  public Set<String> getIntentionWords() {
+  public synchronized Set<String> getIntentionWords() {
     return myWords2DescriptorsMap.keySet();
   }
 
-  public List<String> getFilteredIntentionNames(final String word) {
+  public synchronized List<String> getFilteredIntentionNames(final String word) {
     return myWords2DescriptorsMap.get(word);
   }
 }
