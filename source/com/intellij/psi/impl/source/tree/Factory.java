@@ -14,9 +14,9 @@ import com.intellij.psi.impl.source.xml.*;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.jsp.IJspElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
+import com.intellij.psi.tree.jsp.IJspElementType;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlTokenType;
@@ -63,7 +63,7 @@ public class Factory implements Constants {
 
   public static LeafElement createSingleLeafElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table, PsiManager manager, boolean generatedFlag) {
     final LeafElement newElement;
-    final FileElement holderElement = new DummyHolder(manager, table, type.getLanguage()).getTreeElement();
+    final FileElement holderElement = new DummyHolder(manager, table, type.getLanguage()).getTreeElementNoLock();
     newElement = Factory.createLeafElement(type, buffer, startOffset, endOffset, holderElement.getCharTable());
     TreeUtil.addChildren(holderElement, newElement);
     if(generatedFlag) CodeEditUtil.setNodeGenerated(newElement, true);

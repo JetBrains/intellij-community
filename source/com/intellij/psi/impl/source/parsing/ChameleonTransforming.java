@@ -16,45 +16,48 @@ public class ChameleonTransforming implements Constants {
 
   public static ASTNode transform(LeafElement leaf) {
     if(!(leaf instanceof ChameleonElement)) return leaf;
-    final ChameleonElement chameleon = (ChameleonElement)leaf;
     synchronized (PsiLock.LOCK) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("\"transforming chameleon:\" + chameleon + \" in \" + chameleon.parent");
-      }
-      final ASTNode parent = chameleon.getTreeParent();
-      if (parent == null) return null;
-      parent.getTextLength();
-      PsiFileImpl file = (PsiFileImpl)TreeUtil.getFileElement((TreeElement)parent).getPsi();
-      if (file == null) return null;
-
-      TreeElement newElement = chameleon.transform(file.getTreeElement().getCharTable());
-      //LOG.assertTrue(newElement.getTreeParent().getTextLength() == chameleon.getTextLength());
-      final TreeElement treeNext = chameleon.getTreeNext();
-      TreeUtil.replaceWithList(chameleon, newElement);
-      if (DebugUtil.CHECK) {
-        if (newElement != null) {
-          DebugUtil.checkTreeStructure(newElement);
-        }
-
-        String text1 = chameleon.getText();
-
-        int length2 = 0;
-        for (ASTNode element = newElement; element != treeNext; element = element.getTreeNext()) {
-          length2 += element.getTextLength();
-        }
-        char[] buffer = new char[length2];
-        int offset = 0;
-        for (ASTNode element = newElement; element != treeNext; element = element.getTreeNext()) {
-          offset = SourceUtil.toBuffer(element, buffer, offset);
-        }
-        String text2 = new String(buffer);
-
-        if (!text1.equals(text2)) {
-          LOG.error("Text changed after chameleon transformation!\nWas:\n" + text1 + "\nbecame:\n" + text2);
-        }
-      }
-      return newElement;
+      return transformNoLock((ChameleonElement)leaf);
     }
+  }
+
+  public static ASTNode transformNoLock(final ChameleonElement chameleon) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("\"transforming chameleon:\" + chameleon + \" in \" + chameleon.parent");
+    }
+    final ASTNode parent = chameleon.getTreeParent();
+    if (parent == null) return null;
+    parent.getTextLength();
+    PsiFileImpl file = (PsiFileImpl)TreeUtil.getFileElement((TreeElement)parent).getPsi();
+    if (file == null) return null;
+
+    TreeElement newElement = chameleon.transform(file.getTreeElement().getCharTable());
+    //LOG.assertTrue(newElement.getTreeParent().getTextLength() == chameleon.getTextLength());
+    final TreeElement treeNext = chameleon.getTreeNext();
+    TreeUtil.replaceWithList(chameleon, newElement);
+    if (DebugUtil.CHECK) {
+      if (newElement != null) {
+        DebugUtil.checkTreeStructure(newElement);
+      }
+
+      String text1 = chameleon.getText();
+
+      int length2 = 0;
+      for (ASTNode element = newElement; element != treeNext; element = element.getTreeNext()) {
+        length2 += element.getTextLength();
+      }
+      char[] buffer = new char[length2];
+      int offset = 0;
+      for (ASTNode element = newElement; element != treeNext; element = element.getTreeNext()) {
+        offset = SourceUtil.toBuffer(element, buffer, offset);
+      }
+      String text2 = new String(buffer);
+
+      if (!text1.equals(text2)) {
+        LOG.error("Text changed after chameleon transformation!\nWas:\n" + text1 + "\nbecame:\n" + text2);
+      }
+    }
+    return newElement;
   }
 
   public static void transformChildren(ASTNode element) {
