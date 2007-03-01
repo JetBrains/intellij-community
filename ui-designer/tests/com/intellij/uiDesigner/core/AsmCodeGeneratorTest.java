@@ -3,8 +3,8 @@ package com.intellij.uiDesigner.core;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
-import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
+import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import junit.framework.TestCase;
@@ -27,7 +27,9 @@ public class AsmCodeGeneratorTest extends TestCase {
   private AsmCodeGenerator initCodeGenerator(final String formFileName, final String className) throws Exception {
     final String testDataPath = PathManagerEx.getTestDataPath() + File.separatorChar + "uiDesigner" + File.separatorChar;
     String formPath = testDataPath + formFileName;
-    String classPath = testDataPath + className;
+    String javaPath = testDataPath + className + ".java";
+    com.sun.tools.javac.Main.compile(new String[] { javaPath } );
+    String classPath = testDataPath + className + ".class";
     String formData = new String(FileUtil.loadFileText(new File(formPath)));
     final ClassLoader classLoader = getClass().getClassLoader();
     final CompiledClassPropertiesProvider provider = new CompiledClassPropertiesProvider(classLoader);
@@ -73,42 +75,41 @@ public class AsmCodeGeneratorTest extends TestCase {
     Field rootComponentField = cls.getField("myRootComponent");
     rootComponentField.setAccessible(true);
     Object instance = cls.newInstance();
-    JComponent rootComponent = (JComponent)rootComponentField.get(instance);
-    return rootComponent;
+    return (JComponent)rootComponentField.get(instance);
   }
 
   public void testSimple() throws Exception {
-    JComponent rootComponent = getInstrumentedRootComponent("TestSimple.form", "BindingTest.class");
+    JComponent rootComponent = getInstrumentedRootComponent("TestSimple.form", "BindingTest");
     assertNotNull(rootComponent);
   }
 
   public void testNoSuchField() throws Exception {
-    AsmCodeGenerator generator = initCodeGenerator("TestNoSuchField.form", "BindingTest.class");
+    AsmCodeGenerator generator = initCodeGenerator("TestNoSuchField.form", "BindingTest");
     assertEquals("Cannot bind: field does not exist: BindingTest.myNoSuchField", generator.getErrors() [0].getErrorMessage());
   }
 
   public void testStaticField() throws Exception {
-    AsmCodeGenerator generator = initCodeGenerator("TestStaticField.form", "BindingTest.class");
+    AsmCodeGenerator generator = initCodeGenerator("TestStaticField.form", "BindingTest");
     assertEquals("Cannot bind: field is static: BindingTest.myStaticField", generator.getErrors() [0].getErrorMessage());
   }
 
   public void testFinalField() throws Exception {
-    AsmCodeGenerator generator = initCodeGenerator("TestFinalField.form", "BindingTest.class");
+    AsmCodeGenerator generator = initCodeGenerator("TestFinalField.form", "BindingTest");
     assertEquals("Cannot bind: field is final: BindingTest.myFinalField", generator.getErrors() [0].getErrorMessage());
   }
 
   public void testPrimitiveField() throws Exception {
-    AsmCodeGenerator generator = initCodeGenerator("TestPrimitiveField.form", "BindingTest.class");
+    AsmCodeGenerator generator = initCodeGenerator("TestPrimitiveField.form", "BindingTest");
     assertEquals("Cannot bind: field is of primitive type: BindingTest.myIntField", generator.getErrors() [0].getErrorMessage());
   }
 
   public void testIncompatibleTypeField() throws Exception {
-    AsmCodeGenerator generator = initCodeGenerator("TestIncompatibleTypeField.form", "BindingTest.class");
+    AsmCodeGenerator generator = initCodeGenerator("TestIncompatibleTypeField.form", "BindingTest");
     assertEquals("Cannot bind: Incompatible types. Cannot assign javax.swing.JPanel to field BindingTest.myStringField", generator.getErrors() [0].getErrorMessage());
   }
 
   public void testGridLayout() throws Exception {
-    JComponent rootComponent = getInstrumentedRootComponent("TestGridConstraints.form", "BindingTest.class");
+    JComponent rootComponent = getInstrumentedRootComponent("TestGridConstraints.form", "BindingTest");
     assertTrue(rootComponent.getLayout() instanceof GridLayoutManager);
     GridLayoutManager gridLayout = (GridLayoutManager) rootComponent.getLayout();
     assertEquals(1, gridLayout.getRowCount());
@@ -116,7 +117,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   public void testGridConstraints() throws Exception {
-    JComponent rootComponent = getInstrumentedRootComponent("TestGridConstraints.form", "BindingTest.class");
+    JComponent rootComponent = getInstrumentedRootComponent("TestGridConstraints.form", "BindingTest");
     assertEquals(1, rootComponent.getComponentCount());
     GridLayoutManager gridLayout = (GridLayoutManager) rootComponent.getLayout();
     final GridConstraints constraints = gridLayout.getConstraints(0);
@@ -125,7 +126,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   public void testIntProperty() throws Exception {
-    JComponent rootComponent = getInstrumentedRootComponent("TestIntProperty.form", "BindingTest.class");
+    JComponent rootComponent = getInstrumentedRootComponent("TestIntProperty.form", "BindingTest");
     assertEquals(1, rootComponent.getComponentCount());
     JTextField textField = (JTextField) rootComponent.getComponent(0);
     assertEquals(37, textField.getColumns());
@@ -133,24 +134,24 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   public void testDoubleProperty() throws Exception {
-    JSplitPane splitPane = (JSplitPane)getInstrumentedRootComponent("TestDoubleProperty.form", "BindingTest.class");
+    JSplitPane splitPane = (JSplitPane)getInstrumentedRootComponent("TestDoubleProperty.form", "BindingTest");
     assertEquals(0.1f, splitPane.getResizeWeight(), 0.001f);
   }
 
   public void testStringProperty() throws Exception {
-    JComponent rootComponent = getInstrumentedRootComponent("TestGridConstraints.form", "BindingTest.class");
+    JComponent rootComponent = getInstrumentedRootComponent("TestGridConstraints.form", "BindingTest");
     JButton btn = (JButton) rootComponent.getComponent(0);
     assertEquals("MyTestButton", btn.getText());
   }
 
   public void testSplitPane() throws Exception {
-    JSplitPane splitPane = (JSplitPane)getInstrumentedRootComponent("TestSplitPane.form", "BindingTest.class");
+    JSplitPane splitPane = (JSplitPane)getInstrumentedRootComponent("TestSplitPane.form", "BindingTest");
     assertTrue(splitPane.getLeftComponent() instanceof JLabel);
     assertTrue(splitPane.getRightComponent() instanceof JCheckBox);
   }
 
   public void testTabbedPane() throws Exception {
-    JTabbedPane tabbedPane = (JTabbedPane) getInstrumentedRootComponent("TestTabbedPane.form", "BindingTest.class");
+    JTabbedPane tabbedPane = (JTabbedPane) getInstrumentedRootComponent("TestTabbedPane.form", "BindingTest");
     assertEquals(2, tabbedPane.getTabCount());
     assertEquals("First", tabbedPane.getTitleAt(0));
     assertEquals("Test Value", tabbedPane.getTitleAt(1));
@@ -159,12 +160,12 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   public void testScrollPane() throws Exception {
-    JScrollPane scrollPane = (JScrollPane)getInstrumentedRootComponent("TestScrollPane.form", "BindingTest.class");
+    JScrollPane scrollPane = (JScrollPane)getInstrumentedRootComponent("TestScrollPane.form", "BindingTest");
     assertTrue(scrollPane.getViewport().getView() instanceof JList);
   }
 
   public void testBorder() throws Exception {
-    JPanel panel = (JPanel) getInstrumentedRootComponent("TestBorder.form", "BindingTest.class");
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestBorder.form", "BindingTest");
     assertTrue(panel.getBorder() instanceof TitledBorder);
     TitledBorder border = (TitledBorder) panel.getBorder();
     assertEquals("BorderTitle", border.getTitle());
@@ -172,7 +173,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   public void testMnemonic() throws Exception {
-    JPanel panel = (JPanel) getInstrumentedRootComponent("TestMnemonics.form", "BindingTest.class");
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestMnemonics.form", "BindingTest");
     JLabel label = (JLabel) panel.getComponent(0);
     assertEquals("Mnemonic", label.getText());
     assertEquals('M', label.getDisplayedMnemonic());
@@ -180,7 +181,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   public void testMnemonicFromProperty() throws Exception {
-    JPanel panel = (JPanel) getInstrumentedRootComponent("TestMnemonicsProperty.form", "BindingTest.class");
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestMnemonicsProperty.form", "BindingTest");
     JLabel label = (JLabel) panel.getComponent(0);
     assertEquals("Mnemonic", label.getText());
     assertEquals('M', label.getDisplayedMnemonic());
@@ -188,7 +189,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   public void testGridBagLayout() throws Exception {
-    JPanel panel = (JPanel) getInstrumentedRootComponent("TestGridBag.form", "BindingTest.class");
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestGridBag.form", "BindingTest");
     assertTrue(panel.getLayout() instanceof GridBagLayout);
     GridBagLayout gridBag = (GridBagLayout) panel.getLayout();
     JButton btn = (JButton) panel.getComponent(0);
@@ -203,7 +204,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   public void testGridBagSpacer() throws Exception {
-    JPanel panel = (JPanel) getInstrumentedRootComponent("TestGridBagSpacer.form", "BindingTest.class");
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestGridBagSpacer.form", "BindingTest");
     assertTrue(panel.getLayout() instanceof GridBagLayout);
     assertTrue(panel.getComponent(0) instanceof JLabel);
     assertTrue(panel.getComponent(1) instanceof JPanel);
@@ -218,7 +219,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   public void testLabelFor() throws Exception {
-    JPanel panel = (JPanel) getInstrumentedRootComponent("TestLabelFor.form", "BindingTest.class");
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestLabelFor.form", "BindingTest");
     JTextField textField = (JTextField) panel.getComponent(0);
     JLabel label = (JLabel) panel.getComponent(1);
     assertEquals(textField, label.getLabelFor());
