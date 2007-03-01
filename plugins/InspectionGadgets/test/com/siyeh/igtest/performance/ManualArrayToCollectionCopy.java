@@ -25,4 +25,12 @@ public class ManualArrayToCollectionCopy {
         }
         return list;
     }
+
+    ArrayList<Integer> boom(int[] ints) {
+        final ArrayList<Integer> list = new ArrayList<Integer>(ints.length);
+        for (int i = 0; i < ints.length; ++i) {
+            list.add(ints[i]);
+        }
+        return list;
+    }
 }

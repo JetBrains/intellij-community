@@ -1,3 +1,18 @@
+/*
+ * Copyright 2006-2007 Bas Leijdekkers
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.GroupNames;
@@ -274,9 +289,10 @@ public class ManualArrayToCollectionCopyInspection
         private static boolean bodyIsArrayToCollectionCopy(PsiStatement body,
                                                PsiLocalVariable variable) {
             if (body instanceof PsiExpressionStatement) {
-                final PsiExpressionStatement exp =
+                final PsiExpressionStatement expressionStatement =
                         (PsiExpressionStatement)body;
-                final PsiExpression expression = exp.getExpression();
+                final PsiExpression expression =
+                        expressionStatement.getExpression();
                 return expressionIsArrayToCollectionCopy(expression, variable);
             } else if (body instanceof PsiBlockStatement) {
                 final PsiBlockStatement blockStatement =
@@ -308,6 +324,10 @@ public class ManualArrayToCollectionCopyInspection
                 return false;
             }
             final PsiExpression argument = arguments[0];
+            final PsiType argumentType = argument.getType();
+            if (argumentType instanceof PsiPrimitiveType) {
+                return false;
+            }
             if (SideEffectChecker.mayHaveSideEffects(argument)) {
                 return false;
             }
