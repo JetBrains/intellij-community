@@ -408,12 +408,7 @@ public class AnalysisScope {
 
   private static boolean processFile(final VirtualFile fileOrDir, final PsiElementVisitor visitor, final PsiManager psiManager,
                                      final boolean needReadAction) {
-    final PsiFile file = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>(){
-      @Nullable
-      public PsiFile compute() {
-        return psiManager.findFile(fileOrDir);
-      }
-    });
+    final PsiFile file = getPsiFileInReadAction(psiManager, fileOrDir);
     if (file == null){
       //skip .class files under src directory
       return true;
@@ -598,8 +593,8 @@ public class AnalysisScope {
       final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myProject, Profile.INSPECTION);
       final PsiManager psiManager = PsiManager.getInstance(myProject);
       LOG.assertTrue(profileManager != null);
-      for (VirtualFile file : myFilesSet) {
-        final PsiFile psiFile = psiManager.findFile(file);
+      for (final VirtualFile file : myFilesSet) {
+        final PsiFile psiFile = getPsiFileInReadAction(psiManager, file);
         if (psiFile != null && psiFile.isValid()) {
           result.add(profileManager.getProfileName(psiFile));
         }
@@ -608,15 +603,28 @@ public class AnalysisScope {
     return result;
   }
 
+  private static PsiFile getPsiFileInReadAction(final PsiManager psiManager, final VirtualFile file) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+      @Nullable
+      public PsiFile compute() {
+        return psiManager.findFile(file);
+      }
+    });
+  }
+
   private static void processDirectories(final PsiDirectory[] psiDirectories,
                                          final Set<String> result,
                                          final ProjectProfileManager profileManager) {
-    for (PsiDirectory directory : psiDirectories) {
+    for (final PsiDirectory directory : psiDirectories) {
       final PsiFile[] psiFiles = directory.getFiles();
       for (PsiFile file : psiFiles) {
         result.add(profileManager.getProfileName(file));
       }
-      processDirectories(directory.getSubdirectories(), result, profileManager);
+      processDirectories(ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory[]>() {
+        public PsiDirectory[] compute() {
+          return directory.getSubdirectories();
+        }
+      }), result, profileManager);
     }
   }
 
@@ -628,8 +636,13 @@ public class AnalysisScope {
     final PsiDirectory[] dirs = new PsiDirectory[files.length];
     final PsiManager psiManager = PsiManager.getInstance(project);
     int i = 0;
-    for (VirtualFile file : files) {
-      dirs[i++] = psiManager.findDirectory(file);
+    for (final VirtualFile file : files) {
+      dirs[i++] = ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
+        @Nullable
+        public PsiDirectory compute() {
+          return psiManager.findDirectory(file);
+        }
+      });
     }
     processDirectories(dirs, result, profileManager);
   }
