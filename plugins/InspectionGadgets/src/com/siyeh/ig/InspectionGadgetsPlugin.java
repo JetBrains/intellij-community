@@ -1,5 +1,5 @@
 /*
-* Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+* Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -31,10 +31,10 @@ import com.siyeh.ig.classlayout.*;
 import com.siyeh.ig.classmetrics.*;
 import com.siyeh.ig.cloneable.*;
 import com.siyeh.ig.controlflow.*;
+import com.siyeh.ig.dataflow.LawOfDemeterInspection;
 import com.siyeh.ig.dataflow.ReuseOfLocalVariableInspection;
 import com.siyeh.ig.dataflow.TooBroadScopeInspection;
 import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection;
-import com.siyeh.ig.dataflow.LawOfDemeterInspection;
 import com.siyeh.ig.dependency.*;
 import com.siyeh.ig.encapsulation.*;
 import com.siyeh.ig.errorhandling.*;
@@ -44,9 +44,13 @@ import com.siyeh.ig.finalization.FinalizeNotProtectedInspection;
 import com.siyeh.ig.finalization.NoExplicitFinalizeCallsInspection;
 import com.siyeh.ig.global.MethodReturnAlwaysConstantInspection;
 import com.siyeh.ig.imports.*;
+import com.siyeh.ig.inheritance.*;
 import com.siyeh.ig.initialization.*;
 import com.siyeh.ig.internationalization.*;
 import com.siyeh.ig.j2me.*;
+import com.siyeh.ig.javabeans.ClassWithoutConstructorInspection;
+import com.siyeh.ig.javabeans.ClassWithoutNoArgConstructorInspection;
+import com.siyeh.ig.javabeans.FieldHasSetterButNoGetterInspection;
 import com.siyeh.ig.jdk.*;
 import com.siyeh.ig.jdk15.*;
 import com.siyeh.ig.junit.*;
@@ -73,10 +77,6 @@ import com.siyeh.ig.style.*;
 import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
 import com.siyeh.ig.threading.*;
 import com.siyeh.ig.visibility.*;
-import com.siyeh.ig.javabeans.ClassWithoutConstructorInspection;
-import com.siyeh.ig.javabeans.ClassWithoutNoArgConstructorInspection;
-import com.siyeh.ig.javabeans.FieldHasSetterButNoGetterInspection;
-import com.siyeh.ig.inheritance.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -527,6 +527,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(StaticFieldReferenceOnSubclassInspection.class);
         m_inspectionClasses.add(StringEqualityInspection.class);
         m_inspectionClasses.add(SubtractionInCompareToInspection.class);
+        m_inspectionClasses.add(SuspiciousIndentAfterControlStatementInspection.class);
         m_inspectionClasses.add(SuspiciousSystemArraycopyInspection.class);
         m_inspectionClasses.add(SuspiciousToArrayCallInspection.class);
         m_inspectionClasses.add(TextLabelInSwitchStatementInspection.class);

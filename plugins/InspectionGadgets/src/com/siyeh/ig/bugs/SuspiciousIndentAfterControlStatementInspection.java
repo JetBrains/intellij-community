@@ -66,10 +66,10 @@ public class SuspiciousIndentAfterControlStatementInspection
 
         public void visitIfStatement(PsiIfStatement statement) {
             super.visitIfStatement(statement);
-            final PsiStatement elseStatement = statement.getElseBranch();
-            if (elseStatement != null) {
-                return;
-            }
+            //final PsiStatement elseStatement = statement.getElseBranch();
+            //if (elseStatement != null) {
+            //    return;
+            //}
             if (!isWhiteSpaceSuspicious(statement)) {
                 return;
             }
