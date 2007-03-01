@@ -3,6 +3,7 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.InternalException;
+import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
 
@@ -107,10 +108,12 @@ public class SuspendManagerImpl implements SuspendManager {
         final ThreadReferenceProxyImpl thread = getThread();
 
         if (thread != null) { // check that thread is suspended at the moment
-          final boolean isSuspended = thread.isSuspended();
-          if (!isSuspended && !thread.isCollected()) {
-            LOG.assertTrue(false, "Context thread must be suspended");
+          try {
+            if (!thread.isSuspended()) {
+              LOG.assertTrue(false, "Context thread must be suspended");
+            }
           }
+          catch (ObjectCollectedException ignored) {}
         }
 
         int attempts = 5;
@@ -208,7 +211,7 @@ public class SuspendManagerImpl implements SuspendManager {
     return myFrozenThreads.contains(thread);
   }
 
-  public boolean isSuspended(ThreadReferenceProxyImpl thread) {
+  public boolean isSuspended(ThreadReferenceProxyImpl thread) throws ObjectCollectedException{
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     boolean suspended = false;

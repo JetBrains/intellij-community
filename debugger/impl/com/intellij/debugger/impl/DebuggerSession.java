@@ -33,6 +33,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.request.EventRequest;
@@ -372,21 +373,19 @@ public class DebuggerSession {
 
         StackFrameProxyImpl proxy = null;
         if (currentThread != null) {
-          while (!currentThread.isSuspended()) {
-            // wait until thread is considered suspended. Querying data from a thread immediately after VM.suspend()
-            // may result in IncompatibleThreadStateException, most likely some time after suspend() VM erroneously thinks that thread is still running
-            try {
-              Thread.sleep(10);
-            }
-            catch (InterruptedException e) {
-            }
-            if (currentThread.isCollected()) {
-              break;
-            }
-          }
-
           try {
+            while (!currentThread.isSuspended()) {
+              // wait until thread is considered suspended. Querying data from a thread immediately after VM.suspend()
+              // may result in IncompatibleThreadStateException, most likely some time after suspend() VM erroneously thinks that thread is still running
+              try {
+                Thread.sleep(10);
+              }
+              catch (InterruptedException ignored) {}
+            }
             proxy = (currentThread.frameCount() > 0) ? currentThread.frame(0) : null;
+          }
+          catch (ObjectCollectedException e) {
+            proxy = null;
           }
           catch (EvaluateException e) {
             proxy = null;

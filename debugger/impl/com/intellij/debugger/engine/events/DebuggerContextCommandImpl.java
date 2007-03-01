@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.SuspendManagerUtil;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.sun.jdi.ObjectCollectedException;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -30,7 +31,15 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
     final SuspendManager suspendManager = myDebuggerContext.getDebugProcess().getSuspendManager();
 
     final ThreadReferenceProxyImpl debuggerContextThread = myDebuggerContext.getThreadProxy();
-    if (suspendManager.isSuspended(debuggerContextThread)) {
+    final boolean isSuspendedByContext;
+    try {
+      isSuspendedByContext = suspendManager.isSuspended(debuggerContextThread);
+    }
+    catch (ObjectCollectedException e) {
+      notifyCancelled();
+      return;
+    }
+    if (isSuspendedByContext) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Context thread " + getSuspendContext().getThread());
         LOG.debug("Debug thread" + debuggerContextThread);

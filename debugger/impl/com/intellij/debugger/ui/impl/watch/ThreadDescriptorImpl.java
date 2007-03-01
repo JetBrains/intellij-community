@@ -13,8 +13,8 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.tree.ThreadDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.util.IconLoader;
-import com.sun.jdi.ThreadReference;
 import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.ThreadReference;
 
 import javax.swing.*;
 
@@ -84,7 +84,12 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
     final SuspendManager suspendManager = context.getDebugProcess().getSuspendManager();
     final SuspendContextImpl suspendContext = context.getSuspendContext();
 
-    myIsSuspended    = suspendManager.isSuspended(thread);
+    try {
+      myIsSuspended = suspendManager.isSuspended(thread);
+    }
+    catch (ObjectCollectedException e) {
+      myIsSuspended = false;
+    }
     myIsExpandable   = calcExpandable(myIsSuspended);
     mySuspendContext = SuspendManagerUtil.getSuspendContextForThread(suspendContext, thread);
     myIsAtBreakpoint = SuspendManagerUtil.findContextByThread(suspendManager, thread) != null;

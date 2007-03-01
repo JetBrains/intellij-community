@@ -1,6 +1,7 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.event.EventSet;
 
 import java.util.List;
@@ -16,7 +17,7 @@ public interface SuspendManager {
 
   SuspendContextImpl getPausedContext();
   boolean isFrozen(ThreadReferenceProxyImpl thread);
-  boolean isSuspended(ThreadReferenceProxyImpl thread);
+  boolean isSuspended(ThreadReferenceProxyImpl thread) throws ObjectCollectedException;
 
   void freezeThread(ThreadReferenceProxyImpl invokeThread);
   void unfreezeThread(ThreadReferenceProxyImpl thread);

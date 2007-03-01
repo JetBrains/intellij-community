@@ -247,13 +247,8 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     }
   }
 
-  public boolean isSuspended() {
+  public boolean isSuspended() throws ObjectCollectedException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    try {
-      return getThreadReference().isSuspended();
-    }
-    catch (ObjectCollectedException e) {
-      return false;
-    }
+    return getThreadReference().isSuspended();
   }
 }

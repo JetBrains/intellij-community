@@ -1011,8 +1011,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
     private void assertThreadSuspended(final ThreadReferenceProxyImpl thread, final SuspendContextImpl context) {
       LOG.assertTrue(context.isEvaluating());
-      final boolean isSuspended = thread.isSuspended();
       try {
+        final boolean isSuspended = thread.isSuspended();
         LOG.assertTrue(isSuspended, thread.toString());
       }
       catch (ObjectCollectedException ignored) {
@@ -1503,7 +1503,13 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
     public void contextAction() {
       final ThreadReferenceProxyImpl thread = myStackFrame.threadProxy();
-      if (!getSuspendManager().isSuspended(thread)) {
+      try {
+        if (!getSuspendManager().isSuspended(thread)) {
+          notifyCancelled();
+          return;
+        }
+      }
+      catch (ObjectCollectedException e) {
         notifyCancelled();
         return;
       }

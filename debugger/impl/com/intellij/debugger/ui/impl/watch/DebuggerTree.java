@@ -411,7 +411,12 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         final StackFrameDescriptorImpl stackDescriptor = (StackFrameDescriptorImpl)getNode().getDescriptor();
         final StackFrameProxyImpl frame = stackDescriptor.getFrameProxy();
         final DebuggerContextImpl debuggerContext = getDebuggerContext();
-        if(!debuggerContext.getDebugProcess().getSuspendManager().isSuspended(frame.threadProxy())) {
+        try {
+          if(!debuggerContext.getDebugProcess().getSuspendManager().isSuspended(frame.threadProxy())) {
+            return;
+          }
+        }
+        catch (ObjectCollectedException e) {
           return;
         }
 

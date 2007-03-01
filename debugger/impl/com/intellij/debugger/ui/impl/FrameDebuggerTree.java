@@ -4,6 +4,7 @@
  */
 package com.intellij.debugger.ui.impl;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.SuspendManager;
@@ -30,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
+import com.sun.jdi.ObjectCollectedException;
 
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreeModel;
@@ -217,21 +219,26 @@ public class FrameDebuggerTree extends DebuggerTree {
         else {
           rootNode = getNodeFactory().getDefaultNode();
           SuspendManager suspendManager = getSuspendContext().getDebugProcess().getSuspendManager();
-          if (suspendManager.isSuspended(currentThread)) {
-            try {
-              if (currentThread.frameCount() == 0) {
-                rootNode.add(MessageDescriptor.THREAD_IS_EMPTY);
+          try {
+            if (suspendManager.isSuspended(currentThread)) {
+              try {
+                if (currentThread.frameCount() == 0) {
+                  rootNode.add(MessageDescriptor.THREAD_IS_EMPTY);
+                }
+                else {
+                  rootNode.add(MessageDescriptor.DEBUG_INFO_UNAVAILABLE);
+                }
               }
-              else {
-                rootNode.add(MessageDescriptor.DEBUG_INFO_UNAVAILABLE);
+              catch (EvaluateException e) {
+                rootNode.add(new MessageDescriptor(e.getMessage()));
               }
             }
-            catch (EvaluateException e) {
-              rootNode.add(new MessageDescriptor(e.getMessage()));
+            else {
+              rootNode.add(MessageDescriptor.THREAD_IS_RUNNING);
             }
           }
-          else {
-            rootNode.add(MessageDescriptor.THREAD_IS_RUNNING);
+          catch (ObjectCollectedException e) {
+            rootNode.add(new MessageDescriptor(DebuggerBundle.message("label.thread.node.thread.collected", currentThread.name())));
           }
         }
       }

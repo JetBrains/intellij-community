@@ -1,6 +1,5 @@
 package com.intellij.debugger.ui.impl;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.DebuggerActions;
@@ -23,9 +22,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ThreeComponentsSplitter;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.PopupHandler;
+import com.sun.jdi.ObjectCollectedException;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -384,7 +382,12 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     }
 
     private void updateFrameList(ThreadReferenceProxyImpl thread) {
-      if(!getSuspendContext().getDebugProcess().getSuspendManager().isSuspended(thread)) {
+      try {
+        if(!getSuspendContext().getDebugProcess().getSuspendManager().isSuspended(thread)) {
+          return;
+        }
+      }
+      catch (ObjectCollectedException e) {
         return;
       }
       EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
@@ -435,7 +438,12 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     }
 
     private List<StackFrameDescriptorImpl> getFrameList(ThreadReferenceProxyImpl thread) {
-      if(!getSuspendContext().getDebugProcess().getSuspendManager().isSuspended(thread)) {
+      try {
+        if(!getSuspendContext().getDebugProcess().getSuspendManager().isSuspended(thread)) {
+          return Collections.emptyList();
+        }
+      }
+      catch (ObjectCollectedException e) {
         return Collections.emptyList();
       }
 
