@@ -78,6 +78,10 @@ public abstract class MappedBufferWrapper {
   public final void unmap() {
     synchronized (LOCK) {
       ourMappedWrappers.remove(this);
+      if (myBuffer instanceof MappedByteBuffer) {
+        ((MappedByteBuffer)myBuffer).force();
+      }
+      
       if (!unmapMappedByteBuffer142b19(this)) {
         unmapMappedByteBuffer141(this);
       }
