@@ -33,6 +33,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.jsp.JspxFileViewProvider;
 
 import java.util.*;
+import java.lang.ref.SoftReference;
 
 /**
  * This class makes program structure tree matching:
@@ -52,8 +53,13 @@ public class MatcherImpl {
 
   private int totalFilesToScan;
   private int scannedFilesCount;
-  private static CompiledPattern lastPattern;
-  private static MatchOptions lastOptions;
+
+  static class LastMatchData {
+    CompiledPattern lastPattern;
+    MatchOptions lastOptions;
+  }
+
+  private static SoftReference<LastMatchData> lastMatchData;
 
   protected MatcherImpl(Project project) {
     this.project = project;
@@ -63,9 +69,13 @@ public class MatcherImpl {
 
   public static void validate(Project project, MatchOptions options) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
+    CompiledPattern lastPattern;
+
     synchronized(MatcherImpl.class) {
-      lastPattern =  PatternCompiler.compilePattern(project,options);
-      lastOptions = options;
+      final LastMatchData data = new LastMatchData();
+      lastPattern = data.lastPattern =  PatternCompiler.compilePattern(project,options);
+      data.lastOptions = options;
+      lastMatchData = new SoftReference<LastMatchData>(data);
     }
 
     class ValidatingVisitor extends PsiRecursiveElementVisitor {
@@ -196,11 +206,11 @@ public class MatcherImpl {
     CompiledPattern compiledPattern = null;
 
     synchronized(getClass()) {
-      if (options ==lastOptions) {
-        compiledPattern = lastPattern;
+      final LastMatchData data = lastMatchData != null ? lastMatchData.get():null;
+      if (data != null && options == data.lastOptions) {
+        compiledPattern = data.lastPattern;
       }
-      lastOptions = null;
-      lastPattern = null;
+      lastMatchData = null;
     }
 
     if (compiledPattern==null) {
