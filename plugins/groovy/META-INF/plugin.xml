@@ -6,4 +6,11 @@
   <version>0.01</version>
   <vendor>JetBrains Inc.</vendor>
   <idea-version since-build="6724"/>
+
+  <application-components>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.GroovyLoader</implementation-class>
+    </component>
+  </application-components>
+
 </idea-plugin>
