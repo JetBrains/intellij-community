@@ -16,7 +16,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Ilya.Sergey
  */
 public class GroovyLoader implements ApplicationComponent {
-  public GroovyLoader() {}
+  public GroovyLoader() {
+  }
 
   public void initComponent() {
     loadGroovy();
@@ -26,11 +27,10 @@ public class GroovyLoader implements ApplicationComponent {
     ApplicationManager.getApplication().runWriteAction(
             new Runnable() {
               public void run() {
-                FileTypeManager.getInstance().registerFileType(GroovyFileType.GROOVY_FILE_TYPE, "groovy");
+                FileTypeManager.getInstance().registerFileType(GroovyFileType.GROOVY_FILE_TYPE, new String[]{"groovy", "gvy", "gy", "gsh"});
               }
             }
     );
-
 
 /*
     CompletionUtil.registerCompletionData(ScalaFileType.SCALA_FILE_TYPE,
@@ -50,10 +50,11 @@ public class GroovyLoader implements ApplicationComponent {
 
   }
 
-  public void disposeComponent() {}
+  public void disposeComponent() {
+  }
 
   @NotNull
   public String getComponentName() {
-    return "Groovy Loader";
+    return "groovy.support.loader";
   }
 }

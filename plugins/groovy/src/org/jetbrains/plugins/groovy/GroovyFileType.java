@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 
 import javax.swing.*;
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.NonNls;
 public class GroovyFileType extends LanguageFileType {
 
   public static final GroovyFileType GROOVY_FILE_TYPE = new GroovyFileType();
-  public static final Icon GROOVY_LOGO = IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/groovy_fileType.png");
+  public static final Icon GROOVY_LOGO = Icons.FILE_TYPE;
 
   private GroovyFileType() {
     super(new GroovyLanguage());
@@ -30,7 +29,7 @@ public class GroovyFileType extends LanguageFileType {
 
   @NotNull
   public String getDescription() {
-    return "Groovy files";
+    return "Groovy Scripts and Classes";
   }
 
   @NotNull
