@@ -14,12 +14,8 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
-import gnu.trove.THashSet;
-import gnu.trove.TIntStack;
-import gnu.trove.TLongArrayList;
-import gnu.trove.TLongHashSet;
+import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -46,7 +42,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     empty.myStateSize = 0;
     empty.myStack = new Stack<DfaValue>();
     empty.myDistinctClasses = new TLongHashSet();
-    empty.myVariableStates = new HashMap<DfaVariableValue, DfaVariableState>();
+    empty.myVariableStates = new THashMap<DfaVariableValue, DfaVariableState>();
     empty.myOffsetStack = new TIntStack(1);
     return empty;
   }
@@ -58,7 +54,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     newState.myDistinctClasses = new TLongHashSet(myDistinctClasses.toArray());
     newState.myEqClasses = new ArrayList<SortedIntSet>();
     newState.myStateSize = myStateSize;
-    newState.myVariableStates = new HashMap<DfaVariableValue, DfaVariableState>();
+    newState.myVariableStates = new THashMap<DfaVariableValue, DfaVariableState>();
     newState.myOffsetStack = new TIntStack(myOffsetStack);
 
     for (int i = 0; i < myEqClasses.size(); i++) {
