@@ -243,7 +243,7 @@ public class HighlightInfo {
   }
 
   private static void checkIfInReadOnly(final HighlightInfoType type, final PsiElement element) {
-    if (type != HighlightInfoType.ERROR) return;
+    if (type != HighlightInfoType.ERROR && type != HighlightInfoType.WRONG_REF) return;
     if (element.isWritable()) return;
     int i = 0;
   }

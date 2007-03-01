@@ -520,9 +520,9 @@ public class IntentionHintComponent extends JPanel {
     }
 
     public void hide() {
+      super.hide();
       myVisible = false;
       myAlarm.cancelAllRequests();
-      super.hide();
     }
 
     public boolean isVisible() {
