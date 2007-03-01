@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="false" type="JAVA_MODULE" version="4">
   <component name="ModuleRootManager" />
-  <component inherit-compiler-output="true" name="NewModuleRootManager">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
     <output url="file://$MODULE_DIR$/classes" />
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder isTestSource="false" url="file://$MODULE_DIR$/src" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry forTests="false" type="sourceFolder" />
-    <orderEntry module-name="openapi" type="module" />
-    <orderEntry module-name="util" type="module" />
-    <orderEntry level="project" name="Log4J" type="library" />
-    <orderEntry level="project" name="JDOM" type="library" />
-    <orderEntry level="project" name="JUnit4" type="library" />
-    <orderEntry module-name="codeInsight-openapi" type="module" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="module" module-name="util" />
+    <orderEntry type="library" name="Log4J" level="project" />
+    <orderEntry type="library" name="JDOM" level="project" />
+    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="codeInsight-openapi" />
     <orderEntryProperties />
   </component>
   <component name="VcsManagerConfiguration">

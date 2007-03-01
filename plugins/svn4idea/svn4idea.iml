@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="ModuleRootManager" />
-  <component inherit-compiler-output="true" name="NewModuleRootManager">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
     <output url="file://$MODULE_DIR$/classes" />
     <exclude-output />
     <exclude-exploded />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder isTestSource="false" url="file://$MODULE_DIR$/resources" />
-      <sourceFolder isTestSource="false" url="file://$MODULE_DIR$/src" />
+      <sourceFolder url="file://$MODULE_DIR$/resources" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry forTests="false" type="sourceFolder" />
-    <orderEntry module-name="openapi" type="module" />
-    <orderEntry module-name="util" type="module" />
-    <orderEntry module-name="idea" type="module" />
-    <orderEntry level="project" name="Ant" type="library" />
-    <orderEntry level="project" name="JDOM" type="library" />
-    <orderEntry level="project" name="JUnit4" type="library" />
-    <orderEntry level="project" name="Log4J" type="library" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="idea" />
+    <orderEntry type="library" name="Ant" level="project" />
+    <orderEntry type="library" name="JDOM" level="project" />
+    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -29,8 +29,8 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry module-name="action-system-openapi" type="module" />
-    <orderEntry module-name="ui-openapi" type="module" />
+    <orderEntry type="module" module-name="action-system-openapi" />
+    <orderEntry type="module" module-name="ui-openapi" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
