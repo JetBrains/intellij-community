@@ -14,7 +14,6 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -35,9 +34,9 @@ import com.intellij.packageDependencies.ui.*;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeToolTipHandler;
@@ -68,7 +67,7 @@ import java.util.Set;
  * User: anna
  * Date: 25-Jan-2006
  */
-public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, DataProvider, Disposable {
+public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Disposable {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.ScopeTreeViewPanel");
   private IdeView myIdeView = new  MyIdeView();
   private MyPsiTreeChangeAdapter myPsiTreeChangeAdapter = new MyPsiTreeChangeAdapter();
@@ -219,9 +218,6 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
 
   @Nullable
   public Object getData(String dataId) {
-    if (dataId.equals(DataConstants.PROJECT)){
-      return myProject;
-    }
     if (dataId.equals(DataConstants.MODULE_CONTEXT)){
       final TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath != null){

@@ -189,4 +189,8 @@ public class DirectoryNode extends PackageDependenciesNode {
   public boolean isValid() {
     return myDirectory != null && myDirectory.isValid();
   }
+
+  public boolean canNavigate() {
+    return false;
+  }
 }

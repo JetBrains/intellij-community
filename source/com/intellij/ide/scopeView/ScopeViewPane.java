@@ -211,4 +211,12 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     }
     return super.exhumeElementFromNode(node);
   }
+
+  public Object getData(final String dataId) {
+    final Object data = super.getData(dataId);
+    if (data != null) {
+      return data;
+    }
+    return myViewPanel.getData(dataId);
+  }
 }

@@ -206,6 +206,8 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
           Object userObject = node.getUserObject();
           if (userObject instanceof Navigatable) {
             navigatables.add((Navigatable)userObject);
+          } else if (node instanceof Navigatable) {
+            navigatables.add((Navigatable)node);
           }
         }
       }
