@@ -25,17 +25,23 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
-public class StaticInheritanceInspection extends ClassInspection {
+public class StaticInheritanceInspection extends BaseInspection {
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "static.inheritance.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.INHERITANCE_GROUP_NAME;
@@ -137,7 +143,7 @@ public class StaticInheritanceInspection extends ClassInspection {
         }
 
         private static boolean interfaceContainsOnlyConstants(
-                PsiClass iface, Set visitedIntefaces) {
+                PsiClass iface, Set<PsiClass> visitedIntefaces) {
             if (!visitedIntefaces.add(iface)) {
                 return true;
             }

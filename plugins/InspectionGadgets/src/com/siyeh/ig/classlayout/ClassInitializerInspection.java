@@ -18,14 +18,20 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassInitializerInspection extends ClassInspection {
+public class ClassInitializerInspection extends BaseInspection {
 
     public String getID() {
         return "NonStaticInitializer";
+    }
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "class.initializer.display.name");
     }
 
     public String getGroupDisplayName() {

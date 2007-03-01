@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.JComponent;
 
 public class UtilityClassWithoutPrivateConstructorInspection
-        extends ClassInspection {
+        extends BaseInspection {
 
     /** @noinspection PublicField for externalization*/
     public boolean ignoreClassesWithOnlyMain = false;

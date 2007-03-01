@@ -18,13 +18,13 @@ package com.siyeh.ig.visibility;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
-public class TypeParameterHidesVisibleTypeInspection extends ClassInspection{
+public class TypeParameterHidesVisibleTypeInspection extends BaseInspection {
 
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(

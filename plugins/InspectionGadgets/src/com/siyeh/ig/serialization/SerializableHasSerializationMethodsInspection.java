@@ -17,11 +17,11 @@ package com.siyeh.ig.serialization;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiEnumConstantInitializer;
+import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.JComponent;
 
 public class SerializableHasSerializationMethodsInspection
-        extends ClassInspection {
+        extends BaseInspection {
 
     /** @noinspection PublicField */
     public boolean m_ignoreSerializableDueToInheritance = true;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,20 @@ import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class NonSerializableObjectPassedToObjectStreamInspection
-        extends ClassInspection {
+        extends BaseInspection {
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "non.serializable.object.passed.to.object.stream.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.SERIALIZATION_GROUP_NAME;

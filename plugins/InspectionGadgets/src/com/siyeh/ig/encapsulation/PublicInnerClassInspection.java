@@ -21,8 +21,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.fixes.MoveClassFix;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 
-public class PublicInnerClassInspection extends ClassInspection {
+public class PublicInnerClassInspection extends BaseInspection {
 
     @SuppressWarnings({"PublicField"})
     public boolean ignoreEnums = false;
@@ -50,7 +50,6 @@ public class PublicInnerClassInspection extends ClassInspection {
         return InspectionGadgetsBundle.message(
                 "public.inner.class.problem.descriptor");
     }
-
 
     @Nullable
     public JComponent createOptionsPanel() {

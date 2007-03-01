@@ -29,8 +29,8 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.HighlightUtil;
@@ -45,7 +45,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
+public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
 
     @SuppressWarnings("PublicField")
     public boolean m_ignoreJavadoc = false;

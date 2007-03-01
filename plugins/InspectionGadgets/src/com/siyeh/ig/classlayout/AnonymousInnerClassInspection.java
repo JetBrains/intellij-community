@@ -22,12 +22,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiEnumConstantInitializer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 import org.jetbrains.annotations.NotNull;
 
-public class AnonymousInnerClassInspection extends ClassInspection {
+public class AnonymousInnerClassInspection extends BaseInspection {
 
     @NotNull
     public String getDisplayName() {

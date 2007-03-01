@@ -18,12 +18,12 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class TestCaseWithConstructorInspection extends ClassInspection {
+public class TestCaseWithConstructorInspection extends BaseInspection {
 
     public String getID() {
         return "JUnitTestCaseWithNonTrivialConstructors";

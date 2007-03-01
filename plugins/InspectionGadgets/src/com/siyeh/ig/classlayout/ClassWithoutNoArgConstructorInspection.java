@@ -18,19 +18,23 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
 
-public class ClassWithoutNoArgConstructorInspection extends ClassInspection {
+public class ClassWithoutNoArgConstructorInspection extends BaseInspection {
 
-    /**
-     * @noinspection PublicField
-     */
+    /** @noinspection PublicField */
     public boolean m_ignoreClassesWithNoConstructors = true;
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "class.without.no.arg.constructor.display.name");
+    }
 
     public String getGroupDisplayName() {
         return GroupNames.JAVABEANS_GROUP_NAME;

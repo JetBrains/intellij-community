@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,13 @@
  */
 package com.siyeh.ig.classmetrics;
 
-import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-public abstract class ClassMetricInspection extends ClassInspection {
+public abstract class ClassMetricInspection extends BaseInspection {
+
     /** @noinspection PublicField*/
     public int m_limit = getDefaultLimit();
 
@@ -37,5 +38,4 @@ public abstract class ClassMetricInspection extends ClassInspection {
         return new SingleIntegerFieldOptionsPanel(label,
                 this, "m_limit");
     }
-
 }
