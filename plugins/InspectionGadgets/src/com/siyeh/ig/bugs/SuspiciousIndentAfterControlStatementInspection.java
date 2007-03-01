@@ -21,18 +21,11 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nls;
 
 public class SuspiciousIndentAfterControlStatementInspection
         extends BaseInspection {
 
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return null;
-  }
-
-  @NotNull
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "suspicious.indent.after.control.statement.display.name");
