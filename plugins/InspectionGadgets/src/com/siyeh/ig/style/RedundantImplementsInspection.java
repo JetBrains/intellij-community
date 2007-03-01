@@ -118,11 +118,12 @@ public class RedundantImplementsInspection extends BaseInspection {
             for (final PsiJavaCodeReferenceElement implementsElement :
                     implementsElements) {
                 final PsiElement referent = implementsElement.resolve();
-                if (referent instanceof PsiClass) {
-                    final PsiClass implementedClass = (PsiClass)referent;
-                    checkImplementedClass(implementedClass, implementsElement,
-                            extendsElements, implementsElements);
+                if (!(referent instanceof PsiClass)) {
+                    continue;
                 }
+                final PsiClass implementedClass = (PsiClass)referent;
+                checkImplementedClass(implementedClass, implementsElement,
+                        extendsElements, implementsElements);
             }
         }
 
@@ -134,28 +135,30 @@ public class RedundantImplementsInspection extends BaseInspection {
             for (final PsiJavaCodeReferenceElement extendsElement :
                     extendsElements) {
                 final PsiElement extendsReferent = extendsElement.resolve();
-                if (extendsReferent instanceof PsiClass) {
-                    final PsiClass extendedClass = (PsiClass)extendsReferent;
-                    if (extendedClass.isInheritor(implementedClass, true)) {
-                        registerError(implementsElement);
-                        return;
-                    }
+                if (!(extendsReferent instanceof PsiClass)) {
+                    continue;
+                }
+                final PsiClass extendedClass = (PsiClass)extendsReferent;
+                if (extendedClass.isInheritor(implementedClass, true)) {
+                    registerError(implementsElement);
+                    return;
                 }
             }
             for (final PsiJavaCodeReferenceElement testImplementElement :
                     implementsElements) {
-                if (!testImplementElement.equals(implementsElement)) {
-                    final PsiElement implementsReferent =
-                            testImplementElement.resolve();
-                    if (implementsReferent instanceof PsiClass) {
-                        final PsiClass testImplementedClass =
-                                (PsiClass)implementsReferent;
-                        if (testImplementedClass.isInheritor(implementedClass,
-                                true)) {
-                            registerError(implementsElement);
-                            return;
-                        }
-                    }
+                if (testImplementElement.equals(implementsElement)) {
+                    continue;
+                }
+                final PsiElement implementsReferent =
+                        testImplementElement.resolve();
+                if (!(implementsReferent instanceof PsiClass)) {
+                    continue;
+                }
+                final PsiClass testImplementedClass =
+                        (PsiClass)implementsReferent;
+                if (testImplementedClass.isInheritor(implementedClass, true)) {
+                    registerError(implementsElement);
+                    return;
                 }
             }
         }
@@ -166,18 +169,19 @@ public class RedundantImplementsInspection extends BaseInspection {
                 PsiJavaCodeReferenceElement[] extendsElements) {
             for (final PsiJavaCodeReferenceElement testImplementElement :
                     extendsElements) {
-                if (!testImplementElement.equals(implementsElement)) {
-                    final PsiElement implementsReferent =
-                            testImplementElement.resolve();
-                    if (implementsReferent instanceof PsiClass) {
-                        final PsiClass testImplementedClass =
-                                (PsiClass)implementsReferent;
-                        if (testImplementedClass.isInheritor(implementedClass,
-                                true)) {
-                            registerError(implementsElement);
-                            return;
-                        }
-                    }
+                if (testImplementElement.equals(implementsElement)) {
+                    continue;
+                }
+                final PsiElement implementsReferent =
+                        testImplementElement.resolve();
+                if (!(implementsReferent instanceof PsiClass)) {
+                    continue;
+                }
+                final PsiClass testImplementedClass =
+                        (PsiClass)implementsReferent;
+                if (testImplementedClass.isInheritor(implementedClass, true)) {
+                    registerError(implementsElement);
+                    return;
                 }
             }
         }
