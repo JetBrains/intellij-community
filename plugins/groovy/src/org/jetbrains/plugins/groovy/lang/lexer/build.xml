@@ -1,0 +1,22 @@
+<project name="generate lexer from groovy.flex" default="generate.lexer">
+  <property name="lexer.file" value="_GroovyLexer.java"/>
+  <property name="lexer.log" value="jflex.log"/>
+  <property name="lexer.source" value="groovy.flex"/>
+  <property name="skeleton" value="idea-flex.skeleton"/>
+
+  <target name="jflex" description="Produces Jflex based lexer">
+    <delete file="${lexer.file}"/>
+    <delete file="${lexer.log}"/>
+
+    <java jar="JFlex.jar" output="jflex.log" fork="true" maxmemory="512m">
+      <arg value="--charat"/>
+      <arg value="-skel"/>
+      <arg value="${skeleton}"/>
+      <arg value="${lexer.source}"/>
+    </java>
+  </target>
+
+
+  <target name="generate.lexer" depends="jflex" description="main target"/>
+
+</project>
