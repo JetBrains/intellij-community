@@ -51,14 +51,10 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
 
   public boolean isSubIdSelectable(String subId, VirtualFile file) {
     if (file == null) return false;
-    NamedScopesHolder scopesHolder = NamedScopeManager.getInstance(myProject);
-    NamedScope scope = scopesHolder.getScope(subId);
-    if (scope == null){
-      scope = DependencyValidationManager.getInstance(myProject).getScope(subId);
-    }
+    final NamedScope scope = NamedScopesHolder.getScope(myProject, subId);
     if (scope == null) return false;
     PackageSet packageSet = scope.getValue();
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-    return psiFile != null && packageSet != null && packageSet.contains(psiFile, scopesHolder);
+    return psiFile != null && packageSet != null && packageSet.contains(psiFile, NamedScopesHolder.getHolder(myProject, subId, DependencyValidationManager.getInstance(myProject)));
   }
 }

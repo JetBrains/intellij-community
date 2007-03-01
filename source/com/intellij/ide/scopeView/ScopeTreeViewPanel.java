@@ -37,6 +37,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeToolTipHandler;
@@ -84,6 +85,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
   private final DependencyValidationManager myDependencyValidationManager;
+  private final NamedScopeManager myNamedScopeManager;
   private WolfTheProblemSolver.ProblemListener myProblemListener = new MyProblemListener();
 
   private MergingUpdateQueue myUpdateQueue = new MergingUpdateQueue("ScopeViewUpdate", 300, myTree.isShowing(), myTree);
@@ -95,6 +97,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
 
     add(new JScrollPane(myTree), BorderLayout.CENTER);
     myDependencyValidationManager = DependencyValidationManager.getInstance(myProject);
+    myNamedScopeManager = NamedScopeManager.getInstance(myProject);
 
     final UiNotifyConnector uiNotifyConnector = new UiNotifyConnector(myTree, myUpdateQueue);
     Disposer.register(this, myUpdateQueue);
@@ -124,14 +127,14 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
   }
 
   public void selectScope(final NamedScope scope) {
-    refreshScope(scope, myDependencyValidationManager, true);
+    refreshScope(scope, true);
     if (scope != myDependencyValidationManager.getProjectScope()) {
       CURRENT_SCOPE_NAME = scope.getName();
     }
   }
 
   public void selectCurrentScope() {
-    refreshScope(getCurrentScope(), myDependencyValidationManager, true);
+    refreshScope(getCurrentScope(), true);
   }
 
   public JPanel getPanel() {
@@ -171,12 +174,13 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     return PsiElement.EMPTY_ARRAY;
   }
 
-  private void refreshScope(@Nullable NamedScope scope, final NamedScopesHolder holder, boolean showProgress) {
+  private void refreshScope(@Nullable NamedScope scope, boolean showProgress) {
     myTreeExpansionMonitor.freeze();
     if (scope == null || scope.getValue() == null) { //was deleted
-      scope = DependencyValidationManager.getInstance(myProject).getProjectScope();
+      scope = myDependencyValidationManager.getProjectScope();
     }
     LOG.assertTrue(scope != null);
+    final NamedScopesHolder holder = NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager);
     final PackageSet packageSet = scope.getValue();
     final DependenciesPanel.DependencyPanelSettings settings = new DependenciesPanel.DependencyPanelSettings();
     settings.UI_FILTER_LEGALS = true;
@@ -205,9 +209,10 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
   }
 
   private NamedScope getCurrentScope() {
-    final NamedScope scope = CURRENT_SCOPE_NAME == null
-                             ? myDependencyValidationManager.getProjectScope()
-                             : myDependencyValidationManager.getScope(CURRENT_SCOPE_NAME);
+    NamedScope scope = NamedScopesHolder.getScope(myProject, CURRENT_SCOPE_NAME);
+    if (scope == null) {
+      scope = myDependencyValidationManager.getProjectScope();
+    }
     LOG.assertTrue(scope != null);
     return scope;
   }
@@ -290,9 +295,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     return null;
   }
 
-
-  private void processFileAddition(final PsiFile psiFile) {
-    final DefaultMutableTreeNode rootToReload = myBuilder.addFileNode(psiFile);
+  private void reload(final DefaultMutableTreeNode rootToReload) {
     final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
     if (rootToReload != null) {
       TreeUtil.sort(rootToReload, new DependencyNodeComparator());
@@ -301,7 +304,6 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
     else {
       TreeUtil.sort(treeModel, new DependencyNodeComparator());
       treeModel.reload();
-      selectCurrentScope();
     }
   }
 
@@ -344,24 +346,20 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
             if (myProject.isDisposed()) return;         
             myTreeExpansionMonitor.freeze();
             if (!child.isValid()) return;
-            if (child instanceof PsiFile) {
-              processFileAddition((PsiFile)child);
-            } else if (child instanceof PsiDirectory) {
-              processDirectoryCreation((PsiDirectory)child);
-            }
+            processNodeCreation(child);
             myTreeExpansionMonitor.restore();
           }
         }, false);
       }
     }
 
-    private void processDirectoryCreation(final PsiDirectory psiDirectory) {
-      final PsiElement[] psiElements = psiDirectory.getChildren();
-      for (PsiElement psiElement : psiElements) {
-        if (psiElement instanceof PsiFile) {
-          processFileAddition((PsiFile)psiElement);
-        } else if (psiElement instanceof PsiDirectory) {
-          processDirectoryCreation((PsiDirectory)psiElement);
+    private void processNodeCreation(final PsiElement psiElement) {
+      if (psiElement instanceof PsiFile) {
+        reload(myBuilder.addFileNode((PsiFile)psiElement));
+      } else if (psiElement instanceof PsiDirectory) {
+        final PsiElement[] children = psiElement.getChildren();
+        for (PsiElement child : children) {
+          processNodeCreation(child);
         }
       }
     }
@@ -461,8 +459,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
       myUpdateQueue.cancelAllUpdates();
       myUpdateQueue.queue(new Update("RootsChanged") {
         public void run() {
-          final DependencyValidationManager holder = DependencyValidationManager.getInstance(myProject);
-          refreshScope(CURRENT_SCOPE_NAME != null ? holder.getScope(CURRENT_SCOPE_NAME) : holder.getProjectScope(), holder, false);
+          refreshScope(getCurrentScope(), false);
         }
 
         public boolean isExpired() {
@@ -585,19 +582,9 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Da
         public void run() {
           if (myProject.isDisposed()) return;
           myTreeExpansionMonitor.freeze();
-          final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
           final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(fileToRefresh);
           if (psiFile != null) {
-            DefaultMutableTreeNode rootToReload = rootToReloadGetter.fun(psiFile);
-            if (rootToReload != null) {
-              TreeUtil.sort(rootToReload, new DependencyNodeComparator());
-              collapseExpand(rootToReload);
-            }
-            else {
-              TreeUtil.sort(treeModel, new DependencyNodeComparator());
-              treeModel.reload();
-              selectCurrentScope();
-            }
+            reload(rootToReloadGetter.fun(psiFile));
           }
           myTreeExpansionMonitor.restore();
         }

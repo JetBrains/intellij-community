@@ -124,12 +124,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
   }
 
   public void updateFromRoot(boolean restoreExpandedPaths) {
-    final String subId = getSubId();
-    NamedScope scope = myDependencyValidationManager.getScope(subId);
-    if (scope == null){
-      scope = myNamedScopeManager.getScope(subId);
-    }
-    myViewPanel.selectScope(scope);
+    myViewPanel.selectScope(NamedScopesHolder.getScope(myProject, getSubId()));
   }
 
   public void select(Object element, VirtualFile file, boolean requestFocus) {

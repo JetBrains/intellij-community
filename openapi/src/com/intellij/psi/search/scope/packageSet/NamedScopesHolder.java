@@ -18,6 +18,7 @@ package com.intellij.psi.search.scope.packageSet;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -84,6 +85,30 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
   public void addScope(NamedScope scope) {
     myScopes.add(scope);
     fireScopeListeners();
+  }
+
+  @Nullable
+  public static NamedScope getScope(final Project project, final String scopeName) {
+    final NamedScopesHolder[] holders = project.getComponents(NamedScopesHolder.class);
+    for (NamedScopesHolder holder : holders) {
+      final NamedScope scope = holder.getScope(scopeName);
+      if (scope != null) {
+        return scope;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static NamedScopesHolder getHolder(final Project project, final String scopeName, final NamedScopesHolder defaultHolder) {
+    final NamedScopesHolder[] holders = project.getComponents(NamedScopesHolder.class);
+    for (NamedScopesHolder holder : holders) {
+      final NamedScope scope = holder.getScope(scopeName);
+      if (scope != null) {
+        return holder;
+      }
+    }
+    return defaultHolder;
   }
 
   private static Element writeScope(NamedScope scope) {
