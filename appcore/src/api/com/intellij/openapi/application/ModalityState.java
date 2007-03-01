@@ -15,14 +15,16 @@
  */
 package com.intellij.openapi.application;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.awt.*;
 
 /**
  * Represents the stack of active modal dialogs.
  */
 public abstract class ModalityState {
-  @Deprecated public static final ModalityState NON_MMODAL = ApplicationManager.getApplication().getNoneModalityState();
-  public static final ModalityState NON_MODAL = ApplicationManager.getApplication().getNoneModalityState();
+  @NotNull @Deprecated public static final ModalityState NON_MMODAL = ApplicationManager.getApplication().getNoneModalityState();
+  @NotNull public static final ModalityState NON_MODAL = ApplicationManager.getApplication().getNoneModalityState();
 
   public static ModalityState current() {
     return ApplicationManager.getApplication().getCurrentModalityState();

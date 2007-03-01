@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -21,9 +21,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.ArrayList;
 import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class PsiElementBase extends ElementBase implements PsiElement, NavigationItem {
 
@@ -161,7 +161,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement, 
 
   @NotNull
   public GlobalSearchScope getResolveScope() {
-    return ((PsiManagerImpl)getManager()).getFileManager().getResolveScope(this);
+    return ((PsiManagerEx)getManager()).getFileManager().getResolveScope(this);
   }
 
   @NotNull

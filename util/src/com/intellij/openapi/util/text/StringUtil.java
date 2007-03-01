@@ -189,6 +189,18 @@ public class StringUtil {
     return fqName;
   }
 
+  @NotNull public static String getPackageName(@NotNull String fqName) {
+    return getPackageName(fqName, '.');
+  }
+  
+  @NotNull public static String getPackageName(@NotNull String fqName, char separator) {
+    int lastPointIdx = fqName.lastIndexOf(separator);
+    if (lastPointIdx >= 0) {
+      return fqName.substring(0, lastPointIdx);
+    }
+    return "";
+  }
+
   /**
    * Converts line separators to <code>"\n"</code>
    */

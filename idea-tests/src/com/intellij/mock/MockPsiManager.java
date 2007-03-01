@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -99,14 +100,33 @@ public class MockPsiManager extends PsiManagerEx {
     });
   }
 
-  public void addClass(PsiClass psiClass) {
-    final PsiClass existing = findClass(psiClass.getQualifiedName());
+  public <T extends PsiClass> T addClass(T psiClass) {
+    final String qName = psiClass.getQualifiedName();
+    final PsiClass existing = findClass(qName);
     if (existing != null) myClasses.remove(existing);
     myClasses.add(psiClass);
+    return addToPackage(qName, psiClass);
+
   }
 
-  public void addPackage(PsiPackage psiPackage) {
+  public MockPsiPackage addPackage(String qName) {
+    return addPackage(addToPackage(qName, new MockPsiPackage(qName)));
+  }
+
+  private <T extends PsiElement> T addToPackage(final String qName, final T declaration) {
+    if (qName == null) return declaration;
+
+    String superName = StringUtil.getPackageName(qName);
+    final PsiPackage superPackage = findPackage(superName);
+    if (superPackage instanceof MockPsiPackage) {
+      ((MockPsiPackage)superPackage).addDeclaration(declaration);
+    }
+    return declaration;
+  }
+
+  public <T extends PsiPackage> T addPackage(T psiPackage) {
     myPackages.add(psiPackage);
+    return psiPackage;
   }
 
   public PsiClass findClass(String qualifiedName, GlobalSearchScope scope) {
