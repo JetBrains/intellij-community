@@ -73,7 +73,7 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     if (file == null) return;
     AntElement element = file.lightFindElementAt(textRange.getStartOffset());
     while (element != null && !(element instanceof AntFile) &&
-           (element.getTextLength() < textRange.getLength() || element instanceof AntOuterProjectElement)) {
+           (element.getTextLength() <= textRange.getLength() || element instanceof AntOuterProjectElement)) {
       element = element.getAntParent();
     }
     if (element == null) {
