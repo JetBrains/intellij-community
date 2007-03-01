@@ -2,10 +2,10 @@
 <idea-plugin>
   <id>org.intellij.groovy</id>
   <name>JetGroovy</name>
-  <description>Plugin for Groovy language</description>
+  <description>Plugin for Groovy language support</description>
   <version>0.01</version>
   <vendor>JetBrains Inc.</vendor>
-  <idea-version since-build="6724"/>
+  <idea-version since-build="6727"/>
 
   <application-components>
     <component>

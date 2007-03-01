@@ -1,0 +1,44 @@
+<project name="Generating the build of groovy language plugin">
+    <property file="groovy.properties"/>
+    <property name="project.dest" value="${project.dir}/classes/production/Groovy"/>
+
+    <path id="base.path">
+        <fileset dir="${idea.lib}/../jre/jre/lib">
+            <include name="**/*.jar"/>
+        </fileset>
+        <fileset dir="${idea.lib}">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
+    <target name="clear.all" description="clears all files">
+        <mkdir dir="${project.dest}"/>
+        <delete includeemptydirs="true">
+            <fileset dir="${project.dest}"/>
+        </delete>
+    </target>
+
+    <target name="build.lexer" description="makes lexer file">
+        <ant dir="org/jetbrains/plugins/groovy/lang/lexer/"
+             antfile="build.xml" target="generate.lexer"/>
+    </target>
+
+    <target name="make.project" description="makes project" depends="build.lexer">
+        <copy todir="${project.dest}/META-INF">
+          <fileset dir="${project.dir}/META-INF"/>
+        </copy>
+
+        <copy todir="${project.dest}/resources">
+          <fileset dir="${project.dir}/resources"/>
+        </copy>
+
+        <javac srcdir="."
+               destdir="${project.dest}">
+            <classpath refid="base.path"/>
+        </javac>
+    </target>
+
+    <target name="build.project" depends="clear.all, make.project">
+
+    </target>
+</project>
