@@ -5,6 +5,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +24,10 @@ public class CurrentContentRevision implements ContentRevision {
   public String getContent() {
     final VirtualFile vFile = getVirtualFile();
     if (vFile == null) return null;
-    final Document doc = FileDocumentManager.getInstance().getDocument(vFile);
+    final Document doc = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
+      public Document compute() {
+        return FileDocumentManager.getInstance().getDocument(vFile);
+    }});
     return doc.getText();
   }
 
