@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 
@@ -48,11 +49,11 @@ public class SimpleContent extends DiffContent {
     this(text, null);
   }
 
-  public SimpleContent(String text, FileType type) {
+  public SimpleContent(@NotNull String text, FileType type) {
     this(text, type, EditorFactory.getInstance());
   }
 
-  public SimpleContent(String text, FileType type, EditorFactory f) {
+  public SimpleContent(@NotNull String text, FileType type, EditorFactory f) {
     myOriginalBytes = text.getBytes();
     myOriginalText = myLineSeparators.correctText(text);
     myDocument = f.createDocument(myOriginalText);

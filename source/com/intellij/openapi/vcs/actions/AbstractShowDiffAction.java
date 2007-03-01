@@ -98,10 +98,17 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
       final ContentRevision fileRevision = diffProvider.createFileContent(revisionNumber, selectedFile);
       if (fileRevision != null) {
         final Ref<VcsException> ex = new Ref<VcsException>();
+        final StringBuilder contentBuilder = new StringBuilder();
         ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
           public void run() {
             try {
-              fileRevision.getContent();
+              final String content = fileRevision.getContent();
+              if (!(fileRevision instanceof BinaryContentRevision)) {
+                if (content == null) {
+                  ex.set(new VcsException("Failed to load content"));
+                }
+                contentBuilder.append(content);
+              }
             }
             catch (VcsException e) {
               ex.set(e);
@@ -122,9 +129,8 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
           return;
         }
 
-        final SimpleDiffRequest request =
-        new SimpleDiffRequest(project, selectedFile.getPresentableUrl());
-        final SimpleContent content1 = new SimpleContent(fileRevision.getContent(), selectedFile.getFileType());
+        final SimpleDiffRequest request = new SimpleDiffRequest(project, selectedFile.getPresentableUrl());
+        final SimpleContent content1 = new SimpleContent(contentBuilder.toString(), selectedFile.getFileType());
         final DocumentContent content2 = new DocumentContent(project, FileDocumentManager.getInstance().getDocument(selectedFile));
 
         final VcsRevisionNumber currentRevision = diffProvider.getCurrentRevision(selectedFile);
