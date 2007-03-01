@@ -306,4 +306,19 @@ public final class Utils {
     if ((anchor & leftMask) != 0) return GridConstraints.ALIGN_LEFT;
     return GridConstraints.ALIGN_CENTER;
   }
+
+  public static boolean isBoundField(IComponent component, String fieldName) {
+    if (fieldName.equals(component.getBinding())) {
+     return true;
+    }
+    if (component instanceof IContainer) {
+      IContainer container = (IContainer) component;
+      for(int i=0; i<container.getComponentCount(); i++) {
+        if (isBoundField(container.getComponent(i), fieldName)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }

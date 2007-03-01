@@ -2,10 +2,12 @@ package com.intellij.uiDesigner.make;
 
 import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,12 +27,15 @@ import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 
 public final class FormSourceCodeGenerator {
+  private static final Logger LOG = Logger.getInstance("com.intellij.uiDesigner.make.FormSourceCodeGenerator");
+
   @NonNls private StringBuffer myBuffer;
   private Stack<Boolean> myIsFirstParameterStack;
   private final Project myProject;
@@ -181,7 +186,8 @@ public final class FormSourceCodeGenerator {
       throw new ClassToBindNotFoundException(UIDesignerBundle.message("error.class.to.bind.not.found", rootContainer.getClassToBind()));
     }
 
-    if (Utils.getCustomCreateComponentCount(rootContainer) > 0) {
+    final boolean haveCustomCreateComponents = Utils.getCustomCreateComponentCount(rootContainer) > 0;
+    if (haveCustomCreateComponents) {
       if (FormEditingUtil.findCreateComponentsMethod(classToBind) == null) {
         throw new CodeGenerationException(null, UIDesignerBundle.message("error.no.custom.create.method"));
       }
@@ -230,10 +236,20 @@ public final class FormSourceCodeGenerator {
 
     // don't generate initializer block if $$$setupUI$$$() is called explicitly from one of the constructors
     boolean needInitializer = true;
+    boolean needSetupUI = false;
     for(PsiMethod constructor: newClass.getConstructors()) {
       if (containsMethodIdentifier(constructor, method)) {
         needInitializer = false;
-        break;
+      }
+      else if (haveCustomCreateComponents && hasCustomComponentAffectingReferences(constructor, newClass, rootContainer, null)) {
+        needInitializer = false;
+        needSetupUI = true;
+      }
+    }
+
+    if (needSetupUI) {
+      for(PsiMethod constructor: newClass.getConstructors()) {
+        addSetupUICall(constructor, rootContainer);
       }
     }
 
@@ -257,6 +273,70 @@ public final class FormSourceCodeGenerator {
     if (!lexemsEqual(classToBind, newClass)) {
       classToBind.replace(newClass);
     }
+  }
+
+  private static void addSetupUICall(final PsiMethod constructor, final LwRootContainer rootContainer) {
+    final PsiCodeBlock psiCodeBlock = constructor.getBody();
+    if (psiCodeBlock == null) {
+      return;
+    }
+    final PsiClass classToBind = constructor.getContainingClass();
+    final PsiStatement[] statements = psiCodeBlock.getStatements();
+    PsiElement anchor = psiCodeBlock.getRBrace();
+    Ref<Boolean> callsThisConstructor = new Ref<Boolean>(Boolean.FALSE);
+    for(PsiStatement statement: statements) {
+      if (hasCustomComponentAffectingReferences(statement, classToBind, rootContainer, callsThisConstructor)) {
+        anchor = statement;
+        break;
+      }
+    }
+    if (!callsThisConstructor.get().booleanValue()) {
+      final PsiElementFactory factory = constructor.getManager().getElementFactory();
+      try {
+        PsiStatement setupUIStatement = factory.createStatementFromText(AsmCodeGenerator.SETUP_METHOD_NAME + "();", constructor);
+        psiCodeBlock.addBefore(setupUIStatement, anchor);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
+  }
+
+  private static boolean hasCustomComponentAffectingReferences(final PsiElement element,
+                                                               final PsiClass classToBind,
+                                                               final LwRootContainer rootContainer,
+                                                               @Nullable final Ref<Boolean> callsThisConstructor) {
+    final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
+    element.accept(new PsiRecursiveElementVisitor() {
+      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+        super.visitReferenceElement(expression);
+        final PsiElement psiElement = expression.resolve();
+        if (psiElement == null) {
+          return;
+        }
+        if (psiElement instanceof PsiField) {
+          PsiField field = (PsiField) psiElement;
+          if (field.getContainingClass().equals(classToBind)) {
+            if (Utils.isBoundField(rootContainer, field.getName())) {
+              result.set(Boolean.TRUE);
+            }
+          }
+        }
+        else if (psiElement instanceof PsiMethod) {
+          PsiMethod method = (PsiMethod) psiElement;
+          if (method.isConstructor() && method.getContainingClass() == classToBind) {
+            if (callsThisConstructor != null) {
+              callsThisConstructor.set(Boolean.TRUE);
+            }
+          }
+          else {
+            result.set(Boolean.TRUE);
+          }
+        }
+      }
+    });
+
+    return result.get().booleanValue();
   }
 
   private static boolean lexemsEqual(final PsiClass classToBind, final PsiClass newClass) {
