@@ -200,7 +200,9 @@ public class CompareWithBranchAction extends AnAction {
               .setItemChoosenCallback(new Runnable() {
                 public void run() {
                   SvnBranchItem item = (SvnBranchItem) branchList.getSelectedValue();
-                  compareWithBranch(item.myUrl, item.getRevision());                  
+                  if (item != null) {
+                    compareWithBranch(item.myUrl, item.getRevision());                  
+                  }
                 }
               })
               .createPopup().showCenteredInCurrentWindow(myProject);
