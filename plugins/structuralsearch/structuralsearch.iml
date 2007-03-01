@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="false" type="JAVA_MODULE" version="4">
   <component name="ModuleRootManager" />
-  <component inherit-compiler-output="true" name="NewModuleRootManager">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
     <output url="file://$MODULE_DIR$/classes" />
     <exclude-output />
     <output-test url="file://$MODULE_DIR$/testClasses" />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder isTestSource="false" url="file://$MODULE_DIR$/source" />
-      <sourceFolder isTestSource="true" url="file://$MODULE_DIR$/testSource" />
+      <sourceFolder url="file://$MODULE_DIR$/source" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/testSource" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry forTests="false" type="sourceFolder" />
-    <orderEntry module-name="idea" type="module" />
-    <orderEntry level="project" name="JUnit4" type="library" />
-    <orderEntry module-name="util" type="module" />
-    <orderEntry level="project" name="JDOM" type="library" />
-    <orderEntry level="project" name="Trove4j" type="library" />
-    <orderEntry module-name="ExtendedApi" type="module" />
-    <orderEntry module-name="UsageView" type="module" />
-    <orderEntry module-name="codeInsight-openapi" type="module" />
-    <orderEntry module-name="codeInsight-impl" type="module" />
-    <orderEntry module-name="idea-tests" type="module" />
-    <orderEntry module-name="action-system-openapi" type="module" />
-    <orderEntry module-name="ui-openapi" type="module" />
-    <orderEntry module-name="ui-impl" type="module" />
-    <orderEntry module-name="inspections-openapi" type="module" />
-    <orderEntry module-name="inspections-impl" type="module" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="idea" />
+    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="util" />
+    <orderEntry type="library" name="JDOM" level="project" />
+    <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="module" module-name="ExtendedApi" />
+    <orderEntry type="module" module-name="UsageView" />
+    <orderEntry type="module" module-name="codeInsight-openapi" />
+    <orderEntry type="module" module-name="codeInsight-impl" />
+    <orderEntry type="module" module-name="idea-tests" />
+    <orderEntry type="module" module-name="action-system-openapi" />
+    <orderEntry type="module" module-name="ui-openapi" />
+    <orderEntry type="module" module-name="ui-impl" />
+    <orderEntry type="module" module-name="inspections-openapi" />
+    <orderEntry type="module" module-name="inspections-impl" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
