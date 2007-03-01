@@ -162,20 +162,23 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         myPopup = null;
       }
       else {
-        final Rectangle bounds = myComponent.getBounds();
-        final JLayeredPane layeredPane = myComponent.getRootPane().getLayeredPane();
+        final JRootPane rootPane = myComponent.getRootPane();
+        if (rootPane != null) {
+          final Rectangle bounds = myComponent.getBounds();
+          final JLayeredPane layeredPane = rootPane.getLayeredPane();
 
-        try {
-          if(myFocusBackComponent != null){
-            LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(myFocusBackComponent);
+          try {
+            if(myFocusBackComponent != null){
+              LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(myFocusBackComponent);
+            }
+            layeredPane.remove(myComponent);
           }
-          layeredPane.remove(myComponent);
+          finally {
+            LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(null);
+          }
+
+          layeredPane.repaint(bounds.x, bounds.y, bounds.width, bounds.height);
         }
-        finally {
-          LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(null);
-        }
-        
-        layeredPane.repaint(bounds.x, bounds.y, bounds.width, bounds.height);
       }
     }
     if (myEscListener != null) {
