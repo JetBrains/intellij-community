@@ -1,10 +1,9 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jdom.Content;
+import org.jdom.Text;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Attr;
-import org.w3c.dom.Node;
-import org.w3c.dom.Text;
 
 public class AttributeBinding implements Binding {
   private Accessor myAccessor;
@@ -18,34 +17,32 @@ public class AttributeBinding implements Binding {
     myXmlSerializer = xmlSerializer;
   }
 
-  public Node serialize(Object o, Node context) {
+  public Object serialize(Object o, Object context) {
     final Object v = myAccessor.read(o);
-    final Node node = myBinding.serialize(v, context);
+    final Object node = myBinding.serialize(v, context);
 
-    final Attr attr = context.getOwnerDocument().createAttribute(myAttribute.value());
-    attr.setValue(node.getTextContent());
-    return attr;
+    return new org.jdom.Attribute(myAttribute.value(), ((Content)node).getValue());
   }
 
   @Nullable
-  public Object deserialize(Object context, Node... nodes) {
+  public Object deserialize(Object context, Object... nodes) {
     assert nodes.length == 1;
-    Node node = nodes[0];
+    Object node = nodes[0];
     assert isBoundTo(node);
 
-    Attr attr = (Attr)node;
+    org.jdom.Attribute attr = (org.jdom.Attribute)node;
     final String value = attr.getValue();
-    final Text text = node.getOwnerDocument().createTextNode(value);
+    final Text text = new Text(value);
     myAccessor.write(context, myBinding.deserialize(context, text));
     return context;
   }
 
-  public boolean isBoundTo(Node node) {
-    return node instanceof Attr && node.getNodeName().equals(myAttribute.value());
+  public boolean isBoundTo(Object node) {
+    return node instanceof org.jdom.Attribute && ((org.jdom.Attribute)node).getName().equals(myAttribute.value());
   }
 
-  public Class<? extends Node> getBoundNodeType() {
-    return Attr.class;
+  public Class getBoundNodeType() {
+    return org.jdom.Attribute.class;
   }
 
   public void init() {

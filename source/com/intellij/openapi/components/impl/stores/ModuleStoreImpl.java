@@ -13,15 +13,16 @@ import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.Attribute;
+import org.jdom.Document;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
-import org.w3c.dom.NamedNodeMap;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 
 class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleStore {
@@ -41,7 +42,7 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
   }
 
   @Override
-  protected void writeRootElement(final org.w3c.dom.Element rootElement) {
+  protected void writeRootElement(final Element rootElement) {
     super.writeRootElement(rootElement);
 
     Set<String> options = myModule.myOptions.keySet();
@@ -64,11 +65,11 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
       FileBasedStorage fileBasedStorage = (FileBasedStorage)stateStorage;
 
       Document doc = fileBasedStorage.getDocument();
-      final org.w3c.dom.Element element = doc.getDocumentElement();
+      final Element element = doc.getRootElement();
 
-      final NamedNodeMap attributes = element.getAttributes();
-      for (int i = 0; i < attributes.getLength(); i++) {
-        Attr attr = (Attr)attributes.item(i);
+      final List attributes = element.getAttributes();
+      for (Object attribute : attributes) {
+        Attribute attr = (Attribute)attribute;
         final String optionName = attr.getName();
         final String optionValue = attr.getValue();
         myModule.setOption(optionName, optionValue);

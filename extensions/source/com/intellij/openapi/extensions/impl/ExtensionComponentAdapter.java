@@ -19,7 +19,6 @@ import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -72,7 +71,7 @@ public class ExtensionComponentAdapter implements ComponentAdapter, LoadingOrder
 
         if (myDeserializeInstance) {
           try {
-            XmlSerializer.deserializeInto(componentInstance, JDOMUtil.convertToDOM(myExtensionElement));
+            XmlSerializer.deserializeInto(componentInstance, myExtensionElement);
           }
           catch (Exception e) {
             throw new PicoInitializationException(e);

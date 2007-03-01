@@ -6,11 +6,8 @@ import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManagerConfig;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.DOMUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.XmlSerializer;
-import org.jetbrains.annotations.NonNls;
-import org.w3c.dom.Document;
 
 import java.net.URL;
 import java.util.Map;
@@ -48,9 +45,7 @@ class ComponentManagerConfigurator {
 
         assert url != null : "Defaults not found:" + descriptor;
 
-        final Document document = DOMUtil.load(url);
-
-        managerConfig = XmlSerializer.deserialize(document.getDocumentElement(), ComponentManagerConfig.class);
+        managerConfig = XmlSerializer.deserialize(url, ComponentManagerConfig.class);
 
         ourDescriptorToConfig.put(descriptor, managerConfig);
       }
@@ -80,10 +75,6 @@ class ComponentManagerConfigurator {
 
   public void loadComponentsConfiguration(String layer, final boolean loadDummies) {
     loadComponentsConfiguration(ApplicationManagerEx.getApplicationEx().getComponentsDescriptor(), layer, loadDummies);
-  }
-
-  private static boolean isTrue(Map options, @NonNls final String option) {
-    return options != null && options.containsKey(option) && Boolean.valueOf(options.get(option).toString()).booleanValue();
   }
 
   public void loadComponentsConfiguration(final ComponentConfig[] components,

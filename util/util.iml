@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="ModuleRootManager" />
-  <component inherit-compiler-output="true" name="NewModuleRootManager">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
     <output url="file://$MODULE_DIR$/../out/classes/production/util" />
     <exclude-output />
     <output-test url="file://$MODULE_DIR$/../out/classes/test/util" />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder isTestSource="false" url="file://$MODULE_DIR$/src" />
-      <sourceFolder isTestSource="true" url="file://$MODULE_DIR$/testSource" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/testSource" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry forTests="false" type="sourceFolder" />
-    <orderEntry level="project" name="JDOM" type="library" />
-    <orderEntry level="project" name="Log4J" type="library" />
-    <orderEntry level="project" name="JUnit4" type="library" />
-    <orderEntry exported="" level="project" name="Trove4j" type="library" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="JDOM" level="project" />
+    <orderEntry type="library" name="Log4J" level="project" />
+    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="library" exported="" name="Trove4j" level="project" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -24,10 +24,10 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry exported="" module-name="Annotations" type="module" />
-    <orderEntry module-name="resources_eng" type="module" />
-    <orderEntry exported="" level="project" name="NanoXML" type="library" />
-    <orderEntry level="project" name="picocontainer" type="library" />
+    <orderEntry type="module" module-name="Annotations" exported="" />
+    <orderEntry type="module" module-name="resources_eng" />
+    <orderEntry type="library" exported="" name="NanoXML" level="project" />
+    <orderEntry type="library" name="picocontainer" level="project" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

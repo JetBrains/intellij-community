@@ -1,10 +1,9 @@
 package com.intellij.util.xmlb;
 
-import com.intellij.util.DOMUtil;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
+import org.jdom.Element;
+import org.jdom.Text;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,40 +22,39 @@ class TagBinding implements Binding {
     binding = xmlSerializer.getBinding(accessor);
   }
 
-  public Node serialize(Object o, Node context) {
-    Document ownerDocument = XmlSerializerImpl.getOwnerDocument(context);
+  public Object serialize(Object o, Object context) {
     Object value = accessor.read(o);
     if (value == null) return context;
 
-    Element v = ownerDocument.createElement(myTagName);
+    Element v = new Element(myTagName);
 
-    Node node = binding.serialize(value, v);
+    Object node = binding.serialize(value, v);
     if (node != v) {
-      v.appendChild(node);
+      JDOMUtil.addContent(v, node);
     }
 
     return v;
   }
 
-  public Object deserialize(Object o, Node... nodes) {
+  public Object deserialize(Object o, Object... nodes) {
     assert nodes.length > 0;
-    final Document document = nodes[0].getOwnerDocument();
-    Node[] children;
+    Object[] children;
     if (nodes.length == 1) {
-      children = DOMUtil.toArray(nodes[0].getChildNodes());
+      children = JDOMUtil.getContent((Element)nodes[0]);
     }
     else {
-      String name = nodes[0].getNodeName();
-      List<Node> childrenList = new ArrayList<Node>();
-      for (Node node : nodes) {
-        assert node.getNodeName().equals(name);
-        childrenList.addAll(Arrays.asList(DOMUtil.toArray(node.getChildNodes())));
+      String name = ((Element)nodes[0]).getName();
+      List<Object> childrenList = new ArrayList<Object>();
+      for (Object node : nodes) {
+        assert ((Element)node).getName().equals(name);
+        childrenList.addAll(Arrays.asList(JDOMUtil.getContent((Element)node)));
       }
-      children = childrenList.toArray(new Node[childrenList.size()]);
+
+      children = childrenList.toArray(new Object[childrenList.size()]);
     }
 
     if (children.length == 0) {
-      children = new Node[] {document.createTextNode(myTagAnnotation.textIfEmpty())};
+      children = new Object[] {new Text(myTagAnnotation.textIfEmpty())};
     }
 
     Object v = binding.deserialize(accessor.read(o), children);
@@ -65,11 +63,11 @@ class TagBinding implements Binding {
     return o;
   }
 
-  public boolean isBoundTo(Node node) {
-    return node instanceof Element && node.getNodeName().equals(myTagName);
+  public boolean isBoundTo(Object node) {
+    return node instanceof Element && ((Element)node).getName().equals(myTagName);
   }
 
-  public Class<? extends Node> getBoundNodeType() {
+  public Class getBoundNodeType() {
     throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());
   }
 

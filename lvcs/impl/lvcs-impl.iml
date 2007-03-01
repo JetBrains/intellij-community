@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="ModuleRootManager" />
-  <component inherit-compiler-output="true" name="NewModuleRootManager">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
-    <orderEntry forTests="false" type="sourceFolder" />
-    <orderEntry module-name="ExtendedApi" type="module" />
-    <orderEntry module-name="openapi" type="module" />
-    <orderEntry level="project" name="JUnit4" type="library" />
-    <orderEntry level="project" name="Mocks" type="library" />
-    <orderEntry level="project" name="picocontainer" type="library" />
-    <orderEntry module-name="idea" type="module" />
-    <orderEntry module-name="idea-tests" type="module" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="ExtendedApi" />
+    <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="library" name="Mocks" level="project" />
+    <orderEntry type="library" name="picocontainer" level="project" />
+    <orderEntry type="module" module-name="idea" />
+    <orderEntry type="module" module-name="idea-tests" />
     <orderEntryProperties />
   </component>
 </module>

@@ -1,11 +1,10 @@
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
+import org.jdom.Content;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,7 +51,7 @@ abstract class AbstractCollectionBinding implements Binding {
     }
   }
 
-  protected Binding getElementBinding(Class elementClass) {
+  protected Binding getElementBinding(Class<? extends Object> elementClass) {
     final Binding binding = getElementBindings().get(elementClass);
     if (binding == null) throw new XmlSerializationException("Class " + elementClass + " is not bound");
     return binding;
@@ -75,7 +74,7 @@ abstract class AbstractCollectionBinding implements Binding {
     return myElementBindings;
   }
 
-  protected Binding getElementBinding(Node node) {
+  protected Binding getElementBinding(Object node) {
     for (Binding binding : getElementBindings().values()) {
       if (binding.isBoundTo(node)) return binding;
     }
@@ -106,29 +105,38 @@ abstract class AbstractCollectionBinding implements Binding {
   abstract Object processResult(List result, Object target);
   abstract Iterable getIterable(Object o);
 
-  public Node serialize(Object o, Node context) {
+  public Object serialize(Object o, Object context) {
     Iterable iterable = getIterable(o);
     if (iterable == null) return context;
-    Document ownerDocument = XmlSerializerImpl.getOwnerDocument(context);
 
-    Node result = getTagName() != null ? ownerDocument.createElement(getTagName()) : ownerDocument.createDocumentFragment();
-    for (Object e : iterable) {
-      final Binding binding = getElementBinding(e.getClass());
-      result.appendChild(binding.serialize(e, result));
+    if (getTagName() != null) {
+      Element result = new Element(getTagName());
+      for (Object e : iterable) {
+        final Binding binding = getElementBinding(e.getClass());
+        result.addContent((Content)binding.serialize(e, result));
+      }
+
+      return result;
     }
+    else {
+      List<Object> result = new ArrayList<Object>();
+      for (Object e : iterable) {
+        final Binding binding = getElementBinding(e.getClass());
+        result.add(binding.serialize(e, result));
+      }
 
-    return result;
+      return result;
+    }
   }
 
-  public Object deserialize(Object o, Node... nodes) {
+  public Object deserialize(Object o, Object... nodes) {
     List result = new ArrayList();
 
     if (getTagName() != null) {
       assert nodes.length == 1;
       Element e = (Element)nodes[0];
-      NodeList childNodes = e.getChildNodes();
-      for (int i = 0; i < childNodes.getLength(); i++) {
-        final Node n = childNodes.item(i);
+      final Content[] childElements = JDOMUtil.getContent(e);
+      for (final Content n : childElements) {
         if (XmlSerializerImpl.isIgnoredNode(n)) continue;
         final Binding elementBinding = getElementBinding(n);
         Object v = elementBinding.deserialize(o, n);
@@ -137,7 +145,7 @@ abstract class AbstractCollectionBinding implements Binding {
       }
     }
     else {
-      for (Node node : nodes) {
+      for (Object node : nodes) {
         if (XmlSerializerImpl.isIgnoredNode(node)) continue;
         final Binding elementBinding = getElementBinding(node);
         Object v = elementBinding.deserialize(o, node);
@@ -150,7 +158,7 @@ abstract class AbstractCollectionBinding implements Binding {
     return processResult(result, o);
   }
 
-  public boolean isBoundTo(Node node) {
+  public boolean isBoundTo(Object node) {
     if (!(node instanceof Element)) return false;
 
     final String tagName = getTagName();
@@ -160,10 +168,10 @@ abstract class AbstractCollectionBinding implements Binding {
       }
     }
 
-    return node.getNodeName().equals(tagName);
+    return ((Element)node).getName().equals(tagName);
   }
 
-  public Class<? extends Node> getBoundNodeType() {
+  public Class getBoundNodeType() {
     return Element.class;
   }
 

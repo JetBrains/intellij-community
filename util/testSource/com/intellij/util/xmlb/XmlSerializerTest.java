@@ -1,19 +1,13 @@
 package com.intellij.util.xmlb;
 
-import com.intellij.util.DOMUtil;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.annotations.*;
 import junit.framework.TestCase;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
+import org.jdom.Element;
 
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -26,7 +20,7 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public void testEmptyBeanSerialization() throws Exception {
-    doSerializerTest("<EmptyBean/>", new EmptyBean());
+    doSerializerTest("<EmptyBean />", new EmptyBean());
   }
 
   @Tag("Bean")
@@ -34,7 +28,7 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public void testEmptyBeanSerializationWithCustomName() throws Exception {
-    doSerializerTest("<Bean/>", new EmptyBeanWithCustomName());
+    doSerializerTest("<Bean />", new EmptyBeanWithCustomName());
   }
 
 
@@ -59,13 +53,19 @@ public class XmlSerializerTest extends TestCase {
     BeanWithPublicFields bean = new BeanWithPublicFields();
 
     doSerializerTest(
-      "<BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"hello\"/></BeanWithPublicFields>", bean);
+      "<BeanWithPublicFields>\n" +
+      "  <option name=\"INT_V\" value=\"1\" />\n" +
+      "  <option name=\"STRING_V\" value=\"hello\" />\n" +
+      "</BeanWithPublicFields>", bean);
 
     bean.INT_V = 2;
     bean.STRING_V = "bye";
 
     doSerializerTest(
-      "<BeanWithPublicFields><option name=\"INT_V\" value=\"2\"/><option name=\"STRING_V\" value=\"bye\"/></BeanWithPublicFields>", bean);
+      "<BeanWithPublicFields>\n" +
+      "  <option name=\"INT_V\" value=\"2\" />\n" +
+      "  <option name=\"STRING_V\" value=\"bye\" />\n" +
+      "</BeanWithPublicFields>", bean);
   }
 
 
@@ -77,7 +77,11 @@ public class XmlSerializerTest extends TestCase {
     BeanWithPublicFieldsDescendant bean = new BeanWithPublicFieldsDescendant();
 
     doSerializerTest(
-      "<BeanWithPublicFieldsDescendant><option name=\"NEW_S\" value=\"foo\"/><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"hello\"/></BeanWithPublicFieldsDescendant>",
+      "<BeanWithPublicFieldsDescendant>\n" +
+      "  <option name=\"NEW_S\" value=\"foo\" />\n" +
+      "  <option name=\"INT_V\" value=\"1\" />\n" +
+      "  <option name=\"STRING_V\" value=\"hello\" />\n" +
+      "</BeanWithPublicFieldsDescendant>",
       bean);
 
     bean.INT_V = 2;
@@ -85,7 +89,11 @@ public class XmlSerializerTest extends TestCase {
     bean.NEW_S = "bar";
 
     doSerializerTest(
-      "<BeanWithPublicFieldsDescendant><option name=\"NEW_S\" value=\"bar\"/><option name=\"INT_V\" value=\"2\"/><option name=\"STRING_V\" value=\"bye\"/></BeanWithPublicFieldsDescendant>",
+      "<BeanWithPublicFieldsDescendant>\n" +
+      "  <option name=\"NEW_S\" value=\"bar\" />\n" +
+      "  <option name=\"INT_V\" value=\"2\" />\n" +
+      "  <option name=\"STRING_V\" value=\"bye\" />\n" +
+      "</BeanWithPublicFieldsDescendant>",
       bean);
   }
 
@@ -97,13 +105,33 @@ public class XmlSerializerTest extends TestCase {
   public void testSubBeanSerialization() throws Exception {
     BeanWithSubBean bean = new BeanWithSubBean();
     doSerializerTest(
-      "<BeanWithSubBean><option name=\"BEAN1\"><Bean/></option><option name=\"BEAN2\"><BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"hello\"/></BeanWithPublicFields></option></BeanWithSubBean>",
+      "<BeanWithSubBean>\n" +
+      "  <option name=\"BEAN1\">\n" +
+      "    <Bean />\n" +
+      "  </option>\n" +
+      "  <option name=\"BEAN2\">\n" +
+      "    <BeanWithPublicFields>\n" +
+      "      <option name=\"INT_V\" value=\"1\" />\n" +
+      "      <option name=\"STRING_V\" value=\"hello\" />\n" +
+      "    </BeanWithPublicFields>\n" +
+      "  </option>\n" +
+      "</BeanWithSubBean>",
       bean);
     bean.BEAN2.INT_V = 2;
     bean.BEAN2.STRING_V = "bye";
 
     doSerializerTest(
-      "<BeanWithSubBean><option name=\"BEAN1\"><Bean/></option><option name=\"BEAN2\"><BeanWithPublicFields><option name=\"INT_V\" value=\"2\"/><option name=\"STRING_V\" value=\"bye\"/></BeanWithPublicFields></option></BeanWithSubBean>",
+      "<BeanWithSubBean>\n" +
+      "  <option name=\"BEAN1\">\n" +
+      "    <Bean />\n" +
+      "  </option>\n" +
+      "  <option name=\"BEAN2\">\n" +
+      "    <BeanWithPublicFields>\n" +
+      "      <option name=\"INT_V\" value=\"2\" />\n" +
+      "      <option name=\"STRING_V\" value=\"bye\" />\n" +
+      "    </BeanWithPublicFields>\n" +
+      "  </option>\n" +
+      "</BeanWithSubBean>",
       bean);
   }
 
@@ -111,18 +139,29 @@ public class XmlSerializerTest extends TestCase {
     BeanWithPublicFields bean1 = new BeanWithPublicFields();
 
     doSerializerTest(
-      "<BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"hello\"/></BeanWithPublicFields>",
+      "<BeanWithPublicFields>\n" +
+      "  <option name=\"INT_V\" value=\"1\" />\n" +
+      "  <option name=\"STRING_V\" value=\"hello\" />\n" +
+      "</BeanWithPublicFields>",
       bean1);
 
     bean1.STRING_V = null;
 
-    doSerializerTest("<BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\"/></BeanWithPublicFields>", bean1);
+    doSerializerTest(
+      "<BeanWithPublicFields>\n" +
+      "  <option name=\"INT_V\" value=\"1\" />\n" +
+      "  <option name=\"STRING_V\" />\n" +
+      "</BeanWithPublicFields>", bean1);
 
     BeanWithSubBean bean2 = new BeanWithSubBean();
     bean2.BEAN1 = null;
     bean2.BEAN2 = null;
 
-    doSerializerTest("<BeanWithSubBean><option name=\"BEAN1\"/><option name=\"BEAN2\"/></BeanWithSubBean>", bean2);
+    doSerializerTest(
+      "<BeanWithSubBean>\n" +
+      "  <option name=\"BEAN1\" />\n" +
+      "  <option name=\"BEAN2\" />\n" +
+      "</BeanWithSubBean>", bean2);
 
   }
 
@@ -134,13 +173,29 @@ public class XmlSerializerTest extends TestCase {
     BeanWithList bean = new BeanWithList();
 
     doSerializerTest(
-      "<BeanWithList><option name=\"VALUES\"><collection><option value=\"a\"/><option value=\"b\"/><option value=\"c\"/></collection></option></BeanWithList>",
+      "<BeanWithList>\n" +
+      "  <option name=\"VALUES\">\n" +
+      "    <collection>\n" +
+      "      <option value=\"a\" />\n" +
+      "      <option value=\"b\" />\n" +
+      "      <option value=\"c\" />\n" +
+      "    </collection>\n" +
+      "  </option>\n" +
+      "</BeanWithList>",
       bean);
 
     bean.VALUES = new ArrayList<String>(Arrays.asList("1", "2", "3"));
 
     doSerializerTest(
-      "<BeanWithList><option name=\"VALUES\"><collection><option value=\"1\"/><option value=\"2\"/><option value=\"3\"/></collection></option></BeanWithList>",
+      "<BeanWithList>\n" +
+      "  <option name=\"VALUES\">\n" +
+      "    <collection>\n" +
+      "      <option value=\"1\" />\n" +
+      "      <option value=\"2\" />\n" +
+      "      <option value=\"3\" />\n" +
+      "    </collection>\n" +
+      "  </option>\n" +
+      "</BeanWithList>",
       bean);
   }
 
@@ -151,12 +206,28 @@ public class XmlSerializerTest extends TestCase {
   public void testSetSerialization() throws Exception {
     BeanWithSet bean = new BeanWithSet();
     doSerializerTest(
-      "<BeanWithSet><option name=\"VALUES\"><collection><option value=\"w\"/><option value=\"a\"/><option value=\"b\"/></collection></option></BeanWithSet>",
+      "<BeanWithSet>\n" +
+      "  <option name=\"VALUES\">\n" +
+      "    <collection>\n" +
+      "      <option value=\"w\" />\n" +
+      "      <option value=\"a\" />\n" +
+      "      <option value=\"b\" />\n" +
+      "    </collection>\n" +
+      "  </option>\n" +
+      "</BeanWithSet>",
       bean);
     bean.VALUES = new HashSet<String>(Arrays.asList("1", "2", "3"));
 
     doSerializerTest(
-      "<BeanWithSet><option name=\"VALUES\"><collection><option value=\"3\"/><option value=\"2\"/><option value=\"1\"/></collection></option></BeanWithSet>",
+      "<BeanWithSet>\n" +
+      "  <option name=\"VALUES\">\n" +
+      "    <collection>\n" +
+      "      <option value=\"3\" />\n" +
+      "      <option value=\"2\" />\n" +
+      "      <option value=\"1\" />\n" +
+      "    </collection>\n" +
+      "  </option>\n" +
+      "</BeanWithSet>",
       bean);
   }
 
@@ -173,7 +244,15 @@ public class XmlSerializerTest extends TestCase {
   public void testMapSerialization() throws Exception {
     BeanWithMap bean = new BeanWithMap();
     doSerializerTest(
-      "<BeanWithMap><option name=\"VALUES\"><map><entry key=\"a\" value=\"1\"/><entry key=\"b\" value=\"2\"/><entry key=\"c\" value=\"3\"/></map></option></BeanWithMap>",
+      "<BeanWithMap>\n" +
+      "  <option name=\"VALUES\">\n" +
+      "    <map>\n" +
+      "      <entry key=\"a\" value=\"1\" />\n" +
+      "      <entry key=\"b\" value=\"2\" />\n" +
+      "      <entry key=\"c\" value=\"3\" />\n" +
+      "    </map>\n" +
+      "  </option>\n" +
+      "</BeanWithMap>",
       bean);
     bean.VALUES.clear();
     bean.VALUES.put("1", "a");
@@ -181,7 +260,14 @@ public class XmlSerializerTest extends TestCase {
     bean.VALUES.put("3", "c");
 
     doSerializerTest(
-      "<BeanWithMap><option name=\"VALUES\"><map><entry key=\"1\" value=\"a\"/><entry key=\"2\" value=\"b\"/><entry key=\"3\" value=\"c\"/></map></option></BeanWithMap>",
+      "<BeanWithMap>\n" +
+      "  <option name=\"VALUES\">\n" +
+      "    <map>\n" +
+      "      <entry key=\"1\" value=\"a\" />\n" +
+      "      <entry key=\"2\" value=\"b\" />\n" +
+      "      <entry key=\"3\" value=\"c\" />\n" +
+      "    </map>\n" + "  </option>\n" +
+      "</BeanWithMap>",
       bean);
   }
 
@@ -206,7 +292,11 @@ public class XmlSerializerTest extends TestCase {
   public void testMapSerializationWithAnnotations() throws Exception {
     BeanWithMapWithAnnotations bean = new BeanWithMapWithAnnotations();
     doSerializerTest(
-      "<BeanWithMapWithAnnotations><option name=\"a\" value=\"1\"/><option name=\"b\" value=\"2\"/><option name=\"c\" value=\"3\"/></BeanWithMapWithAnnotations>",
+      "<BeanWithMapWithAnnotations>\n" +
+      "  <option name=\"a\" value=\"1\" />\n" +
+      "  <option name=\"b\" value=\"2\" />\n" +
+      "  <option name=\"c\" value=\"3\" />\n" +
+      "</BeanWithMapWithAnnotations>",
       bean);
     bean.VALUES.clear();
     bean.VALUES.put("1", "a");
@@ -214,7 +304,11 @@ public class XmlSerializerTest extends TestCase {
     bean.VALUES.put("3", "c");
 
     doSerializerTest(
-      "<BeanWithMapWithAnnotations><option name=\"1\" value=\"a\"/><option name=\"2\" value=\"b\"/><option name=\"3\" value=\"c\"/></BeanWithMapWithAnnotations>",
+      "<BeanWithMapWithAnnotations>\n" +
+      "  <option name=\"1\" value=\"a\" />\n" +
+      "  <option name=\"2\" value=\"b\" />\n" +
+      "  <option name=\"3\" value=\"c\" />\n" +
+      "</BeanWithMapWithAnnotations>",
       bean);
   }
 
@@ -231,7 +325,33 @@ public class XmlSerializerTest extends TestCase {
     bean.VALUES.put("c", new BeanWithProperty("Bill"));
 
     doSerializerTest(
-      "<BeanWithMapWithBeanValue><option name=\"VALUES\"><map><entry key=\"a\"><value><BeanWithProperty><option name=\"name\" value=\"James\"/></BeanWithProperty></value></entry><entry key=\"b\"><value><BeanWithProperty><option name=\"name\" value=\"Bond\"/></BeanWithProperty></value></entry><entry key=\"c\"><value><BeanWithProperty><option name=\"name\" value=\"Bill\"/></BeanWithProperty></value></entry></map></option></BeanWithMapWithBeanValue>",
+      "<BeanWithMapWithBeanValue>\n" +
+      "  <option name=\"VALUES\">\n" +
+      "    <map>\n" +
+      "      <entry key=\"a\">\n" +
+      "        <value>\n" +
+      "          <BeanWithProperty>\n" +
+      "            <option name=\"name\" value=\"James\" />\n" +
+      "          </BeanWithProperty>\n" +
+      "        </value>\n" +
+      "      </entry>\n" +
+      "      <entry key=\"b\">\n" +
+      "        <value>\n" +
+      "          <BeanWithProperty>\n" +
+      "            <option name=\"name\" value=\"Bond\" />\n" +
+      "          </BeanWithProperty>\n" +
+      "        </value>\n" +
+      "      </entry>\n" +
+      "      <entry key=\"c\">\n" +
+      "        <value>\n" +
+      "          <BeanWithProperty>\n" +
+      "            <option name=\"name\" value=\"Bill\" />\n" +
+      "          </BeanWithProperty>\n" +
+      "        </value>\n" +
+      "      </entry>\n" +
+      "    </map>\n" +
+      "  </option>\n" +
+      "</BeanWithMapWithBeanValue>",
       bean);
   }
   public static class BeanWithProperty {                                
@@ -257,11 +377,18 @@ public class XmlSerializerTest extends TestCase {
   public void testPropertySerialization() throws Exception {
     BeanWithProperty bean = new BeanWithProperty();
 
-    doSerializerTest("<BeanWithProperty><option name=\"name\" value=\"James\"/></BeanWithProperty>", bean);
+    doSerializerTest(
+      "<BeanWithProperty>\n" +
+      "  <option name=\"name\" value=\"James\" />\n" +
+      "</BeanWithProperty>",
+      bean);
 
     bean.setName("Bond");
 
-    doSerializerTest("<BeanWithProperty><option name=\"name\" value=\"Bond\"/></BeanWithProperty>", bean);
+    doSerializerTest(
+      "<BeanWithProperty>\n" +
+      "  <option name=\"name\" value=\"Bond\" />\n" +
+      "</BeanWithProperty>", bean);
   }
 
   public static class BeanWithFieldWithTagAnnotation {
@@ -272,11 +399,18 @@ public class XmlSerializerTest extends TestCase {
   public void testFieldWithTagAnnotation() throws Exception {
     BeanWithFieldWithTagAnnotation bean = new BeanWithFieldWithTagAnnotation();
 
-    doSerializerTest("<BeanWithFieldWithTagAnnotation><name>hello</name></BeanWithFieldWithTagAnnotation>", bean);
+    doSerializerTest(
+      "<BeanWithFieldWithTagAnnotation>\n" +
+      "  <name>hello</name>\n" +
+      "</BeanWithFieldWithTagAnnotation>",
+      bean);
 
     bean.STRING_V = "bye";
 
-    doSerializerTest("<BeanWithFieldWithTagAnnotation><name>bye</name></BeanWithFieldWithTagAnnotation>", bean);
+    doSerializerTest(
+      "<BeanWithFieldWithTagAnnotation>\n" +
+      "  <name>bye</name>\n" +
+      "</BeanWithFieldWithTagAnnotation>", bean);
   }
 
   public void testShuffledDeserialize() throws Exception {
@@ -286,9 +420,9 @@ public class XmlSerializerTest extends TestCase {
 
     Element element = serialize(bean, null);
 
-    Node node = element.getChildNodes().item(0);
-    element.removeChild(node);
-    element.appendChild(node);
+    Element node = (Element)element.getChildren().get(0);
+    element.removeContent(node);
+    element.addContent(node);
 
     bean = XmlSerializer.deserialize(element, bean.getClass());
     assert bean != null;
@@ -298,7 +432,11 @@ public class XmlSerializerTest extends TestCase {
 
   public void testFilterSerializer() throws Exception {
     BeanWithPublicFields bean = new BeanWithPublicFields();
-    assertSerializer(bean, "<BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/></BeanWithPublicFields>", new SerializationFilter() {
+    assertSerializer(bean,
+                     "<BeanWithPublicFields>\n" +
+                     "  <option name=\"INT_V\" value=\"1\" />\n" +
+                     "</BeanWithPublicFields>",
+                     new SerializationFilter() {
       public boolean accepts(Accessor accessor, Object bean) {
         return accessor.getName().startsWith("I");
       }
@@ -310,10 +448,26 @@ public class XmlSerializerTest extends TestCase {
   }
   public void testArray() throws Exception {
     final BeanWithArray bean = new BeanWithArray();
-    doSerializerTest("<BeanWithArray><option name=\"ARRAY_V\"><array><option value=\"a\"/><option value=\"b\"/></array></option></BeanWithArray>", bean);
+    doSerializerTest(
+      "<BeanWithArray>\n" +
+      "  <option name=\"ARRAY_V\">\n" +
+      "    <array>\n" +
+      "      <option value=\"a\" />\n" +
+      "      <option value=\"b\" />\n" +
+      "    </array>\n" +
+      "  </option>\n" +
+      "</BeanWithArray>", bean);
 
     bean.ARRAY_V = new String[] {"1", "2", "3"};
-    doSerializerTest("<BeanWithArray><option name=\"ARRAY_V\"><array><option value=\"1\"/><option value=\"2\"/><option value=\"3\"/></array></option></BeanWithArray>", bean);
+    doSerializerTest(
+      "<BeanWithArray>\n" +
+      "  <option name=\"ARRAY_V\">\n" +
+      "    <array>\n" +
+      "      <option value=\"1\" />\n" +
+      "      <option value=\"2\" />\n" +
+      "      <option value=\"3\" />\n" +
+      "    </array>\n" + "  </option>\n" +
+      "</BeanWithArray>", bean);
   }
 
   public static class BeanWithTransient {
@@ -327,7 +481,7 @@ public class XmlSerializerTest extends TestCase {
   }
   public void testTransient() throws Exception {
     final BeanWithTransient bean = new BeanWithTransient();
-    doSerializerTest("<BeanWithTransient/>", bean);
+    doSerializerTest("<BeanWithTransient />", bean);
   }
 
   public static class BeanWithArrayWithoutTagName {
@@ -354,11 +508,29 @@ public class XmlSerializerTest extends TestCase {
   public void testArrayAnnotationWithElementTag() throws Exception {
     final BeanWithArrayWithElementTagName bean = new BeanWithArrayWithElementTagName();
 
-    doSerializerTest("<BeanWithArrayWithElementTagName><option name=\"V\"><array><vvalue v=\"a\"/><vvalue v=\"b\"/></array></option></BeanWithArrayWithElementTagName>", bean);
+    doSerializerTest(
+      "<BeanWithArrayWithElementTagName>\n" +
+      "  <option name=\"V\">\n" +
+      "    <array>\n" +
+      "      <vvalue v=\"a\" />\n" +
+      "      <vvalue v=\"b\" />\n" +
+      "    </array>\n" +
+      "  </option>\n" +
+      "</BeanWithArrayWithElementTagName>",
+      bean);
 
     bean.V = new String[] {"1", "2", "3"};
 
-    doSerializerTest("<BeanWithArrayWithElementTagName><option name=\"V\"><array><vvalue v=\"1\"/><vvalue v=\"2\"/><vvalue v=\"3\"/></array></option></BeanWithArrayWithElementTagName>", bean);
+    doSerializerTest(
+      "<BeanWithArrayWithElementTagName>\n" +
+      "  <option name=\"V\">\n" +
+      "    <array>\n" +
+      "      <vvalue v=\"1\" />\n" +
+      "      <vvalue v=\"2\" />\n" +
+      "      <vvalue v=\"3\" />\n" +
+      "    </array>\n" +
+      "  </option>\n" +
+      "</BeanWithArrayWithElementTagName>", bean);
   }
 
   public static class BeanWithArrayWithoutTag {
@@ -369,11 +541,26 @@ public class XmlSerializerTest extends TestCase {
   public void testArrayWithoutTag() throws Exception {
     final BeanWithArrayWithoutTag bean = new BeanWithArrayWithoutTag();
 
-    doSerializerTest("<BeanWithArrayWithoutTag><option name=\"V\"><vvalue v=\"a\"/><vvalue v=\"b\"/></option><option name=\"INT_V\" value=\"1\"/></BeanWithArrayWithoutTag>", bean);
+    doSerializerTest(
+      "<BeanWithArrayWithoutTag>\n" +
+      "  <option name=\"V\">\n" +
+      "    <vvalue v=\"a\" />\n" +
+      "    <vvalue v=\"b\" />\n" +
+      "  </option>\n" +
+      "  <option name=\"INT_V\" value=\"1\" />\n" +
+      "</BeanWithArrayWithoutTag>", bean);
 
     bean.V = new String[] {"1", "2", "3"};
 
-    doSerializerTest("<BeanWithArrayWithoutTag><option name=\"V\"><vvalue v=\"1\"/><vvalue v=\"2\"/><vvalue v=\"3\"/></option><option name=\"INT_V\" value=\"1\"/></BeanWithArrayWithoutTag>", bean);
+    doSerializerTest(
+      "<BeanWithArrayWithoutTag>\n" +
+      "  <option name=\"V\">\n" +
+      "    <vvalue v=\"1\" />\n" +
+      "    <vvalue v=\"2\" />\n" +
+      "    <vvalue v=\"3\" />\n" +
+      "  </option>\n" +
+      "  <option name=\"INT_V\" value=\"1\" />\n" +
+      "</BeanWithArrayWithoutTag>", bean);
   }
 
 
@@ -402,12 +589,27 @@ public class XmlSerializerTest extends TestCase {
   public void testPropertyWithoutTag() throws Exception {
     final BeanWithPropertyWithoutTag bean = new BeanWithPropertyWithoutTag();
 
-    doSerializerTest("<BeanWithPropertyWithoutTag><BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"hello\"/></BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/></BeanWithPropertyWithoutTag>", bean);
+    doSerializerTest(
+      "<BeanWithPropertyWithoutTag>\n" +
+      "  <BeanWithPublicFields>\n" +
+      "    <option name=\"INT_V\" value=\"1\" />\n" +
+      "    <option name=\"STRING_V\" value=\"hello\" />\n" +
+      "  </BeanWithPublicFields>\n" +
+      "  <option name=\"INT_V\" value=\"1\" />\n" +
+      "</BeanWithPropertyWithoutTag>",
+      bean);
 
     bean.INT_V = 2;
     bean.BEAN1.STRING_V = "junk";
 
-    doSerializerTest("<BeanWithPropertyWithoutTag><BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"junk\"/></BeanWithPublicFields><option name=\"INT_V\" value=\"2\"/></BeanWithPropertyWithoutTag>", bean);
+    doSerializerTest(
+      "<BeanWithPropertyWithoutTag>\n" +
+      "  <BeanWithPublicFields>\n" +
+      "    <option name=\"INT_V\" value=\"1\" />\n" +
+      "    <option name=\"STRING_V\" value=\"junk\" />\n" +
+      "  </BeanWithPublicFields>\n" +
+      "  <option name=\"INT_V\" value=\"2\" />\n" +
+      "</BeanWithPropertyWithoutTag>", bean);
   }
 
 
@@ -420,12 +622,23 @@ public class XmlSerializerTest extends TestCase {
   public void testArrayWithoutAllTags() throws Exception {
     final BeanWithArrayWithoutAllsTag bean = new BeanWithArrayWithoutAllsTag();
 
-    doSerializerTest("<BeanWithArrayWithoutAllsTag><vvalue v=\"a\"/><vvalue v=\"b\"/><option name=\"INT_V\" value=\"1\"/></BeanWithArrayWithoutAllsTag>", bean);
+    doSerializerTest(
+      "<BeanWithArrayWithoutAllsTag>\n" +
+      "  <vvalue v=\"a\" />\n" +
+      "  <vvalue v=\"b\" />\n" +
+      "  <option name=\"INT_V\" value=\"1\" />\n" +
+      "</BeanWithArrayWithoutAllsTag>", bean);
 
     bean.INT_V = 2;
     bean.V = new String[] {"1", "2", "3"};
 
-    doSerializerTest("<BeanWithArrayWithoutAllsTag><vvalue v=\"1\"/><vvalue v=\"2\"/><vvalue v=\"3\"/><option name=\"INT_V\" value=\"2\"/></BeanWithArrayWithoutAllsTag>", bean);
+    doSerializerTest(
+      "<BeanWithArrayWithoutAllsTag>\n" +
+      "  <vvalue v=\"1\" />\n" +
+      "  <vvalue v=\"2\" />\n" +
+      "  <vvalue v=\"3\" />\n" +
+      "  <option name=\"INT_V\" value=\"2\" />\n" +
+      "</BeanWithArrayWithoutAllsTag>", bean);
   }
 
   public static class BeanWithArrayWithoutAllsTag2 {
@@ -437,12 +650,23 @@ public class XmlSerializerTest extends TestCase {
   public void testArrayWithoutAllTags2() throws Exception {
     final BeanWithArrayWithoutAllsTag2 bean = new BeanWithArrayWithoutAllsTag2();
 
-    doSerializerTest("<BeanWithArrayWithoutAllsTag2><vvalue>a</vvalue><vvalue>b</vvalue><option name=\"INT_V\" value=\"1\"/></BeanWithArrayWithoutAllsTag2>", bean);
+    doSerializerTest(
+      "<BeanWithArrayWithoutAllsTag2>\n" +
+      "  <vvalue>a</vvalue>\n" +
+      "  <vvalue>b</vvalue>\n" +
+      "  <option name=\"INT_V\" value=\"1\" />\n" +
+      "</BeanWithArrayWithoutAllsTag2>", bean);
 
     bean.INT_V = 2;
     bean.V = new String[] {"1", "2", "3"};
 
-    doSerializerTest("<BeanWithArrayWithoutAllsTag2><vvalue>1</vvalue><vvalue>2</vvalue><vvalue>3</vvalue><option name=\"INT_V\" value=\"2\"/></BeanWithArrayWithoutAllsTag2>", bean);
+    doSerializerTest(
+      "<BeanWithArrayWithoutAllsTag2>\n" +
+      "  <vvalue>1</vvalue>\n" +
+      "  <vvalue>2</vvalue>\n" +
+      "  <vvalue>3</vvalue>\n" +
+      "  <option name=\"INT_V\" value=\"2\" />\n" +
+      "</BeanWithArrayWithoutAllsTag2>", bean);
   }
 
   public void testDeserializeFromFormattedXML() throws Exception {
@@ -450,7 +674,7 @@ public class XmlSerializerTest extends TestCase {
                  "  <vvalue v=\"2\"/>\n" + "  <vvalue v=\"3\"/>\n" + "</BeanWithArrayWithoutAllsTag>";
 
     final BeanWithArrayWithoutAllsTag bean =
-      XmlSerializer.deserialize(DOMUtil.loadText(xml).getDocumentElement(), BeanWithArrayWithoutAllsTag.class);
+      XmlSerializer.deserialize(JDOMUtil.loadDocument(xml).getRootElement(), BeanWithArrayWithoutAllsTag.class);
 
 
     assertEquals(2, bean.INT_V);
@@ -466,11 +690,35 @@ public class XmlSerializerTest extends TestCase {
   public void testPolymorphicArray() throws Exception {
     final BeanWithPolymorphicArray bean = new BeanWithPolymorphicArray();
 
-    doSerializerTest("<BeanWithPolymorphicArray><option name=\"V\"><array/></option></BeanWithPolymorphicArray>", bean);
+    doSerializerTest(
+      "<BeanWithPolymorphicArray>\n" +
+      "  <option name=\"V\">\n" +
+      "    <array />\n" +
+      "  </option>\n" +
+      "</BeanWithPolymorphicArray>", bean);
 
     bean.V = new BeanWithPublicFields[] {new BeanWithPublicFields(), new BeanWithPublicFieldsDescendant(), new BeanWithPublicFields()};
 
-    doSerializerTest("<BeanWithPolymorphicArray><option name=\"V\"><array><BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"hello\"/></BeanWithPublicFields><BeanWithPublicFieldsDescendant><option name=\"NEW_S\" value=\"foo\"/><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"hello\"/></BeanWithPublicFieldsDescendant><BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"hello\"/></BeanWithPublicFields></array></option></BeanWithPolymorphicArray>", bean);
+    doSerializerTest(
+      "<BeanWithPolymorphicArray>\n" +
+      "  <option name=\"V\">\n" +
+      "    <array>\n" +
+      "      <BeanWithPublicFields>\n" +
+      "        <option name=\"INT_V\" value=\"1\" />\n" +
+      "        <option name=\"STRING_V\" value=\"hello\" />\n" +
+      "      </BeanWithPublicFields>\n" +
+      "      <BeanWithPublicFieldsDescendant>\n" +
+      "        <option name=\"NEW_S\" value=\"foo\" />\n" +
+      "        <option name=\"INT_V\" value=\"1\" />\n" +
+      "        <option name=\"STRING_V\" value=\"hello\" />\n" +
+      "      </BeanWithPublicFieldsDescendant>\n" +
+      "      <BeanWithPublicFields>\n" +
+      "        <option name=\"INT_V\" value=\"1\" />\n" +
+      "        <option name=\"STRING_V\" value=\"hello\" />\n" +
+      "      </BeanWithPublicFields>\n" +
+      "    </array>\n" +
+      "  </option>\n" +
+      "</BeanWithPolymorphicArray>", bean);
   }
 
 
@@ -483,12 +731,12 @@ public class XmlSerializerTest extends TestCase {
   public void testBeanWithPrimitivePropertyBoundToAttribute() throws Exception {
     final BeanWithPropertiesBoundToAttribute bean = new BeanWithPropertiesBoundToAttribute();
 
-    doSerializerTest("<BeanWithPropertiesBoundToAttribute count=\"3\" name=\"James\"/>", bean);
+    doSerializerTest("<BeanWithPropertiesBoundToAttribute count=\"3\" name=\"James\" />", bean);
 
     bean.COUNT = 10;
     bean.name = "Bond";
 
-    doSerializerTest("<BeanWithPropertiesBoundToAttribute count=\"10\" name=\"Bond\"/>", bean);
+    doSerializerTest("<BeanWithPropertiesBoundToAttribute count=\"10\" name=\"Bond\" />", bean);
   }
 
 
@@ -507,16 +755,20 @@ public class XmlSerializerTest extends TestCase {
     BeanWithPropertyFilter bean = new BeanWithPropertyFilter();
 
     doSerializerTest(
-      "<BeanWithPropertyFilter><option name=\"STRING_V\" value=\"hello\"/></BeanWithPropertyFilter>", bean);
+      "<BeanWithPropertyFilter>\n" +
+      "  <option name=\"STRING_V\" value=\"hello\" />\n" +
+      "</BeanWithPropertyFilter>", bean);
 
     bean.STRING_V = "bye";
 
     doSerializerTest(
-      "<BeanWithPropertyFilter><option name=\"STRING_V\" value=\"bye\"/></BeanWithPropertyFilter>", bean);
+      "<BeanWithPropertyFilter>\n" +
+      "  <option name=\"STRING_V\" value=\"bye\" />\n" +
+      "</BeanWithPropertyFilter>", bean);
 
     bean.STRING_V = "skip";
 
-    assertSerializer(bean, "<BeanWithPropertyFilter/>", "Serialization failure", null);
+    assertSerializer(bean, "<BeanWithPropertyFilter />", "Serialization failure", null);
   }
 
   public static class BeanWithJDOMElement {
@@ -527,9 +779,9 @@ public class XmlSerializerTest extends TestCase {
   public void testJDOMElementField() throws Exception {
 
 
-    final BeanWithJDOMElement bean = XmlSerializer.deserialize(DOMUtil.loadText(
+    final BeanWithJDOMElement bean = XmlSerializer.deserialize(JDOMUtil.loadDocument(
       "<BeanWithJDOMElement><option name=\"STRING_V\" value=\"bye\"/><actions><action/><action/></actions></BeanWithJDOMElement>"
-    ).getDocumentElement(), BeanWithJDOMElement.class);
+    ).getRootElement(), BeanWithJDOMElement.class);
 
 
     assertEquals("bye", bean.STRING_V);
@@ -545,9 +797,9 @@ public class XmlSerializerTest extends TestCase {
   public void testJDOMElementArrayField() throws Exception {
 
 
-    final BeanWithJDOMElementArray bean = XmlSerializer.deserialize(DOMUtil.loadText(
+    final BeanWithJDOMElementArray bean = XmlSerializer.deserialize(JDOMUtil.loadDocument(
       "<BeanWithJDOMElementArray><option name=\"STRING_V\" value=\"bye\"/><actions><action/><action/></actions><actions><action/></actions></BeanWithJDOMElementArray>"
-    ).getDocumentElement(), BeanWithJDOMElementArray.class);
+    ).getRootElement(), BeanWithJDOMElementArray.class);
 
 
     assertEquals("bye", bean.STRING_V);
@@ -575,13 +827,19 @@ public class XmlSerializerTest extends TestCase {
     BeanWithTextAnnotation bean = new BeanWithTextAnnotation();
 
     doSerializerTest(
-      "<BeanWithTextAnnotation><option name=\"INT_V\" value=\"1\"/>hello</BeanWithTextAnnotation>", bean);
+      "<BeanWithTextAnnotation>\n" +
+      "  <option name=\"INT_V\" value=\"1\" />\n" +
+      "  hello\n" +
+      "</BeanWithTextAnnotation>", bean);
 
     bean.INT_V = 2;
     bean.STRING_V = "bye";
 
     doSerializerTest(
-      "<BeanWithTextAnnotation><option name=\"INT_V\" value=\"2\"/>bye</BeanWithTextAnnotation>", bean);
+      "<BeanWithTextAnnotation>\n" +
+      "  <option name=\"INT_V\" value=\"2\" />\n" +
+      "  bye\n" +
+      "</BeanWithTextAnnotation>", bean);
   }
 
 
@@ -590,7 +848,7 @@ public class XmlSerializerTest extends TestCase {
     bean.STRING_V = "zzz";
 
     String xml = "<BeanWithPublicFields><option name=\"INT_V\" value=\"999\"/></BeanWithPublicFields>";
-    XmlSerializer.deserializeInto(bean, DOMUtil.loadText(xml).getDocumentElement());
+    XmlSerializer.deserializeInto(bean, JDOMUtil.loadDocument(xml).getRootElement());
 
     assertEquals(999, bean.INT_V);
     assertEquals("zzz", bean.STRING_V);
@@ -610,19 +868,51 @@ public class XmlSerializerTest extends TestCase {
     bean.MAP.put(new BeanWithPublicFields(5, "e"), new BeanWithTextAnnotation(6, "f"));
 
     doSerializerTest(
-      "<BeanWithMapWithoutSurround><map><pair><BeanWithPublicFields><option name=\"INT_V\" value=\"1\"/><option name=\"STRING_V\" value=\"a\"/></BeanWithPublicFields><BeanWithTextAnnotation><option name=\"INT_V\" value=\"2\"/>b</BeanWithTextAnnotation></pair><pair><BeanWithPublicFields><option name=\"INT_V\" value=\"3\"/><option name=\"STRING_V\" value=\"c\"/></BeanWithPublicFields><BeanWithTextAnnotation><option name=\"INT_V\" value=\"4\"/>d</BeanWithTextAnnotation></pair><pair><BeanWithPublicFields><option name=\"INT_V\" value=\"5\"/><option name=\"STRING_V\" value=\"e\"/></BeanWithPublicFields><BeanWithTextAnnotation><option name=\"INT_V\" value=\"6\"/>f</BeanWithTextAnnotation></pair></map></BeanWithMapWithoutSurround>",
+      "<BeanWithMapWithoutSurround>\n" +
+      "  <map>\n" +
+      "    <pair>\n" +
+      "      <BeanWithPublicFields>\n" +
+      "        <option name=\"INT_V\" value=\"1\" />\n" +
+      "        <option name=\"STRING_V\" value=\"a\" />\n" +
+      "      </BeanWithPublicFields>\n" +
+      "      <BeanWithTextAnnotation>\n" +
+      "        <option name=\"INT_V\" value=\"2\" />\n" +
+      "        b\n" +
+      "      </BeanWithTextAnnotation>\n" +
+      "    </pair>\n" + "    <pair>\n" +
+      "      <BeanWithPublicFields>\n" +
+      "        <option name=\"INT_V\" value=\"3\" />\n" +
+      "        <option name=\"STRING_V\" value=\"c\" />\n" +
+      "      </BeanWithPublicFields>\n" +
+      "      <BeanWithTextAnnotation>\n" +
+      "        <option name=\"INT_V\" value=\"4\" />\n" +
+      "        d\n" +
+      "      </BeanWithTextAnnotation>\n" +
+      "    </pair>\n" +
+      "    <pair>\n" +
+      "      <BeanWithPublicFields>\n" +
+      "        <option name=\"INT_V\" value=\"5\" />\n" +
+      "        <option name=\"STRING_V\" value=\"e\" />\n" +
+      "      </BeanWithPublicFields>\n" +
+      "      <BeanWithTextAnnotation>\n" +
+      "        <option name=\"INT_V\" value=\"6\" />\n" +
+      "        f\n" +
+      "      </BeanWithTextAnnotation>\n" +
+      "    </pair>\n" +
+      "  </map>\n" +
+      "</BeanWithMapWithoutSurround>",
       bean);
   }
 
 
   //---------------------------------------------------------------------------------------------------
   private void assertSerializer(Object bean, String expected, SerializationFilter filter)
-    throws TransformerException, ParserConfigurationException {
+    throws TransformerException, ParserConfigurationException, IOException {
     assertSerializer(bean, expected, "Serialization failure", filter);
   }
 
   private void doSerializerTest(String expectedText, Object bean)
-    throws ParserConfigurationException, TransformerException, XmlSerializationException {
+    throws ParserConfigurationException, TransformerException, XmlSerializationException, IOException {
     Element element = assertSerializer(bean, expectedText, "Serialization failure", null);
 
     //test deserializer
@@ -632,17 +922,11 @@ public class XmlSerializerTest extends TestCase {
   }
 
   private Element assertSerializer(Object bean, String expectedText, String message, SerializationFilter filter)
-    throws ParserConfigurationException, XmlSerializationException, TransformerException {
+    throws ParserConfigurationException, XmlSerializationException, TransformerException, IOException {
     Element element = serialize(bean, filter);
 
-    TransformerFactory transformerFactory = TransformerFactory.newInstance();
-    Transformer transformer = transformerFactory.newTransformer();
-    DOMSource source = new DOMSource(element);
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    StreamResult result = new StreamResult(byteArrayOutputStream);
-    transformer.transform(source, result);
 
-    String actualString = new String(byteArrayOutputStream.toByteArray()).trim();
+    String actualString = JDOMUtil.writeElement(element, "\n").trim();
 
     if (!expectedText.startsWith(XML_PREFIX)) {
       if (actualString.startsWith(XML_PREFIX)) actualString = actualString.substring(XML_PREFIX.length()).trim();
@@ -654,10 +938,6 @@ public class XmlSerializerTest extends TestCase {
   }
 
   private Element serialize(Object bean, SerializationFilter filter) throws ParserConfigurationException {
-    Document document = DOMUtil.createDocument();
-
-    Element element = XmlSerializer.serialize(bean, document, filter);
-    document.appendChild(element);
-    return element;
+    return XmlSerializer.serialize(bean, filter);
   }
 }

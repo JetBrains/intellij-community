@@ -4,19 +4,19 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.DOMUtil;
+import com.intellij.util.SystemProperties;
 import static com.intellij.util.io.fs.FileSystem.FILE_SYSTEM;
 import com.intellij.util.io.fs.IFile;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -41,7 +41,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
   @Nullable
   protected Element getRootElement() throws StateStorageException {
-    return getDocument().getDocumentElement();
+    return getDocument().getRootElement();
   }
 
   public void save() throws StateStorageException {
@@ -112,7 +112,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
   private byte[] printDocument() throws StateStorageException {
     try {
-      return DOMUtil.print(getDocument()).getBytes(CharsetToolkit.UTF8);
+      return JDOMUtil.writeDocument(getDocument(), SystemProperties.getLineSeparator()).getBytes(CharsetToolkit.UTF8);
     }
     catch (UnsupportedEncodingException e) {
       LOG.error(e);
@@ -169,21 +169,16 @@ public class FileBasedStorage extends XmlElementStorage {
     if (myDocument == null) {
       try {
         if (!myFile.exists() || myFile.length() == 0) {
-          myDocument = DOMUtil.createDocument();
-          final Element rootElement = myDocument.createElement(myRootElementName);
-          myDocument.appendChild(rootElement);
+          myDocument = new Document(new Element(myRootElementName));
         }
         else {
-          myDocument = DOMUtil.load(myFile);
+          myDocument = JDOMUtil.loadDocument(myFile);
         }
       }
       catch (IOException e) {
         throw new StateStorageException(e);
       }
-      catch (ParserConfigurationException e) {
-        throw new StateStorageException(e);
-      }
-      catch (SAXException e) {
+      catch (JDOMException e) {
         throw new StateStorageException(e);
       }
     }

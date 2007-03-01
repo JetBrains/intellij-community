@@ -1,7 +1,6 @@
 package com.intellij.util.xmlb;
 
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Node;
 
 class AccessorBindingWrapper implements Binding {
   private Accessor myAccessor;
@@ -13,21 +12,21 @@ class AccessorBindingWrapper implements Binding {
     myBinding = binding;
   }
 
-  public Node serialize(Object o, Node context) {
+  public Object serialize(Object o, Object context) {
     return myBinding.serialize(myAccessor.read(o), context);
   }
 
   @Nullable
-  public Object deserialize(Object context, Node... nodes) {
+  public Object deserialize(Object context, Object... nodes) {
     myAccessor.write(context, myBinding.deserialize(myAccessor.read(context), nodes));
     return context;
   }
 
-  public boolean isBoundTo(Node node) {
+  public boolean isBoundTo(Object node) {
     return myBinding.isBoundTo(node);
   }
 
-  public Class<? extends Node> getBoundNodeType() {
+  public Class getBoundNodeType() {
     return myBinding.getBoundNodeType();
   }
 

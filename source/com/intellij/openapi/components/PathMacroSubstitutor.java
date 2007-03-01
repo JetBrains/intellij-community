@@ -1,6 +1,6 @@
 package com.intellij.openapi.components;
 
-import org.w3c.dom.Element;
+import org.jdom.Element;
 
 public interface PathMacroSubstitutor {
   String expandPath(String path);

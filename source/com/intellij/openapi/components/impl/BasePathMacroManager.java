@@ -87,11 +87,11 @@ public class BasePathMacroManager extends PathMacroManager {
       return getReplacePathMap().substitute(path, SystemInfo.isFileSystemCaseSensitive, myUsedMacros);
     }
 
-    public void expandPaths(final org.w3c.dom.Element element) {
+    public void expandPaths(final Element element) {
       getExpandMacroMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, myUsedMacros);
     }
 
-    public void collapsePaths(final org.w3c.dom.Element element) {
+    public void collapsePaths(final Element element) {
       getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, myUsedMacros);
     }
 

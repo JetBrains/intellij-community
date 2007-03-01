@@ -1,8 +1,8 @@
 package com.intellij.util.xmlb;
 
+import org.jdom.Content;
+import org.jdom.Text;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Node;
-import org.w3c.dom.Text;
 
 public class TextBinding implements Binding {
   private Accessor myAccessor;
@@ -14,28 +14,28 @@ public class TextBinding implements Binding {
     myXmlSerializer = xmlSerializer;
   }
 
-  public Node serialize(Object o, Node context) {
+  public Object serialize(Object o, Object context) {
     final Object v = myAccessor.read(o);
-    final Node node = myBinding.serialize(v, context);
+    final Object node = myBinding.serialize(v, context);
 
-    return context.getOwnerDocument().createTextNode(node.getTextContent());
+    return new Text(((Content)node).getValue());
   }
 
   @Nullable
-  public Object deserialize(Object context, Node... nodes) {
+  public Object deserialize(Object context, Object... nodes) {
     assert nodes.length == 1;
-    Node node = nodes[0];
+    Object node = nodes[0];
     assert isBoundTo(node);
 
     myAccessor.write(context, myBinding.deserialize(context, nodes[0]));
     return context;
   }
 
-  public boolean isBoundTo(Node node) {
+  public boolean isBoundTo(Object node) {
     return node instanceof Text;
   }
 
-  public Class<? extends Node> getBoundNodeType() {
+  public Class getBoundNodeType() {
     return Text.class;
   }
 

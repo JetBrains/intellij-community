@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="ModuleRootManager" />
-  <component inherit-compiler-output="true" name="NewModuleRootManager">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
     <output url="file://$MODULE_DIR$/../out/classes/production/openapi" />
     <exclude-output />
     <output-test url="file://$MODULE_DIR$/../out/classes/test/openapi" />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder isTestSource="false" url="file://$MODULE_DIR$/src" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry forTests="false" type="sourceFolder" />
-    <orderEntry exported="" module-name="util" type="module" />
-    <orderEntry exported="" module-name="appcore-api" type="module" />
-    <orderEntry module-name="idea_rt" type="module" />
-    <orderEntry level="project" name="JUnit4" type="library" />
-    <orderEntry level="project" name="JDOM" type="library" />
-    <orderEntry module-name="forms_rt" type="module" />
-    <orderEntry level="project" name="Trove4j" type="library" />
-    <orderEntry level="project" name="Jasper2" type="library" />
-    <orderEntry exported="" module-name="pom" type="module" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="util" exported="" />
+    <orderEntry type="module" module-name="appcore-api" exported="" />
+    <orderEntry type="module" module-name="idea_rt" />
+    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="library" name="JDOM" level="project" />
+    <orderEntry type="module" module-name="forms_rt" />
+    <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="library" name="Jasper2" level="project" />
+    <orderEntry type="module" module-name="pom" exported="" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -28,24 +28,24 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry exported="" module-name="extensions" type="module" />
-    <orderEntry level="project" name="XmlRPC" type="library" />
-    <orderEntry exported="" module-name="Annotations" type="module" />
-    <orderEntry module-name="icons" type="module" />
-    <orderEntry exported="" module-name="resources_eng" type="module" />
-    <orderEntry exported="" module-name="codeInsight-openapi" type="module" />
-    <orderEntry exported="" module-name="inspections-openapi" type="module" />
-    <orderEntry exported="" module-name="refactoring-openapi" type="module" />
-    <orderEntry exported="" module-name="compiler-openapi" type="module" />
-    <orderEntry exported="" module-name="execution-openapi" type="module" />
-    <orderEntry exported="" module-name="action-system-openapi" type="module" />
-    <orderEntry exported="" module-name="ui-openapi" type="module" />
-    <orderEntry exported="" module-name="graph-openapi" type="module" />
-    <orderEntry exported="" level="project" name="NanoXML" type="library" />
-    <orderEntry exported="" level="project" name="microba" type="library" />
-    <orderEntry exported="" module-name="jsp-openapi" type="module" />
-    <orderEntry level="project" name="jgoodies-forms" type="library" />
-    <orderEntry exported="" module-name="lvcs-openapi" type="module" />
+    <orderEntry type="module" module-name="extensions" exported="" />
+    <orderEntry type="library" name="XmlRPC" level="project" />
+    <orderEntry type="module" module-name="Annotations" exported="" />
+    <orderEntry type="module" module-name="icons" />
+    <orderEntry type="module" module-name="resources_eng" exported="" />
+    <orderEntry type="module" module-name="codeInsight-openapi" exported="" />
+    <orderEntry type="module" module-name="inspections-openapi" exported="" />
+    <orderEntry type="module" module-name="refactoring-openapi" exported="" />
+    <orderEntry type="module" module-name="compiler-openapi" exported="" />
+    <orderEntry type="module" module-name="execution-openapi" exported="" />
+    <orderEntry type="module" module-name="action-system-openapi" exported="" />
+    <orderEntry type="module" module-name="ui-openapi" exported="" />
+    <orderEntry type="module" module-name="graph-openapi" exported="" />
+    <orderEntry type="library" exported="" name="NanoXML" level="project" />
+    <orderEntry type="library" exported="" name="microba" level="project" />
+    <orderEntry type="module" module-name="jsp-openapi" exported="" />
+    <orderEntry type="library" name="jgoodies-forms" level="project" />
+    <orderEntry type="module" module-name="lvcs-openapi" exported="" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

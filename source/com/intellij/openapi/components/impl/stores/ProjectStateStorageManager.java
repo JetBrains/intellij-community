@@ -7,10 +7,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.project.Project;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -57,25 +55,21 @@ class ProjectStateStorageManager extends StateStorageManager {
         }
       }
 
-      final NodeList oldElements = element.getElementsByTagName(USED_MACROS_ELEMENT_NAME);
-      for (int i = 0; i < oldElements.getLength(); i++) {
-        final Node oldElement = oldElements.item(i);
-        oldElement.getParentNode().removeChild(oldElement);
-      }
+      element.removeChildren(USED_MACROS_ELEMENT_NAME);
 
       if (!usedMacros.isEmpty()) {
 
-        Element usedMacrosElement = element.getOwnerDocument().createElement(USED_MACROS_ELEMENT_NAME);
+        Element usedMacrosElement = new Element(USED_MACROS_ELEMENT_NAME);
 
         for (String usedMacro : usedMacros) {
-          Element macroElement = element.getOwnerDocument().createElement(ELEMENT_MACRO);
+          Element macroElement = new Element(ELEMENT_MACRO);
 
           macroElement.setAttribute(NAME_ATTR, usedMacro);
 
-          usedMacrosElement.appendChild(macroElement);
+          usedMacrosElement.addContent(macroElement);
         }
 
-        element.appendChild(usedMacrosElement);
+        element.addContent(usedMacrosElement);
       }
     }
 

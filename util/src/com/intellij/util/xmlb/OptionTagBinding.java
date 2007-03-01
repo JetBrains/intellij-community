@@ -1,7 +1,11 @@
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.util.JDOMUtil;
+import org.jdom.Attribute;
+import org.jdom.Content;
+import org.jdom.Element;
+import org.jdom.Text;
 import org.jetbrains.annotations.NonNls;
-import org.w3c.dom.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,50 +22,48 @@ class OptionTagBinding implements Binding {
     myBinding = xmlSerializer.getBinding(accessor);
   }
 
-  public Node serialize(Object o, Node context) {
-    Document ownerDocument = XmlSerializerImpl.getOwnerDocument(context);
-    Element targetElement = ownerDocument.createElement(Constants.OPTION);
+  public Object serialize(Object o, Object context) {
+    Element targetElement = new Element(Constants.OPTION);
     Object value = accessor.read(o);
 
     targetElement.setAttribute(Constants.NAME, myName);
 
     if (value == null) return targetElement;
 
-    Node node = myBinding.serialize(value, targetElement);
+    Object node = myBinding.serialize(value, targetElement);
     if (node instanceof Text) {
       Text text = (Text)node;
-      targetElement.setAttribute(Constants.VALUE, text.getWholeText());
+      targetElement.setAttribute(Constants.VALUE, text.getText());
     }
     else {
       if (targetElement != node) {
-        targetElement.appendChild(node);
+        JDOMUtil.addContent(targetElement, node);
       }
     }
 
     return targetElement;
   }
 
-  public Object deserialize(Object o, Node... nodes) {
+  public Object deserialize(Object o, Object... nodes) {
     assert nodes.length == 1;
     Element element = ((Element)nodes[0]);
-    Attr valueAttr = element.getAttributeNode(Constants.VALUE);
+    Attribute valueAttr = element.getAttribute(Constants.VALUE);
 
     if (valueAttr != null) {
       Object value = myBinding.deserialize(o, valueAttr);
       accessor.write(o, value);
     }
     else {
-      NodeList nodeList = element.getChildNodes();
-      List<Node> children = new ArrayList<Node>();
+      final Content[] childElements = JDOMUtil.getContent(element);
+      List<Object> children = new ArrayList<Object>();
 
-      for (int i = 0; i < nodeList.getLength(); i++) {
-        final Node child = nodeList.item(i);
+      for (final Content child : childElements) {
         if (XmlSerializerImpl.isIgnoredNode(child)) continue;
         children.add(child);
       }
 
       if (children.size() > 0) {
-        Object value = myBinding.deserialize(accessor.read(o), children.toArray(new Node[children.size()]));
+        Object value = myBinding.deserialize(accessor.read(o), children.toArray(new Object[children.size()]));
         accessor.write(o, value);
       }
       else {
@@ -72,15 +74,15 @@ class OptionTagBinding implements Binding {
     return o;
   }
 
-  public boolean isBoundTo(Node node) {
+  public boolean isBoundTo(Object node) {
     if (!(node instanceof Element)) return false;
     Element e = (Element)node;
-    if (!e.getNodeName().equals(Constants.OPTION)) return false;
-    String name = e.getAttribute(Constants.NAME);
+    if (!e.getName().equals(Constants.OPTION)) return false;
+    String name = e.getAttributeValue(Constants.NAME);
     return name != null && name.equals(myName);
   }
 
-  public Class<? extends Node> getBoundNodeType() {
+  public Class getBoundNodeType() {
     throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());
   }
 

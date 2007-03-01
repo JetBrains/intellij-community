@@ -39,6 +39,11 @@ public class StreamUtil {
     return new String(data);
   }
 
+  public static String readText(InputStream inputStream, String encoding) throws IOException {
+    final byte[] data = loadFromStream(inputStream);
+    return new String(data, encoding);
+  }
+
   public static String convertSeparators(String s) {
     try {
       return new String(readTextAndConvertSeparators(new StringReader(s)));

@@ -6,10 +6,9 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Element;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -24,10 +23,10 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     super(componentManager, project, projectManager);
     myProjectManager = projectManager;
 
-    final org.jdom.Element projectRootElement = projectManager.getDefaultProjectRootElement();
+    final Element projectRootElement = projectManager.getDefaultProjectRootElement();
 
     if (projectRootElement != null) {
-      myElement = JDOMUtil.convertToDOM(projectRootElement);
+      myElement = projectRootElement;
     }
   }
 
@@ -45,7 +44,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
       public void save() throws StateStorageException {
         if (myElement != null) {
-          myProjectManager.setDefaultProjectRootElement(JDOMUtil.convertFromDOM(myElement));
+          myProjectManager.setDefaultProjectRootElement(myElement);
         }
       }
 

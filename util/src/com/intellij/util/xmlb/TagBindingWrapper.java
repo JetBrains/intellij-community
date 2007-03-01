@@ -1,10 +1,9 @@
 package com.intellij.util.xmlb;
 
-import com.intellij.util.DOMUtil;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.Text;
+import com.intellij.openapi.util.JDOMUtil;
+import org.jdom.Content;
+import org.jdom.Element;
+import org.jdom.Text;
 
 //todo: merge with option tag binding
 class TagBindingWrapper implements Binding {
@@ -20,41 +19,42 @@ class TagBindingWrapper implements Binding {
     myAttributeName = attributeName;
   }
 
-  public Node serialize(Object o, Node context) {
-    Document ownerDocument = XmlSerializerImpl.getOwnerDocument(context);
-    Element e = ownerDocument.createElement(myTagName);
-    Node n = binding.serialize(o, e);
+  public Object serialize(Object o, Object context) {
+    Element e = new Element(myTagName);
+    Object n = binding.serialize(o, e);
+
+    final String value = ((Content)n).getValue();
 
     if (myAttributeName.length() != 0) {
-      e.setAttribute(myAttributeName, n.getNodeValue());
+      e.setAttribute(myAttributeName, value);
     }
     else {
-      e.appendChild(ownerDocument.createTextNode(n.getNodeValue()));
+      e.addContent(new Text(value));
     }
 
     return e;
   }
 
-  public Object deserialize(Object context, Node... nodes) {
+  public Object deserialize(Object context, Object... nodes) {
     assert nodes.length == 1;
 
     Element e = (Element)nodes[0];
-    final Node[] childNodes;
+    final Object[] childNodes;
     if (myAttributeName.length() != 0) {
-      childNodes = new Node[]{e.getAttributeNode(myAttributeName)};
+      childNodes = new Object[]{e.getAttribute(myAttributeName)};
     }
     else {
-      childNodes = DOMUtil.getChildNodes(e);
+      childNodes = JDOMUtil.getContent(e);
     }
   
     return binding.deserialize(context, childNodes);
   }
 
-  public boolean isBoundTo(Node node) {
-    return node instanceof Element && node.getNodeName().equals(myTagName);
+  public boolean isBoundTo(Object node) {
+    return node instanceof Element && ((Element)node).getName().equals(myTagName);
   }
 
-  public Class<? extends Node> getBoundNodeType() {
+  public Class getBoundNodeType() {
     return Element.class;
   }
 

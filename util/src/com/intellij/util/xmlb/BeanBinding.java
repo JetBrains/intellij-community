@@ -1,14 +1,11 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.DOMUtil;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.*;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -57,10 +54,8 @@ class BeanBinding implements Binding {
     }
   }
 
-  public Node serialize(Object o, Node context) {
-    Document ownerDocument = XmlSerializerImpl.getOwnerDocument(context);
-    assert ownerDocument != null;
-    Element element = ownerDocument.createElement(myTagName);
+  public Object serialize(Object o, Object context) {
+    Element element = new Element(myTagName);
 
     for (Binding binding : myPropertyBindingsList) {
       Accessor accessor = myPropertyBindings.get(binding);
@@ -80,14 +75,14 @@ class BeanBinding implements Binding {
         }
       }
 
-      Node node = binding.serialize(o, element);
+      Object node = binding.serialize(o, element);
       if (node != element) {
-        if (node instanceof Attr) {
-          Attr attr = (Attr)node;
+        if (node instanceof org.jdom.Attribute) {
+          org.jdom.Attribute attr = (org.jdom.Attribute)node;
           element.setAttribute(attr.getName(), attr.getValue());
         }
         else {
-          element.appendChild(node);
+          JDOMUtil.addContent(element, node);
         }
       }
     }
@@ -100,13 +95,13 @@ class BeanBinding implements Binding {
     _deserializeInto(bean, element);
   }
 
-  public Object deserialize(Object o, Node... nodes) {
+  public Object deserialize(Object o, Object... nodes) {
     return _deserializeInto(instantiateBean(), nodes);
   }
 
-  private Object _deserializeInto(final Object result, final Node... aNodes) {
-    List<Node> nodes = new ArrayList<Node>();
-    for (Node aNode : aNodes) {
+  private Object _deserializeInto(final Object result, final Object... aNodes) {
+    List<Object> nodes = new ArrayList<Object>();
+    for (Object aNode : aNodes) {
       if (XmlSerializerImpl.isIgnoredNode(aNode)) continue;
       nodes.add(aNode);
     }
@@ -118,10 +113,10 @@ class BeanBinding implements Binding {
     ArrayList<Binding> bindings = new ArrayList<Binding>(myPropertyBindings.keySet());
 
 
-    MultiMap<Binding, Node> data = new MultiMap<Binding, Node>();
+    MultiMap<Binding, Object> data = new MultiMap<Binding, Object>();
 
-    final Node[] children = DOMUtil.getChildNodesWithAttrs(e);
-    nextNode: for (Node child : children) {
+    final Object[] children = JDOMUtil.getChildNodesWithAttrs(e);
+    nextNode: for (Object child : children) {
       if (XmlSerializerImpl.isIgnoredNode(child)) continue;
 
       for (Binding binding : bindings) {
@@ -132,7 +127,7 @@ class BeanBinding implements Binding {
       }
 
       {
-        final String message = "Format error: no binding for " + child + " : " + child.getNodeValue() + " inside " + this;
+        final String message = "Format error: no binding for " + child + " inside " + this;
         LOG.debug(message);
         Logger.getInstance(myBeanClass.getName()).debug(message);
         Logger.getInstance("#" + myBeanClass.getName()).debug(message);
@@ -141,8 +136,8 @@ class BeanBinding implements Binding {
 
     for (Object o1 : data.keySet()) {
       Binding binding = (Binding)o1;
-      List<Node> nn = data.get(binding);
-      binding.deserialize(result, (Node[])nn.toArray(new Node[nn.size()]));
+      List<Object> nn = data.get(binding);
+      binding.deserialize(result, nn.toArray(new Object[nn.size()]));
     }
 
     return result;
@@ -163,11 +158,11 @@ class BeanBinding implements Binding {
     return result;
   }
 
-  public boolean isBoundTo(Node node) {
-    return node instanceof Element && node.getNodeName().equals(myTagName);
+  public boolean isBoundTo(Object node) {
+    return node instanceof Element && ((Element)node).getName().equals(myTagName);
   }
 
-  public Class<? extends Node> getBoundNodeType() {
+  public Class getBoundNodeType() {
     return Element.class;
   }
 

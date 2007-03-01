@@ -1,17 +1,16 @@
 package com.intellij.util.xmlb;
 
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Node;
 
 interface Binding {
-  Node serialize(Object o, Node context);
+  Object serialize(Object o, Object context);
 
   @Nullable
-  Object deserialize(Object context, Node... nodes);
+  Object deserialize(Object context, Object... nodes);
 
-  boolean isBoundTo(Node node);
+  boolean isBoundTo(Object node);
 
-  Class<? extends Node> getBoundNodeType();
+  Class getBoundNodeType();
 
   void init();
 }

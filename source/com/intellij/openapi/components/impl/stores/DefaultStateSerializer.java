@@ -3,17 +3,12 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.DOMUtil;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Document;
-import org.jdom.JDOMException;
-import org.jdom.output.DOMOutputter;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Element;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -26,28 +21,18 @@ class DefaultStateSerializer {
   }
 
   static Element serializeState(Object state) throws ParserConfigurationException, WriteExternalException {
-    if (state instanceof org.jdom.Element) {
-      return JDOMUtil.convertToDOM((org.jdom.Element)state);
+    if (state instanceof Element) {
+      return (Element)state;
     }
     else if (state instanceof JDOMExternalizable) {
       JDOMExternalizable jdomExternalizable = (JDOMExternalizable)state;
 
-      final org.jdom.Element element = new org.jdom.Element("temp_element");
+      final Element element = new Element("temp_element");
       jdomExternalizable.writeExternal(element);
-      final Element domElement;
-      try {
-        final Document d = new Document();
-        d.addContent(element);
-        domElement = new DOMOutputter().output(d).getDocumentElement();
-      }
-      catch (JDOMException e1) {
-        throw new RuntimeException(e1);
-      }
-
-      return domElement;
+      return element;
     }
     else {
-      return  XmlSerializer.serialize(state, DOMUtil.createDocument(), ourSerializationFilter);
+      return  XmlSerializer.serialize(state, ourSerializationFilter);
     }
   }
 
@@ -56,16 +41,16 @@ class DefaultStateSerializer {
   static <T> T deserializeState(@Nullable Element stateElement, Class <T> stateClass, @Nullable T mergeInto) throws StateStorage.StateStorageException {
     if (stateElement == null) return mergeInto;
 
-    if (stateClass.equals(org.jdom.Element.class)) {
+    if (stateClass.equals(Element.class)) {
       assert mergeInto == null;
-      return (T)JDOMUtil.convertFromDOM(stateElement);
+      return (T)stateElement;
     }
     else if (JDOMExternalizable.class.isAssignableFrom(stateClass)) {
       assert mergeInto == null;
       try {
         final T t = stateClass.newInstance();
         try {
-          ((JDOMExternalizable)t).readExternal(JDOMUtil.convertFromDOM(stateElement));
+          ((JDOMExternalizable)t).readExternal(stateElement);
           return t;
         }
         catch (InvalidDataException e) {

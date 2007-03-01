@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="ModuleRootManager" />
-  <component inherit-compiler-output="true" name="NewModuleRootManager">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
     <output url="file://$MODULE_DIR$/classes" />
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder isTestSource="false" url="file://$MODULE_DIR$/src" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry forTests="false" type="sourceFolder" />
-    <orderEntry exported="" module-name="dom-openapi" type="module" />
-    <orderEntry module-name="idea" type="module" />
-    <orderEntry level="project" name="CGLIB" type="library" />
-    <orderEntry module-name="treeStructure" type="module" />
-    <orderEntry module-name="ui-impl" type="module" />
-    <orderEntry module-name="plugins-management" type="module" />
-    <orderEntry module-name="ExtendedApi" type="module" />
-    <orderEntry module-name="UsageView" type="module" />
-    <orderEntry module-name="resources" type="module" />
-    <orderEntry module-name="resources_eng" type="module" />
-    <orderEntry module-name="inspections-impl" type="module" />
-    <orderEntry level="project" name="Xerces" type="library" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="dom-openapi" exported="" />
+    <orderEntry type="module" module-name="idea" />
+    <orderEntry type="library" name="CGLIB" level="project" />
+    <orderEntry type="module" module-name="treeStructure" />
+    <orderEntry type="module" module-name="ui-impl" />
+    <orderEntry type="module" module-name="plugins-management" />
+    <orderEntry type="module" module-name="ExtendedApi" />
+    <orderEntry type="module" module-name="UsageView" />
+    <orderEntry type="module" module-name="resources" />
+    <orderEntry type="module" module-name="resources_eng" />
+    <orderEntry type="module" module-name="inspections-impl" />
+    <orderEntry type="library" name="Xerces" level="project" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

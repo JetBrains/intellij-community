@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="ModuleRootManager" />
-  <component inherit-compiler-output="true" name="NewModuleRootManager">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
     <output url="file://$MODULE_DIR$/classes/openapi" />
     <exclude-output />
     <content url="file://$MODULE_DIR$/openapi">
-      <sourceFolder isTestSource="false" url="file://$MODULE_DIR$/openapi" />
+      <sourceFolder url="file://$MODULE_DIR$/openapi" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry forTests="false" type="sourceFolder" />
-    <orderEntry module-name="openapi" type="module" />
-    <orderEntry module-name="Annotations" type="module" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="module" module-name="Annotations" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

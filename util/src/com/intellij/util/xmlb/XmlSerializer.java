@@ -1,12 +1,11 @@
 package com.intellij.util.xmlb;
 
-import com.intellij.util.DOMUtil;
+import com.intellij.openapi.util.JDOMUtil;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.net.URL;
@@ -21,20 +20,25 @@ public class XmlSerializer {
   private XmlSerializer() {
   }
 
-  public static Element serialize(Object object, Document document) throws XmlSerializationException {
-    return serialize(object, document, TRUE_FILTER);
+  public static Element serialize(Object object) throws XmlSerializationException {
+    return serialize(object, TRUE_FILTER);
   }
 
-  public static Element serialize(Object object, Document document, SerializationFilter filter) throws XmlSerializationException {
+  public static Element serialize(Object object, SerializationFilter filter) throws XmlSerializationException {
     if (filter == null) filter = TRUE_FILTER;
-    return new XmlSerializerImpl(document, filter).serialize(object);
+    return new XmlSerializerImpl(filter).serialize(object);
+  }
+
+  @Nullable
+  public static <T> T deserialize(Document document, Class<T> aClass) throws XmlSerializationException {
+    return deserialize(document.getRootElement(), aClass);
   }
 
   @Nullable
   @SuppressWarnings({"unchecked"})
   public static <T> T deserialize(Element element, Class<T> aClass) throws XmlSerializationException {
     try {
-      XmlSerializerImpl serializer = new XmlSerializerImpl(element.getOwnerDocument(), TRUE_FILTER);
+      XmlSerializerImpl serializer = new XmlSerializerImpl(TRUE_FILTER);
       return (T)serializer.getBinding(aClass).deserialize(null, element);
     }
     catch (XmlSerializationException e) {
@@ -59,22 +63,21 @@ public class XmlSerializer {
   @Nullable
   public static <T> T deserialize(URL url, Class<T> aClass) throws XmlSerializationException {
     try {
-      return deserialize(DOMUtil.load(url).getDocumentElement(), aClass);
+      Document document = JDOMUtil.loadDocument(url);
+      document = JDOMXIncluder.resolve(document, url.toExternalForm());
+      return deserialize(document.getRootElement(), aClass);
     }
     catch (IOException e) {
       throw new XmlSerializationException(e);
     }
-    catch (ParserConfigurationException e) {
-      throw new XmlSerializationException(e);
-    }
-    catch (SAXException e) {
+    catch (JDOMException e) {
       throw new XmlSerializationException(e);
     }
   }
 
   public static void deserializeInto(final Object bean, final Element element) {
     try {
-      XmlSerializerImpl serializer = new XmlSerializerImpl(element.getOwnerDocument(), TRUE_FILTER);
+      XmlSerializerImpl serializer = new XmlSerializerImpl(TRUE_FILTER);
       final Binding binding = serializer.getBinding(bean.getClass());
       assert binding instanceof BeanBinding;
 

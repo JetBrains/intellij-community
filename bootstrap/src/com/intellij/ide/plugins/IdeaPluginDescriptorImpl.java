@@ -6,16 +6,15 @@ import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.DOMUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -72,7 +71,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   public void readExternal(final URL url) throws InvalidDataException, FileNotFoundException {
     try {
-      readExternal(DOMUtil.load(url).getDocumentElement());
+      readExternal(JDOMUtil.loadDocument(url).getRootElement());
     }
     catch (FileNotFoundException e) {
       throw e;
@@ -80,15 +79,12 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     catch (IOException e) {
       throw new InvalidDataException(e);
     }
-    catch (ParserConfigurationException e) {
-      throw new InvalidDataException(e);
-    }
-    catch (SAXException e) {
+    catch (JDOMException e) {
       throw new InvalidDataException(e);
     }
   }
 
-  private void readExternal(org.w3c.dom.Element element) throws InvalidDataException {
+  private void readExternal(Element element) throws InvalidDataException {
     final PluginBean pluginBean = XmlSerializer.deserialize(element, PluginBean.class);
 
     url = pluginBean.url;

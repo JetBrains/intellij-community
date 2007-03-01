@@ -1,8 +1,11 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Pair;
+import org.jdom.Attribute;
+import org.jdom.Comment;
+import org.jdom.Element;
+import org.jdom.Text;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.*;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
@@ -16,19 +19,17 @@ import java.util.Map;
  */
 class XmlSerializerImpl {
 
-  private Document document;
   private SerializationFilter filter;
   private Map<Pair<Class, Accessor>, Binding> myBindings = new HashMap<Pair<Class, Accessor>, Binding>();
 
 
-  public XmlSerializerImpl(Document document, SerializationFilter filter) {
-    this.document = document;
+  public XmlSerializerImpl(SerializationFilter filter) {
     this.filter = filter;
   }
 
   Element serialize(Object object) throws XmlSerializationException {
     try {
-      return (Element)getBinding(object.getClass()).serialize(object, document);
+      return (Element)getBinding(object.getClass()).serialize(object, null);
     }
     catch (XmlSerializationException e) {
       throw e;
@@ -80,8 +81,8 @@ class XmlSerializerImpl {
   private Binding _getNonCachedClassBinding(final Class<?> aClass, final Accessor accessor, final Type originalType) {
     if (aClass.isPrimitive()) return new PrimitiveValueBinding(aClass);
     if (aClass.isArray()) {
-      if (org.jdom.Element.class.isAssignableFrom(aClass.getComponentType())) {
-        return new JDOMElementBinding(this, accessor);
+      if (Element.class.isAssignableFrom(aClass.getComponentType())) {
+        return new JDOMElementBinding(accessor);
       }
 
       return new ArrayBinding(this, aClass, accessor);
@@ -90,7 +91,7 @@ class XmlSerializerImpl {
     if (String.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
     if (Collection.class.isAssignableFrom(aClass)) return new CollectionBinding((ParameterizedType)originalType, this, accessor);
     if (Map.class.isAssignableFrom(aClass)) return new MapBinding((ParameterizedType)originalType, this, accessor);
-    if (org.jdom.Element.class.isAssignableFrom(aClass)) return new JDOMElementBinding(this, accessor);
+    if (Element.class.isAssignableFrom(aClass)) return new JDOMElementBinding(accessor);
 
     return new BeanBinding(aClass, this);
   }
@@ -122,24 +123,19 @@ class XmlSerializerImpl {
   }
 
 
-  static Document getOwnerDocument(Node context) {
-    if (context instanceof Document) return (Document)context;
-    return context.getOwnerDocument();
-  }
-
   public SerializationFilter getFilter() {
     return filter;
   }
 
-  static boolean isIgnoredNode(final Node node) {
-    if (node instanceof Text && node.getNodeValue().trim().length() == 0) {
+  public static boolean isIgnoredNode(final Object child) {
+    if (child instanceof Text && ((Text)child).getValue().trim().length() == 0) {
       return true;
     }
-    if (node instanceof Comment) {
+    if (child instanceof Comment) {
       return true;
     }
-    if (node instanceof Attr) {
-      Attr attr = (Attr)node;
+    if (child instanceof Attribute) {
+      Attribute attr = (Attribute)child;
       final String namespaceURI = attr.getNamespaceURI();
       if (namespaceURI != null && namespaceURI != "") return true;
     }

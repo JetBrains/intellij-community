@@ -3,14 +3,12 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.DOMUtil;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
@@ -29,8 +27,7 @@ class DefaultsStateStorage implements StateStorage {
     if (url == null) return null;
 
     try {
-      final Document document = DOMUtil.load(url);
-      final Element documentElement = document.getDocumentElement();
+      final Element documentElement = JDOMUtil.loadDocument(url).getRootElement();
 
       if (myPathMacroManager != null) {
         myPathMacroManager.expandPaths(documentElement);
@@ -41,10 +38,7 @@ class DefaultsStateStorage implements StateStorage {
     catch (IOException e) {
       throw new StateStorageException(e);
     }
-    catch (ParserConfigurationException e) {
-      throw new StateStorageException(e);
-    }
-    catch (SAXException e) {
+    catch (JDOMException e) {
       throw new StateStorageException(e);
     }
   }

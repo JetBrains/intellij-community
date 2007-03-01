@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="ModuleRootManager" />
-  <component inherit-compiler-output="false" name="NewModuleRootManager">
+  <component name="NewModuleRootManager" inherit-compiler-output="false">
     <output url="file://$MODULE_DIR$/../out/classes/production/idea" />
     <exclude-output />
     <output-test url="file://$MODULE_DIR$/../out/classes/test/idea" />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder isTestSource="false" url="file://$MODULE_DIR$/src" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry forTests="false" type="sourceFolder" />
-    <orderEntry exported="" module-name="openapi" type="module" />
-    <orderEntry exported="" module-name="util" type="module" />
-    <orderEntry module-name="idea" type="module" />
-    <orderEntry level="project" name="JUnit4" type="library" />
-    <orderEntry level="project" name="JDOM" type="library" />
-    <orderEntry level="project" name="Log4J" type="library" />
-    <orderEntry module-name="resources_eng" type="module" />
-    <orderEntry module-name="codeInsight-openapi" type="module" />
-    <orderEntry exported="" module-name="codeInsight-impl" type="module" />
-    <orderEntry module-name="action-system-openapi" type="module" />
-    <orderEntry exported="" module-name="inspections-impl" type="module" />
-    <orderEntry module-name="inspections-openapi" type="module" />
-    <orderEntry module-name="dom-openapi" type="module" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="openapi" exported="" />
+    <orderEntry type="module" module-name="util" exported="" />
+    <orderEntry type="module" module-name="idea" />
+    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="library" name="JDOM" level="project" />
+    <orderEntry type="library" name="Log4J" level="project" />
+    <orderEntry type="module" module-name="resources_eng" />
+    <orderEntry type="module" module-name="codeInsight-openapi" />
+    <orderEntry type="module" module-name="codeInsight-impl" exported="" />
+    <orderEntry type="module" module-name="action-system-openapi" />
+    <orderEntry type="module" module-name="inspections-impl" exported="" />
+    <orderEntry type="module" module-name="inspections-openapi" />
+    <orderEntry type="module" module-name="dom-openapi" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

@@ -17,6 +17,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
 import org.jdom.*;
@@ -106,6 +107,48 @@ public class JDOMUtil {
 
   private static int addToHash(final int i, final String s) {
     return i * 31 + s.hashCode();
+  }
+
+  @SuppressWarnings({"unchecked"})
+  public static Object[] getChildNodesWithAttrs(final Element e) {
+    ArrayList<Object> result = new ArrayList<Object>();
+    result.addAll(e.getContent());
+    result.addAll(e.getAttributes());
+    return result.toArray(new Object[result.size()]);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  public static Content[] getContent(final Element m) {
+    final List list = m.getContent();
+    return (Content[])list.toArray(new Content[list.size()]);
+  }
+
+  @SuppressWarnings({"unchecked"})
+  public static Element[] getElements(final Element m) {
+    final List list = m.getChildren();
+    return (Element[])list.toArray(new Element[list.size()]);
+  }
+
+  public static String concatTextNodesValues(final Object[] nodes) {
+    StringBuffer result = new StringBuffer();
+    for (Object node : nodes) {
+      result.append(((Content)node).getValue());
+    }
+    return result.toString();
+  }
+
+  public static void addContent(final Element targetElement, final Object node) {
+    if (node instanceof Content) {
+      Content content = (Content)node;
+      targetElement.addContent(content);
+    }
+    else if (node instanceof List) {
+      List list = (List)node;
+      targetElement.addContent(list);
+    }
+    else {
+      throw new IllegalArgumentException("Wrong node: " + node);
+    }
   }
 
   private static class EmptyTextFilter implements Filter {
@@ -200,8 +243,7 @@ public class JDOMUtil {
   }
 
   public static Document loadDocument(URL url) throws JDOMException, IOException {
-    SAXBuilder saxBuilder = ourSaxBuilder.get();
-    return saxBuilder.build(url);
+    return loadDocument(URLUtil.openStream(url));
   }
 
   public static void writeDocument(Document document, String filePath, String lineSeparator) throws IOException {
@@ -258,6 +300,14 @@ public class JDOMUtil {
       printDiagnostics(element, "");
     }
   }
+
+  public static String writeElement(Element element, String lineSeparator) throws IOException {
+    final StringWriter writer = new StringWriter();
+    writeElement(element, writer, lineSeparator);
+    return writer.toString();
+  }
+
+
 
   public static void writeDocument(Document document, Writer writer, String lineSeparator) throws IOException {
     XMLOutputter xmlOutputter = createOutputter(lineSeparator);
@@ -471,5 +521,19 @@ public class JDOMUtil {
 
   public static Element convertFromDOM(org.w3c.dom.Element e) {
     return new DOMBuilder().build(e);
+  }
+
+  public static String getValue(Object node) {
+    if (node instanceof Content) {
+      Content content = (Content)node;
+      return content.getValue();
+    }
+    else if (node instanceof Attribute) {
+      Attribute attribute = (Attribute)node;
+      return attribute.getValue();
+    }
+    else {
+      throw new IllegalArgumentException("Wrong node: " + node);
+    }
   }
 }
