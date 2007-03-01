@@ -270,6 +270,7 @@ public class VirtualFileImpl extends VirtualFile {
     return myChildren;
   }
 
+  @Nullable
   VirtualFile findSingleChild(String name) {
 
     if (!isDirectory()) return null;
@@ -280,9 +281,6 @@ public class VirtualFileImpl extends VirtualFile {
       if (child != null) {
         if (child.isValid()) {
           return child;
-        }
-        else {
-          ourFileSystem.myUnaccountedFiles.remove(path);
         }
       }
 

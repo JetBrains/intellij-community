@@ -289,7 +289,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
               if (myUnaccountedFiles.containsKey(runPath)) {
                 if (refreshIfNotFound) {
                   root.refresh(false, false);
-                  child = root.findChild(name);
+                  child = ((VirtualFileImpl)root).findSingleChild(name);
                   if (child == null) return null;
                   //need to fire event here since refresh did not fire, because children are not cached
                   fireFileCreated(null, child);
