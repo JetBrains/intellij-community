@@ -11,6 +11,9 @@
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.GroovyLoader</implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.components.GroovyScriptTemplate</implementation-class>
+    </component>
   </application-components>
 
 </idea-plugin>
