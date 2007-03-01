@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.extensions;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,6 +41,7 @@ public class PluginId {
     return pluginId;
   }
 
+  @NonNls
   public String getIdString() {
     return myIdString;
   }

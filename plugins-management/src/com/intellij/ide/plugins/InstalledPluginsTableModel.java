@@ -1,11 +1,9 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
+import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -21,6 +19,10 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     super(sortableProvider, new PluginManagerColumnInfo(PluginManagerColumnInfo.COLUMN_NAME, sortableProvider));
 
     view = new ArrayList<IdeaPluginDescriptor>(Arrays.asList(PluginManager.getPlugins()));
+    for (Iterator<IdeaPluginDescriptor> iterator = view.iterator(); iterator.hasNext();) {
+      @NonNls final String s = iterator.next().getPluginId().getIdString();
+      if ("com.intellij".equals(s) || "com.intellij.javaee".equals(s)) iterator.remove();
+    }
     sortByColumn(0);
   }
 
