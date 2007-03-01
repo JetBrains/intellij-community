@@ -168,6 +168,10 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
   }
 
   private void updateCrumbs(final LogicalPosition positon) {
+    if (PsiDocumentManager.getInstance(myFile.getProject()).isUncommited(myEditor.getDocument())) {
+      return;
+    }
+
     final PsiElement element = getCaretElement(positon);
     if (element != null) {
       myLine.setCrumbs(getLineElements(element));
