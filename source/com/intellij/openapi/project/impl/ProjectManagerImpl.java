@@ -423,7 +423,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         LOG.info("Reloading project.");
-        final String path = project[0].getProjectFilePath();
+        final String path = ((ProjectImpl)project[0]).getStateStore().getProjectFilePath();
         final List<VirtualFile> original = ((ProjectImpl)project[0]).getStateStore().getAllStorageFiles(true);
 
         if (project[0].isDisposed() || ProjectUtil.closeProject(project[0])) {
