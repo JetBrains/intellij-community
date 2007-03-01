@@ -295,6 +295,15 @@ public final class Palette implements ProjectComponent, JDOMExternalizable{
     myClassName2Item.remove(selectedItem.getClassName());
   }
 
+  public GroupItem findGroup(final ComponentItem componentItem) {
+    for(GroupItem group: myGroups) {
+      if (group.contains(componentItem)) {
+        return group;
+      }
+    }
+    return null;    
+  }
+
   /**
    * Helper method.
    */

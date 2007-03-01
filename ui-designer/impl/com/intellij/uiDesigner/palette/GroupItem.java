@@ -99,6 +99,10 @@ public final class GroupItem implements Cloneable, PaletteGroup {
     myItems.remove(item);
   }
 
+  public boolean contains(ComponentItem item) {
+    return myItems.contains(item);
+  }
+
   public boolean containsItemClass(@NotNull final String className){
     for(int i = myItems.size() - 1; i >= 0; i--){
       if(className.equals(myItems.get(i).getClassName())){

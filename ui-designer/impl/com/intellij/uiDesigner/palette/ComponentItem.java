@@ -356,6 +356,9 @@ public final class ComponentItem implements Cloneable, PaletteItem {
     if (dataId.equals(getClass().getName())) {
       return this;
     }
+    if (dataId.equals(GroupItem.class.getName())) {
+      return Palette.getInstance(project).findGroup(this);
+    }
     return null;
   }
 
@@ -365,7 +368,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
     }
     PsiManager psiManager = PsiManager.getInstance(myProject);
     PsiFile[] boundForms = psiManager.getSearchHelper().findFormsBoundToClass(myClassName.replace('$', '.'));
-    if (boundForms != null && boundForms.length > 0) {
+    if (boundForms.length > 0) {
       return boundForms [0];
     }
     return null;
