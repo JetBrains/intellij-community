@@ -6,6 +6,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -18,7 +19,7 @@ public class MockDomFileDescription<T> extends DomFileDescription<T> {
     myFile = file;
   }
 
-  public boolean isMyFile(final XmlFile xmlFile, final Module module) {
+  public boolean isMyFile(@NotNull final XmlFile xmlFile, final Module module) {
     return myFile == xmlFile;
   }
 

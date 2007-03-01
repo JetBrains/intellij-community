@@ -110,6 +110,7 @@ public abstract class DomManager implements ProjectComponent, ModificationTracke
    * parameters and restrictions to the particular XML files, that need DOM support. Should be called on
    * {@link com.intellij.openapi.components.ProjectComponent} loading.
    * @param description The description in question
+   * @deprecated Make your file description an extension (see {@link com.intellij.util.xml.DomFileDescription#EP_NAME})
    */
   public abstract void registerFileDescription(DomFileDescription description);
 

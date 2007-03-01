@@ -17,6 +17,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.*;
@@ -38,6 +39,8 @@ import java.util.*;
  * @see com.intellij.util.xml.MergingFileDescription
  */
 public class DomFileDescription<T> {
+  public static final ExtensionPointName<DomFileDescription> EP_NAME = ExtensionPointName.create("com.intellij.dom.fileDescription");
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomFileDescription");
   private final InstanceMap<ScopeProvider> myScopeProviders = new InstanceMap<ScopeProvider>();
   protected final Class<T> myRootElementClass;

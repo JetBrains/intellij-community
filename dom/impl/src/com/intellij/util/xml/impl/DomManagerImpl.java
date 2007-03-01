@@ -5,11 +5,14 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.*;
@@ -115,6 +118,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
 
   private long myModificationCount;
   private boolean myChanging;
+  private final ProjectFileIndex myFileIndex;
 
   public DomManagerImpl(final PomModel pomModel,
                         final Project project,
@@ -124,7 +128,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
                         final WolfTheProblemSolver solver,
                         final DomElementAnnotationsManager annotationsManager,
                         final VirtualFileManager virtualFileManager,
-                        final StartupManager startupManager) {
+                        final StartupManager startupManager,
+                        final ProjectRootManager projectRootManager) {
     myProject = project;
     myAnnotationsManager = (DomElementAnnotationsManagerImpl)annotationsManager;
     pomModel.addModelListener(new PomModelListener() {
@@ -140,7 +145,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       }
     }, project);
     myReferenceProvidersRegistry = registry;
-
+    
     myElementFactory = psiManager.getElementFactory();
     solver.registerFileHighlightFilter(new Condition<VirtualFile>() {
       public boolean value(final VirtualFile file) {
@@ -158,7 +163,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       public void run() {
         final VirtualFileAdapter listener = new VirtualFileAdapter() {
           public void contentsChanged(VirtualFileEvent event) {
-            processVfsChange(event.getFile());
+            processFileChange(event.getFile());
           }
 
           public void fileCreated(VirtualFileEvent event) {
@@ -166,15 +171,18 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
           }
 
           public void fileDeleted(VirtualFileEvent event) {
-            processVfsChange(event.getFile());
-          }
-
-          public void fileMoved(VirtualFileMoveEvent event) {
-            processVfsChange(event.getFile());
+            for (final Set<DomFileElementImpl> set : new HashSet<Set<DomFileElementImpl>>(myFileDescriptions.values())) {
+              for (final DomFileElementImpl fileElement : new HashSet<DomFileElementImpl>(set)) {
+                processFileChange(fileElement.getFile());
+              }
+            }
           }
 
           public void propertyChanged(VirtualFilePropertyEvent event) {
-            processVfsChange(event.getFile());
+            final VirtualFile file = event.getFile();
+            if (!file.isDirectory() && VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+              processVfsChange(file);
+            }
           }
         };
         virtualFileManager.addVirtualFileListener(listener, project);
@@ -182,19 +190,17 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     });
 
     StdLanguages.XML.injectAnnotator(new DefaultDomAnnotator(this, annotationsManager), project);
+    myFileIndex = projectRootManager.getFileIndex();
+
+    for (final DomFileDescription description : Extensions.getExtensions(DomFileDescription.EP_NAME)) {
+      registerFileDescription(description);
+    }
   }
 
   private void processVfsChange(final VirtualFile file) {
-    if (!file.isValid()) {
-      for (final Set<DomFileElementImpl> set : new HashSet<Set<DomFileElementImpl>>(myFileDescriptions.values())) {
-        for (final DomFileElementImpl fileElement : new HashSet<DomFileElementImpl>(set)) {
-          processFileChange(fileElement.getFile());
-        }
-      }
-      return;
+    if (myFileIndex.isInContent(file)) {
+      processFileOrDirectoryChange(file);
     }
-
-    processFileOrDirectoryChange(file);
   }
 
   private void processFileChange(final VirtualFile file) {
