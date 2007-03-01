@@ -459,7 +459,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
                 return false;
             }
             final PsiExpression condition = whileStatement.getCondition();
-            if (!isHasNext(condition, declaredVariable)) {
+            if (!isHasNextCalled(declaredVariable, condition)) {
                 return false;
             }
             final PsiStatement body = whileStatement.getBody();
@@ -480,8 +480,8 @@ public class WhileCanBeForeachInspection extends BaseInspection {
                     body);
         }
 
-        private static boolean isHasNext(PsiExpression condition,
-                                         PsiVariable iterator) {
+        private static boolean isHasNextCalled(PsiVariable iterator,
+                                               PsiExpression condition) {
             if (!(condition instanceof PsiMethodCallExpression)) {
                 return false;
             }

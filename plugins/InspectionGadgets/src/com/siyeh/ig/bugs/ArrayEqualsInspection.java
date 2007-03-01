@@ -77,7 +77,6 @@ public class ArrayEqualsInspection extends ExpressionInspection{
                     argText + ')';
             replaceExpressionAndShorten(call, newExpressionText);
         }
-
     }
 
     public BaseInspectionVisitor buildVisitor(){

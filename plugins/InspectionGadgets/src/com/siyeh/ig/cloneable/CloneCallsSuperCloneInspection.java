@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,8 +59,8 @@ public class CloneCallsSuperCloneInspection extends MethodInspection {
 
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;
-          if (!CloneUtils.isClone(method)) {
-              return;
+            if (!CloneUtils.isClone(method)) {
+                return;
             }
             if(method.hasModifierProperty(PsiModifier.ABSTRACT) ||
                     method.hasModifierProperty(PsiModifier.NATIVE)) {

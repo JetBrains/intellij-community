@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,11 +91,11 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
         final PsiExpression qualifier =
                 methodExpression.getQualifierExpression();
         if(qualifier == null || qualifier instanceof PsiThisExpression){
-            final PsiElement method = methodExpression.resolve();
-            if(!(method instanceof PsiMethod)){
+            final PsiMethod method = call.resolveMethod();
+            if (method == null) {
                 return;
             }
-            final PsiClass aClass = ((PsiMethod)method).getContainingClass();
+            final PsiClass aClass = method.getContainingClass();
             if (CollectionUtils.isCollectionClassOrInterface(aClass)){
                 updated = true;
             }

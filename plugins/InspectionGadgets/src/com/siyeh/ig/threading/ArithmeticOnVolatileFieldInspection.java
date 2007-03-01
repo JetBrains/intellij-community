@@ -46,7 +46,7 @@ public class ArithmeticOnVolatileFieldInspection extends ExpressionInspection {
         public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if (!(expression.getROperand() != null)) {
+            if (expression.getROperand() == null) {
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();

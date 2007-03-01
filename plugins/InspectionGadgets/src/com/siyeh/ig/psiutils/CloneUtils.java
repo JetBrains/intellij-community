@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,13 +46,12 @@ public class CloneUtils{
 
     public static boolean isClone(@NotNull PsiMethod method){
         final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(method);
-
         final PsiClassType javaLangObject;
         if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
         javaLangObject = PsiType.getJavaLangObject(
                 method.getManager(), method.getResolveScope());
         } else {
-            // for 1.5 and after, clone may be covaraiant
+            // for 1.5 and after, clone may be covariant
             javaLangObject = null;
         }
         return MethodUtils.methodMatches(method, null, javaLangObject,
