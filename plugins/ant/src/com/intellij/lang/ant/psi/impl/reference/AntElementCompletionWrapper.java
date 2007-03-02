@@ -5,7 +5,7 @@ import com.intellij.lang.ant.psi.impl.AntElementImpl;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class AntElementCompletionWrapper extends AntElementImpl {
+public final class AntElementCompletionWrapper extends AntElementImpl {
 
   private final String myName;
   private final Project myProject;
@@ -20,11 +20,14 @@ public class AntElementCompletionWrapper extends AntElementImpl {
 
 
   public boolean equals(final Object o) {
-    if (this != o) {
-      final AntElementCompletionWrapper that = (AntElementCompletionWrapper)o;
-      if (!myName.equals(that.myName)) return false;
+    if (this == o) {
+      return true;
     }
-    return true;
+    if (o instanceof AntElementCompletionWrapper) {
+      final AntElementCompletionWrapper that = (AntElementCompletionWrapper)o;
+      return myName.equals(that.myName);
+    }
+    return false;
   }
 
   public int hashCode() {
