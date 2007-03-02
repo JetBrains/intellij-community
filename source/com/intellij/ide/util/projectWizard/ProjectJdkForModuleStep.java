@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,11 +31,13 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
   private JdkChooserPanel myJdkChooser;
   private JPanel myPanel;
   private WizardContext myContext;
+  private final SdkType myType;
   private boolean myInitialized = false;
 
   public ProjectJdkForModuleStep(final WizardContext context, final SdkType type) {
     myContext = context;
-    myJdkChooser = new JdkChooserPanel(getProject(context, type), type);
+    myType = type;
+    myJdkChooser = new JdkChooserPanel(getProject(context, type));
 
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEtchedBorder());
@@ -81,6 +84,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     });
   }
 
+  @Nullable
   private static Project getProject(final WizardContext context, final SdkType type) {
     Project project = context.getProject();
     if (type != null && project == null) { //'module' step inside project creation
@@ -107,7 +111,8 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
 
 
   public void updateStep() {
-    if (!myInitialized) { //lazy default project initialization 
+    if (!myInitialized) { //lazy default project initialization
+      myJdkChooser.fillList(myType);
       ProjectJdk defaultJdk = getDefaultJdk();
       if (defaultJdk != null) {
         myJdkChooser.selectJdk(defaultJdk);
@@ -124,6 +129,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     return NEW_PROJECT_ICON;
   }
 
+  @Nullable
   private static ProjectJdk getDefaultJdk() {
     Project defaultProject = ProjectManagerEx.getInstanceEx().getDefaultProject();
     return ProjectRootManagerEx.getInstanceEx(defaultProject).getProjectJdk();

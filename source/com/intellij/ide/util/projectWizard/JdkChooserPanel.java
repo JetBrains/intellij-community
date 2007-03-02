@@ -32,7 +32,7 @@ public class JdkChooserPanel extends JPanel {
   private ProjectJdk myCurrentJdk;
   private Project myProject;
 
-  public JdkChooserPanel(Project project, final SdkType type) {
+  public JdkChooserPanel(Project project) {
     super(new BorderLayout());
     myProject = project;
     myListModel = new DefaultListModel();
@@ -41,7 +41,6 @@ public class JdkChooserPanel extends JPanel {
     myList.setCellRenderer(new ProjectJdkListRenderer());
     //noinspection HardCodedStringLiteral
     myList.setPrototypeCellValue("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-    fillList(type);
 
     myList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
@@ -109,7 +108,7 @@ public class JdkChooserPanel extends JPanel {
     return myList;
   }
 
-  private void fillList(final SdkType type) {
+  public void fillList(final SdkType type) {
     myListModel.clear();
     final ProjectJdk[] jdks;
     if (myProject == null) {
@@ -151,7 +150,8 @@ public class JdkChooserPanel extends JPanel {
   }
 
   private static ProjectJdk showDialog(final Project project, String title, final Component parent, ProjectJdk jdkToSelect) {
-    final JdkChooserPanel jdkChooserPanel = new JdkChooserPanel(project, null);
+    final JdkChooserPanel jdkChooserPanel = new JdkChooserPanel(project);
+    jdkChooserPanel.fillList(null);
     final MyDialog dialog = jdkChooserPanel.new MyDialog(parent);
     if (title != null) {
       dialog.setTitle(title);
