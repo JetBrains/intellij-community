@@ -16,33 +16,39 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import com.intellij.ui.SeparatorFactory;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
+import java.util.Collection;
 
 /**
  * @author max
  */
 public class ChangeListViewerDialog extends DialogWrapper {
-  private final Project myProject;
-  private final CommittedChangeList myChangeList;
+  private Project myProject;
+  private CommittedChangeList myChangeList;
   private ChangesBrowser myChangesBrowser;
-  private final JTextArea myCommitMessageArea;
+  private JTextArea myCommitMessageArea;
 
   public ChangeListViewerDialog(Project project, CommittedChangeList changeList) {
     super(project, true);
+    initCommitMessageArea(changeList);
+    initDialog(project, changeList);
+  }
+
+  public ChangeListViewerDialog(Component parent, Project project, Collection<Change> changes) {
+    super(parent, true);
+    initDialog(project, new CommittedChangeListImpl("", "", "", -1, new Date(0), changes));
+  }
+
+  private void initDialog(final Project project, final CommittedChangeList changeList) {
     myProject = project;
     myChangeList = changeList;
-
-    myCommitMessageArea = new JTextArea();
-    myCommitMessageArea.setRows(3);
-    myCommitMessageArea.setWrapStyleWord(true);
-    myCommitMessageArea.setLineWrap(true);
-    myCommitMessageArea.setEditable(false);
-    myCommitMessageArea.setText(changeList.getComment());
 
     setTitle(VcsBundle.message("dialog.title.changes.browser"));
     setCancelButtonText(CommonBundle.message("close.action.name"));
@@ -50,6 +56,16 @@ public class ChangeListViewerDialog extends DialogWrapper {
 
     init();
   }
+
+  private void initCommitMessageArea(final CommittedChangeList changeList) {
+    myCommitMessageArea = new JTextArea();
+    myCommitMessageArea.setRows(3);
+    myCommitMessageArea.setWrapStyleWord(true);
+    myCommitMessageArea.setLineWrap(true);
+    myCommitMessageArea.setEditable(false);
+    myCommitMessageArea.setText(changeList.getComment());
+  }
+
 
   protected String getDimensionServiceKey() {
     return "VCS.ChangeListViewerDialog";
@@ -64,12 +80,14 @@ public class ChangeListViewerDialog extends DialogWrapper {
     panel.add(myChangesBrowser, BorderLayout.CENTER);
 
 
-    JPanel commitPanel = new JPanel(new BorderLayout());
-    JComponent separator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myCommitMessageArea);
-    commitPanel.add(separator, BorderLayout.NORTH);
-    commitPanel.add(new JScrollPane(myCommitMessageArea), BorderLayout.CENTER);
+    if (myCommitMessageArea != null) {
+      JPanel commitPanel = new JPanel(new BorderLayout());
+      JComponent separator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myCommitMessageArea);
+      commitPanel.add(separator, BorderLayout.NORTH);
+      commitPanel.add(new JScrollPane(myCommitMessageArea), BorderLayout.CENTER);
 
-    panel.add(commitPanel, BorderLayout.SOUTH);
+      panel.add(commitPanel, BorderLayout.SOUTH);
+    }
 
     return panel;
   }

@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.*;
-import com.intellij.openapi.vcs.merge.AbstractMergeAction;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
@@ -57,10 +56,12 @@ import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.List;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl");
@@ -425,6 +426,14 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   public void showChangesBrowser(CommittedChangeList changelist, @Nls String title) {
     final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject, changelist);
+    if (title != null) {
+      dlg.setTitle(title);
+    }
+    dlg.show();
+  }
+
+  public void showChangesBrowser(final Component parent, final Collection<Change> changes, @Nls final String title) {
+    final ChangeListViewerDialog dlg = new ChangeListViewerDialog(parent, myProject, changes);
     if (title != null) {
       dlg.setTitle(title);
     }

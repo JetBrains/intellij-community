@@ -36,6 +36,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.awt.*;
 
 /**
  * Component which provides means to invoke different VCS-related services.
@@ -84,7 +85,8 @@ public abstract class AbstractVcsHelper {
   public abstract void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title);
   public abstract void showChangesBrowser(CommittedChangeList changelist, @Nls String title);
   public abstract void showChangesBrowser(CommittedChangesProvider provider, final VirtualFile root, @Nls String title);
-
+  public abstract void showChangesBrowser(Component parent, Collection<Change> changes, @Nls String title);
+    
   @Nullable public abstract <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(CommittedChangesProvider<T, U> provider);
 
   public abstract void showMergeDialog(List<VirtualFile> files, MergeProvider provider, final AnActionEvent e);
