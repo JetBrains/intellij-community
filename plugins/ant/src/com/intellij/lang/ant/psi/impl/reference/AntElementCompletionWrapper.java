@@ -19,13 +19,12 @@ public final class AntElementCompletionWrapper extends AntElementImpl {
   }
 
 
-  public boolean equals(final Object o) {
-    if (this == o) {
+  public boolean equals(final Object that) {
+    if (this == that) {
       return true;
     }
-    if (o instanceof AntElementCompletionWrapper) {
-      final AntElementCompletionWrapper that = (AntElementCompletionWrapper)o;
-      return myName.equals(that.myName);
+    if (that instanceof AntElementCompletionWrapper) {
+      return myName.equals(((AntElementCompletionWrapper)that).myName);
     }
     return false;
   }
