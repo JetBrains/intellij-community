@@ -65,6 +65,10 @@ public class IdeRootPane extends JRootPane{
       myWelcomePane = WelcomeScreen.createWelcomePanel();
       myContentPane.add(myWelcomePane);
     }
+
+    final IdeGlassPaneImpl gp = new IdeGlassPaneImpl(this);
+    setGlassPane(gp);
+    gp.setVisible(false);
   }
 
   /**
@@ -197,5 +201,9 @@ public class IdeRootPane extends JRootPane{
       updateStatusBarVisibility();
       updateNavigationBarVisibility();
     }
+  }
+
+  public boolean isOptimizedDrawingEnabled() {
+    return true;
   }
 }

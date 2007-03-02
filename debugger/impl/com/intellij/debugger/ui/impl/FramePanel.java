@@ -98,22 +98,6 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     });
   }
 
-  boolean mySplitterInitialized = false;
-  public void addNotify() {
-    super.addNotify();
-    // need invokeLater to be sure the splitter has been assigned with and height
-    if (!mySplitterInitialized) {
-      mySplitterInitialized = true;
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          final DebuggerSettings settings = DebuggerSettings.getInstance();
-          setFirstProportion(settings.THREADS_FRAME_SPLITTER_PROPORTION);
-          setLastProportion(settings.FRAME_WATCHES_SPLITTER_PROPORTION);
-        }
-      });
-    }
-  }
-
   private void registerThreadsPopupMenu(final JList framesList) {
     final PopupHandler popupHandler = new PopupHandler() {
       public void invokePopup(Component comp, int x, int y) {

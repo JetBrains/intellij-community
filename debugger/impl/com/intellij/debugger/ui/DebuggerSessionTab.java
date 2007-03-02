@@ -143,8 +143,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     myViewsContentManager = getContentFactory().createContentManager(new DebuggerContentUI(this, ActionManager.getInstance()), false, getProject());
 
     myWatchPanel = new MainWatchPanel(getProject(), getContextManager());
-    myWatchPanel.setUpdateEnabled(debuggerSettings.WATCHES_VISIBLE);
-    
+
     myFramePanel = new FramePanel(getProject(), getContextManager()) {
       protected boolean isUpdateEnabled() {
         return myViewsContentManager.getSelectedContent().getComponent() == this;
@@ -159,9 +158,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     addAction(watchesGroup, DebuggerActions.REMOVE_WATCH);
     myWatchesContent.setActions(watchesGroup, ActionPlaces.DEBUGGER_TOOLBAR);
 
-    if (debuggerSettings.WATCHES_VISIBLE) {
-      myViewsContentManager.addContent(myWatchesContent);
-    }
+    myViewsContentManager.addContent(myWatchesContent);
 
     myFramesContent = createContent(myFramePanel, DebuggerBundle.message("debugger.session.tab.frames.title"), IconLoader.getIcon("/debugger/frame.png"), FRAME_CONTENT);
     final DefaultActionGroup framesGroup = new DefaultActionGroup();
@@ -186,8 +183,6 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     addAction(varsGroup, DebuggerActions.EVALUATE_EXPRESSION);
     varsGroup.add(new WatchLastMethodReturnValueAction());
     varsGroup.add(new AutoVarsSwitchAction());
-    varsGroup.addSeparator();
-    varsGroup.add(new ShowWatchesAction());
     myVarsContent.setActions(varsGroup, ActionPlaces.DEBUGGER_TOOLBAR);
     myViewsContentManager.addContent(myVarsContent);
 
@@ -534,45 +529,6 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
       myAutoModeEnabled = enabled;
       DebuggerSettings.getInstance().AUTO_VARIABLES_MODE = enabled;
       myFramePanel.getFrameTree().setAutoVariablesMode(enabled);
-    }
-  }
-
-  private class ShowWatchesAction extends ToggleAction {
-    private volatile boolean myWatchesShown;
-    private final String myTextHide;
-    private final String myTextShow;
-
-    public ShowWatchesAction() {
-      super("", DebuggerBundle.message("action.show.watches.description"), WATCHES_ICON);
-      myWatchesShown = DebuggerSettings.getInstance().WATCHES_VISIBLE;
-      myTextHide = DebuggerBundle.message("action.show.watches.text.hide");
-      myTextShow = DebuggerBundle.message("action.show.watches.text.show");
-    }
-
-    public void update(final AnActionEvent e) {
-      super.update(e);
-      final Presentation presentation = e.getPresentation();
-      final boolean watchesShown = (Boolean)presentation.getClientProperty(SELECTED_PROPERTY);
-      presentation.setText(watchesShown ? myTextHide : myTextShow);
-    }
-
-    public boolean isSelected(AnActionEvent e) {
-      return myWatchesShown;
-    }
-
-    public void setSelected(AnActionEvent e, boolean show) {
-      myWatchesShown = show;
-      myWatchPanel.setUpdateEnabled(show);
-      DebuggerSettings.getInstance().WATCHES_VISIBLE = show;
-      if (show) {
-        myViewsContentManager.addContent(myWatchesContent);
-        if (myWatchPanel.isRefreshNeeded()) {
-          myWatchPanel.rebuildIfVisible(DebuggerSession.EVENT_CONTEXT);
-        }
-      }
-      else {
-        myViewsContentManager.removeContent(myWatchesContent);
-      }
     }
   }
 

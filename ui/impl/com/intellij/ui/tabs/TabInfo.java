@@ -51,7 +51,7 @@ public final class TabInfo {
     return myComponent;
   }
 
-  String getText() {
+  public String getText() {
     return myText;
   }
 
@@ -70,5 +70,7 @@ public final class TabInfo {
     myChangeSupport.firePropertyChange(ACTION_GROUP, old, myGroup);
     return this;
   }
+
+
 
 }

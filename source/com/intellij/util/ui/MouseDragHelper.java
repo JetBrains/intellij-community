@@ -1,57 +1,119 @@
 package com.intellij.util.ui;
 
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
 import java.awt.event.*;
 import java.awt.*;
 
-public abstract class MouseDragHelper {
+public abstract class MouseDragHelper implements MouseListener, MouseMotionListener {
 
   public static final int DRAG_START_DEADZONE = 7;
-  private Point myPressPoint;
 
-  private boolean myDragging;
+  private JComponent myDragComponent;
+
+  private Point myPressPointScreen;
+  private Point myPressPointComponent;
+
+  private boolean myDraggingNow;
   private boolean myDragJustStarted;
+  private IdeGlassPane myGlassPane;
+  private Disposable myParentDisposable;
 
-  public MouseDragHelper(final JComponent dragComponent) {
-    dragComponent.addMouseListener(new MouseAdapter() {
-      public void mousePressed(final MouseEvent e) {
-        myPressPoint = e.getPoint();
-      }
-      public void mouseReleased(final MouseEvent e) {
-        boolean wasDragging = myDragging;
-        myPressPoint = null;
-        myDragging = false;
-        myDragJustStarted = false;
+  public MouseDragHelper(Disposable parent, final JComponent dragComponent) {
+    myDragComponent = dragComponent;
+    myParentDisposable = parent;
 
-        if (wasDragging) {
-          processDragFinish(e);
-        }
-      }
-      public void mouseClicked(final MouseEvent e) {
-        MouseDragHelper.this.mouseClicked(e);
-      }
+  }
 
-    });
-    dragComponent.addMouseMotionListener(new MouseMotionAdapter() {
-      public void mouseDragged(final MouseEvent e) {
-        final boolean deadZone = isWithinDeadZone(e);
-        if (!myDragging && !deadZone) {
-          myDragging = true;
-          myDragJustStarted = true;
-        } else if (myDragging) {
-          myDragJustStarted = false;
-        }
+  public void start() {
+    if (myGlassPane != null) return;
 
-        if (myDragging && myPressPoint != null) {
-          final Point draggedTo = new RelativePoint(e).getScreenPoint();
-          draggedTo.x -= myPressPoint.x;
-          draggedTo.y -= myPressPoint.y;
-          processDrag(e, draggedTo);
-        }
+    final Component gp = myDragComponent.getRootPane().getGlassPane();
+    if (!(gp instanceof IdeGlassPane)) throw new IllegalStateException("Glass pane should be " + IdeGlassPane.class.getName());
+    myGlassPane = (IdeGlassPane)gp;
+
+    myGlassPane.addMousePreprocessor(this, myParentDisposable);
+    myGlassPane.addMouseMotionPreprocessor(this, myParentDisposable);
+
+    Disposer.register(myParentDisposable, new Disposable() {
+      public void dispose() {
+        stop();
       }
     });
+  }
+
+  public void stop() {
+    myGlassPane = null;
+  }
+
+  public void mousePressed(final MouseEvent e) {
+    if (!canStartDragging(e)) return;
+
+    myPressPointScreen = new RelativePoint(e).getScreenPoint();
+    myPressPointComponent = e.getPoint();
+  }
+
+  public void mouseReleased(final MouseEvent e) {
+    boolean wasDragging = myDraggingNow;
+    myPressPointScreen = null;
+    myDraggingNow = false;
+    myDragJustStarted = false;
+
+    if (wasDragging) {
+      try {
+        processDragFinish(e);
+      }
+      finally {
+        myDraggingNow = false;
+        myPressPointComponent = null;
+        myPressPointScreen = null;
+      }
+    }
+  }
+
+  public void mouseDragged(final MouseEvent e) {
+    final boolean deadZone = isWithinDeadZone(e);
+    if (!myDraggingNow && !deadZone) {
+      myDraggingNow = true;
+      myDragJustStarted = true;
+    }
+    else if (myDraggingNow) {
+      myDragJustStarted = false;
+    }
+
+    if (myDraggingNow && myPressPointScreen != null) {
+      final Point draggedTo = new RelativePoint(e).getScreenPoint();
+
+      draggedTo.x -= myPressPointComponent.x;
+      draggedTo.y -= myPressPointComponent.y;
+
+
+      processDrag(e, draggedTo);
+    }
+  }
+
+  private boolean canStartDragging(MouseEvent me) {
+    Component component = me.getComponent();
+    if (!component.isShowing()) return false;
+    while (component != null) {
+      if (component == myDragComponent) {
+        final Point dragComponentPoint = SwingUtilities.convertPoint(me.getComponent(), me.getPoint(), myDragComponent);
+        return canStartDragging(dragComponentPoint);
+      }
+      component = component.getParent();
+    }
+
+    return false;
+  }
+
+  protected boolean canStartDragging(Point dragComponentPoint) {
+    return true;
   }
 
   protected void processDragFinish(final MouseEvent even) {
@@ -63,10 +125,24 @@ public abstract class MouseDragHelper {
 
   protected abstract void processDrag(MouseEvent event, Point dragToScreenPoint);
 
-  protected void mouseClicked(final MouseEvent e) {
-  }
 
   private boolean isWithinDeadZone(final MouseEvent e) {
-    return Math.abs(myPressPoint.x - e.getPoint().x) < DRAG_START_DEADZONE && Math.abs(myPressPoint.y - e.getPoint().y) < DRAG_START_DEADZONE;
+    if (myPressPointScreen == null) return true;
+
+    final Point screen = new RelativePoint(e).getScreenPoint();
+    return Math.abs(myPressPointScreen.x - screen.x) < DRAG_START_DEADZONE &&
+           Math.abs(myPressPointScreen.y - screen.y) < DRAG_START_DEADZONE;
+  }
+
+  public void mouseClicked(final MouseEvent e) {
+  }
+
+  public void mouseEntered(final MouseEvent e) {
+  }
+
+  public void mouseExited(final MouseEvent e) {
+  }
+
+  public void mouseMoved(final MouseEvent e) {
   }
 }

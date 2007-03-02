@@ -2,6 +2,7 @@ package com.intellij.openapi.util;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Collection;
 
 public class MutualMap<Key, Value> {
 
@@ -33,5 +34,13 @@ public class MutualMap<Key, Value> {
     final Value value = myKey2Value.get(key);
     myKey2Value.remove(key);
     myValue2Key.remove(value);
+  }
+
+  public Collection<Value> getValues() {
+    return myKey2Value.values();
+  }
+
+  public Collection<Key> getKeys() {
+    return myKey2Value.keySet();
   }
 }

@@ -33,7 +33,6 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
   private final KeyStroke myRemoveWatchAccelerator = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
   private final KeyStroke myNewWatchAccelerator = KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0);
   private final KeyStroke myEditWatchAccelerator = KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0);
-  private boolean myUpdateEnabled = true;
 
   public MainWatchPanel(Project project, DebuggerStateManager stateManager) {
     super(project,stateManager);
@@ -72,11 +71,7 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
   }
 
   public boolean isUpdateEnabled() {
-    return myUpdateEnabled;
-  }
-
-  public void setUpdateEnabled(final boolean updateEnabled) {
-    myUpdateEnabled = updateEnabled;
+    return getRootPane() != null;
   }
 
   protected ActionPopupMenu createPopupMenu() {

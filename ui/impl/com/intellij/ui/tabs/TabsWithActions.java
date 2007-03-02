@@ -11,10 +11,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 import java.awt.*;
 import java.awt.geom.GeneralPath;
 import java.awt.event.MouseAdapter;
@@ -36,7 +34,8 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
 
   private static final int INNER = 1;
 
-  private List<MouseListener> myTabListeners = new ArrayList<MouseListener>();
+  private List<MouseListener> myTabMouseListeners = new ArrayList<MouseListener>();
+  private List<TabsListener> myTabListeners = new ArrayList<TabsListener>();
 
   public TabsWithActions(ActionManager actionManager) {
     myActionManager = actionManager;
@@ -74,8 +73,17 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
   }
 
   public void setSelected(final TabInfo info) {
+    TabInfo oldInfo = mySelectedInfo;
     mySelectedInfo = info;
+    final TabInfo newInfo = getSelectedInfo();
+
     update();
+
+    if (oldInfo != newInfo) {
+      for (TabsListener eachListener : myTabListeners) {
+        eachListener.selectionChanged(oldInfo, newInfo);
+      }
+    }
   }
 
   public void propertyChange(final PropertyChangeEvent evt) {
@@ -254,6 +262,16 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     return null;
   }
 
+  public TabInfo findInfo(String text) {
+    if (text == null) return null;
+
+    for (TabInfo each : myInfos) {
+      if (text.equals(each.getText())) return each;
+    }
+
+    return null;
+  }
+
   public TabInfo findInfo(MouseEvent event) {
     final Point src = event.getPoint();
     final Point point = SwingUtilities.convertPoint(event.getComponent(), src, this);
@@ -293,22 +311,22 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     return myActionManager;
   }
 
-  public void addTabListener(MouseListener listener) {
+   public void addTabMouseListener(MouseListener listener) {
     removeListeners();
-    myTabListeners.add(listener);
+    myTabMouseListeners.add(listener);
     addListeners();
   }
 
-  public void removeTabListener(MouseListener listener) {
+  public void removeTabMouseListener(MouseListener listener) {
     removeListeners();
-    myTabListeners.remove(listener);
+    myTabMouseListeners.remove(listener);
     addListeners();
   }
 
   private void addListeners() {
     for (TabInfo eachInfo : myInfos) {
       final TabLabel label = myInfo2Label.get(eachInfo);
-      for (MouseListener eachListener : myTabListeners) {
+      for (MouseListener eachListener : myTabMouseListeners) {
         label.addMouseListener(eachListener);
       }
     }
@@ -317,7 +335,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
   private void removeListeners() {
     for (TabInfo eachInfo : myInfos) {
       final TabLabel label = myInfo2Label.get(eachInfo);
-      for (MouseListener eachListener : myTabListeners) {
+      for (MouseListener eachListener : myTabMouseListeners) {
         label.removeMouseListener(eachListener);
       }
     }
@@ -328,6 +346,9 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     addListeners();
   }
 
+  public void addListener(TabsListener listener) {
+    myTabListeners.add(listener);
+  }
 
   private class TabLabel extends JPanel {
     private JLabel myLabel = new JLabel();

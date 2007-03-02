@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 public class DebuggerSettings implements JDOMExternalizable, ApplicationComponent {
   public static final int SOCKET_TRANSPORT = 0;
@@ -46,14 +48,12 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public String RUN_HOTSWAP_AFTER_COMPILE;
   public boolean COMPILE_BEFORE_HOTSWAP;
 
-  public volatile float THREADS_FRAME_SPLITTER_PROPORTION = 0.25f;
-  public volatile float FRAME_WATCHES_SPLITTER_PROPORTION = 0.20f;
-  public volatile float CONSOLE_SPLITTER_PROPORTION = 0.75f;
-  public volatile boolean WATCHES_VISIBLE = true;
   public volatile boolean WATCH_RETURN_VALUES = true;
   public volatile boolean AUTO_VARIABLES_MODE = false;
 
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
+
+  private Map<String, ContentState> myContentStates = new HashMap<String, ContentState>();
 
   public void disposeComponent() {
   }
@@ -95,6 +95,13 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
     setSteppingFilters(filtersList.toArray(new ClassFilter[filtersList.size()]));
 
     filtersList.clear();
+
+    final List contents = parentNode.getChildren("content");
+    myContentStates.clear();
+    for (Object content : contents) {
+      final ContentState state = new ContentState((Element)content);
+      myContentStates.put(state.getType(), state);
+    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -105,6 +112,13 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
       element = new Element("filter");
       parentNode.addContent(element);
       mySteppingFilter.writeExternal(element);
+    }
+
+    for (ContentState eachState : myContentStates.values()) {
+      final Element content = new Element("content");
+      if (eachState.write(content)) {
+        parentNode.addContent(content);
+      }
     }
   }
 
@@ -143,5 +157,75 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
 
   public void setSuspendPolicy(boolean suspendAll) {
     STEP_THREAD_SUSPEND_POLICY = suspendAll ? SUSPEND_ALL : SUSPEND_THREAD;
+  }
+
+  public ContentState getContentState(String type) {
+    ContentState state = myContentStates.get(type);
+    if (state == null) {
+      state = new ContentState(type);
+      myContentStates.put(type, state);
+    }
+
+    return state;
+  }
+
+  public static class ContentState {
+
+    private String myType;
+    private boolean myMinimized;
+    private String mySelectedTab;
+    private double mySplitProportion;
+
+    public ContentState(final String type) {
+      myType = type;
+    }
+
+    public ContentState(Element element) {
+      myType = element.getAttributeValue("type");
+      myMinimized = "true".equalsIgnoreCase(element.getAttributeValue("minimized"));
+      mySelectedTab = element.getAttributeValue("selected");
+      final String split = element.getAttributeValue("split");
+      if (split != null) {
+        mySplitProportion = Double.valueOf(split);
+      }
+    }
+
+    public boolean write(final Element element) {
+      element.setAttribute("type", myType);
+      element.setAttribute("minimized", Boolean.valueOf(myMinimized).toString());
+      if (mySelectedTab != null) {
+        element.setAttribute("selected", mySelectedTab);
+      }
+      element.setAttribute("split", new Double(mySplitProportion).toString());
+      return true;
+    }
+
+    public String getType() {
+      return myType;
+    }
+
+    public String getSelectedTab() {
+      return mySelectedTab;
+    }
+
+    public boolean isMinimized() {
+      return myMinimized;
+    }
+
+    public void setMinimized(final boolean minimized) {
+      myMinimized = minimized;
+    }
+
+    public void setSelectedTab(final String selectedTab) {
+      mySelectedTab = selectedTab;
+    }
+
+    public void setSplitProportion(double splitProportion) {
+      mySplitProportion = splitProportion;
+    }
+
+    public double getSplitProportion(double defaultValue) {
+      return (mySplitProportion <= 0 || mySplitProportion >= 1) ? defaultValue : mySplitProportion;
+    }
   }
 }
