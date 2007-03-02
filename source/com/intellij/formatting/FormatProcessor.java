@@ -193,7 +193,9 @@ class FormatProcessor {
     myAlignedAlignments.clear();
     myPreviousDependancies.clear();
     myWrapCandidate = null;
-    myRootBlockWrapper.reset();
+    if (myRootBlockWrapper != null) {
+      myRootBlockWrapper.reset();
+    }
   }
 
   public void performModifications(FormattingModel model) {
