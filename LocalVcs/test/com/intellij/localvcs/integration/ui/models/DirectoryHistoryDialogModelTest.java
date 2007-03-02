@@ -13,6 +13,17 @@ public class DirectoryHistoryDialogModelTest {
   private DirectoryHistoryDialogModel m;
 
   @Test
+  public void testTitle() {
+    TestVirtualFile parent = new TestVirtualFile("parent", null, null);
+    TestVirtualFile file = new TestVirtualFile("file", null, null);
+    parent.addChild(file);
+
+    m = new DirectoryHistoryDialogModel(file, vcs);
+
+    assertEquals("parent/file", m.getTitle());
+  }
+
+  @Test
   public void testNoDifference() {
     vcs.createDirectory("dir", null);
     vcs.apply();
@@ -22,7 +33,7 @@ public class DirectoryHistoryDialogModelTest {
     assertEquals(1, this.m.getLabels().size());
 
     this.m.selectLabels(0, 0);
-    DifferenceNodeModel nm = this.m.getRootDifferenceNodeModel();
+    DirectoryDifferenceModel nm = this.m.getRootDifferenceNodeModel();
 
     assertEquals(NOT_MODIFIED, nm.getDifferenceKind());
     assertEquals(0, nm.getChildren().size());
@@ -41,7 +52,7 @@ public class DirectoryHistoryDialogModelTest {
     assertEquals(2, m.getLabels().size());
 
     m.selectLabels(0, 1);
-    DifferenceNodeModel nm = m.getRootDifferenceNodeModel();
+    DirectoryDifferenceModel nm = m.getRootDifferenceNodeModel();
     assertEquals(1, nm.getChildren().size());
 
     nm = nm.getChildren().get(0);

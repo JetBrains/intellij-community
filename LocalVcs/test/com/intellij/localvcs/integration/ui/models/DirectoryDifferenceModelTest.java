@@ -13,46 +13,46 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class DifferenceNodeModelTest extends LocalVcsTestCase {
+public class DirectoryDifferenceModelTest extends LocalVcsTestCase {
   @Test
   public void testStructure() {
     Difference d = new Difference(false, null, null, null);
     d.addChild(new Difference(false, null, null, null));
     d.getChildren().get(0).addChild(new Difference(true, null, null, null));
 
-    DifferenceNodeModel m = new DifferenceNodeModel(d);
+    DirectoryDifferenceModel m = new DirectoryDifferenceModel(d);
     assertEquals(1, m.getChildren().size());
     assertEquals(1, m.getChildren().get(0).getChildren().size());
   }
 
   @Test
-  public void testName() {
+  public void testNames() {
     Entry left = new DirectoryEntry(null, "left", null);
     Entry right = new DirectoryEntry(null, "right", null);
 
     Difference d = new Difference(false, null, left, right);
-    DifferenceNodeModel m = new DifferenceNodeModel(d);
+    DirectoryDifferenceModel m = new DirectoryDifferenceModel(d);
 
     assertEquals("left", m.getEntryName(0));
     assertEquals("right", m.getEntryName(1));
   }
 
   @Test
-  public void testNameForAbsentEntries() {
+  public void testNamesForAbsentEntries() {
     Difference d = new Difference(false, null, null, null);
-    DifferenceNodeModel m = new DifferenceNodeModel(d);
+    DirectoryDifferenceModel m = new DirectoryDifferenceModel(d);
 
     assertEquals("", m.getEntryName(0));
     assertEquals("", m.getEntryName(1));
   }
 
   @Test
-  public void testDifferenceModel() {
+  public void testFileDifferenceModel() {
     Entry left = new DirectoryEntry(null, "left", 123L);
     Entry right = new DirectoryEntry(null, "right", 123L);
 
     Difference d = new Difference(false, null, left, right);
-    DifferenceNodeModel nm = new DifferenceNodeModel(d);
+    DirectoryDifferenceModel nm = new DirectoryDifferenceModel(d);
     FileDifferenceModel m = nm.getFileDifferenceModel();
 
     assertTrue(m.getLeftTitle().endsWith("left"));
@@ -60,10 +60,33 @@ public class DifferenceNodeModelTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testCanShowFileDifference() {
+    Entry left = new FileEntry(null, "left", null, null);
+    Entry right = new FileEntry(null, "right", null, null);
+
+    Difference d1 = new Difference(true, null, left, right);
+    Difference d2 = new Difference(true, null, null, right);
+    Difference d3 = new Difference(true, null, left, null);
+
+    assertTrue(new DirectoryDifferenceModel(d1).canShowFileDifference());
+    assertFalse(new DirectoryDifferenceModel(d2).canShowFileDifference());
+    assertFalse(new DirectoryDifferenceModel(d3).canShowFileDifference());
+  }
+
+  @Test
+  public void testCanNotShowFileDifferenceForDirectories() {
+    Entry left = new DirectoryEntry(null, "left", null);
+    Entry right = new DirectoryEntry(null, "right", null);
+
+    Difference d = new Difference(false, null, left, right);
+    assertFalse(new DirectoryDifferenceModel(d).canShowFileDifference());
+  }
+
+  @Test
   public void testIconsForFile() {
     Entry e = new FileEntry(null, "file", null, null);
     Difference d = new Difference(true, null, e, e);
-    DifferenceNodeModel m = new DifferenceNodeModel(d);
+    DirectoryDifferenceModel m = new DirectoryDifferenceModel(d);
 
     MyFileTypeManager tm = new MyFileTypeManager();
     Icon i = tm.addIconForFile("file");
@@ -77,7 +100,7 @@ public class DifferenceNodeModelTest extends LocalVcsTestCase {
     Entry e2 = new FileEntry(null, "two", null, null);
 
     Difference d = new Difference(true, null, e1, e2);
-    DifferenceNodeModel m = new DifferenceNodeModel(d);
+    DirectoryDifferenceModel m = new DirectoryDifferenceModel(d);
 
     MyFileTypeManager tm = new MyFileTypeManager();
     Icon i1 = tm.addIconForFile("one");
@@ -94,8 +117,8 @@ public class DifferenceNodeModelTest extends LocalVcsTestCase {
     Difference d1 = new Difference(true, null, e1, null);
     Difference d2 = new Difference(true, null, null, e2);
 
-    DifferenceNodeModel m1 = new DifferenceNodeModel(d1);
-    DifferenceNodeModel m2 = new DifferenceNodeModel(d2);
+    DirectoryDifferenceModel m1 = new DirectoryDifferenceModel(d1);
+    DirectoryDifferenceModel m2 = new DirectoryDifferenceModel(d2);
 
     MyFileTypeManager tm = new MyFileTypeManager();
     Icon i1 = tm.addIconForFile("file1");
@@ -109,7 +132,7 @@ public class DifferenceNodeModelTest extends LocalVcsTestCase {
   public void testIconsForDirectory() {
     Entry e = new DirectoryEntry(null, null, null);
     Difference d = new Difference(false, null, e, e);
-    DifferenceNodeModel m = new DifferenceNodeModel(d);
+    DirectoryDifferenceModel m = new DirectoryDifferenceModel(d);
 
     Icon open = Icons.DIRECTORY_OPEN_ICON;
     Icon closed = Icons.DIRECTORY_CLOSED_ICON;
@@ -121,7 +144,7 @@ public class DifferenceNodeModelTest extends LocalVcsTestCase {
   public void testIconsForDirectoryWhenOneEntryIsNull() {
     Entry e = new DirectoryEntry(null, null, null);
     Difference d = new Difference(false, null, e, null);
-    DifferenceNodeModel m = new DifferenceNodeModel(d);
+    DirectoryDifferenceModel m = new DirectoryDifferenceModel(d);
 
     Icon open = Icons.DIRECTORY_OPEN_ICON;
     Icon closed = Icons.DIRECTORY_CLOSED_ICON;
@@ -129,17 +152,17 @@ public class DifferenceNodeModelTest extends LocalVcsTestCase {
     assertClosedIcons(closed, closed, m, null);
   }
 
-  private void assertIcons(Icon left, Icon right, DifferenceNodeModel m, FileTypeManager tm) {
+  private void assertIcons(Icon left, Icon right, DirectoryDifferenceModel m, FileTypeManager tm) {
     assertOpenIcons(left, right, m, tm);
     assertClosedIcons(left, right, m, tm);
   }
 
-  private void assertClosedIcons(Icon left, Icon right, DifferenceNodeModel m, FileTypeManager tm) {
+  private void assertClosedIcons(Icon left, Icon right, DirectoryDifferenceModel m, FileTypeManager tm) {
     assertSame(left, m.getClosedIcon(0, tm));
     assertSame(right, m.getClosedIcon(1, tm));
   }
 
-  private void assertOpenIcons(Icon left, Icon right, DifferenceNodeModel m, FileTypeManager tm) {
+  private void assertOpenIcons(Icon left, Icon right, DirectoryDifferenceModel m, FileTypeManager tm) {
     assertSame(left, m.getOpenIcon(0, tm));
     assertSame(right, m.getOpenIcon(1, tm));
   }

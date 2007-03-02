@@ -7,20 +7,23 @@ import com.intellij.util.Icons;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
-public class DifferenceNodeModel {
+public class DirectoryDifferenceModel {
   private Difference myDiff;
 
-  public DifferenceNodeModel(Difference d) {
+  public DirectoryDifferenceModel(Difference d) {
     myDiff = d;
   }
 
-  public List<DifferenceNodeModel> getChildren() {
-    List<DifferenceNodeModel> result = new ArrayList<DifferenceNodeModel>();
+  public List<DirectoryDifferenceModel> getChildren() {
+    List<DirectoryDifferenceModel> result = new ArrayList<DirectoryDifferenceModel>();
     for (Difference d : myDiff.getChildren()) {
-      result.add(new DifferenceNodeModel(d));
+      result.add(new DirectoryDifferenceModel(d));
     }
+    Collections.sort(result, new MyComparator());
     return result;
   }
 
@@ -57,5 +60,23 @@ public class DifferenceNodeModel {
 
   public FileDifferenceModel getFileDifferenceModel() {
     return new FileDifferenceModel(myDiff.getLeft(), myDiff.getRight());
+  }
+
+  public boolean canShowFileDifference() {
+    if (!isFile()) return false;
+    return getEntry(0) != null && getEntry(1) != null;
+  }
+
+  private static class MyComparator implements Comparator<DirectoryDifferenceModel> {
+    public int compare(DirectoryDifferenceModel l, DirectoryDifferenceModel r) {
+      if (l.isFile() != r.isFile()) return l.isFile() ? 1 : -1;
+      return l.getAnyEntryName().compareToIgnoreCase(r.getAnyEntryName());
+    }
+  }
+
+  private String getAnyEntryName() {
+    Entry e = getEntry(0);
+    if (e == null) e = getEntry(1);
+    return e.getName();
   }
 }

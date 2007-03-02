@@ -67,7 +67,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   private class RevertAction extends AnAction {
     public RevertAction() {
-      super(Bundle.message("historyDialog.rollback"));
+      super("Rollback");
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -77,7 +77,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
-      p.setIcon(IconLoader.getIcon("/actions/reset.png"));
+      p.setIcon(IconLoader.getIcon("/actions/rollback.png"));
     }
   }
 }

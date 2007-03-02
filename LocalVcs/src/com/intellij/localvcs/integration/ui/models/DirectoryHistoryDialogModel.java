@@ -9,8 +9,12 @@ public class DirectoryHistoryDialogModel extends HistoryDialogModel {
     super(f, vcs);
   }
 
-  public DifferenceNodeModel getRootDifferenceNodeModel() {
+  public String getTitle() {
+    return myFile.getPath();
+  }
+
+  public DirectoryDifferenceModel getRootDifferenceNodeModel() {
     Difference d = getLeftLabel().getDifferenceWith(getRightLabel());
-    return new DifferenceNodeModel(d);
+    return new DirectoryDifferenceModel(d);
   }
 }

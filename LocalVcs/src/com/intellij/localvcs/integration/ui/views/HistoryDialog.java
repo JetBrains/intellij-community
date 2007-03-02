@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIHelper;
 
 import javax.swing.*;
@@ -79,7 +80,8 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
     t.getColumnModel().getColumn(0).setResizable(false);
     t.getColumnModel().getColumn(1).setResizable(false);
-    return new JScrollPane(t);
+
+    return ScrollPaneFactory.createScrollPane(t);
   }
 
   private void addSelectionListener(JTable t) {

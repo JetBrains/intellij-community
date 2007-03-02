@@ -20,15 +20,15 @@ public abstract class HistoryDialogModel {
     myFile = f;
   }
 
+  public List<Label> getLabels() {
+    if (myLabelsCache == null) initLabelsCache();
+    return myLabelsCache;
+  }
+
   private void initLabelsCache() {
     myLabelsCache = new ArrayList<Label>();
     addNotSavedVersionTo(myLabelsCache);
     myLabelsCache.addAll(myVcs.getLabelsFor(myFile.getPath()));
-  }
-
-  public List<Label> getLabels() {
-    if (myLabelsCache == null) initLabelsCache();
-    return myLabelsCache;
   }
 
   protected void addNotSavedVersionTo(List<Label> l) {
