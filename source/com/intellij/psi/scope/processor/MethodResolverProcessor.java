@@ -3,13 +3,12 @@ package com.intellij.psi.scope.processor;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
-import com.intellij.util.SmartList;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.SmartList;
 
-public class MethodResolverProcessor extends MethodCandidatesProcessor implements NameHint, ElementClassHint {
+public class MethodResolverProcessor extends MethodCandidatesProcessor implements ElementClassHint {
   private boolean myStopAcceptingCandidates = false;
 
   public MethodResolverProcessor(PsiMethodCallExpression place){
@@ -39,5 +38,13 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor implement
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
     return !myStopAcceptingCandidates && super.execute(element, substitutor);
+  }
+
+  public JavaResolveResult[] getResult() {
+    JavaResolveResult[] result = super.getResult();
+    if (result.length > 1) {
+      int i = 0;
+    }
+    return result;
   }
 }

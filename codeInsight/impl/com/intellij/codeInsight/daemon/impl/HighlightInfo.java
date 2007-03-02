@@ -73,7 +73,6 @@ public class HighlightInfo {
   }
 
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull PsiElement element, String description, String toolTip) {
-    checkIfInReadOnly(type, element);
 
     TextRange range = element.getTextRange();
     int start = range.getStartOffset();
@@ -235,17 +234,10 @@ public class HighlightInfo {
                                                   @NotNull final PsiElement element,
                                                   final String message,
                                                   final TextAttributes attributes) {
-    checkIfInReadOnly(type, element);
     TextRange textRange = element.getTextRange();
     // do not use HighlightInfoFilter
     return new HighlightInfo(attributes, type, textRange.getStartOffset(), textRange.getEndOffset(), message, htmlEscapeToolTip(message),
                              type.getSeverity(element), false, Boolean.FALSE);
-  }
-
-  private static void checkIfInReadOnly(final HighlightInfoType type, final PsiElement element) {
-    if (type != HighlightInfoType.ERROR && type != HighlightInfoType.WRONG_REF) return;
-    if (element.isWritable()) return;
-    int i = 0;
   }
 
   public static class IntentionActionDescriptor {
