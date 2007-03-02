@@ -4,6 +4,7 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -11,6 +12,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
@@ -37,82 +39,86 @@ public class HtmlExtraClosingTagInspection extends HtmlLocalInspectionTool {
     return "HtmlExtraClosingTag";
   }
 
+  @NotNull
+  public HighlightDisplayLevel getDefaultLevel() {
+    return HighlightDisplayLevel.ERROR;
+  }
+
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    final PsiElement[] children = tag.getChildren();
-    String tagName = tag.getName();
-
-    final boolean[] insideEndTag = new boolean[]{false};
-    final XmlToken[] startTagNameToken = new XmlToken[]{null};
-
-    final ElementProcessor processor = new ElementProcessor() {
-      public void process(@NotNull final XmlToken token, @NotNull final String tagName) {
-        String name = tagName;
-        if (token.getTokenType() == XmlTokenType.XML_EMPTY_ELEMENT_END) {
-          return;
-        }
-
-        if (token.getTokenType() == XmlTokenType.XML_END_TAG_START) {
-          insideEndTag[0] = true;
-        }
-
-        if (token.getTokenType() == XmlTokenType.XML_NAME) {
-          if (insideEndTag[0]) {
-            String text = token.getText();
-            if (tag instanceof HtmlTag) {
-              text = text.toLowerCase();
-              name = name.toLowerCase();
-            }
-
-            boolean isExtraHtmlTagEnd = false;
-            if (text.equals(name)) {
-              isExtraHtmlTagEnd = tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(name);
-              if (!isExtraHtmlTagEnd) {
-                return;
-              }
-            }
-
-            assert startTagNameToken != null;
-
-            markClosingTag(token, startTagNameToken[0], tag, isExtraHtmlTagEnd, holder);
-          }
-          else {
-            startTagNameToken[0] = token;
-          }
-        }
-      }
-    };
-
     ProgressManager progressManager = ProgressManager.getInstance();
-    for (PsiElement child : children) {
+
+    final String name = tag.getName();
+    final boolean htmlTag = tag instanceof HtmlTag;
+    final String tagName = htmlTag ? name.toLowerCase() : name;
+    boolean matchesNothing = false;
+
+    final PsiElement[] children = tag.getChildren();
+    for (int i = children.length - 1; i >= 0; i--) {
       progressManager.checkCanceled();
 
+      final PsiElement child = children[i];
       if (child instanceof XmlToken) {
-        processor.process((XmlToken) child, tagName);
-      } else if (child instanceof PsiErrorElement) {
-        final PsiElement[] errorChildren = child.getChildren();
-        for (PsiElement errorChild : errorChildren) {
-          progressManager.checkCanceled();
-          if (errorChild instanceof XmlToken) {
-            processor.process((XmlToken) errorChild, tagName);
+        final XmlToken token = (XmlToken)child;
+
+        final IElementType type = token.getTokenType();
+        if (XmlTokenType.XML_NAME == type) {
+          if (isEndTagName(token)) {
+            final String tokenName = htmlTag ? token.getText().toLowerCase() : token.getText();
+
+            if (tagName.equals(tokenName)) {
+              matchesNothing = true;
+
+              if (htmlTag && HtmlUtil.isSingleHtmlTag(name)) {
+                markClosingTag(token, tag, matchesNothing, holder, tag);
+              }
+            } else {
+              markClosingTag(token, tag, matchesNothing, holder, tag);
+            }
           }
         }
       }
+      else if (child instanceof PsiErrorElement) {
+        final PsiElement[] errorChildren = child.getChildren();
+        boolean insideEndTag = false;
+        for (final PsiElement each : errorChildren) {
+          if (each instanceof XmlToken) {
+            final XmlToken token = (XmlToken)each;
+            if (token.getTokenType() == XmlTokenType.XML_END_TAG_START) {
+              insideEndTag = true;
+              continue;
+            }
 
+            if (insideEndTag && token.getTokenType() == XmlTokenType.XML_NAME) {
+              final String tokenName = htmlTag ? token.getText().toLowerCase() : token.getText();
+              if (!tagName.equals(tokenName)) {
+                markClosingTag((XmlToken)each, tag, matchesNothing, holder, child);
+              }
+              break;
+            }
+          }
+        }
+      }
     }
   }
 
-  interface ElementProcessor {
-    void process(@NotNull final XmlToken token, @NotNull final String tagName);
+  private static boolean isEndTagName(@NotNull final XmlToken token) {
+    final PsiElement prevSibling = token.getPrevSibling();
+    return prevSibling instanceof XmlToken && ((XmlToken)prevSibling).getTokenType() == XmlTokenType.XML_END_TAG_START;
+
   }
 
   protected void markClosingTag(@NotNull final XmlToken token,
-                                @NotNull final XmlToken startTagNameToken,
                                 @NotNull final XmlTag tag,
                                 boolean extraClosingTag,
-                                @NotNull final ProblemsHolder holder) {
+                                @NotNull final ProblemsHolder holder,
+                                @NotNull final PsiElement parent) {
     if (extraClosingTag) {
-      holder.registerProblem(token, XmlErrorMessages.message("extra.closing.tag.for.empty.element"),
-                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveExtraClosingTagIntentionAction(token));
+      final boolean errorElement = parent instanceof PsiErrorElement &&  ((PsiErrorElement)parent).getErrorDescription().equals(XmlErrorMessages.message("xml.parsing.closing.tag.mathes.nothing"));
+      final PsiElement target = errorElement ? parent : token;
+
+      final RemoveExtraClosingTagIntentionAction action = new RemoveExtraClosingTagIntentionAction(token);
+      holder.registerProblem(target, XmlErrorMessages.message("extra.closing.tag.for.empty.element"),
+                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, action);
     }
   }
 }

@@ -3,6 +3,7 @@
  */
 package com.intellij.psi.impl.source.parsing.xml;
 
+import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
@@ -60,14 +61,14 @@ public class XmlParsing {
     }
 
     if (error != null) {
-      error.error("Top element is not completed");
+      error.error(XmlErrorMessages.message("top.level.element.is.not.completed"));
       error = null;
     }
 
     if (rootTagCount == 0) {
       final PsiBuilder.Marker rootTag = mark();
       error = mark();
-      error.error("Valid XML document must have a root tag");
+      error.error(XmlErrorMessages.message("xml.parsing.absent.root.tag"));
       rootTag.done(XmlElementType.XML_TAG);
     }
 
@@ -77,7 +78,7 @@ public class XmlParsing {
   @Nullable
   private static PsiBuilder.Marker flushError(PsiBuilder.Marker error) {
     if (error != null) {
-      error.error("Unexpected tokens");
+      error.error(XmlErrorMessages.message("xml.parsing.unexpected.tokens"));
       error = null;
     }
     return error;
@@ -90,7 +91,7 @@ public class XmlParsing {
 
     while (token() != XML_DOCTYPE_END && !eof()) advance();
     if (eof()) {
-      error("Unexpected ent of file");
+      error(XmlErrorMessages.message("xml.parsing.unexpected.end.of.file"));
     }
     else {
       advance();
@@ -118,7 +119,7 @@ public class XmlParsing {
         if (!tagName.equals(endName) && myTagNamesStack.contains(endName)) {
           footer.rollbackTo();
           myTagNamesStack.pop();
-          tag.doneBefore(XmlElementType.XML_TAG, content, "Element " + tagName + " is not closed");
+          tag.doneBefore(XmlElementType.XML_TAG, content, XmlErrorMessages.message("named.element.is.not.closed", tagName));
           content.drop();
           return;
         }
@@ -128,14 +129,14 @@ public class XmlParsing {
       footer.drop();
 
       while (token() != XmlTokenType.XML_TAG_END && token() != XmlTokenType.XML_START_TAG_START && token() != XmlTokenType.XML_END_TAG_START && !eof()) {
-        error("Unexpected token");
+        error(XmlErrorMessages.message("xml.parsing.unexpected.token"));
         advance();
       }
 
       if (token() == XML_TAG_END) advance();
     }
     else {
-      error("Unexpected end of file");
+      error(XmlErrorMessages.message("xml.parsing.unexpected.end.of.file"));
     }
 
     content.drop();
@@ -148,7 +149,7 @@ public class XmlParsing {
     if (multipleRootTagError) {
       final PsiBuilder.Marker error = mark();
       advance();
-      error.error("Multiple root tags");
+      error.error(XmlErrorMessages.message("xml.parsing.multiple.root.tags"));
     }
     else {
       advance();
@@ -156,7 +157,7 @@ public class XmlParsing {
 
     final String tagName;
     if (token() != XML_NAME) {
-      error("Tag name expected");
+      error(XmlErrorMessages.message("xml.parsing.tag.name.expected"));
       tagName = "";
     }
     else {
@@ -191,7 +192,7 @@ public class XmlParsing {
       advance();
     }
     else {
-      error("Tag start is not closed");
+      error(XmlErrorMessages.message("tag.start.is.not.closed"));
       myTagNamesStack.pop();
       tag.done(XmlElementType.XML_TAG);
       return null;
@@ -231,7 +232,7 @@ public class XmlParsing {
         xmlText = startText(xmlText);
         final PsiBuilder.Marker error = mark();
         advance();
-        error.error("Unescaped & or nonterminated character/entity reference");
+        error.error(XmlErrorMessages.message("unescaped.ampersand.or.nonterminated.character.entity.reference"));
       }
       else if (tt instanceof IChameleonElementType) {
         xmlText = terminateText(xmlText);
@@ -298,7 +299,7 @@ public class XmlParsing {
       else if (tt == XML_BAD_CHARACTER) {
         final PsiBuilder.Marker error = mark();
         advance();
-        error.error("Bad character");
+        error.error(XmlErrorMessages.message("xml.parsing.bad.character"));
         continue;
       }
       if (tt == XML_COMMENT_END) {
@@ -333,7 +334,7 @@ public class XmlParsing {
       att.done(XML_ATTRIBUTE);
     }
     else {
-      error("'=' expected");
+      error(XmlErrorMessages.message("expected.attribute.eq.sign"));
       att.done(XML_ATTRIBUTE);
     }
   }
@@ -351,7 +352,7 @@ public class XmlParsing {
         if (tt == XML_BAD_CHARACTER) {
           final PsiBuilder.Marker error = mark();
           advance();
-          error.error("Unescaped & or nonterminated character/entity reference");
+          error.error(XmlErrorMessages.message("unescaped.ampersand.or.nonterminated.character.entity.reference"));
         }
         else if (tt == XML_ENTITY_REF_TOKEN) {
           parseReference();
@@ -365,11 +366,11 @@ public class XmlParsing {
         advance();
       }
       else {
-        error("Attribute value is not closed");
+        error(XmlErrorMessages.message("xml.parsing.unclosed.attribute.value"));
       }
     }
     else {
-      error("Attribute value expected");
+      error(XmlErrorMessages.message("xml.parsing.attribute.value.expected"));
     }
 
     attValue.done(XML_ATTRIBUTE_VALUE);
@@ -403,7 +404,7 @@ public class XmlParsing {
     final PsiBuilder.Marker pi = mark();
     advance();
     if (token() != XML_NAME) {
-      error("Processing instruction name expected");
+      error(XmlErrorMessages.message("xml.parsing.processing.instruction.name.expected"));
     }
     else {
       advance();
@@ -415,7 +416,7 @@ public class XmlParsing {
         advance();
       }
       else {
-        error("'=' expected");
+        error(XmlErrorMessages.message("expected.attribute.eq.sign"));
       }
       parseAttributeValue();
     }
@@ -424,7 +425,7 @@ public class XmlParsing {
       advance();
     }
     else {
-      error("Processing instruction not terminated");
+      error(XmlErrorMessages.message("xml.parsing.unterminated.processing.instruction"));
     }
 
     pi.done(XML_PROCESSING_INSTRUCTION);

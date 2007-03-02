@@ -9,12 +9,14 @@ import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.PsiElement;
 import com.intellij.xml.XmlBundle;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,17 +45,16 @@ public class HtmlWrongClosingTagNameInspection extends HtmlExtraClosingTagInspec
   }
 
   protected void markClosingTag(@NotNull final XmlToken token,
-                                @NotNull final XmlToken startTagNameToken,
                                 @NotNull final XmlTag tag,
                                 final boolean extraClosingTag,
-                                @NotNull final ProblemsHolder holder) {
-    if (!extraClosingTag) {
+                                @NotNull final ProblemsHolder holder, @NotNull final PsiElement tokenParent) {
 
+    if (!extraClosingTag) {
       final String tokenText = (tag instanceof HtmlTag) ? token.getText().toLowerCase() : token.getText();
       final String tagName = (tag instanceof HtmlTag) ? tag.getName().toLowerCase() : tag.getName();
 
-      final RenameTagBeginOrEndIntentionAction action1 = new RenameTagBeginOrEndIntentionAction(tag, tagName, false);
-      final RenameTagBeginOrEndIntentionAction action2 = new RenameTagBeginOrEndIntentionAction(tag, tokenText, true);
+      final RenameTagBeginOrEndIntentionAction action1 = new RenameTagBeginOrEndIntentionAction((CompositeElement) tokenParent, token, tagName, tokenText, false);
+      final RenameTagBeginOrEndIntentionAction action2 = new RenameTagBeginOrEndIntentionAction((CompositeElement) tag, (XmlToken)tag.getChildren()[1], tokenText, tagName, true);
 
       holder.registerProblem(token, XmlErrorMessages.message("wrong.closing.tag.name"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                              new RemoveExtraClosingTagIntentionAction(token), action1, action2);
