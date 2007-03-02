@@ -53,7 +53,7 @@ public abstract class HistoryDialogModel {
   public void selectLabels(int first, int second) {
     if (first == second) {
       myRightLabel = 0;
-      myLeftLabel = first;
+      myLeftLabel = first == -1 ? 0 : first;
     }
     else {
       myRightLabel = first;

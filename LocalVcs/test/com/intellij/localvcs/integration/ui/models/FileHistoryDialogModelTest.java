@@ -21,24 +21,6 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   private FileHistoryDialogModel m;
 
   @Test
-  public void testLabelsList() {
-    vcs.createFile("f", b(""), null);
-    vcs.apply();
-    vcs.putLabel("1");
-
-    vcs.changeFileContent("f", b(""), null);
-    vcs.apply();
-    vcs.putLabel("2");
-
-    initModelFor("f");
-    List<Label> ll = m.getLabels();
-
-    assertEquals(2, ll.size());
-    assertEquals("2", ll.get(0).getName());
-    assertEquals("1", ll.get(1).getName());
-  }
-
-  @Test
   public void testIncludingUnsavedVersionInLabels() {
     vcs.createFile("f", b("old"), null);
     vcs.apply();
