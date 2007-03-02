@@ -80,7 +80,7 @@ public class CommittedChangesPanel extends JPanel {
   public void refreshChanges() {
     final Ref<VcsException> refEx = new Ref<VcsException>();
     final Ref<List<CommittedChangeList>> changes = new Ref<List<CommittedChangeList>>();
-    boolean cancelled = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         try {
           if (myRoot == null) {
@@ -99,7 +99,7 @@ public class CommittedChangesPanel extends JPanel {
       LOG.info(refEx.get());
       Messages.showErrorDialog(myProject, "Error refreshing view: " + StringUtil.join(refEx.get().getMessages(), "\n"), "Committed Changes");
     }
-    else if (!cancelled) {
+    else if (completed) {
       myChangesFromProvider = changes.get();
       updateFilteredModel();
     }
