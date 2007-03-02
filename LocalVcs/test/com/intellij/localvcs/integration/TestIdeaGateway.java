@@ -11,9 +11,9 @@ public class TestIdeaGateway extends IdeaGateway {
   }
 
   @Override
-  public void runWriteAction(Callable c) {
+  public <T> T runWriteAction(Callable<T> c) {
     try {
-      c.call();
+      return c.call();
     }
     catch (Exception e) {
       throw new RuntimeException(e);

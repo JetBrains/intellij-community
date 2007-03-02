@@ -11,8 +11,8 @@ public class FileReverter {
   private VirtualFile myFile;
   private Entry myOlder;
 
-  public static void revert(IdeaGateway gw, VirtualFile f, Entry older) {
-    new FileReverter(gw, f, older).revert();
+  public static boolean revert(IdeaGateway gw, VirtualFile f, Entry older) {
+    return new FileReverter(gw, f, older).revert();
   }
 
   private FileReverter(IdeaGateway gw, VirtualFile f, Entry older) {
@@ -21,12 +21,12 @@ public class FileReverter {
     myOlder = older;
   }
 
-  private void revert() {
-    myIdeaGateway.runWriteAction(new Callable() {
-      public Object call() throws Exception {
-        if (!myIdeaGateway.ensureFilesAreWritable(myFile)) return null;
+  private boolean revert() {
+    return myIdeaGateway.runWriteAction(new Callable<Boolean>() {
+      public Boolean call() throws Exception {
+        if (!myIdeaGateway.ensureFilesAreWritable(myFile)) return false;
         doRevert();
-        return null;
+        return true;
       }
     });
   }

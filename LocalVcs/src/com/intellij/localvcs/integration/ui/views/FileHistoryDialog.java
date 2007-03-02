@@ -70,7 +70,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      myModel.revert();
+      if (!myModel.revert()) return;
       close(0);
     }
 

@@ -3,6 +3,7 @@ package com.intellij.localvcs.integration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -19,11 +20,11 @@ public class IdeaGateway {
     return myProject;
   }
 
-  public void runWriteAction(final Callable c) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
+  public <T> T runWriteAction(final Callable<T> c) {
+    return ApplicationManager.getApplication().runWriteAction(new Computable<T>() {
+      public T compute() {
         try {
-          c.call();
+          return c.call();
         }
         catch (Exception e) {
           throw new RuntimeException(e);
