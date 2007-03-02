@@ -39,12 +39,4 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor implement
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
     return !myStopAcceptingCandidates && super.execute(element, substitutor);
   }
-
-  public JavaResolveResult[] getResult() {
-    JavaResolveResult[] result = super.getResult();
-    if (result.length > 1) {
-      int i = 0;
-    }
-    return result;
-  }
 }
