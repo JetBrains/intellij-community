@@ -101,7 +101,10 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     if (failed) {
       if (project != null) {
         FileEditor editor = new FocusBasedCurrentEditorProvider().getCurrentEditor();
-        UndoManager.getInstance(project).undo(editor);
+        final UndoManager undoManager = UndoManager.getInstance(project);
+        if (undoManager.isUndoAvailable(editor)) {
+          undoManager.undo(editor);
+        }
       }
 
       Messages.showErrorDialog(project, "Cannot perform operation. Too complex, sorry.", "Failed to perform operation");
