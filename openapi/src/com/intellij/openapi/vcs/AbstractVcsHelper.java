@@ -84,10 +84,14 @@ public abstract class AbstractVcsHelper {
   public abstract void showChangesBrowser(List<CommittedChangeList> changelists);
   public abstract void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title);
   public abstract void showChangesBrowser(CommittedChangeList changelist, @Nls String title);
-  public abstract void showChangesBrowser(CommittedChangesProvider provider, final VirtualFile root, @Nls String title);
+  public abstract void showChangesBrowser(CommittedChangesProvider provider, final VirtualFile root, @Nls String title,
+                                          @Nullable final Component parent);
   public abstract void showChangesBrowser(Component parent, Collection<Change> changes, @Nls String title);
     
   @Nullable public abstract <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(CommittedChangesProvider<T, U> provider);
+
+  public abstract void openCommittedChangesTab(CommittedChangesProvider provider, VirtualFile root, ChangeBrowserSettings settings,
+                                               int maxCount, final String title);
 
   public abstract void showMergeDialog(List<VirtualFile> files, MergeProvider provider, final AnActionEvent e);
 

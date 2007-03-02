@@ -11,20 +11,30 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author max
  */
 public class ChangesBrowserDialog extends DialogWrapper {
-  private final Project myProject;
-  private final CommittedChangesTableModel myChanges;
-  private final Mode myMode;
+  private Project myProject;
+  private CommittedChangesTableModel myChanges;
+  private Mode myMode;
   private CommittedChangesBrowser myCommittedChangesBrowser;
 
   public enum Mode { Simple, Browse, Choose }
 
   public ChangesBrowserDialog(Project project, CommittedChangesTableModel changes, final Mode mode) {
     super(project, true);
+    initDialog(project, changes, mode);
+  }
+
+  public ChangesBrowserDialog(Project project, Component parent, CommittedChangesTableModel changes, final Mode mode) {
+    super(parent, true);
+    initDialog(project, changes, mode);
+  }
+
+  private void initDialog(final Project project, final CommittedChangesTableModel changes, final Mode mode) {
     myProject = project;
     myChanges = changes;
     myMode = mode;

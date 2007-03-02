@@ -413,11 +413,15 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   public void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title) {
-    showChangesBrowser(new CommittedChangesTableModel(changelists), title, false);
+    showChangesBrowser(new CommittedChangesTableModel(changelists), title, false, null);
   }
 
-  private void showChangesBrowser(CommittedChangesTableModel changelists, String title, boolean showSearchAgain) {
-    final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, changelists, showSearchAgain ? ChangesBrowserDialog.Mode.Browse : ChangesBrowserDialog.Mode.Simple);
+  private void showChangesBrowser(CommittedChangesTableModel changelists, String title, boolean showSearchAgain,
+                                  @Nullable final Component parent) {
+    final ChangesBrowserDialog.Mode mode = showSearchAgain ? ChangesBrowserDialog.Mode.Browse : ChangesBrowserDialog.Mode.Simple;
+    final ChangesBrowserDialog dlg = parent != null
+                                     ? new ChangesBrowserDialog(myProject, parent, changelists, mode)
+                                     : new ChangesBrowserDialog(myProject, changelists, mode);
     if (title != null) {
       dlg.setTitle(title);
     }
@@ -440,7 +444,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     dlg.show();
   }
 
-  public void showChangesBrowser(final CommittedChangesProvider provider, final VirtualFile root, @Nls String title) {
+  public void showChangesBrowser(final CommittedChangesProvider provider, final VirtualFile root, @Nls String title, final Component parent) {
     final ChangesBrowserSettingsEditor filterUI = provider.createFilterUI(true);
     ChangeBrowserSettings settings = provider.createDefaultSettings();
     boolean ok = true;
@@ -455,38 +459,43 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
 
     if (ok) {
-      final List<CommittedChangeList> versions = new ArrayList<CommittedChangeList>();
-      final List<VcsException> exceptions = new ArrayList<VcsException>();
-      final Ref<CommittedChangesTableModel> tableModelRef = new Ref<CommittedChangesTableModel>();
+      if (myProject.isDefault()) {
+        final List<CommittedChangeList> versions = new ArrayList<CommittedChangeList>();
+        final List<VcsException> exceptions = new ArrayList<VcsException>();
+        final Ref<CommittedChangesTableModel> tableModelRef = new Ref<CommittedChangesTableModel>();
 
-      final ChangeBrowserSettings settings1 = settings;
-      final boolean done = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          try {
-            versions.addAll(provider.getCommittedChanges(settings1, root, 0));
+        final ChangeBrowserSettings settings1 = settings;
+        final boolean done = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+          public void run() {
+            try {
+              versions.addAll(provider.getCommittedChanges(settings1, root, 0));
+            }
+            catch (VcsException e) {
+              exceptions.add(e);
+            }
+            tableModelRef.set(new CommittedChangesTableModel(versions, provider.getColumns()));
           }
-          catch (VcsException e) {
-            exceptions.add(e);
-          }
-          tableModelRef.set(new CommittedChangesTableModel(versions, provider.getColumns()));
+        }, VcsBundle.message("browse.changes.progress.title"), true, myProject);
+
+        if (!done) return;
+
+        if (!exceptions.isEmpty()) {
+          Messages.showErrorDialog(myProject, VcsBundle.message("browse.changes.error.message", exceptions.get(0).getMessage()),
+                                   VcsBundle.message("browse.changes.error.title"));
+          return;
         }
-      }, VcsBundle.message("browse.changes.progress.title"), true, myProject);
 
-      if (!done) return;
+        if (versions.isEmpty()) {
+          Messages.showInfoMessage(myProject, VcsBundle.message("browse.changes.nothing.found"),
+                                   VcsBundle.message("browse.changes.nothing.found.title"));
+          return;
+        }
 
-      if (!exceptions.isEmpty()) {
-        Messages.showErrorDialog(myProject, VcsBundle.message("browse.changes.error.message", exceptions.get(0).getMessage()),
-                                 VcsBundle.message("browse.changes.error.title"));
-        return;
+        showChangesBrowser(tableModelRef.get(), title, filterUI != null, parent);
       }
-
-      if (versions.isEmpty()) {
-        Messages.showInfoMessage(myProject, VcsBundle.message("browse.changes.nothing.found"),
-                                 VcsBundle.message("browse.changes.nothing.found.title"));
-        return;
+      else {
+        openCommittedChangesTab(provider, null, settings, 0, title);
       }
-
-      showChangesBrowser(tableModelRef.get(), title, filterUI != null);
     }
   }
 
@@ -627,6 +636,27 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       }
     }
     return result.toArray(new PsiFile[result.size()]);
+  }
+
+  public void openCommittedChangesTab(final CommittedChangesProvider provider, final VirtualFile root, final ChangeBrowserSettings settings,
+                                      final int maxCount, String title) {
+    CommittedChangesPanel panel = new CommittedChangesPanel(myProject, provider, settings);
+    panel.setRoot(root);
+    panel.setMaxCount(maxCount);
+    panel.refreshChanges();
+    final ContentFactory factory = PeerFactory.getInstance().getContentFactory();
+    if (title == null && root != null) {
+      title = VcsBundle.message("browse.changes.content.title", root.getPresentableUrl());
+    }
+    final Content content = factory.createContent(panel, title, false);
+    final ChangesViewContentManager contentManager = ChangesViewContentManager.getInstance(myProject);
+    contentManager.addContent(content);
+    contentManager.setSelectedContent(content);
+
+    ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+    if (!window.isVisible()) {
+      window.activate(null);
+    }
   }
 
   private static class MyContentDisposer implements ContentManagerListener {

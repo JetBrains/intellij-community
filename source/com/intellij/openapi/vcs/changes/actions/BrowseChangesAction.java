@@ -4,26 +4,16 @@
 
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.CommittedChangesFilterDialog;
-import com.intellij.openapi.vcs.changes.ui.CommittedChangesPanel;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.peer.PeerFactory;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
-import com.intellij.CommonBundle;
 
 /**
  * @author yole
@@ -57,20 +47,7 @@ public class BrowseChangesAction extends AnAction {
       }
     }
 
-    CommittedChangesPanel panel = new CommittedChangesPanel(project, provider, settings);
-    panel.setRoot(vFile);
-    panel.setMaxCount(maxCount);
-    panel.refreshChanges();
-    final ContentFactory factory = PeerFactory.getInstance().getContentFactory();
-    final Content content = factory.createContent(panel, VcsBundle.message("browse.changes.content.title", vFile.getPresentableUrl()), false);
-    final ChangesViewContentManager contentManager = ChangesViewContentManager.getInstance(project);
-    contentManager.addContent(content);
-    contentManager.setSelectedContent(content);
-
-    ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-    if (!window.isVisible()) {
-      window.activate(null);
-    }
+    AbstractVcsHelper.getInstance(project).openCommittedChangesTab(provider, vFile, settings, maxCount, null);
   }
 
   public void update(AnActionEvent e) {

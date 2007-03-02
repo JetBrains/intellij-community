@@ -84,7 +84,7 @@ public class CommittedChangesPanel extends JPanel {
       public void run() {
         try {
           if (myRoot == null) {
-            changes.set(myProvider.getAllCommittedChanges(mySettings, 50));
+            changes.set(myProvider.getAllCommittedChanges(mySettings, myMaxCount));
           }
           else {
             changes.set(myProvider.getCommittedChanges(mySettings, myRoot, myMaxCount));

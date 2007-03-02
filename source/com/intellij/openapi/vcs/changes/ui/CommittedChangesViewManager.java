@@ -88,6 +88,7 @@ public class CommittedChangesViewManager implements ProjectComponent {
       if (myContent == null) {
         if (myComponent == null) {
           myComponent = new CommittedChangesPanel(myProject, myProvider, myProvider.createDefaultSettings());
+          myComponent.setMaxCount(50);
         }
         else {
           myComponent.setProvider(myProvider);
