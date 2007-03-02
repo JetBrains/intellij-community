@@ -12,9 +12,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.parsers.ParserConfigurationException;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 abstract class XmlElementStorage implements StateStorage {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.XmlElementStorage");
@@ -24,6 +22,7 @@ abstract class XmlElementStorage implements StateStorage {
   @NonNls private static final String NAME = ATTR_NAME;
 
   private PathMacroSubstitutor myPathMacroManager;
+  private Set<Element> mySavedElements = new HashSet<Element>();
 
   protected XmlElementStorage(final PathMacroSubstitutor pathMacroManager) {
     myPathMacroManager = pathMacroManager;
@@ -82,6 +81,7 @@ abstract class XmlElementStorage implements StateStorage {
       }
     }
 
+    mySavedElements.add(newComponentElement);
     rootElement.addContent(newComponentElement);
   }                                                                  
 
@@ -132,4 +132,19 @@ abstract class XmlElementStorage implements StateStorage {
       node.addContent(e);
     }
   }
+
+  public final void save() throws StateStorageException {
+    try {
+      if (!needsSave()) return;
+      doSave();
+    }
+    finally {
+      for (Element savedElement : mySavedElements) {
+        savedElement.detach();
+      }
+      mySavedElements.clear();
+    }
+  }
+
+  protected abstract void doSave() throws StateStorageException;
 }

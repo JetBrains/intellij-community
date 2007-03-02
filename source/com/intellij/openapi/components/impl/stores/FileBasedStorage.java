@@ -44,9 +44,7 @@ public class FileBasedStorage extends XmlElementStorage {
     return getDocument().getRootElement();
   }
 
-  public void save() throws StateStorageException {
-    if (!needsSave()) return;
-
+  public void doSave() throws StateStorageException {
     try {
       final Ref<IOException> refIOException = Ref.create(null);
       try {
