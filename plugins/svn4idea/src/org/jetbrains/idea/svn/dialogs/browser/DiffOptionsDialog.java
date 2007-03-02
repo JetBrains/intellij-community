@@ -12,8 +12,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 import org.tmatesoft.svn.core.SVNURL;
@@ -21,6 +24,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -38,13 +42,15 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
   private JCheckBox myReverseDiffButton;
   private JLabel mySourceUrlLabel;
   private JPanel myMainPanel;
+  private JLabel myErrorLabel;
+  @NonNls private static final String DEFAULT_PATCH_NAME = "diff.txt";
 
   public DiffOptionsDialog(Project project, SVNURL rootURL, SVNURL url) {
     super(project, true);
     myURL = url;
     myRootURL = rootURL;
     myProject = project;
-    setTitle("Compare With Branch or Tag");
+    setTitle(SvnBundle.message("diff.options.title"));
     mySourceUrlLabel.setText(myURL.toString());
     myBrowser.setRepositoryURL(myRootURL, false);
     myBrowser.addChangeListener(new TreeSelectionListener() {
@@ -60,17 +66,22 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
         File f = selectFile("Patch File", "Select file to store unified diff");
         if (f != null) {
           if (f.exists() && f.isDirectory()) {
-            f = new File(f, "diff.txt");
+            f = new File(f, DEFAULT_PATCH_NAME);
           }
           myFileBrowser.setText(f.getAbsolutePath());
         }
+      }
+    });
+    myFileBrowser.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        update();
       }
     });
     final VirtualFile baseDir = myProject.getBaseDir();
     if (baseDir != null) {
       String projectDir = baseDir.getPath();
       projectDir = projectDir.replace('/', File.separatorChar);
-      myFileBrowser.setText(projectDir + File.separatorChar + "diff.txt");
+      myFileBrowser.setText(projectDir + File.separatorChar + DEFAULT_PATCH_NAME);
     }
   }
 
@@ -110,16 +121,29 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
   private void update() {
     RepositoryTreeNode baseNode = myBrowser.getSelectedNode();
     if (baseNode == null) {
+      myErrorLabel.setText(SvnBundle.message("diff.options.no.url.error"));
       getOKAction().setEnabled(false);
       return;
     }
-    getOKAction().setEnabled(!myURL.equals(getTargetURL()));
+    if (myURL.equals(getTargetURL())) {
+      myErrorLabel.setText(SvnBundle.message("diff.options.same.url.error"));
+      getOKAction().setEnabled(false);
+      return;
+    }
+    if (myUnifiedDiffButton.isSelected() && (myFileBrowser.getText().length() == 0 || getTargetFile().getParentFile() == null)) {
+      myErrorLabel.setText(SvnBundle.message("diff.options.no.patch.file.error"));
+      getOKAction().setEnabled(false);
+      return;
+    }
+    myErrorLabel.setText(" ");
+    getOKAction().setEnabled(true);
   }
 
   public JComponent getPreferredFocusedComponent() {
     return myBrowser;
   }
 
+  @Nullable
   private File selectFile(String title, String description) {
     FileChooserDescriptor fcd = new FileChooserDescriptor(true, true, false, false, false, false);
     fcd.setShowFileSystemRoots(true);
@@ -127,7 +151,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     fcd.setDescription(description);
     fcd.setHideIgnored(false);
     VirtualFile[] files = FileChooser.chooseFiles(myBrowser, fcd, null);
-    if (files == null || files.length != 1 || files[0] == null) {
+    if (files.length != 1 || files[0] == null) {
       return null;
     }
     return new File(files[0].getPath());

@@ -88,9 +88,19 @@
       <component id="f13a0" class="org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent" binding="myBrowser" custom-create="true">
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-          <gridbag weightx="0.0" weighty="0.0"/>
+          <gridbag weightx="1.0" weighty="1.0"/>
         </constraints>
         <properties/>
+      </component>
+      <component id="982a2" class="javax.swing.JLabel" binding="myErrorLabel">
+        <constraints>
+          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <foreground awt-color="red"/>
+          <text value=" "/>
+        </properties>
       </component>
     </children>
   </grid>
