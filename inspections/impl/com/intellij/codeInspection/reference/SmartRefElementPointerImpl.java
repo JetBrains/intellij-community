@@ -62,6 +62,13 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
     initType(type);
   }
 
+  public SmartRefElementPointerImpl(final String type, final String fqName) {
+     myIsPersistent = true;
+     myFQName = fqName;
+     myType = type;
+     initType(type);
+   }
+
   private void initType(final String type) {
     if (METHOD.equals(type)) {
       myType = METHOD;
