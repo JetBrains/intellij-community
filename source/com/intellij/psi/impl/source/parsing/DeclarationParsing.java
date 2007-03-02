@@ -904,8 +904,10 @@ public class DeclarationParsing extends Parsing {
         TreeUtil.addChildren(invalidElementsGroup, ref);
       }
       else{
-        TreeUtil.addChildren(invalidElementsGroup, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
-        lexer.advance();
+        if (lexer.getTokenType() != null) {
+          TreeUtil.addChildren(invalidElementsGroup, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+          lexer.advance();
+        }
       }
     }
 
