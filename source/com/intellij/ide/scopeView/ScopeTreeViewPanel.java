@@ -34,7 +34,6 @@ import com.intellij.packageDependencies.ui.*;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -75,6 +74,8 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   private Tree myTree = new Tree();
   private final Project myProject;
   private TreeModelBuilder myBuilder;
+
+  @SuppressWarnings({"WeakerAccess"})
   public String CURRENT_SCOPE_NAME;
 
   private boolean myInitialized = false;
@@ -84,7 +85,6 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
   private final DependencyValidationManager myDependencyValidationManager;
-  private final NamedScopeManager myNamedScopeManager;
   private WolfTheProblemSolver.ProblemListener myProblemListener = new MyProblemListener();
 
   private MergingUpdateQueue myUpdateQueue = new MergingUpdateQueue("ScopeViewUpdate", 300, myTree.isShowing(), myTree);
@@ -96,7 +96,6 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
 
     add(new JScrollPane(myTree), BorderLayout.CENTER);
     myDependencyValidationManager = DependencyValidationManager.getInstance(myProject);
-    myNamedScopeManager = NamedScopeManager.getInstance(myProject);
 
     final UiNotifyConnector uiNotifyConnector = new UiNotifyConnector(myTree, myUpdateQueue);
     Disposer.register(this, myUpdateQueue);
