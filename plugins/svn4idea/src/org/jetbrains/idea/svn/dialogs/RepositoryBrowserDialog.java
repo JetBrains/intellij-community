@@ -34,20 +34,20 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.browser.*;
+import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.status.SvnDiffEditor;
@@ -69,7 +69,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.*;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Map;
 
 public class RepositoryBrowserDialog extends DialogWrapper {
@@ -182,6 +181,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
     group.add(new CheckoutAction());
     group.add(new DiffAction());
+    group.add(new BrowseChangesAction());
     group.addSeparator();
     group.add(new ImportAction());
     group.add(new ExportAction());
@@ -612,6 +612,24 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
     public void actionPerformed(AnActionEvent e) {
       doCheckout(null);
+    }
+  }
+
+  protected class BrowseChangesAction extends AnAction {
+    public BrowseChangesAction() {
+      super(SvnBundle.message("repository.browser.browse.changes.action"),
+            SvnBundle.message("repository.browser.browse.changes.description"), null);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      RepositoryTreeNode node = getNotNullSelectedNode();
+      SVNURL url = node.getURL();
+      SvnCommittedChangesProvider provider = new SvnCommittedChangesProvider(myProject, url.toString());
+      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(provider, null, "Changes in " + url.toString(), getContentPane());
+    }
+
+    public void update(final AnActionEvent e) {
+      e.getPresentation().setEnabled(getRepositoryBrowser().getSelectedNode() != null);
     }
   }
 

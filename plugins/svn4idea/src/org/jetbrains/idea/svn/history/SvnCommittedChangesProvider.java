@@ -68,6 +68,9 @@ public class SvnCommittedChangesProvider implements CommittedChangesProvider<Svn
   }
 
   public List<SvnChangeList> getAllCommittedChanges(ChangeBrowserSettings settings, final int maxCount) throws VcsException {
+    if (myLocation != null) {
+      return getCommittedChanges(myLocation, maxCount, settings);
+    }
     LinkedHashSet<SvnChangeList> result = new LinkedHashSet<SvnChangeList>();
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     VirtualFile[] roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(SvnVcs.getInstance(myProject));
