@@ -81,7 +81,8 @@ public class IdeaLogger extends Logger {
 
   public void error(String message, Throwable t, String... details) {
     if (t instanceof ProcessCanceledException) {
-      myLogger.error("Do not log ProcessCanceledException: ", new Throwable());
+      myLogger.error("Do not log ProcessCanceledException. Logged at: ", new Throwable());
+      myLogger.error("Do not log ProcessCanceledException. Thrown at:", t);
       throw (ProcessCanceledException)t;
     }
     t.printStackTrace();
