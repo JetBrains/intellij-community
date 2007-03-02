@@ -72,8 +72,14 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
       if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
       if (parserDefinition != null){
         final PsiFile psiFile = viewProvider.getPsi(language);
-        if(markAsCopy) ((TreeElement)psiFile.getNode()).acceptTree(new GeneratedMarkerVisitor());
-        return psiFile;
+        if (psiFile != null) {
+          if(markAsCopy) {
+            final TreeElement node = (TreeElement)psiFile.getNode();
+            assert node != null;
+            node.acceptTree(new GeneratedMarkerVisitor());
+          }
+          return psiFile;
+        }
       }
     }
     final SingleRootFileViewProvider singleRootFileViewProvider =
@@ -100,8 +106,14 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
       if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
       if (parserDefinition != null){
         final PsiFile psiFile = viewProvider.getPsi(lang);
-        if(markAsCopy) ((TreeElement)psiFile.getNode()).acceptTree(new GeneratedMarkerVisitor());
-        return psiFile;
+        if (psiFile != null) {
+          if(markAsCopy) {
+            final TreeElement node = (TreeElement)psiFile.getNode();
+            assert node != null;
+            node.acceptTree(new GeneratedMarkerVisitor());
+          }
+          return psiFile;
+        }
       }
     }
     final SingleRootFileViewProvider singleRootFileViewProvider =
