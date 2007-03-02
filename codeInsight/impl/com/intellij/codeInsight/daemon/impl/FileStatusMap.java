@@ -18,12 +18,9 @@ import java.util.Map;
 
 public class FileStatusMap {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.FileStatusMap");
-
   private final Project myProject;
-
   private final Map<Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<Document, FileStatus>(); // all dirty if absent
-
-  private final Key<RefCountHolder> REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY = Key.create("DaemonCodeAnalyzerImpl.REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY");
+  private final static Key<RefCountHolder> REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY = Key.create("DaemonCodeAnalyzerImpl.REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY");
   private final Map<Document,Object> myDocumentsWithRefCountHolders = new WeakHashMap<Document, Object>(); // Document --> null
   private final Object myRefCountHolderLock = new Object();
 
@@ -162,16 +159,17 @@ public class FileStatusMap {
 
   @NotNull
   public RefCountHolder getRefCountHolder(@NotNull Document document, @NotNull PsiFile file) {
-    RefCountHolder refCountHolder;
     synchronized (myRefCountHolderLock) {
-      refCountHolder = document.getUserData(REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY);
-      if (refCountHolder == null) {
+      RefCountHolder refCountHolder = document.getUserData(REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY);
+      if (refCountHolder == null
+          // PostHighlighting pass is still mumbling with old refCounterHolder. Let it be, it'll be canceled anyway
+          || refCountHolder.isLocked()) {
         refCountHolder = new RefCountHolder(file);
         document.putUserData(REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY, refCountHolder);
         myDocumentsWithRefCountHolders.put(document, null);
       }
+      return refCountHolder;
     }
-    return refCountHolder;
   }
   public boolean allDirtyScopesAreNull(final Document document) {
     synchronized (myDocumentToStatusMap) {

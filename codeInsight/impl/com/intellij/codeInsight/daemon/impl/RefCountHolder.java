@@ -27,6 +27,7 @@ public class RefCountHolder {
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new THashMap<PsiReference, PsiImportStatementBase>();
   private final Set<PsiNamedElement> myUsedElements = new THashSet<PsiNamedElement>();
   private volatile boolean myTouched;
+  private volatile boolean locked;
 
   public RefCountHolder(PsiFile file) {
     myFile = file;
@@ -220,5 +221,14 @@ public class RefCountHolder {
   }
   public void assertIsTouched() {
     LOG.assertTrue(myTouched);
+  }
+
+  public boolean isLocked() {
+    return locked;
+  }
+
+  public void setLocked(final boolean locked) {
+    LOG.assertTrue(this.locked != locked);
+    this.locked = locked;
   }
 }
