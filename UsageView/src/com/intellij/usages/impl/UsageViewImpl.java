@@ -31,11 +31,11 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.content.Content;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
@@ -1012,6 +1012,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     public void calcData(final DataKey key, final DataSink sink) {
       Node node = getSelectedNode();
 
+      if (key == DataKeys.PROJECT) {
+        sink.put(DataKeys.PROJECT, myProject);
+      }
       if (key == USAGE_VIEW_KEY) {
         sink.put(USAGE_VIEW_KEY, UsageViewImpl.this);
       }
@@ -1045,7 +1048,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
       if (node != null) {
         Object userObject = node.getUserObject();
-        if (userObject instanceof DataProvider) {
+        if (userObject instanceof TypeSafeDataProvider) {
+          ((TypeSafeDataProvider)userObject).calcData(key, sink);
+        }
+        else if (userObject instanceof DataProvider) {
           DataProvider dataProvider = (DataProvider)userObject;
           Object data = dataProvider.getData(key.getName());
           if (data != null) {
@@ -1218,7 +1224,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
-  public PsiElement getSelectedPsiElement() {
-    return (PsiElement)DataManager.getInstance().getDataContext(myRootPanel).getData(DataConstants.PSI_ELEMENT);
+  public UsageInfo getSelectedUsageInfo() {
+    return (UsageInfo)DataManager.getInstance().getDataContext(myRootPanel).getData(USAGE_INFO_KEY.getName());
   }
 }

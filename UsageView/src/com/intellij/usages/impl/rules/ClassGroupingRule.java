@@ -15,8 +15,7 @@
  */
 package com.intellij.usages.impl.rules;
 
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,15 +28,12 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.usageView.UsageInfo;
 
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 20, 2004
- * Time: 11:06:30 AM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class ClassGroupingRule implements UsageGroupingRule {
   public UsageGroup groupUsage(Usage usage) {
@@ -93,7 +89,7 @@ public class ClassGroupingRule implements UsageGroupingRule {
     return index < 0? name : name.substring(0, index);
   }
 
-  private static class ClassUsageGroup implements UsageGroup, DataProvider {
+  private static class ClassUsageGroup implements UsageGroup, TypeSafeDataProvider {
     private SmartPsiElementPointer myClassPointer;
     private String myText;
     private String myQName;
@@ -131,7 +127,7 @@ public class ClassGroupingRule implements UsageGroupingRule {
     }
 
     public FileStatus getFileStatus() {
-      return isValid() ? (getPsiClass()).getFileStatus() : null;
+      return isValid() ? getPsiClass().getFileStatus() : null;
     }
 
     private PsiClass getPsiClass() {
@@ -168,12 +164,16 @@ public class ClassGroupingRule implements UsageGroupingRule {
       return getText(null).compareTo(usageGroup.getText(null));
     }
 
-    public Object getData(String dataId) {
-      if (dataId.equals(DataConstants.PSI_ELEMENT)) {
-        return getPsiClass();
+    public void calcData(final DataKey key, final DataSink sink) {
+      if (DataKeys.PSI_ELEMENT == key) {
+        sink.put(DataKeys.PSI_ELEMENT, getPsiClass());
       }
-
-      return null;
+      if (UsageView.USAGE_INFO_KEY == key) {
+        PsiClass psiClass = getPsiClass();
+        if (psiClass != null) {
+          sink.put(UsageView.USAGE_INFO_KEY, new UsageInfo(psiClass));
+        }
+      }
     }
   }
 }

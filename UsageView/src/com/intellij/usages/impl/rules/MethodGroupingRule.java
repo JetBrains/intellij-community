@@ -15,11 +15,13 @@
  */
 package com.intellij.usages.impl.rules;
 
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -29,18 +31,16 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.usageView.UsageInfo;
 
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 20, 2004
- * Time: 11:06:30 AM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class MethodGroupingRule implements UsageGroupingRule {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.rules.MethodGroupingRule");
+
   public UsageGroup groupUsage(Usage usage) {
     if (usage instanceof PsiElementUsage) {
       PsiElement psiElement = ((PsiElementUsage)usage).getElement();
@@ -59,8 +59,8 @@ public class MethodGroupingRule implements UsageGroupingRule {
     }
     return null;
   }
-  
-  private static class MethodUsageGroup implements UsageGroup, DataProvider {
+
+  private static class MethodUsageGroup implements UsageGroup, TypeSafeDataProvider {
     private SmartPsiElementPointer myMethodPointer;
     private String myName;
     private Icon myIcon;
@@ -82,7 +82,7 @@ public class MethodGroupingRule implements UsageGroupingRule {
       }
     }
 
-    private Icon getIconImpl(PsiMethod psiMethod) {
+    private static Icon getIconImpl(PsiMethod psiMethod) {
       return psiMethod.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
     }
 
@@ -143,12 +143,16 @@ public class MethodGroupingRule implements UsageGroupingRule {
       return myName.compareTo(((MethodUsageGroup)usageGroup).myName);
     }
 
-    public Object getData(String dataId) {
-      if (dataId.equals(DataConstants.PSI_ELEMENT)) {
-        return getMethod();
+    public void calcData(final DataKey key, final DataSink sink) {
+      if (DataKeys.PSI_ELEMENT == key) {
+        sink.put(DataKeys.PSI_ELEMENT, getMethod());
       }
-
-      return null;
+      if (UsageView.USAGE_INFO_KEY == key) {
+        PsiMethod method = getMethod();
+        if (method != null) {
+          sink.put(UsageView.USAGE_INFO_KEY, new UsageInfo(method));
+        }
+      }
     }
   }
 }

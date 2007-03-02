@@ -82,17 +82,16 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     }
   }
 
-  private static DataProvider getDataProvider(Component c) {
+  private static DataProvider getDataProvider(Object component) {
     DataProvider dataProvider = null;
-    if (c instanceof DataProvider) {
-      dataProvider = (DataProvider)c;
+    if (component instanceof DataProvider) {
+      dataProvider = (DataProvider)component;
     }
-    else if (c instanceof TypeSafeDataProvider) {
-      dataProvider = new TypeSafeDataProviderAdapter((TypeSafeDataProvider) c);
+    else if (component instanceof TypeSafeDataProvider) {
+      dataProvider = new TypeSafeDataProviderAdapter((TypeSafeDataProvider) component);
     }
-    else if (c instanceof JComponent) {
-      JComponent component = (JComponent)c;
-      dataProvider = (DataProvider)component.getClientProperty(CLIENT_PROPERTY_DATA_PROVIDER);
+    else if (component instanceof JComponent) {
+      dataProvider = (DataProvider)((JComponent)component).getClientProperty(CLIENT_PROPERTY_DATA_PROVIDER);
     }
     
     return dataProvider;

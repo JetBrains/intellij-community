@@ -17,6 +17,7 @@ package com.intellij.usages;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -41,6 +42,7 @@ public interface UsageView extends Disposable {
 
   @NonNls String USAGE_VIEW = "UsageView.new";
   DataKey<UsageView> USAGE_VIEW_KEY = DataKey.create("UsageView.new");
+  DataKey<UsageInfo> USAGE_INFO_KEY = DataKey.create("UsageInfo");
 
   void appendUsage(Usage usage);
   void removeUsage(Usage usage);

@@ -15,8 +15,7 @@
  */
 package com.intellij.usages.impl.rules;
 
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.IconLoader;
@@ -32,11 +31,7 @@ import com.intellij.usages.rules.UsageInModule;
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 16, 2004
- * Time: 5:32:25 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class ModuleGroupingRule implements UsageGroupingRule {
   public UsageGroup groupUsage(Usage usage) {
@@ -55,7 +50,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
     return null;
   }
 
-  private static class LibraryUsageGroup implements UsageGroup, DataProvider {
+  private static class LibraryUsageGroup implements UsageGroup {
     public static final Icon LIBRARY_ICON = IconLoader.getIcon("/nodes/ppLibOpen.png");
 
     OrderEntry myEntry;
@@ -99,10 +94,6 @@ public class ModuleGroupingRule implements UsageGroupingRule {
       return canNavigate();
     }
 
-    public Object getData(String dataId) {
-      return null;
-    }
-
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof LibraryUsageGroup)) return false;
@@ -115,7 +106,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
     }
   }
 
-  private static class ModuleUsageGroup implements UsageGroup, DataProvider {
+  private static class ModuleUsageGroup implements UsageGroup, TypeSafeDataProvider {
     private final Module myModule;
 
     public ModuleUsageGroup(Module module) {
@@ -137,7 +128,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
     }
 
     public int hashCode() {
-      return (myModule != null ? myModule.hashCode() : 0);
+      return myModule != null ? myModule.hashCode() : 0;
     }
 
     public Icon getIcon(boolean isOpen) {
@@ -176,11 +167,10 @@ public class ModuleGroupingRule implements UsageGroupingRule {
       return UsageViewBundle.message("node.group.module") + getText(null);
     }
 
-    public Object getData(String dataId) {
-      if (DataConstants.MODULE_CONTEXT.equals(dataId)) {
-        return myModule;
+    public void calcData(final DataKey key, final DataSink sink) {
+      if (DataKeys.MODULE_CONTEXT == key) {
+        sink.put(DataKeys.MODULE_CONTEXT, myModule);
       }
-      return null;
-    }    
+    }
   }
 }

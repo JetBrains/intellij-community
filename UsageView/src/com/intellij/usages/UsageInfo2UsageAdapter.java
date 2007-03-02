@@ -16,8 +16,9 @@
 package com.intellij.usages;
 
 import com.intellij.ide.SelectInEditorManager;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -34,8 +35,6 @@ import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.rules.*;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -45,7 +44,7 @@ import java.util.List;
  * @author max
  */
 public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, UsageInFile, PsiElementUsage, MergeableUsage, Comparable<UsageInfo2UsageAdapter>, RenameableUsage,
-                                               DataProvider {
+                                               TypeSafeDataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.UsageInfo2UsageAdapter");
 
   private final UsageInfo myUsageInfo;
@@ -314,11 +313,9 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
     return result;
   }
 
-  @Nullable
-  public Object getData(@NonNls final String dataId) {
-    if (DataConstants.PSI_ELEMENT.equals(dataId)) {
-      return getElement();
+  public void calcData(final DataKey key, final DataSink sink) {
+    if (key == UsageView.USAGE_INFO_KEY) {
+      sink.put(UsageView.USAGE_INFO_KEY, getUsageInfo());
     }
-    return null;
   }
 }

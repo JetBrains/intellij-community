@@ -15,8 +15,7 @@
  */
 package com.intellij.usages.impl.rules;
 
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
@@ -35,11 +34,7 @@ import com.intellij.util.Icons;
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 20, 2004
- * Time: 12:18:20 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class PackageGroupingRule implements UsageGroupingRule {
   private Project myProject;
@@ -64,7 +59,7 @@ public class PackageGroupingRule implements UsageGroupingRule {
     return null;
   }
 
-  private class PackageGroup implements UsageGroup, DataProvider {
+  private class PackageGroup implements UsageGroup, TypeSafeDataProvider {
     private PsiPackage myPackage;
     private Icon myOpenIcon;
     private Icon myClosedIcon;
@@ -126,15 +121,14 @@ public class PackageGroupingRule implements UsageGroupingRule {
       return myPackage.hashCode();
     }
 
-    public Object getData(String dataId) {
-      if (DataConstants.PSI_ELEMENT.equals(dataId)) {
-        return myPackage;
+    public void calcData(final DataKey key, final DataSink sink) {
+      if (DataKeys.PSI_ELEMENT == key) {
+        sink.put(DataKeys.PSI_ELEMENT, myPackage);
       }
-      return null;
     }
   }
 
-  private class DirectoryGroup implements UsageGroup, DataProvider {
+  private class DirectoryGroup implements UsageGroup, TypeSafeDataProvider {
     private VirtualFile myDir;
 
     public void update() {
@@ -193,15 +187,13 @@ public class PackageGroupingRule implements UsageGroupingRule {
       return myDir.hashCode();
     }
 
-    public Object getData(String dataId) {
-      if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
-        return myDir;
+    public void calcData(final DataKey key, final DataSink sink) {
+      if (DataKeys.VIRTUAL_FILE == key) {
+        sink.put(DataKeys.VIRTUAL_FILE, myDir);
       }
-      if (DataConstants.PSI_ELEMENT.equals(dataId)) {
-        return PsiManager.getInstance(myProject).findDirectory(myDir);
+      if (DataKeys.PSI_ELEMENT == key) {
+        sink.put(DataKeys.PSI_ELEMENT, getDirectory());
       }
-
-      return null;
     }
   }
 }

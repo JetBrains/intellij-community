@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.vfs.local.win32.FileWatcher;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -59,7 +60,7 @@ public class CommandLineApplication {
       return getDataContext();
     }
 
-    public DataContext getDataContext(Component component, int x, int y) {
+    public DataContext getDataContext(@NotNull Component component, int x, int y) {
       return getDataContext();
     }
   }

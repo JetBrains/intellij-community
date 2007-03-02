@@ -15,8 +15,7 @@
  */
 package com.intellij.usages.impl.rules;
 
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -35,11 +34,7 @@ import com.intellij.util.IconUtil;
 import javax.swing.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 17, 2004
- * Time: 5:20:54 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class FileGroupingRule implements UsageGroupingRule {
   private Project myProject;
@@ -55,7 +50,7 @@ public class FileGroupingRule implements UsageGroupingRule {
     return null;
   }
 
-  protected static class FileUsageGroup implements UsageGroup, DataProvider {
+  protected static class FileUsageGroup implements UsageGroup, TypeSafeDataProvider {
     private final Project myProject;
     private final VirtualFile myFile;
     private final String myPresentableName;
@@ -125,18 +120,18 @@ public class FileGroupingRule implements UsageGroupingRule {
       return getText(null).compareTo(usageGroup.getText(null));
     }
 
-    public Object getData(String dataId) {
-      if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
-        return myFile != null && myFile.isValid()? myFile : null;
+    public void calcData(final DataKey key, final DataSink sink) {
+      if (DataKeys.VIRTUAL_FILE == key) {
+        VirtualFile file = myFile != null && myFile.isValid() ? myFile : null;
+        sink.put(DataKeys.VIRTUAL_FILE, file);
       }
-      if (DataConstants.PSI_ELEMENT.equals(dataId)) {
-        return myFile != null && myFile.isValid()? getPsiFile() : null;
+      if (DataKeys.PSI_ELEMENT == key) {
+        sink.put(DataKeys.PSI_ELEMENT, getPsiFile());
       }
-      return null;
     }
 
     public PsiFile getPsiFile() {
-      return PsiManager.getInstance(myProject).findFile(myFile);
+      return myFile != null && myFile.isValid() ? PsiManager.getInstance(myProject).findFile(myFile) : null;
     }
   }
 }
