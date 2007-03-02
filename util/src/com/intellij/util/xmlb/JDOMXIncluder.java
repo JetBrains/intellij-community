@@ -247,13 +247,15 @@ class JDOMXIncluder {
     if (xpointer != null) {
 
       Matcher matcher = XPOINTER_PATTERN.matcher(xpointer);
-      assert matcher.matches() : "Unsupported XPointer: " + xpointer;
+      boolean b = matcher.matches();
+      assert b : "Unsupported XPointer: " + xpointer;
 
       String pointer = matcher.group(1);
 
       matcher = CHILDREN_PATTERN.matcher(pointer);
 
-      assert matcher.matches() : "Unsupported pointer: " + pointer;
+      b = matcher.matches();
+      assert b : "Unsupported pointer: " + pointer;
 
       final String rootTagName = matcher.group(1);
 
