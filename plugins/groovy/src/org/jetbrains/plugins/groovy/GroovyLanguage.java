@@ -1,7 +1,13 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.Commenter;
+import com.intellij.lang.PsiParser;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
+import org.jetbrains.plugins.groovy.highlighter.GroovyCommenter;
 
 /**
  * @author Ilya.Sergey
@@ -11,11 +17,12 @@ public class GroovyLanguage extends Language {
     super("Groovy");
   }
 
-  protected GroovyLanguage(@NonNls String id) {
-    super(id);
+  public ParserDefinition getParserDefinition() {
+    return new GroovyParserDefinition();
   }
 
-  protected GroovyLanguage(@NonNls String ID, @NonNls String... mimeTypes) {
-    super(ID, mimeTypes);
+  @Nullable
+  public Commenter getCommenter() {
+    return new GroovyCommenter();
   }
 }
