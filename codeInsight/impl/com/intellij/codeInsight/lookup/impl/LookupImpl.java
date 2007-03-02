@@ -98,7 +98,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
     myEditorCaretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e){
         int curOffset = myEditor.getCaretModel().getOffset();
-        if (curOffset != myLookupStartMarker.getStartOffset() + myPrefix.length()){
+        if (curOffset != getLookupStart() + myPrefix.length()){
           hide();
         }
       }
@@ -244,7 +244,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
    */
   Point calculatePosition(){
     Dimension dim = getComponent().getPreferredSize();
-    int lookupStart = myLookupStartMarker.getStartOffset();
+    int lookupStart = getLookupStart();
     LogicalPosition pos = myEditor.offsetToLogicalPosition(lookupStart);
     Point location = myEditor.logicalPositionToXY(pos);
     location.y += myEditor.getLineHeight();
@@ -301,7 +301,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
           myCanceled = false;
           hide();
 
-          int lookupStart = myLookupStartMarker.getStartOffset();
+          int lookupStart = getLookupStart();
           //SD - start
           //this patch fixes the problem, that template is finished after showing lookup
           LogicalPosition lookupPosition = myEditor.offsetToLogicalPosition(lookupStart);
@@ -331,11 +331,12 @@ public class LookupImpl extends LightweightHint implements Lookup {
     );
   }
 
+  private int getLookupStart() {
+    return myLookupStartMarker != null ? myLookupStartMarker.getStartOffset() : calcLookupStart();
+  }
+
   public void show(){
-    int offset = myEditor.getSelectionModel().hasSelection()
-                 ? myEditor.getSelectionModel().getSelectionStart()
-                 : myEditor.getCaretModel().getOffset();
-    int lookupStart = offset - myPrefix.length();
+    int lookupStart = calcLookupStart();
     myLookupStartMarker = myEditor.getDocument().createRangeMarker(lookupStart, lookupStart);
     myLookupStartMarker.setGreedyToLeft(true);
     //myList.setSelectedIndex(0);
@@ -344,6 +345,14 @@ public class LookupImpl extends LightweightHint implements Lookup {
     Point p = calculatePosition();
     HintManager hintManager = HintManager.getInstance();
     hintManager.showEditorHint(this, myEditor, p, HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false);
+  }
+
+  private int calcLookupStart() {
+    int offset = myEditor.getSelectionModel().hasSelection()
+                 ? myEditor.getSelectionModel().getSelectionStart()
+                 : myEditor.getCaretModel().getOffset();
+    int lookupStart = offset - myPrefix.length();
+    return lookupStart;
   }
 
   private void selectMostPreferableItem(){
@@ -463,7 +472,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
         myProject, new Runnable() {
         public void run(){
           if (_subprefix != null){ // correct case
-            int lookupStart = myLookupStartMarker.getStartOffset();
+            int lookupStart = getLookupStart();
             myEditor.getDocument().replaceString(lookupStart, lookupStart + _subprefix.length(), _subprefix);
           }
           myPrefix += _commonPrefix;
