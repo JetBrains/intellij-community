@@ -5,12 +5,19 @@
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.xml.XmlElement;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,8 +30,8 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   private final String myMessage;
   private final LocalQuickFix[] myFixes;
   private List<Annotation> myAnnotations;
-  private HighlightingType myHighlightingType = HighlightingType.START_TAG_NAME;
-  private TextRange myTextRange;
+  private Pair<TextRange, PsiElement> myPair;
+  public static final Pair<TextRange,PsiElement> NO_PROBLEM = new Pair<TextRange, PsiElement>(null, null);
 
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement, final String message, final HighlightSeverity type) {
     this(domElement, message, type, LocalQuickFix.EMPTY_ARRAY);
@@ -57,7 +64,12 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     mySeverity = type;
     myMessage = message;
     myFixes = fixes;
-    myTextRange = textRange;
+
+    if (textRange != null) {
+      final PsiElement psiElement = getPsiElement();
+      LOG.assertTrue(psiElement != null, "Problems with explicit text range can't be created for DOM elements without underlying XML element");
+      myPair = new Pair<TextRange, PsiElement>(textRange, psiElement);
+    }
   }
 
   @NotNull
@@ -83,22 +95,63 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   @NotNull
   public final List<Annotation> getAnnotations() {
     if (myAnnotations == null) {
-      myAnnotations = DomElementsHighlightingUtil.createAnnotations(this);
+      myAnnotations = ContainerUtil.createMaybeSingletonList(DomElementsHighlightingUtil.createAnnotation(this));
     }
     return myAnnotations;
   }
 
-  public void setHighlightingType(HighlightingType highlightingType) {
-    myHighlightingType = highlightingType;
+  public void highlightWholeElement() {
+    final PsiElement psiElement = getPsiElement();
+    if (psiElement instanceof XmlAttributeValue) {
+      final PsiElement attr = psiElement.getParent();
+      myPair = Pair.create(new TextRange(0, attr.getTextLength()), attr);
+    }
+    else if (psiElement != null) {
+      final XmlTag tag = (XmlTag)(psiElement instanceof XmlTag ? psiElement : psiElement.getParent());
+      myPair = new Pair<TextRange, PsiElement>(new TextRange(0, tag.getTextLength()), tag);
+    }
   }
 
-  public HighlightingType getHighlightingType() {
-    return myHighlightingType;
+  public Pair<TextRange,PsiElement> getProblemRange() {
+    if (myPair == null) {
+      myPair = computeProblemRange();
+    }
+    return myPair;
   }
 
-  @Nullable
-  public TextRange getTextRange() {
-      return myTextRange;
+  @NotNull
+  protected Pair<TextRange,PsiElement> computeProblemRange() {
+    final PsiElement element = getPsiElement();
+
+    if (element != null) {
+      if (element instanceof XmlTag) {
+        return createTagNameRange((XmlTag)element);
+      }
+
+      int length = element.getTextRange().getLength();
+      TextRange range = TextRange.from(0, length);
+      if (element instanceof XmlAttributeValue) {
+        final String value = ((XmlAttributeValue)element).getValue();
+        if (StringUtil.isNotEmpty(value)) {
+          range = TextRange.from(element.getText().indexOf(value), value.length());
+        }
+      }
+      return Pair.create(range, element);
+    }
+
+    final XmlTag tag = getParentXmlTag();
+    if (tag != null) {
+      return createTagNameRange(tag);
+    }
+    return NO_PROBLEM;
+  }
+
+  private static Pair<TextRange, PsiElement> createTagNameRange(final XmlTag tag) {
+    final ASTNode node = tag.getNode();
+    assert node != null;
+    final ASTNode startNode = XmlChildRole.START_TAG_NAME_FINDER.findChild(node);
+    assert startNode != null;
+    return Pair.create(startNode.getTextRange().shiftRight(-tag.getTextRange().getStartOffset()), (PsiElement)tag);
   }
 
   public String toString() {
@@ -124,5 +177,33 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     result = 31 * result + mySeverity.hashCode();
     result = 31 * result + myMessage.hashCode();
     return result;
+  }
+
+  @Nullable
+  private PsiElement getPsiElement() {
+    if (myDomElement instanceof GenericAttributeValue) {
+      final GenericAttributeValue attributeValue = (GenericAttributeValue)myDomElement;
+      final XmlAttributeValue value = attributeValue.getXmlAttributeValue();
+      return value != null && StringUtil.isNotEmpty(value.getText()) ? value : attributeValue.getXmlElement();
+    }
+    final XmlTag tag = myDomElement.getXmlTag();
+    if (myDomElement instanceof GenericValue && tag != null) {
+      final XmlText[] textElements = tag.getValue().getTextElements();
+      if (textElements.length > 0) {
+        return textElements[0];
+      }
+    }
+
+    return tag;
+  }
+
+  @Nullable
+  private XmlTag getParentXmlTag() {
+    DomElement parent = myDomElement.getParent();
+    while (parent != null) {
+      if (parent.getXmlTag() != null) return parent.getXmlTag();
+      parent = parent.getParent();
+    }
+    return null;
   }
 }

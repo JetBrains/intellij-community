@@ -21,17 +21,12 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public interface DomElementProblemDescriptor extends CommonProblemDescriptor {
-
-  enum HighlightingType { START_TAG_NAME, WHOLE_ELEMENT
-  }
 
   @NotNull
   DomElement getDomElement();
@@ -42,10 +37,6 @@ public interface DomElementProblemDescriptor extends CommonProblemDescriptor {
   @NotNull
   List<Annotation> getAnnotations();
 
-  void setHighlightingType(HighlightingType highlightingType);
+  void highlightWholeElement();
 
-  HighlightingType getHighlightingType();
-
-  @Nullable
-  TextRange getTextRange();
 }

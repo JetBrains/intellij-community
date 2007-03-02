@@ -21,7 +21,6 @@ import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.CachedValue;
@@ -213,7 +212,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   }
 
   public List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, DomElementProblemDescriptor problemDescriptor) {
-    return DomElementsHighlightingUtil.createProblemDescriptors(manager, problemDescriptor);
+    return ContainerUtil.createMaybeSingletonList(DomElementsHighlightingUtil.createProblemDescriptors(manager, problemDescriptor));
   }
 
   public boolean isHighlightingFinished(final DomElement[] domElements) {
