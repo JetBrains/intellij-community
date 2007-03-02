@@ -972,7 +972,7 @@ public class RefactoringUtil {
       return ((PsiNamedElement)element).getName();
     }
     else {
-      LOG.error("Unknown element type");
+      LOG.error("Unknown element type: " + element);
       return null;
     }
   }
