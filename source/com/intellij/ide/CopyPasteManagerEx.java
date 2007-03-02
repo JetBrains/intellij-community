@@ -90,10 +90,12 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
           for (int i = 0; i < 3; i++) {
             try {
               contents[0] = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(CopyPasteManagerEx.this);
-            } catch (IllegalStateException e) {
+            }
+            catch (IllegalStateException e) {
               try {
                 Thread.sleep(50);
-              } catch (InterruptedException e1) {
+              }
+              catch (InterruptedException e1) {
               }
               continue;
             }
@@ -102,6 +104,9 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
           success[0] = true;
         }
+        catch (Throwable e) {
+          // No luck
+        }        
         finally {
           Thread.interrupted(); // reset interrupted status
         }
