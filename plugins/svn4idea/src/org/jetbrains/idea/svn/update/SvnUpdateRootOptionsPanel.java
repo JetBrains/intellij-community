@@ -118,7 +118,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     final UpdateRootInfo rootInfo = configuration.getUpdateRootInfo(myRoot.getIOFile(), myVcs);
     myURLText.setText(rootInfo.getUrlAsString());
     myRevisionBox.setSelected(rootInfo.isUpdateToRevision());
-    myRevisionText.setText(rootInfo.getRevision().getName());
+    myRevisionText.setText(rootInfo.getRevision().toString());
     myUpdateToSpecificUrl.setSelected(false);
     myRevisionText.setEnabled(myRevisionBox.isSelected());
     myURLText.setEnabled(myUpdateToSpecificUrl.isSelected());
