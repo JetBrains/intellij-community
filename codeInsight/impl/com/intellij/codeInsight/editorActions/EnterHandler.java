@@ -442,10 +442,11 @@ public class EnterHandler extends EditorWriteActionHandler {
         boolean docAsterisk = isInsideJavalikeCode &&
                               commenter.getDocumentationCommentLinePrefix() != null &&
                               CharArrayUtil.regionMatches(chars, lineStart, commenter.getDocumentationCommentLinePrefix());
+        final int firstNonSpaceInLine = CharArrayUtil.shiftForward(chars, myOffset, " \t");
         boolean slashSlash = isInsideJavalikeCode &&
                              commenter.getLineCommentPrefix() != null &&
                              CharArrayUtil.regionMatches(chars, lineStart, commenter.getLineCommentPrefix()) &&
-                             chars.charAt(CharArrayUtil.shiftForward(chars, myOffset, " \t")) != '\n';
+                             firstNonSpaceInLine < chars.length() && chars.charAt(firstNonSpaceInLine) != '\n';
 
         if (docStart) {
           PsiElement element = myFile.findElementAt(lineStart);
