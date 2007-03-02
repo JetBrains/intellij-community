@@ -838,31 +838,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
     final Collection<Change> changesList = changes.values();
 
-    final CommittedChangeList changeList = new CommittedChangeList() {
-      public String getCommitterName() {
-        return "";
-      }
-      public Date getCommitDate() {
-        return new Date(0);
-      }
-      public Collection<Change> getChanges() {
-        return changesList;
-      }
-      public String getName() {
-        return "";
-      }
-      public String getComment() {
-        return "";
-      }
-
-      public long getNumber() {
-        return -1;
-      }
-    };
     final String title = "Compare of '" + SVNPathUtil.tail(sourceURL.toString()) + " and '" + SVNPathUtil.tail(targetURL.toString()) + "'";
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        AbstractVcsHelper.getInstance(myProject).showChangesBrowser(changeList, title);
+        AbstractVcsHelper.getInstance(myProject).showChangesBrowser(getContentPane(), changesList, title);
       }
     });
   }
