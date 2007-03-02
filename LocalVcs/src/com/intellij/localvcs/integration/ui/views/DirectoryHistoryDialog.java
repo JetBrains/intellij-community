@@ -57,6 +57,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
     TreeUtil.expandAll(myDiffTree.getTree());
     addPopupMenuToComponent(myDiffTree, createActionGroup());
+    new ShowDifferenceAction().registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, myDiffTree);
   }
 
   private ActionGroup createActionGroup() {
