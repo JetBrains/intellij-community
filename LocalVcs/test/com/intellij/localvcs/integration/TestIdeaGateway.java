@@ -6,6 +6,10 @@ import java.io.IOException;
 import java.util.concurrent.Callable;
 
 public class TestIdeaGateway extends IdeaGateway {
+  public TestIdeaGateway() {
+    super(null);
+  }
+
   @Override
   public void runWriteAction(Callable c) {
     try {
@@ -14,6 +18,11 @@ public class TestIdeaGateway extends IdeaGateway {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public boolean ensureFilesAreWritable(VirtualFile... ff) {
+    return true;
   }
 
   @Override

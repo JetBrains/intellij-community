@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 public class FileHistoryDialogModel extends HistoryDialogModel {
   private IdeaGateway myIdeaGateway;
@@ -53,12 +52,7 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
   }
 
   public void revert() {
-    myIdeaGateway.runWriteAction(new Callable() {
-      public Object call() throws Exception {
-        FileReverter.revert(myFile, getLeftEntry());
-        return null;
-      }
-    });
+    FileReverter.revert(myIdeaGateway, myFile, getLeftEntry());
   }
 
   private class NotSavedLabel extends Label {

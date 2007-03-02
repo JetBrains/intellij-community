@@ -485,7 +485,7 @@ public class LocalVcsComponentTest extends IntegrationalTestCase {
     f.setBinaryContent(new byte[]{1}, -1, 123);
     f.setBinaryContent(new byte[]{2}, -1, 456);
 
-    FileHistoryDialogModel d = new FileHistoryDialogModel(f, getVcs(), new IdeaGateway());
+    FileHistoryDialogModel d = new FileHistoryDialogModel(f, getVcs(), new IdeaGateway(myProject));
     assertEquals(3, d.getLabels().size());
     d.selectLabels(0, 1);
     d.revert();

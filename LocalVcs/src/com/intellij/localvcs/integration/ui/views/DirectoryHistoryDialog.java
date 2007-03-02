@@ -1,13 +1,13 @@
 package com.intellij.localvcs.integration.ui.views;
 
 import com.intellij.localvcs.ILocalVcs;
+import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.ui.models.DirectoryDifferenceModel;
 import com.intellij.localvcs.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.ex.DiffStatusBar;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.ui.impl.checkinProjectPanel.CheckinPanelTreeTable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,8 +21,8 @@ import java.awt.*;
 public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialogModel> {
   private CheckinPanelTreeTable myDiffTree;
 
-  public DirectoryHistoryDialog(VirtualFile f, Project p) {
-    super(f, p);
+  public DirectoryHistoryDialog(VirtualFile f, IdeaGateway gw) {
+    super(f, gw);
     setTitle(myModel.getTitle());
   }
 
@@ -50,7 +50,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     DirectoryDifferenceModel m = myModel.getRootDifferenceNodeModel();
     DirectoryDifferenceNode n = new DirectoryDifferenceNode(m);
 
-    myDiffTree = CheckinPanelTreeTable.createOn(myProject, n);
+    myDiffTree = CheckinPanelTreeTable.createOn(myIdeaGateway.getProject(), n);
 
     myDiffTree.getFirstTreeColumn().setName(n.getPresentableText(0));
     myDiffTree.getSecondTreeColumn().setName(n.getPresentableText(1));

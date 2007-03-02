@@ -2,6 +2,7 @@ package com.intellij.localvcs.integration.ui.views;
 
 import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.Label;
+import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.LocalVcsComponent;
 import com.intellij.localvcs.integration.ui.models.FileDifferenceModel;
 import com.intellij.localvcs.integration.ui.models.FormatUtil;
@@ -13,7 +14,6 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
@@ -30,19 +30,19 @@ import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 
 public abstract class HistoryDialog<T extends HistoryDialogModel> extends DialogWrapper {
-  protected Project myProject;
+  protected IdeaGateway myIdeaGateway;
   protected Splitter mySplitter;
   protected T myModel;
 
-  protected HistoryDialog(VirtualFile f, Project p) {
-    super(p, true);
-    myProject = p;
+  protected HistoryDialog(VirtualFile f, IdeaGateway gw) {
+    super(gw.getProject(), true);
+    myIdeaGateway = gw;
     initModel(f);
     init();
   }
 
   private void initModel(VirtualFile f) {
-    ILocalVcs vcs = LocalVcsComponent.getLocalVcsFor(myProject);
+    ILocalVcs vcs = LocalVcsComponent.getLocalVcsFor(myIdeaGateway.getProject());
     myModel = createModelFor(f, vcs);
   }
 
@@ -65,7 +65,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
   }
 
   @Override
-  protected void dispose() {
+  public void dispose() {
     saveSplitterProportion();
     super.dispose();
   }
@@ -118,7 +118,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     FileTypeManager tm = FileTypeManager.getInstance();
     EditorFactory ef = EditorFactory.getInstance();
 
-    SimpleDiffRequest r = new SimpleDiffRequest(myProject, m.getTitle());
+    SimpleDiffRequest r = new SimpleDiffRequest(myIdeaGateway.getProject(), m.getTitle());
     r.setContents(m.getLeftDiffContent(tm, ef), m.getRightDiffContent(tm, ef));
     r.setContentTitles(m.getLeftTitle(), m.getRightTitle());
 

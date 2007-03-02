@@ -79,7 +79,7 @@ public abstract class IntegrationalTestCase extends IdeaTestCase {
     return addContentRoot(myModule);
   }
 
-  private VirtualFile addContentRoot(Module m) {
+  protected VirtualFile addContentRoot(Module m) {
     return addContentRootWithFile(null, m);
   }
 

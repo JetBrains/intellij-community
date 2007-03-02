@@ -6,7 +6,6 @@ import com.intellij.localvcs.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffPanel;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -16,24 +15,24 @@ import java.awt.*;
 public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   private DiffPanel myDiffPanel;
 
-  public FileHistoryDialog(VirtualFile f, Project p) {
-    super(f, p);
+  public FileHistoryDialog(VirtualFile f, IdeaGateway gw) {
+    super(f, gw);
   }
 
   @Override
-  protected void dispose() {
+  public void dispose() {
     myDiffPanel.dispose();
     super.dispose();
   }
 
   @Override
   protected FileHistoryDialogModel createModelFor(VirtualFile f, ILocalVcs vcs) {
-    return new FileHistoryDialogModel(f, vcs, new IdeaGateway());
+    return new FileHistoryDialogModel(f, vcs, myIdeaGateway);
   }
 
   @Override
   protected JComponent createDiffPanel() {
-    myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myProject);
+    myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myIdeaGateway.getProject());
     updateDiffs();
     return myDiffPanel.getComponent();
   }

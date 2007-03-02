@@ -4,21 +4,34 @@ import com.intellij.localvcs.Entry;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
 public class FileReverter {
+  private IdeaGateway myIdeaGateway;
   private VirtualFile myFile;
   private Entry myOlder;
 
-  public static void revert(VirtualFile f, Entry older) throws IOException {
-    new FileReverter(f, older).revert();
+  public static void revert(IdeaGateway gw, VirtualFile f, Entry older) {
+    new FileReverter(gw, f, older).revert();
   }
 
-  private FileReverter(VirtualFile f, Entry older) {
+  private FileReverter(IdeaGateway gw, VirtualFile f, Entry older) {
+    myIdeaGateway = gw;
     myFile = f;
     myOlder = older;
   }
 
-  private void revert() throws IOException {
+  private void revert() {
+    myIdeaGateway.runWriteAction(new Callable() {
+      public Object call() throws Exception {
+        if (!myIdeaGateway.ensureFilesAreWritable(myFile)) return null;
+        doRevert();
+        return null;
+      }
+    });
+  }
+
+  private void doRevert() throws IOException {
     if (myOlder == null) {
       myFile.delete(null);
     }

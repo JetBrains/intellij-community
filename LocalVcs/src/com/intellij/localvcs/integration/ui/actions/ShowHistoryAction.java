@@ -1,6 +1,7 @@
 package com.intellij.localvcs.integration.ui.actions;
 
 import com.intellij.localvcs.integration.FileFilter;
+import com.intellij.localvcs.integration.IdeaGateway;
 import com.intellij.localvcs.integration.ui.views.DirectoryHistoryDialog;
 import com.intellij.localvcs.integration.ui.views.FileHistoryDialog;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -18,7 +19,8 @@ public class ShowHistoryAction extends AnAction {
     VirtualFile f = getFile(e);
     Project p = getProject(e);
 
-    DialogWrapper d = f.isDirectory() ? new DirectoryHistoryDialog(f, p) : new FileHistoryDialog(f, p);
+    IdeaGateway gw = new IdeaGateway(p);
+    DialogWrapper d = f.isDirectory() ? new DirectoryHistoryDialog(f, gw) : new FileHistoryDialog(f, gw);
     d.show();
   }
 
