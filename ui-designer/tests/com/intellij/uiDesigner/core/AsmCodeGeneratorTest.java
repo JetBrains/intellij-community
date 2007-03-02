@@ -1,22 +1,19 @@
 package com.intellij.uiDesigner.core;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.util.io.FileUtil;
 import junit.framework.TestCase;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 
@@ -67,7 +64,7 @@ public class AsmCodeGeneratorTest extends TestCase {
     fos.close();
     */
 
-    return new MyClassLoader(AsmCodeGeneratorTest.class.getClassLoader()).doDefineClass("BindingTest", patchedData);
+    return new MyClassLoader(AsmCodeGeneratorTest.class.getClassLoader()).doDefineClass(className, patchedData);
   }
 
   private JComponent getInstrumentedRootComponent(final String formFileName, final String className) throws Exception {
@@ -224,6 +221,26 @@ public class AsmCodeGeneratorTest extends TestCase {
     JLabel label = (JLabel) panel.getComponent(1);
     assertEquals(textField, label.getLabelFor());
   }
+
+  public void testFieldReference() throws Exception {
+    Class cls = loadAndPatchClass("TestFieldReference.form", "FieldReferenceTest");
+    JPanel instance = (JPanel) cls.newInstance();
+    assertEquals(1, instance.getComponentCount());
+  }
+
+  public void testChainedConstructor() throws Exception {
+    Class cls = loadAndPatchClass("TestChainedConstructor.form", "ChainedConstructorTest");
+    Field scrollPaneField = cls.getField("myScrollPane");
+    Object instance = cls.newInstance();
+    JScrollPane scrollPane = (JScrollPane) scrollPaneField.get(instance);
+    assertNotNull(scrollPane.getViewport().getView());
+  }
+
+  public void testConditionalMethodCall() throws Exception {
+    JPanel panel = (JPanel) getInstrumentedRootComponent("TestConditionalMethodCall.form", "ConditionalMethodCallTest");
+    assertNotNull(panel);
+  }
+
 
   private static class MyClassLoader extends ClassLoader {
     private byte[] myTestProperties = Charset.defaultCharset().encode(TEST_PROPERTY_CONTENT).array();

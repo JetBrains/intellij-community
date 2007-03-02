@@ -19,6 +19,7 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.shared.BorderType;
 import org.objectweb.asm.*;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.commons.EmptyVisitor;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
@@ -802,10 +803,12 @@ public class AsmCodeGenerator {
     }
   }
 
-  private static class FormConstructorVisitor extends MethodAdapter {
+  private class FormConstructorVisitor extends MethodAdapter {
     private final String myClassName;
     private final String mySuperName;
     private boolean callsSelfConstructor = false;
+    private boolean mySetupCalled = false;
+    private boolean mySuperCalled = false;
 
     public FormConstructorVisitor(final MethodVisitor mv, final String className, final String superName) {
       super(mv);
@@ -813,18 +816,51 @@ public class AsmCodeGenerator {
       mySuperName = superName;
     }
 
+    public void visitFieldInsn(final int opcode, final String owner, final String name, final String desc) {
+      if (opcode == Opcodes.GETFIELD && !mySetupCalled && !callsSelfConstructor && Utils.isBoundField(myRootContainer, name)) {
+        callSetupUI();
+      }
+      super.visitFieldInsn(opcode, owner, name, desc);
+    }
+
     public void visitMethodInsn(final int opcode, final String owner, final String name, final String desc) {
-      super.visitMethodInsn(opcode, owner, name, desc);
       if (opcode == Opcodes.INVOKESPECIAL && name.equals(CONSTRUCTOR_NAME)) {
         if (owner.equals(myClassName)) {
           callsSelfConstructor = true;
-          return;
         }
-        if (owner.equals(mySuperName) && !callsSelfConstructor) {
-          mv.visitVarInsn(Opcodes.ALOAD, 0);
-          mv.visitMethodInsn(Opcodes.INVOKESPECIAL, myClassName, SETUP_METHOD_NAME, "()V");
+        else if (owner.equals(mySuperName)) {
+          mySuperCalled = true;
+        }
+        else if (mySuperCalled) {
+          callSetupUI();
         }
       }
+      else {
+        callSetupUI();
+      }
+      super.visitMethodInsn(opcode, owner, name, desc);
+    }
+
+    public void visitJumpInsn(final int opcode, final Label label) {
+      if (mySuperCalled) {
+        callSetupUI();
+      }
+      super.visitJumpInsn(opcode, label);
+    }
+
+    private void callSetupUI() {
+      if (!mySetupCalled) {
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        mv.visitMethodInsn(Opcodes.INVOKESPECIAL, myClassName, SETUP_METHOD_NAME, "()V");
+        mySetupCalled = true;
+      }
+    }
+
+    public void visitInsn(final int opcode) {
+      if (opcode == Opcodes.RETURN && !mySetupCalled && !callsSelfConstructor) {
+        callSetupUI();
+      }
+      super.visitInsn(opcode);
     }
   }
 
@@ -837,8 +873,7 @@ public class AsmCodeGenerator {
 
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       if (name.equals(CONSTRUCTOR_NAME)) {
-        final FirstPassConstructorVisitor visitor = new FirstPassConstructorVisitor();
-        return visitor;
+        return new FirstPassConstructorVisitor();
       }
       return null;
     }
