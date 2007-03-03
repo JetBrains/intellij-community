@@ -108,6 +108,9 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public FileElement getTreeElement() {
+    final FileElement noLockAttempt = (FileElement)_getTreeElement();
+    if (noLockAttempt != null) return noLockAttempt;
+
     synchronized (PsiLock.LOCK) {
       return getTreeElementNoLock();
     }

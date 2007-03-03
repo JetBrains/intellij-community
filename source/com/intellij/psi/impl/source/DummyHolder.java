@@ -183,6 +183,8 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   }
 
   public FileElement getTreeElement() {
+    if (myFileElement != null) return myFileElement;
+
     synchronized (PsiLock.LOCK) {
       return getTreeElementNoLock();
     }
