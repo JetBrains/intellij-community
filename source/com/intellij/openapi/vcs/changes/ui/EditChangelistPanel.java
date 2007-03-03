@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.event.DocumentListener;
 
 /**
  * @author max
@@ -42,5 +43,9 @@ public class EditChangelistPanel {
 
   public JComponent getPrefferedFocusedComponent() {
     return myNameTextField;
+  }
+
+  public void addNameDocumentListener(DocumentListener listener) {
+    myNameTextField.getDocument().addDocumentListener(listener);
   }
 }
