@@ -27,9 +27,13 @@ public class VirtualFileImpl extends VirtualFile {
 
   private static final LocalFileSystemImpl ourFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
 
-  private static char[] ourBuffer = new char[1024];
+  private static ThreadLocal<char[]> ourBuffer = new ThreadLocal<char[]>() {
+    protected char[] initialValue() {
+      return new char[1024];
+    }
+  };
 
-  private VirtualFileImpl myParent;
+  private volatile VirtualFileImpl myParent;
   private String myName;
   private volatile VirtualFileImpl[] myChildren = null;  // null, if not defined yet
 
@@ -37,7 +41,7 @@ public class VirtualFileImpl extends VirtualFile {
   private static final byte IS_WRITABLE_INITIALIZED_FLAG = 0x02;
   private static final byte IS_WRITABLE_FLAG = 0x04;
 
-  private byte myFlags = 0;
+  private volatile byte myFlags = 0;
 
   private long myModificationStamp = LocalTimeCounter.currentTime();
 
@@ -96,14 +100,22 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   boolean areChildrenCached() {
-    synchronized (ourFileSystem.LOCK) {
+    ourFileSystem.READ_LOCK.lock();
+    try {
       return myChildren != null;
+    }
+    finally {
+      ourFileSystem.READ_LOCK.unlock();
     }
   }
 
   void setParent(VirtualFileImpl parent) {
-    synchronized (ourFileSystem.LOCK) {
+    ourFileSystem.WRITE_LOCK.lock();
+    try {
       myParent = parent;
+    }
+    finally {
+      ourFileSystem.WRITE_LOCK.unlock();
     }
   }
 
@@ -126,15 +138,20 @@ public class VirtualFileImpl extends VirtualFile {
 
   private String getPath(char separatorChar) {
     //ApplicationManager.getApplication().assertReadAccessAllowed();
-    synchronized (ourFileSystem.LOCK) {
+    ourFileSystem.READ_LOCK.lock();
+    try {
+      final char[] buf = ourBuffer.get();
       try {
-        int length = appendPath(ourBuffer, separatorChar);
-        return new String(ourBuffer, 0, length);
+        int length = appendPath(buf, separatorChar);
+        return new String(buf, 0, length);
       }
       catch (ArrayIndexOutOfBoundsException aiob) {
-        ourBuffer = new char[ourBuffer.length * 2];
+        ourBuffer.set(new char[buf.length * 2]);
         return getPath(separatorChar);
       }
+    }
+    finally {
+      ourFileSystem.READ_LOCK.unlock();
     }
   }
 
@@ -167,14 +184,26 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   public boolean isWritable() {
-    synchronized (ourFileSystem.LOCK) {
+    ourFileSystem.READ_LOCK.lock();
+    try {
       if (!isWritableInitialized()) {
-        cacheIsWritableInitialized();
-        final boolean canWrite = getPhysicalFile().canWrite();
-        cacheIsWritable(canWrite);
-        return canWrite;
+        ourFileSystem.READ_LOCK.unlock();
+        ourFileSystem.WRITE_LOCK.lock();
+        try {
+          cacheIsWritableInitialized();
+          final boolean canWrite = getPhysicalFile().canWrite();
+          cacheIsWritable(canWrite);
+          return canWrite;
+        }
+        finally {
+          ourFileSystem.WRITE_LOCK.unlock();
+          ourFileSystem.READ_LOCK.lock();
+        }
       }
       return isWritableCached();
+    }
+    finally {
+      ourFileSystem.READ_LOCK.unlock();
     }
   }
 
@@ -216,19 +245,27 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   public boolean isValid() {
-    synchronized (ourFileSystem.LOCK) {
+    ourFileSystem.READ_LOCK.lock();
+    try {
       VirtualFileImpl run = this;
       while (run.myParent != null) {
         run = run.myParent;
       }
       return ourFileSystem.isRoot(run);
     }
+    finally {
+      ourFileSystem.READ_LOCK.unlock();
+    }
   }
 
   @Nullable
   public VirtualFileImpl getParent() {
-    synchronized (ourFileSystem.LOCK) {
+    ourFileSystem.READ_LOCK.lock();
+    try {
       return myParent;
+    }
+    finally {
+      ourFileSystem.READ_LOCK.unlock();
     }
   }
 
@@ -261,10 +298,14 @@ public class VirtualFileImpl extends VirtualFile {
         }
       }
 
-      synchronized (ourFileSystem.LOCK) {
+      ourFileSystem.WRITE_LOCK.lock();
+      try {
         if (myChildren == null) {
           myChildren = children;
         }
+      }
+      finally {
+        ourFileSystem.WRITE_LOCK.unlock();
       }
     }
     return myChildren;
@@ -275,7 +316,8 @@ public class VirtualFileImpl extends VirtualFile {
 
     if (!isDirectory()) return null;
     if (myChildren != null) return super.findChild(name);
-    synchronized (ourFileSystem.LOCK) {
+    ourFileSystem.READ_LOCK.lock();
+    try {
       String path = getPath() + "/" + name;
       VirtualFileImpl child = ourFileSystem.myUnaccountedFiles.get(path);
       if (child != null) {
@@ -293,6 +335,9 @@ public class VirtualFileImpl extends VirtualFile {
       else {
         ourFileSystem.myUnaccountedFiles.put(path, null);
       }
+    }
+    finally {
+      ourFileSystem.READ_LOCK.unlock();
     }
 
     return null;
@@ -637,7 +682,8 @@ public class VirtualFileImpl extends VirtualFile {
 
 
   void addChild(VirtualFileImpl child) {
-    synchronized (ourFileSystem.LOCK) {
+    ourFileSystem.WRITE_LOCK.lock();
+    try {
       child.setParent(this);
       if (myChildren != null) {
         VirtualFileImpl[] newChildren = new VirtualFileImpl[myChildren.length + 1];
@@ -649,6 +695,9 @@ public class VirtualFileImpl extends VirtualFile {
       else {
         ourFileSystem.myUnaccountedFiles.put(child.getPath(), child);
       }
+    }
+    finally {
+      ourFileSystem.WRITE_LOCK.unlock();
     }
   }
 
@@ -662,7 +711,8 @@ public class VirtualFileImpl extends VirtualFile {
 
     getChildren(); // to initialize myChildren
 
-    synchronized (ourFileSystem.LOCK) {
+    ourFileSystem.WRITE_LOCK.lock();
+    try {
       for (int i = 0; i < myChildren.length; i++) {
         if (myChildren[i] == child) {
           VirtualFileImpl[] newChildren = new VirtualFileImpl[myChildren.length - 1];
@@ -673,6 +723,9 @@ public class VirtualFileImpl extends VirtualFile {
           return;
         }
       }
+    }
+    finally {
+      ourFileSystem.WRITE_LOCK.unlock();
     }
   }
 

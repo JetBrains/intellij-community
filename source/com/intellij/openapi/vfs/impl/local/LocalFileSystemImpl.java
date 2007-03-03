@@ -31,12 +31,17 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public final class LocalFileSystemImpl extends LocalFileSystem implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl");
   private VirtualFileManagerEx myManager = null;
 
-  final Object LOCK = new Object();
+  final ReadWriteLock LOCK = new ReentrantReadWriteLock();
+  final Lock READ_LOCK = LOCK.readLock();
+  final Lock WRITE_LOCK = LOCK.writeLock();
 
   private final List<WatchRequest> myRootsToWatch = new ArrayList<WatchRequest>();
   private WatchRequest[] myCachedNormalizedRequests = null;
@@ -131,7 +136,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   private void initRoots() {
     if (myFSRootsToPaths != null) return;
 
-    synchronized (LOCK) {
+    WRITE_LOCK.lock();
+    try {
       final BidirectionalMap<VirtualFile, String> map = new BidirectionalMap<VirtualFile, String>();
 
       final File[] files = File.listRoots();
@@ -145,6 +151,9 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       }
       myFSRootsToPaths = map;
     }
+    finally {
+      WRITE_LOCK.unlock();
+    }
   }
 
   private void refreshFSRoots() {
@@ -154,7 +163,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     else {
       final File[] files = File.listRoots();
 
-      synchronized (LOCK) {
+      WRITE_LOCK.lock();
+      try {
         Set<String> newRootPaths = new HashSet<String>();
         for (File file : files) {
           String path = file.getPath();
@@ -176,6 +186,9 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
             iterator.remove();
           }
         }
+      }
+      finally {
+        WRITE_LOCK.unlock();
       }
     }
   }
@@ -220,9 +233,13 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   boolean isRoot(VirtualFileImpl file) {
-    synchronized (LOCK) {
+    READ_LOCK.lock();
+    try {
       initRoots();
       return myFSRootsToPaths.containsKey(file);
+    }
+    finally {
+      READ_LOCK.unlock();
     }
   }
 
@@ -424,8 +441,12 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
         refreshFSRoots();
         WatchRequest[] requests;
-        synchronized (LOCK) {
+        WRITE_LOCK.lock();
+        try {
           requests = normalizeRootsForRefresh();
+        }
+        finally {
+          WRITE_LOCK.unlock();
         }
 
         for (final WatchRequest request : requests) {
@@ -441,9 +462,13 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                 public void run() {
                   if (!rootFile.isValid()) return;
                   fireBeforeFileDeletion(null, rootFile);
-                  synchronized (LOCK) {
+                  WRITE_LOCK.lock();
+                  try {
                     final VirtualFileImpl parent = rootFile.getParent();
                     if (parent != null) parent.removeChild(rootFile);
+                  }
+                  finally {
+                    WRITE_LOCK.unlock();
                   }
                   fireFileDeleted(null, rootFile, rootFile.getName(), null);
                 }
@@ -475,9 +500,13 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                 public void run() {
                   if (!file.isValid()) return;
                   fireBeforeFileDeletion(null, file);
-                  synchronized (LOCK) {
+                  WRITE_LOCK.lock();
+                  try {
                     myUnaccountedFiles.put(entry.getKey(), null);
                     file.setParent(null);
+                  }
+                  finally {
+                    WRITE_LOCK.unlock();
                   }
                   fireFileDeleted(null, file, file.getName(), null);
                 }
@@ -548,7 +577,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   private WatchRequest[] normalizeRootsForRefresh() {
     if (myCachedNormalizedRequests != null) return myCachedNormalizedRequests;
     List<WatchRequest> result = new ArrayList<WatchRequest>();
-    synchronized (LOCK) {
+    WRITE_LOCK.lock();
+    try {
       NextRoot:
       for (WatchRequest request : myRootsToWatch) {
         String rootPath = request.getRootPath();
@@ -568,6 +598,9 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         }
         result.add(request);
       }
+    }
+    finally {
+      WRITE_LOCK.unlock();
     }
 
     myCachedNormalizedRequests = result.toArray(new WatchRequest[result.size()]);
@@ -640,8 +673,12 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                boolean asynchronous,
                final boolean noWatcher) {
     final List<String> manualPaths;
-    synchronized (LOCK) {
+    READ_LOCK.lock();
+    try {
       manualPaths = new ArrayList<String>(myFilePathsToWatchManual);
+    }
+    finally {
+      READ_LOCK.unlock();
     }
 
     if (!manualPaths.isEmpty()) {
@@ -838,7 +875,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     if (FileWatcher.isAvailable()) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          synchronized (LOCK) {
+          WRITE_LOCK.lock();
+          try {
             final WatchRequest[] watchRequests = normalizeRootsForRefresh();
             String[] dirPaths = new String[watchRequests.length];
             boolean[] toWatchRecursively = new boolean[watchRequests.length];
@@ -850,20 +888,21 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
             }
 
             final Vector<String> watchManual = new Vector<String>();
-
             FileWatcher.setup(dirPaths, toWatchRecursively, watchManual);
-            /*
+/*
             if (numDir == 0) {
               FileWatcher.setup(new String[]{PathManager.getBinPath()}, new boolean[] {false}, new Vector());
             }
             */
-
             myFilePathsToWatchManual.clear();
             for (int i = 0; i < watchManual.size(); i++) {
               String path = watchManual.elementAt(i);
               path = path.replace(File.separatorChar, '/');
               myFilePathsToWatchManual.add(path);
             }
+          }
+          finally {
+            WRITE_LOCK.unlock();
           }
         }
       });
@@ -900,7 +939,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public WatchRequest addRootToWatch(@NotNull String rootPath, boolean toWatchRecursively) {
-    synchronized (LOCK) {
+    WRITE_LOCK.lock();
+    try {
       final WatchRequestImpl result = new WatchRequestImpl(rootPath, toWatchRecursively);
       final VirtualFile existingFile = findFileByPath(rootPath, false, false);
       if (existingFile != null) {
@@ -908,10 +948,13 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
           synchronizeFiles(toWatchRecursively, existingFile);
         }
       }
-      myRootsToWatch.add(result); //add in any case
+      myRootsToWatch.add(result);
       myCachedNormalizedRequests = null;
       setUpFileWatcher();
       return result;
+    }
+    finally {
+      WRITE_LOCK.unlock();
     }
   }
 
@@ -927,7 +970,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     Set<WatchRequest> result = new HashSet<WatchRequest>();
     Set<VirtualFile> filesToSynchronize = new HashSet<VirtualFile>();
 
-    synchronized (LOCK) {
+    WRITE_LOCK.lock();
+    try {
       for (String rootPath : rootPaths) {
         LOG.assertTrue(rootPath != null);
         final WatchRequestImpl request = new WatchRequestImpl(rootPath, toWatchRecursively);
@@ -940,12 +984,14 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
         result.add(request);
         myRootsToWatch.add(request); //add in any case, safe to add inplace without copying myRootsToWatch before the loop
       }
-
       myCachedNormalizedRequests = null;
       setUpFileWatcher();
       if (!filesToSynchronize.isEmpty()) {
         synchronizeFiles(toWatchRecursively, filesToSynchronize.toArray(new VirtualFile[filesToSynchronize.size()]));
       }
+    }
+    finally {
+      WRITE_LOCK.unlock();
     }
 
     return result;
@@ -972,11 +1018,15 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public void removeWatchedRoot(final WatchRequest watchRequest) {
-    synchronized (LOCK) {
+    WRITE_LOCK.lock();
+    try {
       if (myRootsToWatch.remove(watchRequest)) {
         myCachedNormalizedRequests = null;
         setUpFileWatcher();
       }
+    }
+    finally {
+      WRITE_LOCK.unlock();
     }
   }
 
@@ -1066,11 +1116,15 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public void removeWatchedRoots(final Collection<WatchRequest> rootsToWatch) {
-    synchronized (LOCK) {
+    WRITE_LOCK.lock();
+    try {
       if (myRootsToWatch.removeAll(rootsToWatch)) {
         myCachedNormalizedRequests = null;
         setUpFileWatcher();
       }
+    }
+    finally {
+      WRITE_LOCK.unlock();
     }
   }
 
