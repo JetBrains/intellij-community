@@ -88,5 +88,15 @@ public class CvsConfiguration implements PersistentStateComponent<CvsConfigurati
 
   public void loadState(CvsConfiguration object) {
     XmlSerializerUtil.copyBean(object, this);
+    // safeguard (IDEADEV-15053)
+    if (CHECKOUT_DATE_OR_REVISION_SETTINGS == null) {
+      CHECKOUT_DATE_OR_REVISION_SETTINGS = new DateOrRevisionSettings();
+    }
+    if (UPDATE_DATE_OR_REVISION_SETTINGS == null) {
+      UPDATE_DATE_OR_REVISION_SETTINGS = new DateOrRevisionSettings();
+    }
+    if (SHOW_CHANGES_REVISION_SETTINGS == null) {
+      SHOW_CHANGES_REVISION_SETTINGS = new DateOrRevisionSettings();
+    }
   }
 }

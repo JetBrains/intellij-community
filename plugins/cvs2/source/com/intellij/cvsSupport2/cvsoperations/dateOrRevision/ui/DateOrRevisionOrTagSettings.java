@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.util.text.SyncDateFormat;
 import com.michaelbaranov.microba.calendar.DatePicker;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -90,7 +91,7 @@ public class DateOrRevisionOrTagSettings {
     }
   }
 
-  public void updateFrom(DateOrRevisionSettings settings) {
+  public void updateFrom(@NotNull DateOrRevisionSettings settings) {
     myUseHead.setSelected((!settings.USE_BRANCH) && (!settings.USE_DATE));
     myUseBranch.setSelected(settings.USE_BRANCH);
     myUseDate.setSelected(settings.USE_DATE);
