@@ -13,24 +13,28 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
 public class AddNoInspectionCommentFix implements IntentionAction {
-  private final PsiElement myContext;
+  private final SmartPsiElementPointer myContext;
   private static final @NonNls String COMMENT_START_TEXT = "//noinspection ";
 
   private final String myID;
 
   public AddNoInspectionCommentFix(LocalInspectionTool tool, PsiElement context) {
-    myID = tool.getID();
-    myContext = context;
+    this(tool.getID(), context);
   }
 
   public AddNoInspectionCommentFix(HighlightDisplayKey key, PsiElement context) {
-    myID = key.getID();
-    myContext = context;
+    this(key.getID(), context);
+  }
+
+  private AddNoInspectionCommentFix(final String ID, final PsiElement context) {
+    myID = ID;
+    myContext = SmartPointerManager.getInstance(context.getProject()).createLazyPointer(context);
   }
 
   @NotNull
@@ -38,8 +42,11 @@ public class AddNoInspectionCommentFix implements IntentionAction {
     return InspectionsBundle.message("suppress.inspection.statement");
   }
 
+  @Nullable
   private PsiStatement getContainer() {
-    return PsiTreeUtil.getParentOfType(myContext, PsiStatement.class);
+    PsiElement context = myContext.getElement();
+    if (context == null) return null;
+    return PsiTreeUtil.getParentOfType(context, PsiStatement.class);
   }
 
   @NotNull
@@ -48,16 +55,19 @@ public class AddNoInspectionCommentFix implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    return myContext.isValid() && myContext.getManager().isInProject(myContext) && getContainer() != null;
+    PsiElement context = myContext.getElement();
+    return context != null && context.getManager().isInProject(context) && getContainer() != null;
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiStatement container = getContainer();
+    if (container == null) return;
+
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
       .ensureFilesWritable(container.getContainingFile().getVirtualFile());
     if (status.hasReadonlyFiles()) return;
     PsiElement prev = PsiTreeUtil.skipSiblingsBackward(container, PsiWhiteSpace.class);
-    PsiElementFactory factory = myContext.getManager().getElementFactory();
+    PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
     if (prev instanceof PsiComment) {
       String text = prev.getText();
       if (text.startsWith(COMMENT_START_TEXT)) {

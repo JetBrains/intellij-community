@@ -6,17 +6,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocCommentOwner;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -61,7 +58,7 @@ public class AddNoInspectionAllForClassFix extends AddNoInspectionDocTagFix {
       PsiDocTag noInspectionTag = docComment.findTagByName(GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
       if (noInspectionTag != null) {
         String tagText = "@" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + ID;
-        noInspectionTag.replace(myContext.getManager().getElementFactory().createDocTagFromText(tagText, null));
+        noInspectionTag.replace(PsiManager.getInstance(project).getElementFactory().createDocTagFromText(tagText, null));
         return;
       }
     }

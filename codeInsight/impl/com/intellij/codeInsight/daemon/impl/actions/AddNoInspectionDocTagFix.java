@@ -25,21 +25,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AddNoInspectionDocTagFix implements IntentionAction {
   private String myID;
-  protected PsiElement myContext;
+  protected SmartPsiElementPointer myContext;
 
   public AddNoInspectionDocTagFix(LocalInspectionTool tool, PsiElement context) {
-    myID = tool.getID();
-    myContext = context;
+    this(tool.getID(), context);
   }
 
   public AddNoInspectionDocTagFix(HighlightDisplayKey key, PsiElement context) {
-    myID = key.getID();
-    myContext = context;
+    this(key.getID(), context);
   }
 
   public AddNoInspectionDocTagFix(String ID, PsiElement context) {
     myID = ID;
-    myContext = context;
+    myContext = SmartPointerManager.getInstance(context.getProject()).createLazyPointer(context);
   }
 
   @NotNull
@@ -55,10 +53,11 @@ public class AddNoInspectionDocTagFix implements IntentionAction {
   }
 
   @Nullable protected PsiDocCommentOwner getContainer() {
-    if (!myContext.isValid() || !(myContext.getContainingFile().getLanguage() instanceof JavaLanguage) || myContext instanceof PsiFile){
+    PsiElement context = myContext.getElement();
+    if (context == null || !(context.getContainingFile().getLanguage() instanceof JavaLanguage) || context instanceof PsiFile){
       return null;
     }
-    PsiElement container = myContext;
+    PsiElement container = context;
     while (!(container instanceof PsiDocCommentOwner) || container instanceof PsiTypeParameter) {
       container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class);
       if (container == null) return null;
@@ -77,7 +76,8 @@ public class AddNoInspectionDocTagFix implements IntentionAction {
     final boolean isValid = container != null && !(container instanceof JspHolderMethod);
     if (!isValid) return false;
     if (SuppressUtil.canHave15Suppressions(file) && !SuppressUtil.alreadyHas14Suppressions(container)) return false;
-    return myContext.isValid() && myContext.getManager().isInProject(myContext);
+    PsiElement context = myContext.getElement();
+    return context != null && context.getManager().isInProject(context);
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
@@ -87,7 +87,7 @@ public class AddNoInspectionDocTagFix implements IntentionAction {
       .ensureFilesWritable(container.getContainingFile().getVirtualFile());
     if (status.hasReadonlyFiles()) return;
     PsiDocComment docComment = container.getDocComment();
-    PsiManager manager = myContext.getManager();
+    PsiManager manager = PsiManager.getInstance(project);
     if (docComment == null) {
       String commentText = "/** @" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " "+ myID + "*/";
       docComment = manager.getElementFactory().createDocCommentFromText(commentText, null);
