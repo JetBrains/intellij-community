@@ -2,12 +2,13 @@ package com.intellij.localvcs;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ChangeSet {
   private String myLabel;
   private long myTimestamp;
-  private List<Change> myChanges = new ArrayList<Change>();
+  private List<Change> myChanges;
 
   public ChangeSet(long timestamp, List<Change> changes) {
     myTimestamp = timestamp;
@@ -18,9 +19,15 @@ public class ChangeSet {
     myLabel = s.readString();
     myTimestamp = s.readLong();
 
-    Integer count = s.readInteger();
-    while (count-- > 0) {
-      myChanges.add(s.readChange());
+    int count = s.readInteger();
+    if (count > 0) {
+      myChanges = new ArrayList<Change>(count);
+      while (count-- > 0) {
+        myChanges.add(s.readChange());
+      }
+    }
+    else {
+      myChanges = Collections.emptyList();
     }
   }
 

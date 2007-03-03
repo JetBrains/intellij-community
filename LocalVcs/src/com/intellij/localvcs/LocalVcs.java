@@ -11,7 +11,7 @@ public class LocalVcs implements ILocalVcs {
   private Integer myEntryCounter;
 
   // todo change type to something else (for example to LinkedList)
-  private List<Change> myPendingChanges = new ArrayList<Change>();
+  private List<Change> myPendingChanges = new ArrayList<Change>(3);
 
   public LocalVcs(Storage s) {
     // todo try to get rid of need to give parameter 

@@ -8,15 +8,17 @@ import java.util.List;
 
 // todo get rid of timestamp for this entry
 public class DirectoryEntry extends Entry {
-  private List<Entry> myChildren = new ArrayList<Entry>();
+  private List<Entry> myChildren;
 
   public DirectoryEntry(Integer id, String name, Long timestamp) {
     super(id, name, timestamp);
+    myChildren = new ArrayList<Entry>(3);
   }
 
   public DirectoryEntry(Stream s) throws IOException {
     super(s);
     int count = s.readInteger();
+    myChildren = new ArrayList<Entry>(count);
     while (count-- > 0) {
       unsafeAddChild(s.readEntry());
     }
