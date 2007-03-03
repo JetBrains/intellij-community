@@ -29,6 +29,11 @@ public class OrderedSet<T> extends AbstractSet<T> implements List<T> {
     myElements = new ArrayList<T>();
   }
 
+  public OrderedSet() {
+    myHashSet = new THashSet<T>();
+    myElements = new ArrayList<T>();
+  }
+
   public Iterator<T> iterator() {
     return new MyIterator();
   }

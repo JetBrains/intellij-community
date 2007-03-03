@@ -40,6 +40,7 @@ public class IdeaPicoContainer extends DefaultPicoContainer {
   }
 
 
+
   public ComponentAdapter getComponentAdapterOfType(final Class componentType) {
     return super.getComponentAdapterOfType(componentType);
   }
