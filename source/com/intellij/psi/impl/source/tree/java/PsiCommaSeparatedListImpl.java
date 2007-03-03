@@ -4,11 +4,12 @@
 
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.lang.ASTNode;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Adds or removes comma
@@ -52,7 +53,7 @@ public abstract class PsiCommaSeparatedListImpl extends CompositePsiElement {
   }
 
 
-  public void deleteChildInternal(ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (myTypesOfElements.contains(child.getElementType())) {
       ASTNode next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (next != null && next.getElementType() == COMMA) {

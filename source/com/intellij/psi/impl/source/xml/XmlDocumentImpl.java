@@ -9,7 +9,10 @@ import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.impl.events.XmlDocumentChangedImpl;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.impl.CachedValueImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
@@ -29,6 +32,7 @@ import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -315,7 +319,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return holder[0];
   }
 
-  public void deleteChildInternal(final ASTNode child) {
+  public void deleteChildInternal(@NotNull final ASTNode child) {
     final PomModel model = getProject().getModel();
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     try{

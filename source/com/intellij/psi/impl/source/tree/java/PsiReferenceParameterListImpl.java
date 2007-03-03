@@ -1,16 +1,16 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReferenceParameterList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -131,7 +131,7 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
     return firstAdded;
   }
 
-  public void deleteChildInternal(ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getElementType() == TYPE){
       ASTNode next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (next != null && next.getElementType() == COMMA){

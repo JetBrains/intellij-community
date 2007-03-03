@@ -12,6 +12,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiForStatementImpl extends CompositePsiElement implements PsiForStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiForStatementImpl");
@@ -140,7 +141,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
     return "PsiForStatement";
   }
 
-  public void deleteChildInternal(ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     final boolean isForInitialization = getChildRole(child) == ChildRole.FOR_INITIALIZATION;
 
     if (isForInitialization) {

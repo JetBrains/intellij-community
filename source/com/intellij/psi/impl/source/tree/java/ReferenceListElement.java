@@ -1,10 +1,10 @@
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.util.CharTable;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class ReferenceListElement extends RepositoryTreeElement{
   public ReferenceListElement(IElementType type) {
@@ -51,7 +51,7 @@ public abstract class ReferenceListElement extends RepositoryTreeElement{
     return firstAdded;
   }
 
-  public void deleteChildInternal(ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getElementType() == JAVA_CODE_REFERENCE){
       ASTNode next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (next != null && next.getElementType() == COMMA){

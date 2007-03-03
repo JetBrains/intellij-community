@@ -1,13 +1,14 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class ParameterListElement extends RepositoryTreeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ParameterListElement");
@@ -60,7 +61,7 @@ public class ParameterListElement extends RepositoryTreeElement {
     return firstAdded;
   }
 
-  public void deleteChildInternal(ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getElementType() == PARAMETER) {
       ASTNode next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (next != null && next.getElementType() == COMMA) {

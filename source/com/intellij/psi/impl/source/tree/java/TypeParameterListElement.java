@@ -6,6 +6,7 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -87,7 +88,7 @@ public class TypeParameterListElement extends RepositoryTreeElement {
     return firstAdded;
   }
 
-  public void deleteChildInternal(final ASTNode child) {
+  public void deleteChildInternal(@NotNull final ASTNode child) {
     if (child.getElementType() == TYPE_PARAMETER){
       final ASTNode next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (next != null && next.getElementType() == COMMA){

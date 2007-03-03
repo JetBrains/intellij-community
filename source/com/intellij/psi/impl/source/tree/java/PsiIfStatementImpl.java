@@ -1,11 +1,15 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiIfStatementImpl");
@@ -18,7 +22,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.CONDITION);
   }
 
-  public void deleteChildInternal(ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (child == getElseBranch()) {
       ASTNode elseKeyword = findChildByRole(ChildRole.ELSE_KEYWORD);
       if (elseKeyword != null) {

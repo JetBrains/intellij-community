@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
@@ -7,7 +8,6 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiDeclarationStatementImpl extends CompositePsiElement implements PsiDeclarationStatement {
@@ -27,7 +27,7 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
     return super.getChildRole(child);
   }
 
-  public void deleteChildInternal(ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (DECLARED_ELEMENT_BIT_SET.contains(child.getElementType())) {
       PsiElement[] declaredElements = getDeclaredElements();
       int length = declaredElements.length;

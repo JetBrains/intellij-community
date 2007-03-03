@@ -3,9 +3,10 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class FieldElement extends RepositoryTreeElement{
    private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.FieldElement");
@@ -18,7 +19,7 @@ public class FieldElement extends RepositoryTreeElement{
     return findChildByRole(ChildRole.NAME).getStartOffset();
   }
 
-  public void deleteChildInternal(ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (getChildRole(child) == ChildRole.INITIALIZER){
       ASTNode eq = findChildByRole(ChildRole.INITIALIZER_EQ);
       if (eq != null){

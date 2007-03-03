@@ -215,6 +215,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
     return SourceTreeToPsiMap.treeElementToPsi(element);
   }
 
+  @Nullable
   public ASTNode findChildByRole(int role) {
     assert ChildRole.isUnique(role);
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
@@ -350,7 +351,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
     return myHC;
   }
 
-  protected int getLengthInner() {
+  private int getLengthInner() {
     int length = 0;
     for (TreeElement child = firstChild; child != null; child = child.getTreeNext()) {
       length += child.getTextLength();
@@ -358,7 +359,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
     return length;
   }
 
-  public void setCachedLength(int length) {
+  private void setCachedLength(int length) {
     myCachedLength = length;
   }
 

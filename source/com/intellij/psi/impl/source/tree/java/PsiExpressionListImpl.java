@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
@@ -113,7 +112,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
     return firstAdded;
   }
 
-  public void deleteChildInternal(ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
       ASTNode next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (next != null && next.getElementType() == COMMA) {

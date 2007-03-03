@@ -1,12 +1,12 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewExpression {
@@ -130,7 +130,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
     return (PsiAnonymousClass)SourceTreeToPsiMap.treeElementToPsi(anonymousClass);
   }
 
-  public void deleteChildInternal(ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (getChildRole(child) == ChildRole.QUALIFIER){
       ASTNode dot = findChildByRole(ChildRole.DOT);
       super.deleteChildInternal(child);

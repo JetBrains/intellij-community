@@ -161,7 +161,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     SharedImplUtil.normalizeBrackets(this);
   }
 
-  public void deleteChildInternal(ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (getChildRole(child) == ChildRole.INITIALIZER){
       ASTNode eq = findChildByRole(ChildRole.INITIALIZER_EQ);
       if (eq != null){

@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ClassElement extends RepositoryTreeElement {
@@ -149,7 +150,7 @@ public class ClassElement extends RepositoryTreeElement {
     return firstAdded;
   }
 
-  public void deleteChildInternal(ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (isEnum()) {
       if (child.getElementType() == ENUM_CONSTANT) {
         ASTNode next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);

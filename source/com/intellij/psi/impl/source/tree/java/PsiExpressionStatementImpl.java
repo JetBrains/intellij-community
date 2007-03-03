@@ -1,13 +1,15 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionStatement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiExpressionStatementImpl extends CompositePsiElement implements PsiExpressionStatement {
@@ -58,7 +60,7 @@ public class PsiExpressionStatementImpl extends CompositePsiElement implements P
     return "PsiExpressionStatement";
   }
 
-  public void deleteChildInternal(ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (getChildRole(child) == ChildRole.EXPRESSION) {
       getTreeParent().deleteChildInternal(this);
     } else {

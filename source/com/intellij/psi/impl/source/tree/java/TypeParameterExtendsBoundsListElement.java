@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
@@ -57,7 +58,7 @@ public class TypeParameterExtendsBoundsListElement extends RepositoryTreeElement
     return firstAdded;
   }
 
-  public void deleteChildInternal(ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getElementType() == JAVA_CODE_REFERENCE){
       ASTNode next = TreeUtil.skipElements(child.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (next != null && next.getElementType() == AND){
