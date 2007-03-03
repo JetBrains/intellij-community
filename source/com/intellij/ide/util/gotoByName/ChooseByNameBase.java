@@ -87,7 +87,7 @@ public abstract class ChooseByNameBase{
     private String myOriginalPattern;
 
     public MatchesComparator(final String originalPattern) {
-      myOriginalPattern = originalPattern;
+      myOriginalPattern = originalPattern.trim();
     }
 
     public int compare(final String a, final String b) {
