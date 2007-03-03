@@ -18,12 +18,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProgressManagerImpl extends ProgressManager {
   @NonNls private static final String PROCESS_CANCELED_EXCEPTION = "idea.ProcessCanceledException";
 
-  private final ConcurrentHashMap<Thread, ProgressIndicator> myThreadToIndicatorMap = new ConcurrentHashMap<Thread, ProgressIndicator>();
+  private final ThreadLocal<ProgressIndicator> myThreadIndicator = new ThreadLocal<ProgressIndicator>();
+  private final AtomicInteger myCurrentProgressCount = new AtomicInteger(0);
+  private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
   private static volatile boolean ourNeedToCheckCancel = false;
   private static volatile int ourLockedCheckCounter = 0;
@@ -102,16 +104,11 @@ public class ProgressManagerImpl extends ProgressManager {
   }
 
   public boolean hasProgressIndicator() {
-    return !myThreadToIndicatorMap.isEmpty();
+    return myCurrentProgressCount.get() > 0;
   }
 
   public boolean hasModalProgressIndicator() {
-    for (ProgressIndicator indicator : myThreadToIndicatorMap.values()) {
-      if (indicator.isModal()) {
-        return true;
-      }
-    }
-    return false;
+    return myCurrentModalProgressCount.get() > 0;
   }
 
   public void runProcess(@NotNull final Runnable process, final ProgressIndicator progress) throws ProcessCanceledException {
@@ -134,31 +131,29 @@ public class ProgressManagerImpl extends ProgressManager {
       }
     },progress);
   }
-  public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
-    Thread currentThread = Thread.currentThread();
 
-    ProgressIndicator oldIndicator;
-    if (progress == null) {
-      oldIndicator = myThreadToIndicatorMap.remove(currentThread);
-    }
-    else {
-      oldIndicator = myThreadToIndicatorMap.put(currentThread, progress);
-    }
+  public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
+    ProgressIndicator oldIndicator = myThreadIndicator.get();
+
+    myThreadIndicator.set(progress);
+    myCurrentProgressCount.incrementAndGet();
+
+    final boolean modal = progress != null && progress.isModal();
+    if (modal) myCurrentModalProgressCount.incrementAndGet();
+
     try {
       process.run();
     }
     finally {
-      if (oldIndicator == null) {
-        myThreadToIndicatorMap.remove(currentThread);
-      }
-      else {
-        myThreadToIndicatorMap.put(currentThread, oldIndicator);
-      }
+      myThreadIndicator.set(oldIndicator);
+
+      myCurrentProgressCount.decrementAndGet();
+      if (modal) myCurrentModalProgressCount.decrementAndGet();
     }
   }
 
   public ProgressIndicator getProgressIndicator() {
-    return myThreadToIndicatorMap.get(Thread.currentThread());
+    return myThreadIndicator.get();
   }
 
   public boolean runProcessWithProgressSynchronously(Runnable process, String progressTitle, boolean canBeCanceled, Project project) {
@@ -256,7 +251,6 @@ public class ProgressManagerImpl extends ProgressManager {
       }
     }
   }
-
 
   public void run(final Task task) {
     if (task.isModal()) {
