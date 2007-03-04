@@ -19,15 +19,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 
-import java.util.concurrent.Future;
-import java.util.concurrent.ExecutionException;
-
 /**
  * This is the 3rd version of SwingWorker (also known as
  * SwingWorker 3), an abstract class that you subclass to
  * perform GUI-related work in a dedicated thread.  For
  * instructions on using this class, see:
- * 
+ *
  * http://java.sun.com/docs/books/tutorial/uiswing/misc/threads.html
  *
  * Note that the API changed slightly in the 3rd version:
@@ -46,28 +43,18 @@ public abstract class SwingWorker {
    * under separate synchronization control.
    */
   private static class ThreadVar {
-    private Runnable myTask;
-    private Future<?> myTaskFuture;
+    private Thread myThread;
 
-    ThreadVar(Runnable task) {
-      myTask = task;
+    ThreadVar(Thread t) {
+      myThread = t;
     }
 
-    synchronized Runnable getTask() {
-      return myTask;
-    }
-
-    synchronized Future<?> getFuture() {
-      return myTaskFuture;
-    }
-
-    synchronized void setFuture(Future<?> future) {
-      myTaskFuture = future;
+    synchronized Thread get() {
+      return myThread;
     }
 
     synchronized void clear() {
-      myTask = null;
-      myTaskFuture = null;
+      myThread = null;
     }
   }
 
@@ -116,9 +103,9 @@ public abstract class SwingWorker {
    */
 
   public void interrupt() {
-    Future<?> future = myThreadVar.getFuture();
-    if (future != null){
-      future.cancel(true);
+    Thread t = myThreadVar.get();
+    if (t != null){
+      t.interrupt();
     }
     myThreadVar.clear();
   }
@@ -133,19 +120,16 @@ public abstract class SwingWorker {
 
   public Object get() {
     while(true){
-      Future t = myThreadVar.getFuture();
+      Thread t = myThreadVar.get();
       if (t == null){
         return getValue();
       }
       try{
-        t.get();
+        t.join();
       }
       catch(InterruptedException e){
         Thread.currentThread().interrupt();
         // propagate
-        return null;
-      }
-      catch (ExecutionException e) {
         return null;
       }
     }
@@ -167,33 +151,31 @@ public abstract class SwingWorker {
 
     Runnable doConstruct = new Runnable() {
       public void run() {
-        try {
-          try{
+        try{
           setValue(construct());
           if (LOG.isDebugEnabled()) {
-              LOG.debug("construct() terminated");
-            }
+            LOG.debug("construct() terminated");
           }
-          catch (Throwable e) {
-            LOG.error(e);
-            onThrowable();
-            throw new RuntimeException(e);
-          }
-          finally{
-            myThreadVar.clear();
-          }
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("invoking 'finished' action");
-          }
-          ApplicationManager.getApplication().invokeLater(doFinished, myModalityState);
         }
-        finally {
-          Thread.interrupted(); // reset interrupted before returning to pool
+        catch (Throwable e) {
+          LOG.error(e);
+          onThrowable();
+          throw new RuntimeException(e);
         }
+        finally{
+          myThreadVar.clear();
+        }
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("invoking 'finished' action");
+        }
+        ApplicationManager.getApplication().invokeLater(doFinished, myModalityState);
       }
     };
 
-    myThreadVar = new ThreadVar(doConstruct);
+    //noinspection HardCodedStringLiteral
+    final Thread workerThread = new Thread(doConstruct, "SwingWorker work thread");
+    workerThread.setPriority(Thread.NORM_PRIORITY);
+    myThreadVar = new ThreadVar(workerThread);
   }
 
   /**
@@ -201,9 +183,9 @@ public abstract class SwingWorker {
    */
 
   public void start() {
-    Runnable t = myThreadVar.getTask();
+    Thread t = myThreadVar.get();
     if (t != null){
-      myThreadVar.setFuture(ApplicationManager.getApplication().executeOnPooledThread(t));
+      t.start();
     }
   }
 }
