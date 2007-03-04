@@ -475,6 +475,10 @@ public class ElementsChooser<T> extends JPanel {
     return value != null ? value.toString() : "";
   }
 
+  protected Icon getItemIcon(T value) {
+    return null;
+  }
+
   private class MyElementColumnCellRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       final Color color = UIUtil.getTableFocusCellBackground();
@@ -495,7 +499,7 @@ public class ElementsChooser<T> extends JPanel {
       component.setEnabled(ElementsChooser.this.isEnabled() && (myColorUnmarkedElements? model.isElementMarked(row) : true));
       final ElementProperties properties = myElementToPropertiesMap.get(t);
       if (component instanceof JLabel) {
-        ((JLabel)component).setIcon(properties != null? properties.getIcon() : null);
+        ((JLabel)component).setIcon(properties != null? properties.getIcon() : getItemIcon(t));
       }
       component.setForeground(properties != null && properties.getColor() != null ?
                               properties.getColor() :

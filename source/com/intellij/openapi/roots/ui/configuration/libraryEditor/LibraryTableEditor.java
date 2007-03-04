@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IconUtilEx;
+import com.intellij.ide.util.JavaUtilForVfs;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
@@ -12,6 +13,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
@@ -29,6 +31,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,18 +55,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
 
 /**
  * @author Eugene Zhuravlev
@@ -533,12 +526,16 @@ public class LibraryTableEditor implements Disposable {
       return new FileChooserDescriptor(false, true, true, false, true, true);
     }
 
+    protected VirtualFile[] scanForActualRoots(VirtualFile[] rootCandidates) {
+      return rootCandidates;
+    }
+
     public final void actionPerformed(ActionEvent e) {
       final Library library = getSelectedLibrary();
       if (library != null) {
         myDescriptor.setTitle(getTitle());
         myDescriptor.setTitle(getDescription());
-        attachFiles(library, FileChooser.chooseFiles(myPanel, myDescriptor), getRootType());
+        attachFiles(library, scanForActualRoots(FileChooser.chooseFiles(myPanel, myDescriptor)), getRootType());
       }
       fireLibrariesChanged();
       myTree.requestFocus();
@@ -624,6 +621,37 @@ public class LibraryTableEditor implements Disposable {
 
     protected OrderRootType getRootType() {
       return OrderRootType.SOURCES;
+    }
+
+    protected VirtualFile[] scanForActualRoots(final VirtualFile[] rootCandidates) {
+      final Set<VirtualFile> result = new HashSet<VirtualFile>();
+      for (final VirtualFile candidate : rootCandidates) {
+        final Ref<List<VirtualFile>> roots = Ref.create(null);
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+          public void run() {
+            List<VirtualFile> detectedRoots = JavaUtilForVfs.suggestRoots(candidate);
+            if (!detectedRoots.isEmpty() && (detectedRoots.size() > 1 || detectedRoots.get(0) != candidate)) {
+              roots.set(detectedRoots);
+            }
+          }
+        }, "Scanning for source roots", true, myProject);
+
+        if (roots.get() == null) {
+          result.add(candidate);
+        }
+        else {
+          DetectedSourceRootsDialog dlg = new DetectedSourceRootsDialog(myProject, roots.get(), candidate);
+          dlg.show();
+          if (dlg.isOK()) {
+            result.addAll(dlg.getChosenRoots());
+          }
+          else {
+            result.add(candidate);
+          }
+        }
+      }
+
+      return result.toArray(new VirtualFile[result.size()]);
     }
   }
 
