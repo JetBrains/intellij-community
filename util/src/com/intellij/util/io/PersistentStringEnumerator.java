@@ -238,7 +238,7 @@ public class PersistentStringEnumerator {
   }
 
   public void flush() throws IOException {
-    if (myStorage.isMapped()) {
+    if (myStorage.isMapped() || isDirty()) {
       markDirty(false);
       myStorage.flush();
     }
