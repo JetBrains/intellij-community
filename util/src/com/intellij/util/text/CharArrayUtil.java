@@ -271,8 +271,12 @@ public class CharArrayUtil {
   }
 
   public static int indexOf(final CharSequence buffer, final CharSequence pattern, int fromIndex) {
+    return indexOf(buffer, pattern, fromIndex, buffer.length());
+  }
+
+  public static int indexOf(final CharSequence buffer, final CharSequence pattern, int fromIndex, final int toIndex) {
     final int patternLength = pattern.length();
-    int limit = buffer.length() - patternLength;
+    int limit = toIndex - patternLength;
     if (fromIndex < 0) {
       fromIndex = 0;
     }
