@@ -125,7 +125,7 @@ public class IntentionManagerImpl extends IntentionManager {
   }
 
   public List<IntentionAction> getStandardIntentionOptions(final HighlightDisplayKey displayKey, final PsiElement context) {
-    List<IntentionAction> options = new ArrayList<IntentionAction>();
+    List<IntentionAction> options = new ArrayList<IntentionAction>(9);
     options.add(new EditInspectionToolsSettingsAction(displayKey));
     options.add(new AddNoInspectionCommentFix(displayKey, context));
     options.add(new AddNoInspectionDocTagFix(displayKey, context));
