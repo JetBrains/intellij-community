@@ -9,12 +9,9 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,15 +27,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author peter
  */
 class FileDescriptionCachedValueProvider<T extends DomElement> implements ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.FileDescriptionCachedValueProvider");
-  private static final Key<CachedValue<Pair<String,String>>> ROOT_TAG_NS_KEY = Key.create("rootTag&ns");
+  private static final Key<CachedValue<String>> ROOT_TAG_NS_KEY = Key.create("rootTag&ns");
   private final XmlFile myXmlFile;
   private boolean myComputing;
   private DomFileElementImpl<T> myLastResult;
@@ -73,10 +70,11 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     try {
       if (!myCachedValue.hasUpToDateValue()) {
         r.unlock();
+        final String rootTagName = getRootTag();
         w.lock();
         try {
           if (!myCachedValue.hasUpToDateValue()) {
-            _computeFileElement(false);
+            _computeFileElement(false, rootTagName);
           }
         }
         finally{
@@ -93,16 +91,17 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
 
   @NotNull
   public final List<DomEvent> computeFileElement(boolean fireEvents) {
+    final String rootTagName = getRootTag();
     w.lock();
     try {
-      return _computeFileElement(fireEvents);
+      return _computeFileElement(fireEvents, rootTagName);
     }
     finally {
       w.unlock();
     }
   }
 
-  private List<DomEvent> _computeFileElement(final boolean fireEvents) {
+  private List<DomEvent> _computeFileElement(final boolean fireEvents, final String rootTagName) {
     if (myComputing || myDomManager.getProject().isDisposed()) return Collections.emptyList();
     myComputing = true;
     try {
@@ -118,7 +117,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
       }
 
       final Module module = ModuleUtil.findModuleForPsiElement(myXmlFile);
-      if (myLastResult != null && myFileDescription.getRootTagName().equals(getRootTagName()) && myFileDescription.isMyFile(myXmlFile, module)) {
+      if (myLastResult != null && myFileDescription.getRootTagName().equals(rootTagName) && myFileDescription.isMyFile(myXmlFile, module)) {
         List<DomEvent> list = new SmartList<DomEvent>();
         if (fireEvents) {
           list.add(new ElementChangedEvent(myLastResult));
@@ -129,7 +128,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
 
       myModCount++;
 
-      final DomFileDescription<T> description = findFileDescription(module);
+      final DomFileDescription<T> description = findFileDescription(module, rootTagName);
       return saveResult(description, fireEvents);
     }
     finally {
@@ -142,7 +141,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   }
 
   @Nullable
-  private DomFileDescription<T> findFileDescription(Module module) {
+  private DomFileDescription<T> findFileDescription(Module module, final String rootTagName) {
     final XmlFile originalFile = (XmlFile)myXmlFile.getOriginalFile();
     if (originalFile != null) {
       return myDomManager.<T>getOrCreateCachedValueProvider(originalFile).getFileDescription();
@@ -150,11 +149,8 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
 
     myCondition.module = module;
 
-    final Pair<String,String> pair = getRootTagAndNamespace();
-    if (pair == null) return null;
-
     //noinspection unchecked
-    final DomFileDescription<T> description = ContainerUtil.find(myDomManager.getFileDescriptions(pair.first), myCondition);
+    final DomFileDescription<T> description = ContainerUtil.find(myDomManager.getFileDescriptions(rootTagName), myCondition);
     if (description != null) {
       return description;
     }
@@ -163,35 +159,23 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   }
 
   @Nullable
-  private Pair<String, String> getRootTagAndNamespace() {
-    CachedValue<Pair<String, String>> value = myXmlFile.getUserData(ROOT_TAG_NS_KEY);
+  private String getRootTag() {
+    CachedValue<String> value = myXmlFile.getUserData(ROOT_TAG_NS_KEY);
     if (value == null) {
-      myXmlFile.putUserData(ROOT_TAG_NS_KEY, value = myXmlFile.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<Pair<String, String>>() {
-        public Result<Pair<String, String>> compute() {
-          Pair<String, String> rootTagAndNs = null;
+      myXmlFile.putUserData(ROOT_TAG_NS_KEY, value = myXmlFile.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<String>() {
+        public Result<String> compute() {
+          String rootTagAndNs = null;
           try {
-            rootTagAndNs = Pair.create(DomImplUtil.getRootTagName(myXmlFile), null);
+            rootTagAndNs = DomImplUtil.getRootTagName(myXmlFile);
           }
           catch (IOException e) {
             LOG.info(e);
           }
-          return new Result<Pair<String, String>>(rootTagAndNs, myXmlFile);
+          return new Result<String>(rootTagAndNs, myXmlFile);
         }
       }, false));
     }
     return value.getValue();
-  }
-
-  @Nullable
-  private String getRootTagName() {
-    final XmlDocument document = myXmlFile.getDocument();
-    if (document != null) {
-      final XmlTag tag = document.getRootTag();
-      if (tag != null) {
-        return tag.getLocalName();
-      }
-    }
-    return null;
   }
 
   private List<DomEvent> saveResult(final DomFileDescription<T> description, final boolean fireEvents) {
