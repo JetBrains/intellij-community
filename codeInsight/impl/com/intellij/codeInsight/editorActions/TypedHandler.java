@@ -855,12 +855,12 @@ public class TypedHandler implements TypedActionHandler {
   private static void handleAfterLParen(Editor editor, FileType fileType, char lparenChar){
     int offset = editor.getCaretModel().getOffset();
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
-    boolean atEnd = offset == editor.getDocument().getTextLength();
+    boolean atEndOfDocument = offset == editor.getDocument().getTextLength();
 
-    if (!atEnd) iterator.retreat();
+    if (!atEndOfDocument) iterator.retreat();
     BraceMatchingUtil.BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
     IElementType braceTokenType = braceMatcher.getTokenType(lparenChar, iterator);
-    if (iterator.getTokenType() != braceTokenType) return;
+    if (iterator.atEnd() || iterator.getTokenType() != braceTokenType) return;
 
     if (!iterator.atEnd()) {
       iterator.advance();
