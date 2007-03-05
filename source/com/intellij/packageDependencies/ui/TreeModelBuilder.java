@@ -390,8 +390,14 @@ public class TreeModelBuilder {
       PsiDirectory directory = parent.getParentDirectory();
       parentNode = (DefaultMutableTreeNode)node.getParent();
       node.removeFromParent();
-      getMap(myModuleDirNodes, ScopeType.SOURCE).put(parent, null);
-      node = getMap(myModuleDirNodes, ScopeType.SOURCE).get(directory);
+      if (parentNode instanceof DirectoryNode) {
+        getMap(myModuleDirNodes, ScopeType.SOURCE).put(parent, null);
+      } else if (parentNode instanceof ModuleNode) {
+        getMap(myModuleNodes, ScopeType.SOURCE).put(((ModuleNode)parentNode).getModule(), null);
+      } else if (parentNode instanceof ModuleGroupNode) {
+        getMap(myModuleGroupNodes, ScopeType.SOURCE).put(((ModuleGroupNode)parentNode).getModuleGroupName(), null);
+      }
+      node = parentNode;
       parent = directory;
     }
     if (myCompactEmptyMiddlePackages && node instanceof DirectoryNode && node.getChildCount() == 1) { //compact
@@ -403,18 +409,6 @@ public class TreeModelBuilder {
         }
         ((DirectoryNode)node).setCompactedDirNode((DirectoryNode)treeNode);
       }
-    }
-    if (parentNode instanceof ModuleNode && parentNode.getChildCount() == 0) {
-      final TreeNode treeNode = parentNode.getParent();
-      parentNode.removeFromParent();
-      getMap(myModuleNodes, ScopeType.SOURCE).put(((ModuleNode)parentNode).getModule(), null);
-      parentNode = (DefaultMutableTreeNode)treeNode;
-    }
-    if (parentNode instanceof ModuleGroupNode && parentNode.getChildCount() == 0) {
-      final TreeNode treeNode = parentNode.getParent();
-      parentNode.removeFromParent();
-      getMap(myModuleGroupNodes, ScopeType.SOURCE).put(((ModuleGroupNode)parentNode).getModuleGroupName(), null);
-      parentNode = (DefaultMutableTreeNode)treeNode;
     }
     return parentNode;
   }
