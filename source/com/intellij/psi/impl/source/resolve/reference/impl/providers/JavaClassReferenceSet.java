@@ -123,7 +123,7 @@ class JavaClassReferenceSet {
         final char c = str.charAt(nextDotOrDollar);
         if (c == SEPARATOR3) {
           int end = str.lastIndexOf('>');
-          if (end != -1) {
+          if (end != -1 && end > nextDotOrDollar) {
             if (myNestedGenericParameterReferences == null) myNestedGenericParameterReferences = new ArrayList<JavaClassReferenceSet>(1);
             myNestedGenericParameterReferences.add(
               new JavaClassReferenceSet(
