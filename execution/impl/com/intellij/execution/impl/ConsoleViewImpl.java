@@ -129,6 +129,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     myProject = project;
 
     addMessageFilter(new ExceptionFilter(myProject));//TEMP!
+    addMessageFilter(new YourkitFilter(myProject));//TEMP!
   }
 
   public void attachToProcess(final ProcessHandler processHandler){

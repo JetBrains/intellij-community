@@ -2,16 +2,19 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.VirtualFile;import com.intellij.openapi.editor.markup.TextAttributes;import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.problems.WolfTheProblemSolver;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -104,6 +107,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   public abstract String getElementText(T element);
 
+  @Nullable
   protected abstract String getContainerText(PsiElement element, final String name);
 
   protected abstract int getIconFlags();

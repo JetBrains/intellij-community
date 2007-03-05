@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public final class OpenFileHyperlinkInfo implements HyperlinkInfo {
   private final OpenFileDescriptor myDescriptor;
@@ -28,11 +29,11 @@ public final class OpenFileHyperlinkInfo implements HyperlinkInfo {
     myDescriptor = descriptor;
   }
 
-  public OpenFileHyperlinkInfo(Project project, final VirtualFile file, final int line, final int column) {
+  public OpenFileHyperlinkInfo(Project project, @NotNull final VirtualFile file, final int line, final int column) {
     this (new OpenFileDescriptor(project, file, line, column));
   }
 
-  public OpenFileHyperlinkInfo(Project project, final VirtualFile file, final int line) {
+  public OpenFileHyperlinkInfo(Project project, @NotNull final VirtualFile file, final int line) {
     this (project, file, line, 0);
   }
 
