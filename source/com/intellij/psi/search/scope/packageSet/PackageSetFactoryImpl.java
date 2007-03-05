@@ -90,7 +90,8 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
           wasIdentifier = false;
           pattern.append("/");
         }
-        else if (myLexer.getTokenType() == TokenTypeEx.IDENTIFIER) {
+        else if (myLexer.getTokenType() == TokenTypeEx.IDENTIFIER ||
+                 myLexer.getTokenType() == JavaTokenType.INTEGER_LITERAL) {
           if (wasIdentifier) error(AnalysisScopeBundle.message("error.packageset.token.expectations", getTokenText()));
           wasIdentifier = true;
           pattern.append(getTokenText());
@@ -202,7 +203,8 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
         } else if (myLexer.getTokenType() == TokenTypeEx.ASTERISK) {
           pattern.append("*");
         } else if (myLexer.getTokenType() == JavaTokenType.IDENTIFIER ||
-                   myLexer.getTokenType() == JavaTokenType.WHITE_SPACE) {
+                   myLexer.getTokenType() == JavaTokenType.WHITE_SPACE ||
+                   myLexer.getTokenType() == JavaTokenType.INTEGER_LITERAL ) {
           pattern.append(getTokenText());
         } else if (myLexer.getTokenType() == JavaTokenType.DOT) {
           pattern.append(".");
