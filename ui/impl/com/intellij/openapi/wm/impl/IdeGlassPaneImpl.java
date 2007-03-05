@@ -27,6 +27,10 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
     });
     addMouseMotionListener(new MouseMotionAdapter() {
     });
+    addMouseWheelListener(new MouseWheelListener() {
+      public void mouseWheelMoved(final MouseWheelEvent e) {
+      }
+    });
   }
 
   protected void processMouseEvent(final MouseEvent e) {
@@ -35,6 +39,10 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
 
   protected void processMouseMotionEvent(final MouseEvent e) {
     process(e, true);
+  }
+
+  protected void processMouseWheelEvent(final MouseWheelEvent e) {
+    process(e, false);
   }
 
   private void process(final MouseEvent e, boolean motionEvent) {
