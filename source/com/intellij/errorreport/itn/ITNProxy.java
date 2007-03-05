@@ -34,54 +34,12 @@ public class ITNProxy {
   public static final String POST_DELIMETER = "&";
 
   @NonNls public static final String NEW_THREAD_URL = "http://www.intellij.net/trackerRpc/idea/createScr";
-  @NonNls public static final String NEW_COMMENT_URL = "http://www.intellij.net/trackerRpc/idea/createComment";
-  @NonNls public static final String CHECK_THREAD_URL = "http://www.intellij.net/xml/scrToXml.jsp?projectName=idea&publicId=";
-  @NonNls public static final String BUILD_NUMBER_URL = "http://www.intellij.net/eap/products/idea/data/build_number.txt";
 
   public static final String THREAD_SUBJECT = "[{0}]";
   @NonNls private static final String HTTP_CONTENT_LENGTH = "Content-Length";
   @NonNls private static final String HTTP_CONTENT_TYPE = "Content-Type";
   @NonNls private static final String HTTP_WWW_FORM = "application/x-www-form-urlencoded";
   @NonNls private static final String HTTP_POST = "POST";
-
-
-  public static String getThreadStatus (int threadId) throws IOException {
-    HttpURLConnection connection = (HttpURLConnection)new URL (CHECK_THREAD_URL + threadId).openConnection();
-
-    connection.setAllowUserInteraction(true);
-    connection.connect();
-    int responseCode = connection.getResponseCode();
-    String threadStatus = "";
-
-    if (responseCode == HttpURLConnection.HTTP_OK) {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      InputStream is = connection.getInputStream();
-
-      int c;
-      while ((c = is.read()) != -1) {
-        baos.write (c);
-      }
-
-      String result = baos.toString();
-      //noinspection HardCodedStringLiteral
-      int startIndex = result.indexOf("state=\"") + 7;
-      int endIndex = result.indexOf("\"", startIndex);
-      threadStatus = result.substring(startIndex, endIndex);
-    }
-
-    connection.disconnect();
-
-    switch (responseCode) {
-      case HttpURLConnection.HTTP_OK:
-        break;
-      default:
-        // some problems
-        throw new IOException(DiagnosticBundle.message("error.report.connection.failure", responseCode));
-    }
-
-    return threadStatus;
-  }
-
 
   private static HttpURLConnection post (String url, Map<String,String> params) throws IOException, MalformedURLException {
     HttpURLConnection connection = (HttpURLConnection) new URL (url).openConnection();
