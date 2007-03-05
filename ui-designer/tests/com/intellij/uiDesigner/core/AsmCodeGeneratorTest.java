@@ -241,6 +241,11 @@ public class AsmCodeGeneratorTest extends TestCase {
     assertNotNull(panel);
   }
 
+  public void testMethodCallInSuper() throws Exception {
+    Class cls = loadAndPatchClass("TestMethodCallInSuper.form", "MethodCallInSuperTest");
+    JDialog instance = (JDialog) cls.newInstance();
+    assertEquals(1, instance.getContentPane().getComponentCount());
+  }
 
   private static class MyClassLoader extends ClassLoader {
     private byte[] myTestProperties = Charset.defaultCharset().encode(TEST_PROPERTY_CONTENT).array();

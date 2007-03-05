@@ -835,7 +835,7 @@ public class AsmCodeGenerator {
           callSetupUI();
         }
       }
-      else {
+      else if (mySuperCalled) {
         callSetupUI();
       }
       super.visitMethodInsn(opcode, owner, name, desc);
