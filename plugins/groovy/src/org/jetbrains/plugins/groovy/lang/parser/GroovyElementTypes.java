@@ -10,6 +10,9 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
  */
 public interface GroovyElementTypes {
 
-  IElementType FILE = new GroovyElementType("Groovy file");
-  
+    GroovyElementType NONE = new GroovyElementType("there is no node");
+
+    GroovyElementType FILE = new GroovyElementType("Groovy file");
+    GroovyElementType COMPILATION_UNIT = new GroovyElementType("Compilation unit");
+
 }
