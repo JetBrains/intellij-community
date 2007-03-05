@@ -429,6 +429,7 @@ public class ScopeEditorPanel {
               //update label
               setToComponent(myMatchingCountLabel);
               UIUtil.setEnabled(myPanel, true, true);
+              UIUtil.setEnabled(myLegendPanel, !DependencyUISettings.getInstance().UI_FILTER_LEGALS, true);
             }
           }
         });
