@@ -5,11 +5,9 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.impl.Pattern;
-import static com.intellij.patterns.impl.StandardPatterns.character;
-import static com.intellij.patterns.impl.StandardPatterns.not;
+import static com.intellij.patterns.impl.StandardPatterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -298,7 +296,7 @@ public class CompletionData {
   }
 
   @NonNls
-  public String getDummyIdentifier(final CompletionContext context) {
+  public String getDummyIdentifier(final PsiFile file, final int offset) {
     return CompletionUtil.DUMMY_IDENTIFIER;
   }
 }

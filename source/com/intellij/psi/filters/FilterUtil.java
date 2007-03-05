@@ -191,7 +191,7 @@ public class FilterUtil{
 
   }
 
-  private static ASTNode prevLeaf(final ASTNode leaf) {
+  public static ASTNode prevLeaf(final ASTNode leaf) {
     LeafElement leftNeibour = (LeafElement)TreeUtil.prevLeaf(leaf);
     if(leftNeibour instanceof ChameleonElement){
       ChameleonTransforming.transform(leftNeibour);

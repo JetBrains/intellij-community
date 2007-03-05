@@ -340,7 +340,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final CompletionData completionData = CompletionUtil.getCompletionDataByFileType(fileType);
     final PsiFile fileCopy = createFileCopy(context.file);
     Document oldDoc = fileCopy.getViewProvider().getDocument();
-    oldDoc.insertString(context.startOffset, completionData == null ? CompletionUtil.DUMMY_IDENTIFIER : completionData.getDummyIdentifier(context));
+    oldDoc.insertString(context.startOffset, completionData == null ? CompletionUtil.DUMMY_IDENTIFIER : completionData.getDummyIdentifier(
+      fileCopy, context.startOffset));
     PsiDocumentManager.getInstance(fileCopy.getProject()).commitDocument(oldDoc);
     context.offset = context.startOffset;
 

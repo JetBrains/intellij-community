@@ -2,18 +2,17 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NonNls;
 
 public class ModalityStateEx extends ModalityState {
   private static final WeakReference[] EMPTY_REFS_ARRAY = new WeakReference[0];
 
   private final WeakReference[] myModalEntities;
 
-  ModalityStateEx(Object[] modalEntities) {
+  public ModalityStateEx(Object[] modalEntities) {
     if (modalEntities.length > 0) {
       myModalEntities = new WeakReference[modalEntities.length];
       for (int i = 0; i < modalEntities.length; i++) {

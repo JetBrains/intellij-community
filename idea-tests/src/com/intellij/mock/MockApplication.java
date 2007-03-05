@@ -3,11 +3,13 @@ package com.intellij.mock;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -19,6 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 public class MockApplication extends MockComponentManager implements ApplicationEx {
+  private ModalityState MODALITY_STATE_NONE;
   public MockApplication() {
     super(null);
   }
@@ -185,7 +188,10 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   public ModalityState getNoneModalityState() {
-    return null;
+    if (MODALITY_STATE_NONE == null) {
+      MODALITY_STATE_NONE = new ModalityStateEx(ArrayUtil.EMPTY_OBJECT_ARRAY);
+    }
+    return MODALITY_STATE_NONE;
   }
 
   public <T> List<Future<T>> invokeAllUnderReadAction(@NotNull final Collection<Callable<T>> tasks, final ExecutorService executorService)
