@@ -273,17 +273,25 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
   }
 
   public TabInfo findInfo(MouseEvent event) {
-    final Point src = event.getPoint();
-    final Point point = SwingUtilities.convertPoint(event.getComponent(), src, this);
+    final Point point = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), this);
+    return _findInfo(point, false);
+  }
+
+  public TabInfo findTabLabelBy(final Point point) {
+    return _findInfo(point, true);
+  }
+
+  private TabInfo _findInfo(final Point point, boolean labelsOnly) {
     Component component = findComponentAt(point);
     if (component == null) return null;
     while (component != this || component != null) {
       if (component instanceof TabLabel) {
         return ((TabLabel)component).getInfo();
-      } else {
+      } else if (!labelsOnly) {
         final TabInfo info = findInfo(component);
         if (info != null) return info;
       }
+      if (component == null) break;
       component = component.getParent();
     }
 
@@ -291,7 +299,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
   }
 
   public void removeAllTabs() {
-    final TabInfo[] infos = (TabInfo[])myInfos.toArray(new TabInfo[myInfos.size()]);
+    final TabInfo[] infos = myInfos.toArray(new TabInfo[myInfos.size()]);
     for (TabInfo each : infos) {
       removeTab(each);
     }

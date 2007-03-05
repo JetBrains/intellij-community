@@ -3,8 +3,6 @@ package com.intellij.util.ui;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.NullableComponent;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.util.Disposer;
 
@@ -110,7 +108,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     while (component != null) {
       if (component == myDragComponent) {
         final Point dragComponentPoint = SwingUtilities.convertPoint(me.getComponent(), me.getPoint(), myDragComponent);
-        return canStartDragging(dragComponentPoint);
+        return canStartDragging(myDragComponent, dragComponentPoint);
       }
       component = component.getParent();
     }
@@ -118,7 +116,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
     return false;
   }
 
-  protected boolean canStartDragging(Point dragComponentPoint) {
+  protected boolean canStartDragging(final JComponent dragComponent, Point dragComponentPoint) {
     return true;
   }
 
