@@ -97,6 +97,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
   private Content myFramesContent;
   private Content myVarsContent;
   private Content myWatchesContent;
+  private DebuggerContentUI myContentUI;
 
   public DebuggerSessionTab(Project project, String sessionName) {
     myProject = project;
@@ -140,8 +141,9 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
         }
       });
     }
+    myContentUI = new DebuggerContentUI(this, ActionManager.getInstance(), DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName);
     myViewsContentManager = getContentFactory().
-      createContentManager(new DebuggerContentUI(this, ActionManager.getInstance(), DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName), false, getProject());
+      createContentManager(myContentUI, false, getProject());
 
     myWatchPanel = new MainWatchPanel(getProject(), getContextManager());
 
@@ -344,6 +346,9 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     addActionToGroup(group, DebuggerActions.MUTE_BREAKPOINTS);
 
     group.addSeparator();
+    addActionToGroup(group, DebuggerActions.RESTORE_LAYOUT);
+
+    group.addSeparator();
 
     group.add(new CloseAction(myRunner, contentDescriptor, getProject()));
 
@@ -489,6 +494,10 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     component.dispose();
     final Content content = myAdditionalContent.remove(component);
     myViewsContentManager.removeContent(content);
+  }
+
+  public void restoreLayout() {
+    myContentUI.restoreLayout();
   }
 
   private class MyDebuggerStateManager extends DebuggerStateManager {

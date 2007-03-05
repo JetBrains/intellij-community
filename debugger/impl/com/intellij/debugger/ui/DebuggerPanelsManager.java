@@ -165,14 +165,19 @@ public class DebuggerPanelsManager implements ProjectComponent{
 
   @Nullable
   public MainWatchPanel getWatchPanel() {
-    DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myProject).getContext();
-    DebuggerSessionTab sessionTab = getSessionTab(context.getDebuggerSession());
+    DebuggerSessionTab sessionTab = getSessionTab();
     return sessionTab != null ? sessionTab.getWatchPanel() : null;
   }
 
-  public void showFramePanel() {
+  @Nullable
+  public DebuggerSessionTab getSessionTab() {
     DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myProject).getContext();
     DebuggerSessionTab sessionTab = getSessionTab(context.getDebuggerSession());
+    return sessionTab;
+  }
+
+  public void showFramePanel() {
+    DebuggerSessionTab sessionTab = getSessionTab();
     if(sessionTab != null) {
       sessionTab.showFramePanel();
     }
