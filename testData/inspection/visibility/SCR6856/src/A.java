@@ -1,4 +1,5 @@
 class A {
+    A(){}    
     static class B {
         int k=0;
         {

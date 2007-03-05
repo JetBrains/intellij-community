@@ -20,6 +20,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -360,6 +362,24 @@ public class VisibilityInspection extends GlobalInspectionTool {
                   return false;
                 }
               });
+
+              if (globalContext.getRefManager().getEntryPointsManager().isAddNonJavaEntries()) {
+                final RefClass ownerClass = refMethod.getOwnerClass();
+                if (refMethod.isConstructor() && ownerClass.getDefaultConstructor() != null) {
+                  String qualifiedName = ownerClass.getElement().getQualifiedName();
+                  if (qualifiedName != null) {
+                    final Project project = globalContext.getProject();
+                    PsiManager.getInstance(project).getSearchHelper()
+                      .processUsagesInNonJavaFiles(qualifiedName, new PsiNonJavaFileReferenceProcessor() {
+                        public boolean process(PsiFile file, int startOffset, int endOffset) {
+                          globalContext.getRefManager().getEntryPointsManager().addEntryPoint(refMethod, false);
+                          ignoreElement(problemDescriptionsProcessor, refMethod);
+                          return false;
+                        }
+                      }, GlobalSearchScope.projectScope(project));
+                  }
+                }
+              }
             }
           }
 

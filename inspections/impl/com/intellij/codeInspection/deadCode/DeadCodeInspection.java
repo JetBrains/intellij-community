@@ -86,6 +86,11 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     System.arraycopy(deadCodeAddins, 0, myExtensions, 0, deadCodeAddins.length);
   }
 
+  public void initialize(final GlobalInspectionContextImpl context) {
+    super.initialize(context);
+    ((EntryPointsManagerImpl)context.getRefManager().getEntryPointsManager()).setAddNonJavaEntries(ADD_NONJAVA_TO_ENTRIES);
+  }
+
   private class OptionsPanel extends JPanel {
     private final JCheckBox myMainsCheckbox;
     private final JCheckBox myJUnitCheckbox;

@@ -28,6 +28,7 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
   private static final String VERSION = "2.0";
   @NonNls private static final String VERSION_ATTR = "version";
   @NonNls private static final String ENTRY_POINT_ATTR = "entry_point";
+  private boolean myAddNonJavaEntries = true;
 
   public EntryPointsManagerImpl() {
     myFQNameToSmartEntryPointRef = new LinkedHashMap(); // To keep the order between readExternal to writeExternal
@@ -219,6 +220,10 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
     }
   }
 
+  public boolean isAddNonJavaEntries() {
+    return myAddNonJavaEntries;
+  }
+
   public void addAllPersistentEntries(EntryPointsManagerImpl manager) {
     myFQNameToSmartEntryPointRef.putAll(manager.myFQNameToSmartEntryPointRef);
   }
@@ -264,5 +269,9 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
         myFQNameToSmartEntryPointRef.put(entryPoint.getFQName(), entryPoint);
       }
     }
+  }
+
+  public void setAddNonJavaEntries(final boolean addNonJavaEntries) {
+    myAddNonJavaEntries = addNonJavaEntries;
   }
 }

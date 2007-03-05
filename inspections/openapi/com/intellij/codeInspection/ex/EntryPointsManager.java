@@ -18,4 +18,6 @@ public interface EntryPointsManager {
   SmartRefElementPointer[] getEntryPoints();
 
   void cleanup();
+
+  boolean isAddNonJavaEntries();
 }

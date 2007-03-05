@@ -485,10 +485,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
   }
 
-  public boolean wasInitialized() {
-    return myInitialized.get();
-  }
-
   public void enableTool(String inspectionTool){
     final HighlightDisplayKey key = HighlightDisplayKey.find(inspectionTool);
     setState(key,

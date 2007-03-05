@@ -60,4 +60,18 @@ public class VisibilityInspectionTest extends InspectionTestCase {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
     doTest();
   }
+
+  public void testDefaultConstructor() throws Exception {
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
+    myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
+    doTest("visibility/defaultConstructor", myTool, false, true);
+  }
+
+  public void testImplicitConstructor() throws Exception {
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
+    myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
+    doTest("visibility/implicitConstructor", myTool, false, true);
+  }
 }
