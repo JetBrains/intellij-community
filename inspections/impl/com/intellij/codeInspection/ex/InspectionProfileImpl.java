@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author max
@@ -69,7 +70,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   private boolean myModified = false;
-  private boolean myInitialized = false;
+  private AtomicBoolean myInitialized = new AtomicBoolean(false);
 
   private VisibleTreeState myVisibleTreeState = new VisibleTreeState();
 
@@ -104,7 +105,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public InspectionProfileImpl(@NonNls String name) {
     super(name);
-    myInitialized = true;
     myRegistrar = InspectionToolRegistrar.getInstance();
     setProfileManager(InspectionProfileManager.getInstance());
   }
@@ -185,7 +185,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public void resetToBase() {
     myDisplayLevelMap.clear();
     copyToolsConfigurations(myBaseProfile);
-    myInitialized = true;
   }
 
   public String getName() {
@@ -224,7 +223,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    if (myFile == null && myTools.isEmpty()){ //can't load tools in any other way
+    if (myFile == null){ //can't load tools in any other way
       initInspectionTools();
     }
     myDisplayLevelMap.clear();
@@ -305,9 +304,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public InspectionProfileEntry getInspectionTool(String shortName) {
-    if (myTools.isEmpty()) {
-      initInspectionTools();
-    }
+    initInspectionTools();
     return myTools.get(shortName);
   }
 
@@ -366,7 +363,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
         final Element root = document.getRootElement();
         readExternal(root);
         myVisibleTreeState.readExternal(root);
-        myInitialized = true;
       }
     }
     catch (FileNotFoundException e) {
@@ -407,7 +403,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public InspectionProfileEntry[] getInspectionTools() {
-    if (myTools.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
      initInspectionTools();
     }
     ArrayList<InspectionTool> result = new ArrayList<InspectionTool>();
@@ -416,17 +412,19 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public void initInspectionTools() {
-    if (myBaseProfile != null){
-      myBaseProfile.initInspectionTools();
+    if (!myInitialized.getAndSet(true)) {
+      if (myBaseProfile != null){
+        myBaseProfile.initInspectionTools();
+      }
+      final InspectionTool[] tools = myRegistrar.createTools();
+      for (InspectionTool tool : tools) {
+        myTools.put(tool.getShortName(), tool);
+      }
+      if (mySource != null){
+        copyToolsConfigurations(mySource);
+      }
+      load(false);
     }
-    final InspectionTool[] tools = myRegistrar.createTools();
-    for (InspectionTool tool : tools) {
-      myTools.put(tool.getShortName(), tool);
-    }
-    if (mySource != null){
-      copyToolsConfigurations(mySource);
-    }
-    load(false);
   }
 
   public ModifiableModel getModifiableModel() {
@@ -488,7 +486,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public boolean wasInitialized() {
-    return myInitialized;
+    return myInitialized.get();
   }
 
   public void enableTool(String inspectionTool){
@@ -528,10 +526,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public boolean isExecutable() {
-    if (myTools.isEmpty()){
-      //initialize
-      initInspectionTools();
-    }
+    initInspectionTools();
     for (String name : myTools.keySet()) {
       if (isToolEnabled(HighlightDisplayKey.find(name))){
         return true;

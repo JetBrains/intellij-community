@@ -37,7 +37,6 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
   private static final @NonNls String NAME_ATT = "name";
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
 
-  private final HashMap<String, ArrayList<String>> myWords2DescriptorsMap = new HashMap<String, ArrayList<String>>();
 
   public String getExternalFileName() {
     return "intentionSettings";
@@ -110,47 +109,18 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
     myMetaData.put(metaData.myFamily, metaData);
   }
 
-
-  public synchronized void buildIndex(){
-    try {
-      final List<IntentionActionMetaData> list = getMetaData();
-      for (IntentionActionMetaData metaData : list) {
-        processMetaData(metaData);
-      }
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-  }
-
-  private void processMetaData(@NotNull final IntentionActionMetaData metaData) throws IOException {
+  private static void processMetaData(@NotNull final IntentionActionMetaData metaData) throws IOException {
     final URL description = metaData.getDescription();
     if (description != null) {
       SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
+      if (registrar == null) return;
       @NonNls String descriptionText = ResourceUtil.loadText(description).toLowerCase();
       descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
       final Set<String> words = registrar.getProcessedWordsWithoutStemming(descriptionText);
       words.addAll(registrar.getProcessedWords(metaData.myFamily));
       for (String word : words) {
-        ArrayList<String> descriptors = myWords2DescriptorsMap.get(word);
-        if (descriptors == null) {
-          descriptors = new ArrayList<String>();
-          myWords2DescriptorsMap.put(word, descriptors);
-        }
-        descriptors.add(metaData.myFamily);
+        registrar.addOption(word, metaData.myFamily, metaData.myFamily, IntentionSettingsConfigurable.HELP_ID, IntentionSettingsConfigurable.DISPLAY_NAME);
       }
     }
-  }
-
-  public synchronized ArrayList<String> getIntentionNames(final String filtString) {
-    return myWords2DescriptorsMap.get(filtString);
-  }
-
-  public synchronized Set<String> getIntentionWords() {
-    return myWords2DescriptorsMap.keySet();
-  }
-
-  public synchronized List<String> getFilteredIntentionNames(final String word) {
-    return myWords2DescriptorsMap.get(word);
   }
 }

@@ -196,7 +196,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   }
 
   @Nullable
-  private Set<OptionDescription> getAcceptableDescriptions(final String prefix) {
+  public Set<OptionDescription> getAcceptableDescriptions(final String prefix) {
     if (prefix == null) return null;
     final String stemmedPrefix = PorterStemmerUtil.stem(prefix);
     if (stemmedPrefix == null) return null;
@@ -295,8 +295,8 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     return result;
   }
 
-  public void addOption(SearchableConfigurable configurable, String option, String path, final String hit) {
-    putOptionWithHelpId(option, configurable.getId(), configurable.getDisplayName(), hit, path);
+  public void addOption(String option, String path, final String hit, final String configurableId, final String configurableDisplayName) {
+    putOptionWithHelpId(option, configurableId, configurableDisplayName, hit, path);
   }
 
   public Set<String> getProcessedWordsWithoutStemming(@NotNull String text) {

@@ -6,10 +6,6 @@ package com.intellij.ide.ui.search;
 
 import com.intellij.application.options.CodeStyleSchemesConfigurable;
 import com.intellij.application.options.colors.ColorAndFontOptions;
-import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
-import com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable;
-import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
@@ -20,13 +16,15 @@ import com.intellij.openapi.keymap.impl.ui.KeymapConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.profile.ui.ErrorOptionsConfigurable;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * User: anna
@@ -84,10 +82,6 @@ public class TraverseUIStarter implements ApplicationStarter {
       }
       if (configurable instanceof KeymapConfigurable){
         processKeymap(configurableElement);
-      } else if (configurable instanceof ErrorOptionsConfigurable){
-        processInspectionTools(configurableElement);
-      } else if (configurable instanceof IntentionSettingsConfigurable){
-        processIntentions(configurableElement);
       } else if (configurable instanceof ColorAndFontOptions){
         processColorAndFontsSettings((ColorAndFontOptions)configurable, configurableElement);
       } else if (configurable instanceof CodeStyleSchemesConfigurable){
@@ -152,42 +146,7 @@ public class TraverseUIStarter implements ApplicationStarter {
       append(opt.getPath(), opt.getHit(), opt.getOption(), configurableElement);
     }
   }
-
-  private static void processIntentions(final Element configurableElement) {
-    final IntentionManagerSettings intentionManagerSettings = IntentionManagerSettings.getInstance();
-    intentionManagerSettings.buildIndex();
-    final TreeSet<String> words = new TreeSet<String>(intentionManagerSettings.getIntentionWords());
-    for (String word : words) {
-      final List<String> mentionedIntentions = intentionManagerSettings.getFilteredIntentionNames(word);
-      for (String intention : mentionedIntentions) {
-        append(intention, intention, word, configurableElement);
-      }
-    }
-  }
-
-  private void processInspectionTools(final Element configurableElement) {
-    final InspectionTool[] tools = InspectionToolRegistrar.getInstance().createTools();//force index building
-    while (!InspectionToolRegistrar.isIndexBuild()){//wait for index build
-      synchronized (this) {
-        try {
-          wait(100);
-        }
-        catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-      }
-    }
-    final TreeSet<String> words = new TreeSet<String>(InspectionToolRegistrar.getToolWords());
-    for (String word : words) {
-      final List<String> mentionedInspections = InspectionToolRegistrar.getFilteredToolNames(word);
-      for (InspectionTool tool : tools) {
-        if (mentionedInspections.contains(tool.getShortName())){
-          append(tool.getShortName(), tool.getDisplayName(), word, configurableElement);
-        }
-      }
-    }
-  }
-
+ 
   private static void append(String path, String hit, final String word, final Element configurableElement) {
     Element optionElement = new Element(OPTION);
     optionElement.setAttribute(NAME, word);

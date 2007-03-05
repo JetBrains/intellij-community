@@ -4,12 +4,15 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class IntentionSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private IntentionSettingsPanel myPanel;
+  @NonNls public static final String HELP_ID = "preferences.intentionPowerPack";
+  public static final String DISPLAY_NAME = CodeInsightBundle.message("intention.settings");
 
   public JComponent createComponent() {
     myPanel = new IntentionSettingsPanel();
@@ -27,7 +30,7 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
   }
 
   public String getDisplayName() {
-    return CodeInsightBundle.message("intention.settings");
+    return DISPLAY_NAME;
   }
 
   public Icon getIcon() {
@@ -49,7 +52,7 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
   }
 
   public String getHelpTopic() {
-    return "preferences.intentionPowerPack";
+    return HELP_ID;
   }
 
   public Runnable enableSearch(String option) {
@@ -57,7 +60,7 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
   }
 
   public String getId() {
-    return getHelpTopic();
+    return HELP_ID;
   }
 
   public boolean clearSearch() {

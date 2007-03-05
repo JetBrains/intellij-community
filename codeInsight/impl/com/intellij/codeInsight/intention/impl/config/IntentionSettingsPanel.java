@@ -2,9 +2,12 @@ package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
+import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.NonNls;
 
@@ -118,13 +121,21 @@ public class IntentionSettingsPanel {
 
     boolean highlight = false;
 
-    final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter.toLowerCase());
+    final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
+    final Set<String> filters = optionsRegistrar.getProcessedWords(filter.toLowerCase());
     for (String filtString : filters) {
-      final ArrayList<String> descriptors = IntentionManagerSettings.getInstance().getIntentionNames(filtString);
-      if (descriptors != null && descriptors.contains(metaData.myFamily)){
-        highlight = true;
-      } else {
-        if (force) return false;
+      final Set<OptionDescription> descriptors = ((SearchableOptionsRegistrarImpl)optionsRegistrar).getAcceptableDescriptions(filtString);
+      if (descriptors != null) {
+        for (OptionDescription description : descriptors) {
+          if (Comparing.strEqual(description.getPath(), metaData.myFamily)) {
+            highlight = true;
+            break;
+          }
+        }
+        if (!highlight && force) return false;
+      }
+      else {
+        if (!highlight && force) return false;
       }
     }
     return highlight;

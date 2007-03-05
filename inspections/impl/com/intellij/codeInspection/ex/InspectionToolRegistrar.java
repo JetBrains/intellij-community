@@ -15,6 +15,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ResourceUtil;
+import com.intellij.profile.ui.ErrorOptionsConfigurable;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -25,6 +26,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 /**
@@ -36,8 +38,8 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
   private ArrayList<Class> myInspectionTools;
   private ArrayList<Class> myLocalInspectionTools;
   private ArrayList<Class> myGlobalInspectionTools;
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-  private static HashMap<String, ArrayList<String>> myWords2InspectionToolNameMap = null;
+
+  private AtomicBoolean myToolsAreInitialized = new AtomicBoolean(false);
 
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
 
@@ -149,8 +151,7 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
   }
 
   private synchronized void buildInspectionIndex(final InspectionTool[] tools) {
-    if (myWords2InspectionToolNameMap == null) {
-      myWords2InspectionToolNameMap = new HashMap<String, ArrayList<String>>();
+    if (!myToolsAreInitialized.getAndSet(true)) {
       final Application app = ApplicationManager.getApplication();
       if (app.isUnitTestMode()) return;
 
@@ -178,27 +179,12 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
   }
 
   private static void processText(final @NonNls @NotNull String descriptionText, final InspectionTool tool) {
-    final Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWordsWithoutStemming(descriptionText);
+    final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
+    if (optionsRegistrar == null) return; //application disposed during startup
+    final Set<String> words = optionsRegistrar.getProcessedWordsWithoutStemming(descriptionText);
     for (String word : words) {
-      ArrayList<String> descriptors = myWords2InspectionToolNameMap.get(word);
-      if (descriptors == null) {
-        descriptors = new ArrayList<String>();
-        myWords2InspectionToolNameMap.put(word, descriptors);
-      }
-      descriptors.add(tool.getShortName());
+      optionsRegistrar.addOption(word, tool.getShortName(), tool.getDisplayName(), ErrorOptionsConfigurable.ID, ErrorOptionsConfigurable.DISPLAY_NAME);
     }
-  }
-
-  public static boolean isIndexBuild(){
-    return myWords2InspectionToolNameMap != null;
-  }
-
-  public static List<String> getFilteredToolNames(String filter){
-    return myWords2InspectionToolNameMap.get(filter);
-  }
-
-  public static Set<String> getToolWords(){
-    return myWords2InspectionToolNameMap.keySet();
   }
 
   public static URL getDescriptionUrl(@NotNull InspectionProfileEntry tool) {

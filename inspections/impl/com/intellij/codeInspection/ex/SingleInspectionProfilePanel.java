@@ -16,6 +16,8 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
+import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -568,21 +570,25 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (descriptor.getText().toLowerCase().contains(filter)) {
       return true;
     }
-    if (InspectionToolRegistrar.isIndexBuild()) {
-      final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
-      boolean highlight = false;
-      for (String filtString : filters) {
-        final List<String> descriptors = InspectionToolRegistrar.getFilteredToolNames(filtString);
-        if (descriptors != null && descriptors.contains(descriptor.getKey().toString())) {
-          highlight = true;
+    final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
+    final Set<String> filters = optionsRegistrar.getProcessedWords(filter);
+    boolean highlight = false;
+    for (String filtString : filters) {
+      final Set<OptionDescription> descriptors = ((SearchableOptionsRegistrarImpl)optionsRegistrar).getAcceptableDescriptions(filtString);
+      if (descriptors != null) {
+        for (OptionDescription description : descriptors) {
+          if (Comparing.strEqual(description.getPath(), descriptor.getKey().toString())) {
+            highlight = true;
+            break;
+          }
         }
-        else {
-          if (forceInclude) return false;
-        }
+        if (!highlight && forceInclude) return false;
       }
-      return highlight;
+      else {
+        if (!highlight && forceInclude) return false;
+      }
     }
-    return true;
+    return highlight;
   }
 
   protected void fillTreeData(String filter, boolean forceInclude) {
@@ -1154,6 +1160,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
 
     protected void onlineFilter() {
+      if (mySelectedProfile == null) return;
       final String filter = getFilter();
       if (filter != null && filter.length() > 0) {
         if (!myExpansionMonitor.isFreeze()) {

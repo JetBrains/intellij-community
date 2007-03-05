@@ -47,7 +47,7 @@ public abstract class SearchableOptionsRegistrar{
   @Nullable
   public abstract String getInnerPath(SearchableConfigurable configurable, String option);
 
-  public abstract void addOption(SearchableConfigurable configurable, String option, String path, String hit);
+  public abstract void addOption(String option, String path, String hit, final String configurableId, final String configurableDisplayName);
 
   public abstract boolean isStopWord(String word);
 
