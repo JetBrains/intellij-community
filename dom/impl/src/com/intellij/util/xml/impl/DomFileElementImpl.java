@@ -8,7 +8,6 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
@@ -16,15 +15,17 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author peter
@@ -134,6 +135,10 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   private Map<Key,Object> myUserData = new HashMap<Key, Object>();
   private long myModificationCount;
   private boolean myInvalidated;
+
+  private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+  private static final Lock r = rwl.readLock();
+  private static final Lock w = rwl.writeLock();
 
   protected DomFileElementImpl(final XmlFile file,
                                final Class<T> rootElementClass,
@@ -260,12 +265,26 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   protected final DomRootInvocationHandler getRootHandler() {
-    synchronized (PsiLock.LOCK) {
+    r.lock();
+    try {
       if (myRootHandler == null) {
-        final XmlTag tag = getRootTag();
-        myRootHandler = new DomRootInvocationHandler(myRootElementClass, tag, this, myRootTagName);
+        r.unlock();
+        w.lock();
+        try {
+          if (myRootHandler == null) {
+            final XmlTag tag = getRootTag();
+            myRootHandler = new DomRootInvocationHandler(myRootElementClass, tag, this, myRootTagName);
+          }
+        }
+        finally{
+          r.lock();
+          w.unlock();
+        }
       }
       return myRootHandler;
+    }
+    finally {
+      r.unlock();
     }
   }
 

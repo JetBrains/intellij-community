@@ -9,6 +9,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.XmlFile;
@@ -36,6 +37,23 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 class FileDescriptionCachedValueProvider<T extends DomElement> implements ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.FileDescriptionCachedValueProvider");
   private static final Key<CachedValue<String>> ROOT_TAG_NS_KEY = Key.create("rootTag&ns");
+  private static final UserDataCache<CachedValue<String>,XmlFile,Object> ourRootTagCache = new UserDataCache<CachedValue<String>, XmlFile, Object>() {
+    protected CachedValue<String> compute(final XmlFile file, final Object o) {
+      return file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<String>() {
+        public Result<String> compute() {
+          String rootTagAndNs = null;
+          try {
+            rootTagAndNs = DomImplUtil.getRootTagName(file);
+          }
+          catch (IOException e) {
+            LOG.info(e);
+          }
+          return new Result<String>(rootTagAndNs, file);
+        }
+      }, false);
+    }
+  };
+
   private final XmlFile myXmlFile;
   private boolean myComputing;
   private DomFileElementImpl<T> myLastResult;
@@ -160,22 +178,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
 
   @Nullable
   private String getRootTag() {
-    CachedValue<String> value = myXmlFile.getUserData(ROOT_TAG_NS_KEY);
-    if (value == null) {
-      myXmlFile.putUserData(ROOT_TAG_NS_KEY, value = myXmlFile.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<String>() {
-        public Result<String> compute() {
-          String rootTagAndNs = null;
-          try {
-            rootTagAndNs = DomImplUtil.getRootTagName(myXmlFile);
-          }
-          catch (IOException e) {
-            LOG.info(e);
-          }
-          return new Result<String>(rootTagAndNs, myXmlFile);
-        }
-      }, false));
-    }
-    return value.getValue();
+    return ourRootTagCache.get(ROOT_TAG_NS_KEY, myXmlFile, null).getValue();
   }
 
   private List<DomEvent> saveResult(final DomFileDescription<T> description, final boolean fireEvents) {
