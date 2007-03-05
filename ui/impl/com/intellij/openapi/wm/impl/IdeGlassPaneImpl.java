@@ -48,9 +48,12 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
   private void process(final MouseEvent e, boolean motionEvent) {
     final Container cp = myRootPane.getContentPane();
     final Point cpPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), cp);
-    if (cpPoint.y < 0) {
+    final boolean processingDrag = myMousePressedComponent != null && e.getID() == MouseEvent.MOUSE_DRAGGED;
+    if (!processingDrag && cpPoint.y < 0) {
       final JMenuBar mb = myRootPane.getJMenuBar();
-      processForContainer(e, motionEvent, mb, SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), mb));
+      if (mb != null) {
+        processForContainer(e, motionEvent, mb, SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), mb));
+      }
     }
     else {
       processForContainer(e, motionEvent, cp, cpPoint);
@@ -78,6 +81,9 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
       setCursor(target.getCursor());
       if (e.getID() == MouseEvent.MOUSE_PRESSED) {
         myMousePressedComponent = target;
+        if (target.isFocusable()) {
+          target.requestFocus();
+        }
       }
     }
     else {

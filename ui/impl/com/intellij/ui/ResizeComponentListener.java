@@ -132,6 +132,8 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
                               bounds.height);
         break;
     }
+
+    popupWindow.validate();
   }
 
   public void mouseMoved(MouseEvent e) {
