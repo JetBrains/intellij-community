@@ -1,10 +1,7 @@
-package com.intellij.codeInspection.dataFlow;
+package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.impl.AddAnnotationFix;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -24,7 +21,7 @@ import java.util.List;
  * @author cdr
  */
 public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.AnnotateMethodFix");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.AnnotateMethodFix");
   private final String myAnnotation;
 
   public AnnotateOverriddenMethodParameterFix(final String fqn) {

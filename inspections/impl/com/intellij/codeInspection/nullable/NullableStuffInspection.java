@@ -2,12 +2,7 @@ package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.AnnotateQuickFix;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.dataFlow.AnnotateMethodFix;
-import com.intellij.codeInspection.dataFlow.AnnotateOverriddenMethodParameterFix;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -25,13 +20,13 @@ import java.awt.event.ActionListener;
 import java.util.List;
 
 public class NullableStuffInspection extends BaseLocalInspectionTool {
-  public boolean REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL = true;
-  public boolean REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL = true;
-  public boolean REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE = true;
-  public boolean REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL = true;
-  public boolean REPORT_NOT_ANNOTATED_GETTER = true;
-  public boolean REPORT_NOT_ANNOTATED_SETTER_PARAMETER = true;
-  public boolean REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_GETTER = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_SETTER_PARAMETER = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
   private static final AnnotateMethodFix ANNOTATE_OVERRIDDEN_METHODS_FIX = new AnnotateMethodFix(AnnotationUtil.NOT_NULL){
     protected boolean annotateOverriddenMethods() {
       return true;

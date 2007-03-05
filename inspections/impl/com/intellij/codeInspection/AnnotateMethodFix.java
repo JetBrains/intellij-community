@@ -1,14 +1,15 @@
-package com.intellij.codeInspection.dataFlow;
+package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.impl.AddAnnotationFix;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -17,17 +18,18 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author cdr
  */
 public class AnnotateMethodFix implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.AnnotateMethodFix");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.AnnotateMethodFix");
   private final String myAnnotation;
 
   public AnnotateMethodFix(final String fqn) {
@@ -44,7 +46,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
 
     PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
     if (method == null) return;
-    List<PsiMethod> toAnnotate = new ArrayList<PsiMethod>();
+    final List<PsiMethod> toAnnotate = new ArrayList<PsiMethod>();
     toAnnotate.add(method);
     List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
@@ -66,9 +68,20 @@ public class AnnotateMethodFix implements LocalQuickFix {
       }
     }
 
+    Set<VirtualFile> files = new THashSet<VirtualFile>();
+    for (PsiMethod psiMethod : toAnnotate) {
+      PsiFile file = psiMethod.getContainingFile();
+      if (file == null) continue;
+      VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile == null) continue;
+      files.add(virtualFile);
+    }
+    VirtualFile[] virtualFiles = files.toArray(new VirtualFile[files.size()]);
+    ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(virtualFiles);
     for (PsiMethod psiMethod : toAnnotate) {
       annotateMethod(psiMethod);
     }
+    UndoManager.getInstance(project).markDocumentForUndo(method.getContainingFile());
   }
 
   protected int annotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
