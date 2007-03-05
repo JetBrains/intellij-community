@@ -575,7 +575,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       }
       myUpdateQueue.queue(new Update(fileToRefresh) {
         public void run() {
-          if (myProject.isDisposed()) return;
+          if (myProject.isDisposed() || !fileToRefresh.isValid()) return;
           myTreeExpansionMonitor.freeze();
           final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(fileToRefresh);
           if (psiFile != null) {
