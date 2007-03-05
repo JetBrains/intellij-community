@@ -57,7 +57,7 @@ public class MoveComponentListener extends MouseAdapter implements MouseMotionLi
       draggedTo.x -= myStartPoint.x;
       draggedTo.y -= myStartPoint.y;
 
-      JBPopupImpl.moveTo(myComponent, draggedTo);
+      JBPopupImpl.moveTo(myComponent, draggedTo, null);
 
       e.consume();
     }

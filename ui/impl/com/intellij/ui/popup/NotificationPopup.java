@@ -53,14 +53,13 @@ public class NotificationPopup {
       .setRequestFocus(false)
       .setResizable(false)
       .setMovable(true)
+      .setLocateWithinScreenBounds(false)
       .createPopup();
     final Point p = RelativePoint.getSouthEastOf(owner).getScreenPoint();
     Rectangle screen = ScreenUtil.getScreenRectangle(p.x, p.y);
 
     final Point initial = new Point(screen.x + screen.width - myContent.getPreferredSize().width - 50,
                                     screen.y + screen.height - 5);
-
-    ((JBPopupImpl)myPopup).doNotFitToScreen();
 
     myPopup.showInScreenCoordinates(owner, initial);
 

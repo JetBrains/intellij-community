@@ -81,4 +81,9 @@ public interface ComponentPopupBuilder {
   @NotNull ComponentPopupBuilder setTitleIcon(@NotNull ActiveIcon icon);
   
   @NotNull ComponentPopupBuilder setCancelKeyEnabled(boolean enabled);
+  
+  @NotNull ComponentPopupBuilder setLocateByContent(boolean byContent);
+
+  @NotNull ComponentPopupBuilder setLocateWithinScreenBounds(boolean within);
+
 }

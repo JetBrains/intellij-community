@@ -81,6 +81,8 @@ public final class FloatingDecorator extends JDialog{
 
     //
 
+    getRootPane().setGlassPane(new IdeGlassPaneImpl(getRootPane()));
+
     apply(info);
   }
 

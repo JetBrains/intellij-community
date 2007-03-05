@@ -512,7 +512,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
   }
 
   public void setLocation(final Point screenPoint) {
-    JBPopupImpl.moveTo(myContainer, screenPoint);
+    JBPopupImpl.moveTo(myContainer, screenPoint, null);
   }
 
   public void setSize(final Dimension size) {

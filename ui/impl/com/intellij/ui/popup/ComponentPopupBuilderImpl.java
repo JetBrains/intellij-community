@@ -45,6 +45,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myCancelOnWindow;
   private ActiveIcon myTitleIcon = new ActiveIcon(new EmptyIcon(0));
   private boolean myCancelKeyEnabled = true;
+  private boolean myLocateByContent = false;
+  private boolean myPlacewithinScreen = true;
 
   public ComponentPopupBuilderImpl(final JComponent component,
                                    final JComponent prefferedFocusedComponent) {
@@ -137,7 +139,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
     final JBPopupImpl popup = new JBPopupImpl(myComponent, myPrefferedFocusedComponent, myRequestFocus, myForceHeavyweight,
                                               myDimensionServiceKey, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null,
                                               myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton,
-                                              myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled);
+                                              myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
+                                              myPlacewithinScreen);
     if (myPopupUpdater != null) {
       popup.setPopupUpdater(myPopupUpdater, myProject);
     }
@@ -161,6 +164,18 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @NotNull
   public ComponentPopupBuilder setCancelKeyEnabled(final boolean enabled) {
     myCancelKeyEnabled = enabled;
+    return this;
+  }
+
+  @NotNull
+  public ComponentPopupBuilder setLocateByContent(final boolean byContent) {
+    myLocateByContent = byContent;
+    return this;
+  }
+
+  @NotNull
+  public ComponentPopupBuilder setLocateWithinScreenBounds(final boolean within) {
+    myPlacewithinScreen = within;
     return this;
   }
 }
