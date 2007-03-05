@@ -72,9 +72,12 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
                                          final ConvertContext context) {
     final String originalValue = genericDomValue.getStringValue();
     if (originalValue == null) return PsiReference.EMPTY_ARRAY;
-    final String unquotedValue = XmlTagTextUtil.escapeString(unquote(originalValue, getQuoteSigns()), false);
-    final int start = element.getText().indexOf(unquotedValue);
-    return new PsiReference[]{createPsiReference(element, start, start + unquotedValue.length(), context, genericDomValue)};
+    final String unquotedValue = unquote(originalValue, getQuoteSigns());
+    if (originalValue == unquotedValue) {
+      return new PsiReference[]{createPsiReference(element, 1, element.getTextLength() - 1, context, genericDomValue)};
+    }
+    final int quoteLength = XmlTagTextUtil.escapeString(originalValue.substring(0, 1), false).length();
+    return new PsiReference[]{createPsiReference(element, quoteLength+1, element.getTextLength() - 1 - quoteLength, context, genericDomValue)};
   }
 
   @Nullable
