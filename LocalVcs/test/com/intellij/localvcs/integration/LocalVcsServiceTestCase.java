@@ -130,12 +130,6 @@ public class LocalVcsServiceTestCase extends MockedLocalFileSystemTestCase {
       }
     }
 
-    public void fireFileMoved(VirtualFile f, VirtualFile oldParent, VirtualFile newParent) {
-      if (getListener() != null) {
-        getListener().fileMoved(new VirtualFileMoveEvent(null, f, oldParent, newParent));
-      }
-    }
-
     public void fireFileDeletion(VirtualFile f) {
       if (getListener() != null) {
         getListener().fileDeleted(new VirtualFileEvent(null, f, null, null));

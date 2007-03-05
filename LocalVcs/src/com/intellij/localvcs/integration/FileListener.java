@@ -58,7 +58,7 @@ public class FileListener extends VirtualFileAdapter implements VirtualFileManag
     boolean wasInContent = myVcs.hasEntry(oldFile.getPath());
 
     // todo try make it more clear... and refactor
-    if (!myFileFilter.isAllowedAndUnderContentRoot(newFile)) {
+    if (notAllowedOrNotUnderContentRoot(newFile)) {
       if (wasInContent) myState.delete(oldFile);
       return;
     }
@@ -79,16 +79,19 @@ public class FileListener extends VirtualFileAdapter implements VirtualFileManag
     if (isMovedFromOutside(e)) {
       if (notAllowedOrNotUnderContentRoot(e)) return;
       myState.create(e.getFile());
+      return;
     }
-    else {
-      VirtualFile f = new ReparentedVirtualFile(e.getOldParent(), e.getFile());
-      if (isMovedToOutside(e)) {
-        myState.delete(f);
-      }
-      else {
-        myState.move(f, e.getNewParent());
-      }
+
+    VirtualFile oldFile = new ReparentedVirtualFile(e.getOldParent(), e.getFile());
+
+    if (isMovedToOutside(e)) {
+      boolean wasInContent = myVcs.hasEntry(oldFile.getPath());
+      if (wasInContent) myState.delete(oldFile);
+      return;
     }
+
+    if (notAllowedOrNotUnderContentRoot(e)) return;
+    myState.move(oldFile, e.getNewParent());
   }
 
   @Override
@@ -105,8 +108,12 @@ public class FileListener extends VirtualFileAdapter implements VirtualFileManag
     myState.delete(f);
   }
 
+  private boolean notAllowedOrNotUnderContentRoot(VirtualFile f) {
+    return !myFileFilter.isAllowedAndUnderContentRoot(f);
+  }
+
   private boolean notAllowedOrNotUnderContentRoot(VirtualFileEvent e) {
-    return !myFileFilter.isAllowedAndUnderContentRoot(e.getFile());
+    return notAllowedOrNotUnderContentRoot(e.getFile());
   }
 
   private boolean isMovedFromOutside(VirtualFileMoveEvent e) {

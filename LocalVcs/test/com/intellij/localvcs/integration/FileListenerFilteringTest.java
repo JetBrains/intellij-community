@@ -17,7 +17,7 @@ public class FileListenerFilteringTest extends FileListenerTestCase {
     vcs.apply();
 
     VirtualFile renamed = new TestVirtualFile("filtered", null, null);
-    fireRenamed("allowed", renamed);
+    fireRenamed(renamed, "allowed");
 
     assertFalse(vcs.hasEntry("allowed"));
     assertFalse(vcs.hasEntry("filtered"));
@@ -26,7 +26,7 @@ public class FileListenerFilteringTest extends FileListenerTestCase {
   @Test
   public void testRenamingFileFromFilteredOne() {
     VirtualFile renamed = new TestVirtualFile("allowed", "content", 123L);
-    fireRenamed("filtered", renamed);
+    fireRenamed(renamed, "filtered");
 
     Entry e = vcs.findEntry("allowed");
     assertNotNull(e);
@@ -37,7 +37,7 @@ public class FileListenerFilteringTest extends FileListenerTestCase {
   @Test
   public void testRenamingFileFromFilteredToFilteredOne() {
     VirtualFile renamed = new TestVirtualFile("filtered2", null, null);
-    fireRenamed("filtered1", renamed);
+    fireRenamed(renamed, "filtered1");
 
     assertFalse(vcs.hasEntry("filtered1"));
     assertFalse(vcs.hasEntry("filtered2"));
@@ -46,7 +46,7 @@ public class FileListenerFilteringTest extends FileListenerTestCase {
   @Test
   public void testRenamingDirectoryFromFilteredOne() {
     VirtualFile renamed = new TestVirtualFile("filtered2", null, null);
-    fireRenamed("filtered1", renamed);
+    fireRenamed(renamed, "filtered1");
 
     assertFalse(vcs.hasEntry("filtered1"));
     assertFalse(vcs.hasEntry("filtered2"));
