@@ -3,7 +3,9 @@ package com.intellij.find.findUsages;
 import com.intellij.find.FindManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.vcs.FileStatus;
@@ -15,12 +17,10 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.meta.PsiPresentableMetaData;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -164,10 +164,6 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget, TypeSafeDataP
 
     public String getPresentableText() {
       return myPresentableText;
-    }
-    
-    private String createPresentableText(final PsiElement element) {
-      return UsageViewUtil.createNodeText(element, true);
     }
 
     public String getLocationString() {

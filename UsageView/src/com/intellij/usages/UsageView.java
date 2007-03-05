@@ -32,17 +32,18 @@ public interface UsageView extends Disposable {
    * Returns {@link com.intellij.usages.UsageTarget} to look usages for
    */
   @NonNls String USAGE_TARGETS = "usageTarget";
-  DataKey<UsageTarget[]> USAGE_TARGETS_KEY = DataKey.create("usageTarget");
+  DataKey<UsageTarget[]> USAGE_TARGETS_KEY = DataKey.create(USAGE_TARGETS);
 
   /**
    * Returns {@link com.intellij.usages.Usage} which are selected in usage view
    */
   @NonNls String USAGES = "usages";
-  DataKey<Usage[]> USAGES_KEY = DataKey.create("usages");
+  DataKey<Usage[]> USAGES_KEY = DataKey.create(USAGES);
 
   @NonNls String USAGE_VIEW = "UsageView.new";
-  DataKey<UsageView> USAGE_VIEW_KEY = DataKey.create("UsageView.new");
+  DataKey<UsageView> USAGE_VIEW_KEY = DataKey.create(USAGE_VIEW);
   DataKey<UsageInfo> USAGE_INFO_KEY = DataKey.create("UsageInfo");
+  DataKey<List<UsageInfo>> USAGE_INFO_LIST_KEY = DataKey.create("UsageInfo.List");
 
   void appendUsage(Usage usage);
   void removeUsage(Usage usage);

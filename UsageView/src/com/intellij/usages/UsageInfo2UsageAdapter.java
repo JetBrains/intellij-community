@@ -317,5 +317,22 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
     if (key == UsageView.USAGE_INFO_KEY) {
       sink.put(UsageView.USAGE_INFO_KEY, getUsageInfo());
     }
+    if (key == UsageView.USAGE_INFO_LIST_KEY) {
+      ArrayList<UsageInfo> list = getSelectedInfoList();
+      sink.put(UsageView.USAGE_INFO_LIST_KEY, list);
+    }
+  }
+
+  public ArrayList<UsageInfo> getSelectedInfoList() {
+    ArrayList<UsageInfo> list = new ArrayList<UsageInfo>();
+    UsageInfo first = getUsageInfo();
+    list.add(first);
+    for (int i = 1; i < myRangeMarkers.size(); i++) {
+      RangeMarker rangeMarker = myRangeMarkers.get(i);
+      PsiFile file = first.getElement().getContainingFile();
+      UsageInfo usageInfo = new UsageInfo(file, rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+      list.add(usageInfo);
+    }
+    return list;
   }
 }

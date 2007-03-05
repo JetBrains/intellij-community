@@ -1015,38 +1015,38 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       if (key == DataKeys.PROJECT) {
         sink.put(DataKeys.PROJECT, myProject);
       }
-      if (key == USAGE_VIEW_KEY) {
+      else if (key == USAGE_VIEW_KEY) {
         sink.put(USAGE_VIEW_KEY, UsageViewImpl.this);
       }
 
-      if (key == DataKeys.NAVIGATABLE_ARRAY) {
+      else if (key == DataKeys.NAVIGATABLE_ARRAY) {
         sink.put(DataKeys.NAVIGATABLE_ARRAY, getNavigatablesForNodes(getSelectedNodes()));
       }
 
-      if (key == DataKeys.EXPORTER_TO_TEXT_FILE) {
+      else if (key == DataKeys.EXPORTER_TO_TEXT_FILE) {
         sink.put(DataKeys.EXPORTER_TO_TEXT_FILE, myTextFileExporter);
       }
 
-      if (key == USAGES_KEY) {
+      else if (key == USAGES_KEY) {
         final Set<Usage> selectedUsages = getSelectedUsages();
         sink.put(USAGES_KEY, selectedUsages != null ? selectedUsages.toArray(new Usage[selectedUsages.size()]) : null);
       }
 
-      if (key == USAGE_TARGETS_KEY) {
+      else if (key == USAGE_TARGETS_KEY) {
         sink.put(USAGE_TARGETS_KEY, getSelectedUsageTargets());
       }
 
-      if (key == DataKeys.VIRTUAL_FILE_ARRAY) {
+      else if (key == DataKeys.VIRTUAL_FILE_ARRAY) {
         final Set<Usage> usages = getSelectedUsages();
         VirtualFile[] data = provideVirtualFileArray(usages != null ? usages.toArray(new Usage[usages.size()]) : null, getSelectedUsageTargets());
         sink.put(DataKeys.VIRTUAL_FILE_ARRAY, data);
       }
 
-      if (key == DataKeys.HELP_ID) {
+      else if (key == DataKeys.HELP_ID) {
         sink.put(DataKeys.HELP_ID, HELP_ID);
       }
 
-      if (node != null) {
+      else if (node != null) {
         Object userObject = node.getUserObject();
         if (userObject instanceof TypeSafeDataProvider) {
           ((TypeSafeDataProvider)userObject).calcData(key, sink);
@@ -1224,7 +1224,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
-  public UsageInfo getSelectedUsageInfo() {
-    return (UsageInfo)DataManager.getInstance().getDataContext(myRootPanel).getData(USAGE_INFO_KEY.getName());
+  public List<UsageInfo> getSelectedUsageInfos() {
+    return (List<UsageInfo>)DataManager.getInstance().getDataContext(myRootPanel).getData(USAGE_INFO_LIST_KEY.getName());
   }
 }

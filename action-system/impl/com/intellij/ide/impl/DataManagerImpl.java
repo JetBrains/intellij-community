@@ -209,6 +209,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     myDataConstantToRuleMap.put(DataConstants.FILE_EDITOR, new FileEditorRule());
     myDataConstantToRuleMap.put(DataConstants.MODULE, new ModuleRule());
     myDataConstantToRuleMap.put(UsageView.USAGE_TARGETS, new UsageTargetsRule());
+    myDataConstantToRuleMap.put(UsageView.USAGE_INFO_LIST_KEY.getName(), new UsageInfo2ListRule());
     myDataConstantToRuleMap.put(DataConstants.NAVIGATABLE_ARRAY, new NavigatableArrayRule());
   }
 

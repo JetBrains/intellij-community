@@ -13,14 +13,15 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author cdr
@@ -33,9 +34,9 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
       public void valueChanged(final TreeSelectionEvent e) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            UsageInfo info = usageView.getSelectedUsageInfo();
-            if (info != null) {
-              resetEditor(info);
+            List<UsageInfo> infos = usageView.getSelectedUsageInfos();
+            if (infos != null) {
+              resetEditor(infos);
             }
           }
         });
@@ -45,8 +46,8 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     setLayout(new BorderLayout());
   }
 
-  private void resetEditor(@NotNull final UsageInfo info) {
-    PsiElement psiElement = info.getElement();
+  private void resetEditor(@NotNull final List<UsageInfo> infos) {
+    PsiElement psiElement = infos.get(0).getElement();
     if (psiElement == null) return;
     PsiFile psiFile = psiElement.getContainingFile();
     if (psiFile == null) return;
@@ -66,32 +67,35 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        highlightElement(info);
+        highlight(infos);
       }
     });
   }
 
-  private void highlightElement(final UsageInfo info) {
-    PsiElement psiElement = info.getElement();
-    if (psiElement == null) return;
-    int offsetInFile = psiElement.getTextOffset();
-
-    EditorColorsManager colorManager = EditorColorsManager.getInstance();
-    TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-
-    TextRange textRange = psiElement.getTextRange().cutOut(info.getRange());
-    // hack to determine element range to highlight
-    if (psiElement instanceof PsiNamedElement && !(psiElement instanceof PsiFile)) {
-      PsiFile psiFile = psiElement.getContainingFile();
-      PsiElement nameElement = psiFile.findElementAt(offsetInFile);
-      if (nameElement != null) {
-        textRange = nameElement.getTextRange();
-      }
-    }
+  private void highlight(final List<UsageInfo> infos) {
     myEditor.getMarkupModel().removeAllHighlighters();
-    myEditor.getMarkupModel().addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                attributes, HighlighterTargetArea.EXACT_RANGE);
-    myEditor.getCaretModel().moveToOffset(textRange.getStartOffset());
+    for (int i = infos.size()-1; i>=0; i--) { // finish with the first usage so that caret end up there
+      UsageInfo info = infos.get(i);
+      PsiElement psiElement = info.getElement();
+      if (psiElement == null) return;
+      int offsetInFile = psiElement.getTextOffset();
+
+      EditorColorsManager colorManager = EditorColorsManager.getInstance();
+      TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+
+      TextRange textRange = psiElement.getTextRange().cutOut(info.getRange());
+      // hack to determine element range to highlight
+      if (psiElement instanceof PsiNamedElement && !(psiElement instanceof PsiFile)) {
+        PsiFile psiFile = psiElement.getContainingFile();
+        PsiElement nameElement = psiFile.findElementAt(offsetInFile);
+        if (nameElement != null) {
+          textRange = nameElement.getTextRange();
+        }
+      }
+      myEditor.getMarkupModel().addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
+                                                    HighlighterLayer.ADDITIONAL_SYNTAX, attributes, HighlighterTargetArea.EXACT_RANGE);
+      myEditor.getCaretModel().moveToOffset(textRange.getStartOffset());
+    }
     myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
 
