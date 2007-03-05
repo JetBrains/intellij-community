@@ -265,10 +265,7 @@ public class Splitter extends JPanel {
   }
 
   static boolean isNull(Component component) {
-    if (component instanceof NullableComponent) {
-      return ((NullableComponent)component).isNull();
-    }
-    return component == null;
+    return NullableComponent.Check.isNull(component);
   }
 
   static void hideNull(Component component) {

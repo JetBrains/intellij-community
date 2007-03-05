@@ -2,6 +2,7 @@ package com.intellij.util.ui;
 
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IdeGlassPane;
@@ -73,11 +74,14 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
         myDraggingNow = false;
         myPressPointComponent = null;
         myPressPointScreen = null;
+        e.consume();
       }
     }
   }
 
   public void mouseDragged(final MouseEvent e) {
+    if (myPressPointScreen == null) return;
+
     final boolean deadZone = isWithinDeadZone(e);
     if (!myDraggingNow && !deadZone) {
       myDraggingNow = true;
@@ -95,12 +99,14 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
 
       processDrag(e, draggedTo);
+
+      e.consume();
     }
   }
 
   private boolean canStartDragging(MouseEvent me) {
     Component component = me.getComponent();
-    if (!component.isShowing()) return false;
+    if (NullableComponent.Check.isNullOrHidden(component)) return false;
     while (component != null) {
       if (component == myDragComponent) {
         final Point dragComponentPoint = SwingUtilities.convertPoint(me.getComponent(), me.getPoint(), myDragComponent);
@@ -127,8 +133,6 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
 
 
   private boolean isWithinDeadZone(final MouseEvent e) {
-    if (myPressPointScreen == null) return true;
-
     final Point screen = new RelativePoint(e).getScreenPoint();
     return Math.abs(myPressPointScreen.x - screen.x) < DRAG_START_DEADZONE &&
            Math.abs(myPressPointScreen.y - screen.y) < DRAG_START_DEADZONE;

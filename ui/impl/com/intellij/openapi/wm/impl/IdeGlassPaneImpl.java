@@ -140,14 +140,19 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
     switch (event.getID()) {
       case MouseEvent.MOUSE_PRESSED:
         listener.mousePressed(event);
+        break;
       case MouseEvent.MOUSE_RELEASED:
         listener.mouseReleased(event);
+        break;
       case MouseEvent.MOUSE_ENTERED:
         listener.mouseEntered(event);
+        break;
       case MouseEvent.MOUSE_EXITED:
         listener.mouseExited(event);
+        break;
       case MouseEvent.MOUSE_CLICKED:
         listener.mouseClicked(event);
+        break;
     }
   }
 

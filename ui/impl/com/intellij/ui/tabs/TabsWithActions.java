@@ -370,6 +370,11 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
       setBorder(new EmptyBorder(4, 8, 4, 8));
     }
 
+    protected void processMouseEvent(final MouseEvent e) {
+      super.processMouseEvent(e);
+      System.out.println(e);
+    }
+
     public void setText(final String text) {
       myLabel.setText(text);
     }
