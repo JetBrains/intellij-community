@@ -98,7 +98,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
   private Content myVarsContent;
   private Content myWatchesContent;
 
-  public DebuggerSessionTab(Project project) {
+  public DebuggerSessionTab(Project project, String sessionName) {
     myProject = project;
     myManager = new LogFilesManager(project, this);
     myContentPanel = new JPanel(new BorderLayout());
@@ -140,7 +140,8 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
         }
       });
     }
-    myViewsContentManager = getContentFactory().createContentManager(new DebuggerContentUI(this, ActionManager.getInstance()), false, getProject());
+    myViewsContentManager = getContentFactory().
+      createContentManager(new DebuggerContentUI(this, ActionManager.getInstance(), DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName), false, getProject());
 
     myWatchPanel = new MainWatchPanel(getProject(), getContextManager());
 

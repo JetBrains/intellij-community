@@ -200,8 +200,10 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     path.lineTo(getWidth() - insets.right, bottomY);
     path.closePath();
 
-    g2d.setPaint(new GradientPaint(mySelectedBounds.x, topY, CaptionPanel.BND_ACTIVE_COLOR, mySelectedBounds.x, bottomY,
-                                   CaptionPanel.CNT_ACTIVE_COLOR));
+    final Color from = toAlpha(CaptionPanel.BND_ACTIVE_COLOR.brighter());
+    final Color to = toAlpha(CaptionPanel.CNT_ACTIVE_COLOR.darker());
+
+    g2d.setPaint(new GradientPaint(mySelectedBounds.x, topY, from, mySelectedBounds.x, bottomY, to));
     g2d.fill(path);
     g2d.setColor(CaptionPanel.CNT_ACTIVE_COLOR.darker());
     g2d.draw(path);
@@ -209,6 +211,10 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     g2d.drawRect(insets.left, bottomY, getWidth() - insets.left - insets.right - 1, getHeight() - bottomY - insets.bottom - 1);
 
     config.restore();
+  }
+
+  private Color toAlpha(final Color color) {
+    return new Color(color.getRed(), color.getGreen(), color.getBlue(), 75);
   }
 
   private Max computeMaxSize() {
