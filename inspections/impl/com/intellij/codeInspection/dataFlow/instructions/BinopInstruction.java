@@ -12,6 +12,7 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiType;
@@ -27,7 +28,7 @@ public class BinopInstruction extends BranchingInstruction {
 
   public BinopInstruction(@NonNls String opSign, PsiElement psiAnchor) {
     if (opSign != null &&
-        ("==".equals(opSign) || "!=".equals(opSign) || "instanceof".equals(opSign))) {
+        ("==".equals(opSign) || "!=".equals(opSign) || "instanceof".equals(opSign) || "+".equals(opSign))) {
       myOperationSign = opSign;
       if (!"instanceof".equals(opSign)) myIsInstanceofRedundant = false;
     }
@@ -87,6 +88,9 @@ public class BinopInstruction extends BranchingInstruction {
 
         return states.toArray(new DfaInstructionState[states.size()]);
       }
+      else if ("+".equals(myOperationSign)) {
+        memState.push(getNonNullStringValue(factory));
+      }
       else {
         if (PsiKeyword.INSTANCEOF.equals(myOperationSign) &&
             (dfaLeft instanceof DfaTypeValue || dfaLeft instanceof DfaNotNullValue) &&
@@ -109,12 +113,25 @@ public class BinopInstruction extends BranchingInstruction {
         }
         memState.push(DfaUnknownValue.getInstance());
       }
+
     }
     else {
       memState.push(DfaUnknownValue.getInstance());
     }
 
     return new DfaInstructionState[]{new DfaInstructionState(next, memState)};
+  }
+
+  private boolean isOfStringType(final DfaValue value, final DfaValueFactory factory) {
+    return value instanceof DfaTypeValue && getStringType(factory).isAssignableFrom((DfaTypeValue)value);
+  }
+
+  private DfaTypeValue getStringType(final DfaValueFactory factory) {
+    return factory.getTypeFactory().create(PsiClassType.getJavaLangString(getPsiAnchor().getManager(), getPsiAnchor().getResolveScope()), false);
+  }
+
+  private DfaValue getNonNullStringValue(final DfaValueFactory factory) {
+    return factory.getNotNullFactory().create(PsiClassType.getJavaLangString(getPsiAnchor().getManager(), getPsiAnchor().getResolveScope()));
   }
 
   public boolean isInstanceofRedundant() {

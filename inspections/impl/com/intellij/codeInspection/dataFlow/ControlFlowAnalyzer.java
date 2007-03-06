@@ -854,7 +854,15 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
           if (!comparingRef) {
             generateBoxingUnboxingInstructionFor(rExpr,type);
           }
-          addInstruction(new BinopInstruction(expression.getOperationSign().getText(), expression.isPhysical() ? expression : null));
+
+          String opSign = expression.getOperationSign().getText();
+          if ("+".equals(opSign)) {
+            if (!type.equalsToText("java.lang.String")) {
+              opSign = null;
+            }
+          }
+          
+          addInstruction(new BinopInstruction(opSign, expression.isPhysical() ? expression : null));
         }
       }
     }
