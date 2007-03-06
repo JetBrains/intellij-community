@@ -7,6 +7,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspExpressionStatement;
+import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
@@ -115,6 +117,20 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
         before = Boolean.FALSE;
       }
     }
+
+    if (before == Boolean.TRUE) {
+      while (anchor instanceof JspExpressionStatement || anchor instanceof JspTemplateStatement) {
+        anchor = anchor.getTreePrev();
+        before = Boolean.FALSE;
+      }
+    }
+    else if (before == Boolean.FALSE) {
+      while (anchor instanceof JspExpressionStatement || anchor instanceof JspTemplateStatement) {
+        anchor = anchor.getTreeNext();
+        before = Boolean.TRUE;
+      }
+    }
+
     return super.addInternal(first, last, anchor, before);
   }
 
