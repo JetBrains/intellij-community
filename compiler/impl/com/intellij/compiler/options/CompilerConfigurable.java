@@ -1,36 +1,25 @@
 package com.intellij.compiler.options;
 
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class CompilerConfigurable implements SearchableConfigurable, ProjectComponent {
+public class CompilerConfigurable implements SearchableConfigurable {
   private CompilerUIConfigurable myDelegateConfigurable;
   private Project myProject;
 
   public static CompilerConfigurable getInstance(Project project) {
-    return project.getComponent(CompilerConfigurable.class);
+    return ShowSettingsUtil.getInstance().findProjectConfigurable(project, CompilerConfigurable.class);
   }
 
   public CompilerConfigurable(Project project) {
     myProject = project;
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() { }
-
-  public void projectClosed() {
-  }
-
-  public void projectOpened() {
   }
 
   public String getDisplayName() {
@@ -68,10 +57,6 @@ public class CompilerConfigurable implements SearchableConfigurable, ProjectComp
 
   public String getHelpTopic() {
     return "project.propCompiler";
-  }
-
-  public String getComponentName() {
-    return "CompilerConfigurable";
   }
 
   public String getId() {
