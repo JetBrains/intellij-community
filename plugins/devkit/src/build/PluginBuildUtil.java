@@ -41,6 +41,9 @@ import java.util.Set;
  * Date: Nov 24, 2004
  */
 public class PluginBuildUtil {
+  private PluginBuildUtil() {
+  }
+
   @NonNls @Nullable public static String getPluginExPath(Module module) {
     final ProjectJdk jdk = IdeaJdk.findIdeaJdk(ModuleRootManager.getInstance(module).getJdk());
     if (jdk == null) {
@@ -58,13 +61,11 @@ public class PluginBuildUtil {
   }
 
   public static void getDependencies(Module module, Set<Module> modules) {
-    if (modules.contains(module)) return;
-    Module[] dependencies = ModuleRootManager.getInstance(module).getDependencies();
-    for (int i = 0; i < dependencies.length; i++) {
-      Module dependency = dependencies[i];
+    for (Module dependency : ModuleRootManager.getInstance(module).getDependencies()) {
       if (dependency.getModuleType() == ModuleType.JAVA) {
-        modules.add(dependency);
-        getDependencies(dependency, modules);
+        if (modules.add(dependency)) {
+          getDependencies(dependency, modules);
+        }
       }
     }
   }
@@ -74,21 +75,19 @@ public class PluginBuildUtil {
       public Module[] compute() {
         ArrayList<Module> result = new ArrayList<Module>();
         final Module[] projectModules = ModuleManager.getInstance(module.getProject()).getModules();
-        for (int i = 0; i < projectModules.length; i++) {
-          if (ArrayUtil.find(ModuleRootManager.getInstance(projectModules[i]).getDependencies(), module) > -1) {
-            result.add(projectModules[i]);
+        for (Module projectModule : projectModules) {
+          if (ArrayUtil.find(ModuleRootManager.getInstance(projectModule).getDependencies(), module) > -1) {
+            result.add(projectModule);
           }
         }
         return result.toArray(new Module[result.size()]);
       }
     });
-
   }
 
   public static void getLibraries(Module module, Set<Library> libs) {
     OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
-    for (int i = 0; i < orderEntries.length; i++) {
-      OrderEntry orderEntry = orderEntries[i];
+    for (OrderEntry orderEntry : orderEntries) {
       if (orderEntry instanceof LibraryOrderEntry) {
         LibraryOrderEntry libEntry = (LibraryOrderEntry)orderEntry;
         Library lib = libEntry.getLibrary();

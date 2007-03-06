@@ -23,6 +23,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -30,6 +31,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ZipUtil;
@@ -38,6 +40,8 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
@@ -53,7 +57,7 @@ public class PrepareToDeployAction extends AnAction {
   @NonNls private static final String ZIP_EXTENSION = ".zip";
   @NonNls private static final String JAR_EXTENSION = ".jar";
   @NonNls private static final String TEMP_PREFIX = "temp";
-  @NonNls private static final String MIDDLE_LIB_DIR = "/lib/";
+  @NonNls private static final String MIDDLE_LIB_DIR = "lib";
 
   private final FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
 
@@ -112,9 +116,11 @@ public class PrepareToDeployAction extends AnAction {
       }
     }
 
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    final String dstPath = defaultPath + (isZip ? ZIP_EXTENSION : JAR_EXTENSION);
+    final File dstFile = new File(dstPath);
+    return clearReadOnly(module.getProject(), dstFile)
+           && ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        final String dstPath = defaultPath + (isZip ? ZIP_EXTENSION : JAR_EXTENSION);
 
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         if (progressIndicator != null) {
@@ -122,7 +128,6 @@ public class PrepareToDeployAction extends AnAction {
           progressIndicator.setIndeterminate(true);
         }
         try {
-          final File dstFile = new File(dstPath);
           File jarFile = preparePluginsJar(module, modules);
           if (isZip) {
             processLibraries(jarFile, dstFile, pluginName, libs, progressIndicator);
@@ -137,6 +142,20 @@ public class PrepareToDeployAction extends AnAction {
         }
       }
     }, DevKitBundle.message("prepare.for.deployment", pluginName), true, module.getProject());
+
+  }
+
+  private static boolean clearReadOnly(final Project project, final File dstFile) {
+    //noinspection EmptyCatchBlock
+    final URL url;
+    try {
+       url = dstFile.toURL();
+    }
+    catch (MalformedURLException e) {
+      return true;
+    }
+    final VirtualFile vfile = VfsUtil.findFileByURL(url);
+    return vfile == null || !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(vfile).hasReadonlyFiles();
   }
 
   private static FileFilter createFilter(final ProgressIndicator progressIndicator, final FileTypeManager fileTypeManager) {
@@ -160,10 +179,12 @@ public class PrepareToDeployAction extends AnAction {
       try {
         zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
         addStructure(pluginName, zos);
-        addStructure(pluginName + "/" + "lib", zos);
-        ZipUtil.addFileToZip(zos, jarFile, "/" + pluginName + MIDDLE_LIB_DIR + pluginName + JAR_EXTENSION, new HashSet<String>(),
+        addStructure(pluginName + "/" + MIDDLE_LIB_DIR, zos);
+        final String entryName = pluginName + JAR_EXTENSION;
+        ZipUtil.addFileToZip(zos, jarFile, getZipPath(pluginName, entryName), new HashSet<String>(),
                              createFilter(progressIndicator, myFileTypeManager));
         Set<String> usedJarNames = new HashSet<String>();
+        usedJarNames.add(entryName);
         Set<VirtualFile> jarredVirtualFiles = new HashSet<VirtualFile>();
         for (Library library : libs) {
           final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
@@ -185,6 +206,10 @@ public class PrepareToDeployAction extends AnAction {
     }
   }
 
+  private static String getZipPath(final String pluginName, final String entryName) {
+    return "/" + pluginName + "/" + MIDDLE_LIB_DIR + "/" + entryName;
+  }
+
   private void makeAndAddLibraryJar(final VirtualFile virtualFile, final File zipFile, final String pluginName, final ZipOutputStream zos,
                                     final Set<String> usedJarNames, final ProgressIndicator progressIndicator,
                                     final String preferredName) throws IOException {
@@ -201,7 +226,7 @@ public class PrepareToDeployAction extends AnAction {
     }
     final String jarName =
       getLibraryJarName(virtualFile.getName() + JAR_EXTENSION, usedJarNames, preferredName == null ? null : preferredName + JAR_EXTENSION);
-    ZipUtil.addFileOrDirRecursively(zos, zipFile, libraryJar, "/" + pluginName + MIDDLE_LIB_DIR + jarName,
+    ZipUtil.addFileOrDirRecursively(zos, zipFile, libraryJar, getZipPath(pluginName, jarName),
                                     createFilter(progressIndicator, null), null);
   }
 
@@ -231,13 +256,13 @@ public class PrepareToDeployAction extends AnAction {
 
   private static void addLibraryJar(final VirtualFile virtualFile,
                                     final File zipFile,
-                                    final String name,
+                                    final String pluginName,
                                     final ZipOutputStream zos,
                                     final Set<String> usedJarNames,
                                     final ProgressIndicator progressIndicator) throws IOException {
     File ioFile = VfsUtil.virtualToIoFile(virtualFile);
     final String jarName = getLibraryJarName(ioFile.getName(), usedJarNames, null);
-    ZipUtil.addFileOrDirRecursively(zos, zipFile, ioFile, "/" + name + MIDDLE_LIB_DIR + jarName, createFilter(progressIndicator, null), null);
+    ZipUtil.addFileOrDirRecursively(zos, zipFile, ioFile, getZipPath(pluginName, jarName), createFilter(progressIndicator, null), null);
   }
 
   private static void addStructure(@NonNls final String relativePath, final ZipOutputStream zos) throws IOException {
