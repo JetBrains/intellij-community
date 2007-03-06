@@ -857,7 +857,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
           String opSign = expression.getOperationSign().getText();
           if ("+".equals(opSign)) {
-            if (!type.equalsToText("java.lang.String")) {
+            if (type == null || !type.equalsToText("java.lang.String")) {
               opSign = null;
             }
           }
