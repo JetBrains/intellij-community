@@ -232,4 +232,20 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
       }
     });
   }
+
+  public Component getTargetComponentFor(MouseEvent e) {
+    Component candidate = findComponent(e, myRootPane.getLayeredPane());
+    if (candidate != null) return candidate;
+    candidate = findComponent(e, myRootPane.getContentPane());
+    if (candidate != null) return candidate;
+    return e.getComponent();
+  }
+
+  private Component findComponent(final MouseEvent e, final Container container) {
+    final Point lpPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), container);
+    final Component lpComponent = SwingUtilities.getDeepestComponentAt(container, lpPoint.x, lpPoint.y);
+    return lpComponent;
+  }
+
+
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 
 import javax.swing.*;
 import java.awt.*;
@@ -93,8 +94,13 @@ public final class IdeMouseEventDispatcher{
       throw new IllegalStateException("component cannot be null");
     }
     component=SwingUtilities.getDeepestComponentAt(component,e.getX(),e.getY());
+
     if(component==null){ // do nothing if component doesn't contains specified point
       return false;
+    }
+
+    if (component instanceof IdeGlassPaneImpl) {
+      component = ((IdeGlassPaneImpl)component).getTargetComponentFor(e);
     }
 
     MouseShortcut shortcut=new MouseShortcut(e.getButton(),e.getModifiersEx(),e.getClickCount());
