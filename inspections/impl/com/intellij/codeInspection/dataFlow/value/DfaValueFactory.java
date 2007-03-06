@@ -54,8 +54,17 @@ public class DfaValueFactory {
 
       if (psiSource != null) {
         if (psiSource instanceof PsiVariable) {
-          DfaValue constValue = getConstFactory().create((PsiVariable)psiSource);
+          final PsiVariable variable = (PsiVariable)psiSource;
+          DfaValue constValue = getConstFactory().create(variable);
           if (constValue != null) return constValue;
+
+          if (variable.getInitializer() instanceof PsiBinaryExpression &&
+              variable.hasModifierProperty(PsiModifier.FINAL)) {
+            PsiType type = variable.getInitializer().getType();
+            if (type.equalsToText("java.lang.String")) {
+              return getNotNullFactory().create(type);
+            }
+          }
         }
 
         PsiVariable psiVariable = resolveVariable((PsiReferenceExpression)psiExpression);
