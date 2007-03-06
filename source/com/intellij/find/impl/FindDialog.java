@@ -2,6 +2,7 @@
 package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
@@ -16,6 +17,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.util.PatternUtil;
@@ -47,7 +49,6 @@ final class FindDialog extends DialogWrapper {
   private ComboBox myModuleComboBox;
   private ComboBox myDirectoryComboBox;
   private StateRestoringCheckBox myCbWithSubdirectories;
-  private JLabel myReplacePrompt;
   private JCheckBox myCbToOpenInNewTab;
   private final FindModel myModel;
   private FixedSizeButton mySelectDirectoryButton;
@@ -57,6 +58,8 @@ final class FindDialog extends DialogWrapper {
   private final Project myProject;
 
   private Action myFindAllAction;
+  private JRadioButton myRbCustomScope;
+  private ScopeChooserCombo myScopeCombo;
 
   public FindDialog(Project project, FindModel model){
     super(project, true);
@@ -150,14 +153,14 @@ final class FindDialog extends DialogWrapper {
       gbConstraints.gridwidth = GridBagConstraints.RELATIVE;
       gbConstraints.fill = GridBagConstraints.VERTICAL;
       gbConstraints.weightx = 0;
-      myReplacePrompt = new JLabel(FindBundle.message("find.replace.with.label"));
-      panel.add(myReplacePrompt, gbConstraints);
+      final JLabel replacePrompt = new JLabel(FindBundle.message("find.replace.with.label"));
+      panel.add(replacePrompt, gbConstraints);
 
       gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
       gbConstraints.fill = GridBagConstraints.BOTH;
       gbConstraints.weightx = 1;
       panel.add(myReplaceComboBox, gbConstraints);
-      myReplacePrompt.setLabelFor(myReplaceComboBox.getEditor().getEditorComponent());
+      replacePrompt.setLabelFor(myReplaceComboBox.getEditor().getEditorComponent());
     }
 
     return panel;
@@ -321,11 +324,11 @@ final class FindDialog extends DialogWrapper {
     doOKAction(false);
   }
 
-  public void doOKAction(boolean findAll) {
+  private void doOKAction(boolean findAll) {
     FindModel validateModel = (FindModel)myModel.clone();
-    doApply(validateModel);
-    myModel.setFindAll(findAll);
-    if (!validateModel.isProjectScope() && myDirectoryComboBox != null && validateModel.getModuleName()==null) {
+    applyTo(validateModel);
+    validateModel.setFindAll(findAll);
+    if (validateModel.getDirectoryName() != null) {
       PsiDirectory directory = FindInProjectUtil.getPsiDirectory(validateModel, myProject);
       if (directory == null) {
         Messages.showMessageDialog(
@@ -342,7 +345,6 @@ final class FindDialog extends DialogWrapper {
       String toFind = validateModel.getStringToFind();
       try {
         Pattern pattern;
-
         if (validateModel.isCaseSensitive()){
           pattern = Pattern.compile(toFind, Pattern.MULTILINE);
         }
@@ -365,33 +367,27 @@ final class FindDialog extends DialogWrapper {
       }
     }
 
-    myModel.setFileFilter( null );
+    validateModel.setFileFilter( null );
 
     if (useFileFilter!=null && useFileFilter.isSelected() &&
         myFileFilter.getSelectedItem()!=null
        ) {
       final String mask = (String)myFileFilter.getSelectedItem();
 
-      if(mask.length() > 0) {
+      if (mask.length() > 0) {
         try {
           Pattern.compile(PatternUtil.convertToRegex(mask));
-          myModel.setFileFilter( mask );
-        } catch(PatternSyntaxException ex) {
-          Messages.showMessageDialog(
-            myProject,
-            FindBundle.message("find.filter.invalid.file.mask.error", myFileFilter.getSelectedItem()),
-            CommonBundle.getErrorTitle(),
-            Messages.getErrorIcon()
-          );
+          validateModel.setFileFilter(mask);
+        }
+        catch (PatternSyntaxException ex) {
+          Messages.showMessageDialog(myProject, FindBundle.message("find.filter.invalid.file.mask.error", myFileFilter.getSelectedItem()),
+                                     CommonBundle.getErrorTitle(), Messages.getErrorIcon());
           return;
         }
-      } else {
-        Messages.showMessageDialog(
-          myProject,
-          FindBundle.message("find.filter.empty.file.mask.error"),
-          CommonBundle.getErrorTitle(),
-          Messages.getErrorIcon()
-        );
+      }
+      else {
+        Messages.showMessageDialog(myProject, FindBundle.message("find.filter.empty.file.mask.error"), CommonBundle.getErrorTitle(),
+                                   Messages.getErrorIcon());
         return;
       }
     }
@@ -402,6 +398,7 @@ final class FindDialog extends DialogWrapper {
       );
     }
 
+    myModel.copyFrom(validateModel);
     super.doOKAction();
   }
 
@@ -524,17 +521,16 @@ final class FindDialog extends DialogWrapper {
     scopePanel.add(myRbProject, gbConstraints);
 
     gbConstraints.gridx = 0;
-    gbConstraints.gridy = 1;
+    gbConstraints.gridy++;
     gbConstraints.weightx = 0;
     gbConstraints.gridwidth = 1;
     myRbModule = new JRadioButton(FindBundle.message("find.scope.module.radio"), false);
     scopePanel.add(myRbModule, gbConstraints);
 
     gbConstraints.gridx = 1;
-    gbConstraints.gridy = 1;
     gbConstraints.weightx = 1;
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    String names[] = new String[modules.length];
+    String[] names = new String[modules.length];
     for (int i = 0; i < modules.length; i++) {
       names[i] = modules[i].getName();
     }
@@ -544,14 +540,13 @@ final class FindDialog extends DialogWrapper {
     scopePanel.add(myModuleComboBox, gbConstraints);
 
     gbConstraints.gridx = 0;
-    gbConstraints.gridy = 2;
+    gbConstraints.gridy++;
     gbConstraints.weightx = 0;
     gbConstraints.gridwidth = 1;
     myRbDirectory = new JRadioButton(FindBundle.message("find.scope.directory.radio"), false);
     scopePanel.add(myRbDirectory, gbConstraints);
 
     gbConstraints.gridx = 1;
-    gbConstraints.gridy = 2;
     gbConstraints.weightx = 1;
 
     myDirectoryComboBox = new ComboBox(-1);
@@ -572,7 +567,7 @@ final class FindDialog extends DialogWrapper {
     scopePanel.add(mySelectDirectoryButton, gbConstraints);
 
     gbConstraints.gridx = 0;
-    gbConstraints.gridy = 3;
+    gbConstraints.gridy++;
     gbConstraints.weightx = 1;
     gbConstraints.gridwidth = 2;
     gbConstraints.insets = new Insets(0, 16, 0, 0);
@@ -580,12 +575,34 @@ final class FindDialog extends DialogWrapper {
     myCbWithSubdirectories.setSelected(true);
     scopePanel.add(myCbWithSubdirectories, gbConstraints);
 
+
+    gbConstraints.gridx = 0;
+    gbConstraints.gridy++;
+    gbConstraints.weightx = 1;
+    gbConstraints.gridwidth = 1;
+    gbConstraints.insets = new Insets(0, 1, 0, 0);
+    myRbCustomScope = new JRadioButton(FindBundle.message("find.scope.custom.radio"), false);
+    scopePanel.add(myRbCustomScope, gbConstraints);
+
+    gbConstraints.gridx++;
+    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
+    myScopeCombo = new ScopeChooserCombo(myProject, true, true, FindSettings.getInstance().getDefaultScopeName());
+    scopePanel.add(myScopeCombo, gbConstraints);
+
+
     ButtonGroup bgScope = new ButtonGroup();
     bgScope.add(myRbDirectory);
     bgScope.add(myRbProject);
     bgScope.add(myRbModule);
+    bgScope.add(myRbCustomScope);
 
     myRbProject.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        validateScopeControls();
+        validateFindButton();
+      }
+    });
+    myRbCustomScope.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         validateScopeControls();
         validateFindButton();
@@ -623,15 +640,17 @@ final class FindDialog extends DialogWrapper {
   }
 
   private void validateScopeControls() {
-    if (myRbProject.isSelected() || myRbModule.isSelected()) {
-      myCbWithSubdirectories.makeUnselectable(false);
-    } else {
+    if (myRbDirectory.isSelected()) {
       myCbWithSubdirectories.makeSelectable();
+    }
+    else {
+      myCbWithSubdirectories.makeUnselectable(myCbWithSubdirectories.isSelected());
     }
     myDirectoryComboBox.setEnabled(myRbDirectory.isSelected());
     mySelectDirectoryButton.setEnabled(myRbDirectory.isSelected());
 
     myModuleComboBox.setEnabled(myRbModule.isSelected());
+    myScopeCombo.setEnabled(myRbCustomScope.isSelected());
   }
 
   private JPanel createScopePanel() {
@@ -679,13 +698,10 @@ final class FindDialog extends DialogWrapper {
   }
 
   private String getDirectory() {
-    if (myDirectoryComboBox == null){
-      return null;
-    }
     return (String)myDirectoryComboBox.getSelectedItem();
   }
 
-  private void setStringsToComboBox(String[] strings, ComboBox combo, String s) {
+  private static void setStringsToComboBox(String[] strings, ComboBox combo, String s) {
     if (combo.getItemCount() > 0){
       combo.removeAllItems();
     }
@@ -698,9 +714,6 @@ final class FindDialog extends DialogWrapper {
   }
 
   private void setDirectories(ArrayList strings, String directoryName) {
-    if (myDirectoryComboBox == null){
-      return;
-    }
     if (myDirectoryComboBox.getItemCount() > 0){
       myReplaceComboBox.removeAllItems();
     }
@@ -718,11 +731,7 @@ final class FindDialog extends DialogWrapper {
     }
   }
 
-  public void apply() {
-    doApply(myModel);
-  }
-
-  private void doApply(FindModel model) {
+  private void applyTo(FindModel model) {
     FindSettings findSettings = FindSettings.getInstance();
     model.setCaseSensitive(myCbCaseSensitive.isSelected());
     findSettings.setCaseSensitive(myCbCaseSensitive.isSelected());
@@ -764,19 +773,30 @@ final class FindDialog extends DialogWrapper {
       model.setProjectScope(myRbProject.isSelected());
       model.setDirectoryName(null);
       model.setModuleName(null);
+      model.setCustomScopeName(null);
+      model.setCustomScope(null);
 
-      if (myRbDirectory.isSelected()){
+      if (myRbDirectory.isSelected()) {
         String directory = getDirectory();
         model.setDirectoryName(directory == null ? "" : directory);
         model.setWithSubdirectories(myCbWithSubdirectories.isSelected());
         findSettings.setWithSubdirectories(myCbWithSubdirectories.isSelected());
-      } else if (myRbModule.isSelected()) {
+      }
+      else if (myRbModule.isSelected()) {
         model.setModuleName((String)myModuleComboBox.getSelectedItem());
+      }
+      else if (myRbCustomScope.isSelected()) {
+        SearchScope selectedScope = myScopeCombo.getSelectedScope();
+        String customScopeName = selectedScope == null ? null : selectedScope.getDisplayName();
+        model.setCustomScopeName(customScopeName);
+        model.setCustomScope(selectedScope == null ? null : selectedScope);
+        findSettings.setCustomScope(customScopeName);
       }
 
       if (useFileFilter.isSelected()) {
         findSettings.setFileMask(model.getFileFilter());
-      } else {
+      }
+      else {
         findSettings.setFileMask(null);
       }
     }
@@ -786,8 +806,60 @@ final class FindDialog extends DialogWrapper {
     myCbCaseSensitive.setSelected(myModel.isCaseSensitive());
     myCbWholeWordsOnly.setSelected(myModel.isWholeWordsOnly());
     myCbRegularExpressions.setSelected(myModel.isRegularExpressions());
-    if (!myModel.isMultipleFiles()){
 
+    if (myModel.isMultipleFiles()) {
+      setDirectories(FindSettings.getInstance().getRecentDirectories(), myModel.getDirectoryName());
+      if (myModel.isProjectScope()) {
+        myRbProject.setSelected(true);
+
+        myCbWithSubdirectories.setEnabled(false);
+        myDirectoryComboBox.setEnabled(false);
+        mySelectDirectoryButton.setEnabled(false);
+        myModuleComboBox.setEnabled(false);
+        myScopeCombo.setEnabled(false);
+      }
+      else if (myModel.getDirectoryName() != null) {
+        myRbDirectory.setSelected(true);
+        myCbWithSubdirectories.setEnabled(true);
+        myDirectoryComboBox.setEnabled(true);
+        mySelectDirectoryButton.setEnabled(true);
+        myModuleComboBox.setEnabled(false);
+        myScopeCombo.setEnabled(false);
+      }
+      else if (myModel.getModuleName() != null) {
+        myRbModule.setSelected(true);
+
+        myCbWithSubdirectories.setEnabled(false);
+        myDirectoryComboBox.setEnabled(false);
+        mySelectDirectoryButton.setEnabled(false);
+        myModuleComboBox.setEnabled(true);
+        myModuleComboBox.setSelectedItem(myModel.getModuleName());
+        myScopeCombo.setEnabled(false);
+      }
+      else if (myModel.getCustomScopeName() != null) {
+        myRbCustomScope.setSelected(true);
+
+        myScopeCombo.setEnabled(true);
+        myScopeCombo.init(myProject, myModel.getCustomScopeName());
+
+        myCbWithSubdirectories.setEnabled(false);
+        myDirectoryComboBox.setEnabled(false);
+        mySelectDirectoryButton.setEnabled(false);
+        myModuleComboBox.setEnabled(false);
+      }
+      else {
+        assert false;
+      }
+
+      myCbWithSubdirectories.setSelected(myModel.isWithSubdirectories());
+
+      if (myModel.getFileFilter()!=null && myModel.getFileFilter().length() > 0) {
+        myFileFilter.setSelectedItem(myModel.getFileFilter());
+        myFileFilter.setEnabled(true);
+        useFileFilter.setSelected(true);
+      }
+    }
+    else {
       if (myModel.isForward()){
         myRbForward.setSelected(true);
       }
@@ -807,41 +879,6 @@ final class FindDialog extends DialogWrapper {
       }
       else{
         myRbSelectedText.setSelected(true);
-      }
-
-    }
-    else{
-      setDirectories(FindSettings.getInstance().getRecentDirectories(), myModel.getDirectoryName());
-      if (myModel.isProjectScope()){
-        myRbProject.setSelected(true);
-
-        myCbWithSubdirectories.setEnabled(false);
-        myDirectoryComboBox.setEnabled(false);
-        mySelectDirectoryButton.setEnabled(false);
-        myModuleComboBox.setEnabled(false);
-      }
-      else if (myModel.getDirectoryName()!=null) {
-        myRbDirectory.setSelected(true);
-        myCbWithSubdirectories.setEnabled(true);
-        myDirectoryComboBox.setEnabled(true);
-        mySelectDirectoryButton.setEnabled(true);
-        myModuleComboBox.setEnabled(false);
-      } else {
-        myRbModule.setSelected(true);
-
-        myCbWithSubdirectories.setEnabled(false);
-        myDirectoryComboBox.setEnabled(false);
-        mySelectDirectoryButton.setEnabled(false);
-        myModuleComboBox.setEnabled(true);
-        myModuleComboBox.setSelectedItem(myModel.getModuleName());
-      }
-
-      myCbWithSubdirectories.setSelected(myModel.isWithSubdirectories());
-
-      if (myModel.getFileFilter()!=null && myModel.getFileFilter().length() > 0) {
-        myFileFilter.setSelectedItem(myModel.getFileFilter());
-        myFileFilter.setEnabled(true);
-        useFileFilter.setSelected(true);
       }
     }
 

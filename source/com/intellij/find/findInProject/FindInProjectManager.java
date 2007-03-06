@@ -79,7 +79,7 @@ public class FindInProjectManager {
     }
     findModel.setOpenInNewTabVisible(false);
     final PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(findModel, myProject);
-    if (!findModel.isProjectScope() && findModel.getModuleName()==null && psiDirectory == null){
+    if (findModel.getDirectoryName() != null && psiDirectory == null){
       return;
     }
     if (isOpenInNewTabEnabled) {
@@ -94,7 +94,7 @@ public class FindInProjectManager {
       final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(myToOpenInNewTab, findModelCopy);
       final boolean showPanelIfOnlyOneUsage = !FindSettings.getInstance().isSkipResultsWithOneUsage();
 
-       FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
+      FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
 
       manager.searchAndShowUsages(
         new UsageTarget[] { new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind()) },

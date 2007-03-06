@@ -177,7 +177,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
       }
     }
 
-    if (ChangeListManager.getInstance(myProject).getAffectedFiles().size() > 0) {
+    if (!ChangeListManager.getInstance(myProject).getAffectedFiles().isEmpty()) {
       model.addElement(new ModifiedFilesScopeDescriptor());
     }
 
@@ -202,7 +202,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
               }
             }
           }
-          if (files.size() > 0) {
+          if (!files.isEmpty()) {
             model.addElement(new ScopeDescriptor(new GlobalSearchScope() {
               public String getDisplayName() {
                 return IdeBundle.message("scope.files.in.previous.search.result");
@@ -236,7 +236,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
             }
           }
 
-          if (results.size() > 0) {
+          if (!results.isEmpty()) {
             model.addElement(new ScopeDescriptor(new LocalSearchScope(results.toArray(new PsiElement[results.size()]),
                                                                       IdeBundle.message("scope.previous.search.results"))));
           }
@@ -260,7 +260,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     public SearchScope getScope() {
       return new GlobalSearchScope() {
         public String getDisplayName() {
-          return ModifiedFilesScopeDescriptor.this.getDisplay();
+          return getDisplay();
         }
 
         public boolean contains(VirtualFile file) {

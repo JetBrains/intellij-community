@@ -16,6 +16,7 @@
 package com.intellij.find;
 
 import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.search.SearchScope;
 
 /**
  * Represents the settings of a Find, Replace, Find in Path or Replace in Path
@@ -45,6 +46,8 @@ public class FindModel implements Cloneable {
   private String directoryName = null;
   private boolean isWithSubdirectories = true;
   private String fileFilter;
+  private String customScopeName;
+  private SearchScope customScope;
 
   /**
    * Gets the Preserve Case flag.
@@ -93,6 +96,8 @@ public class FindModel implements Cloneable {
     isPreserveCase = model.isPreserveCase;
     fileFilter = model.fileFilter;
     moduleName = model.moduleName;
+    customScopeName = model.customScopeName;
+    customScope = model.customScope;
   }
 
   /**
@@ -435,7 +440,7 @@ public class FindModel implements Cloneable {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     buffer.append("--- FIND MODEL ---\n");
     buffer.append("myStringToFind =").append(myStringToFind).append("\n");
     buffer.append("myStringToReplace =").append(myStringToReplace).append("\n");
@@ -457,6 +462,7 @@ public class FindModel implements Cloneable {
     buffer.append("isWithSubdirectories =").append(isWithSubdirectories).append("\n");
     buffer.append("fileFilter =").append(fileFilter).append("\n");
     buffer.append("moduleName =").append(moduleName).append("\n");
+    buffer.append("customScopeName =").append(customScopeName).append("\n");
     return buffer.toString();
   }
 
@@ -510,7 +516,7 @@ public class FindModel implements Cloneable {
   }
 
   /**
-   * Gets the name of the module used as the scope for the Find in Path / Replace
+   * Sets the name of the module used as the scope for the Find in Path / Replace
    * in Path operation.
    *
    * @param moduleName the name of the module used as the scope.
@@ -559,5 +565,21 @@ public class FindModel implements Cloneable {
    */
   public void setFindAllEnabled(final boolean findAllEnabled) {
     isFindAllEnabled = findAllEnabled;
+  }
+
+  public String getCustomScopeName() {
+    return customScopeName;
+  }
+
+  public void setCustomScopeName(String customScopeName) {
+    this.customScopeName = customScopeName;
+  }
+
+  public SearchScope getCustomScope() {
+    return customScope;
+  }
+
+  public void setCustomScope(final SearchScope customScope) {
+    this.customScope = customScope;
   }
 }

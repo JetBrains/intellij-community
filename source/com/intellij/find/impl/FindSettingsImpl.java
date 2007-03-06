@@ -44,6 +44,7 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
   public String FIND_DIRECTION = FIND_DIRECTION_FORWARD;
   public String FIND_ORIGIN = FIND_ORIGIN_FROM_CURSOR;
   public String FIND_SCOPE = FIND_SCOPE_GLOBAL;
+  public String FIND_CUSTOM_SCOPE = null;
 
   public boolean CASE_SENSITIVE_SEARCH = false;
   public boolean PRESERVE_CASE_REPLACE = false;
@@ -181,6 +182,8 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
     model.setWholeWordsOnly(isWholeWordsOnly());
     model.setWithSubdirectories(isWithSubdirectories());
     model.setFileFilter(FILE_MASK);
+
+    model.setCustomScopeName(FIND_SCOPE);
   }
 
   private static void addStringToList(String str, List<String> list, int maxSize){
@@ -239,5 +242,13 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
     if (_fileMask != null && _fileMask.length() > 0) {
       addStringToList(_fileMask, RECENT_FILE_MASKS, MAX_RECENT_SIZE);
     }
+  }
+
+  public String getCustomScope() {
+    return SEARCH_SCOPE;
+  }
+
+  public void setCustomScope(final String SEARCH_SCOPE) {
+    this.SEARCH_SCOPE = SEARCH_SCOPE;
   }
 }

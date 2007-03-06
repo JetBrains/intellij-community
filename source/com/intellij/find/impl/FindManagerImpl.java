@@ -125,7 +125,6 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
       return false;
     }
 
-    findDialog.apply();
     String stringToFind = model.getStringToFind();
     if (stringToFind == null || stringToFind.length() == 0){
       return false;

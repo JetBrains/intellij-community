@@ -82,4 +82,6 @@ public abstract class FindSettings{
   public abstract String getFileMask();
 
   public abstract void setFileMask(String fileMask);
+  public abstract void setCustomScope(String scopeName);
+  public abstract String getCustomScope();
 }

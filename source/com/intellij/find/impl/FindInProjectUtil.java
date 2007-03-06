@@ -1,6 +1,5 @@
 package com.intellij.find.impl;
 
-import com.intellij.Patches;
 import com.intellij.find.*;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -17,7 +16,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
@@ -37,10 +35,11 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.search.PsiSearchScopeUtil;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.usageView.AsyncFindUsagesProcessListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
-import com.intellij.usages.impl.UsageViewImplUtil;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
@@ -58,7 +57,7 @@ public class FindInProjectUtil {
   private static final int SINGLE_FILE_SIZE_LIMIT = 5 * 1024 * 1024; // megabytes.
 
   private static final int SKIP = 0;
-  private static final int PROCESS = 1;
+  private static final int PROCESS_FILE = 1;
   private static final int SKIP_ALL = 2;
   private static final int PROCESS_ALL = 3;
 
@@ -94,7 +93,7 @@ public class FindInProjectUtil {
 
     if (model.getModuleName() == null || dataContext.getData(DataConstants.EDITOR) == null) {
       model.setDirectoryName(directoryName);
-      model.setProjectScope((directoryName == null && module == null) || dataContext.getData(DataConstants.EDITOR) != null);
+      model.setProjectScope(directoryName == null && module == null && model.getCustomScopeName() == null || dataContext.getData(DataConstants.EDITOR) != null);
     }
   }
 
@@ -180,15 +179,25 @@ public class FindInProjectUtil {
     final Collection<PsiFile> psiFiles = getFilesToSearchIn(findModel, project, psiDirectory);
     final FileDocumentManager manager = FileDocumentManager.getInstance();
     try {
-      int i =0;
+      final SearchScope customScope = findModel.getCustomScope();
+      findModel.setCustomScope(null); //avoid mem leak
+      int i = 0;
       long totalFilesSize = 0;
       final int[] count = new int[]{0};
       boolean warningShown = false;
 
       boolean skipAllLarge = false;
       boolean processAllLarge = false;
+
       for (final PsiFile psiFile : psiFiles) {
         ProgressManager.getInstance().checkCanceled();
+        if (customScope != null && !ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          public Boolean compute() {
+            return PsiSearchScopeUtil.isInScope(customScope, psiFile);
+          }
+        })) {
+          continue;
+        }
         final VirtualFile virtualFile = psiFile.getVirtualFile();
         final int index = i++;
         if (virtualFile == null) continue;
@@ -218,6 +227,9 @@ public class FindInProjectUtil {
             }
             else if (retCode == PROCESS_ALL) {
               processAllLarge = true;
+            }
+            else {
+              assert retCode == PROCESS_FILE : retCode;
             }
           }
         }
@@ -347,19 +359,18 @@ public class FindInProjectUtil {
                                 ProjectRootManager.getInstance(project).getFileIndex() :
                                 ModuleRootManager.getInstance(module).getFileIndex();
 
-    if (psiDirectory == null || (findModel.isWithSubdirectories() && fileIndex.isInContent(psiDirectory.getVirtualFile()))) {
+    if (psiDirectory == null || findModel.isWithSubdirectories() && fileIndex.isInContent(psiDirectory.getVirtualFile())) {
       final Pattern fileMaskRegExp = createFileMaskRegExp(findModel);
       // optimization
       final Collection<PsiFile> filesForFastWordSearch = getFilesForFastWordSearch(findModel, project, psiDirectory, fileMaskRegExp, module);
-      if (canOptimizeForFastWordSearch(findModel) && filesForFastWordSearch != null) return filesForFastWordSearch;
+      if (filesForFastWordSearch != null && canOptimizeForFastWordSearch(findModel)) return filesForFastWordSearch;
 
       class EnumContentIterator implements ContentIterator {
         List<PsiFile> myFiles = new ArrayList<PsiFile>(filesForFastWordSearch == null ? Collections.<PsiFile>emptyList() : filesForFastWordSearch);
         final PsiManager psiManager = PsiManager.getInstance(project);
 
         public boolean processFile(VirtualFile virtualFile) {
-          if (!virtualFile.isDirectory() &&
-              (fileMaskRegExp == null || fileMaskRegExp.matcher(virtualFile.getName()).matches()) ) {
+          if (!virtualFile.isDirectory() && (fileMaskRegExp == null || fileMaskRegExp.matcher(virtualFile.getName()).matches()) ) {
             final PsiFile psiFile = psiManager.findFile(virtualFile);
             if (psiFile != null && (filesForFastWordSearch == null || !filesForFastWordSearch.contains(psiFile))) {
               myFiles.add(psiFile);
@@ -505,15 +516,7 @@ public class FindInProjectUtil {
     }
   }
 
-  public static void runProcessWithProgress(final ProgressIndicator progressIndicator,
-                                            final Runnable findUsagesRunnable,
-                                            final Runnable showResultsRunnable,
-                                            Project project) {
-    final ProgressIndicator progressIndicator1 = Patches.MAC_HIDE_QUIT_HACK ? progressIndicator : new SmoothProgressAdapter(progressIndicator, project);
-    UsageViewImplUtil.runProcessWithProgress(progressIndicator1, findUsagesRunnable, showResultsRunnable);
-  }
-
-  public static String getTitleForScope(final FindModel findModel) {
+  private static String getTitleForScope(final FindModel findModel) {
     String result;
 
     if (findModel.isProjectScope()) {
