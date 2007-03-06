@@ -21,6 +21,7 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.rules.MergeableUsage;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,6 +75,7 @@ class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
   }
 
   public void removeAllChildren() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     super.removeAllChildren();
     mySubgroupNodes.clear();
     myRecursiveUsageCount = 0;
@@ -95,6 +97,7 @@ class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
   }
 
   public boolean removeUsage(UsageNode usage) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final Collection<GroupNode> groupNodes = mySubgroupNodes.values();
     for(Iterator<GroupNode> iterator = groupNodes.iterator();iterator.hasNext();) {
       final GroupNode groupNode = iterator.next();
@@ -119,6 +122,7 @@ class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
   }
 
   private void doUpdate() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     --myRecursiveUsageCount;
     myTreeModel.nodeChanged(this);
   }

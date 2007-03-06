@@ -121,7 +121,7 @@ public class FindInProjectUtil {
     }
   }
 
-  private static void addFilesUnderDirectory(PsiDirectory directory, List<PsiFile> fileList, boolean isRecursive, Pattern fileMaskRegExp) {
+  private static void addFilesUnderDirectory(PsiDirectory directory, Collection<PsiFile> fileList, boolean isRecursive, Pattern fileMaskRegExp) {
     final PsiElement[] children = directory.getChildren();
 
     for (PsiElement child : children) {
@@ -130,7 +130,10 @@ public class FindInProjectUtil {
            fileMaskRegExp.matcher(((PsiFile)child).getName()).matches()
           )
         ) {
-        fileList.add((PsiFile)child);
+        PsiFile file = (PsiFile)child;
+        PsiFile sourceFile = (PsiFile)file.getNavigationElement();
+        if (sourceFile != null) file = sourceFile;
+        fileList.add(file);
       }
       else if (isRecursive && child instanceof PsiDirectory) {
         addFilesUnderDirectory((PsiDirectory)child, fileList, isRecursive, fileMaskRegExp);
@@ -394,7 +397,7 @@ public class FindInProjectUtil {
       return iterator.getFiles();
     }
     else {
-      ArrayList<PsiFile> fileList = new ArrayList<PsiFile>();
+      Collection<PsiFile> fileList = new THashSet<PsiFile>();
 
       addFilesUnderDirectory(psiDirectory,
                              fileList,

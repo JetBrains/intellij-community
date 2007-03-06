@@ -617,8 +617,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void removeUsage(Usage usage) {
     final UsageNode node = myUsageNodes.remove(usage);
     if (node != NULL_NODE) {
-      ((DefaultTreeModel)myTree.getModel()).removeNodeFromParent (node);
-      ((GroupNode)myTree.getModel().getRoot()).removeUsage(node);
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          ((DefaultTreeModel)myTree.getModel()).removeNodeFromParent(node);
+          ((GroupNode)myTree.getModel().getRoot()).removeUsage(node);
+        }
+      });
     }
   }
 
@@ -1113,17 +1117,16 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       setLayout(new FlowLayout(FlowLayout.LEFT, 8, 0));
     }
 
-    public JButton add(int index, final Runnable runnable, String text) {
+    public void add(int index, final Runnable runnable, String text) {
       final JButton button = new JButton(UIUtil.replaceMnemonicAmpersand(text));
       DialogUtil.registerMnemonic(button);
 
       button.setFocusable(false);
       button.addActionListener(new ActionListener() {
-                                     public void actionPerformed(ActionEvent e) {
-                                       runnable.run();
-                                     }
-                                   });
-
+        public void actionPerformed(ActionEvent e) {
+          runnable.run();
+        }
+      });
 
       add(button, index);
 
@@ -1131,7 +1134,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       if (getParent() != null) {
         getParent().validate();
       }
-      return button;
     }
 
     void update() {
