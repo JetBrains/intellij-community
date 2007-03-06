@@ -34,9 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
@@ -87,6 +85,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       public void modelChanged(final PomModelEvent event) {
         final PomChangeSet set = event.getChangeSet(event.getSource().getModelAspect(XmlAspect.class));
         if (set instanceof XmlChangeSet) {
+          myQueue.cancelAllUpdates();
           myQueue.queue(new MyUpdate(BreadcrumbsComponent.this, editor));
         }
       }
@@ -105,6 +104,20 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     setLayout(new BorderLayout());
 
     add(myLine);
+
+    final ComponentAdapter resizeListener = new ComponentAdapter() {
+      public void componentResized(final ComponentEvent e) {
+        myQueue.cancelAllUpdates();
+        myQueue.queue(new MyUpdate(BreadcrumbsComponent.this, editor));
+      }
+    };
+
+    myLine.addComponentListener(resizeListener);
+    Disposer.register(this, new Disposable() {
+      public void dispose() {
+        myLine.removeComponentListener(resizeListener);
+      }
+    });
 
     myQueue = new MergingUpdateQueue("Breadcrumbs.Queue", 200, true, this);
     myQueue.queue(new MyUpdate(this, editor));
@@ -173,9 +186,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
   private static class CrumbLine extends JComponent {
     private List<XmlElement> myElementList = new ArrayList<XmlElement>();
     private Crumb myHovered;
-    private boolean myDirty = true;
-    private BufferedImage myBuffer;
-    private int myBufferOffset;
+    private PagedImage myBuffer;
     private List<Crumb> myCrumbs;
     private BreadcrumbsComponent myBreadcrumbsComponent;
 
@@ -211,10 +222,8 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       if (myElementList != elementList) {
         myElementList = elementList;
         myCrumbs = null;
-        myBufferOffset = 0;
       }
 
-      myDirty = true;
       repaint();
     }
 
@@ -225,8 +234,14 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
           return null;
         }
 
+        if (myBuffer == null) {
+          return null;
+        }
+
+        final int offset = myBuffer.getPageOffset();
+
         for (final Crumb each : myCrumbs) {
-          if ((p.x + myBufferOffset >= each.getOffset()) && (p.x + myBufferOffset < each.getOffset() + each.getWidth())) {
+          if (((p.x + offset) >= each.getOffset()) && ((p.x + offset) < (each.getOffset() + each.getWidth()))) {
             return each;
           }
         }
@@ -245,60 +260,58 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       }
 
       myHovered = crumb;
-      myDirty = true;
+      repaint();
+    }
+
+    public void nextPage() {
+      if (myBuffer != null) {
+        final int page = myBuffer.getPage();
+        if (page + 1 < myBuffer.getPageCount()) {
+          myBuffer.setPage(page + 1);
+        }
+      }
+
+      repaint();
+    }
+
+    public void previousPage() {
+      if (myBuffer != null) {
+        final int page = myBuffer.getPage();
+        if (page - 1 >= 0) {
+          myBuffer.setPage(page - 1);
+        }
+      }
+
       repaint();
     }
 
     public void paint(final Graphics g) {
       final Graphics2D g2 = ((Graphics2D)g);
       final Dimension d = getSize();
-
       final FontMetrics fm = g2.getFontMetrics();
 
-      //g2.setColor(Color.WHITE);
-      //g2.fillRect(0, 0, d.width, d.height);
+      final boolean veryDirty = (myCrumbs == null) || (myBuffer != null && !myBuffer.isValid(d.width));
 
-      boolean veryDirty = (myCrumbs == null);
       final List<Crumb> crumbList = veryDirty ? createCrumbList(fm, myElementList, d.width) : myCrumbs;
       if (crumbList != null) {
-        if (myDirty) { // TODO[spLeaner]: make buffer operations faster by redrawing only changed crumbs!!!
-          myBuffer = createBuffer(this, crumbList, d.height);
-          myDirty = false;
+        if (veryDirty) {
+          //final BufferedImage bufferedImage = createBuffer(crumbList, d.height);
+          myBuffer = new PagedImage(getTotalWidth(crumbList), d.width);
+          myBuffer.setPage(myBuffer.getPageCount() - 1); // point to the last page
         }
 
-        BufferedImage image2draw = myBuffer;
-        if (myBuffer.getWidth() > d.width) {
-          if (veryDirty) {
-            // reset buffer offset to point to the last page
-            myBufferOffset = myBuffer.getWidth() - d.width;
-          }
+        assert myBuffer != null;
 
-          int subSize = d.width;
-          int offset = myBufferOffset;
-          if (myBuffer.getWidth() < d.width) {
-            subSize = myBuffer.getWidth();
-          }
-          else if (myBufferOffset < 0) {
-            subSize = d.width + myBufferOffset;
-            offset = 0;
-          }
+        super.paint(g2);
+        
+        //if (myDirty) {
+        //  myBuffer.repaint(crumbList, getPainter());
+          //myDirty = false;
+        //}
 
-          image2draw = myBuffer.getSubimage(offset, 0, subSize, d.height);
-        }
-
-        g2.drawImage(image2draw, myBufferOffset < 0 ? Math.abs(myBufferOffset) : 0, 0, this);
+        myBuffer.paintPage(g2, crumbList, getPainter(), d.height);
         myCrumbs = crumbList;
       }
-    }
-
-    private void forward() {
-      myBufferOffset += getSize().width;
-      repaint();
-    }
-
-    private void backward() {
-      myBufferOffset -= getSize().width;
-      repaint();
     }
 
     private void setSelectedCrumb(@NotNull final Crumb c) {
@@ -327,7 +340,6 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
         }
       }
 
-      myDirty = true;
       repaint();
     }
 
@@ -335,11 +347,11 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       assert element.isValid();
       myBreadcrumbsComponent.setUserCaretChange(false);
       getEditor().getCaretModel().moveToOffset(element.getTextOffset());
-      getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      getEditor().getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
 
     private static Painter getPainter() {
-      return System.getProperty("idea.breadcrumbs") != null ? TRANSPARENT_PAINTER : DEFAULT_PAINTER;
+      return TRANSPARENT_PAINTER; //System.getProperty("idea.breadcrumbs") != null ? TRANSPARENT_PAINTER : DEFAULT_PAINTER;
     }
 
     @Nullable
@@ -428,7 +440,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
         }
       }
 
-      assert screenWidth < width;
+      //assert screenWidth < width;
 
       // now fix up offsets going forward
       int offset = 0;
@@ -451,22 +463,18 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       return result;
     }
 
-    @NotNull
-    private BufferedImage createBuffer(@NotNull final JComponent parent, @NotNull final List<Crumb> crumbList, final int height) {
+    private static int getTotalWidth(@NotNull final List<Crumb> crumbList) {
       int totalWidth = 0;
       for (final Crumb each : crumbList) {
         totalWidth += each.getWidth();
       }
 
-      final BufferedImage result = new BufferedImage(totalWidth, height, BufferedImage.TYPE_INT_ARGB);
-      final Graphics2D g2 = (Graphics2D)result.getGraphics();
-      g2.setFont(parent.getFont());
+      return totalWidth;
+    }
 
-      for (final Crumb each : crumbList) {
-        each.paint(g2, getPainter(), height);
-      }
-
-      return result;
+    @NotNull
+    private static BufferedImage createBuffer(@NotNull final List<Crumb> crumbList, final int height) {
+      return new BufferedImage(getTotalWidth(crumbList), height, BufferedImage.TYPE_INT_ARGB);
     }
 
     public Dimension getMinimumSize() {
@@ -480,6 +488,73 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
     public Dimension getMaximumSize() {
       return getPreferredSize();
+    }
+  }
+
+  private static class PagedImage {
+    private int myPageWidth;
+    private int myPage;
+    private int myTotalWidth;
+
+    public PagedImage(int totalWidth, int pageWidth) {
+      myPageWidth = pageWidth;
+      myTotalWidth = totalWidth;
+    }
+
+    public int getPageCount() {
+      if (myTotalWidth < myPageWidth) {
+        return 1;
+      }
+
+      return myTotalWidth / myPageWidth;
+    }
+
+    public void setPage(final int page) {
+      assert page >= 0;
+      assert page < getPageCount();
+
+      myPage = page;
+    }
+
+    public int getPage() {
+      return myPage;
+    }
+
+    private void repaint(@NotNull final Graphics2D g2, @NotNull final List<Crumb> crumbList, @NotNull final Painter painter, final int height) {
+      //final int height = myImage.getHeight();
+      final int pageOffset = getPageOffset();
+
+      for (final Crumb each : crumbList) {
+        if (each.getOffset() >= pageOffset && each.getOffset() < pageOffset + myPageWidth) {
+          each.paint(g2, painter, height, pageOffset);
+        }
+      }
+    }
+
+    public int getPageOffset() {
+      return myPage * myPageWidth;
+    }
+
+    public void paintPage(@NotNull final Graphics2D g2, @NotNull final List<Crumb> list, @NotNull final Painter p, final int height) {
+      repaint(g2, list, p, height);
+
+      //final int offset = getPageOffset();
+      //
+      //int width = myPageWidth;
+      //BufferedImage image2draw = myImage;
+      //if (myImage.getWidth() <= myPageWidth) {
+      //  width = myImage.getWidth();
+      //}
+      //else {
+      //  image2draw = myImage.getSubimage(offset, 0, myPageWidth, myImage.getHeight());
+      //}
+      //
+      //assert (offset + width) <= myImage.getWidth();
+      //g2.drawImage(image2draw, 0, 0, width, myImage.getHeight(), null);
+    }
+
+    public boolean isValid(final int width) {
+      return width == myPageWidth;
     }
   }
 
@@ -582,8 +657,8 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       return myLight;
     }
 
-    public void paint(@NotNull final Graphics2D g2, @NotNull final Painter painter, final int height) {
-      painter.paint(this, g2, height);
+    public void paint(@NotNull final Graphics2D g2, @NotNull final Painter painter, final int height, final int pageOffset) {
+      painter.paint(this, g2, height, pageOffset);
     }
 
     @Nullable
@@ -645,10 +720,10 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
     public void performAction() {
       if (myForward) {
-        myLine.forward();
+        myLine.nextPage();
       }
       else {
-        myLine.backward();
+        myLine.previousPage();
       }
     }
   }
@@ -658,7 +733,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       super(null, width);
     }
 
-    public void paint(@NotNull final Graphics2D g2, @NotNull final Painter painter, final int height) {
+    public void paint(@NotNull final Graphics2D g2, @NotNull final Painter painter, final int height, final int pageOffset) {
       // does nothing
     }
 
@@ -812,7 +887,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       return mySettings;
     }
 
-    abstract void paint(@NotNull final Crumb c, @NotNull final Graphics2D g2, final int height);
+    abstract void paint(@NotNull final Crumb c, @NotNull final Graphics2D g2, final int height, final int pageOffset);
 
     @NotNull
     Dimension getSize(@NotNull @NonNls final String s, @NotNull final FontMetrics fm) {
@@ -826,23 +901,25 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       super(s);
     }
 
-    public void paint(@NotNull final Crumb c, @NotNull final Graphics2D g2, final int height) {
+    public void paint(@NotNull final Crumb c, @NotNull final Graphics2D g2, final int height, final int pageOffset) {
       final int roundValue = SystemInfo.isMac ? 5 : 2;
 
       final PainterSettings s = getSettings();
 
       final Font oldFont = g2.getFont();
 
+      final int offset = c.getOffset() - pageOffset;
+
       final Color bg = s.getBackgroundColor(c);
       if (bg != null) {
         g2.setColor(bg);
-        g2.fillRoundRect(c.getOffset() + 1, 1, c.getWidth() - 3, height - 2, roundValue, roundValue);
+        g2.fillRoundRect(offset + 1, 1, c.getWidth() - 3, height - 2, roundValue, roundValue);
       }
 
       final Color borderColor = s.getBorderColor(c);
       if (borderColor != null) {
         g2.setColor(borderColor);
-        g2.drawRoundRect(c.getOffset() + 1, 1, c.getWidth() - 3, height - 2, roundValue, roundValue);
+        g2.drawRoundRect(offset + 1, 1, c.getWidth() - 3, height - 2, roundValue, roundValue);
       }
 
       final Color textColor = s.getForegroundColor(c);
@@ -856,8 +933,8 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       }
 
       final FontMetrics fm = g2.getFontMetrics();
-      g2.drawString(c.getString(), c.getOffset() + 2, fm.getAscent() + (SystemInfo.isMac ? fm.getDescent() : 0)); //fm.getHeight());
-      
+      g2.drawString(c.getString(), offset + 2, fm.getAscent() + (SystemInfo.isMac ? fm.getDescent() : 0)); //fm.getHeight());
+
       g2.setFont(oldFont);
     }
 
