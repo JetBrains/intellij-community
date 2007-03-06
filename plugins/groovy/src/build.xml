@@ -1,4 +1,4 @@
-<project name="Generating the build of groovy language plugin">
+<project name="Generating the build of groovy language plugin" default="build.project">
     <property file="groovy.properties"/>
     <property name="project.dest" value="${project.dir}/classes/production/Groovy"/>
 
@@ -7,6 +7,12 @@
             <include name="**/*.jar"/>
         </fileset>
         <fileset dir="${idea.lib}">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
+    <path id="groovy.path">
+        <fileset dir="${groovy.lib}">
             <include name="**/*.jar"/>
         </fileset>
     </path>
@@ -35,6 +41,7 @@
         <javac srcdir="."
                destdir="${project.dest}">
             <classpath refid="base.path"/>
+            <classpath refid="groovy.path"/>
         </javac>
     </target>
 
