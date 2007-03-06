@@ -25,7 +25,7 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public abstract class ColoredListCellRenderer extends SimpleColoredComponent implements ListCellRenderer{
-  private boolean mySelected;
+  protected boolean mySelected;
 
   public ColoredListCellRenderer(){
     setFocusBorderAroundIcon(true);
