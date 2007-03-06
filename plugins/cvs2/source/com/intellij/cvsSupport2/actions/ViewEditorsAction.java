@@ -40,7 +40,8 @@ public class ViewEditorsAction extends AsbtractActionFromEditGroup {
       if (editors.isEmpty()){
         Messages.showMessageDialog(CvsBundle.message("message.error.no.editors.for.file", filePath) , CvsBundle.message("message.error.no.editors.for.file.title"), Messages.getInformationIcon());
       } else {
-        tabbedWindow.addTab(CvsBundle.message("message.editors.for.file", filePath), new EditorsPanel(editors), true, true, true, true, "cvs.editors");
+        tabbedWindow.addTab(CvsBundle.message("message.editors.for.file", filePath),
+                            new EditorsPanel(context.getProject(), editors), true, true, true, true, "cvs.editors");
         tabbedWindow.ensureVisible(context.getProject());
       }
     }
