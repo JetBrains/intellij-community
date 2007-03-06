@@ -78,8 +78,6 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   @SuppressWarnings({"WeakerAccess"})
   public String CURRENT_SCOPE_NAME;
 
-  private boolean myInitialized = false;
-
   private TreeExpansionMonitor myTreeExpansionMonitor;
   private CopyPasteManagerEx.CopyPasteDelegator myCopyPasteDelegator;
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
@@ -103,7 +101,6 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   }
 
   public void initListeners(){
-    myInitialized = true;
     final MessageBusConnection connection = myProject.getMessageBus().connect(this);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter);
@@ -113,10 +110,6 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   public void dispose(){
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeAdapter);
     WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
-  }
-
-  public boolean isInitialized() {
-    return myInitialized;
   }
 
   @Nullable
@@ -129,10 +122,6 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     if (scope != myDependencyValidationManager.getProjectScope()) {
       CURRENT_SCOPE_NAME = scope.getName();
     }
-  }
-
-  public void selectCurrentScope() {
-    refreshScope(getCurrentScope(), true);
   }
 
   public JPanel getPanel() {
@@ -230,7 +219,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       final TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath != null){
         PackageDependenciesNode node = (PackageDependenciesNode)selectionPath.getLastPathComponent();
-        return node != null ? node.getPsiElement() : null;
+        return node != null && node.isValid() ? node.getPsiElement() : null;
       }
     }
     final TreePath[] treePaths = myTree.getSelectionPaths();
@@ -239,9 +228,11 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         Set<PsiElement> psiElements = new HashSet<PsiElement>();
         for (TreePath treePath : treePaths) {
           final PackageDependenciesNode node = (PackageDependenciesNode)treePath.getLastPathComponent();
-          final PsiElement psiElement = node.getPsiElement();
-          if (psiElement != null){
-            psiElements.add(psiElement);
+          if (node.isValid()) {
+            final PsiElement psiElement = node.getPsiElement();
+            if (psiElement != null){
+              psiElements.add(psiElement);
+            }
           }
         }
         return psiElements.isEmpty() ? null : psiElements.toArray(new PsiElement[psiElements.size()]);
@@ -338,11 +329,8 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       if (element instanceof PsiDirectory || element instanceof PsiPackage) {
         queueUpdate(new Runnable(){
           public void run() {
-            if (myProject.isDisposed()) return;         
-            myTreeExpansionMonitor.freeze();
             if (!child.isValid()) return;
             processNodeCreation(child);
-            myTreeExpansionMonitor.restore();
           }
         }, false);
       }
@@ -365,10 +353,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       if (parent instanceof PsiDirectory && (child instanceof PsiFile || child instanceof PsiDirectory)) {
         queueUpdate(new Runnable() {
           public void run() {
-            if (myProject.isDisposed()) return;
-            myTreeExpansionMonitor.freeze();
             collapseExpand(myBuilder.removeNode(child, (PsiDirectory)parent));
-            myTreeExpansionMonitor.restore();
           }
         }, true);
       }
@@ -382,13 +367,10 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         if (child instanceof PsiFile) {
           queueUpdate(new Runnable() {
             public void run() {
-              if (myProject.isDisposed()) return;
-              myTreeExpansionMonitor.freeze();
               if (child.isValid()) {
                 collapseExpand(myBuilder.removeNode(child, (PsiDirectory)oldParent));
                 collapseExpand(myBuilder.addFileNode((PsiFile)child));
               }
-              myTreeExpansionMonitor.restore();
             }
           }, true);
         }
@@ -403,28 +385,84 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         if (!file.getViewProvider().isPhysical()) return;
         queueUpdate(new Runnable() {
           public void run() {
-            if (myProject.isDisposed()) return;
-            myTreeExpansionMonitor.freeze();
             if (file.isValid()) {
               collapseExpand(myBuilder.getFileParentNode(file));
             }
-            myTreeExpansionMonitor.restore();
           }
         }, false);
       }
     }
 
+    public final void propertyChanged(PsiTreeChangeEvent event) {
+      String propertyName = event.getPropertyName();
+      final PsiElement element = event.getElement();
+      if (element != null && element.isValid()) {
+        final NamedScope scope = getCurrentScope();
+        if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_NAME) || propertyName.equals(PsiTreeChangeEvent.PROP_FILE_TYPES)) {
+          queueUpdate(new Runnable() {
+            public void run() {
+              processFileRenamed(scope, element.getContainingFile());
+            }
+          }, false);
+        }
+        else if (propertyName.equals(PsiTreeChangeEvent.PROP_DIRECTORY_NAME)) {
+          queueRefreshScope(scope);
+        }
+      }
+    }
+
+    public void childReplaced(final PsiTreeChangeEvent event) {
+      final NamedScope scope = getCurrentScope();
+      final PsiElement element = event.getNewChild();
+      if (element instanceof PsiFile && element.isValid()) {
+        queueUpdate(new Runnable() {
+          public void run() {
+            processFileRenamed(scope, ((PsiFile)element));
+          }
+        }, false);
+      }
+      else if (element != null && element.isValid()) {
+        queueRefreshScope(scope);
+      }
+    }
+
+    private void queueRefreshScope(final NamedScope scope) {
+      queueUpdate(new Runnable() {
+        public void run() {
+          refreshScope(scope, true);
+        }
+      }, false);
+    }
+
+    private void processFileRenamed(final NamedScope scope, final PsiFile psiFile) {
+      final PackageSet packageSet = scope.getValue();
+      LOG.assertTrue(packageSet != null);
+      if (packageSet.contains(psiFile, NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager))) {
+        reload(myBuilder.getFileParentNode(psiFile));
+      } else {
+        reload(myBuilder.removeNode(psiFile, psiFile.getParent()));
+      }
+    }
+
     private void queueUpdate(final Runnable request, boolean updateImmediately) {
+      final Runnable wrapped = new Runnable() {
+        public void run() {
+          if (myProject.isDisposed()) return;
+          myTreeExpansionMonitor.freeze();
+          request.run();
+          myTreeExpansionMonitor.restore();
+        }
+      };
       if (updateImmediately && myTree.isShowing()) {
         myUpdateQueue.run(new Update(request) {
           public void run() {
-            request.run();
+            wrapped.run();
           }
         });
       } else {
         myUpdateQueue.queue(new Update(request) {
           public void run() {
-            request.run();
+            wrapped.run();
           }
 
           public boolean isExpired() {
@@ -484,6 +522,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         if (selectedPaths.length != 1) return null;
         TreePath path = selectedPaths[0];
         final PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
+        if (!node.isValid()) return null;
         if (node instanceof DirectoryNode) {
           DirectoryNode directoryNode = (DirectoryNode)node;
           while (directoryNode.getCompactedDirNode() != null){

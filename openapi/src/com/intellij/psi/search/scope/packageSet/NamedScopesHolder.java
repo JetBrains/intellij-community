@@ -15,10 +15,10 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -145,7 +145,8 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
   }
 
   @Nullable
-  public NamedScope getScope(String name) {
+  public NamedScope getScope(@Nullable String name) {
+    if (name == null) return null;
     for (NamedScope scope : myScopes) {
       if (name.equals(scope.getName())) return scope;
     }

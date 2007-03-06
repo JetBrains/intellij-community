@@ -459,10 +459,18 @@ public class TreeModelBuilder {
         if (element instanceof PsiDirectory && node.getPsiElement() == element){
           return new PackageDependenciesNode[] {node};
         }
-        if (element instanceof PsiFile){
-          final PsiElement psiElement = node instanceof ClassNode ? ((ClassNode)node).getContainingFile() : node.getPsiElement();
-          if (element == psiElement){
-            result.add(node);
+        if (element instanceof PsiFile) {
+          final PsiElement psiElement;
+          if (node instanceof ClassNode) {
+            psiElement = ((ClassNode)node).getContainingFile();
+            if (element == psiElement) {
+              result.add(node);
+            }
+          }
+          else if (node instanceof FileNode) { //non java files
+            if (((PsiFile)node.getPsiElement()).getVirtualFile() == ((PsiFile)element).getVirtualFile()) {
+              result.add(node);
+            }
           }
         }
       }
