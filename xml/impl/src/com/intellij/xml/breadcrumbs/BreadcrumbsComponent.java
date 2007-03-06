@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.project.Project;
@@ -47,17 +48,6 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
   @NonNls private static final String CLASS_ATTRIBUTE_NAME = "class";
   @NonNls private static final String ID_ATTRIBUTE_NAME = "id";
 
-  private static final Color DEFAULT_BG_COLOR = new Color(245, 245, 245);
-  private static final Color LIGHT_BG_COLOR = new Color(253, 253, 253);
-  private static final Color CURRENT_BG_COLOR = new Color(250, 250, 220);
-  private static final Color HOVERED_BG_COLOR = new Color(220, 220, 220);
-
-  private static final Color DEFAULT_TEXT_COLOR = new Color(50, 50, 50);
-  private static final Color LIGHT_TEXT_COLOR = new Color(170, 170, 170);
-
-  private static final Color DEFAULT_BORDER_COLOR = new Color(90, 90, 90);
-  private static final Color LIGHT_BORDER_COLOR = new Color(170, 170, 170);
-
   private Editor myEditor;
   private CrumbLine myLine;
   private LinkedList<XmlElement> myCurrentList;
@@ -74,6 +64,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     final CaretListener caretListener = new CaretListener() {
       public void caretPositionChanged(final CaretEvent e) {
         if (myUserCaretChange) {
+          myQueue.cancelAllUpdates();
           myQueue.queue(new MyUpdate(BreadcrumbsComponent.this, editor));
         }
 
@@ -105,7 +96,12 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       }
     }, this);
 
+
     myLine = new CrumbLine(this);
+
+    final Font editorFont = editor.getColorsScheme().getFont(EditorFontType.PLAIN);
+    myLine.setFont(editorFont.deriveFont(Font.PLAIN, editorFont.getSize2D()));
+
     setLayout(new BorderLayout());
 
     add(myLine);
@@ -119,10 +115,6 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
   private Editor getEditor() {
     return myEditor;
-  }
-
-  public String getToolTipText(final MouseEvent event) {
-    return super.getToolTipText(event);    //To change body of overridden methods use File | Settings | File Templates.
   }
 
   private void setUserCaretChange(final boolean userCaretChange) {
@@ -187,6 +179,9 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     private List<Crumb> myCrumbs;
     private BreadcrumbsComponent myBreadcrumbsComponent;
 
+    private static final Painter DEFAULT_PAINTER = new DefaultPainter(new ButtonSettings());
+    private static final Painter TRANSPARENT_PAINTER = new DefaultPainter(new TransparentSettings());
+
     public CrumbLine(@NotNull final BreadcrumbsComponent breadcrumbsComponent) {
       final CrumbLineMouseListener listener = new CrumbLineMouseListener(this);
       addMouseListener(listener);
@@ -223,14 +218,13 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       repaint();
     }
 
-    @NotNull
-    public List<XmlElement> getCrumbs() {
-      return myElementList;
-    }
-
     @Nullable
     public Crumb getCrumb(@NotNull final Point p) {
       if (myCrumbs != null) {
+        if (!getBounds().contains(p)) {
+          return null;
+        }
+
         for (final Crumb each : myCrumbs) {
           if ((p.x + myBufferOffset >= each.getOffset()) && (p.x + myBufferOffset < each.getOffset() + each.getWidth())) {
             return each;
@@ -239,27 +233,6 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       }
 
       return null;
-    }
-
-    @NotNull
-    private static String prepareString(@NotNull XmlTag tag) {
-      final StringBuffer sb = new StringBuffer();
-      sb.append(tag.getName());
-
-      final String id_value = tag.getAttributeValue(ID_ATTRIBUTE_NAME);
-      if (null != id_value) {
-        sb.append(" ").append("#").append(id_value);
-      }
-
-      final String class_value = tag.getAttributeValue(CLASS_ATTRIBUTE_NAME);
-      if (null != class_value) {
-        final StringTokenizer tokenizer = new StringTokenizer(class_value, " ");
-        while (tokenizer.hasMoreTokens()) {
-          sb.append(" .").append(tokenizer.nextToken());
-        }
-      }
-
-      return sb.toString();
     }
 
     public void setHoveredCrumb(@Nullable final Crumb crumb) {
@@ -281,6 +254,9 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       final Dimension d = getSize();
 
       final FontMetrics fm = g2.getFontMetrics();
+
+      //g2.setColor(Color.WHITE);
+      //g2.fillRect(0, 0, d.width, d.height);
 
       boolean veryDirty = (myCrumbs == null);
       final List<Crumb> crumbList = veryDirty ? createCrumbList(fm, myElementList, d.width) : myCrumbs;
@@ -331,17 +307,18 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       final Set<XmlElement> elements = new HashSet<XmlElement>();
       boolean light = false;
       for (final Crumb each : myCrumbs) {
-        if (elements.contains(each.getElement())) {
+        final XmlElement element = each.getElement();
+        if (element != null && elements.contains(element)) {
           light = false;
         }
 
         each.setLight(light);
 
-        if (!light) {
-          elements.add(each.getElement());
+        if (element != null && !light) {
+          elements.add(element);
         }
 
-        if (selectedElement == each.getElement()) {
+        if (selectedElement == element) {
           each.setSelected(true);
           light = true;
         }
@@ -361,11 +338,17 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
 
+    private static Painter getPainter() {
+      return System.getProperty("idea.breadcrumbs") != null ? TRANSPARENT_PAINTER : DEFAULT_PAINTER;
+    }
+
     @Nullable
     private List<Crumb> createCrumbList(@NotNull final FontMetrics fm, @NotNull final List<XmlElement> elements, final int width) {
       if (elements.size() == 0) {
         return null;
       }
+
+      final Painter painter = getPainter();
 
       final LinkedList<Crumb> result = new LinkedList<Crumb>();
       int screenWidth = 0;
@@ -374,12 +357,12 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       // fill up crumb list first going from end to start
       for (int i = elements.size() - 1; i >= 0; i--) {
         final XmlTag tag = (XmlTag)elements.get(i);
-        final String s = prepareString(tag);
-        final Dimension d = CrumbPainter.getSize(s, fm);
+        final String s = painter.getSettings().prepareString(tag);
+        final Dimension d = painter.getSize(s, fm);
         final Crumb crumb = new Crumb(this, s, d.width, tag);
         if (screenWidth + d.width > width) {
-          final NavigationCrumb forward = new NavigationCrumb(this, fm, true);
-          final NavigationCrumb backward = new NavigationCrumb(this, fm, false);
+          final NavigationCrumb forward = new NavigationCrumb(this, fm, true, painter);
+          final NavigationCrumb backward = new NavigationCrumb(this, fm, false, painter);
 
           Crumb first = null;
           if (screenWidth + backward.getWidth() > width) {
@@ -469,7 +452,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     }
 
     @NotNull
-    private static BufferedImage createBuffer(@NotNull final JComponent parent, @NotNull final List<Crumb> crumbList, final int height) {
+    private BufferedImage createBuffer(@NotNull final JComponent parent, @NotNull final List<Crumb> crumbList, final int height) {
       int totalWidth = 0;
       for (final Crumb each : crumbList) {
         totalWidth += each.getWidth();
@@ -480,7 +463,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       g2.setFont(parent.getFont());
 
       for (final Crumb each : crumbList) {
-        each.paint(g2, height);
+        each.paint(g2, getPainter(), height);
       }
 
       return result;
@@ -492,7 +475,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
     public Dimension getPreferredSize() {
       final Graphics2D g2 = (Graphics2D)getGraphics();
-      return new Dimension(Integer.MAX_VALUE, CrumbPainter.getSize("dummy", g2.getFontMetrics()).height);
+      return new Dimension(Integer.MAX_VALUE, getPainter().getSize("dummy", g2.getFontMetrics()).height);
     }
 
     public Dimension getMaximumSize() {
@@ -516,13 +499,16 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       final Crumb crumb = myLine.getCrumb(e.getPoint());
       if (crumb != myHoveredCrumb) {
         myLine.setHoveredCrumb(crumb);
-        myLine.repaint();
         myHoveredCrumb = crumb;
       }
     }
 
     public void mouseExited(final MouseEvent e) {
-      myLine.setHoveredCrumb(null);
+      mouseMoved(e);
+    }
+
+    public void mouseEntered(final MouseEvent e) {
+      mouseMoved(e);
     }
 
     public void mouseClicked(final MouseEvent e) {
@@ -588,6 +574,18 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       return myHovered;
     }
 
+    public boolean isSelected() {
+      return mySelected;
+    }
+
+    public boolean isLight() {
+      return myLight;
+    }
+
+    public void paint(@NotNull final Graphics2D g2, @NotNull final Painter painter, final int height) {
+      painter.paint(this, g2, height);
+    }
+
     @Nullable
     public String getTooltipText() {
       final XmlElement element = getElement();
@@ -615,24 +613,6 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       return null;
     }
 
-    public void paint(@NotNull final Graphics2D g2, int height) {
-      final Color bg = myHovered
-                       ? BreadcrumbsComponent.HOVERED_BG_COLOR
-                       : myLight
-                         ? BreadcrumbsComponent.LIGHT_BG_COLOR
-                         : mySelected ? BreadcrumbsComponent.CURRENT_BG_COLOR : BreadcrumbsComponent.DEFAULT_BG_COLOR;
-
-      final Color text = myHovered
-                         ? BreadcrumbsComponent.DEFAULT_TEXT_COLOR
-                         : myLight ? BreadcrumbsComponent.LIGHT_TEXT_COLOR : BreadcrumbsComponent.DEFAULT_TEXT_COLOR;
-
-      final Color border = myHovered
-                           ? BreadcrumbsComponent.DEFAULT_BORDER_COLOR
-                           : myLight ? BreadcrumbsComponent.LIGHT_BORDER_COLOR : BreadcrumbsComponent.DEFAULT_BORDER_COLOR;
-
-      CrumbPainter.paint(this, height, g2, text, bg, border);
-    }
-
     public XmlElement getElement() {
       return myElement;
     }
@@ -652,12 +632,13 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
   }
 
   private static class NavigationCrumb extends Crumb {
-    @NonNls private static final String TEXT = "...";
+    @NonNls private static final String FORWARD = ">>";
+    @NonNls private static final String BACKWARD = "<<";
     private boolean myForward;
     private CrumbLine myLine;
 
-    public NavigationCrumb(@NotNull final CrumbLine line, @NotNull final FontMetrics fm, final boolean forward) {
-      super(TEXT, CrumbPainter.getSize(TEXT, fm).width);
+    public NavigationCrumb(@NotNull final CrumbLine line, @NotNull final FontMetrics fm, final boolean forward, @NotNull final Painter p) {
+      super(forward ? FORWARD : BACKWARD, p.getSize(forward ? FORWARD : BACKWARD, fm).width);
       myForward = forward;
       myLine = line;
     }
@@ -670,14 +651,6 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
         myLine.backward();
       }
     }
-
-    public void paint(@NotNull final Graphics2D g2, final int height) {
-      final Color text = BreadcrumbsComponent.DEFAULT_TEXT_COLOR;
-      final Color bg = isHovered() ? BreadcrumbsComponent.HOVERED_BG_COLOR : BreadcrumbsComponent.DEFAULT_BG_COLOR;
-      final Color border = BreadcrumbsComponent.DEFAULT_BORDER_COLOR;
-
-      CrumbPainter.paint(this, height, g2, text, bg, border);
-    }
   }
 
   private static class DummyCrumb extends Crumb {
@@ -685,7 +658,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       super(null, width);
     }
 
-    public void paint(@NotNull final Graphics2D g2, final int height) {
+    public void paint(@NotNull final Graphics2D g2, @NotNull final Painter painter, final int height) {
       // does nothing
     }
 
@@ -699,30 +672,198 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     }
   }
 
-  @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
-  private static class CrumbPainter {
-    public static void paint(@NotNull final Crumb c,
-                             final int height,
-                             @NotNull final Graphics2D g2,
-                             final Color textColor,
-                             final Color bg,
-                             final Color border) {
+  abstract static class PainterSettings {
+    private static final Color DEFAULT_FOREGROUND_COLOR = new Color(50, 50, 50);
 
-      int roundValue = SystemInfo.isMac ? 5 : 2;
+    @Nullable
+    Color getBackgroundColor(@NotNull final Crumb c) {
+      return null;
+    }
 
-      g2.setColor(bg);
-      g2.fillRoundRect(c.getOffset() + 2, 2, c.getWidth() - 4, height - 4, roundValue, roundValue);
+    @Nullable
+    Color getForegroundColor(@NotNull final Crumb c) {
+      return DEFAULT_FOREGROUND_COLOR;
+    }
 
-      g2.setColor(border);
-      g2.drawRoundRect(c.getOffset() + 2, 2, c.getWidth() - 4, height - 4, roundValue, roundValue);
+    @Nullable
+    Color getBorderColor(@NotNull final Crumb c) {
+      return null;
+    }
 
-      g2.setColor(textColor);
-      g2.drawString(c.getString(), c.getOffset() + 4, 2 + g2.getFontMetrics().getAscent());
+    @Nullable
+    Font getFont(@NotNull final Graphics g2, @NotNull final Crumb c) {
+      return null;
     }
 
     @NotNull
-    public static Dimension getSize(@NonNls @NotNull final String s, @NotNull final FontMetrics fm) {
-      return new Dimension(fm.stringWidth(s) + 8, fm.getHeight() + 4);
+    public String prepareString(@NotNull final XmlTag tag) {
+      final StringBuffer sb = new StringBuffer();
+      sb.append(tag.getName());
+
+      final String id_value = tag.getAttributeValue(ID_ATTRIBUTE_NAME);
+      if (null != id_value) {
+        sb.append("#").append(id_value);
+      }
+
+      final String class_value = tag.getAttributeValue(CLASS_ATTRIBUTE_NAME);
+      if (null != class_value) {
+        final StringTokenizer tokenizer = new StringTokenizer(class_value, " ");
+        while (tokenizer.hasMoreTokens()) {
+          sb.append(".").append(tokenizer.nextToken());
+        }
+      }
+
+      return sb.toString();
+    }
+  }
+
+  private static class ButtonSettings extends PainterSettings {
+    protected static final Color DEFAULT_BG_COLOR = new Color(245, 245, 245);
+    private static final Color LIGHT_BG_COLOR = new Color(253, 253, 253);
+    private static final Color CURRENT_BG_COLOR = new Color(250, 250, 220);
+    protected static final Color HOVERED_BG_COLOR = new Color(220, 220, 220);
+
+    private static final Color LIGHT_TEXT_COLOR = new Color(170, 170, 170);
+
+    protected static final Color DEFAULT_BORDER_COLOR = new Color(90, 90, 90);
+    private static final Color LIGHT_BORDER_COLOR = new Color(170, 170, 170);
+
+    @Nullable
+    Color getBackgroundColor(@NotNull final Crumb c) {
+      if (c.isHovered()) {
+        return HOVERED_BG_COLOR;
+      }
+
+      if (c.isSelected()) {
+        return CURRENT_BG_COLOR;
+      }
+
+      if (c.isLight() && !(c instanceof NavigationCrumb)) {
+        return LIGHT_BG_COLOR;
+      }
+
+      return DEFAULT_BG_COLOR;
+    }
+
+    @Nullable
+    Color getForegroundColor(@NotNull final Crumb c) {
+      if (c.isLight() && !c.isHovered() && !(c instanceof NavigationCrumb)) {
+        return LIGHT_TEXT_COLOR;
+      }
+
+      return super.getForegroundColor(c);
+    }
+
+    @Nullable
+    Color getBorderColor(@NotNull final Crumb c) {
+      return (c.isLight() && !c.isHovered() && !(c instanceof NavigationCrumb)) ? LIGHT_BORDER_COLOR : DEFAULT_BORDER_COLOR;
+    }
+  }
+
+  private static class TransparentSettings extends ButtonSettings {
+    private static final Color LIGHT_TEXT_COLOR = new Color(130, 130, 130);
+
+    @Nullable
+    Color getBackgroundColor(@NotNull final Crumb c) {
+      return c.isHovered() ? HOVERED_BG_COLOR : null;
+    }
+
+    @Nullable
+    Color getBorderColor(@NotNull final Crumb c) {
+      return c.isHovered() ? DEFAULT_BORDER_COLOR : null;
+    }
+
+    @Nullable
+    Color getForegroundColor(@NotNull final Crumb c) {
+      if (c.isLight() && !c.isHovered() && !(c instanceof NavigationCrumb)) {
+        return LIGHT_TEXT_COLOR;
+      }
+
+      return super.getForegroundColor(c);
+    }
+
+    @NotNull
+    public String prepareString(@NotNull final XmlTag tag) {
+      final String s = super.prepareString(tag);
+
+      final StringBuffer sb = new StringBuffer("<");
+      return sb.append(s).append(">").toString();
+    }
+
+    @Nullable
+    Font getFont(@NotNull final Graphics g2, @NotNull final Crumb c) {
+      if (c.isSelected()) {
+        final Font font = g2.getFont();
+        return font.deriveFont(Font.BOLD, font.getSize2D());
+      }
+
+      return null;
+    }
+  }
+
+  abstract static class Painter {
+    private PainterSettings mySettings;
+
+    public Painter(@NotNull final PainterSettings s) {
+      mySettings = s;
+    }
+
+    protected PainterSettings getSettings() {
+      return mySettings;
+    }
+
+    abstract void paint(@NotNull final Crumb c, @NotNull final Graphics2D g2, final int height);
+
+    @NotNull
+    Dimension getSize(@NotNull @NonNls final String s, @NotNull final FontMetrics fm) {
+      return new Dimension(fm.stringWidth(s), fm.getHeight());
+    }
+
+  }
+
+  private static class DefaultPainter extends Painter {
+    public DefaultPainter(@NotNull final PainterSettings s) {
+      super(s);
+    }
+
+    public void paint(@NotNull final Crumb c, @NotNull final Graphics2D g2, final int height) {
+      final int roundValue = SystemInfo.isMac ? 5 : 2;
+
+      final PainterSettings s = getSettings();
+
+      final Font oldFont = g2.getFont();
+
+      final Color bg = s.getBackgroundColor(c);
+      if (bg != null) {
+        g2.setColor(bg);
+        g2.fillRoundRect(c.getOffset() + 1, 1, c.getWidth() - 3, height - 2, roundValue, roundValue);
+      }
+
+      final Color borderColor = s.getBorderColor(c);
+      if (borderColor != null) {
+        g2.setColor(borderColor);
+        g2.drawRoundRect(c.getOffset() + 1, 1, c.getWidth() - 3, height - 2, roundValue, roundValue);
+      }
+
+      final Color textColor = s.getForegroundColor(c);
+      if (textColor != null) {
+        g2.setColor(textColor);
+      }
+
+      final Font font = s.getFont(g2, c);
+      if (font != null) {
+        g2.setFont(font);
+      }
+
+      final FontMetrics fm = g2.getFontMetrics();
+      g2.drawString(c.getString(), c.getOffset() + 2, fm.getAscent() + (SystemInfo.isMac ? fm.getDescent() : 0)); //fm.getHeight());
+      
+      g2.setFont(oldFont);
+    }
+
+    @NotNull
+    Dimension getSize(@NotNull @NonNls final String s, @NotNull final FontMetrics fm) {
+      return new Dimension(fm.stringWidth(s) + 5, fm.getHeight() + (SystemInfo.isMac ? 4 : 0));
     }
   }
 
