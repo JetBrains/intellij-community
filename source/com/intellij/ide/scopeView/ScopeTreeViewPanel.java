@@ -365,11 +365,16 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       final PsiElement child = event.getChild();
       if (oldParent instanceof PsiDirectory && newParent instanceof PsiDirectory) {
         if (child instanceof PsiFile) {
+          final PsiFile file = (PsiFile)child;
           queueUpdate(new Runnable() {
             public void run() {
-              if (child.isValid()) {
-                collapseExpand(myBuilder.removeNode(child, (PsiDirectory)oldParent));
-                collapseExpand(myBuilder.addFileNode((PsiFile)child));
+              collapseExpand(myBuilder.removeNode(child, (PsiDirectory)oldParent));
+              final VirtualFile virtualFile = file.getVirtualFile();
+              if (virtualFile != null) {
+                final PsiFile newFile = file.isValid() ? file : PsiManager.getInstance(myProject).findFile(virtualFile);
+                if (newFile != null) {
+                  collapseExpand(myBuilder.addFileNode(newFile));
+                }
               }
             }
           }, true);
