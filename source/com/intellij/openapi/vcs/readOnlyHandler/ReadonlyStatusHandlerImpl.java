@@ -85,7 +85,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     // The hack itself is safe since we guarantee that focus will return to the same component had it before modal dialog have been shown.
     final int savedEventCount = IdeEventQueue.getInstance().getEventCount();
     if (SHOW_DIALOG) {
-      new HandleReadOnlyStatusDialog(myProject, fileInfos).show();
+      new ReadOnlyStatusDialog(myProject, fileInfos).show();
     }
     else {
       processFiles(new ArrayList<FileInfo>(Arrays.asList(fileInfos))); // the collection passed is modified

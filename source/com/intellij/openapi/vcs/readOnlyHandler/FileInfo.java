@@ -42,7 +42,7 @@ import com.intellij.util.ListWithSelection;
 class FileInfo {
   private final VirtualFile myFile;
   private final EditFileProvider myEditFileProvider;
-  private final ListWithSelection myHandleType = new ListWithSelection();
+  private final ListWithSelection<HandleType> myHandleType = new ListWithSelection<HandleType>();
 
   public FileInfo(VirtualFile file, Project project) {
     myFile = file;
@@ -75,14 +75,14 @@ class FileInfo {
   }
 
   public boolean getUseVersionControl() {
-    return ( (HandleType)myHandleType.getSelection()).getUseVcs();
+    return myHandleType.getSelection().getUseVcs();
   }
 
   public boolean hasVersionControl() {
     return myEditFileProvider != null;
   }
 
-  public ListWithSelection getHandleType(){
+  public ListWithSelection<HandleType> getHandleType(){
     return myHandleType;
   }
 
