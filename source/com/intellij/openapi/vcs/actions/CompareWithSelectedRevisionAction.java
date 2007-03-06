@@ -97,6 +97,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
 
     try {
       final VcsHistorySession session = vcsHistoryProvider.createSessionFor(new FilePathImpl(file));
+      if (session == null) return;
       final List<VcsFileRevision> revisions = session.getRevisionList();
       final HistoryAsTreeProvider treeHistoryProvider = vcsHistoryProvider.getTreeHistoryProvider();
       if (treeHistoryProvider != null) {

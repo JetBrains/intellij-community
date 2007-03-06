@@ -51,6 +51,7 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
       int selectionStart = selection.getSelectionStartLineNumber();
       int selectionEnd = selection.getSelectionEndLineNumber();
       VcsHistorySession session = provider.createSessionFor(new FilePathImpl(file));
+      if (session == null) return;
       VcsBlockHistoryDialog vcsHistoryDialog =
         new VcsBlockHistoryDialog(project,
                                   context.getSelectedFiles()[0],

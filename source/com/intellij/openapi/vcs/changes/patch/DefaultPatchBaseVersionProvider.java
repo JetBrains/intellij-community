@@ -66,6 +66,7 @@ public class DefaultPatchBaseVersionProvider {
     final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(virtualFile);
     try {
       final VcsHistorySession session = vcs.getVcsHistoryProvider().createSessionFor(filePath);
+      if (session == null) return;
       final List<VcsFileRevision> list = session.getRevisionList();
       for(VcsFileRevision fileRevision: list) {
         boolean found;

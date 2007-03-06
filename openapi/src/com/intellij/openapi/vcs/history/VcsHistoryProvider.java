@@ -32,6 +32,14 @@ public interface VcsHistoryProvider {
   @Nullable
   @NonNls String getHelpId();
 
+  /**
+   * Returns the history session for the specified file path.
+   *
+   * @param filePath the file path for which the session is requested.
+   * @return the session, or null if the initial revisions loading process was cancelled.
+   * @throws VcsException if an error occurred when loading the revisions
+   */
+  @Nullable
   VcsHistorySession createSessionFor(FilePath filePath) throws VcsException;
 
   //return null if your revisions cannot be tree

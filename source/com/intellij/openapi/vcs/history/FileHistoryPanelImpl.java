@@ -516,7 +516,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   public void refresh() {
     try {
-      refresh(getHistoryProvider().createSessionFor(myFilePath));
+      final VcsHistorySession session = getHistoryProvider().createSessionFor(myFilePath);
+      if (session == null) return;
+      refresh(session);
     }
     catch (VcsException e1) {
       Messages.showErrorDialog(VcsBundle.message("message.text.cannot.refresh.file.history", e1.getLocalizedMessage()),

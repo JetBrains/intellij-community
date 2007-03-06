@@ -135,6 +135,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     public void showFileHistory(VcsHistoryProvider vcsHistoryProvider, FilePath path) {
         try {
           VcsHistorySession session = vcsHistoryProvider.createSessionFor(path);
+          if (session == null) return;
           List<VcsFileRevision> revisionsList = session.getRevisionList();
           if (revisionsList.isEmpty()) return;
     
