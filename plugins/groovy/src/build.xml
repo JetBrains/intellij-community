@@ -1,11 +1,13 @@
 <project name="Generating the build of groovy language plugin" default="build.project">
     <property file="groovy.properties"/>
     <property name="project.dest" value="${project.dir}/classes/production/Groovy"/>
+    <property name="idea.dir" value="${project.dest}/lib/idea"/>
+    <!--<property name="idea.zip" value="${idea.pack}/${last.succ.idea}.zip"/>-->
+    <property name="idea.lib" value="${project.dest}/lib/idea/lib"/>
+    <property name="groovy.lib" value="${project.dir}/GDK"/>
+
 
     <path id="base.path">
-        <fileset dir="${idea.lib}/../jre/jre/lib">
-            <include name="**/*.jar"/>
-        </fileset>
         <fileset dir="${idea.lib}">
             <include name="**/*.jar"/>
         </fileset>
@@ -16,6 +18,15 @@
             <include name="**/*.jar"/>
         </fileset>
     </path>
+
+    <target name="unzip last successful IDEA build">
+        <unzip dest="${idea.dir}">
+            <fileset dir="${idea.pack}">
+                <include name="*.zip"/>
+            </fileset>
+        </unzip>
+    </target>
+
 
     <target name="clear.all" description="clears all files">
         <mkdir dir="${project.dest}"/>
@@ -29,13 +40,13 @@
              antfile="build.xml" target="generate.lexer"/>
     </target>
 
-    <target name="make.project" description="makes project" depends="build.lexer">
+    <target name="make.project" description="makes project" depends="build.lexer, unzip last successful IDEA build">
         <copy todir="${project.dest}/META-INF">
-          <fileset dir="${project.dir}/META-INF"/>
+            <fileset dir="${project.dir}/META-INF"/>
         </copy>
 
         <copy todir="${project.dest}/resources">
-          <fileset dir="${project.dir}/resources"/>
+            <fileset dir="${project.dir}/resources"/>
         </copy>
 
         <javac srcdir="."
