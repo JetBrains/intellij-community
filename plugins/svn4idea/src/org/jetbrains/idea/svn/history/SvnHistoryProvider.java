@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.*;
@@ -33,6 +34,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ShowAllSubmittedFilesAction;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -71,8 +73,13 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     return new ColumnInfo[] {new CopyFromColumnInfo()};
   }
 
+  @Nullable
   public VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
-    return new VcsHistorySession(getRevisionsList(filePath)) {
+    final List<VcsFileRevision> revisions = getRevisionsList(filePath);
+    if (revisions == null) {
+      return null;
+    }
+    return new VcsHistorySession(revisions) {
       @Nullable
       public VcsRevisionNumber calcCurrentRevisionNumber() {
         return getCurrentRevision(filePath);
@@ -85,7 +92,8 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     };
   }
 
-  public List<VcsFileRevision> getRevisionsList(final FilePath file) throws VcsException {
+  @Nullable
+  private List<VcsFileRevision> getRevisionsList(final FilePath file) throws VcsException {
     final SVNException[] exception = new SVNException[1];
     final ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
 
@@ -102,15 +110,20 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
             collectLogEntriesForRepository(indicator, result);
           }
         }
+        catch(SVNCancelException ex) {
+          throw new ProcessCanceledException(ex);
+        }
         catch (SVNException e) {
           exception[0] = e;
         }
-
       }
     };
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.revisions.history"), false, myVcs.getProject());
+      boolean success = ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.revisions.history"), true, myVcs.getProject());
+      if (!success) {
+        return null;
+      }
     }
     else {
       command.run();
@@ -203,8 +216,11 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
       myUrl = url;
     }
 
-    public void handleLogEntry(SVNLogEntry logEntry) {
+    public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
       if (myIndicator != null) {
+        if (myIndicator.isCanceled()) {
+          SVNErrorManager.cancel(SvnBundle.message("exception.text.update.operation.cancelled"));
+        }
         myIndicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
       }
       String copyPath = null;
