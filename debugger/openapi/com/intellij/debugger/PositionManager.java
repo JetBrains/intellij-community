@@ -19,16 +19,19 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public interface PositionManager {
   
+  @Nullable
   SourcePosition getSourcePosition(Location location) throws NoDataException;
 
   List<ReferenceType> getAllClasses(SourcePosition classPosition) throws NoDataException;
 
   List<Location> locationsOfLine (ReferenceType type, SourcePosition position) throws NoDataException;
 
+  @Nullable
   ClassPrepareRequest createPrepareRequest(ClassPrepareRequestor requestor, SourcePosition position)throws NoDataException;
 }

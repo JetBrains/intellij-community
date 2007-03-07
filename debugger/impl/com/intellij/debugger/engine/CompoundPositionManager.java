@@ -39,8 +39,7 @@ public class CompoundPositionManager implements PositionManager{
       try {
         return positionManager.getSourcePosition(location);
       }
-      catch (NoDataException e) {
-        LOG.info(e);
+      catch (NoDataException ignored) {
       }
     }
     return null;
@@ -51,8 +50,7 @@ public class CompoundPositionManager implements PositionManager{
       try {
         return positionManager.getAllClasses(classPosition);
       }
-      catch (NoDataException e) {
-        LOG.info(e);
+      catch (NoDataException ignored) {
       }
     }
     return Collections.emptyList();
@@ -63,7 +61,7 @@ public class CompoundPositionManager implements PositionManager{
       try {
         return positionManager.locationsOfLine(type, position);
       }
-      catch (NoDataException e) {
+      catch (NoDataException ignored) {
       }
     }
     return Collections.emptyList();
@@ -74,7 +72,7 @@ public class CompoundPositionManager implements PositionManager{
       try {
         return positionManager.createPrepareRequest(requestor, position);
       }
-      catch (NoDataException e) {
+      catch (NoDataException ignored) {
       }
     }
 
