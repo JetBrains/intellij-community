@@ -32,6 +32,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -70,6 +71,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
   private MyNode myLocalScopesNode;
   private MyNode mySharedScopesNode;
 
+  private int myTotalFilesCount = -1;
+
   public static ScopeChooserConfigurable getInstance(Project project) {
     return project.getComponent(ScopeChooserConfigurable.class);
   }
@@ -104,6 +107,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
     super.disposeUIResources();
     myLocalScopesNode = null;
     mySharedScopesNode = null;
+    myTotalFilesCount = -1;
   }
 
 
@@ -238,6 +242,13 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
   @NonNls
   public String getHelpTopic() {
     return "project.scopes";  //todo help id
+  }
+
+  protected void updateSelection(@NotNull final NamedConfigurable configurable) {
+    super.updateSelection(configurable);
+    if (configurable instanceof ScopeConfigurable) {
+      ((ScopeConfigurable)configurable).restoreCanceledProgress();
+    }
   }
 
   private String createUniqueName() {

@@ -21,6 +21,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +59,7 @@ public class TreeModelBuilder {
   private Map<ScopeType, Map<OrderEntry, LibraryNode>> myLibraryNodes = new HashMap<ScopeType, Map<OrderEntry, LibraryNode>>();
   private int myScannedFileCount = 0;
   private int myTotalFileCount = 0;
+  private static TObjectIntHashMap<Project> ourTotalFilesCount = new TObjectIntHashMap<Project>();
   private int myMarkedFileCount = 0;
   private GeneralGroupNode myAllLibsNode = null;
 
@@ -189,21 +191,29 @@ public class TreeModelBuilder {
   }
 
   private void countFiles(Project project) {
-    myFileIndex.iterateContent(new ContentIterator() {
-      public boolean processFile(VirtualFile fileOrDir) {
-        if (!fileOrDir.isDirectory()) {
-          counting(fileOrDir);
+    if (!ourTotalFilesCount.containsKey(project)) {
+      myFileIndex.iterateContent(new ContentIterator() {
+        public boolean processFile(VirtualFile fileOrDir) {
+          if (!fileOrDir.isDirectory()) {
+            counting(fileOrDir);
+          }
+          return true;
         }
-        return true;
-      }
-    });
+      });
 
-    if (!myGroupByFiles) {
-      VirtualFile[] roots = getLibraryRoots(project);
-      for (VirtualFile root : roots) {
-        countFilesRecursively(root);
+      if (!myGroupByFiles) {
+        VirtualFile[] roots = getLibraryRoots(project);
+        for (VirtualFile root : roots) {
+          countFilesRecursively(root);
+        }
       }
-    }
+      ourTotalFilesCount.put(project, myTotalFileCount);
+    }    
+    myTotalFileCount = ourTotalFilesCount.get(project);
+  }
+
+  public static void clearCaches(Project project) {
+    ourTotalFilesCount.remove(project);
   }
 
   public TreeModel build(final Project project, boolean showProgress) {
@@ -250,7 +260,7 @@ public class TreeModelBuilder {
         processFilesRecursively(aChildren, psiManager);
       }
     }
-    else if (myFileIndex.isInLibrarySource(file) && myFileIndex.isJavaSourceFile(file) || myFileIndex.isLibraryClassFile(file)) {
+    else {
       final PsiFile psiFile = psiManager.findFile(file);
       if (psiFile != null) { // skip inners & anonymous
         buildFileNode(psiFile);
@@ -265,7 +275,7 @@ public class TreeModelBuilder {
         countFilesRecursively(aChildren);
       }
     }
-    else if (myFileIndex.isInLibrarySource(file) && myFileIndex.isJavaSourceFile(file) || myFileIndex.isLibraryClassFile(file)) {
+    else {
       counting(file);
     }
   }
@@ -707,9 +717,4 @@ public class TreeModelBuilder {
       }
     }
   }
-
-  public TreeNode getRootNode() {
-    return myRoot;
-  }
-
 }

@@ -94,6 +94,7 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
   public void disposeUIResources() {
     if (myPanel != null){
       myPanel.cancelCurrentProgress();
+      myPanel.clearCaches();
       myPanel = null;
     }
   }
@@ -106,5 +107,11 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
 
   public PackageSet getScope() {
     return myPanel.getCurrentScope();
+  }
+
+  public void restoreCanceledProgress() {
+    if (myPanel != null) {
+      myPanel.restoreCanceledProgress();
+    }
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -59,7 +60,7 @@ public class ScopeEditorPanel {
 
   private JLabel myCaretPositionLabel;
   private int myCaretPosition = 0;
-  private boolean myCanceled = false;
+  private boolean myTextChanged = false;
   private JPanel myMatchingCountPanel;
   private PanelProgressIndicator myCurrentProgress;
 
@@ -139,7 +140,7 @@ public class ScopeEditorPanel {
       try {
         myCurrentScope = PackageSetFactory.getInstance().compile(myPatternField.getText());
         myErrorMessage = null;
-        myCanceled = true;
+        myTextChanged = true;
         rebuild(false);
       }
       catch (Exception e) {
@@ -337,23 +338,29 @@ public class ScopeEditorPanel {
 
   public void rebuild(final boolean updateText, final Runnable runnable){
     myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(new Runnable() {
+    final Runnable request = new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable(){
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
+            myIsInUpdate = true;
             if (updateText && myCurrentScope != null) {
-              myIsInUpdate = true;
               myPatternField.setText(myCurrentScope.getText());
-              myIsInUpdate = false;
             }
-            updateTreeModel();
-            if (runnable != null){
+            try {
+              updateTreeModel();
+            }
+            catch (ProcessCanceledException e) {
+              return;
+            }
+            if (runnable != null) {
               runnable.run();
             }
+            myIsInUpdate = false;
           }
         });
       }
-    }, 1000);
+    };
+    myUpdateAlarm.addRequest(request, 1000);
   }
 
   public void rebuild(final boolean updateText) {
@@ -373,14 +380,19 @@ public class ScopeEditorPanel {
     new TreeSpeedSearch(tree);
   }
 
-  private void updateTreeModel() {
+  private void updateTreeModel() throws ProcessCanceledException {
     PanelProgressIndicator progress = new PanelProgressIndicator(new Consumer<JComponent>() {
       public void consume(final JComponent component) {
         setToComponent(component);
       }
     }) {
+      public void start() {
+        super.start();
+        myTextChanged = false;
+      }
+
       public boolean isCanceled() {
-        return super.isCanceled() || myCanceled;
+        return super.isCanceled() || myTextChanged || !myPanel.isShowing();
       }
 
       public void stop() {
@@ -400,11 +412,11 @@ public class ScopeEditorPanel {
     myCurrentProgress = progress;
     Runnable updateModel = new Runnable() {
       public void run() {
+        final ProcessCanceledException [] ex = new ProcessCanceledException[1];
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             try {
               myTreeExpansionMonitor.freeze();
-              UIUtil.setEnabled(myPanel, false, true);
               final TreeModelBuilder.TreeModel model = TreeModelBuilder.createTreeModel(myProject, false, false, myTreeMarker);
 
               if (myErrorMessage == null) {
@@ -422,17 +434,19 @@ public class ScopeEditorPanel {
                   myTreeExpansionMonitor.restore();
                 }
               });
+            } catch (ProcessCanceledException e) {
+              ex[0] = e;
             }
             finally {
-              myCanceled = false;
               myCurrentProgress = null;
               //update label
               setToComponent(myMatchingCountLabel);
-              UIUtil.setEnabled(myPanel, true, true);
-              UIUtil.setEnabled(myLegendPanel, !DependencyUISettings.getInstance().UI_FILTER_LEGALS, true);
             }
           }
         });
+        if (ex[0] != null) {
+          throw ex[0];
+        }
       }
     };
     ProgressManager.getInstance().runProcess(updateModel, progress);
@@ -488,6 +502,16 @@ public class ScopeEditorPanel {
         myPatternField.requestFocusInWindow();        
       }
     });
+  }
+
+  public void restoreCanceledProgress() {
+    if (myIsInUpdate) {
+      rebuild(false);
+    }
+  }
+
+  public void clearCaches() {
+    TreeModelBuilder.clearCaches(myProject);
   }
 
   private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
@@ -652,6 +676,7 @@ public class ScopeEditorPanel {
 
     public void setSelected(AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_FILTER_LEGALS = flag;
+      UIUtil.setEnabled(myLegendPanel, !flag, true);
       rebuild(true);
     }
   }
