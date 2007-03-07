@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -48,6 +49,17 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
     Set<String> options = myModule.myOptions.keySet();
     for (String option : options) {
       rootElement.setAttribute(option, myModule.myOptions.get(option));
+    }
+
+    Set<String> obsoleteOptions = new HashSet<String>();
+    for (Object attr : rootElement.getAttributes()) {
+      obsoleteOptions.add(((Attribute)attr).getName());
+    }
+    obsoleteOptions.removeAll(options);
+    obsoleteOptions.remove(BaseFileConfigurableStoreImpl.VERSION_OPTION);
+    obsoleteOptions.remove(BaseFileConfigurableStoreImpl.RELATIVE_PATHS_OPTION);
+    for ( String oldOption : obsoleteOptions ) {
+      rootElement.removeAttribute(oldOption);
     }
   }
 

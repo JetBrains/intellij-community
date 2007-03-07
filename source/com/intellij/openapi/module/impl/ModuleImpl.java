@@ -7,8 +7,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
-import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.components.impl.stores.IModuleStore;
+import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -235,6 +235,10 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
   public void setOption(@NotNull String optionName, @NotNull String optionValue) {
     myOptions.put(optionName, optionValue);
+  }
+
+  public void clearOption(@NotNull String optionName) {
+    myOptions.remove(optionName);
   }
 
   public String getOptionValue(@NotNull String optionName) {

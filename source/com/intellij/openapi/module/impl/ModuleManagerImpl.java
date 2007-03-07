@@ -36,6 +36,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -567,6 +568,11 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
     @NotNull
     public Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType) {
+      return newModule(filePath,moduleType,null);
+    }
+
+    @NotNull
+    public Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType, @Nullable Map<String, String> options) {
       assertWritable();
       try {
         filePath = FileUtil.resolveShortWindowsName(filePath);
@@ -578,6 +584,11 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       if (module == null) {
         module = new ModuleImpl(filePath, myProject, myPomModel);
         module.setModuleType(moduleType);
+        if (options != null) {
+          for ( Map.Entry<String,String> option : options.entrySet()) {
+            module.setOption(option.getKey(),option.getValue());
+          }
+        }
         module.loadModuleComponents();
         initModule(module, false);
       }

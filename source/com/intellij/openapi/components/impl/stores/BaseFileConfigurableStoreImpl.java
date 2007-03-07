@@ -26,8 +26,8 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   private int myOriginalVersion = -1;
   private boolean mySavePathsRelative;
   final HashMap<String,String> myConfigurationNameToFileName = new HashMap<String,String>();
-  @NonNls private static final String RELATIVE_PATHS_OPTION = "relativePaths";
-  @NonNls private static final String VERSION_OPTION = "version";
+  @NonNls protected static final String RELATIVE_PATHS_OPTION = "relativePaths";
+  @NonNls protected static final String VERSION_OPTION = "version";
   @NonNls public static final String ATTRIBUTE_NAME = "name";
   @NonNls static final String ELEMENT_COMPONENT = "component";
   @NonNls private static final String ATTRIBUTE_CLASS = "class";

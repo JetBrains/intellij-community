@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Represents the model for the list of modules in a project, or a temporary copy
@@ -57,6 +58,18 @@ public interface ModifiableModuleModel {
    * @return the module instance.
    */
   @NotNull Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType);
+
+  /**
+   * Creates a module of the specified type at the specified path and adds it to the project
+   * to which the module manager is related. {@link #commit()} must be called to
+   * bring the changes in effect.
+   *
+   * @param filePath the path at which the module is created.
+   * @param moduleType the type of the module to create.
+   * @param options map of module options to be used when creating the module
+   * @return the module instance.
+   */
+  @NotNull Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType, @Nullable Map<String,String> options);
 
   /**
    * Loads a module from an .iml file with the specified path and adds it to the project.

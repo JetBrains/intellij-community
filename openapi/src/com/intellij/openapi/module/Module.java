@@ -106,6 +106,13 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   void setOption(@NotNull String optionName, @NotNull String optionValue);
 
   /**
+   * Removes a custom option from this module.
+   *
+   * @param optionName the name of the custom option.
+   */
+  void clearOption(@NotNull String optionName);
+
+  /**
    * Gets the value of a custom option for this module.
    *
    * @param optionName the name of the custom option.
