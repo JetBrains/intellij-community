@@ -10,6 +10,9 @@ import java.awt.*;
 import java.util.Set;
 import java.util.LinkedHashSet;
 import java.util.EventListener;
+import java.util.HashSet;
+
+import org.jetbrains.annotations.Nullable;
 
 public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
 
@@ -121,26 +124,33 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
   }
 
   private boolean redispatch(final MouseEvent originalEvent, final boolean isMotion, final Component target) {
+    Container actualContainer = getParentOf(target);
     Component actualTarget = target;
 
+    if (isEndComponent(actualTarget)) return false;
+
+    MouseEvent targetEvent = SwingUtilities.convertMouseEvent(originalEvent.getComponent(), originalEvent, actualTarget);
+    for (EventListener eachListener : myMouseListeners) {
+      if (isMotion && eachListener instanceof MouseMotionListener) {
+        fireMouseMotion((MouseMotionListener)eachListener, targetEvent);
+      }
+      else if (!isMotion && eachListener instanceof MouseListener) {
+        fireMouseEvent((MouseListener)eachListener, targetEvent);
+      }
+    }
+
+    if (targetEvent.isConsumed()) {
+      return true;
+    }
+
+
+    Set<Component> processed = new HashSet<Component>();
     while (true) {
-      if (isEndComponent(actualTarget)) break;
-
-      final MouseEvent targetEvent = SwingUtilities.convertMouseEvent(originalEvent.getComponent(), originalEvent, actualTarget);
-      for (EventListener eachListener : myMouseListeners) {
-        if (isMotion && eachListener instanceof MouseMotionListener) {
-          fireMouseMotion((MouseMotionListener)eachListener, targetEvent);
-        }
-        else if (!isMotion && eachListener instanceof MouseListener) {
-          fireMouseEvent((MouseListener)eachListener, targetEvent);
-        }
-      }
-
-      if (targetEvent.isConsumed()) {
-        return true;
-      }
+      if (actualTarget == null || actualContainer == null) break;
+      targetEvent = SwingUtilities.convertMouseEvent(originalEvent.getComponent(), originalEvent, actualTarget);
 
       actualTarget.dispatchEvent(targetEvent);
+      processed.add(actualTarget);
 
       if (targetEvent.isConsumed()) {
         return true;
@@ -148,13 +158,33 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
 
       boolean shouldProceed = isMotion ? actualTarget.getMouseMotionListeners().length == 0  : actualTarget.getMouseListeners().length == 0;
       if (shouldProceed) {
-        actualTarget = actualTarget.getParent();
+        Component sibling = null;
+        Point containerPoint = SwingUtilities.convertPoint(originalEvent.getComponent(), originalEvent.getPoint(), actualContainer);
+        for (int i = 0; i < actualContainer.getComponentCount(); i++) {
+          final Component eachCandidate = actualContainer.getComponent(i);
+          if (processed.contains(eachCandidate)) continue;
+          if (eachCandidate.getBounds().contains(containerPoint)) {
+            sibling = eachCandidate;
+            break;
+          }
+        }
+        if (sibling != null) {
+          actualTarget = sibling;
+        } else {
+          actualTarget = getParentOf(actualTarget);
+          actualContainer = getParentOf(actualTarget);
+        }
       } else {
         break;
       }
+      if (isEndComponent(actualTarget)) return false;
     }
 
     return false;
+  }
+
+  private static @Nullable Container getParentOf(final Component actualTarget) {
+    return actualTarget != null ? actualTarget.getParent() : null;
   }
 
   private boolean isEndComponent(final Component actualTarget) {
