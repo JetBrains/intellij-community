@@ -2,7 +2,6 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
-import com.intellij.debugger.actions.ExportThreadsAction;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
@@ -31,6 +30,7 @@ import com.intellij.execution.ui.CloseAction;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.actions.CommonActionsFactory;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,7 +40,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
-import com.intellij.openapi.Disposable;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.*;
 import org.jetbrains.annotations.Nullable;
@@ -149,7 +148,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
 
     myFramePanel = new FramePanel(getProject(), getContextManager()) {
       protected boolean isUpdateEnabled() {
-        return myViewsContentManager.getSelectedContent().getComponent() == this;
+        return getRootPane() != null;
       }
     };
     myFramePanel.getFrameTree().setAutoVariablesMode(debuggerSettings.AUTO_VARIABLES_MODE);
