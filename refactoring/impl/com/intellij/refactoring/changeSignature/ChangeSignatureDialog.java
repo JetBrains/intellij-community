@@ -100,7 +100,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     return result;
   }
 
-  public String getMethodName() {
+  private String getMethodName() {
     if (myNameField != null) {
       return myNameField.getText().trim();
     }
@@ -109,7 +109,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     }
   }
 
-  public CanonicalTypes.Type getReturnType() {
+  private CanonicalTypes.Type getReturnType() {
     if (myReturnTypeField != null) {
       try {
         final PsiType type = myReturnTypeCodeFragment.getType();
@@ -126,7 +126,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     return null;
   }
 
-  public String getVisibility() {
+  private String getVisibility() {
     if (myVisibilityPanel != null) {
       return myVisibilityPanel.getVisibility();
     }
@@ -135,11 +135,11 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     }
   }
 
-  public ParameterInfo[] getParameters() {
+  private ParameterInfo[] getParameters() {
     return myParametersTableModel.getParameters();
   }
 
-  public ThrownExceptionInfo[] getExceptions() {
+  private ThrownExceptionInfo[] getExceptions() {
     return myExceptionsTableModel.getThrownExceptions();
   }
 
