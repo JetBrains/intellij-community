@@ -351,7 +351,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     }
 
     private static Painter getPainter() {
-      return TRANSPARENT_PAINTER; //System.getProperty("idea.breadcrumbs") != null ? TRANSPARENT_PAINTER : DEFAULT_PAINTER;
+      return System.getProperty("idea.breadcrumbs") != null ? TRANSPARENT_PAINTER : DEFAULT_PAINTER;
     }
 
     @Nullable
