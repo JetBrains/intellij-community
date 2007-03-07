@@ -58,6 +58,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.messages.MessageBusConnection;
+import gnu.trove.THashSet;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -129,8 +130,8 @@ public class DaemonListeners {
 
     myEditorTracker = editorTracker;
     myEditorTrackerListener = new EditorTrackerListener() {
-      public void activeEditorsChanged(final Editor[] editors) {
-        if (editors.length > 0) {
+      public void activeEditorsChanged(List<Editor> editors) {
+        if (!editors.isEmpty()) {
           stopDaemon(true);  // do not stop daemon if idea loses focus
         }
       }
@@ -389,27 +390,34 @@ public class DaemonListeners {
     myDaemonCodeAnalyzer.stopProcess(toRestartAlarm);
   }
 
-  FileEditor[] getSelectedEditors() {
+  Collection<FileEditor> getSelectedEditors() {
     // Editors in modal context
-    Editor[] editors = myEditorTracker.getActiveEditors();
-    FileEditor[] fileEditors = new FileEditor[editors.length];
-    if (editors.length > 0) {
-      for (int i = 0; i < fileEditors.length; i++) {
-        fileEditors[i] = TextEditorProvider.getInstance().getTextEditor(editors[i]);
-      }
-    }
+    List<Editor> editors = myEditorTracker.getActiveEditors();
 
+    Set<FileEditor> activeFileEditors = new THashSet<FileEditor>(editors.size());
+    for (Editor editor : editors) {
+      TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
+      activeFileEditors.add(textEditor);
+    }
     if (ApplicationManager.getApplication().getCurrentModalityState() != ModalityState.NON_MODAL) {
-      return fileEditors;
+      return activeFileEditors;
     }
-
-    final FileEditor[] tabEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
-    if (fileEditors.length == 0) return tabEditors;
 
     // Editors in tabs.
-    Set<FileEditor> common = new HashSet<FileEditor>(Arrays.asList(fileEditors));
-    common.addAll(Arrays.asList(tabEditors));
-
-    return common.toArray(new FileEditor[common.size()]);
+    Set<FileEditor> result = new THashSet<FileEditor>();
+    Set<Document> documents = new THashSet<Document>(activeFileEditors.size());
+    final FileEditor[] tabEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
+    for (FileEditor tabEditor : tabEditors) {
+      if (tabEditor instanceof TextEditor) {
+        documents.add(((TextEditor)tabEditor).getEditor().getDocument());
+      }
+      result.add(tabEditor);
+    }
+    // do not duplicate documents
+    for (FileEditor fileEditor : activeFileEditors) {
+      if (fileEditor instanceof TextEditor && documents.contains(((TextEditor)fileEditor).getEditor().getDocument())) continue;
+      result.add(fileEditor);
+    }
+    return result;
   }
 }

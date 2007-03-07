@@ -162,7 +162,7 @@ public class FileStatusMap {
     synchronized (myRefCountHolderLock) {
       RefCountHolder refCountHolder = document.getUserData(REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY);
       if (refCountHolder == null
-          // PostHighlighting pass is still mumbling with old refCounterHolder. Let it be, it'll be canceled anyway
+          // PostHighlighting pass is still mumbling with old refCounterHolder. Let it be, it'll be canceled soon anyway
           || refCountHolder.isLocked()) {
         refCountHolder = new RefCountHolder(file);
         document.putUserData(REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY, refCountHolder);

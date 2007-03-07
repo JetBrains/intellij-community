@@ -137,24 +137,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     dispose();
   }
 
-  public void prepareForTest(final Object stoppedNotify, final EditorTracker editorTracker) {
-    myStatusBarUpdater = new StatusBarUpdater(myProject);
-
-    myDaemonListeners = new DaemonListeners(myProject, this, editorTracker) {
-      protected void stopDaemon(boolean toRestartAlarm) {
-      }
-    };
-    reloadScopes();
-    myUpdateProgress = new MockDaemonProgressIndicator(stoppedNotify);
-
-    myInitialized = true;
-    myDisposed = false;
-
-    myAlarm.cancelAllRequests();
-    myPassExecutorService.cancelAll();
-    myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
-  }
-
   void repaintErrorStripeRenderer(Editor editor) {
     if (myProject.isDisposed()) return;
     final Document document = editor.getDocument();
@@ -534,9 +516,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         }
         if (!myUpdateByTimerEnabled) return;
         if (myDisposed || myProject.isDisposed()) return;
-        final FileEditor[] activeEditors = myDaemonListeners.getSelectedEditors();
-        if (activeEditors.length == 0) return;
-        Map<FileEditor, HighlightingPass[]> passes = new THashMap<FileEditor, HighlightingPass[]>(activeEditors.length);
+        final Collection<FileEditor> activeEditors = myDaemonListeners.getSelectedEditors();
+        if (activeEditors.isEmpty()) return;
+        Map<FileEditor, HighlightingPass[]> passes = new THashMap<FileEditor, HighlightingPass[]>(activeEditors.size());
         //setLastIntentionHint(null);
         for (FileEditor fileEditor : activeEditors) {
           BackgroundEditorHighlighter highlighter = fileEditor.getBackgroundHighlighter();

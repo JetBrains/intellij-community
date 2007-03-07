@@ -17,16 +17,15 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class EditorTracker implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.EditorTracker");
@@ -40,8 +39,7 @@ public class EditorTracker implements ProjectComponent {
   private Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<Window, List<Editor>>();
   private Map<Window, WindowFocusListener> myWindowToWindowFocusListenerMap = new HashMap<Window, WindowFocusListener>();
   private Map<Editor, Window> myEditorToWindowMap = new HashMap<Editor, Window>();
-  private static final Editor[] EMPTY_EDITOR_ARRAY = new Editor[0];
-  private Editor[] myActiveEditors = EMPTY_EDITOR_ARRAY;
+  private List<Editor> myActiveEditors = Collections.emptyList();
 
   private MyEditorFactoryListener myEditorFactoryListener;
   private EventDispatcher<EditorTrackerListener> myDispatcher = EventDispatcher.create(EditorTrackerListener.class);
@@ -198,41 +196,37 @@ public class EditorTracker implements ProjectComponent {
     return window;
   }
 
-  public Editor[] getActiveEditors() {
+  @NotNull public List<Editor> getActiveEditors() {
     return myActiveEditors;
   }
 
   private void setActiveWindow(Window window) {
     myActiveWindow = window;
-    Editor[] editors = editorsByWindow(myActiveWindow);
+    List<Editor> editors = editorsByWindow(myActiveWindow);
     setActiveEditors(editors);
   }
 
-  private Editor[] editorsByWindow(Window window) {
+  @NotNull
+  private List<Editor> editorsByWindow(Window window) {
     List<Editor> list = myWindowToEditorsMap.get(window);
-    if (list == null) return EMPTY_EDITOR_ARRAY;
-    List<Editor> filtered = new ArrayList<Editor>();
+    if (list == null) return Collections.emptyList();
+    List<Editor> filtered = new SmartList<Editor>();
     for (Editor editor : list) {
       if (editor.getContentComponent().isShowing()) {
         filtered.add(editor);
       }
     }
-    return filtered.toArray(new Editor[filtered.size()]);
+    return filtered;
   }
 
-  private void setActiveEditors(Editor[] editors) {
+  private void setActiveEditors(@NotNull List<Editor> editors) {
     myActiveEditors = editors;
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("active editors changed:");
-      if (editors.length > 0) {
-        for (Editor editor : editors) {
-          PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-          LOG.debug("    " + psiFile);
-        }
-      }
-      else {
-        LOG.debug("    <none>");
+      for (Editor editor : editors) {
+        PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+        LOG.debug("    " + psiFile);
       }
     }
 
