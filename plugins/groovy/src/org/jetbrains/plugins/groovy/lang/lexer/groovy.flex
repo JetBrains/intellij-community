@@ -31,8 +31,9 @@ import org.jetbrains.annotations.NotNull;
 ////////// NewLines and spaces /////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-mONE_NL = \r | \n | \r\n | \u0085| \u2028 | \u2029          // NewLines
-mWS = " " | \t | \f | \\                                    // Whitespaces
+mONE_NL = \r | \n | \r\n                                    // NewLines
+mWS = " " | \t | \f | \\ {mONE_NL}                          // Whitespaces
+mNLS = {mONE_NL}+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// Comments ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44,80 +45,114 @@ COMMENT_TAIL=( [^"*"]* ("*"+ [^"*""/"] )? )* ("*"+"/")?
 
 mSH_COMMENT = "#!"[^\r\n]*
 mSL_COMMENT = "/""/"[^\r\n]*
-mML_COMMENT = C_STYLE_COMMENT | DOC_COMMENT
+mML_COMMENT = {C_STYLE_COMMENT} | {DOC_COMMENT}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////      integers and floats     /////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*
-integerLiteral = ({decimalNumeral} | {hexNumeral} | {octalNumeral}) (L | l)?
-decimalNumeral = 0 | {nonZeroDigit} {digit}*
-hexNumeral = 0 x {hexDigit}+
-octalNumeral = 0{octalDigit}+
-digit = [0-9]
-nonZeroDigit = [1-9]
-octalDigit = [0-7]
-hexDigit = [0-9A-Fa-f]
+mHEX_DIGIT = [0-9A-Fa-f]
+mDIGIT = [0-9]
+mBIG_SUFFIX = g | G
+mFLOAT_SUFFIX = f | F | d | D
+mEXPONENT = (e | E)("+" | "-")?([0-9])+
 
-floatingPointLiteral =
-        {digit} + "." {digit}* {exponentPart}? {floatType}?
-    | "." {digit}+ {exponentPart}? {floatType}?
-    | {digit}+ {exponentPart} {floatType}?
-    | {digit}+ {exponentPart}? {floatType}
+mNUM_INT = ( 0
+ ( (x | X)({mHEX_DIGIT})+
+   | {mDIGIT}+
+   | ([0-7])+
+ )?
+ | {mDIGIT}+
+) ( (l | L)
+ | (i | I)
+ | {mBIG_SUFFIX}
+ | ("." {mDIGIT}+ {mEXPONENT}? ({mFLOAT_SUFFIX}|{mBIG_SUFFIX})? )
+ | {mEXPONENT} ({mFLOAT_SUFFIX}|{mBIG_SUFFIX})?
+ | {mFLOAT_SUFFIX}
+)?
 
-exponentPart = (E | e) ("+" | "-")? {digit}+
-floatType = F | f | D | d
-*/
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////      identifiers      ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+mLETTER = [:jletter:]
+| "_"
 /*
-
-identifier = {plainid} //| "'" "\"" {stringLiteral} "\"" "'"
-
-digit = [0-9]
-special =   \u0021 | \u0023
-          | [\u0025-\u0026]
-          | [\u002A-\u002B]
-          | \u002D | \u005E
-          | \u003A
-          | [\u003C-\u0040]
-          | \u007E
-          | \u005C | \u002F     //slashes
-
-// Vertical line haemorrhoids
-op = \u007C ({special} | \u007C)+
-     | {special} ({special} | \u007C)*
-
-idrest1 = [:jletter:]? [:jletterdigit:]* ("_" {op})?
-idrest = [:jletter:]? [:jletterdigit:]* ("_" {op} | "_" {idrest1} )?
-varid = [:jletter:] {idrest}
-
-plainid = {varid}
-          | {op}
-
-*/          
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////// String & chars //////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-
-ESCAPE_SEQUENCE=\\[^\r\n]
-CHARACTER_LITERAL="'"([^\\\'\r\n]|{ESCAPE_SEQUENCE})*("'"|\\)
-STRING_LITERAL=\"([^\\\"\r\n]|{ESCAPE_SEQUENCE})*(\"|\\)? |
-                \"\"\" ( (\"(\")?)? [^\"] )* \"\"\"    // Multi-line string
-
-charEscapeSeq = \\[^\r\n]
-charNoDoubleQuote = !( ![^"\""] | {LineTerminator})
-stringElement = {charNoDoubleQuote} | {charEscapeSeq}  
-stringLiteral = {stringElement}*
-symbolLiteral = "\'" {plainid}
-
+| [\u00C0..\u00D6] 
+| [\u00D8..\u00F6]
+| [\u00F8..\u00FF]
+| [\u0100..\uFFFE]
 */
+
+mIDENT = {mLETTER} ({mLETTER} | {mDIGIT})*
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// String & regexprs ///////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+mSTRING_NL = {mONE_NL}
+mSTRING_ESC = \\ n | \\ r | \\ t | \\ b | \\ f | \\ \" | \\ \' | \\ \\ | \\ "$"
+| "\\""u"{mHEX_DIGIT}{4}
+| "\\" [0..3] ([0..7] ([0..7])?)?
+| "\\" [4..7] ([0..7])?
+| "\\" {mONE_NL}
+
+mSINGLE_QUOTED_STRING_BEGIN = "\'" ( {mSTRING_ESC}
+    | "\""
+    | [^\'\r\n]
+    | "$" )*
+
+mSINGLE_QUOTED_STRING = {mSINGLE_QUOTED_STRING_BEGIN} \'
+
+mTRIPLE_QUOTED_STRING = "\'\'\'" ({mSTRING_ESC}
+    | "\""
+    | "$"
+    | [^\']
+    | {mSTRING_NL}
+    | \'(\')?[^\'] )* (\'\'\')?
+
+mSTRING_CTOR_END_SINGLE_BEGIN = ({mSTRING_ESC}
+    | [^\"\r\n]
+    | "\'" )*
+
+mSTRING_CTOR_END_SINGLE = {mSTRING_CTOR_END_SINGLE_BEGIN}  \"
+
+mSTRING_CTOR_END_TRIPLE = ( {mSTRING_ESC}
+    | \'
+    | \" (\")? [^\"]
+    | [^\"]
+    | {mSTRING_NL} )* (\"\"\")?
+
+
+mSTRING_LITERAL = {mTRIPLE_QUOTED_STRING}
+    | {mSINGLE_QUOTED_STRING}
+    | \" ([^\"] | {mSTRING_ESC})? {mSTRING_CTOR_END_SINGLE}
+    | \"\"\" {mSTRING_CTOR_END_TRIPLE}
+    | \"\"
+
+
+
+/////////////////////////////////////////// Regular expressions ////////////////////////////////////////////////////////
+
+mREGEXP_SYMBOL = (( "*"
+        | "$"
+        | \\
+        | \n
+        | \r
+        | [^\r\n/] )
+    | "\\" (\n | \r)
+    | "\\" {mONE_NL} )("*")*
+
+mREGEXP_CTOR_END = ({mREGEXP_SYMBOL} | "$")* ("/" | "$")
+
+mREGEXP_LITERAL = "/" [^"*"/] (
+  {mREGEXP_SYMBOL}? {mREGEXP_CTOR_END}
+  | "$" {mREGEXP_CTOR_END}
+  | "$" )
+  | "/"
+  | "/="
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////  states ///////////////////////////////////////////////////////////////////////////////////////////
@@ -127,146 +162,173 @@ symbolLiteral = "\'" {plainid}
 
 <YYINITIAL>{
 
-// White spaces & NewLines
-{mWS}                                                     {   return WS; }
-
-// Comments
-{mSH_COMMENT}                                             {   return SH_COMMENT; }
-{mSL_COMMENT}                                             {   return SL_COMMENT; }
-{mML_COMMENT}                                             {   return ML_COMMENT; }
-
-// Other
-. | {mONE_NL}                                             {   return WRONG; }
-
-}
-
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////// FOR ALL INCLUSIVE STATES //////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////// White spaces & NewLines //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*
+{mWS}                                     {  return mWS; }
+{mNLS}                                    {  return mNLS; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////Comments //////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+{mSH_COMMENT}                             {  return mSH_COMMENT; }
+{mSL_COMMENT}                             {  return mSL_COMMENT; }
+{mML_COMMENT}                             {  return mML_COMMENT; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////// Integers and floats //////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+{mNUM_INT}                                {  return mNUM_INT; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////// Strings & regular expressions ////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+{mSTRING_LITERAL}                         {  return mSTRING_LITERAL; }
+
+( \" ([^\"] | {mSTRING_ESC})? {mSTRING_CTOR_END_SINGLE_BEGIN}
+  | \"
+  | {mSINGLE_QUOTED_STRING_BEGIN}) /{mSTRING_NL}          {  return mWRONG_STRING_LITERAL; }
+
+{mREGEXP_LITERAL}                         {  return mREGEXP_LITERAL; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////// Reserved shorthands //////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+"?"                                       {  return(mQUESTION);  }
+"("                                       {  return(mLPAREN);  }
+")"                                       {  return(mRPAREN);  }
+"["                                       {  return(mLBRACK);  }
+"]"                                       {  return(mRBRACK);  }
+"{"                                       {  return(mLCURLY);  }
+"}"                                       {  return(mRCURLY);  }
+":"                                       {  return(mCOLON);  }
+","                                       {  return(mCOMMA);  }
+"."                                       {  return(mDOT);  }
+"="                                       {  return(mASSIGN);  }
+"<=>"                                     {  return(mCOMPARE_TO);  }
+"=="                                      {  return(mEQUAL);  }
+"!"                                       {  return(mLNOT);  }
+"~"                                       {  return(mBNOT);  }
+"!="                                      {  return(mNOT_EQUAL);  }
+"+"                                       {  return(mPLUS);  }
+"+="                                      {  return(mPLUS_ASSIGN);  }
+"++"                                      {  return(mINC);  }
+"-"                                       {  return(mMINUS);  }
+"-="                                      {  return(mMINUS_ASSIGN);  }
+"--"                                      {  return(mDEC);  }
+"*"                                       {  return(mSTAR);  }
+"*="                                      {  return(mSTAR_ASSIGN);  }
+"%"                                       {  return(mMOD);  }
+"%="                                      {  return(mMOD_ASSIGN);  }
+">>"                                      {  return(mSR);  }
+">>="                                     {  return(mSR_ASSIGN);  }
+">>>"                                     {  return(mBSR);  }
+">>>="                                    {  return(mBSR_ASSIGN);  }
+">="                                      {  return(mGE);  }
+">"                                       {  return(mGT);  }
+"<<"                                      {  return(mSL);  }
+"<<="                                     {  return(mSL_ASSIGN);  }
+"<="                                      {  return(mLE);  }
+"<"                                       {  return(mLT);  }
+"^"                                       {  return(mBXOR);  }
+"^="                                      {  return(mBXOR_ASSIGN);  }
+"|"                                       {  return(mBOR);  }
+"|="                                      {  return(mBOR_ASSIGN);  }
+"||"                                      {  return(mLOR);  }
+"&"                                       {  return(mBAND);  }
+"&="                                      {  return(mBAND_ASSIGN);  }
+"&&"                                      {  return(mLAND);  }
+";"                                       {  return(mSEMI);  }
+"$"                                       {  return(mDOLLAR);  }
+".."                                      {  return(mRANGE_INCLUSIVE);  }
+"..<"                                     {  return(mRANGE_EXCLUSIVE);  }
+"..."                                     {  return(mTRIPLE_DOT);  }
+"*."                                      {  return(mSPREAD_DOT);  }
+"?."                                      {  return(mOPTIONAL_DOT);  }
+".&"                                      {  return(mMEMBER_POINTER);  }
+"=~"                                      {  return(mREGEX_FIND);  }
+"==~"                                     {  return(mREGEX_MATCH);  }
+"**"                                      {  return(mSTAR_STAR);  }
+"**="                                     {  return(mSTAR_STAR_ASSIGN);  }
+"->"                                      {  return(mCLOSABLE_BLOCK_OP);  }
+"@"                                       {  return(mAT);  }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// keywords /////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-"abstract"                              {   return process(kABSTRACT); }
+"package"                                 {  return( kPACKAGE );  }
+"import"                                  {  return( kIMPORT );  }
+"static"                                  {  return( kSTATIC );  }
+"def"                                     {  return( kDEF );  }
+"class"                                   {  return( kCLASS );  }
+"interface"                               {  return( kINTERFACE );  }
+"enum"                                    {  return( kENUM );  }
+"extends"                                 {  return( kEXTENDS );  }
+"super"                                   {  return( kSUPER );  }
+"void"                                    {  return( kVOID );  }
+"boolean"                                 {  return( kBOOLEAN );  }
+"byte"                                    {  return( kBYTE );  }
+"char"                                    {  return( kCHAR );  }
+"short"                                   {  return( kSHORT );  }
+"int"                                     {  return( kINT );  }
+"float"                                   {  return( kFLOAT );  }
+"long"                                    {  return( kLONG );  }
+"double"                                  {  return( kDOUBLE );  }
+"any"                                     {  return( kANY );  }
+"as"                                      {  return( kAS );  }
+"private"                                 {  return( kPRIVATE );  }
+"public"                                  {  return( kPUBLIC );  }
+"protected"                               {  return( kPROTECTED );  }
+"transient"                               {  return( kTRANSIENT );  }
+"native"                                  {  return( kNATIVE );  }
+"threadsafe"                              {  return( kTHREADSAFE );  }
+"synchronized"                            {  return( kSYNCHRONIZED );  }
+"volatile"                                {  return( kVOLATILE );  }
+"default"                                 {  return( kDEFAULT );  }
+"throws"                                  {  return( kTHROWS );  }
+"implements"                              {  return( kIMPLEMENTS );  }
+"this"                                    {  return( kTHIS );  }
+"if"                                      {  return( kIF );  }
+"else"                                    {  return( kELSE );  }
+"while"                                   {  return( kWHILE );  }
+"with"                                    {  return( kWITH );  }
+"switch"                                  {  return( kSWITCH );  }
+"for"                                     {  return( kFOR );  }
+"in"                                      {  return( kIN );  }
+"return"                                  {  return( kRETURN );  }
+"break"                                   {  return( kBREAK );  }
+"continue"                                {  return( kCONTINUE );  }
+"throw"                                   {  return( kTHROW );  }
+"assert"                                  {  return( kASSERT );  }
+"case"                                    {  return( kCASE );  }
+"try"                                     {  return( kTRY );  }
+"finally"                                 {  return( kFINALLY );  }
+"catch"                                   {  return( kCATCH );  }
+"instanceof"                              {  return( kINSTANCEOF );  }
+"new"                                     {  return( kNEW );  }
+"true"                                    {  return( kTRUE );  }
+"false"                                   {  return( kFALSE );  }
+"null"                                    {  return( kNULL );  }
 
-"case" / ({LineTerminator}|{WhiteSpaceInLine})+("class" | "object")
-                                        {   return process(kCASE); }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////      identifiers      ////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-"case"                                  {   braceStack.push(kCASE);
-                                            yybegin(NEW_LINE_DEPRECATED);
-                                            return process(kCASE); }
-                                            
-"catch"                                 {   return process(kCATCH); }
-"class"                                 {   return process(kCLASS); }
-"def"                                   {   return process(kDEF); }
-"do"                                    {   return process(kDO); }
-"else"                                  {   return process(kELSE); }
-"extends"                               {   return process(kEXTENDS); }
-"false"                                 {   processNewLine();
-                                            return process(kFALSE); }
-"final"                                 {   return process(kFINAL); }
-"finally"                               {   return process(kFINALLY); }
-"for"                                   {   return process(kFOR); }
-"if"                                    {   return process(kIF); }
-"implicit"                              {   return process(kIMPLICIT); }
-"import"                                {   return process(kIMPORT); }
-"match"                                 {   return process(kMATCH); }
-"new"                                   {   return process(kNEW); }
-"null"                                  {   processNewLine();
-                                            return process(kNULL); }
-"object"                                {   return process(kOBJECT); }
-"override"                              {   return process(kOVERRIDE); }
-"package"                               {   return process(kPACKAGE); }
-"private"                               {   return process(kPRIVATE); }
-"protected"                             {   return process(kPROTECTED); }
-"requires"                              {   return process(kREQUIRES); }
-"return"                                {   processNewLine();
-                                            return process(kRETURN); }
-"sealed"                                {   return process(kSEALED); }
-"super"                                 {   return process(kSUPER); }
-"this"                                  {   processNewLine();
-                                            return process(kTHIS); }
-"throw"                                 {   return process(kTHROW); }
-"trait"                                 {   return process(kTRAIT); }
-"try"                                   {   return process(kTRY); }
-"true"                                  {   processNewLine();
-                                            return process(kTRUE); }
-"type"                                  {   processNewLine();
-                                            return process(kTYPE); }
-"val"                                   {   return process(kVAL); }
-"var"                                   {   return process(kVAR); }
-"while"                                 {   return process(kWHILE); }
-"with"                                  {   return process(kWITH); }
-"yield"                                 {   return process(kYIELD); }
+{mIDENT}                                  {   return mIDENT; }
 
-///////////////////// Reserved shorthands //////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////// Other ////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-"*"                                     {   processNewLine();
-                                            return process(tIDENTIFIER);  }
-"?"                                     {   processNewLine();
-                                            return process(tIDENTIFIER);  }
+// Unknown symbol is using for debug goals.
+.                              {   return WRONG; }
 
-"_"                                     {   processNewLine();
-                                            return process(tUNDER);  }
-":"                                     {   return process(tCOLON);  }
-"="                                     {   return process(tASSIGN);  }
-"=>"                                    {   return popBraceStack(tFUNTYPE); }
-\u21D2                                  {   return process(tFUNTYPE_ASCII); }
-"<-"                                    {   return process(tCHOOSE); }
-"<:"                                    {   return process(tUPPER_BOUND); }
-">:"                                    {   return process(tLOWER_BOUND); }
-"<%"                                    {   return process(tVIEW); }
-"#"                                     {   return process(tINNER_CLASS); }
-"@"                                     {   return process(tAT);}
-
-//"&"                                     {   return process(tAND);}
-//"|"                                     {   return process(tOR);}
-
-"&"                                     {   processNewLine();
-                                            return process(tIDENTIFIER);}
-"|"                                     {   processNewLine();
-                                            return process(tIDENTIFIER);}
-"+"                                     {   processNewLine();
-                                            return process(tIDENTIFIER); }
-"-"                                     {   processNewLine();
-                                            return process(tIDENTIFIER);}
-"~"                                     {   processNewLine();
-                                            return process(tIDENTIFIER);}
-"!"                                     {   processNewLine();
-                                            return process(tIDENTIFIER);}
-
-"."                                     {   return process(tDOT);}
-";"                                     {   return process(tSEMICOLON);}
-","                                     {   return process(tCOMMA);}
-
-
-////////////////////// Identifier /////////////////////////////////////////
-
-{identifier}                            {   processNewLine();
-                                            return process(tIDENTIFIER); }
-({digit}+) / ("." {identifier})         {   processNewLine();
-                                            return process(tINTEGER);  }
-{integerLiteral}                        {   processNewLine();
-                                            return process(tINTEGER);  }
-{floatingPointLiteral}                  {   processNewLine();
-                                            return process(tFLOAT);      }
-
-////////////////////// white spaces in line ///////////////////////////////////////////////
-{WhiteSpaceInLine}                            {   return process(tWHITE_SPACE_IN_LINE);  }
-
-////////////////////// white spaces line terminator ///////////////////////////////////////////////
-//{LineTerminator}                              {   return process(tNON_SIGNIFICANT_NEWLINE); }
-{LineTerminator}                              {   return process(tWHITE_SPACE_IN_LINE); }
-
-////////////////////// STUB ///////////////////////////////////////////////
-*/
-
-
+}
 

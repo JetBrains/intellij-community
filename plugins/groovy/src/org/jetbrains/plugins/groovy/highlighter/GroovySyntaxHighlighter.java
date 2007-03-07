@@ -1,0 +1,174 @@
+package org.jetbrains.plugins.groovy.highlighter;
+
+import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.lexer.Lexer;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyFlexLexer;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+
+import java.util.Map;
+import java.util.HashMap;
+
+/**
+ * @author Ilya.Sergey
+ */
+public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements GroovyTokenTypes {
+
+  private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<IElementType, TextAttributesKey>();
+
+
+  static final TokenSet tCOMMENTS = TokenSet.create(
+          GroovyTokenTypes.mSL_COMMENT,
+          GroovyTokenTypes.mML_COMMENT,
+          GroovyTokenTypes.mSH_COMMENT
+  );
+
+  static final TokenSet tNUMBERS = TokenSet.create(
+          GroovyTokenTypes.mNUM_INT
+  );
+
+  static final TokenSet tSTRINGS = TokenSet.create(
+          GroovyTokenTypes.mSTRING_LITERAL,
+          GroovyTokenTypes.mWRONG_STRING_LITERAL
+  );
+
+  static final TokenSet tREGEXP = TokenSet.create(
+          GroovyTokenTypes.mREGEXP_LITERAL
+  );
+
+  static final TokenSet tBRACES = TokenSet.create(
+          GroovyTokenTypes.mLPAREN,
+          GroovyTokenTypes.mRPAREN,
+          GroovyTokenTypes.mLBRACK,
+          GroovyTokenTypes.mRBRACK,
+          GroovyTokenTypes.mLCURLY,
+          GroovyTokenTypes.mRCURLY
+  );
+
+  public static final TokenSet tOPERATORS = TokenSet.create(
+          GroovyTokenTypes.mQUESTION,
+          GroovyTokenTypes.mCOMPARE_TO,
+          GroovyTokenTypes.mEQUAL,
+          GroovyTokenTypes.mBNOT,
+          GroovyTokenTypes.mNOT_EQUAL,
+          GroovyTokenTypes.mPLUS,
+          GroovyTokenTypes.mPLUS_ASSIGN,
+          GroovyTokenTypes.mINC,
+          GroovyTokenTypes.mMINUS,
+          GroovyTokenTypes.mMINUS_ASSIGN,
+          GroovyTokenTypes.mDEC,
+          GroovyTokenTypes.mSTAR,
+          GroovyTokenTypes.mSTAR_ASSIGN,
+          GroovyTokenTypes.mMOD,
+          GroovyTokenTypes.mMOD_ASSIGN,
+          GroovyTokenTypes.mSR,
+          GroovyTokenTypes.mSR_ASSIGN,
+          GroovyTokenTypes.mBSR,
+          GroovyTokenTypes.mBSR_ASSIGN,
+          GroovyTokenTypes.mGE,
+          GroovyTokenTypes.mGT,
+          GroovyTokenTypes.mSL,
+          GroovyTokenTypes.mSL_ASSIGN,
+          GroovyTokenTypes.mLE,
+          GroovyTokenTypes.mLT,
+          GroovyTokenTypes.mBXOR,
+          GroovyTokenTypes.mBXOR_ASSIGN,
+          GroovyTokenTypes.mBOR,
+          GroovyTokenTypes.mBOR_ASSIGN,
+          GroovyTokenTypes.mLOR,
+          GroovyTokenTypes.mBAND,
+          GroovyTokenTypes.mBAND_ASSIGN,
+          GroovyTokenTypes.mLAND,
+          GroovyTokenTypes.mDOLLAR,
+          GroovyTokenTypes.mRANGE_INCLUSIVE,
+          GroovyTokenTypes.mRANGE_EXCLUSIVE,
+          GroovyTokenTypes.mTRIPLE_DOT,
+          GroovyTokenTypes.mSPREAD_DOT,
+          GroovyTokenTypes.mOPTIONAL_DOT,
+          GroovyTokenTypes.mMEMBER_POINTER,
+          GroovyTokenTypes.mREGEX_FIND,
+          GroovyTokenTypes.mREGEX_MATCH,
+          GroovyTokenTypes.mSTAR_STAR,
+          GroovyTokenTypes.mSTAR_STAR_ASSIGN,
+          GroovyTokenTypes.mCLOSABLE_BLOCK_OP,
+          GroovyTokenTypes.mAT
+  );
+
+  public static final TokenSet tKEYWORDS = TokenSet.create(
+          GroovyTokenTypes.kPACKAGE,
+          GroovyTokenTypes.kIMPORT,
+          GroovyTokenTypes.kSTATIC,
+          GroovyTokenTypes.kDEF,
+          GroovyTokenTypes.kCLASS,
+          GroovyTokenTypes.kINTERFACE,
+          GroovyTokenTypes.kENUM,
+          GroovyTokenTypes.kEXTENDS,
+          GroovyTokenTypes.kSUPER,
+          GroovyTokenTypes.kVOID,
+          GroovyTokenTypes.kBOOLEAN,
+          GroovyTokenTypes.kBYTE,
+          GroovyTokenTypes.kCHAR,
+          GroovyTokenTypes.kSHORT,
+          GroovyTokenTypes.kINT,
+          GroovyTokenTypes.kFLOAT,
+          GroovyTokenTypes.kLONG,
+          GroovyTokenTypes.kDOUBLE,
+          GroovyTokenTypes.kANY,
+          GroovyTokenTypes.kAS,
+          GroovyTokenTypes.kPRIVATE,
+          GroovyTokenTypes.kPUBLIC,
+          GroovyTokenTypes.kPROTECTED,
+          GroovyTokenTypes.kTRANSIENT,
+          GroovyTokenTypes.kNATIVE,
+          GroovyTokenTypes.kTHREADSAFE,
+          GroovyTokenTypes.kSYNCHRONIZED,
+          GroovyTokenTypes.kVOLATILE,
+          GroovyTokenTypes.kDEFAULT,
+          GroovyTokenTypes.kTHROWS,
+          GroovyTokenTypes.kIMPLEMENTS,
+          GroovyTokenTypes.kTHIS,
+          GroovyTokenTypes.kIF,
+          GroovyTokenTypes.kELSE,
+          GroovyTokenTypes.kWHILE,
+          GroovyTokenTypes.kWITH,
+          GroovyTokenTypes.kSWITCH,
+          GroovyTokenTypes.kFOR,
+          GroovyTokenTypes.kIN,
+          GroovyTokenTypes.kRETURN,
+          GroovyTokenTypes.kBREAK,
+          GroovyTokenTypes.kCONTINUE,
+          GroovyTokenTypes.kTHROW,
+          GroovyTokenTypes.kASSERT,
+          GroovyTokenTypes.kCASE,
+          GroovyTokenTypes.kTRY,
+          GroovyTokenTypes.kFINALLY,
+          GroovyTokenTypes.kCATCH,
+          GroovyTokenTypes.kINSTANCEOF,
+          GroovyTokenTypes.kNEW,
+          GroovyTokenTypes.kTRUE,
+          GroovyTokenTypes.kFALSE,
+          GroovyTokenTypes.kNULL
+  );
+
+  static {
+    fillMap(ATTRIBUTES, tCOMMENTS, DefaultHighlighter.LINE_COMMENT);
+    fillMap(ATTRIBUTES, tKEYWORDS, DefaultHighlighter.KEYWORD);
+    fillMap(ATTRIBUTES, tNUMBERS, DefaultHighlighter.NUMBER);
+    fillMap(ATTRIBUTES, tSTRINGS, DefaultHighlighter.STRING);
+    fillMap(ATTRIBUTES, tREGEXP, DefaultHighlighter.REGEXP);
+    fillMap(ATTRIBUTES, tBRACES, DefaultHighlighter.BRACES);
+  }
+
+  @NotNull
+  public Lexer getHighlightingLexer() {
+    return new GroovyFlexLexer();
+  }
+
+  @NotNull
+  public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+    return pack(ATTRIBUTES.get(tokenType));
+  }
+}

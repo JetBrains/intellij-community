@@ -10,13 +10,13 @@ import com.intellij.psi.tree.TokenSet;
 public abstract class TokenSets implements GroovyTokenTypes {
 
   public static TokenSet COMMENTS_TOKEN_SET = TokenSet.create(
-          SH_COMMENT,
-          SL_COMMENT,
-          ML_COMMENT
+          mSH_COMMENT,
+          mSL_COMMENT,
+          mML_COMMENT
   );
 
   public static TokenSet WHITE_SPACE_TOKEN_SET = TokenSet.create(
-          WS
+          mWS
   );
 
 }
