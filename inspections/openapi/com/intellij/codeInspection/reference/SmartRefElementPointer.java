@@ -16,12 +16,20 @@
 package com.intellij.codeInspection.reference;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * User: anna
  * Date: 28-Dec-2005
  */
 public interface SmartRefElementPointer {
+
+  @NonNls String CLASS = "class";
+  @NonNls String METHOD = "method";
+  @NonNls String FIELD = "field";
+  @NonNls String FILE = "file";
+  @NonNls String PARAMETER = "parameter";
+
   boolean isPersistent();
 
   String getFQName();

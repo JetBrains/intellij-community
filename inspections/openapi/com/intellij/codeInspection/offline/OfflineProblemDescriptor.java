@@ -6,11 +6,10 @@
  * User: anna
  * Date: 05-Jan-2007
  */
-package com.intellij.codeInspection.offlineViewer;
+package com.intellij.codeInspection.offline;
 
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.SmartRefElementPointerImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
@@ -96,7 +95,7 @@ public class OfflineProblemDescriptor {
 
   @Nullable
   public RefElement getRefElement(final RefManager refManager) {
-    final RefElement refElement = new SmartRefElementPointerImpl(myType, myFQName, refManager).getRefElement();
+    final RefElement refElement = refManager.getReference(myType, myFQName);
     if (refElement != null) {
       final PsiElement element = refElement.getElement();
       if (element != null && element.isValid()) {

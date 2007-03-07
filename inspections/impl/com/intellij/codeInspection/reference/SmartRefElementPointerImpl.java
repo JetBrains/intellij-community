@@ -12,12 +12,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 public class SmartRefElementPointerImpl implements SmartRefElementPointer {
-  @NonNls public static final String CLASS = "class";
-  @NonNls public static final String METHOD = "method";
-  @NonNls public static final String FIELD = "field";
-
-  @NonNls public static final String FILE = "file";
-  @NonNls public static final String PARAMETER = "parameter";
 
   private final boolean myIsPersistent;
   private RefElement myRefElement;

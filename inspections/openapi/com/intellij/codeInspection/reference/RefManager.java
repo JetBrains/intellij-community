@@ -86,6 +86,17 @@ public abstract class RefManager {
    */
   public abstract @Nullable RefElement getReference(PsiElement elem);
 
+
+  /**
+   * Creates (if necessary) and returns the reference graph node for the PSI element specified by its type and FQName.
+   * @param type {@link SmartRefElementPointer.CLASS, SmartRefElementPointer.FIELD, SmartRefElementPointer.METHOD,
+                  SmartRefElementPointer.FILE, SmartRefElementPointer.PARAMETER}
+   * @param fqName FQName for the element
+   * @return the node for the element, or null if the element is not found or does not have
+   * a corresponding reference graph node type.
+   */
+  public abstract @Nullable RefElement getReference(String type, String fqName);
+
   /**
    * Creates (if necessary) and returns the reference graph node for the specified PSI parameter.
    *

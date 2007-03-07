@@ -453,6 +453,12 @@ public class RefManagerImpl extends RefManager {
     return null;
   }
 
+  public
+  @Nullable
+  RefElement getReference(final String type, final String fqName) {
+    return new SmartRefElementPointerImpl(type, fqName, this).getRefElement();
+  }
+
   public RefMethod getMethodReference(RefClass refClass, PsiMethod psiMethod) {
     LOG.assertTrue(isValidPointForReference(), "References may become invalid after process is finished");
 

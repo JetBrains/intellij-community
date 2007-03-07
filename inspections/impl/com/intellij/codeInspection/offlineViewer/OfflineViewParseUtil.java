@@ -10,6 +10,7 @@ package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.ex.InspectionApplication;
 import com.intellij.codeInspection.reference.SmartRefElementPointerImpl;
+import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;

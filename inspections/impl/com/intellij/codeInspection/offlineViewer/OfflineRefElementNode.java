@@ -11,6 +11,7 @@ package com.intellij.codeInspection.offlineViewer;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.ui.RefElementNode;
+import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import org.jetbrains.annotations.Nullable;
 
 public class OfflineRefElementNode extends RefElementNode {
