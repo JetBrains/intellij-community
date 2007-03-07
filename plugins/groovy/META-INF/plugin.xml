@@ -14,6 +14,9 @@
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.components.GroovyScriptTemplate</implementation-class>
     </component>
+      <component>
+          <implementation-class>org.jetbrains.plugins.groovy.sdk.GroovySdkType</implementation-class>
+      </component>
   </application-components>
 
 </idea-plugin>

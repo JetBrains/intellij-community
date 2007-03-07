@@ -2,7 +2,6 @@
     <property file="groovy.properties"/>
     <property name="project.dest" value="${project.dir}/classes/production/Groovy"/>
     <property name="idea.dir" value="${project.dest}/lib/idea"/>
-    <!--<property name="idea.zip" value="${idea.pack}/${last.succ.idea}.zip"/>-->
     <property name="idea.lib" value="${project.dest}/lib/idea/lib"/>
     <property name="groovy.lib" value="${project.dir}/GDK"/>
 
