@@ -1,6 +1,7 @@
 package com.intellij.ui.tabs;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.ui.content.Content;
 
 import javax.swing.*;
 import java.beans.PropertyChangeSupport;
@@ -20,6 +21,7 @@ public final class TabInfo {
   private String myText;
   private Icon myIcon;
   private String myPlace;
+  private Object myObject;
 
   TabInfo(final JComponent component) {
     myComponent = component;
@@ -71,6 +73,11 @@ public final class TabInfo {
     return this;
   }
 
+  public void setObject(final Object object) {
+    myObject = object;
+  }
 
-
+  public Object getObject() {
+    return myObject;
+  }
 }
