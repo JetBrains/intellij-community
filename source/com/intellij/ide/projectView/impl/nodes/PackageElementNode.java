@@ -31,11 +31,11 @@
  */
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.coverage.CoverageDataManager;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.TreeViewUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -46,7 +46,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Icons;
-import com.intellij.coverage.CoverageDataManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -116,7 +115,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
   }
 
 
-  public void update(final PresentationData presentation) {
+  protected void update(final PresentationData presentation) {
     if (getValue() != null && getValue().getPackage().isValid()) {
       updateValidData(presentation);
     }
@@ -140,34 +139,21 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
       return;
     }
 
-    if (showFwName(aPackage)) {
-      presentation.setPresentableText(getSettings().isAbbreviatePackageNames()
-                                      ? TreeViewUtil.calcAbbreviatedPackageFQName(aPackage)
-                                      : aPackage.getQualifiedName());
+    PsiPackage parentPackage;
+    if (getParentValue() instanceof PackageElement) {
+      parentPackage = ((PackageElement)getParentValue()).getPackage();
     }
     else {
-      if (!(getParentValue() instanceof PackageElement)) {
-        presentation.setPresentableText(qName);
-      }
-      else {
-        final PsiPackage parentPackageInTree = ((PackageElement)getParentValue()).getPackage();
-        PsiPackage parentPackage = aPackage.getParentPackage();
-        final StringBuilder buf = new StringBuilder();
-        buf.append(aPackage.getName());
-        while (parentPackage != null && !parentPackage.equals(parentPackageInTree)) {
-          buf.insert(0, ".");
-          buf.insert(0, parentPackage.getName());
-          parentPackage = parentPackage.getParentPackage();
-        }
-        presentation.setPresentableText(buf.toString());
-      }
+      parentPackage = null;
     }
+    String name = PackageUtil.getNodeName(getSettings(), aPackage,parentPackage, qName, showFQName(aPackage));
+    presentation.setPresentableText(name);
 
     presentation.setOpenIcon(Icons.PACKAGE_OPEN_ICON);
     presentation.setClosedIcon(Icons.PACKAGE_ICON);
   }
 
-  private boolean showFwName(final PsiPackage aPackage) {
+  private boolean showFQName(final PsiPackage aPackage) {
     return getSettings().isFlattenPackages() && aPackage.getQualifiedName().length() > 0;
   }
 
@@ -175,10 +161,6 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     final PresentationData presentation = new PresentationData();
     update(presentation);
     return "PsiPackage: " + presentation.getPresentableText();
-  }
-
-  public boolean isFQNameShown() {
-    return getValue() != null && showFwName(getValue().getPackage());
   }
 
   public boolean valueIsCut() {

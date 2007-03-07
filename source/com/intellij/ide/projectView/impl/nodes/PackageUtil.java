@@ -208,13 +208,13 @@ public class PackageUtil {
     return false;
   }
 
-  public static boolean isSourceRoot(final PsiDirectory psiDirectory) {
+  private static boolean isSourceRoot(final PsiDirectory psiDirectory) {
     return psiDirectory.getVirtualFile().equals(
       ProjectRootManager.getInstance(psiDirectory.getProject()).getFileIndex()
         .getSourceRootForFile(psiDirectory.getVirtualFile()));
   }
 
-  public static boolean isPackage(final PsiDirectory psiDirectory) {
+  private static boolean isPackage(final PsiDirectory psiDirectory) {
     return psiDirectory.getPackage() != null;
   }
 
@@ -272,37 +272,19 @@ public class PackageUtil {
 
     final boolean isWritable = virtualFile.isWritable();
 
-    final String name;
-    if (parentValue instanceof Project) {
-      name = psiDirectory.getVirtualFile().getPresentableUrl();
+    PsiPackage parentPackage;
+    if (!isSourceRoot(psiDirectory) && aPackage != null && aPackage.getQualifiedName().length() > 0 &&
+                              parentValue instanceof PsiDirectory) {
+
+      parentPackage = ((PsiDirectory)parentValue).getPackage();
     }
     else {
-      if (isFQNameShown(psiDirectory, parentValue, settings)) {
-        name = settings.isAbbreviatePackageNames() ? TreeViewUtil.calcAbbreviatedPackageFQName(aPackage) : aPackage.getQualifiedName();
-      }
-      else {
-        if (!isSourceRoot(psiDirectory) && aPackage != null && aPackage.getQualifiedName().length() > 0 &&
-            parentValue instanceof PsiDirectory) {
-          final PsiPackage parentPackageInTree = ((PsiDirectory)parentValue).getPackage();
-          PsiPackage parentPackage = aPackage.getParentPackage();
-          final StringBuilder buf = new StringBuilder();
-          buf.append(aPackage.getName());
-          while (parentPackage != null && !parentPackage.equals(parentPackageInTree)) {
-            final String parentPackageName = parentPackage.getName();
-            if (parentPackageName == null || "".equals(parentPackageName)) {
-              break; // reached default package
-            }
-            buf.insert(0, ".");
-            buf.insert(0, parentPackageName);
-            parentPackage = parentPackage.getParentPackage();
-          }
-          name = buf.toString();
-        }
-        else {
-          name = psiDirectory.getName();
-        }
-      }
+      parentPackage = null;
     }
+
+      final String name = parentValue instanceof Project ?
+      psiDirectory.getVirtualFile().getPresentableUrl() :
+      getNodeName(settings, aPackage,parentPackage, psiDirectory.getName(), isFQNameShown(psiDirectory, parentValue, settings));
 
     final String packagePrefix = isSourceRoot(psiDirectory) && aPackage != null ? aPackage.getQualifiedName() : "";
 
@@ -337,6 +319,33 @@ public class PackageUtil {
                                      : Icons.DIRECTORY_CLOSED_ICON,
                                    isWritable));
 
+  }
+
+  static String getNodeName(final ViewSettings settings, final PsiPackage aPackage, final PsiPackage parentPackageInTree, String defaultShortName,
+                            boolean isFQNameShown) {
+    final String name;
+    if (isFQNameShown) {
+      name = settings.isAbbreviatePackageNames() ? TreeViewUtil.calcAbbreviatedPackageFQName(aPackage) : aPackage.getQualifiedName();
+    }
+    else if (parentPackageInTree != null) {
+      PsiPackage parentPackage = aPackage.getParentPackage();
+      final StringBuilder buf = new StringBuilder();
+      buf.append(aPackage.getName());
+      while (parentPackage != null && !parentPackage.equals(parentPackageInTree)) {
+        final String parentPackageName = parentPackage.getName();
+        if (parentPackageName == null || "".equals(parentPackageName)) {
+          break; // reached default package
+        }
+        buf.insert(0, ".");
+        buf.insert(0, parentPackageName);
+        parentPackage = parentPackage.getParentPackage();
+      }
+      name = buf.toString();
+    }
+    else {
+      name = defaultShortName;
+    }
+    return name;
   }
 
   public static boolean isSourceOrTestRoot(final VirtualFile virtualFile, final Project project) {

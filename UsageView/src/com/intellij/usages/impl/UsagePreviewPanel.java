@@ -94,7 +94,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
       }
       myEditor.getMarkupModel().addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
                                                     HighlighterLayer.ADDITIONAL_SYNTAX, attributes, HighlighterTargetArea.EXACT_RANGE);
-      myEditor.getCaretModel().moveToOffset(textRange.getStartOffset());
+      myEditor.getCaretModel().moveToOffset(textRange.getEndOffset());
     }
     myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }

@@ -54,7 +54,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   protected PsiJavaFileBaseImpl(IElementType elementType, IElementType contentElementType, FileViewProvider viewProvider) {
     super(elementType, contentElementType, viewProvider);
-    myGuessCache = myManager.getResolveCache().getOrCreateWeakMap(myManager, CACHED_CLASSES_MAP_KEY, false);
+    myGuessCache = myManager.getResolveCache().getOrCreateWeakMap(CACHED_CLASSES_MAP_KEY, false);
   }
 
   public void subtreeChanged() {

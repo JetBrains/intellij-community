@@ -68,7 +68,7 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
     });
     final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
-        if (CachesBasedRefSearcher.DEBUG) {
+        if (DEBUG) {
           System.out.println("!!! About to check "+element);
         }
         final PsiReference[] refs = element.getReferences();

@@ -37,6 +37,7 @@ public class ResolveCache {
   private final Map<PsiPolyVariantReference,Reference<ResolveResult[]>>[] myPolyVariantResolveMaps = new Map[4];
   private final Map<PsiReference,Reference<PsiElement>>[] myResolveMaps = new Map[4];
   private final AtomicInteger myClearCount = new AtomicInteger(0);
+  private final PsiManagerEx myManager;
 
 
   public static interface AbstractResolver<Ref,Result> {
@@ -49,19 +50,20 @@ public class ResolveCache {
   }
 
   public ResolveCache(PsiManagerEx manager) {
-    myVarToConstValueMap1 = getOrCreateWeakMap(manager, VAR_TO_CONST_VALUE_MAP_KEY, true);
-    myVarToConstValueMap2 = getOrCreateWeakMap(manager, VAR_TO_CONST_VALUE_MAP_KEY, false);
+    myManager = manager;
+    myVarToConstValueMap1 = getOrCreateWeakMap(VAR_TO_CONST_VALUE_MAP_KEY, true);
+    myVarToConstValueMap2 = getOrCreateWeakMap(VAR_TO_CONST_VALUE_MAP_KEY, false);
 
-    myPolyVariantResolveMaps[0] = getOrCreateWeakMap(manager, JAVA_RESOLVE_MAP, true);
-    myPolyVariantResolveMaps[1] = getOrCreateWeakMap(manager, JAVA_RESOLVE_MAP_INCOMPLETE, true);
-    myResolveMaps[0] = getOrCreateWeakMap(manager, RESOLVE_MAP, true);
-    myResolveMaps[1] = getOrCreateWeakMap(manager, RESOLVE_MAP_INCOMPLETE, true);
+    myPolyVariantResolveMaps[0] = getOrCreateWeakMap(JAVA_RESOLVE_MAP, true);
+    myPolyVariantResolveMaps[1] = getOrCreateWeakMap(JAVA_RESOLVE_MAP_INCOMPLETE, true);
+    myResolveMaps[0] = getOrCreateWeakMap(RESOLVE_MAP, true);
+    myResolveMaps[1] = getOrCreateWeakMap(RESOLVE_MAP_INCOMPLETE, true);
 
-    myPolyVariantResolveMaps[2] = getOrCreateWeakMap(manager, JAVA_RESOLVE_MAP, false);
-    myPolyVariantResolveMaps[3] = getOrCreateWeakMap(manager, JAVA_RESOLVE_MAP_INCOMPLETE, false);
+    myPolyVariantResolveMaps[2] = getOrCreateWeakMap(JAVA_RESOLVE_MAP, false);
+    myPolyVariantResolveMaps[3] = getOrCreateWeakMap(JAVA_RESOLVE_MAP_INCOMPLETE, false);
 
-    myResolveMaps[2] = getOrCreateWeakMap(manager, RESOLVE_MAP, false);
-    myResolveMaps[3] = getOrCreateWeakMap(manager, RESOLVE_MAP_INCOMPLETE, false);
+    myResolveMaps[2] = getOrCreateWeakMap(RESOLVE_MAP, false);
+    myResolveMaps[3] = getOrCreateWeakMap(RESOLVE_MAP_INCOMPLETE, false);
 
     manager.registerRunnableToRunOnAnyChange(new Runnable() {
       public void run() {
@@ -226,15 +228,13 @@ public class ResolveCache {
     return result;
   }
 
-  //NB: this method is not reentrant
-  public <K,V> ConcurrentMap<K,V> getOrCreateWeakMap(final PsiManagerEx manager, final Key<MapPair<K, V>> key, boolean forPhysical) {
-    MapPair<K, V> pair = manager.getUserData(key);
-    if (pair == null){
-      pair = new MapPair<K,V>();
-      manager.putUserData(key, pair);
+  public <K,V> ConcurrentMap<K,V> getOrCreateWeakMap(final Key<MapPair<K, V>> key, boolean forPhysical) {
+    MapPair<K, V> pair = myManager.getUserData(key);
+    if (pair == null) {
+      pair = myManager.putUserDataIfAbsent(key, new MapPair<K,V>());
 
       final MapPair<K, V> _pair = pair;
-      manager.registerRunnableToRunOnChange(
+      myManager.registerRunnableToRunOnChange(
         new Runnable() {
           public void run() {
             myClearCount.incrementAndGet();
@@ -242,7 +242,7 @@ public class ResolveCache {
           }
         }
       );
-      manager.registerRunnableToRunOnAnyChange(
+      myManager.registerRunnableToRunOnAnyChange(
         new Runnable() {
           public void run() {
             myClearCount.incrementAndGet();

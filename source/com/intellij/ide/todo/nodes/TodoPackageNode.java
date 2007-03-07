@@ -75,7 +75,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
     return myHighlightedRegions;
   }
 
-  public void update(PresentationData data) {
+  protected void update(PresentationData data) {
     super.update(data);
     final PackageElement packageElement = getValue();
 
