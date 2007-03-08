@@ -15,27 +15,26 @@
  */
 package com.siyeh.ig.j2me;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
-import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 
 public class MultiplyOrDivideByPowerOfTwoInspection
-        extends ExpressionInspection {
+        extends BaseInspection {
 
     /** @noinspection PublicField*/
     public boolean checkDivision = false;
@@ -44,10 +43,6 @@ public class MultiplyOrDivideByPowerOfTwoInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "multiply.or.divide.by.power.of.two.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.J2ME_GROUP_NAME;
     }
 
     @Nullable

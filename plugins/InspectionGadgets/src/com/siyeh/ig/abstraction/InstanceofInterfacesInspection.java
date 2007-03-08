@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,18 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInstanceOfExpression;
 import com.intellij.psi.PsiTypeElement;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class InstanceofInterfacesInspection extends ExpressionInspection {
+public class InstanceofInterfacesInspection extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "instanceof.concrete.class.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.ABSTRACTION_GROUP_NAME;
     }
 
     public String buildErrorString(Object... infos) {
@@ -52,6 +46,9 @@ public class InstanceofInterfacesInspection extends ExpressionInspection {
             super.visitInstanceOfExpression(expression);
             final PsiTypeElement typeElement = expression.getCheckType();
             if (!ConcreteClassUtil.typeIsConcreteClass(typeElement)) {
+                return;
+            }
+            if (typeElement == null) {
                 return;
             }
             registerError(typeElement);

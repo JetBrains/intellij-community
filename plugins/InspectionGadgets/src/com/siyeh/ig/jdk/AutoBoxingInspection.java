@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,17 @@
  */
 package com.siyeh.ig.jdk;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.StdLanguages;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
@@ -36,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AutoBoxingInspection extends ExpressionInspection {
+public class AutoBoxingInspection extends BaseInspection {
 
     /** @noinspection StaticCollection*/
     @NonNls static final Map<String,String> s_boxingClasses =
@@ -55,10 +54,6 @@ public class AutoBoxingInspection extends ExpressionInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("auto.boxing.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.JDK_GROUP_NAME;
     }
 
     @NotNull

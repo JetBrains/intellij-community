@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -31,16 +30,18 @@ public class StaticMethodNamingConventionInspection
     private static final int DEFAULT_MIN_LENGTH = 4;
     private static final int DEFAULT_MAX_LENGTH = 32;
 
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "static.method.naming.convention.display.name");
+    }
+
     protected InspectionGadgetsFix buildFix(PsiElement location) {
         return new RenameFix();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
     @NotNull

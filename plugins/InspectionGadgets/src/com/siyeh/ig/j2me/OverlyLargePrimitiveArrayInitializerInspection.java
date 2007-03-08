@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,20 @@
  */
 package com.siyeh.ig.j2me;
 
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
-
-import javax.swing.*;
-
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JComponent;
+
 public class OverlyLargePrimitiveArrayInitializerInspection
-        extends ExpressionInspection{
+        extends BaseInspection {
     
     /**
      * @noinspection PublicField
@@ -37,10 +38,6 @@ public class OverlyLargePrimitiveArrayInitializerInspection
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "large.initializer.primitive.type.array.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.J2ME_GROUP_NAME;
     }
 
     @NotNull

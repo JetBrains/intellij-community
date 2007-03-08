@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,19 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class SignalWithoutCorrespondingAwaitInspection extends ExpressionInspection {
+public class SignalWithoutCorrespondingAwaitInspection extends BaseInspection {
 
-    public String getGroupDisplayName() {
-        return GroupNames.THREADING_GROUP_NAME;
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new SignalWithoutCorrespondingAwaitVisitor();
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "signal.without.corresponding.await.display.name");
     }
 
     @NotNull
@@ -38,16 +35,24 @@ public class SignalWithoutCorrespondingAwaitInspection extends ExpressionInspect
         return InspectionGadgetsBundle.message(
                 "signal.without.corresponding.await.problem.descriptor");
     }
-    private static class SignalWithoutCorrespondingAwaitVisitor extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+    public BaseInspectionVisitor buildVisitor() {
+        return new SignalWithoutCorrespondingAwaitVisitor();
+    }
+
+    private static class SignalWithoutCorrespondingAwaitVisitor
+            extends BaseInspectionVisitor {
+
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!ThreadingUtils.isSignalOrSignalAllCall(expression)) {
                 return;
             }
-
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            final PsiExpression qualifier = methodExpression.getQualifierExpression();
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
             if (!(qualifier instanceof PsiReferenceExpression)) {
                 return;
             }
@@ -68,14 +73,19 @@ public class SignalWithoutCorrespondingAwaitInspection extends ExpressionInspect
             }
             registerMethodCallError(expression);
         }
+
+        private static boolean containsAwaitCall(
+                PsiClass fieldClass, PsiField field) {
+            final ContainsAwaitVisitor visitor =
+                    new ContainsAwaitVisitor(field);
+            fieldClass.accept(visitor);
+            return visitor.containsAwait();
+        }
     }
 
-    private static boolean containsAwaitCall(PsiClass fieldClass, PsiField field) {
-        final ContainsAwaitVisitor visitor = new ContainsAwaitVisitor(field);
-        fieldClass.accept(visitor);
-        return visitor.containsAwait();
-    }
-    private static class ContainsAwaitVisitor extends PsiRecursiveElementVisitor {
+    private static class ContainsAwaitVisitor
+            extends PsiRecursiveElementVisitor {
+
         private PsiField target;
         private boolean containsAwait = false;
 
@@ -91,28 +101,27 @@ public class SignalWithoutCorrespondingAwaitInspection extends ExpressionInspect
             super.visitElement(element);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(
+                PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!ThreadingUtils.isAwaitCall(expression)) {
                 return;
             }
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            final PsiExpression qualifier = methodExpression.getQualifierExpression();
-            if(qualifier == null)
-            {
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (qualifier == null) {
                 return;
             }
-            if(!(qualifier instanceof PsiReferenceExpression))
-            {
+            if (!(qualifier instanceof PsiReferenceExpression)) {
                 return;
             }
             final PsiElement referent = ((PsiReference) qualifier).resolve();
-            if(referent == null)
-            {
+            if (referent == null) {
                 return;
             }
-            if(!target.equals(referent))
-            {
+            if (!target.equals(referent)) {
                 return;
             }
             containsAwait = true;
@@ -122,5 +131,4 @@ public class SignalWithoutCorrespondingAwaitInspection extends ExpressionInspect
             return containsAwait;
         }
     }
-
 }

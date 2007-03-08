@@ -15,13 +15,12 @@
  */
 package com.siyeh.ig.dataflow;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.InlineVariableFix;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
@@ -31,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
 
-public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
+public class UnnecessaryLocalVariableInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
     public boolean m_ignoreImmediatelyReturnedVariables = false;
@@ -42,10 +41,6 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "redundant.local.variable.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.DATA_FLOW_ISSUES;
     }
 
     public JComponent createOptionsPanel() {

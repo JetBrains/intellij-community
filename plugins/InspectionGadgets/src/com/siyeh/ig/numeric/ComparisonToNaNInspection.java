@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,25 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-public class ComparisonToNaNInspection extends ExpressionInspection {
+public class ComparisonToNaNInspection extends BaseInspection {
 
-    public String getGroupDisplayName() {
-        return GroupNames.NUMERIC_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "comparison.to.nan.display.name");
     }
 
     @NotNull
@@ -42,10 +43,10 @@ public class ComparisonToNaNInspection extends ExpressionInspection {
         final IElementType tokenType = sign.getTokenType();
         if (tokenType.equals(JavaTokenType.EQEQ)) {
             return InspectionGadgetsBundle.message(
-                    "comparison.to.na.n.problem.descriptor1");
+                    "comparison.to.nan.problem.descriptor1");
         } else {
             return InspectionGadgetsBundle.message(
-                    "comparison.to.na.n.problem.descriptor2");
+                    "comparison.to.nan.problem.descriptor2");
         }
     }
 
@@ -61,7 +62,7 @@ public class ComparisonToNaNInspection extends ExpressionInspection {
 
         public String getName() {
             return InspectionGadgetsBundle.message(
-                    "comparison.to.na.n.replace.quickfix");
+                    "comparison.to.nan.replace.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
@@ -117,7 +118,7 @@ public class ComparisonToNaNInspection extends ExpressionInspection {
             }
             if (isNaN(lhs)) {
                 registerError(lhs, expression);
-            } else if (isNaN(rhs)) {
+            } else if (rhs != null && isNaN(rhs)) {
                 registerError(rhs, expression);
             }
         }

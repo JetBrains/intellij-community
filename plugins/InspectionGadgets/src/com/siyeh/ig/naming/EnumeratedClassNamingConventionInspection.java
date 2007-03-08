@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
@@ -30,8 +29,10 @@ public class EnumeratedClassNamingConventionInspection
     private static final int DEFAULT_MIN_LENGTH = 8;
     private static final int DEFAULT_MAX_LENGTH = 64;
 
-    public String getGroupDisplayName() {
-        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "enumerated.class.naming.convention.display.name");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {

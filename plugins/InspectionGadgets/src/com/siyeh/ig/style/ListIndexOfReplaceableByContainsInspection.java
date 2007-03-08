@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -24,8 +23,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import org.jetbrains.annotations.NonNls;
@@ -33,15 +32,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ListIndexOfReplaceableByContainsInspection
-        extends ExpressionInspection {
+        extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "indexof.replaceable.by.contains.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.STYLE_GROUP_NAME;
     }
 
     @NotNull

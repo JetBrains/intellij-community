@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -23,21 +22,23 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class LongLiteralsEndingWithLowercaseLInspection
-        extends ExpressionInspection {
+        extends BaseInspection {
 
     public String getID() {
         return "LongLiteralEndingWithLowercaseL";
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.NUMERIC_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "long.literals.ending.with.lowercase.l.display.name");
     }
 
     @NotNull

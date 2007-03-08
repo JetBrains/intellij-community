@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,20 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class BusyWaitInspection extends ExpressionInspection {
+public class BusyWaitInspection extends BaseInspection {
 
-    public String getGroupDisplayName() {
-        return GroupNames.THREADING_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message("busy.wait.display.name");
     }
 
     @NotNull

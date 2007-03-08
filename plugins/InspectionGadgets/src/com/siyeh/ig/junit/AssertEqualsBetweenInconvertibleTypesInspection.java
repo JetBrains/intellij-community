@@ -15,26 +15,21 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class AssertEqualsBetweenInconvertibleTypesInspection
-        extends ExpressionInspection {
+        extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "assertequals.between.inconvertible.types.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.JUNIT_GROUP_NAME;
     }
 
     @NotNull

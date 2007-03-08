@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Bas Leijdekkers
+ * Copyright 2005-2007 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.siyeh.ig.jdk15;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -26,8 +25,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import org.jetbrains.annotations.NonNls;
@@ -35,15 +34,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class IndexOfReplaceableByContainsInspection
-        extends ExpressionInspection {
+        extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "indexof.replaceable.by.contains.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.JDK15_SPECIFIC_GROUP_NAME;
     }
 
     @NotNull

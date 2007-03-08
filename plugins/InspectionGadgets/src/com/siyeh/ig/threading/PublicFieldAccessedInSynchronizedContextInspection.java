@@ -15,16 +15,15 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.SynchronizationUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PublicFieldAccessedInSynchronizedContextInspection
-        extends ExpressionInspection {
+        extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -33,10 +32,6 @@ public class PublicFieldAccessedInSynchronizedContextInspection
 
     public String getID() {
         return "NonPrivateFieldAccessedInSynchronizedContext";
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.THREADING_GROUP_NAME;
     }
 
     @NotNull

@@ -15,27 +15,22 @@
  */
 package com.siyeh.ig.internationalization;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiNewExpression;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class SimpleDateFormatWithoutLocaleInspection
-        extends ExpressionInspection {
+        extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "instantiating.simpledateformat.without.locale.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
     }
 
     @NotNull

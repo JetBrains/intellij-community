@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,15 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpressionException;
@@ -32,7 +31,7 @@ import javax.xml.xpath.XPathFactory;
 import java.util.HashSet;
 import java.util.Set;
 
-public class MalformedXPathInspection extends ExpressionInspection{
+public class MalformedXPathInspection extends BaseInspection {
 
     /** @noinspection StaticCollection*/
     @NonNls
@@ -46,10 +45,6 @@ public class MalformedXPathInspection extends ExpressionInspection{
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "malformed.xpath.expression.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.BUGS_GROUP_NAME;
     }
 
     @NotNull

@@ -15,34 +15,31 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ManualArrayToCollectionCopyInspection
-        extends ExpressionInspection {
+        extends BaseInspection {
 
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "manual.array.to.collection.copy.display.name");
-    }
-
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,26 @@
  */
 package com.siyeh.ig.j2me;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
-        extends ExpressionInspection{
+        extends BaseInspection {
 
-    /**
-     * @noinspection PublicField
-     */
+    /** @noinspection PublicField */
     public int m_limit = 64;
 
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "large.array.allocation.no.outofmemoryerror.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.J2ME_GROUP_NAME;
     }
 
     @NotNull

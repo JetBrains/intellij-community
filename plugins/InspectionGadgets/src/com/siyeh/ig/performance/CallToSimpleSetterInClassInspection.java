@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -23,8 +22,8 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -35,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 
-public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
+public class CallToSimpleSetterInClassInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
     public boolean ignoreSetterCallsOnOtherObjects = false;
@@ -47,10 +46,6 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "call.to.simple.setter.in.class.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
     @NotNull

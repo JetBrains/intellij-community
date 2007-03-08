@@ -15,23 +15,18 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class InstantiationOfUtilityClassInspection extends ExpressionInspection{
+public class InstantiationOfUtilityClassInspection extends BaseInspection {
 
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "instantiation.utility.class.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.BUGS_GROUP_NAME;
     }
 
     @NotNull

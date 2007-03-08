@@ -15,16 +15,15 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -45,8 +44,10 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
             new HashSet<String>(Arrays.asList(PsiModifier.PUBLIC,
                     PsiModifier.ABSTRACT));
 
-    public String getGroupDisplayName() {
-        return GroupNames.STYLE_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "unnecessary.interface.modifier.display.name");
     }
 
     @NotNull

@@ -15,31 +15,26 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class MisorderedAssertEqualsParametersInspection
-        extends ExpressionInspection {
+        extends BaseInspection {
 
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "misordered.assert.equals.parameters.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.JUNIT_GROUP_NAME;
     }
 
     @NotNull

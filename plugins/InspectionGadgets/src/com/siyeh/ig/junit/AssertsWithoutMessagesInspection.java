@@ -15,13 +15,12 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class AssertsWithoutMessagesInspection extends ExpressionInspection {
+public class AssertsWithoutMessagesInspection extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -38,10 +37,6 @@ public class AssertsWithoutMessagesInspection extends ExpressionInspection {
 
     public String getID() {
         return "MessageMissingOnJUnitAssertion";
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.JUNIT_GROUP_NAME;
     }
 
     @NotNull

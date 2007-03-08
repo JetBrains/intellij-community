@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,20 @@
  */
 package com.siyeh.ig.assignment;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpressionListStatement;
 import com.intellij.psi.PsiExpressionStatement;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class NestedAssignmentInspection extends ExpressionInspection {
+public class NestedAssignmentInspection extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "nested.assignment.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.ASSIGNMENT_GROUP_NAME;
     }
 
     @NotNull

@@ -1,10 +1,10 @@
 package com.siyeh.igtest.style;
 
-import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class One extends ExpressionInspection {
+public class One extends BaseInspection {
 
     public BaseInspectionVisitor buildVisitor() {
         return null;

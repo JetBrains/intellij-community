@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,18 @@
  */
 package com.siyeh.ig;
 
-import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.ui.FormattedTextFieldMacFix;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Nls;
 
 import javax.swing.JFormattedTextField;
 import javax.swing.event.DocumentEvent;
@@ -37,8 +35,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 public abstract class BaseInspection extends LocalInspectionTool {
 
@@ -130,67 +128,12 @@ public abstract class BaseInspection extends LocalInspectionTool {
     }
 
     @Nullable
-    protected ProblemDescriptor[] doCheckMethod(PsiMethod method,
-                                                InspectionManager manager,
-                                                boolean isOnTheFly) {
-        return super.checkMethod(method, manager, isOnTheFly);
-    }
-
-    @Nullable
-    protected ProblemDescriptor[] doCheckClass(PsiClass aClass,
-                                               InspectionManager manager,
-                                               boolean isOnTheFly) {
-        return super.checkClass(aClass, manager, isOnTheFly);
-    }
-
-    @Nullable
-    protected ProblemDescriptor[] doCheckField(PsiField field,
-                                               InspectionManager manager,
-                                               boolean isOnTheFly) {
-        return super.checkField(field, manager, isOnTheFly);
-    }
-
-    protected final BaseInspectionVisitor createVisitor(
-            InspectionManager inspectionManager, boolean onTheFly) {
-        final BaseInspectionVisitor visitor = buildVisitor();
-        visitor.setOnTheFly(onTheFly);
-        visitor.setInspection(this);
-        return visitor;
-    }
-
-    @Nullable
     protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
         return null;
     }
 
-    private String getPropertyPrefixForInspection() {
-        final String shortName = getShortName();
-        return getPrefix(shortName);
-    }
-
-    public static String getPrefix(String shortName) {
-        final int length = shortName.length();
-        final StringBuilder builder = new StringBuilder(length + 10);
-        builder.append(Character.toLowerCase(shortName.charAt(0)));
-        for (int i = 1; i < length; i++) {
-            final char c = shortName.charAt(i);
-            if (Character.isUpperCase(c)) {
-                builder.append('.');
-                builder.append(Character.toLowerCase(c));
-            }
-            else {
-                builder.append(c);
-            }
-        }
-        return builder.toString();
-    }
-
     @NotNull
-    public String getDisplayName() {
-        @NonNls final String displayNameSuffix = ".display.name";
-        return InspectionGadgetsBundle.message(
-                getPropertyPrefixForInspection() + displayNameSuffix);
-    }
+    public abstract String getDisplayName();
 
     public boolean hasQuickFix() {
         final Class<? extends BaseInspection> aClass = getClass();

@@ -15,24 +15,19 @@
  */
 package com.siyeh.ig.cloneable;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class CloneCallsConstructorsInspection extends ExpressionInspection {
+public class CloneCallsConstructorsInspection extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "clone.instantiates.objects.with.constructor.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.CLONEABLE_GROUP_NAME;
     }
 
     @NotNull

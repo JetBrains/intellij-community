@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Bas Leijdekkers
+ * Copyright 2006-2007 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,24 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-public class UnqualifiedFieldAccessInspection extends ExpressionInspection {
+public class UnqualifiedFieldAccessInspection extends BaseInspection {
 
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unqualified.field.access.display.name");
-    }
-
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.STYLE_GROUP_NAME;
     }
 
     public BaseInspectionVisitor buildVisitor() {

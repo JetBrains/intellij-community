@@ -15,15 +15,14 @@
  */
 package com.siyeh.ig.encapsulation;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class UseOfAnotherObjectsPrivateFieldInspection
-        extends ExpressionInspection{
+        extends BaseInspection {
 
     public String getID(){
         return "AccessingNonPublicFieldOfAnotherObject";
@@ -32,10 +31,6 @@ public class UseOfAnotherObjectsPrivateFieldInspection
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "accessing.non.public.field.of.another.object.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.ENCAPSULATION_GROUP_NAME;
     }
 
     @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,19 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class NotifyWithoutCorrespondingWaitInspection extends ExpressionInspection {
+public class NotifyWithoutCorrespondingWaitInspection extends BaseInspection {
 
-
-    public String getGroupDisplayName() {
-        return GroupNames.THREADING_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "notify.without.corresponding.wait.display.name");
     }
 
     @NotNull
@@ -40,16 +40,20 @@ public class NotifyWithoutCorrespondingWaitInspection extends ExpressionInspecti
         return new WaitWithoutCorrespondingNotifyVisitor();
     }
 
-    private static class WaitWithoutCorrespondingNotifyVisitor extends BaseInspectionVisitor {
+    private static class WaitWithoutCorrespondingNotifyVisitor
+            extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!ThreadingUtils.isNotifyOrNotifyAllCall(expression)) {
                 return;
             }
 
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            final PsiExpression qualifier = methodExpression.getQualifierExpression();
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
             if (!(qualifier instanceof PsiReferenceExpression)) {
                 return;
             }
@@ -70,15 +74,18 @@ public class NotifyWithoutCorrespondingWaitInspection extends ExpressionInspecti
             }
             registerMethodCallError(expression);
         }
+
+        private static boolean containsWaitCall(
+                PsiClass fieldClass, PsiField field) {
+            final ContainsWaitVisitor visitor = new ContainsWaitVisitor(field);
+            fieldClass.accept(visitor);
+            return visitor.containsWait();
+        }
     }
 
-    private static boolean containsWaitCall(PsiClass fieldClass, PsiField field) {
-        final ContainsWaitVisitor visitor = new ContainsWaitVisitor(field);
-        fieldClass.accept(visitor);
-        return visitor.containsWait();
-    }
+    private static class ContainsWaitVisitor
+            extends PsiRecursiveElementVisitor {
 
-    private static class ContainsWaitVisitor extends PsiRecursiveElementVisitor {
         private PsiField target;
         private boolean containsWait = false;
 
@@ -94,13 +101,16 @@ public class NotifyWithoutCorrespondingWaitInspection extends ExpressionInspecti
             super.visitElement(element);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(
+                PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!ThreadingUtils.isWaitCall(expression)) {
                 return;
             }
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            final PsiExpression qualifier = methodExpression.getQualifierExpression();
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
             if (qualifier == null) {
                 return;
             }
@@ -121,5 +131,4 @@ public class NotifyWithoutCorrespondingWaitInspection extends ExpressionInspecti
             return containsWait;
         }
     }
-
 }

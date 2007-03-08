@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Dave Griffith
+ * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,19 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ReflectionForUnavailableAnnotationInspection
-        extends ExpressionInspection {
+        extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "reflection.for.unavailable.annotation.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.BUGS_GROUP_NAME;
     }
 
     @NotNull

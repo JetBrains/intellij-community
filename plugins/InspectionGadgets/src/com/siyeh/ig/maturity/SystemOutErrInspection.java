@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,17 @@
  */
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.InspectionGadgetsBundle;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class SystemOutErrInspection extends ExpressionInspection {
+public class SystemOutErrInspection extends BaseInspection {
 
     public String getID() {
         return "UseOfSystemOutOrSystemErr";
@@ -32,10 +34,6 @@ public class SystemOutErrInspection extends ExpressionInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "use.system.out.err.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.MATURITY_GROUP_NAME;
     }
 
     @NotNull

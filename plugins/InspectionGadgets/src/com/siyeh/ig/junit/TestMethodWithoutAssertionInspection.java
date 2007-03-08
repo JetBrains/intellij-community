@@ -15,16 +15,15 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class TestMethodWithoutAssertionInspection extends ExpressionInspection {
+public class TestMethodWithoutAssertionInspection extends BaseInspection {
 
     public String getID() {
         return "JUnitTestMethodWithNoAssertions";
@@ -34,10 +33,6 @@ public class TestMethodWithoutAssertionInspection extends ExpressionInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "test.method.without.assertion.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.JUNIT_GROUP_NAME;
     }
 
     @NotNull

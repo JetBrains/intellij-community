@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,12 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
@@ -29,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
 
-public class StringConcatenationInLoopsInspection extends ExpressionInspection {
+public class StringConcatenationInLoopsInspection extends BaseInspection {
 
     /** @noinspection PublicField */
     public boolean m_ignoreUnlessAssigned = false;
@@ -41,10 +40,6 @@ public class StringConcatenationInLoopsInspection extends ExpressionInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "string.concatenation.in.loops.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
     @NotNull

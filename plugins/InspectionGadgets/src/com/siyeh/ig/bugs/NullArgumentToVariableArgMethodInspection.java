@@ -15,26 +15,21 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class NullArgumentToVariableArgMethodInspection
-        extends ExpressionInspection{
+        extends BaseInspection {
 
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "null.argument.to.var.arg.method.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.BUGS_GROUP_NAME;
     }
 
     @NotNull

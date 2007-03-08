@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,22 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class IntegerMultiplicationImplicitCastToLongInspection extends ExpressionInspection {
+public class IntegerMultiplicationImplicitCastToLongInspection extends
+        BaseInspection {
+
     /** @noinspection StaticCollection*/
     private static final Set<String> s_typesToCheck = new HashSet<String>(10);
-
     static {
         s_typesToCheck.add("int");
         s_typesToCheck.add("short");
@@ -38,8 +38,10 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends Expressio
         s_typesToCheck.add("char");
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.NUMERIC_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "integer.multiplication.implicit.cast.to.long.display.name");
     }
 
     @NotNull
@@ -47,13 +49,16 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends Expressio
         return InspectionGadgetsBundle.message(
                 "integer.multiplication.implicit.cast.to.long.problem.descriptor");
     }
+
     public BaseInspectionVisitor buildVisitor() {
         return new IntegerMultiplicationImplicitlyCastToLongVisitor();
     }
 
-    private static class IntegerMultiplicationImplicitlyCastToLongVisitor extends BaseInspectionVisitor {
+    private static class IntegerMultiplicationImplicitlyCastToLongVisitor
+            extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
+        public void visitBinaryExpression(
+                @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             if(!(expression.getROperand() != null)){
                 return;
@@ -81,7 +86,8 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends Expressio
             if (context == null) {
                 return;
             }
-            final PsiType contextType = ExpectedTypeUtils.findExpectedType(context, true);
+            final PsiType contextType =
+                    ExpectedTypeUtils.findExpectedType(context, true);
             if (contextType == null) {
                 return;
             }
@@ -91,8 +97,8 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends Expressio
             registerError(expression);
         }
 
-
-        private static PsiExpression getContainingExpression(PsiExpression expression) {
+        private static PsiExpression getContainingExpression(
+                PsiExpression expression) {
             final PsiElement parent = expression.getParent();
             if (parent == null) {
                 return expression;
@@ -103,18 +109,16 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends Expressio
             }
             return expression;
         }
-    }
 
-    private static boolean isNonLongInteger(PsiType type) {
-
-        if (type == null) {
-            return false;
+        private static boolean isNonLongInteger(PsiType type) {
+            if (type == null) {
+                return false;
+            }
+            final String text = type.getCanonicalText();
+            if (text == null) {
+                return false;
+            }
+            return s_typesToCheck.contains(text);
         }
-        final String text = type.getCanonicalText();
-        if (text == null) {
-            return false;
-        }
-        return s_typesToCheck.contains(text);
     }
-
 }

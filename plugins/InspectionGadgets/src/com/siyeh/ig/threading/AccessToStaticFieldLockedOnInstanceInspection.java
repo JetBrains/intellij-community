@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,22 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class AccessToStaticFieldLockedOnInstanceInspection
-        extends ExpressionInspection {
+        extends BaseInspection {
 
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "access.to.static.field.locked.on.instance.display.name");
-    }
-
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.THREADING_GROUP_NAME;
     }
 
     @NotNull
@@ -118,16 +112,16 @@ public class AccessToStaticFieldLockedOnInstanceInspection
             }
             registerError(expression);
         }
-    }
 
-    private static boolean isConstant(PsiField field) {
-        if (!field.hasModifierProperty(PsiModifier.FINAL)) {
-            return false;
+        private static boolean isConstant(PsiField field) {
+            if (!field.hasModifierProperty(PsiModifier.FINAL)) {
+                return false;
+            }
+            if (CollectionUtils.isEmptyArray(field)) {
+                return true;
+            }
+            final PsiType type = field.getType();
+            return ClassUtils.isImmutable(type);
         }
-        if (CollectionUtils.isEmptyArray(field)) {
-            return true;
-        }
-        final PsiType type = field.getType();
-        return ClassUtils.isImmutable(type);
     }
 }

@@ -15,25 +15,26 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class CastThatLosesPrecisionInspection extends ExpressionInspection {
+public class CastThatLosesPrecisionInspection extends BaseInspection {
 
     public String getID() {
         return "NumericCastThatLosesPrecision";
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.NUMERIC_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "cast.that.loses.precision.display.name");
     }
 
     @NotNull
@@ -91,7 +92,7 @@ public class CastThatLosesPrecisionInspection extends ExpressionInspection {
                     evaluationHelper.computeConstantExpression(operand);
 
             if (result instanceof Character) {
-                result = new Integer(((Character)result).charValue());
+                result = Integer.valueOf(((Character) result).charValue());
             }
             if (result instanceof Number) {
                 final Number number = (Number)result;

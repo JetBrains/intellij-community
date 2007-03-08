@@ -15,18 +15,19 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class MapReplaceableByEnumMapInspection extends ExpressionInspection {
+public class MapReplaceableByEnumMapInspection extends BaseInspection {
 
-    public String getGroupDisplayName() {
-        return GroupNames.PERFORMANCE_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "map.replaceable.by.enum.map.display.name");
     }
 
     @NotNull

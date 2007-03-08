@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,20 @@
  */
 package com.siyeh.ig.security;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class JDBCExecuteWithNonConstantStringInspection
-        extends ExpressionInspection {
+        extends BaseInspection {
 
     /**
      * @noinspection StaticCollection
@@ -44,14 +43,17 @@ public class JDBCExecuteWithNonConstantStringInspection
         s_execMethodNames.add("addBatch");
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.SECURITY_GROUP_NAME;
+
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "jdbc.execute.with.non.constant.string.display.name");
     }
 
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
-                "j.d.b.c.execute.with.non.constant.string.problem.descriptor");
+                "jdbc.execute.with.non.constant.string.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

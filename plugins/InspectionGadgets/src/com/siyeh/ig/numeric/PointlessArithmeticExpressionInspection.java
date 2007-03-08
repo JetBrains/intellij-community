@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,28 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.HashSet;
 import java.util.Set;
 
 public class PointlessArithmeticExpressionInspection
-        extends ExpressionInspection {
+        extends BaseInspection {
 
     private static final Set<String> arithmeticTokens =
             new HashSet<String>(4);
@@ -69,11 +68,6 @@ public class PointlessArithmeticExpressionInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "pointless.arithmetic.expression.display.name");
-    }
-
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.NUMERIC_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault() {
@@ -291,10 +285,7 @@ public class PointlessArithmeticExpressionInspection
                 !(expression instanceof PsiLiteralExpression)) {
             return false;
         }
-        final Double value = (Double)
-                ConstantExpressionUtil.computeCastTo(
-                        expression, PsiType.DOUBLE);
-        return !(value == null || value != 1.0);
+        return ExpressionUtils.isOne(expression);
     }
 
     private static boolean isMinDouble(PsiExpression expression) {

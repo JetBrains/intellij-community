@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,23 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class ConstantMathCallInspection extends ExpressionInspection{
+public class ConstantMathCallInspection extends BaseInspection {
 
     @SuppressWarnings("StaticCollection")
     @NonNls static final Set<String> constantMathCall =
@@ -68,10 +67,6 @@ public class ConstantMathCallInspection extends ExpressionInspection{
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "constant.math.call.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.NUMERIC_GROUP_NAME;
     }
 
     @NotNull

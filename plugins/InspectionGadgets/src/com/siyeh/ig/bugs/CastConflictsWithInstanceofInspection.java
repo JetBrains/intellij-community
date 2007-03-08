@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,53 +15,48 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
+public class CastConflictsWithInstanceofInspection extends BaseInspection {
 
-    public String getDisplayName(){
+    public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "cast.conflicts.with.instanceof.display.name");
     }
 
-    public String getGroupDisplayName(){
-        return GroupNames.BUGS_GROUP_NAME;
-    }
-
     @NotNull
-    public String buildErrorString(Object... infos){
+    public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "cast.conflicts.with.instanceof.problem.descriptor");
     }
 
-    public BaseInspectionVisitor buildVisitor(){
+    public BaseInspectionVisitor buildVisitor() {
         return new CastConflictsWithInstanceofVisitor();
     }
 
     private static class CastConflictsWithInstanceofVisitor
-            extends BaseInspectionVisitor{
+            extends BaseInspectionVisitor {
 
         public void visitTypeCastExpression(
-                @NotNull PsiTypeCastExpression expression){
+                @NotNull PsiTypeCastExpression expression) {
             super.visitTypeCastExpression(expression);
             final PsiTypeElement castTypeElement = expression.getCastType();
-            if(castTypeElement == null){
+            if (castTypeElement == null) {
                 return;
             }
             final PsiType castType = castTypeElement.getType();
             final PsiExpression operand = expression.getOperand();
-            if(!(operand instanceof PsiReferenceExpression)){
+            if (!(operand instanceof PsiReferenceExpression)) {
                 return;
             }
             final PsiReferenceExpression referenceExpression =
@@ -95,7 +90,7 @@ public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
             private boolean agreeingInstanceof = false;
 
 
-            public InstanceofChecker(PsiReferenceExpression referenceExpression,
+            InstanceofChecker(PsiReferenceExpression referenceExpression,
                                      PsiType castType) {
                 this.referenceExpression = referenceExpression;
                 this.castType = castType;
@@ -130,7 +125,7 @@ public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
                     if (branch instanceof PsiBlockStatement) {
                         final PsiBlockStatement blockStatement =
                                 (PsiBlockStatement)branch;
-                        if (isVariableAssignedBeforeReference(blockStatement)){
+                        if (isVariableAssignedBeforeReference(blockStatement)) {
                             return;
                         }
                     }
@@ -166,8 +161,9 @@ public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
                         referenceExpression);
             }
 
-            private boolean isVariableAssignedAtPoint(PsiVariable variable,
-                    @Nullable PsiElement context, PsiElement point) {
+            private static boolean isVariableAssignedAtPoint(
+                    @NotNull PsiVariable variable, @Nullable PsiElement context,
+                    PsiElement point) {
                 if (context == null) {
                     return false;
                 }
@@ -192,19 +188,17 @@ public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
 
             @Nullable
             public static PsiElement getDirectChildWhichContainsElement(
-                    @NotNull PsiElement ancestor, @NotNull PsiElement descendant)
-            {
+                    @NotNull PsiElement ancestor,
+                    @NotNull PsiElement descendant) {
                 if (ancestor == descendant) {
                     return null;
                 }
                 PsiElement child = descendant;
                 PsiElement parent = child.getParent();
-                while (!parent.equals(ancestor))
-                {
+                while (!parent.equals(ancestor)) {
                     child = parent;
                     parent = child.getParent();
-                    if (parent == null)
-                    {
+                    if (parent == null) {
                         return null;
                     }
                 }
@@ -266,28 +260,28 @@ public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
                 }
             }
 
-            private boolean isConflicting(PsiInstanceOfExpression expression){
-                final PsiExpression conditionOperand = expression.getOperand();
-                if(!EquivalenceChecker.expressionsAreEquivalent(
-                        referenceExpression, conditionOperand)) {
-                    return false;
-                }
-                final PsiTypeElement typeElement = expression.getCheckType();
-                if(typeElement == null){
-                    return false;
-                }
-                final PsiType type = typeElement.getType();
-                return !castType.isAssignableFrom(type);
-            }
-
-            private boolean isAgreeing(PsiInstanceOfExpression expression){
+            private boolean isConflicting(PsiInstanceOfExpression expression) {
                 final PsiExpression conditionOperand = expression.getOperand();
                 if (!EquivalenceChecker.expressionsAreEquivalent(
                         referenceExpression, conditionOperand)) {
                     return false;
                 }
                 final PsiTypeElement typeElement = expression.getCheckType();
-                if(typeElement == null){
+                if (typeElement == null) {
+                    return false;
+                }
+                final PsiType type = typeElement.getType();
+                return !castType.isAssignableFrom(type);
+            }
+
+            private boolean isAgreeing(PsiInstanceOfExpression expression) {
+                final PsiExpression conditionOperand = expression.getOperand();
+                if (!EquivalenceChecker.expressionsAreEquivalent(
+                        referenceExpression, conditionOperand)) {
+                    return false;
+                }
+                final PsiTypeElement typeElement = expression.getCheckType();
+                if (typeElement == null) {
                     return false;
                 }
                 final PsiType type = typeElement.getType();

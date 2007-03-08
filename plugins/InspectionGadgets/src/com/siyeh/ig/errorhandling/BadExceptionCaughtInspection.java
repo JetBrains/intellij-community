@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiParameter;
@@ -23,8 +22,8 @@ import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +37,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 
-public class BadExceptionCaughtInspection extends ExpressionInspection {
+public class BadExceptionCaughtInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
     public String exceptionCheckString =
@@ -96,10 +95,6 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "bad.exception.caught.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
 
     @NotNull

@@ -1,22 +1,38 @@
+/*
+ * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.siyeh.ig.controlflow;
 
-import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.InspectionGadgetsBundle;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-import java.util.HashSet;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
-public class DuplicateBooleanBranchInspection extends ExpressionInspection {
+public class DuplicateBooleanBranchInspection extends BaseInspection {
 
-    public String getGroupDisplayName() {
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "duplicate.boolean.branch.display.name");
     }
 
     @NotNull
@@ -34,8 +50,9 @@ public class DuplicateBooleanBranchInspection extends ExpressionInspection {
 
         public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            final IElementType tokenType = expression.getOperationSign().getTokenType();
-            if (!tokenType.equals(JavaTokenType.ANDAND) && !tokenType.equals(JavaTokenType.OROR)) {
+            final IElementType tokenType = expression.getOperationTokenType();
+            if (!tokenType.equals(JavaTokenType.ANDAND) &&
+                    !tokenType.equals(JavaTokenType.OROR)) {
                 return;
             }
 
@@ -44,8 +61,9 @@ public class DuplicateBooleanBranchInspection extends ExpressionInspection {
                 parent = parent.getParent();
             }
             if (parent instanceof PsiBinaryExpression) {
-                final PsiBinaryExpression parentExpression = (PsiBinaryExpression) parent;
-                if (tokenType.equals(parentExpression.getOperationSign().getTokenType())) {
+                final PsiBinaryExpression parentExpression =
+                        (PsiBinaryExpression) parent;
+                if (tokenType.equals(parentExpression.getOperationTokenType())) {
                     return;
                 }
             }
@@ -84,7 +102,8 @@ public class DuplicateBooleanBranchInspection extends ExpressionInspection {
             }
         }
 
-        private static void collectConditions(PsiExpression condition, Set<PsiExpression> conditions,
+        private static void collectConditions(PsiExpression condition,
+                                              Set<PsiExpression> conditions,
                                               IElementType tokenType) {
             if (condition == null) {
                 return;

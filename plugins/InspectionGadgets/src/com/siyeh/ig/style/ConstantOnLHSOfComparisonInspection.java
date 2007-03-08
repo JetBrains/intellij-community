@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiBinaryExpression;
@@ -24,27 +23,29 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class ConstantOnLHSOfComparisonInspection extends ExpressionInspection {
+public class ConstantOnLHSOfComparisonInspection extends BaseInspection {
 
     public String getID() {
         return "ConstantOnLeftSideOfComparison";
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.STYLE_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "constant.on.lhs.of.comparison.display.name");
     }
 
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
-                "constant.on.l.h.s.of.comparison.problem.descriptor");
+                "constant.on.lhs.of.comparison.problem.descriptor");
     }
 
     public BaseInspectionVisitor buildVisitor() {

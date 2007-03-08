@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiCatchSection;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiForeachStatement;
@@ -35,8 +34,10 @@ public class ParameterNamingConventionInspection extends ConventionInspection {
         return "MethodParameterNamingConvention";
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "parameter.naming.convention.display.name");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {

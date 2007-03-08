@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,27 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PointlessBooleanExpressionInspection extends ExpressionInspection{
+public class PointlessBooleanExpressionInspection extends BaseInspection {
 
     private static final Set<String> booleanTokens =
             new HashSet<String>(7);
@@ -62,9 +61,10 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
                 this, "m_ignoreExpressionsContainingConstants");
     }
 
-
-    public String getGroupDisplayName(){
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "pointless.boolean.expression.display.name");
     }
 
     public boolean isEnabledByDefault(){

@@ -15,16 +15,18 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class OctalAndDecimalIntegersMixedInspection
-        extends ExpressionInspection {
+        extends BaseInspection {
 
     public String getID() {
         return "OctalAndDecimalIntegersInSameArray";
@@ -33,10 +35,6 @@ public class OctalAndDecimalIntegersMixedInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "octal.and.decimal.integers.in.same.array.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.NUMERIC_GROUP_NAME;
     }
 
     @NotNull

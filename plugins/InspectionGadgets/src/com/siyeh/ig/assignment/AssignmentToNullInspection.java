@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,17 @@
  */
 package com.siyeh.ig.assignment;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class AssignmentToNullInspection extends ExpressionInspection {
+public class AssignmentToNullInspection extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("assignment.to.null.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.ASSIGNMENT_GROUP_NAME;
     }
 
     @NotNull

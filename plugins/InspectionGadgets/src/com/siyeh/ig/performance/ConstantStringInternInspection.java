@@ -1,22 +1,38 @@
+/*
+ * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ConstantStringInternInspection extends ExpressionInspection {
+public class ConstantStringInternInspection extends BaseInspection {
 
-    public String getGroupDisplayName() {
-        return GroupNames.PERFORMANCE_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "constant.string.intern.display.name");
     }
 
     @NotNull
@@ -37,13 +53,16 @@ public class ConstantStringInternInspection extends ExpressionInspection {
 
         @NotNull
         public String getName() {
-            return InspectionGadgetsBundle.message("constant.string.intern.quickfix");
+            return InspectionGadgetsBundle.message(
+                    "constant.string.intern.quickfix");
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            final PsiElement parent = element.getParent();
             final PsiMethodCallExpression call =
-                    (PsiMethodCallExpression)descriptor.getPsiElement().getParent().getParent();
+                    (PsiMethodCallExpression) parent.getParent();
             final PsiReferenceExpression expression =
                     call.getMethodExpression();
             final PsiExpression qualifier = expression.getQualifierExpression();
@@ -55,7 +74,9 @@ public class ConstantStringInternInspection extends ExpressionInspection {
         }
     }
 
-    private static class ConstantStringInternVisitor extends BaseInspectionVisitor {
+    private static class ConstantStringInternVisitor
+            extends BaseInspectionVisitor {
+
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
@@ -71,7 +92,8 @@ public class ConstantStringInternInspection extends ExpressionInspection {
             if (args.length != 0) {
                 return;
             }
-            final PsiExpression qualifier = methodExpression.getQualifierExpression();
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
             if(qualifier == null)
             {
                 return;
@@ -95,6 +117,5 @@ public class ConstantStringInternInspection extends ExpressionInspection {
             }
             registerMethodCallError(expression);
         }
-
     }
 }

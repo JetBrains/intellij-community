@@ -44,8 +44,10 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
     /** @noinspection PublicField*/
     public boolean m_ignoreOverridesOfLibraryMethods = false;
 
-    public String getGroupDisplayName() {
-        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
+    @NotNull
+    public String getDisplayName() {
+        return InspectionGadgetsBundle.message(
+                "parameter.name.differs.from.overridden.parameter.display.name");
     }
 
     @NotNull
