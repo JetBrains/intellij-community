@@ -958,7 +958,7 @@ public class StringUtil {
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
   public static String unpluralize(final @NotNull String name) {
-    if (name.endsWith("sses") || name.endsWith("xes")) { //?
+    if (name.endsWith("sses") || name.endsWith("shes") || name.endsWith("ches") || name.endsWith("xes")) { //?
       return name.substring(0, name.length() - 2);
     }
 
