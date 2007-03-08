@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.javabeans;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
@@ -30,10 +29,6 @@ public class FieldHasSetterButNoGetterInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "field.has.setter.but.no.getter.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.JAVABEANS_GROUP_NAME;
     }
 
     @NotNull

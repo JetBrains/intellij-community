@@ -15,13 +15,12 @@
  */
 package com.siyeh.ig.memory;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
@@ -36,10 +35,6 @@ public class StaticCollectionInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "static.collection.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.MEMORY_GROUP_NAME;
     }
 
     @NotNull

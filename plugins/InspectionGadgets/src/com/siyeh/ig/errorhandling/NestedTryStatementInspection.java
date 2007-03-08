@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiTryStatement;
@@ -31,10 +30,6 @@ public class NestedTryStatementInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "nested.try.statement.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
 
     @NotNull

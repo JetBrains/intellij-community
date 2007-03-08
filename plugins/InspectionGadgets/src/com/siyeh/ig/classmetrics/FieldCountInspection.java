@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.classmetrics;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -28,7 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 public class FieldCountInspection extends ClassMetricInspection {
 
@@ -45,10 +45,6 @@ public class FieldCountInspection extends ClassMetricInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("too.many.fields.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.CLASSMETRICS_GROUP_NAME;
     }
 
     @NotNull

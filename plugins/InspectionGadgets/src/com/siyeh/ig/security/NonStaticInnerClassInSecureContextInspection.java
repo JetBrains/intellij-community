@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.security;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -30,10 +29,6 @@ public class NonStaticInnerClassInSecureContextInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "non.static.inner.class.in.secure.context.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.SECURITY_GROUP_NAME;
     }
 
     @NotNull

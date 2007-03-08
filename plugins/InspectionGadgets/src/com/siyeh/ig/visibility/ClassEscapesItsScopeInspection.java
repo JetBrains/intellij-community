@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -31,10 +30,6 @@ public class ClassEscapesItsScopeInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "class.escapes.defined.scope.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.VISIBILITY_GROUP_NAME;
     }
 
     @NotNull

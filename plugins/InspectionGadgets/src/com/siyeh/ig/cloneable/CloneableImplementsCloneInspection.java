@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.cloneable;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiTypeParameter;
@@ -40,10 +39,6 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "cloneable.class.without.clone.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.CLONEABLE_GROUP_NAME;
     }
 
     @NotNull

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
@@ -76,7 +75,7 @@ public class QuestionableNameInspection extends BaseInspection {
     }
 
     private void formatNameCheckString(){
-        final StringBuffer buffer = new StringBuffer();
+        final StringBuilder buffer = new StringBuilder();
         synchronized(lock) {
             boolean first = true;
             for(Object aNameList : nameList){
@@ -95,10 +94,6 @@ public class QuestionableNameInspection extends BaseInspection {
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "questionable.name.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
     @NotNull
@@ -244,7 +239,7 @@ public class QuestionableNameInspection extends BaseInspection {
                     "questionable.name.column.title");
         }
 
-        public Class getColumnClass(int columnIndex){
+        public Class<?> getColumnClass(int columnIndex){
             return String.class;
         }
 

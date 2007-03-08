@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -34,10 +33,6 @@ public class NonSerializableObjectBoundToHttpSessionInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "non.serializable.object.bound.to.http.session.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.SERIALIZATION_GROUP_NAME;
     }
 
     @NotNull

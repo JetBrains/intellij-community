@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -29,10 +28,6 @@ public class ClassWithoutToStringInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "class.without.tostring.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.MATURITY_GROUP_NAME;
     }
 
     @NotNull

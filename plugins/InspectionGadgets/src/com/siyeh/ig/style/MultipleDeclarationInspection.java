@@ -15,12 +15,11 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.fixes.NormalizeDeclarationFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,10 +32,6 @@ public class MultipleDeclarationInspection extends BaseInspection {
 
     public String getID() {
         return "MultipleVariablesInDeclaration";
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.STYLE_GROUP_NAME;
     }
 
     @NotNull

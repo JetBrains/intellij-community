@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.initialization;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.siyeh.InspectionGadgetsBundle;
@@ -34,9 +33,7 @@ import javax.swing.JComponent;
 
 public class InstanceVariableInitializationInspection extends BaseInspection {
 
-    /**
-     * @noinspection PublicField
-     */
+    /** @noinspection PublicField */
     public boolean m_ignorePrimitives = false;
 
     public String getID(){
@@ -46,10 +43,6 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "instance.variable.may.not.be.initialized.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.INITIALIZATION_GROUP_NAME;
     }
 
     @NotNull

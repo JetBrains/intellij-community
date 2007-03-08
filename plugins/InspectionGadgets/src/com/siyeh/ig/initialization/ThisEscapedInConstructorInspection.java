@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.initialization;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -35,10 +34,6 @@ public class ThisEscapedInConstructorInspection extends BaseInspection {
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "this.reference.escaped.in.construction.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.INITIALIZATION_GROUP_NAME;
     }
 
     @NotNull

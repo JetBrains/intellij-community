@@ -15,12 +15,11 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.psiutils.SingletonUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.SingletonUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class SingletonInspection extends BaseInspection {
@@ -28,10 +27,6 @@ public class SingletonInspection extends BaseInspection {
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("singleton.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }
 
     @NotNull

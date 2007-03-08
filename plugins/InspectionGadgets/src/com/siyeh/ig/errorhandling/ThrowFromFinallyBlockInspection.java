@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiThrowStatement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -29,10 +28,6 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "throw.from.finally.block.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault() {

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.jdk;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -33,10 +32,6 @@ public class EnumAsNameInspection extends BaseInspection{
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "use.enum.as.identifier.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.JDK_GROUP_NAME;
     }
 
     @NotNull

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.j2me;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
@@ -35,10 +34,6 @@ public class InterfaceWithOnlyOneDirectInheritorInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "interface.one.inheritor.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.J2ME_GROUP_NAME;
     }
 
     @NotNull

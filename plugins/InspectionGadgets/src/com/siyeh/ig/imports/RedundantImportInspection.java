@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.imports;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -36,11 +35,6 @@ public class RedundantImportInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "redundant.import.display.name");
-    }
-
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.IMPORTS_GROUP_NAME;
     }
 
     @NotNull

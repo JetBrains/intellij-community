@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
@@ -38,11 +37,6 @@ public class TestCaseInProductCodeInspection extends BaseInspection {
     @NotNull
     public String getID() {
         return "JUnitTestCaseInProductSource";
-    }
-
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.JUNIT_GROUP_NAME;
     }
 
     @NotNull

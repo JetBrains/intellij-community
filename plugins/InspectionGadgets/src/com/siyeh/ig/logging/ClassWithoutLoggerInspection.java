@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.logging;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -44,10 +43,6 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("no.logger.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.LOGGING_GROUP_NAME;
     }
 
     @NotNull

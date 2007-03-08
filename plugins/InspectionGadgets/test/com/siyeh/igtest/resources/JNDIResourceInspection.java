@@ -37,7 +37,7 @@ public class JNDIResourceInspection {
         try {
             context = new InitialContext();
         } catch (NamingException e) {
-            e.printStackTrace(); //TODO
+            e.printStackTrace();
         }
         context.close();
     }

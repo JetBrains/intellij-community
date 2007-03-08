@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.imports;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -29,11 +28,6 @@ public class UnusedImportInspection extends BaseInspection {
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("unused.import.display.name");
-    }
-
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.IMPORTS_GROUP_NAME;
     }
 
     @NotNull

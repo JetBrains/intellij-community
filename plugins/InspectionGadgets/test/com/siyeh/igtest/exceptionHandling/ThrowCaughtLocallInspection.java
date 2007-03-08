@@ -7,12 +7,12 @@ public class ThrowCaughtLocallInspection
         try {
             throw new MyCheckedException();
         } catch (MyCheckedException e) {
-            e.printStackTrace(); //TODO
+            e.printStackTrace();
         }
         try {
             throw new MyCheckedException();
         } catch (Exception e) {
-            e.printStackTrace(); //TODO
+            e.printStackTrace();
         }
 
         try {
@@ -28,11 +28,11 @@ public class ThrowCaughtLocallInspection
             try {
                 throw new MyCheckedException();
             } catch (MyUncheckedException e) {
-                e.printStackTrace(); //TODO
+                e.printStackTrace();
 
             }
         } catch (MyCheckedException e) {
-            e.printStackTrace(); //TODO
+            e.printStackTrace();
         }
     }
 

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.encapsulation;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
@@ -32,10 +31,6 @@ public class ProtectedInnerClassInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "protected.inner.class.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.ENCAPSULATION_GROUP_NAME;
     }
 
     @NotNull

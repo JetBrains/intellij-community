@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.util.PsiUtil;
@@ -29,10 +28,6 @@ public class EmptyTryBlockInspection extends BaseInspection {
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("empty.try.block.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault() {

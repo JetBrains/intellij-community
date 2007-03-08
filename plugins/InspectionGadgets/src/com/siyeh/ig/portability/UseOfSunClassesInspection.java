@@ -15,22 +15,17 @@
  */
 package com.siyeh.ig.portability;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.BaseInspection;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class UseOfSunClassesInspection extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("use.sun.classes.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.PORTABILITY_GROUP_NAME;
     }
 
     @NotNull

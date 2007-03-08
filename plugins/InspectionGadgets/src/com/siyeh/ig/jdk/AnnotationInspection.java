@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.jdk;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiAnnotation;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -26,10 +25,6 @@ public class AnnotationInspection extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("annotation.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.JDK_GROUP_NAME;
     }
 
     @NotNull

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.javabeans;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -33,10 +32,6 @@ public class ClassWithoutConstructorInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "class.without.constructor.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.JAVABEANS_GROUP_NAME;
     }
 
     @NotNull

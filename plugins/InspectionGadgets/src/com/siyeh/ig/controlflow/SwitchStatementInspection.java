@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiSwitchStatement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -27,10 +26,6 @@ public class SwitchStatementInspection extends BaseInspection {
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("switch.statement.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     @NotNull

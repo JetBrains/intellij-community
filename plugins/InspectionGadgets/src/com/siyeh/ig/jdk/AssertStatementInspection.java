@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.jdk;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiAssertStatement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -27,10 +26,6 @@ public class AssertStatementInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "assert.statement.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.JDK_GROUP_NAME;
     }
 
     @NotNull

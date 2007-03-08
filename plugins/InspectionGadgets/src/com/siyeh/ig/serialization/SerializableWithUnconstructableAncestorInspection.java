@@ -42,10 +42,6 @@ public class SerializableWithUnconstructableAncestorInspection
                 "serializable.with.unconstructable.ancestor.display.name");
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.SERIALIZATION_GROUP_NAME;
-    }
-
     @NotNull
     public String buildErrorString(Object... infos) {
         final PsiClass ancestor = (PsiClass)infos[0];

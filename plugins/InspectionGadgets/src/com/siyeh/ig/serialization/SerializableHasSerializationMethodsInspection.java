@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiEnumConstantInitializer;
 import com.intellij.psi.PsiTypeParameter;
@@ -37,10 +36,6 @@ public class SerializableHasSerializationMethodsInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "serializable.has.serialization.methods.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.SERIALIZATION_GROUP_NAME;
     }
 
     @NotNull

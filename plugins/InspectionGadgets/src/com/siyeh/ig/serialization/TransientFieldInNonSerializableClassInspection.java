@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -37,10 +36,6 @@ public class TransientFieldInNonSerializableClassInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "transient.field.in.non.serializable.class.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.SERIALIZATION_GROUP_NAME;
     }
 
     @NotNull

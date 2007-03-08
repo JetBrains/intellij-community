@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -41,10 +40,6 @@ public class ExceptionFromCatchWhichDoesntWrapInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "exception.from.catch.which.doesnt.wrap.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
 
     @NotNull

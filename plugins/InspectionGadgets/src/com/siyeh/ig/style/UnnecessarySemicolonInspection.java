@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -35,10 +34,6 @@ public class UnnecessarySemicolonInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.semicolon.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.STYLE_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault(){

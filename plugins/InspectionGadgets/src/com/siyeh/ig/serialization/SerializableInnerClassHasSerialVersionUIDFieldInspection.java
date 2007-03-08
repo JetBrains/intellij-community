@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -44,17 +43,13 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspection
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
-                "serializable.inner.class.has.serial.version.u.i.d.field.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.SERIALIZATION_GROUP_NAME;
+                "serializable.inner.class.has.serial.version.uid.field.display.name");
     }
 
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
-                "serializable.inner.class.has.serial.version.u.i.d.field.problem.descriptor");
+                "serializable.inner.class.has.serial.version.uid.field.problem.descriptor");
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
@@ -64,7 +59,7 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspection
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message(
-                        "serializable.inner.class.has.serial.version.u.i.d.field.ignore.option"),
+                        "serializable.inner.class.has.serial.version.uid.field.ignore.option"),
                 this, "m_ignoreSerializableDueToInheritance");
     }
 

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -28,11 +27,6 @@ public class EmptyClassInspection extends BaseInspection {
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("empty.class.display.name");
-    }
-
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }
 
     @NotNull

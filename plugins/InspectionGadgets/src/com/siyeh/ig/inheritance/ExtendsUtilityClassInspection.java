@@ -15,13 +15,12 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiModifier;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
-import com.siyeh.InspectionGadgetsBundle;
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtendsUtilityClassInspection extends BaseInspection {
@@ -29,10 +28,6 @@ public class ExtendsUtilityClassInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "class.extends.utility.class.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.INHERITANCE_GROUP_NAME;
     }
 
     @NotNull

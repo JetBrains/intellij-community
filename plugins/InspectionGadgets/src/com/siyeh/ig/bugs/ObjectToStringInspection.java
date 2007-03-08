@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.HardcodedMethodConstants;
@@ -34,10 +33,6 @@ public class ObjectToStringInspection extends BaseInspection {
     public String getDisplayName() {
       return InspectionGadgetsBundle.message(
               "default.tostring.call.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.BUGS_GROUP_NAME;
     }
 
     @NotNull

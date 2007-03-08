@@ -15,12 +15,14 @@
  */
 package com.siyeh.ig.classmetrics;
 
-import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AnonymousClassMethodCountInspection
@@ -35,10 +37,6 @@ public class AnonymousClassMethodCountInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "anonymous.inner.class.with.too.many.methods.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.CLASSMETRICS_GROUP_NAME;
     }
 
     protected int getDefaultLimit() {

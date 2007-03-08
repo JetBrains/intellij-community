@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.security;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -32,11 +31,6 @@ public class PublicStaticArrayFieldInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "public.static.array.field.display.name");
-    }
-
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.SECURITY_GROUP_NAME;
     }
 
     @NotNull

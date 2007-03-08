@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.encapsulation;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -31,10 +30,6 @@ public class PackageVisibleFieldInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "package.visible.field.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.ENCAPSULATION_GROUP_NAME;
     }
 
     @NotNull

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiDoWhileStatement;
 import com.intellij.psi.PsiForStatement;
 import com.intellij.psi.PsiStatement;
@@ -31,10 +30,6 @@ public class InfiniteLoopStatementInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "infinite.loop.statement.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault() {

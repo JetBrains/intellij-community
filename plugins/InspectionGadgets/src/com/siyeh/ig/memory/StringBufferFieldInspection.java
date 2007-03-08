@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.memory;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
@@ -28,10 +27,6 @@ public class StringBufferFieldInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "stringbuffer.field.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.MEMORY_GROUP_NAME;
     }
 
     @NotNull

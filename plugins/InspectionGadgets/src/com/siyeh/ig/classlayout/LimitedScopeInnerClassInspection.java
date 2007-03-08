@@ -34,10 +34,6 @@ public class LimitedScopeInnerClassInspection extends BaseInspection {
                 "limited.scope.inner.class.display.name");
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.CLASSLAYOUT_GROUP_NAME;
-    }
-
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(

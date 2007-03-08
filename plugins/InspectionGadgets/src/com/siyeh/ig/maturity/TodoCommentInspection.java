@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiComment;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -26,10 +25,6 @@ public class TodoCommentInspection extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("todo.comment.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.MATURITY_GROUP_NAME;
     }
 
     @NotNull

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.imports;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiImportList;
 import com.intellij.psi.PsiImportStatement;
@@ -31,10 +30,6 @@ public class SingleClassImportInspection extends BaseInspection {
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "single.class.import.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.IMPORTS_GROUP_NAME;
     }
 
     @NotNull

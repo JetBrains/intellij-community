@@ -15,13 +15,12 @@
  */
 package com.siyeh.ig.internationalization;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,10 +33,6 @@ public class StringTokenizerInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "use.stringtokenizer.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
     }
 
     @NotNull

@@ -15,15 +15,14 @@
  */
 package com.siyeh.ig.jdk15;
 
-import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.lang.StdLanguages;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.lang.StdLanguages;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,11 +42,6 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "raw.use.of.parameterized.type.display.name");
-    }
-
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.JDK15_SPECIFIC_GROUP_NAME;
     }
 
     @NotNull

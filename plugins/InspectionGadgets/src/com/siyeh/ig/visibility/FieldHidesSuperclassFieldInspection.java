@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -45,10 +44,6 @@ public class FieldHidesSuperclassFieldInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "field.name.hides.in.superclass.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.VISIBILITY_GROUP_NAME;
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {

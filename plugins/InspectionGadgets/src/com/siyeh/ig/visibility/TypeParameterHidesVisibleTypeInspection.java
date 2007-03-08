@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -29,10 +28,6 @@ public class TypeParameterHidesVisibleTypeInspection extends BaseInspection {
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "type.parameter.hides.visible.type.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.VISIBILITY_GROUP_NAME;
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){

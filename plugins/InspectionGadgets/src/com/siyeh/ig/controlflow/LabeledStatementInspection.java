@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiLabeledStatement;
 import com.siyeh.InspectionGadgetsBundle;
@@ -29,10 +28,6 @@ public class LabeledStatementInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "labeled.statement.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     @NotNull

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.classmetrics;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -42,10 +41,6 @@ public class ClassCouplingInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "overly.coupled.class.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.CLASSMETRICS_GROUP_NAME;
     }
 
     @NotNull

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.encapsulation;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -28,10 +27,6 @@ public class ReturnOfDateFieldInspection extends BaseInspection{
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "return.date.calendar.field.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.ENCAPSULATION_GROUP_NAME;
     }
 
     @NotNull

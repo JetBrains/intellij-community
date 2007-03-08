@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
@@ -37,11 +36,6 @@ public class LoopConditionNotUpdatedInsideLoopInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "loop.condition.not.updated.inside.loop.display.name");
-    }
-
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     @NotNull

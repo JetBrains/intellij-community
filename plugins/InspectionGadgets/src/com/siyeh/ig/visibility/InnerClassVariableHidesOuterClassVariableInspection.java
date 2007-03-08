@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -47,11 +46,6 @@ public class InnerClassVariableHidesOuterClassVariableInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "inner.class.field.hides.outer.display.name");
-    }
-
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.VISIBILITY_GROUP_NAME;
     }
 
     @NotNull

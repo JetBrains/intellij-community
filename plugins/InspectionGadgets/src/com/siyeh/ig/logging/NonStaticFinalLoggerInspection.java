@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.logging;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -43,10 +42,6 @@ public class NonStaticFinalLoggerInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "non.constant.logger.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.LOGGING_GROUP_NAME;
     }
 
     @NotNull

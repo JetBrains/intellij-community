@@ -35,10 +35,6 @@ public class ExternalizableWithSerializationMethodsInspection
                 "externalizable.with.serialization.methods.display.name");
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.SERIALIZATION_GROUP_NAME;
-    }
-
     @NotNull
     public String buildErrorString(Object... infos) {
         final boolean hasReadObject = ((Boolean)infos[0]).booleanValue();

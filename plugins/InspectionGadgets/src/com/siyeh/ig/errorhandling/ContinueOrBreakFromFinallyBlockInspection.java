@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiBreakStatement;
 import com.intellij.psi.PsiContinueStatement;
 import com.intellij.psi.PsiStatement;
@@ -32,10 +31,6 @@ public class ContinueOrBreakFromFinallyBlockInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "continue.or.break.from.finally.block.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.ERRORHANDLING_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault() {

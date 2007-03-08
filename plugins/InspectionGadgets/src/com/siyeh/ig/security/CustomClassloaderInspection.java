@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.security;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -29,10 +28,6 @@ public class CustomClassloaderInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "custom.classloader.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.SECURITY_GROUP_NAME;
     }
 
     @NotNull

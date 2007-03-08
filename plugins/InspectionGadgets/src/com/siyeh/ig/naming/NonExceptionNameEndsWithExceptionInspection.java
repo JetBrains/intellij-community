@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
@@ -34,10 +33,6 @@ public class NonExceptionNameEndsWithExceptionInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "non.exception.name.ends.with.exception.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
     @NotNull

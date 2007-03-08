@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.imports;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -31,10 +30,6 @@ public class StaticImportInspection extends BaseInspection {
 
     public String getDisplayName(){
         return InspectionGadgetsBundle.message("static.import.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.IMPORTS_GROUP_NAME;
     }
 
     @NotNull

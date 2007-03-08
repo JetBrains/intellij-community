@@ -15,12 +15,11 @@
  */
 package com.siyeh.ig.inheritance;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class AbstractClassExtendsConcreteClassInspection
@@ -29,10 +28,6 @@ public class AbstractClassExtendsConcreteClassInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "abstract.class.extends.concrete.class.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.INHERITANCE_GROUP_NAME;
     }
 
     @NotNull

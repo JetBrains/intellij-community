@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.j2me;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -27,10 +26,6 @@ public class MethodCallInLoopConditionInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "method.call.in.loop.condition.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.J2ME_GROUP_NAME;
     }
 
     @NotNull

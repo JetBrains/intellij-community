@@ -22,10 +22,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -98,11 +99,9 @@ public class ReuseOfLocalVariableInspection
                     codeStyleManager.suggestUniqueVariableName(baseName,
                                                                variableBlock,
                                                                false);
-            final PsiSearchHelper searchHelper = manager.getSearchHelper();
-            final PsiReference[] references =
-                    searchHelper.findReferences(variable,
-                            variable.getUseScope(), false);
-            for (PsiReference reference : references){
+            final Query<PsiReference> query = ReferencesSearch.search(variable,
+                    variable.getUseScope(), false);
+            for (PsiReference reference : query){
                 final PsiElement referenceElement = reference.getElement();
                 if(referenceElement != null){
                     final TextRange textRange =
@@ -152,16 +151,18 @@ public class ReuseOfLocalVariableInspection
             final PsiVariable variable = (PsiVariable) referent;
 
             //TODO: this is safe, but can be weakened
-            if(variable.getInitializer()==null){
+            if(variable.getInitializer() == null){
                 return;
             }
             final PsiJavaToken sign = assignment.getOperationSign();
-
             final IElementType tokenType = sign.getTokenType();
             if(!JavaTokenType.EQ.equals(tokenType)){
                 return;
             }
             final PsiExpression rhs = assignment.getRExpression();
+            if(rhs == null){
+                return;
+            }
             if(VariableAccessUtils.variableIsUsed(variable, rhs)){
                 return;
             }

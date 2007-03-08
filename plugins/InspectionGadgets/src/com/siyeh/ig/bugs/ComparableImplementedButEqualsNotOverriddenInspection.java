@@ -15,17 +15,15 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class ComparableImplementedButEqualsNotOverriddenInspection
@@ -34,12 +32,6 @@ public class ComparableImplementedButEqualsNotOverriddenInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "comparable.implemented.but.equals.not.overridden.display.name");
-    }
-
-    @Nls
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.BUGS_GROUP_NAME;
     }
 
     @NotNull

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.j2me;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -28,10 +27,6 @@ public class ArrayLengthInLoopConditionInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "array.length.in.loop.condition.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.J2ME_GROUP_NAME;
     }
 
     @NotNull

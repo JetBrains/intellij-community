@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -49,10 +48,6 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
 
     @SuppressWarnings("PublicField")
     public boolean m_ignoreJavadoc = false;
-
-    public String getGroupDisplayName(){
-        return GroupNames.STYLE_GROUP_NAME;
-    }
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -162,7 +157,8 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
                 extends PsiRecursiveElementVisitor {
 
             private final String fullyQualifiedText;
-            private final List shortenedElements = new ArrayList();
+            private final List<PsiJavaCodeReferenceElement> shortenedElements =
+                    new ArrayList();
 
             QualificationRemover(String fullyQualifiedText) {
                 this.fullyQualifiedText = fullyQualifiedText;

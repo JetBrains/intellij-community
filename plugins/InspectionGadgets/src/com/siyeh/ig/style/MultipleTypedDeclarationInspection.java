@@ -15,14 +15,13 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.fixes.NormalizeDeclarationFix;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -38,10 +37,6 @@ public class MultipleTypedDeclarationInspection extends BaseInspection {
 
     public String getID() {
         return "VariablesOfDifferentTypesInDeclaration";
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.STYLE_GROUP_NAME;
     }
 
     @NotNull

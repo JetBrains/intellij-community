@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.classmetrics;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,10 +34,6 @@ public class AnonymousClassComplexityInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "overly.complex.anonymous.inner.class.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.CLASSMETRICS_GROUP_NAME;
     }
 
     protected int getDefaultLimit() {

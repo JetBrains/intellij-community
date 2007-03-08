@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.jdk15;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -48,10 +47,6 @@ public class WhileCanBeForeachInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "while.can.be.foreach.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.JDK15_SPECIFIC_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault() {

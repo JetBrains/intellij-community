@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.dataflow;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.find.FindManager;
@@ -67,13 +66,6 @@ public class TooBroadScopeInspection extends BaseInspection
     public String getID()
     {
         return "TooBroadScope";
-    }
-
-
-    @NotNull
-    public String getGroupDisplayName()
-    {
-        return GroupNames.DATA_FLOW_ISSUES;
     }
 
     @Nullable

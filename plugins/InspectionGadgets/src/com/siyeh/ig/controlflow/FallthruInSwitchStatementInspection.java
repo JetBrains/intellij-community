@@ -40,10 +40,6 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
         return "fallthrough";
     }
 
-    public String getGroupDisplayName() {
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
-    }
-
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(

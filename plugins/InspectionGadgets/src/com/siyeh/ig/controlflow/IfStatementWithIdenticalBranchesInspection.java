@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -36,10 +35,6 @@ public class IfStatementWithIdenticalBranchesInspection
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "if.statement.with.identical.branches.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     @NotNull

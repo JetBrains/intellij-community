@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.imports;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
@@ -32,10 +31,6 @@ public class JavaLangImportInspection extends BaseInspection {
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "java.lang.import.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.IMPORTS_GROUP_NAME;
     }
 
     @NotNull

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.javabeans;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -34,10 +33,6 @@ public class ClassWithoutNoArgConstructorInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "class.without.no.arg.constructor.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.JAVABEANS_GROUP_NAME;
     }
 
     public JComponent createOptionsPanel() {

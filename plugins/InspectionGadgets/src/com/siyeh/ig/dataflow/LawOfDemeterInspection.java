@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Bas Leijdekkers
+ * Copyright 2006-2007 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.dataflow;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -23,11 +22,10 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class LawOfDemeterInspection extends BaseInspection {
 
@@ -40,12 +38,6 @@ public class LawOfDemeterInspection extends BaseInspection {
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("law.of.demeter.display.name");
-    }
-
-    @Nls
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.DATA_FLOW_ISSUES;
     }
 
     @NotNull

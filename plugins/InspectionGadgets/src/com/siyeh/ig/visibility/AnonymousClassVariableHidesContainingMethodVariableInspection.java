@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Bas Leijdekkers
+ * Copyright 2006-2007 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -37,11 +36,6 @@ public class AnonymousClassVariableHidesContainingMethodVariableInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "anonymous.class.variable.hides.containing.method.variable.display.name");
-    }
-
-    @NotNull
-    public String getGroupDisplayName() {
-        return GroupNames.VISIBILITY_GROUP_NAME;
     }
 
     @NotNull

@@ -34,7 +34,7 @@ public class SocketResourceInspection {
         try {
             socket = new Socket(InetAddress.getLocalHost(), 1);
         } catch (FileNotFoundException e) {
-            e.printStackTrace(); //TODO
+            e.printStackTrace();
         }
         socket.close();
     }

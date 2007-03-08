@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.encapsulation;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -40,10 +39,6 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection{
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "return.of.collection.array.field.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.ENCAPSULATION_GROUP_NAME;
     }
 
     @Nullable

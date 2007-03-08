@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -38,10 +37,6 @@ public class NonSerializableFieldInSerializableClassInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "non.serializable.field.in.serializable.class.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.SERIALIZATION_GROUP_NAME;
     }
 
     public String buildErrorString(Object... infos) {

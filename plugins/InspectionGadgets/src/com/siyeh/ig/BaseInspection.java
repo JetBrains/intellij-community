@@ -101,7 +101,7 @@ public abstract class BaseInspection extends LocalInspectionTool {
 
 
     @Nls @NotNull
-    public String getGroupDisplayName() {
+    public final String getGroupDisplayName() {
         final Class<? extends BaseInspection> thisClass = getClass();
         final Package thisPackage = thisClass.getPackage();
         assert thisPackage != null : "need package to determine group display name";

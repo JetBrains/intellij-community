@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -38,10 +37,6 @@ public class EmptyStatementBodyInspection extends BaseInspection {
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "statement.with.empty.body.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.BUGS_GROUP_NAME;
     }
 
     @NotNull

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.jdk;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -33,10 +32,6 @@ public class ForeachStatementInspection extends BaseInspection{
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "extended.for.statement.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.JDK_GROUP_NAME;
     }
 
     public String buildErrorString(Object... infos){

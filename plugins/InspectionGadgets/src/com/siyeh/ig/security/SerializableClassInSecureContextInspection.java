@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.security;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
@@ -31,10 +30,6 @@ public class SerializableClassInSecureContextInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "serializable.class.in.secure.context.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.SECURITY_GROUP_NAME;
     }
 
     @NotNull

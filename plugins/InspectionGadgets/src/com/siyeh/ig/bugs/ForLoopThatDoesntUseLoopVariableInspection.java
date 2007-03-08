@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -28,10 +27,6 @@ public class ForLoopThatDoesntUseLoopVariableInspection
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "for.loop.not.use.loop.variable.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.BUGS_GROUP_NAME;
     }
 
     @NotNull

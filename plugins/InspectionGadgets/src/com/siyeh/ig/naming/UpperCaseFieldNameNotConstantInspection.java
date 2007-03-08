@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -50,10 +49,6 @@ public class UpperCaseFieldNameNotConstantInspection extends BaseInspection {
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
     public BaseInspectionVisitor buildVisitor() {

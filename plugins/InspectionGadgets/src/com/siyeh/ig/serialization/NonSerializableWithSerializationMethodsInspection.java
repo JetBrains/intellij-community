@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
@@ -36,10 +35,6 @@ public class NonSerializableWithSerializationMethodsInspection
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "non.serializable.class.with.readwriteobject.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.SERIALIZATION_GROUP_NAME;
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){

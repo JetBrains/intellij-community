@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.logging;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
@@ -41,10 +40,6 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
 
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("multiple.loggers.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.LOGGING_GROUP_NAME;
     }
 
     @NotNull

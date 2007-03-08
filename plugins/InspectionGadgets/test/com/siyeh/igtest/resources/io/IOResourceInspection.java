@@ -38,7 +38,7 @@ public class IOResourceInspection {
         try {
             str = new FileInputStream("bar");
         } catch (FileNotFoundException e) {
-            e.printStackTrace(); //TODO
+            e.printStackTrace();
         }
         str.close();
     }
@@ -66,7 +66,7 @@ public class IOResourceInspection {
             str = new FileInputStream("bar");
             str2 = new BufferedInputStream(str);
         } catch (FileNotFoundException e) {
-            e.printStackTrace(); //TODO
+            e.printStackTrace();
         }
         str.close();
     }

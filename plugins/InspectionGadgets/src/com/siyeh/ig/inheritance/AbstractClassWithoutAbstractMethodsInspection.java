@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.inheritance;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -34,10 +33,6 @@ public class AbstractClassWithoutAbstractMethodsInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "abstract.class.without.abstract.methods.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.INHERITANCE_GROUP_NAME;
     }
 
     @NotNull

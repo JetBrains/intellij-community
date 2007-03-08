@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiComment;
@@ -32,10 +31,6 @@ public class SuppressionAnnotationInspection extends BaseInspection {
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "inspection.suppression.annotation.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.MATURITY_GROUP_NAME;
     }
 
     @NotNull

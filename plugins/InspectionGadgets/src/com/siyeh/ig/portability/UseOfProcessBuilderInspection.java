@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.portability;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -28,10 +27,6 @@ public class UseOfProcessBuilderInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "use.processbuilder.class.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.PORTABILITY_GROUP_NAME;
     }
 
     @NotNull

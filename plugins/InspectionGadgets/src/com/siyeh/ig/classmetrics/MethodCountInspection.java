@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.classmetrics;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
@@ -31,10 +30,6 @@ public class MethodCountInspection extends ClassMetricInspection {
     }
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("too.many.methods.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.CLASSMETRICS_GROUP_NAME;
     }
 
     protected int getDefaultLimit() {

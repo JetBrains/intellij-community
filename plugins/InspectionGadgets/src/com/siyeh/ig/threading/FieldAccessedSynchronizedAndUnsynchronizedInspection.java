@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -38,10 +37,6 @@ public class FieldAccessedSynchronizedAndUnsynchronizedInspection
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "field.accessed.synchronized.and.unsynchronized.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.THREADING_GROUP_NAME;
     }
 
     @NotNull

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -36,10 +35,6 @@ public class EnumSwitchStatementWhichMissesCasesInspection
 
     /** @noinspection PublicField*/
     public boolean ignoreSwitchStatementsWithDefault = false;
-
-    public String getGroupDisplayName() {
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
-    }
 
     @NotNull
     public String buildErrorString(Object... infos) {

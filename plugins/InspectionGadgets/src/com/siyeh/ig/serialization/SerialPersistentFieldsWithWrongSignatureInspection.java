@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -33,10 +32,6 @@ public class SerialPersistentFieldsWithWrongSignatureInspection
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "serialpersistentfields.with.wrong.signature.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.SERIALIZATION_GROUP_NAME;
     }
 
     @NotNull

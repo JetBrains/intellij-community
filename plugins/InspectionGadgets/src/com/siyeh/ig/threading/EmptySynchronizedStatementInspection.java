@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiSynchronizedStatement;
@@ -31,10 +30,6 @@ public class EmptySynchronizedStatementInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "empty.synchronized.statement.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.THREADING_GROUP_NAME;
     }
 
     @NotNull

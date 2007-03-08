@@ -32,7 +32,7 @@ public class StreamOpenCloseInspection {
         try {
             str = new FileInputStream("bar");
         } catch (FileNotFoundException e) {
-            e.printStackTrace(); //TODO
+            e.printStackTrace();
         }
         str.close();
     }

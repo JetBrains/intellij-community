@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.j2me;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -36,10 +35,6 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "private.member.access.between.outer.and.inner.classes.display.name");
-    }
-
-    public String getGroupDisplayName(){
-        return GroupNames.J2ME_GROUP_NAME;
     }
 
     @NotNull

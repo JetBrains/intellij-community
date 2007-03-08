@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiSwitchStatement;
 import com.siyeh.InspectionGadgetsBundle;
@@ -41,10 +40,6 @@ public class SwitchStatementWithTooManyBranchesInspection
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "switch.statement.with.too.many.branches.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     public JComponent createOptionsPanel() {

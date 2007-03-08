@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.initialization;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -39,10 +38,6 @@ public class StaticVariableUninitializedUseInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "static.variable.used.before.initialization.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.INITIALIZATION_GROUP_NAME;
     }
 
     @NotNull

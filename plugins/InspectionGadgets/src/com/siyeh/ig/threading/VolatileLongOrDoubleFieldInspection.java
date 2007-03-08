@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
@@ -30,10 +29,6 @@ public class VolatileLongOrDoubleFieldInspection extends BaseInspection {
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "volatile.long.or.double.field.display.name");
-    }
-
-    public String getGroupDisplayName() {
-        return GroupNames.THREADING_GROUP_NAME;
     }
 
     @NotNull
