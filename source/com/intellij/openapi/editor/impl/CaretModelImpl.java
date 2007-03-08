@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
@@ -281,6 +282,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     int newY = myEditor.visibleLineNumberToYPosition(myVisibleCaret.line);
     int lineHeight = myEditor.getLineHeight();
     Rectangle visibleRect = myEditor.getScrollingModel().getVisibleArea();
+    final EditorGutterComponentEx gutter = myEditor.getGutterComponentEx();
+    final EditorComponentImpl content = (EditorComponentImpl)myEditor.getContentComponent();
 
     int updateWidth = myEditor.getScrollPane()
       .getHorizontalScrollBar()
@@ -288,12 +291,16 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     if (Math.abs(newY - oldY) <= 2 * lineHeight) {
       int minY = Math.min(oldY, newY);
       int maxY = Math.max(oldY + lineHeight, newY + lineHeight);
-      ((EditorComponentImpl)myEditor.getContentComponent()).repaintEditorComponent(0, minY, updateWidth, maxY - minY);
+      content.repaintEditorComponent(0, minY, updateWidth, maxY - minY);
+      gutter.repaint(0, minY, gutter.getWidth(), maxY - minY);
     }
     else {
-      ((EditorComponentImpl)myEditor.getContentComponent()).repaintEditorComponent(0, oldY, updateWidth, 2 * lineHeight);
-      ((EditorComponentImpl)myEditor.getContentComponent()).repaintEditorComponent(0, newY, updateWidth, 2 * lineHeight);
+      content.repaintEditorComponent(0, oldY, updateWidth, 2 * lineHeight);
+      gutter.repaint(0, oldY, updateWidth, 2 * lineHeight);
+      content.repaintEditorComponent(0, newY, updateWidth, 2 * lineHeight);
+      gutter.repaint(0, newY, updateWidth, 2 * lineHeight);
     }
+    
   }
 
   public LogicalPosition getLogicalPosition() {

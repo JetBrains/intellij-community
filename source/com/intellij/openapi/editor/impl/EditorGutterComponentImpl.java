@@ -28,8 +28,8 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
@@ -151,8 +151,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void paintAnnotations(Graphics g, Rectangle clip) {
-    g.setColor(getBackground());
-    g.fillRect(getAnnotationsAreaOffset(), clip.y, getAnnotationsAreaWidth(), clip.height);
+    paintBackground(g, clip, getAnnotationsAreaOffset(), getAnnotationsAreaWidth());
 
     int x = getAnnotationsAreaOffset();
 
@@ -200,16 +199,27 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void paintLineMarkers(Graphics g, Rectangle clip) {
     if (isLineMarkersShown()) {
-      g.setColor(getBackground());
-      g.fillRect(getLineMarkerAreaOffset(), clip.y, getLineMarkerAreaWidth(), clip.height);
+      paintBackground(g, clip, getLineMarkerAreaOffset(), getLineMarkerAreaWidth());
       paintGutterRenderers(g);
+    }
+  }
+
+  private void paintBackground(final Graphics g, final Rectangle clip, final int x, final int width) {
+    g.setColor(getBackground());
+    g.fillRect(x, clip.y, width, clip.height);
+
+    final VisualPosition visCaret = myEditor.getCaretModel().getVisualPosition();
+    Color caretRowColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
+    if (caretRowColor != null) {
+      g.setColor(caretRowColor);
+      final Point caretPoint = myEditor.visualPositionToXY(visCaret);
+      g.fillRect(x, caretPoint.y, width, myEditor.getLineHeight());
     }
   }
 
   private void paintLineNumbers(Graphics g, Rectangle clip) {
     if (isLineNumbersShown()) {
-      g.setColor(getBackground());
-      g.fillRect(getLineNumberAreaOffset(), clip.y, getLineNumberAreaWidth(), clip.height);
+      paintBackground(g, clip, getLineNumberAreaOffset(), getLineNumberAreaWidth());
       g.setColor(Color.white);
       int x = getLineNumberAreaOffset() + getLineNumberAreaWidth() - 2;
       UIUtil.drawLine(g, x, clip.y, x, clip.y + clip.height);
@@ -252,6 +262,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (startLineNumber >= endLineNumber) {
       return;
     }
+
     Color color = myEditor.getColorsScheme().getColor(EditorColors.LINE_NUMBERS_COLOR);
     g.setColor(color != null ? color : Color.blue);
     g.setFont(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
@@ -624,8 +635,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void paintFoldingBackground(Graphics g) {
     Rectangle clip = g.getClipBounds();
     int lineX = getWhitespaceSeparatorOffset();
-    g.setColor(getBackground());
-    g.fillRect(getFoldingAreaOffset(), clip.y, getFoldingAreaWidth(), clip.height);
+    paintBackground(g, clip, getFoldingAreaOffset(), getFoldingAreaWidth());
 
     g.setColor(myEditor.getBackroundColor());
     g.fillRect(lineX, clip.y, getFoldingAreaWidth(), clip.height);
