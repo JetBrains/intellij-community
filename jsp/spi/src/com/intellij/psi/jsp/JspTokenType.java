@@ -26,4 +26,7 @@ public interface JspTokenType {
   IElementType JSP_FRAGMENT = new IJspElementType("JSP_FRAGEMENT"); // passed to template parser for all of jsp code
   IElementType JSPX_ROOT_TAG_HEADER = new IJspElementType("JSPX_ROOT_TAG_HEADER"); // These two only produced by JspxJavaLexer
   IElementType JSPX_ROOT_TAG_FOOTER = new IJspElementType("JSPX_ROOT_TAG_FOOTER");
+  IElementType JSPX_JAVA_IN_ATTR_START = new IJspElementType("JSPX_JAVA_IN_ATTR_START");
+  IElementType JSPX_JAVA_IN_ATTR_END = new IJspElementType("JSPX_JAVA_IN_ATTR_END");
+  IElementType JSPX_JAVA_IN_ATTR = new IJspElementType("JSPX_JAVA_IN_ATTR");
 }

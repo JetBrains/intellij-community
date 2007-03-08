@@ -64,4 +64,8 @@ public class _XmlLexer extends FlexAdapter implements ELHostLexer {
   public void setElTypes(final IElementType jspElContent, final IElementType jspElContent1) {
     ((ELHostLexer)getFlex()).setElTypes(jspElContent, jspElContent1);
   }
+
+  public void setJavaEmbeddedType(final IElementType javaEmbeddedType) {
+    ((__XmlLexer)getFlex()).setJavaEmbeddedType(javaEmbeddedType);
+  }
 }
