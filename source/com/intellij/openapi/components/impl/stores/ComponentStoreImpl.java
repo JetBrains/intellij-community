@@ -13,17 +13,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 @SuppressWarnings({"deprecation"})
 abstract class ComponentStoreImpl implements IComponentStore {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentStoreImpl");
-  private Map<String, Object> myComponents = new TreeMap<String, Object>();
-  private List<SettingsSavingComponent> mySettingsSavingComponents = new ArrayList<SettingsSavingComponent>();
+  private Map<String, Object> myComponents = Collections.synchronizedMap(new TreeMap<String, Object>());
+  private List<SettingsSavingComponent> mySettingsSavingComponents = Collections.synchronizedList(new ArrayList<SettingsSavingComponent>());
 
   @Nullable
   protected StateStorage getStateStorage(final Storage storageSpec) throws StateStorage.StateStorageException {
@@ -97,11 +94,16 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
 
   public void commit() {
-    for (SettingsSavingComponent settingsSavingComponent : mySettingsSavingComponents) {
+    final SettingsSavingComponent[] settingsComponents =
+      mySettingsSavingComponents.toArray(new SettingsSavingComponent[mySettingsSavingComponents.size()]);
+
+    for (SettingsSavingComponent settingsSavingComponent : settingsComponents) {
       settingsSavingComponent.save();
     }
 
-    for (String name : myComponents.keySet()) {
+    final String[] names = myComponents.keySet().toArray(new String[myComponents.keySet().size()]);
+    
+    for (String name : names) {
       Object component = myComponents.get(name);
       if (component instanceof JDOMExternalizable) {
         saveJdomExternalizable((JDOMExternalizable)component);
