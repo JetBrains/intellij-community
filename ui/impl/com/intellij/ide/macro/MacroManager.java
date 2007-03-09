@@ -48,7 +48,7 @@ public final class MacroManager {
     registerMacro(new SourcepathEntryMacro());
     registerMacro(new ClasspathEntryMacro());
 
-    registerMacro(new ProjectFilePathMacro());
+    //registerMacro(new ProjectFilePathMacro());
     registerMacro(new ProjectFileDirMacro());
     registerMacro(new ProjectNameMacro());
     registerMacro(new ProjectPathMacro());
