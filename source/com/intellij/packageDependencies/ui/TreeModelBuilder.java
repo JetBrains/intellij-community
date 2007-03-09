@@ -166,7 +166,6 @@ public class TreeModelBuilder {
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      roots.addAll(Arrays.asList(moduleRootManager.getFiles(OrderRootType.SOURCES)));
       final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
       for (OrderEntry entry : orderEntries) {
         if (entry instanceof LibraryOrderEntry){
