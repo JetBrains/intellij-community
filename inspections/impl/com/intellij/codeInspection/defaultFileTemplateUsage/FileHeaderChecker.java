@@ -36,9 +36,9 @@ public class FileHeaderChecker {
   static ProblemDescriptor checkFileHeader(final PsiFile file,
                                            final InspectionManager manager) {
     FileTemplate template = FileTemplateManager.getInstance().getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
-    String text = template.getText();
     TIntObjectHashMap<String> offsetToProperty = new TIntObjectHashMap<String>();
-    String regex = templateToRegex(text, offsetToProperty);
+    String templateText = template.getText().trim();
+    String regex = templateToRegex(templateText, offsetToProperty);
     regex = ".*("+regex+").*";
     String fileText = file.getText();
     Pattern pattern = Pattern.compile(regex, Pattern.DOTALL);

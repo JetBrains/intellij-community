@@ -3,6 +3,7 @@ package com.intellij.ide.fileTemplates;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
@@ -26,29 +27,33 @@ public interface FileTemplate{
   @NonNls String ATTRIBUTE_METHOD_NAME = "METHOD_NAME";
   @NonNls String ATTRIBUTE_PACKAGE_NAME = "PACKAGE_NAME";
 
-  String[] getUnsetAttributes(Properties properties) throws ParseException;
+  @NotNull String[] getUnsetAttributes(@NotNull Properties properties) throws ParseException;
 
-  String getName();
+  @NotNull String getName();
 
-  void setName(String name);
+  void setName(@NotNull String name);
 
   boolean isJavaClassTemplate();
 
   boolean isDefault();
 
+  @NotNull
   String getDescription();
 
+  @NotNull
   String getText();
 
   void setText(String text);
 
+  @NotNull
   String getText(Map attributes) throws IOException;
 
+  @NotNull
   String getText(Properties attributes) throws IOException;
 
-  String getExtension();
+  @NotNull String getExtension();
 
-  void setExtension(String extension);
+  void setExtension(@NotNull String extension);
 
   boolean isAdjust();
 

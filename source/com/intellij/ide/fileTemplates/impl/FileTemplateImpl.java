@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
 import org.apache.velocity.runtime.parser.ParseException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.Map;
@@ -47,7 +48,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
   private boolean myIsInternal = false;
 
   /** Creates new template. This template is marked as 'new', i.e. it will be saved to new file at IDEA end. */
-  FileTemplateImpl(String content, String name, String extension){
+  FileTemplateImpl(String content, @NotNull String name, @NotNull String extension){
     if(content != null){
       content = StringUtil.convertLineSeparators(content);
     }
@@ -57,7 +58,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
     myModified = true;
   }
 
-  FileTemplateImpl(File templateFile, String name, String extension, boolean isReadOnly) {
+  FileTemplateImpl(@NotNull File templateFile, @NotNull String name, @NotNull String extension, boolean isReadOnly) {
     myTemplateFile = templateFile;
     myName = replaceFileSeparatorChar(name);
     myExtension = extension;
@@ -65,7 +66,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
     myReadOnly = isReadOnly;
   }
 
-  FileTemplateImpl(VirtualFile templateURL, String name, String extension) {
+  FileTemplateImpl(@NotNull VirtualFile templateURL, @NotNull String name, @NotNull String extension) {
     myTemplateURL = templateURL;
     myName = name;
     myExtension = extension;
@@ -84,7 +85,8 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
     }
   }
 
-  public String[] getUnsetAttributes(Properties properties) throws ParseException{
+  @NotNull
+  public String[] getUnsetAttributes(@NotNull Properties properties) throws ParseException{
     String content;
     try{
       content = getContent();
@@ -100,6 +102,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
     return myReadOnly;
   }
 
+  @NotNull
   public String getDescription(){
     try {
       return myDescription != null ? VfsUtil.loadText(myDescription) : "";
@@ -113,6 +116,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
     myDescription = file;
   }
 
+  @NotNull
   public String getName(){
     return myName;
   }
@@ -122,10 +126,12 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
     return fileType.equals(StdFileTypes.JAVA);
   }
 
+  @NotNull
   public String getExtension(){
     return myExtension;
   }
 
+  @NotNull
   public String getText(){
     String text = "";
     try{
@@ -232,10 +238,12 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
     myTemplateFile = templateFile;
   }
 
+  @NotNull
   public String getText(Map attributes) throws IOException{
     return StringUtil.convertLineSeparators(FileTemplateUtil.mergeTemplate(attributes, getContent()));
   }
 
+  @NotNull
   public String getText(Properties attributes) throws IOException{
     return StringUtil.convertLineSeparators(FileTemplateUtil.mergeTemplate(attributes, getContent()));
   }
@@ -244,6 +252,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
     return getName();
   }
 
+  @NotNull
   private String getContent() throws IOException{
     if(myContent == null){
       if(myTemplateFile != null){
@@ -271,7 +280,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
     return myTemplateFile == null && myTemplateURL == null;
   }
 
-  public void setName(String name){
+  public void setName(@NotNull String name){
     if(name == null){
       name = "";
     }
@@ -286,7 +295,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
     }
   }
 
-  public void setExtension(String extension){
+  public void setExtension(@NotNull String extension){
     if(extension == null){
       extension = "";
     }
