@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -44,22 +44,12 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
 
   @Override
   protected void writeRootElement(final Element rootElement) {
-    super.writeRootElement(rootElement);
+    rootElement.setAttributes(Collections.EMPTY_LIST);
+    //super.writeRootElement(rootElement);
 
     Set<String> options = myModule.myOptions.keySet();
     for (String option : options) {
       rootElement.setAttribute(option, myModule.myOptions.get(option));
-    }
-
-    Set<String> obsoleteOptions = new HashSet<String>();
-    for (Object attr : rootElement.getAttributes()) {
-      obsoleteOptions.add(((Attribute)attr).getName());
-    }
-    obsoleteOptions.removeAll(options);
-    obsoleteOptions.remove(BaseFileConfigurableStoreImpl.VERSION_OPTION);
-    obsoleteOptions.remove(BaseFileConfigurableStoreImpl.RELATIVE_PATHS_OPTION);
-    for ( String oldOption : obsoleteOptions ) {
-      rootElement.removeAttribute(oldOption);
     }
   }
 
@@ -96,7 +86,7 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
       myModule.setModuleType(moduleType);
     }
     catch (StateStorage.StateStorageException e) {
-      LOG.info(e);
+      LOG.error(e);
       throw new IOException(e.getMessage());
     }
   }
@@ -115,13 +105,7 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
 
   @Nullable
   public VirtualFile getModuleFile() {
-    try {
-      return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE)).getVirtualFile();
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      return null;
-    }
+    return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(DEFAULT_STATE_STORAGE)).getVirtualFile();
   }
 
   @NotNull

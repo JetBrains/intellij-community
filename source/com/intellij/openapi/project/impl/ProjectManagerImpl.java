@@ -571,16 +571,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public void writeExternal(Element parentNode) throws WriteExternalException {
     if (myDefaultProject != null) {
       myDefaultProject.save();
-      assert myDefaultProjectRootElement != null;
-
-      myDefaultProjectRootElement.setName(ELEMENT_DEFAULT_PROJECT);
-      parentNode.addContent(myDefaultProjectRootElement.detach());
-      myDefaultProjectRootElement = null;
-    }
-    else if (myDefaultProjectRootElement != null) {
-      parentNode.addContent((Element)myDefaultProjectRootElement.clone());
     }
 
+    assert myDefaultProjectRootElement != null;
+    myDefaultProjectRootElement.detach();
+    parentNode.addContent(myDefaultProjectRootElement);
   }
 
 
@@ -589,10 +584,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public void readExternal(Element parentNode) throws InvalidDataException {
-    Element element = parentNode.getChild(ELEMENT_DEFAULT_PROJECT);
-    if (element != null) {
-      myDefaultProjectRootElement = element;
+    myDefaultProjectRootElement = parentNode.getChild(ELEMENT_DEFAULT_PROJECT);
+
+    if (myDefaultProjectRootElement == null) {
+      myDefaultProjectRootElement = new Element(ELEMENT_DEFAULT_PROJECT);
     }
+
+    myDefaultProjectRootElement.detach();
   }
 
   public String getExternalFileName() {

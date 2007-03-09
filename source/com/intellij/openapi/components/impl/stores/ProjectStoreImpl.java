@@ -255,27 +255,13 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @Nullable
   public VirtualFile getProjectFile() {
     if (myProject.isDefault()) return null;
-
-    try {
-      return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE)).getVirtualFile();
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      return null;
-    }
+    return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE)).getVirtualFile();
   }
 
   @Nullable
   public VirtualFile getWorkspaceFile() {
     if (myProject.isDefault()) return null;
-    
-    try {
-      return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(WS_FILE_STORAGE)).getVirtualFile();
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      return null;
-    }
+    return ((FileBasedStorage)getStateStorageManager().getFileStateStorage(WS_FILE_STORAGE)).getVirtualFile();
   }
 
   public void loadProjectFromTemplate(final Project project) {

@@ -1,7 +1,9 @@
 package com.intellij.openapi.components.impl.stores;
 
+
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroSubstitutor;
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.JDOMUtil;
@@ -29,7 +31,6 @@ public class FileBasedStorage extends XmlElementStorage {
 
   private final String myFilePath;
   private final String myRootElementName;
-  private Document myDocument;
   private final File myFile;
 
   public FileBasedStorage(@Nullable PathMacroSubstitutor pathMacroManager, final String filePath, String rootElementName) {
@@ -39,58 +40,49 @@ public class FileBasedStorage extends XmlElementStorage {
     myFile = new File(myFilePath);
   }
 
-  @Nullable
-  protected Element getRootElement() throws StateStorageException {
-    return getDocument().getRootElement();
-  }
-
-  public void doSave() throws StateStorageException {
+  public void doSave() throws StateStorage.StateStorageException {
     try {
       final Ref<IOException> refIOException = Ref.create(null);
-      try {
-        final byte[] text = printDocument();
+      final byte[] text = printDocument();
 
-        final IFile ioFile = FILE_SYSTEM.createFile(myFilePath);
+      final IFile ioFile = FILE_SYSTEM.createFile(myFilePath);
 
-        if (ioFile.exists()) {
-          final byte[] bytes = ioFile.loadBytes();
-          if (Arrays.equals(bytes, text)) return;
-          IFile backupFile = deleteBackup(myFilePath);
-          ioFile.renameTo(backupFile);
-        }
-
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            if (!ioFile.exists()) {
-              ioFile.createParentDirs();
-            }
-
-            try {
-              getOrCreateVirtualFile(ioFile).setBinaryContent(text);
-            }
-            catch (IOException e) {
-              refIOException.set(e);
-            }
-
-            deleteBackup(myFilePath);
-          }
-        });
+      if (ioFile.exists()) {
+        final byte[] bytes = ioFile.loadBytes();
+        if (Arrays.equals(bytes, text)) return;
+        IFile backupFile = deleteBackup(myFilePath);
+        ioFile.renameTo(backupFile);
       }
-      finally {
-        if (refIOException.get() != null) {
-          throw refIOException.get();
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          if (!ioFile.exists()) {
+            ioFile.createParentDirs();
+          }
+
+          try {
+            getOrCreateVirtualFile(ioFile).setBinaryContent(text);
+          }
+          catch (IOException e) {
+            refIOException.set(e);
+          }
+
+          deleteBackup(myFilePath);
         }
+      });
+      if (refIOException.get() != null) {
+        throw new StateStorage.StateStorageException(refIOException.get());
       }
     }
-    catch (StateStorageException e) {
-      throw new StateStorageException(e);
+    catch (StateStorage.StateStorageException e) {
+      throw new StateStorage.StateStorageException(e);
     }
     catch (IOException e) {
-      throw new StateStorageException(e);
+      throw new StateStorage.StateStorageException(e);
     }
   }
 
-  public boolean needsSave() throws StateStorageException {
+  public boolean needsSave() throws StateStorage.StateStorageException {
     sort();
     try {
       final IFile ioFile = FILE_SYSTEM.createFile(myFilePath);
@@ -108,13 +100,13 @@ public class FileBasedStorage extends XmlElementStorage {
     }
   }
 
-  private byte[] printDocument() throws StateStorageException {
+  private byte[] printDocument() throws StateStorage.StateStorageException {
     try {
       return JDOMUtil.writeDocument(getDocument(), SystemProperties.getLineSeparator()).getBytes(CharsetToolkit.UTF8);
     }
     catch (UnsupportedEncodingException e) {
       LOG.error(e);
-      throw new StateStorageException(e);
+      throw new StateStorage.StateStorageException(e);
     }
   }
 
@@ -133,7 +125,7 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   @Nullable
-  public VirtualFile getVirtualFile() throws IOException {
+  public VirtualFile getVirtualFile() {
     return getVirtualFile(FILE_SYSTEM.createFile(myFilePath));
   }
 
@@ -163,25 +155,22 @@ public class FileBasedStorage extends XmlElementStorage {
     return LocalFileSystem.getInstance().findFileByIoFile(ioFile);
   }
 
-  public Document getDocument() throws StateStorageException {
-    if (myDocument == null) {
-      try {
-        if (!myFile.exists() || myFile.length() == 0) {
-          myDocument = new Document(new Element(myRootElementName));
-        }
-        else {
-          myDocument = JDOMUtil.loadDocument(myFile);
-        }
+  @Nullable
+  protected Document loadDocument() throws StateStorage.StateStorageException {
+    try {
+      if (!myFile.exists() || myFile.length() == 0) {
+        return new Document(new Element(myRootElementName));
       }
-      catch (IOException e) {
-        throw new StateStorageException(e);
-      }
-      catch (JDOMException e) {
-        throw new StateStorageException(e);
+      else {
+        return JDOMUtil.loadDocument(myFile);
       }
     }
-
-    return myDocument;
+    catch (JDOMException e) {
+      throw new StateStorage.StateStorageException(e);
+    }
+    catch (IOException e) {
+      throw new StateStorage.StateStorageException(e);
+    }
   }
 
   public String getFileName() {

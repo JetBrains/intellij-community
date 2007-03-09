@@ -63,8 +63,10 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
   }
 
   protected void writeRootElement(final Element rootElement) {
-    rootElement.setAttribute(VERSION_OPTION, Integer.toString(ProjectManagerImpl.CURRENT_FORMAT_VERSION));
+    rootElement.setAttributes(Collections.EMPTY_LIST);
+
     rootElement.setAttribute(RELATIVE_PATHS_OPTION, Boolean.toString(isSavePathsRelative()));
+    rootElement.setAttribute(VERSION_OPTION, Integer.toString(ProjectManagerImpl.CURRENT_FORMAT_VERSION));
   }
 
   protected abstract XmlElementStorage getMainStorage();

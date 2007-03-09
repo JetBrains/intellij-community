@@ -7,7 +7,10 @@ import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -18,37 +21,41 @@ import java.util.List;
 public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   private @Nullable Element myElement;
   private ProjectManagerImpl myProjectManager;
+  @NonNls private static final String PROJECT = "project";
 
   public DefaultProjectStoreImpl(final ComponentManagerImpl componentManager, final ProjectImpl project, final ProjectManagerImpl projectManager) {
     super(componentManager, project, projectManager);
     myProjectManager = projectManager;
 
-    final Element projectRootElement = projectManager.getDefaultProjectRootElement();
-
-    if (projectRootElement != null) {
-      myElement = projectRootElement;
-    }
+    myElement = projectManager.getDefaultProjectRootElement();
   }
-
 
   @Override
   protected StateStorageManager createStateStorageManager() {
+
+    Document d = null;
+
+    if (myElement != null) {
+      myElement.detach();
+      d = new Document(myElement);
+    }
+
     final PathMacroManager pathMacroManager = PathMacroManager.getInstance(getComponentManager());
 
+    final Document document = d;
     final XmlElementStorage storage = new XmlElementStorage(pathMacroManager) {
-
       @Nullable
-      protected Element getRootElement() throws StateStorageException {
-        return myElement;
+      protected Document loadDocument() throws StateStorage.StateStorageException {
+        return document;
       }
 
-      public void doSave() throws StateStorageException {
+      public void doSave() throws StateStorage.StateStorageException {
         if (myElement != null) {
-          myProjectManager.setDefaultProjectRootElement(myElement);
+          myProjectManager.setDefaultProjectRootElement((Element)myElement.clone());
         }
       }
 
-      public boolean  needsSave() throws StateStorageException {
+      public boolean  needsSave() throws StateStorage.StateStorageException {
         return true;
       }
 
@@ -57,9 +64,9 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
     };
 
-    return new StateStorageManager(pathMacroManager, "project") {
+    return new StateStorageManager(pathMacroManager, PROJECT) {
       @Override
-      public synchronized StateStorage getStateStorage(final Storage storageSpec) {
+      public synchronized StateStorage getStateStorage(@NotNull final Storage storageSpec) {
         return storage;
       }
 

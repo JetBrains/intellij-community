@@ -49,7 +49,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   private ModuleType myModuleType = null;
   private MyVirtualFileListener myVirtualFileListener;
   private boolean isModuleAdded;
-  public Map<String, String> myOptions = new HashMap<String, String>();
+  public Map<String, String> myOptions = new TreeMap<String, String>();
 
   private GlobalSearchScope myModuleScope = null;
 

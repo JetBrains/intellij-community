@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Attribute;
+import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -23,16 +24,17 @@ abstract class XmlElementStorage implements StateStorage {
 
   private PathMacroSubstitutor myPathMacroManager;
   private Set<Element> mySavedElements = new HashSet<Element>();
+  private Document myDocument;
 
   protected XmlElementStorage(final PathMacroSubstitutor pathMacroManager) {
     myPathMacroManager = pathMacroManager;
   }
 
   @Nullable
-  protected abstract Element getRootElement() throws StateStorageException;
+  protected abstract Document loadDocument() throws StateStorage.StateStorageException;
 
   @Nullable
-  private synchronized Element getState(final String componentName) throws StateStorageException {
+  private synchronized Element getState(final String componentName) throws StateStorage.StateStorageException {
     final Element rootElement = getRootElement();
     if (rootElement == null) return null;
 
@@ -51,7 +53,7 @@ abstract class XmlElementStorage implements StateStorage {
     return null;
   }
 
-  private synchronized void setState(final String componentName, final Element element) throws StateStorageException {
+  private synchronized void setState(final String componentName, final Element element) throws StateStorage.StateStorageException {
     final Element rootElement = getRootElement();
     if (rootElement == null) return;
 
@@ -83,7 +85,7 @@ abstract class XmlElementStorage implements StateStorage {
 
     mySavedElements.add(newComponentElement);
     rootElement.addContent(newComponentElement);
-  }                                                                  
+  }
 
   public void setState(final Object component, final String componentName, final Object state) throws StateStorageException {
     try {
@@ -103,7 +105,8 @@ abstract class XmlElementStorage implements StateStorage {
     return DefaultStateSerializer.deserializeState(element, stateClass, mergeInto);
   }
 
-  protected void sort() throws StateStorageException {
+
+   protected void sort() throws StateStorage.StateStorageException {
     final Element node = getRootElement();
     if (node == null) return;
 
@@ -146,5 +149,21 @@ abstract class XmlElementStorage implements StateStorage {
     }
   }
 
-  protected abstract void doSave() throws StateStorageException;
+  protected abstract void doSave() throws StateStorage.StateStorageException;
+
+  @Nullable
+  Element getRootElement() throws StateStorage.StateStorageException {
+    if (myDocument == null) {
+      myDocument = loadDocument();
+    }
+    return myDocument != null ? myDocument.getRootElement() : null;
+  }
+
+  public Document getDocument() throws StateStorage.StateStorageException {
+    if (myDocument == null) {
+      myDocument = loadDocument();
+    }
+
+    return myDocument;
+  }
 }
