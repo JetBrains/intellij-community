@@ -10,11 +10,11 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -23,28 +23,29 @@ import com.intellij.psi.xml.*;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
-import com.intellij.xml.util.XmlResourceResolver;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.util.XmlResourceResolver;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import org.apache.xerces.impl.Constants;
 import org.apache.xerces.jaxp.JAXPConstants;
 import org.apache.xerces.jaxp.SAXParserFactoryImpl;
 import org.apache.xerces.util.XMLGrammarPoolImpl;
+import org.jetbrains.annotations.NonNls;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.StringReader;
 import java.io.FileNotFoundException;
-import java.net.UnknownHostException;
+import java.io.StringReader;
+import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.NoRouteToHostException;
-import java.net.ConnectException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -166,7 +167,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
             SwingUtilities.invokeLater(
               new Runnable() {
                   public void run() {
-                    if (!myErrorsDetected) {
+                    if (!myErrorsDetected && CompilerWorkspaceConfiguration.getInstance(myProject).CLOSE_MESSAGE_VIEW_IF_SUCCESS) {
                       SwingUtilities.invokeLater(
                           new Runnable() {
                             public void run() {
