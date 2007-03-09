@@ -426,7 +426,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
           }
         }, false);
       }
-      else if (element != null && element.isValid()) {
+      else if (element instanceof PsiDirectory && element.isValid()) {
         queueRefreshScope(scope);
       }
     }
