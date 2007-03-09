@@ -1,7 +1,10 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.StateStorageChooser;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -11,8 +14,10 @@ import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
@@ -33,8 +38,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 
@@ -42,7 +45,7 @@ import java.util.*;
   name = "NewModuleRootManager",
   storages = {
     @Storage(
-      id = ModuleRootManagerImpl.StorageChooser.DEFAULT_STORAGE,
+      id = ClasspathStorage.DEFAULT_STORAGE,
       file = "$MODULE_FILE$"
     ),
 
@@ -640,127 +643,13 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   public static class StorageChooser implements StateStorageChooser<ModuleRootManagerImpl> {
-    @NonNls public static final String DEFAULT_STORAGE = "default";
-    @NonNls public static final String CLASSPATH_OPTION = "classpath";
-
     public Storage selectStorage(Storage[] storages, ModuleRootManagerImpl moduleRootManager, final Operation operation) {
-      String id = DEFAULT_STORAGE;
-
-      final Module module = moduleRootManager.getModule();
-
-      final String classpathOption = module.getOptionValue(CLASSPATH_OPTION);
-      if (classpathOption!=null) {
-        id = classpathOption;
-      }
-
+      final String id = ClasspathStorage.getStorageType(moduleRootManager.getModule());
       for (Storage storage : storages) {
         if (storage.id().equals(id)) return storage;
       }
-
       throw new IllegalArgumentException();
     }
   }
 
-  private static File getTestStorageFile(Module module) {
-    final File moduleBaseDir = new File(module.getModuleFilePath()).getParentFile();
-
-    return new File(new File(moduleBaseDir, ".module"), "classpath.xml");
-  }
-
-  abstract public static class ClasspathStorage implements StateStorage {
-    protected CachedFileSet myFileCache;
-
-    @NonNls private static final String COMPONENT_TAG = "component";
-
-    @Nullable
-    public <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto)
-      throws StateStorageException {
-      assert component instanceof ModuleRootManager;
-      assert componentName.equals("NewModuleRootManager");
-      assert stateClass == ModuleRootManagerImpl.ModuleRootManagerState.class;
-
-      try {
-        final Module module = ((ModuleRootManagerImpl)component).getModule();
-        final Element element = new Element(ClasspathStorage.COMPONENT_TAG);
-        createFileCache(module);
-        getClasspath(module, element);
-        PathMacroManager.getInstance(module).expandPaths(element);
-        ModuleRootManagerImpl.ModuleRootManagerState moduleRootManagerState = new ModuleRootManagerImpl.ModuleRootManagerState();
-        moduleRootManagerState.readExternal(element);
-        //noinspection unchecked
-        return (T)moduleRootManagerState;
-      }
-      catch (InvalidDataException e) {
-        throw new StateStorageException(e);
-      }
-      catch (IOException e) {
-        throw new StateStorageException(e);
-      }
-    }
-
-    public void setState(Object component, final String componentName, Object state) throws StateStorageException {
-      assert component instanceof ModuleRootManager;
-      assert componentName.equals("NewModuleRootManager");
-      assert state.getClass() == ModuleRootManagerImpl.ModuleRootManagerState.class;
-
-      try {
-        final Module module = ((ModuleRootManagerImpl)component).getModule();
-        final Element element = new Element(ClasspathStorage.COMPONENT_TAG);
-        createFileCache(module);
-        ((ModuleRootManagerImpl.ModuleRootManagerState)state).writeExternal(element);
-        PathMacroManager.getInstance(module).collapsePaths(element);
-        setClasspath(module, element);
-      }
-      catch (WriteExternalException e) {
-        throw new StateStorageException(e);
-      }
-      catch (IOException e) {
-        throw new StateStorageException(e);
-      }
-    }
-
-    public List<VirtualFile> getAllStorageFiles() {
-      final List<VirtualFile> list = new ArrayList<VirtualFile>();
-      myFileCache.listFiles(list);
-      return list;
-    }
-
-    public boolean needsSave() throws StateStorageException {
-      return myFileCache.hasChanged();
-    }
-
-    public void save() throws StateStorageException {
-      final Ref<IOException> ref = new Ref<IOException>();
-        ApplicationManager.getApplication().runWriteAction(new Runnable(){
-          public void run() {
-            try {
-              myFileCache.commit();
-            }
-            catch (IOException e) {
-              ref.set(e);
-            }
-          }
-        });
-
-      if (!ref.isNull()) {
-        throw new StateStorageException(ref.get());
-      }
-    }
-
-    private void createFileCache(final Module module) throws StateStorageException, IOException {
-      if (myFileCache == null) {
-        final VirtualFile moduleFile = VfsUtil.findFileByURL(new File(module.getModuleFilePath()).getParentFile().toURL());
-        if (moduleFile == null) {
-          throw new StateStorageException();
-        }
-        myFileCache = createFileCache(module, moduleFile);
-      }
-    }
-
-    protected abstract CachedFileSet createFileCache(final Module module, final VirtualFile moduleDir) throws IOException;
-
-    protected abstract void getClasspath(final Module module, Element element) throws IOException, InvalidDataException;
-
-    protected abstract void setClasspath(Module module, Element element) throws IOException, WriteExternalException;
-  }
 }

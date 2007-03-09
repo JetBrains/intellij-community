@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
+import com.intellij.openapi.roots.impl.ClasspathStorage;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.projectImport.eclipse.config.EclipseClasspathStorage;
@@ -47,8 +47,6 @@ public class ClasspathEditor extends ModuleElementsEditor {
   private Map<String,String> formatIdToDescr = new HashMap<String, String>();
 
   private JComboBox cbClasspathFormat;
-  private static final String DEFAULT_FORMAT = ModuleRootManagerImpl.StorageChooser.DEFAULT_STORAGE;
-  private static final String IDEA_FORMAT_DESCR = ProjectBundle.message("project.roots.classpath.format.default.descr");
 
   public ClasspathEditor(Project project, ModifiableRootModel model, final ModulesProvider modulesProvider) {
     super(project, model);
@@ -105,7 +103,7 @@ public class ClasspathEditor extends ModuleElementsEditor {
     formatPanel.add(new JLabel(ProjectBundle.message("project.roots.classpath.format.label")),
                     new GridBagConstraints(0,0,1,1,0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(10, 6, 6, 0), 0, 0));
 
-    formatIdToDescr.put ( DEFAULT_FORMAT, IDEA_FORMAT_DESCR);
+    formatIdToDescr.put ( ClasspathStorage.DEFAULT_STORAGE, ClasspathStorage.DEFAULT_STORAGE_DESCR);
     formatIdToDescr.put ( EclipseClasspathStorage.ID, EclipseClasspathStorage.DESCR);
 //    formatIdToDescr.put ( MavenClasspathStorage.ID, MavenClasspathStorage.DESCR);
 
@@ -134,18 +132,12 @@ public class ClasspathEditor extends ModuleElementsEditor {
 
   @NotNull
   private String getModuleClasspathFormat() {
-    final String optionValue = myModel.getModule().getOptionValue(ModuleRootManagerImpl.StorageChooser.CLASSPATH_OPTION);
-    return optionValue == null ? DEFAULT_FORMAT : optionValue;
+    return ClasspathStorage.getStorageType(myModel.getModule());
   }
 
   private void setModuleClasspathFormat() {
     if (isClasspathFormatModified()) {
-      final String format = getSelectedClasspathFormat();
-      if ( format.equals(DEFAULT_FORMAT)) {
-        myModel.getModule().clearOption(ModuleRootManagerImpl.StorageChooser.CLASSPATH_OPTION);
-      } else {
-        myModel.getModule().setOption(ModuleRootManagerImpl.StorageChooser.CLASSPATH_OPTION, format);
-      }
+      ClasspathStorage.setStorageType(myModel.getModule(), getSelectedClasspathFormat());
     }
   }
 
