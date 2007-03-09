@@ -50,19 +50,19 @@ abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledEleme
     return this;
   }
 
-  public void checkAdd(PsiElement element) throws IncorrectOperationException {
+  public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
-  public PsiElement add(PsiElement element) throws IncorrectOperationException {
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
-  public PsiElement addBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
-  public PsiElement addAfter(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
@@ -74,7 +74,7 @@ abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledEleme
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
-  public PsiElement replace(PsiElement newElement) throws IncorrectOperationException {
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
@@ -187,11 +187,11 @@ abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledEleme
     return getText().toCharArray();
   }
 
-  public boolean textMatches(CharSequence text) {
+  public boolean textMatches(@NotNull CharSequence text) {
     return getText().equals(text.toString());
   }
 
-  public boolean textMatches(PsiElement element) {
+  public boolean textMatches(@NotNull PsiElement element) {
     return getText().equals(element.getText());
   }
 

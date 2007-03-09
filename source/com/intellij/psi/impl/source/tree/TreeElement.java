@@ -117,11 +117,11 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
     }
   }
 
-  public boolean textMatches(CharSequence seq) {
+  public boolean textMatches(@NotNull CharSequence seq) {
     return textMatches(seq, 0, seq.length());
   }
 
-  public boolean textMatches(PsiElement element) {
+  public boolean textMatches(@NotNull PsiElement element) {
     return getTextLength() == element.getTextLength() && textMatches(element.getText());
   }
 

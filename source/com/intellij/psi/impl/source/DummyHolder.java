@@ -133,7 +133,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     return true;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitFile(this);
   }
 

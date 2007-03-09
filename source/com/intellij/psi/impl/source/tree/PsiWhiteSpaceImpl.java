@@ -13,7 +13,7 @@ public class PsiWhiteSpaceImpl extends LeafPsiElement implements PsiWhiteSpace {
     super(TokenTypeEx.WHITE_SPACE, buffer, startOffset, endOffset, table);
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitWhiteSpace(this);
   }
 

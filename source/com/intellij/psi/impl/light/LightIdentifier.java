@@ -3,6 +3,7 @@ package com.intellij.psi.impl.light;
 import com.intellij.psi.*;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -23,7 +24,7 @@ public class LightIdentifier extends LightElement implements PsiIdentifier, PsiJ
     return myText;
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitIdentifier(this);
   }
 

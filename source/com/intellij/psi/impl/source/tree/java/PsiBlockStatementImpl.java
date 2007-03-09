@@ -44,7 +44,7 @@ public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlo
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitBlockStatement(this);
   }
 

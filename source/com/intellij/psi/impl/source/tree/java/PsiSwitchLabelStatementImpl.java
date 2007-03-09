@@ -9,6 +9,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements PsiSwitchLabelStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiSwitchLabelStatementImpl");
@@ -86,7 +87,7 @@ public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements 
     return true;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitSwitchLabelStatement(this);
   }
 

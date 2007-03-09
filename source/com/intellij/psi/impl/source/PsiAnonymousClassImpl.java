@@ -141,7 +141,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     return this;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitAnonymousClass(this);
   }
 

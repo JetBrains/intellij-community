@@ -5,6 +5,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
@@ -18,7 +19,7 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment {
     return XML_COMMENT;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitXmlComment(this);
   }
 

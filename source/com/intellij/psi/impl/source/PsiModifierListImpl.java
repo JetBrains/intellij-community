@@ -263,7 +263,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
     return PsiImplUtil.findAnnotation(this, qualifiedName);
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitModifierList(this);
   }
 

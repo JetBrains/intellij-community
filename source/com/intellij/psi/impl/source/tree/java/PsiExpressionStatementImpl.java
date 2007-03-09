@@ -52,7 +52,7 @@ public class PsiExpressionStatementImpl extends CompositePsiElement implements P
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitExpressionStatement(this);
   }
 

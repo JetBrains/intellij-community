@@ -79,7 +79,7 @@ public class PsiArrayAccessExpressionImpl extends CompositePsiElement implements
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitArrayAccessExpression(this);
   }
 

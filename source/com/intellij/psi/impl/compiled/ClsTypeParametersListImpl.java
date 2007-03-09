@@ -67,7 +67,7 @@ public class ClsTypeParametersListImpl extends ClsElementImpl implements PsiType
     return myParent;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitTypeParameterList(this);
   }
 

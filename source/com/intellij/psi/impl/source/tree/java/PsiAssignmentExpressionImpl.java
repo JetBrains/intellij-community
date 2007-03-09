@@ -76,7 +76,7 @@ public class PsiAssignmentExpressionImpl extends CompositePsiElement implements 
     GTGTGTEQ, ANDEQ, OREQ, XOREQ
   });
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitAssignmentExpression(this);
   }
 

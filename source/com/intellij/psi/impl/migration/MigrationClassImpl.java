@@ -38,7 +38,7 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
     return "class " + myName + " {}";
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitClass(this);
   }
 

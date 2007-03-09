@@ -87,7 +87,7 @@ public class PsiAnnotationImpl extends IndexedRepositoryPsiElement implements Ps
     return nameRef.getCanonicalText();
   }
 
-  public final void accept(PsiElementVisitor visitor) {
+  public final void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitAnnotation(this);
   }
 

@@ -762,7 +762,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitMethod(this);
   }
 

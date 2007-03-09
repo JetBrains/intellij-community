@@ -278,7 +278,7 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
     return null;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitTypeParameter(this);
   }
 

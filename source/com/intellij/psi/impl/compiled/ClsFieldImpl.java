@@ -503,7 +503,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
       ((ClsElementImpl)getNameIdentifier()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getNameIdentifier()));
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitField(this);
   }
 

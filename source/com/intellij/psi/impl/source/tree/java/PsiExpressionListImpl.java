@@ -128,7 +128,7 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
     super.deleteChildInternal(child);
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitExpressionList(this);
   }
 

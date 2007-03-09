@@ -57,7 +57,7 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
     return document == null || document.processElements(processor, place);
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitXmlFile(this);
   }
 

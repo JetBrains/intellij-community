@@ -190,7 +190,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     throw new UnsupportedOperationException();
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitReferenceElement(this);
   }
 

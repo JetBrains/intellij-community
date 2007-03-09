@@ -876,7 +876,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return this;
   }
 
-  public final void accept(final PsiElementVisitor visitor) {
+  public final void accept(@NotNull final PsiElementVisitor visitor) {
     visitor.visitReferenceElement(this);
   }
 

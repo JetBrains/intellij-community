@@ -107,7 +107,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     return XmlUtil.findLocalNameByQualifiedName(getName());
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitXmlAttribute(this);
   }
 

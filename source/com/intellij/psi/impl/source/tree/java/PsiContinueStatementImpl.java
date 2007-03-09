@@ -82,7 +82,7 @@ public class PsiContinueStatementImpl extends CompositePsiElement implements Psi
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitContinueStatement(this);
   }
 

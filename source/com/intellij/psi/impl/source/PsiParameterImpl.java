@@ -124,7 +124,7 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
     SharedImplUtil.normalizeBrackets(this);
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitParameter(this);
   }
 

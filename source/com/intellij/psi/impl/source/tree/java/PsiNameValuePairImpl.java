@@ -203,7 +203,7 @@ methods:
     };
   }
 
-  public final void accept(PsiElementVisitor visitor) {
+  public final void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitNameValuePair(this);
   }
 

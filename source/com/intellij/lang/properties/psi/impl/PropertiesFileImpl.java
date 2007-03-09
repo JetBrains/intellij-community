@@ -116,7 +116,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return PropertiesUtil.getLocale(getVirtualFile());
   }
 
-  public PsiElement add(PsiElement element) throws IncorrectOperationException {
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     if (element instanceof Property) {
       throw new IncorrectOperationException("Use addProperty() instead");
     }

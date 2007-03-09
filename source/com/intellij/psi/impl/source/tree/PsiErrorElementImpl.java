@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiErrorElementImpl extends CompositePsiElement implements PsiErrorElement{
   private String myErrorDescription;
@@ -18,7 +19,7 @@ public class PsiErrorElementImpl extends CompositePsiElement implements PsiError
     return myErrorDescription;
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitErrorElement(this);
   }
 

@@ -6,6 +6,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiTypeCastExpressionImpl extends CompositePsiElement implements PsiTypeCastExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiTypeCastExpressionImpl");
@@ -68,7 +69,7 @@ public class PsiTypeCastExpressionImpl extends CompositePsiElement implements Ps
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitTypeCastExpression(this);
   }
 

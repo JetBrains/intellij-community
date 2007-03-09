@@ -154,7 +154,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitIfStatement(this);
   }
 

@@ -76,7 +76,7 @@ public class PsiArrayInitializerExpressionImpl extends CompositePsiElement imple
     }
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitArrayInitializerExpression(this);
   }
 

@@ -6,6 +6,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDialect;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class LightPsiFileBase extends LightPsiFileImpl {
   public LightPsiFileBase(final FileViewProvider provider, final Language language) {
@@ -16,7 +17,7 @@ public abstract class LightPsiFileBase extends LightPsiFileImpl {
     return false;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitFile(this);
   }
 

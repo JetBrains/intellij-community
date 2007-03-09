@@ -8,6 +8,7 @@ import com.intellij.psi.PsiSynchronizedStatement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiSynchronizedStatementImpl extends CompositePsiElement implements PsiSynchronizedStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiSynchronizedStatementImpl");
@@ -70,7 +71,7 @@ public class PsiSynchronizedStatementImpl extends CompositePsiElement implements
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitSynchronizedStatement(this);
   }
 

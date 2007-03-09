@@ -48,11 +48,11 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     return getNameElement().getText().substring(1);
   }
 
-  public boolean textMatches(CharSequence text) {
+  public boolean textMatches(@NotNull CharSequence text) {
     return myNameElement.textMatches(text);
   }
 
-  public boolean textMatches(PsiElement element) {
+  public boolean textMatches(@NotNull PsiElement element) {
     return myNameElement.textMatches(element);
   }
 
@@ -85,7 +85,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     return null;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitDocTag(this);
   }
 
@@ -121,7 +121,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
       return ClsDocTagImpl.this;
     }
 
-    public void accept(PsiElementVisitor visitor) {
+    public void accept(@NotNull PsiElementVisitor visitor) {
       visitor.visitElement(this);
     }
   }

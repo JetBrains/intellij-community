@@ -9,6 +9,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiParenthesizedExpressionImpl extends CompositePsiElement implements PsiParenthesizedExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiParenthesizedExpressionImpl");
@@ -63,7 +64,7 @@ public class PsiParenthesizedExpressionImpl extends CompositePsiElement implemen
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitParenthesizedExpression(this);
   }
 

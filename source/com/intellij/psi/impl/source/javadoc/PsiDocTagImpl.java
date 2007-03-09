@@ -14,6 +14,7 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag {
   private static final TokenSet VALUE_BIT_SET = TokenSet.create(new IElementType[]{
@@ -79,7 +80,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag {
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitDocTag(this);
   }
 

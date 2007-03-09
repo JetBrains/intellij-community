@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiSwitchStatementImpl extends CompositePsiElement implements PsiSwitchStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiSwitchStatementImpl");
@@ -79,7 +80,7 @@ public class PsiSwitchStatementImpl extends CompositePsiElement implements PsiSw
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitSwitchStatement(this);
   }
 

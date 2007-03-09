@@ -52,7 +52,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return SharedImplUtil.getLastChild(this);
   }
 
-  public void acceptChildren(PsiElementVisitor visitor) {
+  public void acceptChildren(@NotNull PsiElementVisitor visitor) {
     TreeElement childNode = firstChild;
     while (childNode != null) {
       if (childNode instanceof ChameleonElement) {
@@ -132,15 +132,15 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return SharedPsiElementImplUtil.getReferences(this);
   }
 
-  public PsiElement add(PsiElement element) throws IncorrectOperationException {
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     return addInnerBefore(element, null);
   }
 
-  public PsiElement addBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     return addInnerBefore(element, anchor);
   }
 
-  public PsiElement addAfter(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
     TreeElement treeElement = addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.FALSE);
@@ -148,7 +148,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
 
   }
 
-  public final void checkAdd(PsiElement element) throws IncorrectOperationException {
+  public final void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
   }
 
@@ -156,7 +156,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return SharedImplUtil.addRange(this, first, last, null, null);
   }
 
-  public final PsiElement addRangeBefore(PsiElement first, PsiElement last, PsiElement anchor)
+  public final PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor)
     throws IncorrectOperationException {
     return SharedImplUtil.addRange(this, first, last, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
   }
@@ -186,7 +186,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     CodeEditUtil.removeChildren(this, firstElement, lastElement);
   }
 
-  public PsiElement replace(PsiElement newElement) throws IncorrectOperationException {
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     LOG.assertTrue(getTreeParent() != null);
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(newElement);
@@ -198,7 +198,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return result;
   }
 
-  public void accept(PsiElementVisitor visitor) { //TODO: remove this method!!
+  public void accept(@NotNull PsiElementVisitor visitor) { //TODO: remove this method!!
     visitor.visitElement(this);
   }
 

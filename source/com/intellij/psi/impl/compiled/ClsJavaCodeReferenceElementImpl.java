@@ -282,7 +282,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     myMirror = element;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitReferenceElement(this);
   }
 

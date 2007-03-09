@@ -28,7 +28,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     myCachedDetachedType = null;
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitTypeElement(this);
   }
 

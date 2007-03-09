@@ -7,6 +7,7 @@ import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiIdentifierImpl extends LeafPsiElement implements PsiIdentifier, PsiJavaToken {
   public PsiIdentifierImpl(CharSequence buffer, int startOffset, int endOffset, CharTable table) {
@@ -17,7 +18,7 @@ public class PsiIdentifierImpl extends LeafPsiElement implements PsiIdentifier, 
     return JavaTokenType.IDENTIFIER;
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitIdentifier(this);
   }
 

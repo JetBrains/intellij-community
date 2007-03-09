@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *  @author dsl
@@ -110,7 +111,7 @@ public class PsiTypeParameterListImpl extends SlaveRepositoryPsiElement implemen
     return true;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitTypeParameterList(this);
   }
 

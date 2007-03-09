@@ -358,7 +358,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitImportStaticReferenceElement(this);
   }
 }

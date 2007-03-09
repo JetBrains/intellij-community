@@ -7,6 +7,7 @@ import com.intellij.psi.PsiExpressionListStatement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiExpressionListStatementImpl extends CompositePsiElement implements PsiExpressionListStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiExpressionListStatementImpl");
@@ -47,7 +48,7 @@ public class PsiExpressionListStatementImpl extends CompositePsiElement implemen
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitExpressionListStatement(this);
   }
 

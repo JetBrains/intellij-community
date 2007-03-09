@@ -81,7 +81,7 @@ public class PsiTypeParameterExtendsBoundsListImpl extends SlaveRepositoryPsiEle
     return (PsiTypeParameterExtendsBoundsListImpl)SourceTreeToPsiMap.treeElementToPsi(treeElement);
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitReferenceList(this);
   }
 

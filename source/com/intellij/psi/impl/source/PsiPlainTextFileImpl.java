@@ -20,7 +20,7 @@ public class PsiPlainTextFileImpl extends PsiFileImpl implements PsiPlainTextFil
     myFileType = viewProvider.getVirtualFile().getFileType();
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitPlainTextFile(this);
   }
 

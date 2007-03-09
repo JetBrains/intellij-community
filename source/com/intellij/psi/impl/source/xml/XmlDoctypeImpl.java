@@ -144,7 +144,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
     return null;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitXmlDoctype(this);
   }
 

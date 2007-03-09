@@ -223,7 +223,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitLocalVariable(this);
   }
 

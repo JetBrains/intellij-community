@@ -38,7 +38,7 @@ public class LightModifierList extends LightElement implements PsiModifierList{
     return null;
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitModifierList(this);
   }
 

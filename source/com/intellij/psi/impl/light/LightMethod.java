@@ -146,7 +146,7 @@ public class LightMethod extends LightElement implements PsiMethod {
     return myMethod.getText();
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     myMethod.accept(visitor);
   }
 

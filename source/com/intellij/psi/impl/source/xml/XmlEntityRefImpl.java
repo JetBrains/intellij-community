@@ -208,7 +208,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     return ResolveUtil.getReferencesFromProviders(this,XmlEntityRef.class);
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitXmlElement(this);
   }
 

@@ -157,7 +157,7 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitModifierList(this);
   }
 

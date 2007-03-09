@@ -120,7 +120,7 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
     return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitForeachStatement(this);
   }
 }

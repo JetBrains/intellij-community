@@ -64,7 +64,7 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
     myMirror = element;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitPrefixExpression(this);
   }
 
@@ -96,7 +96,7 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
       myMirror = element;
     }
 
-    public void accept(PsiElementVisitor visitor) {
+    public void accept(@NotNull PsiElementVisitor visitor) {
       visitor.visitJavaToken(this);
     }
   }

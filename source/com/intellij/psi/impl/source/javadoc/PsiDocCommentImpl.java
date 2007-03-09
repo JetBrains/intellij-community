@@ -276,7 +276,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitDocComment(this);
   }
 

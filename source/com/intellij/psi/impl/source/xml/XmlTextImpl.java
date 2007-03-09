@@ -26,6 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -317,7 +318,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     throw new RuntimeException("Clients must not use operations with direct children of XmlText!");
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitXmlText(this);
   }
 

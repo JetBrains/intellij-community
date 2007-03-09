@@ -170,7 +170,7 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
       ((ClsElementImpl)getTypeElement()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getTypeElement()));
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitParameter(this);
   }
 

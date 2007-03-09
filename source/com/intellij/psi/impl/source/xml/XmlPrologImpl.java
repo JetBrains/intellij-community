@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.xml.XmlDoctype;
 import com.intellij.psi.xml.XmlProlog;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
@@ -18,7 +19,7 @@ public class XmlPrologImpl extends XmlElementImpl implements XmlProlog {
     super(XML_PROLOG);
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitXmlProlog(this);
   }
 

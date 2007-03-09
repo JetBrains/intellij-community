@@ -61,7 +61,7 @@ public class PsiArrayInitializerMemberValueImpl extends PsiCommaSeparatedListImp
     return "PsiArrayInitializerMemberValue:" + getText();
   }
 
-  public final void accept(PsiElementVisitor visitor) {
+  public final void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitAnnotationArrayInitializer(this);
   }
 }

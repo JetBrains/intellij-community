@@ -51,7 +51,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     super(type);
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitXmlDocument(this);
   }
 

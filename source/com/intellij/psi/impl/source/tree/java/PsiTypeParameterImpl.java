@@ -353,7 +353,7 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
     return null;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitTypeParameter(this);
   }
 

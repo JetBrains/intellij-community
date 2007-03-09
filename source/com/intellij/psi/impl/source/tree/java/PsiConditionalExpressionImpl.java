@@ -131,7 +131,7 @@ public class PsiConditionalExpressionImpl extends CompositePsiElement implements
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitConditionalExpression(this);
   }
 

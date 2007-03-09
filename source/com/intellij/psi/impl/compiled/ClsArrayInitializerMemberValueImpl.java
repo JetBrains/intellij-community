@@ -60,7 +60,7 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
     return myParent;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitAnnotationArrayInitializer(this);
   }
 

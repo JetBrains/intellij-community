@@ -55,7 +55,7 @@ public class PsiPostfixExpressionImpl extends CompositePsiElement implements Psi
     return ChildRole.NONE;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitPostfixExpression(this);
   }
 

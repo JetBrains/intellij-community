@@ -7,6 +7,7 @@ import com.intellij.psi.PsiReturnStatement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiReturnStatementImpl extends CompositePsiElement implements PsiReturnStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReturnStatementImpl");
@@ -55,7 +56,7 @@ public class PsiReturnStatementImpl extends CompositePsiElement implements PsiRe
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitReturnStatement(this);
   }
 

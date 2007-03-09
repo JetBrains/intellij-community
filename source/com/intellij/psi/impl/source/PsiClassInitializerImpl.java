@@ -68,7 +68,7 @@ public class PsiClassInitializerImpl extends NonSlaveRepositoryPsiElement implem
     return (PsiCodeBlock)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.METHOD_BODY);
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitClassInitializer(this);
   }
 

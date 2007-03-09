@@ -201,7 +201,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return clone();
   }
 
-  public final void checkAdd(PsiElement element) throws IncorrectOperationException {
+  public final void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
   }
 
@@ -303,11 +303,11 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return 0;
   }
 
-  public boolean textMatches(PsiElement element) {
+  public boolean textMatches(@NotNull PsiElement element) {
     return textMatches(element.getText());
   }
 
-  public boolean textMatches(CharSequence text) {
+  public boolean textMatches(@NotNull CharSequence text) {
     return text.equals(getViewProvider().getContents());
   }
 
@@ -315,15 +315,15 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return getText().indexOf(c) >= 0;
   }
 
-  public PsiElement add(PsiElement element) throws IncorrectOperationException {
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException("Not implemented");
   }
 
-  public PsiElement addBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException("Not implemented");
   }
 
-  public PsiElement addAfter(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException("Not implemented");
   }
 
@@ -331,7 +331,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     throw new IncorrectOperationException("Not implemented");
   }
 
-  public final PsiElement addRangeBefore(PsiElement first, PsiElement last, PsiElement anchor)
+  public final PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor)
     throws IncorrectOperationException {
     throw new IncorrectOperationException("Not implemented");
   }
@@ -345,7 +345,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     throw new IncorrectOperationException("Not implemented");
   }
 
-  public PsiElement replace(PsiElement newElement) throws IncorrectOperationException {
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     throw new IncorrectOperationException("Not implemented");
   }
 

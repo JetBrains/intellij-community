@@ -9,6 +9,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -38,7 +39,7 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
     return "PsiAnnotationMethod:" + getName();
   }
 
-  public final void accept(PsiElementVisitor visitor) {
+  public final void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitAnnotationMethod(this);
   }
 }

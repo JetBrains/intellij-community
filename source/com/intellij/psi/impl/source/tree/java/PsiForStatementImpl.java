@@ -133,7 +133,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
     }
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitForStatement(this);
   }
 

@@ -67,7 +67,7 @@ public class ClsLiteralExpressionImpl extends ClsElementImpl implements PsiLiter
     return "PsiLiteralExpression:" + getText();
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitLiteralExpression(this);
   }
 }

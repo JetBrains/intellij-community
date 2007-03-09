@@ -674,7 +674,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return elements.toArray(new PsiElement[elements.size()]);
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitXmlTag(this);
   }
 

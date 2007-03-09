@@ -6,6 +6,7 @@ import com.intellij.psi.impl.source.parsing.JavaParsingContext;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl implements PsiImportStaticStatement {
 
@@ -68,7 +69,7 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
     }
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitImportStaticStatement(this);
   }
 

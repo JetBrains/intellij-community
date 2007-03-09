@@ -60,7 +60,7 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
     return myParent;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitAnnotationParameterList(this);
   }
 

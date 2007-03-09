@@ -125,7 +125,7 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitTryStatement(this);
   }
 

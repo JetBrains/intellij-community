@@ -8,6 +8,7 @@ import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
@@ -17,7 +18,7 @@ public class PsiDocTagValueImpl extends CompositePsiElement implements PsiDocTag
     super(DOC_TAG_VALUE_TOKEN);
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitDocTagValue(this);
   }
 

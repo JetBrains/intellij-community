@@ -41,7 +41,7 @@ public class LightReferenceParameterList extends LightElement implements PsiRefe
     return myText;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitReferenceParameterList(this);
   }
 

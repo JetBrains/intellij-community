@@ -77,7 +77,7 @@ public class PsiPrefixExpressionImpl extends CompositePsiElement implements PsiP
     return ChildRole.NONE;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitPrefixExpression(this);
   }
 

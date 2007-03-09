@@ -242,7 +242,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
     }
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitNewExpression(this);
   }
 

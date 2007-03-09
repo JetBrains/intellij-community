@@ -213,7 +213,7 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
     }
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitImportList(this);
   }
 

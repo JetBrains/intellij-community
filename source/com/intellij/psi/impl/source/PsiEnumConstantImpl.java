@@ -42,7 +42,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
     super(manager, treeElement);
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitEnumConstant(this);
   }
 

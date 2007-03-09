@@ -66,7 +66,7 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
     if (prev != null && prev.getElementType() == COMMA) deleteChildInternal(prev);
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitDeclarationStatement(this);
   }
 

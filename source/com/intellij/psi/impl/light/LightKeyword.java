@@ -5,6 +5,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -27,7 +28,7 @@ public class LightKeyword extends LightElement implements PsiKeyword, PsiJavaTok
     return lexer.getTokenType();
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitKeyword(this);
   }
 

@@ -152,7 +152,7 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     myMirror = element;
   }
 
-  public void accept(PsiElementVisitor visitor) {
+  public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitReferenceExpression(this);
   }
 

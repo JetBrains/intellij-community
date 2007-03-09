@@ -363,7 +363,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
     SharedImplUtil.normalizeBrackets(this);
   }
 
-  public void accept(PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor){
     visitor.visitField(this);
   }
 
