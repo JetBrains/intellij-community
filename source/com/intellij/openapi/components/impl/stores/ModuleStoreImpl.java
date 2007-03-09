@@ -11,6 +11,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Attribute;
@@ -45,7 +46,8 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
   @Override
   protected void writeRootElement(final Element rootElement) {
     rootElement.setAttributes(Collections.EMPTY_LIST);
-    //super.writeRootElement(rootElement);
+    
+    myModule.myOptions.put(VERSION_OPTION, Integer.toString(ProjectManagerImpl.CURRENT_FORMAT_VERSION));
 
     Set<String> options = myModule.myOptions.keySet();
     for (String option : options) {
