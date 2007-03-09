@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -262,6 +263,10 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   public String getCheckinOperationName() {
     return SvnBundle.message("checkin.operation.name");
+  }
+
+  public String getRollbackOperationName() {
+    return VcsBundle.message("changes.action.rollback.text");
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
