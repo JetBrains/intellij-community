@@ -528,6 +528,9 @@ public class FindInProjectUtil {
     else if (findModel.getModuleName() != null) {
       result = FindBundle.message("find.scope.module.title", findModel.getModuleName());
     }
+    else if(findModel.getCustomScopeName() != null) {
+      result = findModel.getCustomScopeName();
+    }
     else {
       result = FindBundle.message("find.scope.directory.title", findModel.getDirectoryName());
     }
