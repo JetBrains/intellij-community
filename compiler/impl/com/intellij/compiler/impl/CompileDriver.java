@@ -1142,7 +1142,7 @@ public class CompileDriver {
         context.getProgressIndicator().setFraction(((double)(++current)) / total);
         if (deleteHelper.delete(outputPath)) {
           wereFilesDeleted = true;
-          String qName = cache.getClassName(outputPath);
+          final String qName = cache.getClassName(outputPath);
           if (qName != null) {
             final int id = dependencyCache.getSymbolTable().getId(qName);
             dependencyCache.addTraverseRoot(id);
@@ -1153,6 +1153,9 @@ public class CompileDriver {
           if (isTestMode) {
             CompilerManagerImpl.addDeletedPath(outputPath);
           }
+          cache.remove(outputPath);
+        }
+        else if (!new File(outputPath).exists()){
           cache.remove(outputPath);
         }
       }
