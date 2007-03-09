@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -22,7 +23,7 @@ import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,33 +31,89 @@ import java.util.List;
 
 public class RollbackAction extends AnAction {
   public void update(AnActionEvent e) {
+    e.getPresentation().setEnabled(isEnabled(e));
+  }
+
+  private static boolean isEnabled(final AnActionEvent e) {
     Project project = e.getData(DataKeys.PROJECT);
-    Change[] changes = e.getData(DataKeys.CHANGES);
+    if (project == null) {
+      return false;
+    }
+    Change[] changes = getChanges(project, e);
+    if (changes != null && changes.length > 0) {
+      return true;
+    }
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
-    List<VirtualFile> modifiedWithoutEditing = e.getData(ChangesListView.MODIFIED_WITHOUT_EDITING_DATA_KEY);
-    e.getPresentation().setEnabled(ChangesUtil.getChangeListIfOnlyOne(project, changes) != null ||
-                                   (missingFiles != null && !missingFiles.isEmpty()) ||
-                                   (modifiedWithoutEditing != null && !modifiedWithoutEditing.isEmpty()));
+    if (missingFiles != null && !missingFiles.isEmpty()) {
+      return true;
+    }
+    List<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(project, e);
+    if (modifiedWithoutEditing != null && !modifiedWithoutEditing.isEmpty()) {
+      return true;
+    }
+    return false;
   }
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(DataKeys.PROJECT);
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
-    List<VirtualFile> modifiedWithoutEditing = e.getData(ChangesListView.MODIFIED_WITHOUT_EDITING_DATA_KEY);
     if (missingFiles != null && !missingFiles.isEmpty()) {
       new RollbackDeletionAction().actionPerformed(e);
     }
-    else if (modifiedWithoutEditing != null && !modifiedWithoutEditing.isEmpty()) {
-      rollbackModifiedWithoutEditing(project, modifiedWithoutEditing);
-    }
     else {
-      Change[] changes = e.getData(DataKeys.CHANGES);
-      final ChangeList list = ChangesUtil.getChangeListIfOnlyOne(project, changes);
-      if (list == null) return;
-
-      FileDocumentManager.getInstance().saveAllDocuments();
-      RollbackChangesDialog.rollbackChanges(project, Arrays.asList(changes));
+      List<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(project, e);
+      if (modifiedWithoutEditing != null && !modifiedWithoutEditing.isEmpty()) {
+        rollbackModifiedWithoutEditing(project, modifiedWithoutEditing);
+      }
+      else {
+        Change[] changes = getChanges(project, e);
+        if (changes != null) {
+          FileDocumentManager.getInstance().saveAllDocuments();
+          RollbackChangesDialog.rollbackChanges(project, Arrays.asList(changes));
+        }
+      }
     }
+  }
+
+  @Nullable
+  private static Change[] getChanges(final Project project, final AnActionEvent e) {
+    final Change[] changes = e.getData(DataKeys.CHANGES);
+    if (changes != null && changes.length > 0) {
+      if (ChangesUtil.getChangeListIfOnlyOne(project, changes) == null) {
+        return null;
+      }
+      return changes;
+    }
+    final VirtualFile[] virtualFiles = e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
+    if (virtualFiles != null && virtualFiles.length > 0) {
+      List<Change> result = new ArrayList<Change>();
+      for(VirtualFile file: virtualFiles) {
+        result.addAll(ChangeListManager.getInstance(project).getChangesIn(file));
+      }
+      return result.toArray(new Change[result.size()]);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static List<VirtualFile> getModifiedWithoutEditing(Project project, final AnActionEvent e) {
+    final List<VirtualFile> modifiedWithoutEditing = e.getData(ChangesListView.MODIFIED_WITHOUT_EDITING_DATA_KEY);
+    if (modifiedWithoutEditing != null && modifiedWithoutEditing.size() > 0) {
+      return modifiedWithoutEditing;
+    }
+    List<VirtualFile> result = null;
+    final VirtualFile[] virtualFiles = e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
+    if (virtualFiles != null && virtualFiles.length > 0) {
+      for(VirtualFile file: virtualFiles) {
+        if (FileStatusManager.getInstance(project).getStatus(file).equals(FileStatus.HIJACKED)) {
+          if (result == null) {
+            result = new ArrayList<VirtualFile>();
+          }
+          result.add(file);
+        }
+      }
+    }
+    return result;
   }
 
   private static void rollbackModifiedWithoutEditing(final Project project, final List<VirtualFile> modifiedWithoutEditing) {
