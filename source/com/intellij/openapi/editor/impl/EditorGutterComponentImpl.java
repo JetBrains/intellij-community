@@ -208,6 +208,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     g.setColor(getBackground());
     g.fillRect(x, clip.y, width, clip.height);
 
+    paintCaretRowBackground(g, x, width);
+  }
+
+  private void paintCaretRowBackground(final Graphics g, final int x, final int width) {
     final VisualPosition visCaret = myEditor.getCaretModel().getVisualPosition();
     Color caretRowColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
     if (caretRowColor != null) {
@@ -639,6 +643,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     g.setColor(myEditor.getBackroundColor());
     g.fillRect(lineX, clip.y, getFoldingAreaWidth(), clip.height);
+
+    paintCaretRowBackground(g, lineX, getFoldingAnchorWidth());
 
     paintFoldingBoxBacgrounds((Graphics2D)g);
   }
