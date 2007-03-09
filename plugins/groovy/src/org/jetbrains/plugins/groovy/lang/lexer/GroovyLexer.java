@@ -13,7 +13,8 @@ public class GroovyLexer extends MergingLexerAdapter {
       TokenSet.create(
         GroovyTokenTypes.mSH_COMMENT,
         GroovyTokenTypes.mSL_COMMENT,
-        GroovyTokenTypes.mML_COMMENT
+        GroovyTokenTypes.mML_COMMENT,
+        GroovyTokenTypes.mWRONG_GSTRING_LITERAL
       ));
   }
 

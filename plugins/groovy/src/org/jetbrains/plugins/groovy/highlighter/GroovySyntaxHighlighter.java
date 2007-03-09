@@ -32,7 +32,14 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
 
   static final TokenSet tSTRINGS = TokenSet.create(
           GroovyTokenTypes.mSTRING_LITERAL,
-          GroovyTokenTypes.mWRONG_STRING_LITERAL
+
+          GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
+          GroovyTokenTypes.mGSTRING_SINGLE_CONTENT,
+          GroovyTokenTypes.mGSTRING_SINGLE_END,
+          GroovyTokenTypes.mGSTRING_LITERAL,
+
+          GroovyTokenTypes.mWRONG_STRING_LITERAL,
+          GroovyTokenTypes.mWRONG_GSTRING_LITERAL
   );
 
   static final TokenSet tREGEXP = TokenSet.create(

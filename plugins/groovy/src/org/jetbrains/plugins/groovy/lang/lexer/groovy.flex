@@ -25,6 +25,20 @@ import org.jetbrains.annotations.NotNull;
 
 %{
 
+  private Stack <IElementType> gStringStack = new Stack<IElementType>();
+  private void clearGStack() {
+    while (!gStringStack.isEmpty()){
+      gStringStack.pop();
+    }
+  }
+
+  private Stack <Stack<IElementType>> blockStack = new Stack<Stack<IElementType>>();
+  private void clearBlockStack() {
+    while (!blockStack.isEmpty()){
+      blockStack.pop();
+    }
+  }
+
 %}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -76,14 +90,7 @@ mNUM_INT = ( 0
 /////////////////////      identifiers      ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-mLETTER = [:jletter:]
-| "_"
-/*
-| [\u00C0..\u00D6] 
-| [\u00D8..\u00F6]
-| [\u00F8..\u00FF]
-| [\u0100..\uFFFE]
-*/
+mLETTER = (!([:jletter:] | "_") | "$")
 
 mIDENT = {mLETTER} ({mLETTER} | {mDIGIT})*
 
@@ -103,9 +110,7 @@ mSINGLE_QUOTED_STRING_BEGIN = "\'" ( {mSTRING_ESC}
     | "\""
     | [^\'\r\n]
     | "$" )*
-
 mSINGLE_QUOTED_STRING = {mSINGLE_QUOTED_STRING_BEGIN} \'
-
 mTRIPLE_QUOTED_STRING = "\'\'\'" ({mSTRING_ESC}
     | "\""
     | "$"
@@ -113,24 +118,29 @@ mTRIPLE_QUOTED_STRING = "\'\'\'" ({mSTRING_ESC}
     | {mSTRING_NL}
     | \'(\')?[^\'] )* (\'\'\')?
 
-mSTRING_CTOR_END_SINGLE_BEGIN = ({mSTRING_ESC}
-    | [^\"\r\n]
+mSTRING_LITERAL = {mTRIPLE_QUOTED_STRING}
+    | {mSINGLE_QUOTED_STRING}
+
+
+// Single-double-quoted GStrings
+mGSTRING_SINGLE_BEGIN = \""$" 
+    |  \" ([^\""$"] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT}"$"
+mGSTRING_SINGLE_CONTENT = ({mSTRING_ESC}
+    | [^\"\r\n"$"]
     | "\'" )*
+mGSTRING_SINGLE_CTOR_END = {mGSTRING_SINGLE_CONTENT}  \"
 
-mSTRING_CTOR_END_SINGLE = {mSTRING_CTOR_END_SINGLE_BEGIN}  \"
-
-mSTRING_CTOR_END_TRIPLE = ( {mSTRING_ESC}
+// Triple-double-quoted GStrings
+mGSTRING_TRIPLE_CTOR_END = ( {mSTRING_ESC}
     | \'
     | \" (\")? [^\"]
     | [^\"]
     | {mSTRING_NL} )* (\"\"\")?
 
 
-mSTRING_LITERAL = {mTRIPLE_QUOTED_STRING}
-    | {mSINGLE_QUOTED_STRING}
-    | \" ([^\"] | {mSTRING_ESC})? {mSTRING_CTOR_END_SINGLE}
-    | \"\"\" {mSTRING_CTOR_END_TRIPLE}
-    | \"\"
+mGSTRING_LITERAL = \"\"
+    | \" ([^\"\n\r"$"] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT} \"
+    | \"\"\" {mGSTRING_TRIPLE_CTOR_END}
 
 
 
@@ -139,8 +149,6 @@ mSTRING_LITERAL = {mTRIPLE_QUOTED_STRING}
 mREGEXP_SYMBOL = (( "*"
         | "$"
         | \\
-        | \n
-        | \r
         | [^\r\n/] )
     | "\\" (\n | \r)
     | "\\" {mONE_NL} )("*")*
@@ -154,13 +162,83 @@ mREGEXP_LITERAL = "/" [^"*"/] (
   | "/"
   | "/="
 
+mAFTER_REGEXP = !( "(" | "{" | {mIDENT} | {mNUM_INT} | "[" )
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////  states ///////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+%xstate IN_SINGLE_GSTRING_DOLLAR
+%xstate IN_SINGLE_GSTRING
+%xstate WRONG_STRING
+%state IN_INNER_BLOCK
+
 %%
 
-<YYINITIAL>{
+<IN_SINGLE_GSTRING_DOLLAR> {
+
+  {mIDENT}("."{mIDENT})*                  {  yybegin(IN_SINGLE_GSTRING);
+                                             return mIDENT; }
+  "{"                                     {  blockStack.push(new Stack<IElementType>());
+                                             blockStack.peek().push(mLCURLY);
+                                             yybegin(IN_INNER_BLOCK);
+                                             return mLCURLY; }
+  [^{[:jletter:]\n\r] [^\n\r]*/{mONE_NL}  {  clearGStack();
+                                             yybegin(YYINITIAL);
+                                             return mWRONG_GSTRING_LITERAL;  }
+  {mNLS}                                  {  yybegin(YYINITIAL);
+                                             clearGStack();
+                                             return mNLS;}
+  .                                       {  yybegin(WRONG_STRING);
+                                             clearGStack();
+                                             return mWRONG_GSTRING_LITERAL; }
+}
+
+<IN_SINGLE_GSTRING> {
+  {mGSTRING_SINGLE_CONTENT}"$"            {  yybegin(IN_SINGLE_GSTRING_DOLLAR);
+                                             return mGSTRING_SINGLE_CONTENT; }
+  {mGSTRING_SINGLE_CONTENT}"\""           {  gStringStack.pop();
+                                             if (blockStack.isEmpty()){
+                                               yybegin(YYINITIAL);
+                                             } else {
+                                               yybegin(IN_INNER_BLOCK);
+                                             }
+                                             return mGSTRING_SINGLE_END; }
+  {mGSTRING_SINGLE_CONTENT} / {mONE_NL}   {  clearGStack();
+                                             yybegin(YYINITIAL);
+                                             return mWRONG_GSTRING_LITERAL; }
+  .                                       {  yybegin(WRONG_STRING);
+                                             return mWRONG_GSTRING_LITERAL; }
+  {mNLS}                                  {  clearGStack();
+                                             yybegin(YYINITIAL);
+                                             return mNLS; }
+}
+
+<WRONG_STRING>{
+  {mNLS}                                  {  yybegin(YYINITIAL);
+                                             return mNLS; }
+  .* / {mONE_NL}                          {  yybegin(YYINITIAL);
+                                             return mWRONG_GSTRING_LITERAL;  }
+}
+
+<IN_INNER_BLOCK>{
+
+  "}"                                     {  if (!blockStack.isEmpty()) {
+                                               blockStack.peek().pop();
+                                               if (blockStack.peek().isEmpty()) {
+                                                 blockStack.pop();
+                                                 yybegin(IN_SINGLE_GSTRING);
+                                               }
+                                             }
+                                             return mRCURLY; }
+}
+
+<YYINITIAL> {
+
+"}"                                       {  return(mRCURLY);  }
+
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// White spaces & NewLines //////////////////////////////////////////////////////////////////////
@@ -187,13 +265,23 @@ mREGEXP_LITERAL = "/" [^"*"/] (
 ///////////////////////// Strings & regular expressions ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-{mSTRING_LITERAL}                         {  return mSTRING_LITERAL; }
+// Java strings
+{mSTRING_LITERAL}                                          {  return mSTRING_LITERAL; }
+{mSINGLE_QUOTED_STRING_BEGIN}/{mSTRING_NL}                 {  return mWRONG_STRING_LITERAL; }
 
-( \" ([^\"] | {mSTRING_ESC})? {mSTRING_CTOR_END_SINGLE_BEGIN}
-  | \"
-  | {mSINGLE_QUOTED_STRING_BEGIN}) /{mSTRING_NL}          {  return mWRONG_STRING_LITERAL; }
+// GStrings
+{mGSTRING_SINGLE_BEGIN}                                    {  yybegin(IN_SINGLE_GSTRING_DOLLAR);
+                                                              gStringStack.push(mLPAREN);
+                                                              return mGSTRING_SINGLE_BEGIN; }
 
-{mREGEXP_LITERAL}                         {  return mREGEXP_LITERAL; }
+{mGSTRING_LITERAL}                                         {  return mGSTRING_LITERAL; }
+
+( \" ([^\"] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT}
+  | \")/{mSTRING_NL}                                       {  return mWRONG_GSTRING_LITERAL; }
+
+
+
+//{mREGEXP_LITERAL} / {mWS}* {mAFTER_REGEXP}              {  return mREGEXP_LITERAL; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Reserved shorthands //////////////////////////////////////////////////////////////////////////
@@ -205,7 +293,6 @@ mREGEXP_LITERAL = "/" [^"*"/] (
 "["                                       {  return(mLBRACK);  }
 "]"                                       {  return(mRBRACK);  }
 "{"                                       {  return(mLCURLY);  }
-"}"                                       {  return(mRCURLY);  }
 ":"                                       {  return(mCOLON);  }
 ","                                       {  return(mCOMMA);  }
 "."                                       {  return(mDOT);  }
@@ -328,7 +415,7 @@ mREGEXP_LITERAL = "/" [^"*"/] (
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Unknown symbol is using for debug goals.
-.                              {   return WRONG; }
+.                                         {   return WRONG; }
 
-}
+
 
