@@ -90,7 +90,7 @@ mNUM_INT = ( 0
 /////////////////////      identifiers      ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-mLETTER = (!([:jletter:] | "_") | "$")
+mLETTER = !(!([:jletter:] | "_") | "$")
 
 mIDENT = {mLETTER} ({mLETTER} | {mDIGIT})*
 
@@ -131,10 +131,19 @@ mGSTRING_SINGLE_CONTENT = ({mSTRING_ESC}
 mGSTRING_SINGLE_CTOR_END = {mGSTRING_SINGLE_CONTENT}  \"
 
 // Triple-double-quoted GStrings
+mGSTRING_TRIPLE_BEGIN = \"\"\""$"
+    |  \"\"\" ([^\""$"] | {mSTRING_ESC})? {mGSTRING_TRIPLE_CONTENT}"$"
+mGSTRING_TRIPLE_CONTENT = ({mSTRING_ESC}
+    | \'
+    | \" (\")? [^\"]
+    | [^\""$"]
+    | {mSTRING_NL} )*
+mGSTRING_TRIPLE_CTOR_END = {mGSTRING_TRIPLE_CONTENT}  \"\"\"
+
 mGSTRING_TRIPLE_CTOR_END = ( {mSTRING_ESC}
     | \'
     | \" (\")? [^\"]
-    | [^\"]
+    | [^\""$"]
     | {mSTRING_NL} )* (\"\"\")?
 
 
@@ -169,18 +178,21 @@ mAFTER_REGEXP = !( "(" | "{" | {mIDENT} | {mNUM_INT} | "[" )
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 %xstate IN_SINGLE_GSTRING_DOLLAR
+%xstate IN_TRIPLE_GSTRING_DOLLAR
 %xstate IN_SINGLE_GSTRING
+%xstate IN_TRIPLE_GSTRING
 %xstate WRONG_STRING
 %state IN_INNER_BLOCK
 
 %%
 
+// Single double-quoted GString
 <IN_SINGLE_GSTRING_DOLLAR> {
 
   {mIDENT}("."{mIDENT})*                  {  yybegin(IN_SINGLE_GSTRING);
                                              return mIDENT; }
   "{"                                     {  blockStack.push(new Stack<IElementType>());
-                                             blockStack.peek().push(mLCURLY);
+                                             blockStack.peek().push(mLPAREN);
                                              yybegin(IN_INNER_BLOCK);
                                              return mLCURLY; }
   [^{[:jletter:]\n\r] [^\n\r]*/{mONE_NL}  {  clearGStack();
@@ -224,14 +236,47 @@ mAFTER_REGEXP = !( "(" | "{" | {mIDENT} | {mNUM_INT} | "[" )
 <IN_INNER_BLOCK>{
 
   "}"                                     {  if (!blockStack.isEmpty()) {
-                                               blockStack.peek().pop();
+                                               IElementType br = blockStack.peek().pop();
                                                if (blockStack.peek().isEmpty()) {
                                                  blockStack.pop();
-                                                 yybegin(IN_SINGLE_GSTRING);
+                                                 if (br.equals(mLPAREN)) yybegin(IN_SINGLE_GSTRING);
+                                                 if (br.equals(mLBRACK)) yybegin(IN_TRIPLE_GSTRING);
                                                }
                                              }
                                              return mRCURLY; }
 }
+
+// Single double-quoted GString
+<IN_TRIPLE_GSTRING_DOLLAR> {
+
+  {mIDENT}("."{mIDENT})*                  {  yybegin(IN_TRIPLE_GSTRING);
+                                             return mIDENT; }
+  "{"                                     {  blockStack.push(new Stack<IElementType>());
+                                             blockStack.peek().push(mLBRACK);
+                                             yybegin(IN_INNER_BLOCK);
+                                             return mLCURLY; }
+  [^{[:jletter:]](. | mONE_NL)*           {  clearGStack();
+                                             clearBlockStack();
+                                             return mWRONG_GSTRING_LITERAL; }
+}
+
+<IN_TRIPLE_GSTRING> {
+  {mGSTRING_TRIPLE_CONTENT}"$"            {  yybegin(IN_TRIPLE_GSTRING_DOLLAR);
+                                             return mGSTRING_SINGLE_CONTENT; }
+  {mGSTRING_TRIPLE_CONTENT}\"\"\"         {  gStringStack.pop();
+                                             if (blockStack.isEmpty()){
+                                               yybegin(YYINITIAL);
+                                             } else {
+                                               yybegin(IN_INNER_BLOCK);
+                                             }
+                                             return mGSTRING_SINGLE_END; }
+  .                                       {  clearGStack();
+                                             clearBlockStack();
+                                             yybegin(WRONG_STRING);
+                                             return mWRONG_GSTRING_LITERAL; }
+}
+
+
 
 <YYINITIAL> {
 
@@ -272,6 +317,10 @@ mAFTER_REGEXP = !( "(" | "{" | {mIDENT} | {mNUM_INT} | "[" )
 // GStrings
 {mGSTRING_SINGLE_BEGIN}                                    {  yybegin(IN_SINGLE_GSTRING_DOLLAR);
                                                               gStringStack.push(mLPAREN);
+                                                              return mGSTRING_SINGLE_BEGIN; }
+
+{mGSTRING_TRIPLE_BEGIN}                                    {  yybegin(IN_TRIPLE_GSTRING_DOLLAR);
+                                                              gStringStack.push(mLBRACK);
                                                               return mGSTRING_SINGLE_BEGIN; }
 
 {mGSTRING_LITERAL}                                         {  return mGSTRING_LITERAL; }
