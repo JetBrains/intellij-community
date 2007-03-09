@@ -16,10 +16,8 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.awt.*;
 
 /**
@@ -72,6 +70,19 @@ public class RollbackChangesDialog extends DialogWrapper {
 
     setOKButtonText(VcsBundle.message("changes.action.rollback.text"));
     setTitle(VcsBundle.message("changes.action.rollback.title"));
+
+    Set<AbstractVcs> affectedVcs = new HashSet<AbstractVcs>();
+    for(Change c: changes) {
+      affectedVcs.add(ChangesUtil.getVcsForChange(c, project));
+    }
+    if (affectedVcs.size() == 1) {
+      AbstractVcs vcs = (AbstractVcs) affectedVcs.toArray() [0];
+      if (vcs.getCheckinEnvironment() != null) {
+        final String rollbackOperationName = vcs.getCheckinEnvironment().getRollbackOperationName();
+        setTitle(VcsBundle.message("changes.action.rollback.custom.title", rollbackOperationName).replace("_", ""));
+        setOKButtonText(rollbackOperationName);
+      }
+    }
 
     for(Change c: changes) {
       if (c.getType() == Change.Type.NEW) {

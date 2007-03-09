@@ -31,7 +31,22 @@ import java.util.List;
 
 public class RollbackAction extends AnAction {
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(isEnabled(e));
+    final boolean isEnabled = isEnabled(e);
+    e.getPresentation().setEnabled(isEnabled);
+    if (isEnabled) {
+      VirtualFile[] files = e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
+      if (files != null) {
+        for(VirtualFile file: files) {
+          final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(e.getData(DataKeys.PROJECT)).getVcsFor(file);
+          if (vcs != null) {
+            final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
+            if (checkinEnvironment != null) {
+              e.getPresentation().setText(checkinEnvironment.getRollbackOperationName());
+            }
+          }
+        }
+      }
+    }
   }
 
   private static boolean isEnabled(final AnActionEvent e) {

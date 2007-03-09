@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -80,7 +81,11 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   public String getCheckinOperationName() {
-    return com.intellij.CvsBundle.message("operation.name.checkin.project");
+    return CvsBundle.message("operation.name.checkin.project");
+  }
+
+  public String getRollbackOperationName() {
+    return VcsBundle.message("changes.action.rollback.text");
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {

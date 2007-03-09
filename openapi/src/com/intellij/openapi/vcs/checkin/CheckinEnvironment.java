@@ -46,6 +46,7 @@ public interface CheckinEnvironment {
   String getHelpId();
 
   String getCheckinOperationName();
+  String getRollbackOperationName();
 
   /**
    * @return true if check in dialog should be shown even if there are no files to check in
