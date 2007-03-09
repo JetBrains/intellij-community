@@ -28,6 +28,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
+import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,6 +131,10 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     return myEditor;
   }
 
+  private PsiFile getFile() {
+    return myFile;
+  }
+
   private void setUserCaretChange(final boolean userCaretChange) {
     myUserCaretChange = userCaretChange;
   }
@@ -201,6 +206,10 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       myBreadcrumbsComponent = breadcrumbsComponent;
 
       setToolTipText(new String());
+    }
+
+    private boolean isHtmlLikeFile() {
+      return myBreadcrumbsComponent.getFile().getLanguage() != StdLanguages.XML;
     }
 
     public String getToolTipText(final MouseEvent event) {
@@ -303,10 +312,10 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
         assert myBuffer != null;
 
         super.paint(g2);
-        
+
         //if (myDirty) {
         //  myBuffer.repaint(crumbList, getPainter());
-          //myDirty = false;
+        //myDirty = false;
         //}
 
         myBuffer.paintPage(g2, crumbList, getPainter(), d.height);
@@ -360,6 +369,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
         return null;
       }
 
+      final boolean htmlInfo = isHtmlLikeFile();
       final Painter painter = getPainter();
 
       final LinkedList<Crumb> result = new LinkedList<Crumb>();
@@ -369,7 +379,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       // fill up crumb list first going from end to start
       for (int i = elements.size() - 1; i >= 0; i--) {
         final XmlTag tag = (XmlTag)elements.get(i);
-        final String s = painter.getSettings().prepareString(tag);
+        final String s = painter.getSettings().prepareString(tag, htmlInfo);
         final Dimension d = painter.getSize(s, fm);
         final Crumb crumb = new Crumb(this, s, d.width, tag);
         if (screenWidth + d.width > width) {
@@ -520,7 +530,10 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       return myPage;
     }
 
-    private void repaint(@NotNull final Graphics2D g2, @NotNull final List<Crumb> crumbList, @NotNull final Painter painter, final int height) {
+    private void repaint(@NotNull final Graphics2D g2,
+                         @NotNull final List<Crumb> crumbList,
+                         @NotNull final Painter painter,
+                         final int height) {
       //final int height = myImage.getHeight();
       final int pageOffset = getPageOffset();
 
@@ -771,20 +784,22 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     }
 
     @NotNull
-    public String prepareString(@NotNull final XmlTag tag) {
+    public String prepareString(@NotNull final XmlTag tag, boolean addHtmlInfo) {
       final StringBuffer sb = new StringBuffer();
       sb.append(tag.getName());
 
-      final String id_value = tag.getAttributeValue(ID_ATTRIBUTE_NAME);
-      if (null != id_value) {
-        sb.append("#").append(id_value);
-      }
+      if (addHtmlInfo) {
+        final String id_value = tag.getAttributeValue(ID_ATTRIBUTE_NAME);
+        if (null != id_value) {
+          sb.append("#").append(id_value);
+        }
 
-      final String class_value = tag.getAttributeValue(CLASS_ATTRIBUTE_NAME);
-      if (null != class_value) {
-        final StringTokenizer tokenizer = new StringTokenizer(class_value, " ");
-        while (tokenizer.hasMoreTokens()) {
-          sb.append(".").append(tokenizer.nextToken());
+        final String class_value = tag.getAttributeValue(CLASS_ATTRIBUTE_NAME);
+        if (null != class_value) {
+          final StringTokenizer tokenizer = new StringTokenizer(class_value, " ");
+          while (tokenizer.hasMoreTokens()) {
+            sb.append(".").append(tokenizer.nextToken());
+          }
         }
       }
 
@@ -858,8 +873,8 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     }
 
     @NotNull
-    public String prepareString(@NotNull final XmlTag tag) {
-      final String s = super.prepareString(tag);
+    public String prepareString(@NotNull final XmlTag tag, boolean addHtmlInfo) {
+      final String s = super.prepareString(tag, addHtmlInfo);
 
       final StringBuffer sb = new StringBuffer("<");
       return sb.append(s).append(">").toString();
