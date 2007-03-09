@@ -90,7 +90,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
   private static LocalQuickFix[] getQuickFixes(final GenericDomValue element, PsiReference reference) {
     final List<LocalQuickFix> result = new SmartList<LocalQuickFix>();
     final Converter converter = element.getConverter();
-    if (reference instanceof GenericDomValueReference && converter instanceof ResolvingConverter) {
+    if (converter instanceof ResolvingConverter) {
       final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
       result
         .addAll(Arrays.asList(resolvingConverter.getQuickFixes(new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element)))));
