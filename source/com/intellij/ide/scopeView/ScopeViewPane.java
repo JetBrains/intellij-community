@@ -161,10 +161,12 @@ public class ScopeViewPane extends AbstractProjectViewPane {
         TreePath path = new TreePath(node.getPath());
         // hack: as soon as file path gets expanded, file node replaced with class node on the fly
         if (node instanceof FileNode && psiFile.getViewProvider().getBaseLanguage() == StdLanguages.JAVA) {
-          PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
-          if (classes.length != 0 && classes[0] != null && classes[0].isValid()) {
-            ClassNode classNode = new ClassNode(classes[0]);
-            path = path.getParentPath().pathByAddingChild(classNode);
+          if (psiFile instanceof PsiJavaFile) {
+            PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
+            if (classes.length != 0 && classes[0] != null && classes[0].isValid()) {
+              ClassNode classNode = new ClassNode(classes[0]);
+              path = path.getParentPath().pathByAddingChild(classNode);
+            }
           }
         }
         TreeUtil.selectPath(myTree, path);
