@@ -1,18 +1,17 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeGlassPane;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.*;
 import java.awt.*;
-import java.util.Set;
-import java.util.LinkedHashSet;
+import java.awt.event.*;
 import java.util.EventListener;
 import java.util.HashSet;
-
-import org.jetbrains.annotations.Nullable;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
 
@@ -47,6 +46,14 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
 
   protected void processMouseWheelEvent(final MouseWheelEvent e) {
     process(e, false);
+  }
+
+  public void removeNotify() {
+    // clear references to prevent memory leaks
+    myCurrentOverComponent = null;
+    myMousePressedComponent = null;
+    myMousePressedContainer = null;
+    super.removeNotify();
   }
 
   private void process(final MouseEvent e, boolean motionEvent) {
