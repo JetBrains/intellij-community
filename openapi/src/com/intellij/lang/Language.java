@@ -552,4 +552,8 @@ public abstract class Language {
   public void setDocumentationProvider(DocumentationProvider documentationProvider) {
     myDocumentationProvider = documentationProvider;
   }
+
+  public @Nullable LanguageDialect[] getAvailableLanguageDialects() {
+    return null;
+  }
 }
