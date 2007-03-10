@@ -141,6 +141,13 @@ public class EnterHandler extends EditorWriteActionHandler {
           lexer.advance();
         }
 
+        if (psiAtOffset.getParent() instanceof PsiLiteralExpression && psiAtOffset.getParent().getParent() instanceof PsiReferenceExpression) {
+          document.insertString(psiAtOffset.getTextRange().getEndOffset(), ")");
+          document.insertString(psiAtOffset.getTextRange().getStartOffset(), "(");
+          caretOffset++;
+          caretAdvance++;
+        }        
+
         final String insertedFragment = literalStart + " " + quoteHandler.getStringConcatenationOperatorRepresentation();
         document.insertString(caretOffset, insertedFragment + " " + literalStart);
         text = document.getCharsSequence();
