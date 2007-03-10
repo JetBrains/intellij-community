@@ -212,7 +212,8 @@ public class RedundantCastUtil {
           }
           else if (
             newTargetMethod.getSignature(newResult.getSubstitutor()).equals(targetMethod.getSignature(resolveResult.getSubstitutor())) &&
-            !(newTargetMethod.isDeprecated() && !targetMethod.isDeprecated())) { // see SCR11555, SCR14559
+            !(newTargetMethod.isDeprecated() && !targetMethod.isDeprecated()) &&  // see SCR11555, SCR14559
+            areThrownExceptionsCompatible(targetMethod, newTargetMethod)) { //see IDEADEV-15170
             addToResults(typeCast);
           }
         }
@@ -220,6 +221,22 @@ public class RedundantCastUtil {
       }
       catch (IncorrectOperationException e) {
       }
+    }
+
+    private static boolean areThrownExceptionsCompatible(final PsiMethod targetMethod, final PsiMethod newTargetMethod) {
+      final PsiClassType[] oldThrowsTypes = targetMethod.getThrowsList().getReferencedTypes();
+      final PsiClassType[] newThrowsTypes = newTargetMethod.getThrowsList().getReferencedTypes();
+      for (final PsiClassType throwsType : newThrowsTypes) {
+        if (!isExceptionThrown(throwsType, oldThrowsTypes)) return false;
+      }
+      return true;
+    }
+
+    private static boolean isExceptionThrown(PsiClassType exceptionType, PsiClassType[] thrownTypes) {
+      for (final PsiClassType type : thrownTypes) {
+        if (type.equals(exceptionType)) return true;
+      }
+      return false;
     }
 
     public void visitNewExpression(PsiNewExpression expression) {
