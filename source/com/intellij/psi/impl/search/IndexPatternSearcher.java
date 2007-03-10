@@ -229,21 +229,13 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
       myHighlighter = highlighter;
     }
 
-    public void start(char[] buffer) {
-      start(buffer, 0, buffer.length);
-    }
-
-    public void start(char[] buffer, int startOffset, int endOffset) {
-      start(new CharArrayCharSequence(buffer), startOffset, endOffset, 0);
-    }
-
     public void start(CharSequence buffer, int startOffset, int endOffset, int state) {
       myHighlighter.setText(new CharSequenceSubSequence(this.buffer = buffer, start = startOffset, end = endOffset));
       iterator = myHighlighter.createIterator(0);
     }
 
     public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-      start(buffer, startOffset, endOffset);
+      start(new CharArrayCharSequence(buffer), startOffset, endOffset, initialState);
     }
 
     public int getState() {

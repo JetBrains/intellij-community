@@ -27,14 +27,6 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
     myTodoCounts = todoCounts;
   }
 
-  public void start(char[] buffer) {
-    myOriginalLexer.start(buffer);
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset) {
-    myOriginalLexer.start(buffer, startOffset, endOffset);
-  }
-
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
     myOriginalLexer.start(buffer, startOffset, endOffset, initialState);
   }

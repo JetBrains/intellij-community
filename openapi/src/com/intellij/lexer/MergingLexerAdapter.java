@@ -30,16 +30,6 @@ public class MergingLexerAdapter extends LexerBase {
     myTokensToMerge = tokensToMerge;
   }
 
-  public void start(char[] buffer){
-    myOriginal.start(buffer);
-    myTokenType = null;
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset){
-    myOriginal.start(buffer, startOffset, endOffset);
-    myTokenType = null;
-  }
-
   public void start(char[] buffer, int startOffset, int endOffset, int initialState){
     myOriginal.start(buffer, startOffset, endOffset, initialState);
     myTokenType = null;

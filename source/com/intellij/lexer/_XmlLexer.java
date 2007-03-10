@@ -19,22 +19,6 @@ public class _XmlLexer extends FlexAdapter implements ELHostLexer {
     myState = ((flex.yyprevstate() & 15) << 4) | (flex.yystate() & 15);
   }
 
-  public void start(char[] buffer) {
-    super.start(buffer);
-    final __XmlLexer flex = (__XmlLexer)getFlex();
-    flex.yybegin(__XmlLexer.YYINITIAL);
-    flex.pushState(__XmlLexer.YYINITIAL);
-    packState();
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset) {
-    super.start(buffer, startOffset, endOffset);
-    final __XmlLexer flex = (__XmlLexer)getFlex();
-    flex.yybegin(__XmlLexer.YYINITIAL);
-    flex.pushState(__XmlLexer.YYINITIAL);
-    packState();
-  }
-
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
     super.start(buffer, startOffset, endOffset, initialState);
     handleState(initialState);

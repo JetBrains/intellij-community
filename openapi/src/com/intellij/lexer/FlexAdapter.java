@@ -40,14 +40,6 @@ public class FlexAdapter extends LexerBase {
     return myFlex;
   }
 
-  public void start(char[] buffer) {
-    start(buffer, 0, buffer.length, 0);
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset) {
-    start(buffer, startOffset, endOffset, 0);
-  }
-
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
     final CharArrayCharSequence arrayCharSequence = new CharArrayCharSequence(buffer);
     start(arrayCharSequence, startOffset, endOffset, initialState);

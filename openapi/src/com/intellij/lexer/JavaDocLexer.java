@@ -18,7 +18,6 @@ package com.intellij.lexer;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 
 import java.io.IOException;
@@ -46,14 +45,6 @@ public class JavaDocLexer extends MergingLexerAdapter {
 
     public AsteriskStripperLexer(final _JavaDocLexer flex) {
       myFlex = flex;
-    }
-
-    public final void start(char[] buffer) {
-      start(buffer, 0, buffer.length);
-    }
-
-    public final void start(char[] buffer, int startOffset, int endOffset) {
-      start(new CharArrayCharSequence(buffer), startOffset,endOffset,0);
     }
 
     public final void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {

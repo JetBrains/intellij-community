@@ -23,16 +23,6 @@ public class HtmlLexer extends BaseHtmlLexer {
   private int myTokenStart;
   private int myTokenEnd;
 
-  public void start(char[] buffer) {
-    myTokenType = null;
-    super.start(buffer);
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset) {
-    myTokenType = null;
-    super.start(buffer, startOffset, endOffset);
-  }
-
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
     myTokenType = null;
     super.start(buffer, startOffset, endOffset, initialState);

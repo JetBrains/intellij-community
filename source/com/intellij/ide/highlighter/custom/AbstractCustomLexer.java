@@ -33,14 +33,6 @@ public abstract class AbstractCustomLexer extends LexerBase {
     mySmartUpdateShift = smartUpdateShift;
   }
 
-  public void start(char[] buffer) {
-    start(buffer, 0, buffer.length, START_STATE);
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset) {
-    start(buffer, startOffset, endOffset, START_STATE);
-  }
-
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
    start(new CharArrayCharSequence(buffer), startOffset, endOffset, initialState);
   }

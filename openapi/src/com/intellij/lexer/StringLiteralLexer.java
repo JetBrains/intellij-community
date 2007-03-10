@@ -62,31 +62,23 @@ public class StringLiteralLexer extends LexerBase {
     myAdditionalValidEscapes = additionalValidEscapes;
   }
 
-  public void start(char[] buffer) {
-    start(buffer, 0, buffer.length);
-  }
-
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
     start(new CharArrayCharSequence(buffer),startOffset,endOffset,initialState);
   }
 
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
-      myBuffer = buffer;
-      myStart = startOffset;
-      if (myQuoteChar == NO_QUOTE_CHAR) {
-        myState = AFTER_FIRST_QUOTE;
-      }
-      else {
-        myState = initialState;
-      }
-      myLastState = initialState;
-      myBufferEnd = endOffset;
-      myEnd = locateToken(myStart);
-      mySeenEscapedSpacesOnly = true;
+    myBuffer = buffer;
+    myStart = startOffset;
+    if (myQuoteChar == NO_QUOTE_CHAR) {
+      myState = AFTER_FIRST_QUOTE;
     }
-
-  public void start(char[] buffer, int startOffset, int endOffset) {
-    start(buffer, startOffset, endOffset, BEFORE_FIRST_QUOTE);
+    else {
+      myState = initialState;
+    }
+    myLastState = initialState;
+    myBufferEnd = endOffset;
+    myEnd = locateToken(myStart);
+    mySeenEscapedSpacesOnly = true;
   }
 
   public int getState() {

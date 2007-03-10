@@ -24,18 +24,9 @@ public class EmptyLexer extends LexerBase {
   private int myStartOffset;
   private int myEndOffset;
 
-  public void start(char[] buffer) {
-    start(buffer, 0, buffer.length);
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset) {
+  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
     start(new CharArrayCharSequence(buffer), startOffset, endOffset,0);
   }
-
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    start(buffer, startOffset, endOffset);
-  }
-
 
   public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
     myBuffer = buffer;

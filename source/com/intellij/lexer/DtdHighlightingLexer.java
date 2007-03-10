@@ -65,14 +65,6 @@ public class DtdHighlightingLexer extends LexerBase {
     return tokenType;
   }
 
-  public void start(char[] buffer) {
-    myLexer.start(buffer);
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset) {
-    myLexer.start(buffer, startOffset, endOffset);
-  }
-
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
     myLexer.start(buffer, startOffset, endOffset, initialState);
   }

@@ -47,14 +47,6 @@ class PrefixSuffixStripperLexer extends LexerBase {
     myBufferEnd = endOffset;
   }
 
-  public void start(char[] buffer, int startOffset, int endOffset) {
-    start(buffer, startOffset, endOffset, 0);
-  }
-
-  public void start(char[] buffer) {
-    start(buffer, 0, buffer.length);
-  }
-
   public IElementType getTokenType() {
     locateToken();
     return myTokenType;

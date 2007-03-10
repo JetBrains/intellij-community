@@ -34,14 +34,6 @@ public class EscapedJavaLexer extends LexerBase {
     mySurroundingQuote = surroundingQuote;
   }
 
-  public void start(char[] buffer) {
-    start(buffer, 0, buffer.length);
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset) {
-    start(new CharArrayCharSequence(buffer),startOffset,endOffset,0);
-  }
-
   public void start(CharSequence buffer, int startOffset, int endOffset, int state) {
     myBuffer = buffer;
     myCurOffset = startOffset;
@@ -55,7 +47,7 @@ public class EscapedJavaLexer extends LexerBase {
   }
 
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    start(buffer, startOffset, endOffset);
+    start(new CharArrayCharSequence(buffer),startOffset,endOffset,0);
   }
 
   public int getState() {

@@ -145,14 +145,6 @@ public class JavaLexer extends LexerBase {
   private final static HashTable ourTableWithAssertAndJDK15 = new HashTable(true, true);
   private final static HashTable ourTableWithJDK15 = new HashTable(false, true);
 
-  public final void start(char[] buffer) {
-    start(buffer, 0, buffer.length);
-  }
-
-  public final void start(char[] buffer, int startOffset, int endOffset) {
-    start(new CharArrayCharSequence(buffer), startOffset, endOffset, 0);
-  }
-
   public final void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
     myBufferArray = CharArrayUtil.fromSequenceWithoutCopying(buffer);
@@ -164,7 +156,7 @@ public class JavaLexer extends LexerBase {
   }
 
   public final void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    start(buffer, startOffset, endOffset);
+    start(new CharArrayCharSequence(buffer), startOffset, endOffset, initialState);
   }
 
   public int getState() {

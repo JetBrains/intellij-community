@@ -69,14 +69,6 @@ public class LayeredLexer extends LexerBase {
     }
   }
 
-  public void start(char[] buffer) {
-    start(buffer, 0, buffer.length);
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset) {
-    start(buffer, startOffset, endOffset,  0);
-  }
-
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
     start(new CharArrayCharSequence(buffer),startOffset, endOffset, initialState);
   }

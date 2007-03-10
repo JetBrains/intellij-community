@@ -49,14 +49,6 @@ public class SyntaxTableLexer extends LexerBase {
     endComment = table.getEndComment();
   }
 
-  public void start(char[] buffer) {
-    start(buffer, 0, buffer.length, (short) 0);
-  }
-
-  public void start(char[] buffer, int startOffset, int endOffset) {
-    start(buffer, startOffset, endOffset, (short) 0);
-  }
-
   public void start(CharSequence buffer, int startOffset, int endOffset,
                     int initialState) {
     this.buffer = buffer;
