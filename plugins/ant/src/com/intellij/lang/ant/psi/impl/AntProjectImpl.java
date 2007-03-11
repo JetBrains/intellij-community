@@ -167,11 +167,6 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       if (myImports == null) {
         // this is necessary to avoid recurrent getImportedFiles() and stack overflow
         myImports = AntFile.NO_FILES;
-
-        // do this to discover all properties, defined in this file, so
-        // paths to imported files, defined in terms of properties, could be resolved
-        getChildrenInner();
-
         final XmlTag se = getSourceElement();
         final PsiFile psiFile = se.getContainingFile();
         final List<AntFile> imports = new ArrayList<AntFile>();
