@@ -33,6 +33,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   private volatile AntTarget[] myTargets;
   private volatile AntTarget[] myImportedTargets;
   private volatile AntFile[] myImports;
+  private Set<String> myImportsDependentProperties;
+    
   private volatile List<AntProperty> myPredefinedProps = new ArrayList<AntProperty>();
   private volatile Map<String, AntElement> myReferencedElements;
   private volatile String[] myRefIdsArray;
@@ -74,6 +76,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       myTargets = null;
       myImportedTargets = null;
       myImports = null;
+      myImportsDependentProperties = null;
       myReferencedElements = null;
       myRefIdsArray = null;
       myEnvPrefixes = null;
@@ -181,9 +184,23 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
 
             }
             else if (AntFileImpl.IMPORT_TAG.equals(tag.getName())) {
-              final AntFile imported = AntImportImpl.getImportedFile(tag.getAttributeValue(AntFileImpl.FILE_ATTR), this);
+              final String fileName = tag.getAttributeValue(AntFileImpl.FILE_ATTR);
+              final AntFile imported = AntImportImpl.getImportedFile(fileName, this);
               if (imported != null) {
                 imports.add(imported);
+              }
+              else {
+                int startProp = 0;
+                while ((startProp = fileName.indexOf("${", startProp)) >= 0) {
+                  final int endProp = fileName.indexOf('}', startProp + 2);
+                  if (endProp > startProp + 2) {
+                    if (myImportsDependentProperties == null) {
+                      myImportsDependentProperties = new HashSet<String>();
+                    }
+                    myImportsDependentProperties.add(fileName.substring(startProp + 2, endProp));
+                  }
+                  startProp += 2;
+                }
               }
             }
           }
@@ -309,7 +326,9 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
         checkPropertiesMap();
         super.setProperty(name, element);
         // hack: if there are any imports defined in terms of this property, they will be recalculated 
-        myImports = null;
+        if (myImportsDependentProperties != null && myImportsDependentProperties.contains(name)) {
+          myImports = null;
+        }
       }
     }
   }
