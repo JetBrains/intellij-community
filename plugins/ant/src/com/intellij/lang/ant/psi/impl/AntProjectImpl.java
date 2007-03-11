@@ -308,6 +308,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       if (getParent() != null) {
         checkPropertiesMap();
         super.setProperty(name, element);
+        // hack: if there are any imports defined in terms of this property, they will be recalculated 
+        myImports = null;
       }
     }
   }
