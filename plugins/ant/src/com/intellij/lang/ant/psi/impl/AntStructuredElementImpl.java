@@ -228,15 +228,20 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   @Nullable
   public String computeAttributeValue(final String value) {
     synchronized (PsiLock.LOCK) {
-      if (value != null && !myComputingAttrValue) {
-        myComputingAttrValue = true;
-        final Set<PsiElement> set = PsiElementSetSpinAllocator.alloc();
-        try {
-          return computeAttributeValue(value, set);
+      if (value != null) {
+        if (!myComputingAttrValue) {
+          myComputingAttrValue = true;
+          final Set<PsiElement> set = PsiElementSetSpinAllocator.alloc();
+          try {
+            return computeAttributeValue(value, set);
+          }
+          finally {
+            PsiElementSetSpinAllocator.dispose(set);
+            myComputingAttrValue = false;
+          }
         }
-        finally {
-          PsiElementSetSpinAllocator.dispose(set);
-          myComputingAttrValue = false;
+        else if (value.indexOf('$') < 0){
+          return value;
         }
       }
       return null;
