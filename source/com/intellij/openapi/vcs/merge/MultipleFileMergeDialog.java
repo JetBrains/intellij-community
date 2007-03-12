@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
@@ -269,6 +270,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       if (request.getResult() == DialogWrapper.OK_EXIT_CODE) {
         myFiles.remove(file);
         myProvider.conflictResolvedForFile(file);
+        VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
         checkMarkModifiedProject(file);
       }
       else {
