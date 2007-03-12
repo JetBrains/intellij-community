@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.ide.scopeView;
+package com.intellij.ide.scopeView.nodes;
 
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;

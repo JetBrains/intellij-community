@@ -6,6 +6,7 @@ import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.scopeView.nodes.ClassNode;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
@@ -182,6 +183,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   }
 
   private void refreshScope(@Nullable NamedScope scope, boolean showProgress) {
+    TreeModelBuilder.clearCaches(myProject);
     myTreeExpansionMonitor.freeze();
     if (scope == null || scope.getValue() == null) { //was deleted
       scope = myDependencyValidationManager.getProjectScope();
@@ -205,6 +207,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     myTree.setModel(myBuilder.build(myProject, showProgress));
     ((DefaultTreeModel)myTree.getModel()).reload();
     myTreeExpansionMonitor.restore();
+    TreeModelBuilder.clearCaches(myProject);
   }
 
   public void readExternal(Element element) throws InvalidDataException {

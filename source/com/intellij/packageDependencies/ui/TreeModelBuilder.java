@@ -2,7 +2,7 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.ide.scopeView.ClassNode;
+import com.intellij.ide.scopeView.nodes.ClassNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;

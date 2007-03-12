@@ -2,6 +2,9 @@ package com.intellij.ide.scopeView;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.PsiClassChildrenSource;
+import com.intellij.ide.scopeView.nodes.ClassNode;
+import com.intellij.ide.scopeView.nodes.FieldNode;
+import com.intellij.ide.scopeView.nodes.MethodNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;

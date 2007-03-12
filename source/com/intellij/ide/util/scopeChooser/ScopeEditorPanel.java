@@ -32,12 +32,12 @@ import javax.swing.*;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.DocumentEvent;
-import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.ArrayList;
 
 public class ScopeEditorPanel {
   public static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
@@ -196,36 +196,49 @@ public class ScopeEditorPanel {
   }
 
   private void excludeSelected(boolean recurse) {
-    PackageSet selected = getSelectedSet(recurse);
-    if (selected == null) return;
-    selected = new ComplementPackageSet(selected);
-    if (myCurrentScope == null) {
-      myCurrentScope = selected;
-    }
-    else {
-      myCurrentScope = new IntersectionPackageSet(myCurrentScope, selected);
+    final ArrayList<PackageSet> selected = getSelectedSets(recurse);
+    if (selected == null || selected.isEmpty()) return;
+    for (PackageSet set : selected) {
+      if (myCurrentScope == null) {
+        myCurrentScope = new ComplementPackageSet(set);
+      } else {
+        myCurrentScope = new IntersectionPackageSet(myCurrentScope, new ComplementPackageSet(set));
+      }
     }
     rebuild(true);
   }
 
   private void includeSelected(boolean recurse) {
-    PackageSet selected = getSelectedSet(recurse);
-    if (selected == null) return;
-
-    if (myCurrentScope == null) {
-      myCurrentScope = selected;
-    }
-    else {
-      myCurrentScope = new UnionPackageSet(myCurrentScope, selected);
+    final ArrayList<PackageSet> selected = getSelectedSets(recurse);
+    if (selected == null || selected.isEmpty()) return;
+    for (PackageSet set : selected) {
+      if (myCurrentScope == null) {
+        myCurrentScope = set;
+      }
+      else {
+        myCurrentScope = new UnionPackageSet(myCurrentScope, set);
+      }
     }
     rebuild(true);
   }
 
   @Nullable
-  private PackageSet getSelectedSet(boolean recursively) {
+  private ArrayList<PackageSet> getSelectedSets(boolean recursively) {
     int[] rows = myPackageTree.getSelectionRows();
-    if (rows == null || rows.length != 1) return null;
-    PackageDependenciesNode node = (PackageDependenciesNode)myPackageTree.getPathForRow(rows[0]).getLastPathComponent();
+    if (rows == null) return null;
+    final ArrayList<PackageSet> result = new ArrayList<PackageSet>();
+    for (int row : rows) {
+      final PackageDependenciesNode node = (PackageDependenciesNode)myPackageTree.getPathForRow(row).getLastPathComponent();
+      final PackageSet set = getNodePackageSet(node, recursively);
+      if (set != null) {
+        result.add(set);
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  private static PackageSet getNodePackageSet(final PackageDependenciesNode node, final boolean recursively) {
     if (node instanceof ModuleGroupNode){
       if (!recursively) return null;
       final String scope = getSelectedScopeType(node);
@@ -368,7 +381,6 @@ public class ScopeEditorPanel {
   }
 
   private static void initTree(Tree tree) {
-    tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     tree.setCellRenderer(new MyTreeCellRenderer());
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);

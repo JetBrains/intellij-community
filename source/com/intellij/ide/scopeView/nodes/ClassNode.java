@@ -1,4 +1,4 @@
-package com.intellij.ide.scopeView;
+package com.intellij.ide.scopeView.nodes;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;

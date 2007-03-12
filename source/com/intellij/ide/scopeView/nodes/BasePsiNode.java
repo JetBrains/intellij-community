@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.ide.scopeView;
+package com.intellij.ide.scopeView.nodes;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
