@@ -608,13 +608,14 @@ public class TreeModelBuilder {
       return directoryNode;
     }
 
-    directoryNode = new DirectoryNode(psiDirectory, myShowModules, myCompactEmptyMiddlePackages, myFlattenPackages);
+    directoryNode = new DirectoryNode(psiDirectory, myCompactEmptyMiddlePackages, myFlattenPackages);
     ((DirectoryNode)directoryNode).setCompactedDirNode(childNode); //compact
     getMap(myModuleDirNodes, scopeType).put(psiDirectory, (DirectoryNode)directoryNode);
 
     final PsiDirectory directory = psiDirectory.getParentDirectory();
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     if (!myFlattenPackages && directory != null) {
-      if (ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(directory.getVirtualFile()) == module) {
+      if (fileIndex.getModuleForFile(directory.getVirtualFile()) == module) {
         DirectoryNode parentDirectoryNode = getMap(myModuleDirNodes, scopeType).get(directory);
         if (parentDirectoryNode != null || !myCompactEmptyMiddlePackages) {
           getModuleDirNode(directory, module, scopeType, (DirectoryNode)directoryNode).add(directoryNode);
@@ -628,7 +629,24 @@ public class TreeModelBuilder {
       }
     }
     else {
-      getModuleNode(module, scopeType).add(directoryNode);
+      final VirtualFile virtualFile = psiDirectory.getVirtualFile();
+      final VirtualFile contentRoot = fileIndex.getContentRootForFile(virtualFile);
+      if (contentRoot == virtualFile) {
+        getModuleNode(module, scopeType).add(directoryNode);
+      } else {
+        final VirtualFile sourceRoot = fileIndex.getSourceRootForFile(virtualFile);
+        final PsiDirectory root;
+        if (sourceRoot != virtualFile && sourceRoot != null) {
+          root = myPsiManager.findDirectory(sourceRoot);
+        } else if (contentRoot != null) {
+          root = myPsiManager.findDirectory(contentRoot);
+        } else {
+          root = null;
+        }
+        if (root != null) {
+          getModuleDirNode(root, module, scopeType, null).add(directoryNode);
+        }
+      }
     }
 
     return directoryNode;

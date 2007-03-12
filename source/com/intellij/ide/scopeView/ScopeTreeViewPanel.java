@@ -1,6 +1,7 @@
 package com.intellij.ide.scopeView;
 
 import com.intellij.ProjectTopics;
+import com.intellij.lang.StdLanguages;
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
@@ -8,6 +9,7 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PackageUtil;
@@ -112,9 +114,27 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
   }
 
-  @Nullable
-  public PackageDependenciesNode findNode(PsiFile file) {
-    return myBuilder.findNode(file);
+  public void selectNode(final PsiFile file) {
+    myUpdateQueue.queue(new Update("Select") {
+      public void run() {
+        if (myProject.isDisposed()) return;
+        PackageDependenciesNode node = myBuilder.findNode(file);
+        if (node != null) {
+          TreePath path = new TreePath(node.getPath());
+          // hack: as soon as file path gets expanded, file node replaced with class node on the fly
+          if (node instanceof FileNode && file.getViewProvider().getBaseLanguage() == StdLanguages.JAVA) {
+            if (file instanceof PsiJavaFile) {
+              PsiClass[] classes = ((PsiJavaFile)file).getClasses();
+              if (classes.length != 0 && classes[0] != null && classes[0].isValid()) {
+                ClassNode classNode = new ClassNode(classes[0]);
+                path = path.getParentPath().pathByAddingChild(classNode);
+              }
+            }
+          }
+          TreeUtil.selectPath(myTree, path);
+        }
+      }
+    });
   }
 
   public void selectScope(final NamedScope scope) {
@@ -514,10 +534,22 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       if (element != null) {
         final boolean isDirectory = element instanceof PsiDirectory;
         if (!isDirectory) {
+          final PsiFile psiFile = element.getContainingFile();
+          final PackageSet packageSet = getCurrentScope().getValue();
+          LOG.assertTrue(packageSet != null);
+          if (psiFile != null) {
+            final ProjectView projectView = ProjectView.getInstance(myProject);
+            if (!packageSet.contains(psiFile, NamedScopesHolder.getHolder(myProject, CURRENT_SCOPE_NAME, myDependencyValidationManager))) {
+              projectView.changeView(ProjectViewPane.ID);
+            }
+            projectView.select(psiFile, psiFile.getVirtualFile(), false);
+          }
           Editor editor = EditorHelper.openInEditor(element);
           if (editor != null) {
             ToolWindowManager.getInstance(myProject).activateEditorComponent();
           }
+        } else {
+          ((PsiDirectory)element).navigate(true);
         }
       }
     }

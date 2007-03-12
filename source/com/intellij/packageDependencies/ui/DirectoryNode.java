@@ -1,4 +1,3 @@
-
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.project.Project;
@@ -29,31 +28,35 @@ public class DirectoryNode extends PackageDependenciesNode {
   private String myFQName = null;
   //private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.ui.DirectoryNode");
 
-  private boolean myShowModules;
-
-  public DirectoryNode(PsiDirectory aDirectory, boolean showModules, boolean compactPackages, boolean showFQName) {
+  public DirectoryNode(PsiDirectory aDirectory, boolean compactPackages, boolean showFQName) {
     myDirectory = aDirectory;
     VirtualFile directory = myDirectory.getVirtualFile();
     final ProjectFileIndex index = ProjectRootManager.getInstance(myDirectory.getProject()).getFileIndex();
     myDirName = aDirectory.getName();
-    myShowModules = showModules;
-    if (showModules) {
-      if (showFQName) {
-        final VirtualFile contentRoot = index.getContentRootForFile(directory);
-        if (contentRoot != null) {
-          myFQName = VfsUtil.getRelativePath(directory, contentRoot.getParent(), '/');
+    if (showFQName) {
+      final VirtualFile contentRoot = index.getContentRootForFile(directory);
+      if (contentRoot != null) {
+        if (directory == contentRoot) {
+          myFQName = myDirName;
         }
         else {
-          myFQName = PatternPackageSet.getLibRelativePath(directory, index);
+          final VirtualFile sourceRoot = index.getSourceRootForFile(directory);
+          if (directory == sourceRoot) {
+            myFQName = myDirName;
+          }
+          else if (sourceRoot != null) {
+            myFQName = VfsUtil.getRelativePath(directory, sourceRoot, '/');
+          }
+          else {
+            myFQName = VfsUtil.getRelativePath(directory, contentRoot, '/');
+          }
         }
-        myDirName = myFQName;
       }
+      else {
+        myFQName = PatternPackageSet.getLibRelativePath(directory, index);
+      }
+      myDirName = myFQName;
     }
-    else {
-      if (showFQName) {
-        myFQName = PatternPackageSet.getRelativePath(directory, index, true);
-      }
-    }    
     myCompactPackages = compactPackages;
   }
 
@@ -70,7 +73,7 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   public String toString() {
     if (myFQName != null) return myFQName;
-    if (myCompactPackages && myCompactedDirNode != null){
+    if (myCompactPackages && myCompactedDirNode != null) {
       return myDirName + "/" + myCompactedDirNode.getDirName();
     }
     final String locationString = getLocationString();
@@ -94,9 +97,9 @@ public class DirectoryNode extends PackageDependenciesNode {
     return null;
   }
 
-  public String getDirName(){
+  public String getDirName() {
     if (myDirectory == null || !myDirectory.isValid()) return "";
-    if (myCompactPackages && myCompactedDirNode != null){
+    if (myCompactPackages && myCompactedDirNode != null) {
       return myDirectory.getName() + "/" + myCompactedDirNode.getDirName();
     }
     return myDirName;
@@ -109,22 +112,14 @@ public class DirectoryNode extends PackageDependenciesNode {
     VirtualFile directory = myDirectory.getVirtualFile();
     VirtualFile contentRoot = index.getContentRootForFile(directory);
     if (directory == contentRoot) {
-      return myShowModules ? "" : directory.getName() + "/";
+      return "";
     }
     if (contentRoot == null) {
       return "";
     }
-    if (myShowModules) {
-      while (directory != null && contentRoot != directory) {
-        buf.insert(0, directory.getName() + "/");
-        directory = directory.getParent();
-      }
-    }
-    else {
-      while (directory != null && contentRoot.getParent() != directory) {
-        buf.insert(0, directory.getName() + "/");
-        directory = directory.getParent();
-      }
+    while (directory != null && contentRoot != directory) {
+      buf.insert(0, directory.getName() + "/");
+      directory = directory.getParent();
     }
     return buf.toString();
   }
@@ -138,7 +133,7 @@ public class DirectoryNode extends PackageDependenciesNode {
   }
 
   public boolean equals(Object o) {
-    if (isEquals()){
+    if (isEquals()) {
       return super.equals(o);
     }
     if (this == o) return true;

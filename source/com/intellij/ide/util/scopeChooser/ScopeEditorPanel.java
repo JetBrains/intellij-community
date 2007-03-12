@@ -643,7 +643,9 @@ public class ScopeEditorPanel {
       settings.UI_GROUP_BY_FILES = flag;
       if (flag){
         settings.UI_GROUP_BY_SCOPE_TYPE = false;
+        settings.UI_SHOW_MODULES = true;
       }
+      clearCaches(); //need to reconsider libraries files 
       rebuild(true);
     }
   }
@@ -661,6 +663,11 @@ public class ScopeEditorPanel {
     public void setSelected(AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_SHOW_MODULES = flag;
       rebuild(true);
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(!DependencyUISettings.getInstance().UI_GROUP_BY_FILES);
     }
   }
 
