@@ -23,6 +23,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+    if (!(file instanceof PsiJavaFile)) return false;
     final PsiReference psiReference = file.findReferenceAt(editor.getCaretModel().getOffset());
     if (psiReference == null) return false;
 
