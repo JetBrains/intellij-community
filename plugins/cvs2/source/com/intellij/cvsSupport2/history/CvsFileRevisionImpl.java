@@ -53,18 +53,7 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
       final String[] branchNames = branches.split(";");
       for (String branchName : branchNames) {
         final CvsRevisionNumber revisionNumber = new CvsRevisionNumber(branchName.trim());
-        final int[] subRevisions = revisionNumber.getSubRevisions();
-        CvsRevisionNumber headRevNumber = revisionNumber.removeTailVersions(1);
-        CvsRevisionNumber symRevNumber;
-        if (subRevisions.length > 1) {   // checking just in case - it should always be true
-          int lastSubRevision = subRevisions [subRevisions.length-1];
-          symRevNumber = headRevNumber.addTailVersions(new int[]{0, lastSubRevision});
-        }
-        else {
-          symRevNumber = headRevNumber.addTailVersions(new int[]{0, 2});
-        }
-        //noinspection unchecked
-        final List<SymbolicName> symNames = myLogInformation.getSymNamesForRevision(symRevNumber.asString());
+        final List<SymbolicName> symNames = getSymbolicNames(revisionNumber);
         if (!symNames.isEmpty()) {
           for (final SymbolicName symName : symNames) {
             result.add(symName.getName() + " (" + revisionNumber.asString() + ")");
@@ -84,6 +73,21 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
       }
     }
     return result;
+  }
+
+  private List<SymbolicName> getSymbolicNames(final CvsRevisionNumber revisionNumber) {
+    final int[] subRevisions = revisionNumber.getSubRevisions();
+    CvsRevisionNumber headRevNumber = revisionNumber.removeTailVersions(1);
+    CvsRevisionNumber symRevNumber;
+    if (subRevisions != null && subRevisions.length > 1) {   // checking just in case - it should always be true
+      int lastSubRevision = subRevisions [subRevisions.length-1];
+      symRevNumber = headRevNumber.addTailVersions(new int[]{0, lastSubRevision});
+    }
+    else {
+      symRevNumber = headRevNumber.addTailVersions(new int[]{0, 2});
+    }
+    //noinspection unchecked
+    return (List<SymbolicName>)myLogInformation.getSymNamesForRevision(symRevNumber.asString());
   }
 
   public String getAuthor() {
@@ -141,16 +145,13 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     final String[] branchNames = branches.split(";");
     for (String branchName : branchNames) {
       final CvsRevisionNumber revisionNumber = new CvsRevisionNumber(branchName.trim());
-      CvsRevisionNumber headRevNumber = revisionNumber.removeTailVersions(1);
-      CvsRevisionNumber symRevNumber = headRevNumber.addTailVersions(new int[]{0, 2});
-      final List symNames = myLogInformation.getSymNamesForRevision(symRevNumber.asString());
+      final List<SymbolicName> symNames = getSymbolicNames(revisionNumber);
       if (!symNames.isEmpty()) {
-        for (Iterator iterator = symNames.iterator(); iterator.hasNext();) {
-          SymbolicName symbolicName = (SymbolicName)iterator.next();
+        for (final SymbolicName symName : symNames) {
           if (buffer.length() > 0) {
             buffer.append(", ");
           }
-          buffer.append(symbolicName.getName());
+          buffer.append(symName.getName());
         }
       }
     }
