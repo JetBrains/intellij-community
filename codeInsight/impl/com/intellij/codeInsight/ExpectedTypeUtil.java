@@ -3,6 +3,7 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 
 import java.util.*;
 
@@ -84,8 +85,8 @@ public class ExpectedTypeUtil {
     int kind1 = info1.getKind();
     int kind2 = info2.getKind();
     if (kind1 == kind2) {
-      if (matches(info1.getType(), info2)) return -1;
-      if (matches(info2.getType(), info1)) return 1;
+      if (matchesStrictly(info1.getType(), info2)) return -1;
+      if (matchesStrictly(info2.getType(), info1)) return 1;
       return 0;
     } else if (kind1 == ExpectedTypeInfo.TYPE_STRICTLY) {
       return matches(info1.getType(), info2) ? -1 : 0;
@@ -93,6 +94,11 @@ public class ExpectedTypeUtil {
       return matches(info2.getType(), info1) ? 1  : 0;
     }
     return 0;
+  }
+
+  private static boolean matchesStrictly (PsiType type, ExpectedTypeInfo info) {
+    if ((type instanceof PsiPrimitiveType) != (info.getType() instanceof PsiPrimitiveType)) return false;
+    return matches(type, info);
   }
 
   public static boolean matches (PsiType type, ExpectedTypeInfo info) {
