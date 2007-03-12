@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -17,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
@@ -277,32 +277,21 @@ public abstract class AbstractLayoutCodeProcessor {
     }
   }
 
-  private static VirtualFile[] convert(List<PsiFile> psiFiles) {
-    VirtualFile[] files = new VirtualFile[psiFiles.size()];
-    int i = 0;
-    for (PsiFile file : psiFiles) {
-      files[i++] = file.getVirtualFile();
-    }
-    return files;
-  }
-
   private void runProcessOnFiles(final String where, final List<PsiFile> array) {
-    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(convert(array));
-    final VirtualFile[] readonlyFiles = status.getReadonlyFiles();
-    if (readonlyFiles.length == array.size()) return;
+    boolean success = CodeInsightUtil.preparePsiElementsForWrite(array);
 
-    if (readonlyFiles.length > 0) {
-      int res = Messages.showOkCancelDialog(myProject, CodeInsightBundle.message("error.dialog.readonly.files.message", where),
-                                            CodeInsightBundle.message("error.dialog.readonly.files.title"), Messages.getQuestionIcon());
-      if (res != 0) {
-        return;
-      }
-
+    if (!success) {
       List<PsiFile> writeables = new ArrayList<PsiFile>();
       for (PsiFile file : array) {
         if (file.isWritable()) {
           writeables.add(file);
         }
+      }
+      if (writeables.isEmpty()) return;
+      int res = Messages.showOkCancelDialog(myProject, CodeInsightBundle.message("error.dialog.readonly.files.message", where),
+                                            CodeInsightBundle.message("error.dialog.readonly.files.title"), Messages.getQuestionIcon());
+      if (res != 0) {
+        return;
       }
 
       array.clear();

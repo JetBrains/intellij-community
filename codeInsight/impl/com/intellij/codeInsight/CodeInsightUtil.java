@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -36,6 +37,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.text.CharArrayUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -363,9 +365,25 @@ public class CodeInsightUtil {
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
-  public static boolean preparePsiElementForWrite(final PsiElement element) {
+  public static boolean preparePsiElementForWrite(PsiElement element) {
     PsiFile file = element == null ? null : element.getContainingFile();
     return prepareFileForWrite(file);
+  }
+  public static boolean preparePsiElementsForWrite(Collection<? extends PsiElement> elements) {
+    if (elements.isEmpty()) return true;
+    Set<VirtualFile> files = new THashSet<VirtualFile>();
+    Project project = null;
+    for (PsiElement element : elements) {
+      PsiFile file = element.getContainingFile();
+      if (file == null) continue;
+      VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile == null) continue;
+      files.add(virtualFile);
+      project = element.getProject();
+    }
+    VirtualFile[] virtualFiles = files.toArray(new VirtualFile[files.size()]);
+    ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(virtualFiles);
+    return !status.hasReadonlyFiles();
   }
 
   public static boolean prepareFileForWrite(final PsiFile file) {

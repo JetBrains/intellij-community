@@ -1,6 +1,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.impl.AddAnnotationFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -68,16 +69,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
       }
     }
 
-    Set<VirtualFile> files = new THashSet<VirtualFile>();
-    for (PsiMethod psiMethod : toAnnotate) {
-      PsiFile file = psiMethod.getContainingFile();
-      if (file == null) continue;
-      VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile == null) continue;
-      files.add(virtualFile);
-    }
-    VirtualFile[] virtualFiles = files.toArray(new VirtualFile[files.size()]);
-    ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(virtualFiles);
+    CodeInsightUtil.preparePsiElementsForWrite(toAnnotate);
     for (PsiMethod psiMethod : toAnnotate) {
       annotateMethod(psiMethod);
     }

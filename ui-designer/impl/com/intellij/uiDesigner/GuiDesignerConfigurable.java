@@ -1,5 +1,6 @@
 package com.intellij.uiDesigner;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,7 +10,6 @@ import com.intellij.openapi.progress.util.DispatchThreadProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * @author Anton Katilin
@@ -141,19 +141,8 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable {
     private void vanishGeneratedSources() {
       final PsiShortNamesCache cache = PsiManager.getInstance(myProject).getShortNamesCache();
       final PsiMethod[] methods = cache.getMethodsByName(AsmCodeGenerator.SETUP_METHOD_NAME, GlobalSearchScope.projectScope(myProject));
-      final ArrayList<VirtualFile> vFiles = new ArrayList<VirtualFile>();
 
-      for(PsiMethod method: methods) {
-        PsiFile file = method.getContainingFile();
-        if (file != null) {
-          VirtualFile vFile = file.getVirtualFile();
-          if (vFile != null) {
-            vFiles.add(vFile);
-          }
-        }
-      }
-
-      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(vFiles.toArray(new VirtualFile[vFiles.size()]));
+      CodeInsightUtil.preparePsiElementsForWrite(Arrays.asList(methods));
 
       for (int i = 0; i < methods.length; i++) {
         final PsiMethod method = methods[i];

@@ -1,9 +1,11 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.impl.AddAnnotationFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
@@ -55,9 +57,10 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
       }
     }
 
+    CodeInsightUtil.preparePsiElementsForWrite(toAnnotate);
     for (PsiParameter psiParam : toAnnotate) {
       try {
-        new AddAnnotationFix(myAnnotation, psiParam).invoke(psiParam.getProject(), null, psiParam.getContainingFile());
+        new AddAnnotationFix(myAnnotation, psiParam).invoke(project, null, psiParam.getContainingFile());
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
