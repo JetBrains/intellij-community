@@ -23,6 +23,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -65,11 +67,12 @@ public class ReuseOfLocalVariableInspection
 
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
-            final PsiReferenceExpression ref =
+            final PsiReferenceExpression referenceExpression =
                     (PsiReferenceExpression) descriptor.getPsiElement();
-            final PsiLocalVariable variable = (PsiLocalVariable) ref.resolve();
+            final PsiLocalVariable variable =
+                    (PsiLocalVariable) referenceExpression.resolve();
             final PsiAssignmentExpression assignment =
-                    (PsiAssignmentExpression) ref.getParent();
+                    (PsiAssignmentExpression) referenceExpression.getParent();
             assert assignment != null;
             final PsiExpressionStatement assignmentStatement =
                     (PsiExpressionStatement) assignment.getParent();
@@ -99,8 +102,17 @@ public class ReuseOfLocalVariableInspection
                     codeStyleManager.suggestUniqueVariableName(baseName,
                                                                variableBlock,
                                                                false);
+            final PsiCodeBlock codeBlock =
+                    PsiTreeUtil.getParentOfType(assignmentStatement,
+                            PsiCodeBlock.class);
+            final SearchScope scope;
+            if (codeBlock != null) {
+                scope = new LocalSearchScope(codeBlock);
+            } else {
+                scope = variable.getUseScope();
+            }
             final Query<PsiReference> query = ReferencesSearch.search(variable,
-                    variable.getUseScope(), false);
+                    scope, false);
             for (PsiReference reference : query){
                 final PsiElement referenceElement = reference.getElement();
                 if(referenceElement != null){
