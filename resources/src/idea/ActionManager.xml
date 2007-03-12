@@ -17,11 +17,10 @@
     <action id="CodeInspection.OnEditor" class="com.intellij.codeInspection.actions.CodeInspectionOnEditorAction"/>
     <action id="TextComponent.ClearAction" class="com.intellij.ui.ClearTextAction"/>
 
-    <action id="AddToFavoritesPopup" class="com.intellij.ide.favoritesTreeView.AddToFavoritesPopupAction"/>
-    <group id="AddToFavorites" class="com.intellij.ide.favoritesTreeView.AddToFavoritesActionGroup" popup="true"/>
-    <group id="AddAllToFavorites" class="com.intellij.ide.favoritesTreeView.AddAllToFavoritesActionGroup" popup="true"/>
-    <action id="AddNewFavoritesList" class="com.intellij.ide.favoritesTreeView.AddNewFavoritesListAction"/>
-    <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.SendToFavoritesGroup" popup="true"/>
+    <group id="AddToFavorites" class="com.intellij.ide.favoritesTreeView.actions.AddToFavoritesActionGroup" popup="true"/>
+    <group id="AddAllToFavorites" class="com.intellij.ide.favoritesTreeView.actions.AddAllToFavoritesActionGroup" popup="true"/>
+    <action id="AddNewFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.AddNewFavoritesListAction"/>
+    <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.actions.SendToFavoritesGroup" popup="true"/>
     <action id="ActivateNavBar" class="com.intellij.ide.navigationToolbar.ActivateNavigationBarAction" popup="true"/>
     <group id="RunContextGroup" popup="false">
       <action id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
@@ -867,18 +866,18 @@
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
       <separator/>
-      <action id="RenameFavoritesList" class="com.intellij.ide.favoritesTreeView.RenameFavoritesListAction"/>
-      <action id="RemoveFromFavorites" class="com.intellij.ide.favoritesTreeView.DeleteFromFavoritesAction"/>
-      <action id="RemoveFavoritesList" class="com.intellij.ide.favoritesTreeView.DeleteFavoritesListAction"/>
-      <action id="RemoveAllFavoritesListsButThis" class="com.intellij.ide.favoritesTreeView.DeleteAllFavoritesListsButThisAction"/>
-      <reference ref="SendToFavoritesGroup"/>
-      <separator/>
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
       <reference ref="ReplaceInPath"/>
       <reference ref="AnalyzeMenu"/>
       <reference ref="RefactoringMenu"/>
       <reference ref="ValidateXml"/>
+      <separator/>
+      <action id="RenameFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.RenameFavoritesListAction"/>
+      <action id="RemoveFromFavorites" class="com.intellij.ide.favoritesTreeView.actions.DeleteFromFavoritesAction"/>
+      <action id="RemoveFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.DeleteFavoritesListAction"/>
+      <action id="RemoveAllFavoritesListsButThis" class="com.intellij.ide.favoritesTreeView.actions.DeleteAllFavoritesListsButThisAction"/>
+      <reference ref="SendToFavoritesGroup"/>
       <separator/>
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
@@ -915,6 +914,9 @@
       <reference ref="AnalyzeMenu"/>
       <reference ref="RefactoringMenu"/>
       <reference ref="ValidateXml"/>
+      <separator/>
+      <reference ref="AddToFavorites"/>
+      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>

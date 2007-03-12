@@ -60,9 +60,6 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
       }
     };
   }
-  public static FavoritesProjectViewPane getInstance(Project project) {
-    return project.getComponent(FavoritesProjectViewPane.class);
-  }
 
   public String getTitle() {
     return IdeBundle.message("action.toolwindow.favorites");

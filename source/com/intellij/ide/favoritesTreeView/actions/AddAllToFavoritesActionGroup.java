@@ -1,7 +1,8 @@
-package com.intellij.ide.favoritesTreeView;
+package com.intellij.ide.favoritesTreeView.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import org.jetbrains.annotations.Nullable;
 
 /**

@@ -1,8 +1,10 @@
-package com.intellij.ide.favoritesTreeView;
+package com.intellij.ide.favoritesTreeView.actions;
 
 import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.ClassSmartPointerNode;
 import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.FieldSmartPointerNode;
 import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.MethodSmartPointerNode;
+import com.intellij.ide.favoritesTreeView.FavoritesManager;
+import com.intellij.ide.favoritesTreeView.FavoriteNodeProvider;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
@@ -33,7 +35,7 @@ import java.util.Collections;
  * Date: Feb 15, 2005
  */
 public class AddToFavoritesAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("com.intellij.ide.favoritesTreeView.AddToFavoritesAction");
+  private static final Logger LOG = Logger.getInstance("com.intellij.ide.favoritesTreeView.actions.AddToFavoritesAction");
 
   private String myFavoritesListName;
 
@@ -61,7 +63,7 @@ public class AddToFavoritesAction extends AnAction {
     Module moduleContext = DataKeys.MODULE_CONTEXT.getData(dataContext);
 
     Collection<AbstractTreeNode> nodesToAdd = null;
-    FavoriteNodeProvider[] providers = Extensions.getExtensions(FavoriteNodeProvider.EP_NAME); 
+    FavoriteNodeProvider[] providers = Extensions.getExtensions(FavoriteNodeProvider.EP_NAME);
     for(FavoriteNodeProvider provider: providers) {
       nodesToAdd = provider.getFavoriteNodes(dataContext, ViewSettings.DEFAULT);
       if (nodesToAdd != null) {
@@ -80,7 +82,7 @@ public class AddToFavoritesAction extends AnAction {
 
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = (Project)e.getData(DataKeys.PROJECT);
+    Project project = e.getData(DataKeys.PROJECT);
     if (project == null) {
       e.getPresentation().setEnabled(false);
     }

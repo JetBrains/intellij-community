@@ -1,6 +1,9 @@
-package com.intellij.ide.favoritesTreeView;
+package com.intellij.ide.favoritesTreeView.actions;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.favoritesTreeView.FavoritesManager;
+import com.intellij.ide.favoritesTreeView.FavoritesTreeNodeDescriptor;
+import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
