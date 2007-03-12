@@ -2,7 +2,6 @@ package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.CvsBundle;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -32,9 +31,9 @@ public class TagsPanel extends JPanel implements TableCellRenderer{
   private Collection<String> myTags;
   private final JList myList = new JList();
   @NonNls private static final String MORE_LABEL_TEXT = "<html><b>(...)</b></html>";
+  private String myPopupTitle;
 
-
-  public TagsPanel() {
+  public TagsPanel(final String popupTitle) {
     super(new BorderLayout());
     add(myTextLabel, BorderLayout.CENTER);
     add(myMoreLabel, BorderLayout.EAST);
@@ -44,6 +43,7 @@ public class TagsPanel extends JPanel implements TableCellRenderer{
         showTags();
       }
     });
+    myPopupTitle = popupTitle;
   }
 
   private void showTags() {
@@ -54,7 +54,7 @@ public class TagsPanel extends JPanel implements TableCellRenderer{
     }
 
     new PopupChooserBuilder(myList).
-      setTitle(CvsBundle.message("list.popup.text.tags")).
+      setTitle(myPopupTitle).
       createPopup().
       showUnderneathOf(myMoreLabel);
   }

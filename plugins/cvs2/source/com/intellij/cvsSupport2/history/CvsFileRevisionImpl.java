@@ -5,6 +5,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ListWithSelection;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.command.log.Revision;
@@ -46,7 +47,12 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
   }
 
   public Collection<String> getBranches() {
+    return getBranchList(true);
+  }
+
+  private Collection<String> getBranchList(final boolean includeRevisionNumbers) {
     final ArrayList<String> result = new ArrayList<String>();
+    final Set<SymbolicName> processedSymbolicNames = new HashSet<SymbolicName>();
 
     final String branches = myCvsRevision.getBranches();
     if (branches != null && branches.length() != 0) {
@@ -56,18 +62,34 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
         final List<SymbolicName> symNames = getSymbolicNames(revisionNumber);
         if (!symNames.isEmpty()) {
           for (final SymbolicName symName : symNames) {
-            result.add(symName.getName() + " (" + revisionNumber.asString() + ")");
+            processedSymbolicNames.add(symName);
+            if (includeRevisionNumbers) {
+              result.add(symName.getName() + " (" + revisionNumber.asString() + ")");
+            }
+            else {
+              result.add(symName.getName());
+            }
           }
         }
       }
     }
-    else {
-      // IDEADEV-15186 - show branch name for just created branch with no revisions yet
-      CvsRevisionNumber symRevNumber = getNumber().addTailVersions(new int[]{0, 2});
-      //noinspection unchecked
-      final List<SymbolicName> symNames = myLogInformation.getSymNamesForRevision(symRevNumber.asString());
-      if (!symNames.isEmpty()) {
-        for (final SymbolicName symName : symNames) {
+    // IDEADEV-15186 - show branch name for just created branch with no revisions yet
+    //noinspection unchecked
+    final List<SymbolicName> symNames = myLogInformation.getAllSymbolicNames();
+    for (final SymbolicName symName : symNames) {
+      if (symName.getRevision().startsWith(myCvsRevision.getNumber() + ".") &&
+          !processedSymbolicNames.contains(symName)) {
+        CvsRevisionNumber number = new CvsRevisionNumber(symName.getRevision().trim());
+        final int[] subRevisions = number.getSubRevisions();
+        if (subRevisions.length == 4) {
+          int lastSubRevision = subRevisions [subRevisions.length-1];
+          number = number.removeTailVersions(2);
+          number = number.addTailVersions(new int[] { lastSubRevision });
+        }
+        if (includeRevisionNumbers) {
+          result.add(symName.getName() + " (" + number.asString() + ")");
+        }
+        else {
           result.add(symName.getName());
         }
       }
@@ -136,27 +158,6 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
   }
 
   public String getBranchName() {
-    final String branches = myCvsRevision.getBranches();
-    if (branches == null || branches.length() == 0) {
-      return null;
-    }
-    final StringBuffer buffer = new StringBuffer();
-    
-    final String[] branchNames = branches.split(";");
-    for (String branchName : branchNames) {
-      final CvsRevisionNumber revisionNumber = new CvsRevisionNumber(branchName.trim());
-      final List<SymbolicName> symNames = getSymbolicNames(revisionNumber);
-      if (!symNames.isEmpty()) {
-        for (final SymbolicName symName : symNames) {
-          if (buffer.length() > 0) {
-            buffer.append(", ");
-          }
-          buffer.append(symName.getName());
-        }
-      }
-    }
-
-    return buffer.toString();        
-    
+    return StringUtil.join(getBranchList(false), ", ");
   }
 }

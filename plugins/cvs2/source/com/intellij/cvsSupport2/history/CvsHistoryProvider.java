@@ -71,7 +71,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       if (!(object instanceof CvsFileRevision)) return rendererFromSuper;
       final Collection tags = getValues((CvsFileRevision)object);
       if (tags.size() < 2) return rendererFromSuper;
-      return new TagsPanel();
+      return new TagsPanel(getName());
     }
 
     public boolean isCellEditable(Object object) {
@@ -91,14 +91,13 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
                                                      boolean isSelected,
                                                      int row,
                                                      int column) {
-          TagsPanel result = new TagsPanel();
+          TagsPanel result = new TagsPanel(getName());
           result.setTags(getValues((CvsFileRevision)object));
           result.setSelected(true, table);
           return result;
         }
       };
     }
-
 
     protected abstract Collection<String> getValues(CvsFileRevision revision);
 
