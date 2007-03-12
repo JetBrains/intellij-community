@@ -216,9 +216,21 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       ) {
         final XmlTag tag = ((XmlTag)element);
         result = tag.getValue().getText();
-        if (result.startsWith(CDATA_PREFIX)) result = result.substring(CDATA_PREFIX.length());
-        if (result.endsWith(CDATA_SUFFIX)) result = result.substring(0, result.length() - CDATA_SUFFIX.length());
+        boolean withCData = false;
+
+        if (result.startsWith(CDATA_PREFIX)) {
+          result = result.substring(CDATA_PREFIX.length());
+          withCData = true;
+        }
+
+        if (result.endsWith(CDATA_SUFFIX)) {
+          result = result.substring(0, result.length() - CDATA_SUFFIX.length());
+        }
         result = result.trim();
+
+        if (withCData) {
+          result = XmlUtil.escape(result);
+        }
         url = tag.getAttributeValue("source");
         return false;
       }
