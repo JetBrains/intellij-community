@@ -282,14 +282,20 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
     selectNodeInTree(nodeToAdd);
   }
 
-  private void createScope(boolean isLocal, String title, final PackageSet set) {
+  private void createScope(final boolean isLocal, String title, final PackageSet set) {
     final String newName = Messages.showInputDialog(myWholePanel,
                                                     IdeBundle.message("add.scope.name.label"),
                                                     title,
                                                     Messages.getInformationIcon(),
                                                     createUniqueName(), new InputValidator() {
       public boolean checkInput(String inputString) {
-        return inputString != null && inputString.trim().length() > 0;
+        final NamedScopesHolder holder = isLocal ? myLocalScopesManager : mySharedScopesManager;
+        for (NamedScope scope : holder.getPredefinedScopes()) {
+          if (Comparing.strEqual(scope.getName(), inputString.trim())) {
+            return false;
+          }
+        }
+        return inputString.trim().length() > 0;
       }
 
       public boolean canClose(String inputString) {
