@@ -156,7 +156,11 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
 
     final SelectionModel selectionModel = editor.getSelectionModel();
     int caretOffset = editor.getCaretModel().getOffset();
-    PsiElement elt = getElementAtOffset(file, caretOffset);
+    int mostProbablyCorrectLanguageOffset = caretOffset == selectionModel.getSelectionStart() ||
+                                            caretOffset == selectionModel.getSelectionEnd()
+                                            ? selectionModel.getSelectionStart()
+                                            : caretOffset;
+    PsiElement elt = getElementAtOffset(file, mostProbablyCorrectLanguageOffset);
     Language lang = elt != null ? PsiUtil.findLanguageFromElement(elt, file): null;
     if (lang == null) return null;
 
