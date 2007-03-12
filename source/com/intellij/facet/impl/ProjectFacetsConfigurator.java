@@ -16,8 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author nik
@@ -29,6 +28,7 @@ public class ProjectFacetsConfigurator {
   private Map<Module, FacetTreeModel> myTreeModels = new HashMap<Module, FacetTreeModel>();
   private Map<FacetInfo, Facet> myInfo2Facet = new HashMap<FacetInfo, Facet>();
   private Map<Facet, FacetInfo> myFacet2Info = new HashMap<Facet, FacetInfo>();
+  private Set<Facet> myChangedFacets = new HashSet<Facet>();
 
   public ProjectFacetsConfigurator() {
   }
@@ -56,7 +56,7 @@ public class ProjectFacetsConfigurator {
   public void addFacetInfos(final Module module) {
     final Facet[] facets = getFacetModel(module).getSortedFacets();
     for (Facet facet : facets) {
-      //todo[nik] remove later
+      //todo[nik] remove later. This 'if' is used only to hide javaee facets in Project Settings
       if (FacetTypeRegistry.getInstance().findFacetType(facet.getTypeId()) != null) {
         addFacetInfo(facet);
       }
@@ -113,16 +113,24 @@ public class ProjectFacetsConfigurator {
     }
 
     myModels.clear();
+    for (Facet facet : myChangedFacets) {
+      facet.getModule().getMessageBus().syncPublisher(FacetManager.FACETS_TOPIC).facetConfigurationChanged(facet);
+    }
+    myChangedFacets.clear();
   }
 
-  public void reset() {
+  public void resetEditors() {
     for (FacetEditor editor : myEditors.values()) {
       editor.reset();
     }
   }
 
-  public void apply() throws ConfigurationException {
-    for (FacetEditor editor : myEditors.values()) {
+  public void applyEditors() throws ConfigurationException {
+    for (Map.Entry<Facet,FacetEditor> entry : myEditors.entrySet()) {
+      final FacetEditor editor = entry.getValue();
+      if (editor.isModified()) {
+        myChangedFacets.add(entry.getKey());
+      }
       editor.apply();
     }
   }

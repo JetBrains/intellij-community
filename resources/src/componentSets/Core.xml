@@ -246,10 +246,6 @@
       <implementation-class>com.intellij.lang.jsp.jspxLike.impl.JspxLikeXmlTextSynchronizer</implementation-class>
     </component>
     -->
-    <component>
-      <interface-class>com.intellij.facet.FacetExistenceListenersRegistry</interface-class>
-      <implementation-class>com.intellij.facet.impl.FacetExistenceListenersRegistryImpl</implementation-class>
-    </component>
   </project-components>
 
 

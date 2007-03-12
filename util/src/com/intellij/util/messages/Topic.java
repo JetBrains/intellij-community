@@ -32,4 +32,8 @@ public class Topic<L> {
   public String toString() {
     return myDisplayName;
   }
+
+  public static <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass) {
+    return new Topic<L>(displayName, listenerClass);
+  }
 }

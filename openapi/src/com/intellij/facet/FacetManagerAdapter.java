@@ -27,4 +27,7 @@ public abstract class FacetManagerAdapter implements FacetManagerListener {
 
   public void facetRemoved(@NotNull Facet facet) {
   }
+
+  public void facetConfigurationChanged(@NotNull Facet facet) {
+  }
 }

@@ -20,8 +20,8 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
@@ -30,8 +30,8 @@ import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.StableElement;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
 import javax.swing.*;
+import java.util.*;
 
 /**
  * @author peter
@@ -50,15 +50,19 @@ public class MockDomElementsEditor {
     final DomManager domManager = DomManager.getDomManager(myModule.getProject());
     final T t = domManager.createStableValue(new Factory<T>() {
       public T create() {
-        T weblogicRdbmsBean = description.find();
-        if (weblogicRdbmsBean == null) {
-          return createMockElement(aClass, myModule);
+        T t = description.find();
+        if (t == null) {
+          return createMockElement(aClass);
         }
-        return weblogicRdbmsBean;
+        return t;
       }
     });
     myDomElements.put(description, t);
     return t;
+  }
+
+  protected <T extends DomElement> T createMockElement(final Class<T> aClass) {
+    return createMockElement(aClass, myModule);
   }
 
   protected final DomFileEditor initFileEditor(final BasicDomElementComponent component, final VirtualFile virtualFile, final String name) {

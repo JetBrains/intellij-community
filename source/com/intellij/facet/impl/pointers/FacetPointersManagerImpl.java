@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,19 +69,7 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Ap
         refreshPointers(facet.getModule());
       }
     };
-    myModuleListener = new ApplicationWideModuleListener() {
-      public void moduleAdded(final Module module) {
-        FacetManager.getInstance(module).addListener(facetListener);
-      }
-
-      public void moduleRemoved(final Module module) {
-        FacetManager.getInstance(module).removeListener(facetListener);
-      }
-
-      public void moduleRenamed(final Module module) {
-        refreshPointers(module);
-      }
-    };
+    myModuleListener = new MyApplicationWideModuleListener(facetListener);
   }
 
   private void refreshPointers(final @NotNull Module module) {
@@ -163,4 +152,29 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Ap
     }
   }
 
+  private class MyApplicationWideModuleListener extends ApplicationWideModuleListener {
+    private final FacetManagerListener myFacetListener;
+    private Map<Module, MessageBusConnection> myModule2Connection = new HashMap<Module, MessageBusConnection>();
+
+    public MyApplicationWideModuleListener(final FacetManagerListener facetListener) {
+      myFacetListener = facetListener;
+    }
+
+    public void moduleAdded(final Module module) {
+      final MessageBusConnection connection = module.getMessageBus().connect();
+      myModule2Connection.put(module, connection);
+      connection.subscribe(FacetManager.FACETS_TOPIC, myFacetListener);
+    }
+
+    public void moduleRemoved(final Module module) {
+      final MessageBusConnection connection = myModule2Connection.remove(module);
+      if (connection != null) {
+        connection.disconnect();
+      }
+    }
+
+    public void moduleRenamed(final Module module) {
+      refreshPointers(module);
+    }
+  }
 }

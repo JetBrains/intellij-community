@@ -5,19 +5,18 @@
 package com.intellij.facet;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
 public abstract class FacetManager implements FacetModel {
+  public static final Topic<FacetManagerListener> FACETS_TOPIC = Topic.create("facet changes", FacetManagerListener.class);
 
   public static FacetManager getInstance(Module module) {
     return module.getComponent(FacetManager.class);
   }
-
-  public abstract void addListener(FacetManagerListener listener);
-  public abstract void removeListener(FacetManagerListener listener);
 
   public abstract ModifiableFacetModel createModifiableModel();
 

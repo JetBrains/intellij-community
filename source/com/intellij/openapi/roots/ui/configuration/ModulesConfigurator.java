@@ -152,7 +152,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         }
       }
     });
-    myFacetsConfigurator.reset();
+    myFacetsConfigurator.resetEditors();
     myModified = false;
   }
 
@@ -209,7 +209,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
               models.add(model);
             }
           }
-          myFacetsConfigurator.apply();
+          myFacetsConfigurator.applyEditors();
 
           J2EEModuleUtilEx.checkJ2EEModulesAcyclic(models);
           final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);

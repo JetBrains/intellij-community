@@ -26,4 +26,5 @@ public interface FacetManagerListener extends EventListener {
 
   void facetRenamed(@NotNull Facet facet, @NotNull String oldName);
 
+  void facetConfigurationChanged(@NotNull Facet facet);
 }

@@ -10,8 +10,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
-import com.intellij.openapi.util.*;
-import com.intellij.util.EventDispatcher;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,25 +32,18 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
   @NonNls private static final String CONFIGURATION_ELEMENT = "configuration";
   @NonNls private static final String NAME_ATTRIBUTE = "name";
 
-  private EventDispatcher<FacetManagerListener> myDispatcher = EventDispatcher.create(FacetManagerListener.class);
   private Module myModule;
   private FacetTypeRegistry myFacetTypeRegistry;
   private FacetManagerModel myModel = new FacetManagerModel();
   private boolean myHasNoFacetsFromBeginning = true;
 
   private boolean myInsideCommit = false;
+  private MessageBus myMessageBus;
 
-  public FacetManagerImpl(final Module module, final FacetTypeRegistry facetTypeRegistry) {
+  public FacetManagerImpl(final Module module, MessageBus messageBus, final FacetTypeRegistry facetTypeRegistry) {
     myModule = module;
+    myMessageBus = messageBus;
     myFacetTypeRegistry = facetTypeRegistry;
-  }
-
-  public void addListener(FacetManagerListener listener) {
-    myDispatcher.addListener(listener);
-  }
-
-  public void removeListener(FacetManagerListener listener) {
-    myDispatcher.removeListener(listener);
   }
 
   public ModifiableFacetModel createModifiableModel() {
@@ -211,14 +207,15 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
         }
       }
 
+      final FacetManagerListener publisher = myMessageBus.syncPublisher(FACETS_TOPIC);
       for (Facet facet : toAdd) {
-        myDispatcher.getMulticaster().beforeFacetAdded(facet);
+        publisher.beforeFacetAdded(facet);
       }
       for (Facet facet : toRemove) {
-        myDispatcher.getMulticaster().beforeFacetRemoved(facet);
+        publisher.beforeFacetRemoved(facet);
       }
       for (FacetRenameInfo info : toRename) {
-        myDispatcher.getMulticaster().beforeFacetRenamed(info.myFacet);
+        publisher.beforeFacetRenamed(info.myFacet);
       }
 
       for (FacetRenameInfo info : toRename) {
@@ -234,13 +231,13 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, J
       }
 
       for (Facet facet : toAdd) {
-        myDispatcher.getMulticaster().facetAdded(facet);
+        publisher.facetAdded(facet);
       }
       for (Facet facet : toRemove) {
-        myDispatcher.getMulticaster().facetRemoved(facet);
+        publisher.facetRemoved(facet);
       }
       for (FacetRenameInfo info : toRename) {
-        myDispatcher.getMulticaster().facetRenamed(info.myFacet, info.myOldName);
+        publisher.facetRenamed(info.myFacet, info.myOldName);
       }
 
     }
