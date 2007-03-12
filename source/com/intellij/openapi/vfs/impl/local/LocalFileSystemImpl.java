@@ -306,7 +306,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
               if (myUnaccountedFiles.containsKey(runPath)) {
                 if (refreshIfNotFound) {
                   root.refresh(false, false);
-                  child = ((VirtualFileImpl)root).findSingleChild(name);
+                  child = ((VirtualFileImpl)root).findSingleChild(name, true);
                   if (child == null) return null;
                   //need to fire event here since refresh did not fire, because children are not cached
                   fireFileCreated(null, child);
@@ -317,7 +317,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
                 }
               }
               else {
-                root = ((VirtualFileImpl)root).findSingleChild(name);
+                root = ((VirtualFileImpl)root).findSingleChild(name, true);
                 if (root == null) return null;
               }
             }
@@ -560,6 +560,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
           final String path = vfsPath;
           getManager().addEventToFireByRefresh(new Runnable() {
             public void run() {
+              if (vParent.findSingleChild(new File(path).getName(), false) != null) return;
               final VirtualFileImpl newVFile = new VirtualFileImpl(path);
               vParent.addChild(newVFile);
               fireFileCreated(null, newVFile);

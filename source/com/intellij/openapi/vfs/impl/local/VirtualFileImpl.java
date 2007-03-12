@@ -312,7 +312,7 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   @Nullable
-  VirtualFile findSingleChild(String name) {
+  VirtualFile findSingleChild(String name, final boolean createIfNotCached) {
 
     if (!isDirectory()) return null;
     if (myChildren != null) return super.findChild(name);
@@ -326,14 +326,16 @@ public class VirtualFileImpl extends VirtualFile {
         }
       }
 
-      File physicalFile = new File(path);
-      if (physicalFile.exists()) {
-        child = new VirtualFileImpl(this, physicalFile, physicalFile.isDirectory());
-        ourFileSystem.myUnaccountedFiles.put(path, child);
-        return child;
-      }
-      else {
-        ourFileSystem.myUnaccountedFiles.put(path, null);
+      if (createIfNotCached) {
+        File physicalFile = new File(path);
+        if (physicalFile.exists()) {
+          child = new VirtualFileImpl(this, physicalFile, physicalFile.isDirectory());
+          ourFileSystem.myUnaccountedFiles.put(path, child);
+          return child;
+        }
+        else {
+          ourFileSystem.myUnaccountedFiles.put(path, null);
+        }
       }
     }
     finally {
