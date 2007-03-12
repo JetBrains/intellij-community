@@ -111,9 +111,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
       if (e.getID() == MouseEvent.MOUSE_PRESSED) {
         myMousePressedComponent = target;
         myMousePressedContainer = container;
-        if (target.isFocusable()) {
-          target.requestFocus();
-        }
       }
     }
     else {
