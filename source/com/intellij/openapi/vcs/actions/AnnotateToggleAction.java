@@ -47,7 +47,7 @@ public class AnnotateToggleAction extends ToggleAction {
   private static boolean isEnabled(final VcsContext context) {
     VirtualFile[] selectedFiles = context.getSelectedFiles();
     if (selectedFiles == null) return false;
-    if (selectedFiles.length == 0) return false;
+    if (selectedFiles.length != 1) return false;
     VirtualFile file = selectedFiles[0];
     if (file.isDirectory()) return false;
     Project project = context.getProject();
