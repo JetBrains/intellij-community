@@ -139,6 +139,8 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       setTitle(VcsBundle.message("lookup.title.vcs.file.revisions")).
       setItemChoosenCallback(runnable).
       setSouthComponent(createCommentsPanel(treeTable)).
+      setResizable(true).
+      setDimensionServiceKey("Vcs.CompareWithSelectedRevision.Popup").
       createPopup().
       showCenteredInCurrentWindow(project);
   }
