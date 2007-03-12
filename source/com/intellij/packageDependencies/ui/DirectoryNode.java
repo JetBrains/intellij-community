@@ -143,12 +143,17 @@ public class DirectoryNode extends PackageDependenciesNode {
 
     if (!toString().equals(packageNode.toString())) return false;
 
+    if (!Comparing.strEqual(getLocationString(), packageNode.getLocationString())) return false;
+
     return true;
   }
 
   public int hashCode() {
-    int result;
-    result = toString().hashCode();
+    int result = toString().hashCode();
+    final String location = getLocationString();
+    if (location != null) {
+      result = 31 * result + location.hashCode();
+    }
     return result;
   }
 

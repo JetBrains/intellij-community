@@ -328,8 +328,15 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         }
         final SimpleTextAttributes regularAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
         TextAttributes textAttributes = null;
-        final String text = node.toString();
-        if (text != null) {
+        if (node instanceof DirectoryNode) {
+          final DirectoryNode directoryNode = (DirectoryNode)node;
+          append(directoryNode.getDirName(), regularAttributes);
+          final String locationString = directoryNode.getLocationString();
+          if (locationString != null) {
+            append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+          }
+        }
+        else {
           final PsiElement psiElement = node.getPsiElement();
           if (psiElement instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)psiElement).isDeprecated()){
             textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES).clone();
@@ -338,7 +345,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
             textAttributes = regularAttributes.toTextAttributes();
           }
           textAttributes.setForegroundColor(node.getStatus().getColor());
-          append(text, SimpleTextAttributes.fromTextAttributes(textAttributes));
+          append(node.toString(), SimpleTextAttributes.fromTextAttributes(textAttributes));
         }
       }
     }
