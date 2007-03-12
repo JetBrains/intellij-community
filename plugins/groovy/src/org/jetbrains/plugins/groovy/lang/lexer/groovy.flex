@@ -402,6 +402,7 @@ mAFTER_REGEXP = !( "(" | "{" | {mIDENT} | {mNUM_INT} | "[" )
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 "package"                                 {  return( kPACKAGE );  }
+"strictfp"                                {  return( kSTRICTFP );  }
 "import"                                  {  return( kIMPORT );  }
 "static"                                  {  return( kSTATIC );  }
 "def"                                     {  return( kDEF );  }
@@ -426,7 +427,6 @@ mAFTER_REGEXP = !( "(" | "{" | {mIDENT} | {mNUM_INT} | "[" )
 "protected"                               {  return( kPROTECTED );  }
 "transient"                               {  return( kTRANSIENT );  }
 "native"                                  {  return( kNATIVE );  }
-"threadsafe"                              {  return( kTHREADSAFE );  }
 "synchronized"                            {  return( kSYNCHRONIZED );  }
 "volatile"                                {  return( kVOLATILE );  }
 "default"                                 {  return( kDEFAULT );  }

@@ -126,6 +126,7 @@ public interface GroovyTokenTypes {
  * ****************************************************************************************************/
 
   IElementType kPACKAGE = new GroovyElementType("package");
+  IElementType kSTRICTFP = new GroovyElementType("strictfp");
   IElementType kIMPORT = new GroovyElementType("import");
   IElementType kSTATIC = new GroovyElementType("static");
   IElementType kDEF = new GroovyElementType("def");
@@ -150,7 +151,6 @@ public interface GroovyTokenTypes {
   IElementType kPROTECTED = new GroovyElementType("protected");
   IElementType kTRANSIENT = new GroovyElementType("transient");
   IElementType kNATIVE = new GroovyElementType("native");
-  IElementType kTHREADSAFE = new GroovyElementType("threadsafe");
   IElementType kSYNCHRONIZED = new GroovyElementType("synchronized");
   IElementType kVOLATILE = new GroovyElementType("volatile");
   IElementType kDEFAULT = new GroovyElementType("default");
