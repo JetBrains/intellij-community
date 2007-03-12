@@ -130,7 +130,6 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
           GroovyTokenTypes.kPROTECTED,
           GroovyTokenTypes.kTRANSIENT,
           GroovyTokenTypes.kNATIVE,
-          GroovyTokenTypes.kTHREADSAFE,
           GroovyTokenTypes.kSYNCHRONIZED,
           GroovyTokenTypes.kVOLATILE,
           GroovyTokenTypes.kDEFAULT,
