@@ -18,7 +18,7 @@ package com.intellij.openapi.cvsIntegration;
 
 public interface DateOrRevision {
   public String getBranch();
-  public boolean souldUseBranch();
+  public boolean shouldUseBranch();
   public String getDate();
   public boolean shouldUseDate();
 }

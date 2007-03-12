@@ -51,7 +51,7 @@ public class DateOrRevisionSettings implements JDOMExternalizable, DateOrRevisio
     return USE_DATE;
   }
 
-  public boolean souldUseBranch() {
+  public boolean shouldUseBranch() {
     return USE_BRANCH;
   }
 
@@ -72,7 +72,7 @@ public class DateOrRevisionSettings implements JDOMExternalizable, DateOrRevisio
   }
 
   public DateOrRevisionSettings updateFrom(DateOrRevision dateOrRevision) {
-    USE_BRANCH = dateOrRevision.souldUseBranch();
+    USE_BRANCH = dateOrRevision.shouldUseBranch();
     USE_DATE = dateOrRevision.shouldUseDate();
     BRANCH = dateOrRevision.getBranch();
     DATE = dateOrRevision.getDate();
@@ -92,6 +92,12 @@ public class DateOrRevisionSettings implements JDOMExternalizable, DateOrRevisio
   }
 
   public String asString() {
-    return USE_DATE ? DATE : BRANCH;
+    if (USE_DATE) {
+      return DATE;
+    }
+    if (USE_BRANCH) {
+      return BRANCH;
+    }
+    return "HEAD";
   }
 }
