@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.history;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
@@ -13,14 +14,13 @@ import com.intellij.cvsSupport2.cvsoperations.cvsLog.LocalPathIndifferentLogOper
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui.TagsPanel;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsDataConstants;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.*;
@@ -28,12 +28,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.TreeItem;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.CvsBundle;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.command.log.Revision;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -72,7 +71,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       if (!(object instanceof CvsFileRevision)) return rendererFromSuper;
       final Collection tags = getValues((CvsFileRevision)object);
       if (tags.size() < 2) return rendererFromSuper;
-      return new TagsPanel(myProject);
+      return new TagsPanel();
     }
 
     public boolean isCellEditable(Object object) {
@@ -92,7 +91,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
                                                      boolean isSelected,
                                                      int row,
                                                      int column) {
-          TagsPanel result = new TagsPanel(myProject);
+          TagsPanel result = new TagsPanel();
           result.setTags(getValues((CvsFileRevision)object));
           result.setSelected(true, table);
           return result;
@@ -101,7 +100,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     }
 
 
-    protected abstract Collection getValues(CvsFileRevision revision);
+    protected abstract Collection<String> getValues(CvsFileRevision revision);
 
     public Object valueOf(Object object) {
       if (!(object instanceof CvsFileRevision)) return "";
@@ -115,13 +114,13 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
   }
 
   private final ColumnInfo TAG = new TagOrBranchColumn(CvsBundle.message("file.history.tag.column.name")) {
-    protected Collection getValues(CvsFileRevision revision) {
+    protected Collection<String> getValues(CvsFileRevision revision) {
       return revision.getTags();
     }
   };
 
   public final ColumnInfo BRANCHES = new TagOrBranchColumn(CvsBundle.message("file.history.branches.column.name")) {
-    protected Collection getValues(CvsFileRevision revision) {
+    protected Collection<String> getValues(CvsFileRevision revision) {
       return revision.getBranches();
     }
   };
@@ -216,8 +215,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
   public AnAction[] getAdditionalActions(final FileHistoryPanel panel) {
     return new AnAction[]{new AnAction(CvsBundle.message("annotate.action.name"), CvsBundle.message("annotate.action.description"), IconLoader.getIcon("/actions/annotate.png")) {
       public void update(AnActionEvent e) {
-        DataContext dataContext = e.getDataContext();
-        FilePath filePath = (FilePath)dataContext.getData(VcsDataConstants.FILE_PATH);
+        FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
         if (filePath == null) {
           e.getPresentation().setEnabled(false);
           return;
@@ -226,8 +224,8 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
         FileType fileType = vFile == null
                             ? FileTypeManager.getInstance().getFileTypeByFileName(filePath.getName())
                             : vFile.getFileType();
-        CvsFileRevision revision = (CvsFileRevision)dataContext.getData(VcsDataConstants.VCS_FILE_REVISION);
-        VirtualFile revisionVirtualFile = (VirtualFile)dataContext.getData(VcsDataConstants.VCS_VIRTUAL_FILE);
+        CvsFileRevision revision = (CvsFileRevision)e.getData(VcsDataKeys.VCS_FILE_REVISION);
+        VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
         e.getPresentation().setEnabled(revision != null &&
                                        revisionVirtualFile != null
                                        && !fileType.isBinary());
@@ -235,10 +233,9 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
 
 
       public void actionPerformed(AnActionEvent e) {
-        DataContext dataContext = e.getDataContext();
-        FilePath filePath = (FilePath)dataContext.getData(VcsDataConstants.FILE_PATH);
-        CvsFileRevision revision = (CvsFileRevision)dataContext.getData(VcsDataConstants.VCS_FILE_REVISION);
-        VirtualFile revisionVirtualFile = (VirtualFile)dataContext.getData(VcsDataConstants.VCS_VIRTUAL_FILE);
+        FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
+        CvsFileRevision revision = (CvsFileRevision)e.getData(VcsDataKeys.VCS_FILE_REVISION);
+        VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
         try {
           final FileAnnotation annotation = CvsVcs2.getInstance(myProject)
             .createAnnotation(CvsUtil.getCvsLightweightFileForFile(filePath.getIOFile()),

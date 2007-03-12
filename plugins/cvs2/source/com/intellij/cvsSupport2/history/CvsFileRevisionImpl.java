@@ -20,7 +20,7 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
 
   private Revision myCvsRevision;
   private LogInformation myLogInformation;
-  private Collection myTags;
+  private Collection<String> myTags;
 
   public CvsFileRevisionImpl(Revision cvsRevision, File file, LogInformation logInfo,
                              CvsEnvironment cvsRoot, Project project) {
@@ -53,16 +53,15 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
       return result;
     }
     final String[] branchNames = branches.split(";");
-    for (int i = 0; i < branchNames.length; i++) {
-      String branchName = branchNames[i];
+    for (String branchName : branchNames) {
       final CvsRevisionNumber revisionNumber = new CvsRevisionNumber(branchName.trim());
       CvsRevisionNumber headRevNumber = revisionNumber.removeTailVersions(1);
       CvsRevisionNumber symRevNumber = headRevNumber.addTailVersions(new int[]{0, 2});
-      final List symNames = myLogInformation.getSymNamesForRevision(symRevNumber.asString());
+      //noinspection unchecked
+      final List<SymbolicName> symNames = myLogInformation.getSymNamesForRevision(symRevNumber.asString());
       if (!symNames.isEmpty()) {
-        for (Iterator iterator = symNames.iterator(); iterator.hasNext();) {
-          SymbolicName symbolicName = (SymbolicName)iterator.next();
-          result.add(symbolicName.getName() + " (" + revisionNumber.asString() + ")");
+        for (final SymbolicName symName : symNames) {
+          result.add(symName.getName() + " (" + revisionNumber.asString() + ")");
         }
       }
     }
@@ -78,19 +77,20 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     return myCvsRevision.getState();
   }
 
-  public Collection getTags() {
+  public Collection<String> getTags() {
     if (myTags == null) {
-      myTags = new ListWithSelection(myLogInformation == null ? new ArrayList() :
-                                     collectSymNamesForRevision());
+      myTags = new ListWithSelection<String>(myLogInformation == null ? new ArrayList<String>() :
+                                             collectSymNamesForRevision());
     }
     return myTags;
   }
 
-  private List collectSymNamesForRevision() {
-    ArrayList result = new ArrayList();
-    List symNames = myLogInformation.getSymNamesForRevision(myCvsRevision.getNumber());
-    for (Iterator each = symNames.iterator(); each.hasNext();) {
-      result.add(((SymbolicName)each.next()).getName());
+  private List<String> collectSymNamesForRevision() {
+    ArrayList<String> result = new ArrayList<String>();
+    //noinspection unchecked
+    List<SymbolicName> symNames = myLogInformation.getSymNamesForRevision(myCvsRevision.getNumber());
+    for (final SymbolicName symName : symNames) {
+      result.add(symName.getName());
     }
     return result;
   }
@@ -122,8 +122,7 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     final StringBuffer buffer = new StringBuffer();
     
     final String[] branchNames = branches.split(";");
-    for (int i = 0; i < branchNames.length; i++) {
-      String branchName = branchNames[i];
+    for (String branchName : branchNames) {
       final CvsRevisionNumber revisionNumber = new CvsRevisionNumber(branchName.trim());
       CvsRevisionNumber headRevNumber = revisionNumber.removeTailVersions(1);
       CvsRevisionNumber symRevNumber = headRevNumber.addTailVersions(new int[]{0, 2});
@@ -131,12 +130,12 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
       if (!symNames.isEmpty()) {
         for (Iterator iterator = symNames.iterator(); iterator.hasNext();) {
           SymbolicName symbolicName = (SymbolicName)iterator.next();
-          if (buffer.length() > 0){
+          if (buffer.length() > 0) {
             buffer.append(", ");
           }
           buffer.append(symbolicName.getName());
         }
-      }      
+      }
     }
 
     return buffer.toString();        

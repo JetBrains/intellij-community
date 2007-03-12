@@ -13,6 +13,6 @@ public interface CvsFileRevision extends VcsFileRevision{
 
   String getState();
 
-  Collection getTags();
+  Collection<String> getTags();
 
 }
