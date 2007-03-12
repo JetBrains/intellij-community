@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -93,7 +94,9 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
               // refresh base directory so that conflict files should be detected
               vf.getParent().refresh(true, false);
               VcsDirtyScopeManager.getInstance(myVcs.getProject()).fileDirty(vf);
-              vfFiles.add(vf);
+              if (ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsFor(vf).equals(myVcs)) {
+                vfFiles.add(vf);
+              }
             }
           }
           if (!vfFiles.isEmpty()) {
