@@ -207,13 +207,18 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     String result;
     String url;
     @NonNls public static final String DOCUMENTATION_ELEMENT_LOCAL_NAME = "documentation";
+    private @NonNls static final String CDATA_PREFIX = "<![CDATA[";
+    private @NonNls static final String CDATA_SUFFIX = "]]>";
 
     public boolean execute(PsiElement element) {
       if (element instanceof XmlTag &&
           ((XmlTag)element).getLocalName().equals(DOCUMENTATION_ELEMENT_LOCAL_NAME)
       ) {
         final XmlTag tag = ((XmlTag)element);
-        result = tag.getValue().getText().trim();
+        result = tag.getValue().getText();
+        if (result.startsWith(CDATA_PREFIX)) result = result.substring(CDATA_PREFIX.length());
+        if (result.endsWith(CDATA_SUFFIX)) result = result.substring(0, result.length() - CDATA_SUFFIX.length());
+        result = result.trim();
         url = tag.getAttributeValue("source");
         return false;
       }
