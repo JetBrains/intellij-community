@@ -26,12 +26,8 @@ public class ClassNameInputDialog extends DialogWrapper {
   public ClassNameInputDialog(Project project, Component parent) {
     super(parent, false);
     myProject = project;
-    $$$setupUI$$$();
     init();
     setTitle(UIDesignerBundle.message("client.properties.title"));
-  }
-
-  private void $$$setupUI$$$() {
   }
 
   private void createUIComponents() {
