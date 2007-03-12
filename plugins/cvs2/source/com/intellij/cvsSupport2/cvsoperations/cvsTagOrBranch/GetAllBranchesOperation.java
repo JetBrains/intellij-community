@@ -25,7 +25,10 @@ public class GetAllBranchesOperation extends LocalPathIndifferentOperation
   }
 
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
-    return new RlogCommand();
+    final RlogCommand command = new RlogCommand();
+    // TODO[yole]: it would be best to implement smarter handling similar to LoadHistoryOperation, but it's too cumbersome without a major refactoring
+    command.setSuppressEmptyHeaders(false);  // see IDEADEV-14276
+    return command;
   }
 
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
