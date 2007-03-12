@@ -16,12 +16,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.IntArrayList;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import org.jetbrains.annotations.NotNull;
 
 public class DefUseUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defUse.DefUseUtil");
@@ -342,9 +341,10 @@ public class DefUseUtil {
     protected abstract void processInstruction(Set<PsiElement> res, final Instruction instruction, int index);
     protected abstract boolean defs ();
 
-    public PsiElement [] get (final PsiVariable def, PsiElement refOrDef) {
+    @NotNull
+    public PsiElement[] get (final PsiVariable def, PsiElement refOrDef) {
       if (body == null) {
-        return null;
+        return PsiElement.EMPTY_ARRAY;
       }
 
       final boolean [] visited = new boolean[instructions.size() + 1];
@@ -413,7 +413,7 @@ public class DefUseUtil {
         new Inner ().traverse (elem);
         return res.toArray(new PsiElement[res.size ()]);
       }
-      return null;
+      return PsiElement.EMPTY_ARRAY;
     }
   }
 

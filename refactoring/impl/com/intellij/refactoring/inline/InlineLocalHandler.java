@@ -94,7 +94,7 @@ class InlineLocalHandler {
 
     for (final PsiElement ref : refsToInline) {
       final PsiElement[] defs = DefUseUtil.getDefs(containerBlock, local, ref);
-      if (defs.length > 1 || !isSameDefinition(defs[0], defToInline)) {
+      if (defs.length > 1 && !isSameDefinition(defs[0], defToInline)) {
         highlightManager.addOccurrenceHighlights(editor, defs, writeAttributes, true, null);
         highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{ref}, attributes, true, null);
         String message =
@@ -176,8 +176,7 @@ class InlineLocalHandler {
   private static boolean isSameDefinition(final PsiElement def, final PsiExpression defToInline) {
     if (def instanceof PsiLocalVariable) return defToInline.equals(((PsiLocalVariable)def).getInitializer());
     final PsiElement parent = def.getParent();
-    if (parent instanceof PsiAssignmentExpression) return defToInline.equals(((PsiAssignmentExpression)parent).getRExpression());
-    return false;
+    return parent instanceof PsiAssignmentExpression && defToInline.equals(((PsiAssignmentExpression)parent).getRExpression());
   }
 
   private static boolean isInliningVariableInitializer(final PsiExpression defToInline) {
@@ -185,19 +184,24 @@ class InlineLocalHandler {
   }
 
   @Nullable
-  private static PsiExpression getDefToInline(final PsiLocalVariable local, final PsiReferenceExpression refExpr, final PsiCodeBlock block) {
+  private static PsiExpression getDefToInline(final PsiLocalVariable local,
+                                              final PsiReferenceExpression refExpr,
+                                              final PsiCodeBlock block) {
     if (refExpr != null) {
-      PsiElement def = null;
+      PsiElement def;
       if (PsiUtil.isAccessedForWriting(refExpr)) {
         def = refExpr;
-      } else {
+      }
+      else {
         final PsiElement[] defs = DefUseUtil.getDefs(block, local, refExpr);
         if (defs.length == 1) {
           def = defs[0];
         }
-        else return null;
+        else {
+          return null;
+        }
       }
-      
+
       if (def instanceof PsiReferenceExpression && def.getParent() instanceof PsiAssignmentExpression) {
         final PsiExpression rExpr = ((PsiAssignmentExpression)def.getParent()).getRExpression();
         if (rExpr != null) return rExpr;

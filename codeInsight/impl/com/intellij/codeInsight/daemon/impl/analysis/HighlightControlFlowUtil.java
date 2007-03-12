@@ -29,7 +29,7 @@ import java.util.*;
 public class HighlightControlFlowUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
-  //@top
+
   @Nullable
   public static HighlightInfo checkMissingReturnStatement(PsiMethod method) {
     PsiCodeBlock body = method.getBody();
@@ -41,13 +41,12 @@ public class HighlightControlFlowUtil {
     // do not compute constant expressions for if() statement condition
     // see JLS 14.20 Unreachable Statements
     try {
-      final ControlFlow controlFlow = ControlFlowFactory.getInstance(method.getProject()).getControlFlow(body,
-                                                                        LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(),
-                                                                        false);
+      final ControlFlow controlFlow = getControlFlowNoConstantEvaluate(body);
       if (!ControlFlowUtil.returnPresent(controlFlow)) {
-        final PsiElement context = body.getRBrace() == null
+        final PsiJavaToken rBrace = body.getRBrace();
+        final PsiElement context = rBrace == null
                                    ? body.getLastChild()
-                                   : body.getRBrace();
+                                   : rBrace;
         final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
             HighlightInfoType.ERROR,
             context,
@@ -65,15 +64,23 @@ public class HighlightControlFlowUtil {
 
   }
 
-  //@top
+  private static ControlFlow getControlFlowNoConstantEvaluate(final PsiElement body) throws AnalysisCanceledException {
+    return ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body,
+                                                                      LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(),
+                                                                      false);
+  }
+  private static ControlFlow getControlFlow(final PsiElement context) throws AnalysisCanceledException {
+    return ControlFlowFactory.getInstance(context.getProject())
+      .getControlFlow(context, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+  }
+
+
   public static HighlightInfo checkUnreachableStatement(PsiCodeBlock codeBlock) {
     if (codeBlock == null) return null;
     // do not compute constant expressions for if() statement condition
     // see JLS 14.20 Unreachable Statements
     try {
-      final ControlFlow controlFlow = ControlFlowFactory.getInstance(codeBlock.getProject()).getControlFlow(codeBlock,
-                                                                        LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(),
-                                                                        false);
+      final ControlFlow controlFlow = getControlFlowNoConstantEvaluate(codeBlock);
       final PsiElement unreachableStatement = ControlFlowUtil.getUnreachableStatement(controlFlow);
       if (unreachableStatement != null) {
         return HighlightInfo.createHighlightInfo(
@@ -213,7 +220,7 @@ public class HighlightControlFlowUtil {
    */
   private static boolean variableDefinitelyAssignedIn(PsiVariable variable, PsiElement context) {
     try {
-      ControlFlow controlFlow = ControlFlowFactory.getInstance(variable.getProject()).getControlFlow(context, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+      ControlFlow controlFlow = getControlFlow(context);
       return ControlFlowUtil.isVariableDefinitelyAssigned(variable, controlFlow);
     }
     catch (AnalysisCanceledException e) {
@@ -223,7 +230,7 @@ public class HighlightControlFlowUtil {
 
   private static boolean variableDefinitelyNotAssignedIn(PsiVariable variable, PsiElement context) {
     try {
-      ControlFlow controlFlow = ControlFlowFactory.getInstance(variable.getProject()).getControlFlow(context, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+      ControlFlow controlFlow = getControlFlow(context);
       return ControlFlowUtil.isVariableDefinitelyNotAssigned(variable, controlFlow);
     }
     catch (AnalysisCanceledException e) {
@@ -231,7 +238,7 @@ public class HighlightControlFlowUtil {
     }
   }
 
-  //@top
+
   @Nullable
   public static HighlightInfo checkFinalFieldInitialized(PsiField field) {
     if (!field.hasModifierProperty(PsiModifier.FINAL)) return null;
@@ -255,7 +262,7 @@ public class HighlightControlFlowUtil {
     return null;
   }
 
-  //@top
+
   @Nullable
   public static HighlightInfo checkVariableInitializedBeforeUsage(PsiReferenceExpression expression,
                                                                   PsiElement element,
@@ -271,7 +278,7 @@ public class HighlightControlFlowUtil {
     }
     else {
       final PsiElement scope = variable instanceof PsiField
-                               ? ((PsiField)variable).getContainingFile()
+                               ? variable.getContainingFile()
                                : variable.getParent() != null ? variable.getParent().getParent() : null;
       topBlock = PsiUtil.isInJspFile(scope) && scope instanceof PsiFile ? scope : PsiUtil.getTopLevelEnclosingCodeBlock(expression, scope);
       if (variable instanceof PsiField) {
@@ -370,7 +377,7 @@ public class HighlightControlFlowUtil {
     Collection<PsiReferenceExpression> codeBlockProblems = uninitializedVarProblems.get(topBlock);
     if (codeBlockProblems == null) {
       try {
-        final ControlFlow controlFlow = ControlFlowFactory.getInstance(topBlock.getProject()).getControlFlow(topBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+        final ControlFlow controlFlow = getControlFlow(topBlock);
         codeBlockProblems = ControlFlowUtil.getReadBeforeWrite(controlFlow);
       }
       catch (AnalysisCanceledException e) {
@@ -444,7 +451,7 @@ public class HighlightControlFlowUtil {
     return processor.isWriteRefFound();
   }
 
-  //@top
+
   public static HighlightInfo checkFinalVariableMightAlreadyHaveBeenAssignedTo(PsiVariable variable,
                                                                                PsiReferenceExpression expression,
                                                                                Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems) {
@@ -498,8 +505,7 @@ public class HighlightControlFlowUtil {
             final PsiCodeBlock body = initializer.getBody();
             if (body == codeBlock) return null;
             try {
-              final ControlFlow controlFlow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body,
-                                                                                LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+              final ControlFlow controlFlow = getControlFlow(body);
               if (!ControlFlowUtil.isVariableDefinitelyNotAssigned(field, controlFlow)) {
                 alreadyAssigned = true;
                 break;
@@ -550,7 +556,7 @@ public class HighlightControlFlowUtil {
     Collection<ControlFlowUtil.VariableInfo> codeBlockProblems = finalVarProblems.get(codeBlock);
     if (codeBlockProblems == null) {
       try {
-        final ControlFlow controlFlow = ControlFlowFactory.getInstance(codeBlock.getProject()).getControlFlow(codeBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+        final ControlFlow controlFlow = getControlFlow(codeBlock);
         codeBlockProblems = ControlFlowUtil.getInitializedTwice(controlFlow);
       }
       catch (AnalysisCanceledException e) {
@@ -561,7 +567,7 @@ public class HighlightControlFlowUtil {
     return codeBlockProblems;
   }
 
-  //@top
+
   public static HighlightInfo checkFinalVariableInitalizedInLoop(PsiReferenceExpression expression, PsiElement resolved) {
     if (ControlFlowUtil.isVariableAssignedInLoop(expression, resolved)) {
       String description = JavaErrorMessages.message("variable.assigned.in.loop", ((PsiVariable)resolved).getName());
@@ -576,7 +582,7 @@ public class HighlightControlFlowUtil {
     return null;
   }
 
-  //@top
+
   public static HighlightInfo checkCannotWriteToFinal(PsiExpression expression) {
     PsiReferenceExpression reference = null;
     if (expression instanceof PsiAssignmentExpression) {
@@ -655,7 +661,7 @@ public class HighlightControlFlowUtil {
     return qualifierExpression == null || qualifierExpression instanceof PsiThisExpression;
   }
 
-  //@top
+
   static HighlightInfo checkVariableMustBeFinal(PsiVariable variable, PsiJavaCodeReferenceElement context) {
     if (variable.hasModifierProperty(PsiModifier.FINAL)) return null;
     final PsiClass innerClass = getInnerClassVariableReferencedFrom(variable, context);
@@ -673,9 +679,11 @@ public class HighlightControlFlowUtil {
     PsiElement scope;
     if (variable instanceof PsiLocalVariable) {
       scope = variable.getParent().getParent(); // code block or for statement
-    } else if (variable instanceof PsiParameter) {
+    }
+    else if (variable instanceof PsiParameter) {
       scope = ((PsiParameter)variable).getDeclarationScope();
-    } else {
+    }
+    else {
       scope = variable.getParent();
     }
     if (scope.getContainingFile() != context.getContainingFile()) return null;
@@ -684,10 +692,8 @@ public class HighlightControlFlowUtil {
     PsiElement prevParent = context;
     while (parent != null) {
       if (parent.equals(scope)) break;
-      if (parent instanceof PsiClass) {
-        if (!(prevParent instanceof PsiExpressionList && parent instanceof PsiAnonymousClass)) {
-          return (PsiClass)parent;
-        }
+      if (parent instanceof PsiClass && !(prevParent instanceof PsiExpressionList && parent instanceof PsiAnonymousClass)) {
+        return (PsiClass)parent;
       }
       prevParent = parent;
       parent = parent.getParent();
@@ -695,14 +701,12 @@ public class HighlightControlFlowUtil {
     return null;
   }
 
-  //@top
+
   public static HighlightInfo checkInitializerCompleteNormally(PsiClassInitializer initializer) {
     final PsiCodeBlock body = initializer.getBody();
     // unhandled exceptions already reported
     try {
-      final ControlFlow controlFlow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body,
-                                                                        LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(),
-                                                                        false);
+      final ControlFlow controlFlow = getControlFlowNoConstantEvaluate(body);
       final int completionReasons = ControlFlowUtil.getCompletionReasons(controlFlow, 0, controlFlow.getSize());
       if ((completionReasons & ControlFlowUtil.NORMAL_COMPLETION_REASON) == 0) {
         return HighlightInfo.createHighlightInfo(

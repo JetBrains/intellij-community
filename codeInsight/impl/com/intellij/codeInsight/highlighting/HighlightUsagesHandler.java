@@ -280,7 +280,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   }
 
-  protected Runnable createHighlightAction(final Project project, PsiFile file, PsiElement[] targets, final Editor editor) {
+  private Runnable createHighlightAction(final Project project, PsiFile file, PsiElement[] targets, final Editor editor) {
     if (file instanceof PsiCompiledElement) file = (PsiFile)((PsiCompiledElement)file).getMirror();
     PsiElement target = targets[0];
 
@@ -306,22 +306,22 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
         }
         PsiTryStatement tryStatement = ((PsiCatchSection)parent).getTryStatement();
 
-        PsiParameter param = ( (PsiCatchSection)parent).getParameter();
+        final PsiParameter param = ((PsiCatchSection)parent).getParameter();
         if (param == null) return EMPTY_HIGHLIGHT_RUNNABLE;
 
         final PsiParameter[] catchBlockParameters = tryStatement.getCatchBlockParameters();
 
         final PsiClassType[] allThrownExceptions = ExceptionUtil.collectUnhandledExceptions(tryStatement.getTryBlock(),
                                                                                             tryStatement.getTryBlock());
-
-        final PsiElement param1 = param;
         TypeFilter filter = new TypeFilter() {
           public boolean accept(PsiType type) {
             for (PsiParameter parameter : catchBlockParameters) {
-              if (parameter != param1) {
-                if (parameter.getType().isAssignableFrom(type)) return false;
-              } else {
-                return parameter.getType().isAssignableFrom(type);
+              boolean isAssignable = parameter.getType().isAssignableFrom(type);
+              if (parameter != param) {
+                if (isAssignable) return false;
+              }
+              else {
+                return isAssignable;
               }
             }
             return false;
@@ -424,15 +424,13 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
         public void visitThrowStatement(PsiThrowStatement statement) {
           super.visitThrowStatement(statement);
           PsiClassType[] exceptionTypes = ExceptionUtil.getUnhandledExceptions(statement, block);
-          if (exceptionTypes != null) {
-            for (final PsiClassType actualType : exceptionTypes) {
-              if (type.isAssignableFrom(actualType) && typeFilter.accept(actualType)) {
-                PsiExpression psiExpression = statement.getException();
-                if (!(psiExpression instanceof PsiNewExpression)) continue;
-                PsiJavaCodeReferenceElement ref = ((PsiNewExpression) psiExpression).getClassReference();
-                if (refs.contains(ref)) continue;
-                refs.add(ref);
-              }
+          for (final PsiClassType actualType : exceptionTypes) {
+            if (type.isAssignableFrom(actualType) && typeFilter.accept(actualType)) {
+              PsiExpression psiExpression = statement.getException();
+              if (!(psiExpression instanceof PsiNewExpression)) continue;
+              PsiJavaCodeReferenceElement ref = ((PsiNewExpression) psiExpression).getClassReference();
+              if (refs.contains(ref)) continue;
+              refs.add(ref);
             }
           }
         }
