@@ -1,9 +1,12 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -17,7 +20,6 @@ import com.intellij.pom.tree.events.impl.ReplaceChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.light.LightTypeElement;
@@ -27,6 +29,7 @@ import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
+import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
@@ -34,6 +37,7 @@ import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -304,6 +308,10 @@ public class ChangeUtil {
   }
 
   private static void encodeInformation(TreeElement element, ASTNode original) {
+    encodeInformation(element, original, conversionMayApply(original));
+  }
+
+  private static void encodeInformation(TreeElement element, ASTNode original, boolean shallEncodeEscapedTexts) {
     if (original instanceof CompositeElement) {
       if (original.getElementType() == JavaElementType.JAVA_CODE_REFERENCE || original.getElementType() == JavaElementType
         .REFERENCE_EXPRESSION) {
@@ -323,11 +331,34 @@ public class ChangeUtil {
       TreeElement child = element.getFirstChildNode();
       ASTNode child1 = original.getFirstChildNode();
       while (child != null) {
-        encodeInformation(child, child1);
+        encodeInformation(child, child1, shallEncodeEscapedTexts);
         child = child.getTreeNext();
         child1 = child1.getTreeNext();
       }
     }
+    else if (shallEncodeEscapedTexts && original instanceof LeafElement && !(original instanceof OuterLanguageElement)) {
+      if (!isInCData(original)) {
+        final String originalText = element.getText();
+        final String unescapedText = XmlUtil.unescape(originalText);
+        if (!Comparing.equal(originalText, unescapedText)) {
+          ((LeafElement)element).setText(unescapedText);
+          element.putCopyableUserData(ALREADY_ESCAPED, null);
+        }
+      }
+    }
+  }
+
+  private static boolean isInCData(ASTNode element) {
+    ASTNode leaf = element;
+    while (leaf != null) {
+      if (leaf instanceof OuterLanguageElement) {
+        return leaf.getText().indexOf("<![CDATA[") >= 0;
+      }
+
+      leaf = TreeUtil.prevLeaf(leaf);
+    }
+
+    return false;
   }
 
   private static void encodeInformationInRef(TreeElement ref, ASTNode original) {
@@ -364,11 +395,24 @@ public class ChangeUtil {
   }
 
   public static TreeElement decodeInformation(TreeElement element) {
+    return decodeInformation(element, conversionMayApply(element));
+  }
+
+  private static boolean conversionMayApply(ASTNode element) {
+    PsiElement psi = element.getPsi();
+    if (psi == null || !psi.isValid()) return false;
+
+    final PsiFile file = psi.getContainingFile();
+    final Language baseLanguage = file.getViewProvider().getBaseLanguage();
+    return baseLanguage == StdLanguages.JSPX && file.getLanguage() != baseLanguage;
+  }
+
+  private static TreeElement decodeInformation(TreeElement element, boolean shallDecodeEscapedTexts) {
     if (element instanceof CompositeElement) {
       ChameleonTransforming.transformChildren(element);
       TreeElement child = element.getFirstChildNode();
       while (child != null) {
-        child = decodeInformation(child);
+        child = decodeInformation(child, shallDecodeEscapedTexts);
         child = child.getTreeNext();
       }
 
@@ -421,8 +465,24 @@ public class ChangeUtil {
         }
       }
     }
+    else if (shallDecodeEscapedTexts && element instanceof LeafElement && !(element instanceof OuterLanguageElement)) {
+      if (!isInCData(element)) {
+        final String original = element.getText();
+        final String escaped = XmlUtil.escape(original);
+        if (!Comparing.equal(original, escaped) && element.getCopyableUserData(ALREADY_ESCAPED) == null) {
+          final LeafElement copy = (LeafElement)element.copyElement();
+          copy.setText(escaped);
+          element.getTreeParent().replaceChild(element, copy);
+          copy.putCopyableUserData(ALREADY_ESCAPED, Boolean.TRUE);
+          return copy;
+        }
+      }
+    }
+    
     return element;
   }
+
+  private static Key<Boolean> ALREADY_ESCAPED = new Key<Boolean>("ALREADY_ESCAPED");
 
   public static TreeElement copyElement(TreeElement original, CharTable table) {
     final TreeElement element = (TreeElement)original.clone();

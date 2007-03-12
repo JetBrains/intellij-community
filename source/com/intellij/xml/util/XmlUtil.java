@@ -145,6 +145,7 @@ public class XmlUtil {
     return null;
   }
 
+  @Nullable
   public static String findNamespacePrefixByURI(XmlFile file, @NonNls String uri) {
     if (file == null) return null;
     final XmlDocument document = file.getDocument();
@@ -1149,18 +1150,28 @@ public class XmlUtil {
     return text;
   }
 
-  @NonNls private static final String[] REPLACES =
-    new String[]{"&lt;", "<", "&nbsp;", " ", "&gt;", ">", "&amp;", "&", "&apos;", "'", "&quot;", "\"",};
+  @NonNls private static final String[] REPLACES_REFS = new String[]{"&lt;",  "&nbsp;", "&gt;", "&amp;",  "&apos;", "&quot;"};
+  @NonNls private static final String[] REPLACES_DISP = new String[]{"<",     "\u00a0",      ">",    "&",      "'",      "\""};
 
   public static String unescape(String text) {
     if (text == null) return null;
+    return replace(text, REPLACES_REFS, REPLACES_DISP);
+  }
+
+  public static String escape(String text) {
+    if (text == null) return null;
+    return replace(text, REPLACES_DISP, REPLACES_REFS);
+  }
+
+  @SuppressWarnings({"AssignmentToForLoopParameter"})
+  private static String replace(final String text, final String[] from, final String[] to) {
     final StringBuilder result = StringBuilderSpinAllocator.alloc();
     try {
       replace:
       for (int i = 0; i < text.length(); i++) {
-        for (int j = 0; j < REPLACES.length; j += 2) {
-          String toReplace = REPLACES[j];
-          String replaceWith = REPLACES[j + 1];
+        for (int j = 0; j < from.length; j += 1) {
+          String toReplace = from[j];
+          String replaceWith = to[j];
 
           final int len = toReplace.length();
           if (text.regionMatches(i, toReplace, 0, len)) {
