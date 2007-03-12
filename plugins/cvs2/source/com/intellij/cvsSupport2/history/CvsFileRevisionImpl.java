@@ -49,23 +49,32 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     final ArrayList<String> result = new ArrayList<String>();
 
     final String branches = myCvsRevision.getBranches();
-    if (branches == null || branches.length() == 0) {
-      return result;
+    if (branches != null && branches.length() != 0) {
+      final String[] branchNames = branches.split(";");
+      for (String branchName : branchNames) {
+        final CvsRevisionNumber revisionNumber = new CvsRevisionNumber(branchName.trim());
+        CvsRevisionNumber headRevNumber = revisionNumber.removeTailVersions(1);
+        CvsRevisionNumber symRevNumber = headRevNumber.addTailVersions(new int[]{0, 2});
+        //noinspection unchecked
+        final List<SymbolicName> symNames = myLogInformation.getSymNamesForRevision(symRevNumber.asString());
+        if (!symNames.isEmpty()) {
+          for (final SymbolicName symName : symNames) {
+            result.add(symName.getName() + " (" + revisionNumber.asString() + ")");
+          }
+        }
+      }
     }
-    final String[] branchNames = branches.split(";");
-    for (String branchName : branchNames) {
-      final CvsRevisionNumber revisionNumber = new CvsRevisionNumber(branchName.trim());
-      CvsRevisionNumber headRevNumber = revisionNumber.removeTailVersions(1);
-      CvsRevisionNumber symRevNumber = headRevNumber.addTailVersions(new int[]{0, 2});
+    else {
+      // IDEADEV-15186 - show branch name for just created branch with no revisions yet
+      CvsRevisionNumber symRevNumber = getNumber().addTailVersions(new int[]{0, 2});
       //noinspection unchecked
       final List<SymbolicName> symNames = myLogInformation.getSymNamesForRevision(symRevNumber.asString());
       if (!symNames.isEmpty()) {
         for (final SymbolicName symName : symNames) {
-          result.add(symName.getName() + " (" + revisionNumber.asString() + ")");
+          result.add(symName.getName());
         }
       }
     }
-
     return result;
   }
 
