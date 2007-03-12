@@ -8,17 +8,18 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
-public abstract class IntegrationalTestCase extends IdeaTestCase {
-  protected VirtualFile root;
+public abstract class IntegrationTestCase extends IdeaTestCase {
+  String EXCLUDED_DIR_NAME = "CVS";
+  VirtualFile root;
 
   @Override
   public void setUp() throws Exception {
@@ -36,9 +37,63 @@ public abstract class IntegrationalTestCase extends IdeaTestCase {
     super.tearDown();
   }
 
+  protected void addFileListenerDuring(VirtualFileListener l, Callable task) throws Exception {
+    VirtualFileManager.getInstance().addVirtualFileListener(l);
+    try {
+      task.call();
+    }
+    finally {
+      VirtualFileManager.getInstance().removeVirtualFileListener(l);
+    }
+  }
+
+  protected class ContentChangesListener extends VirtualFileAdapter {
+    private VirtualFile myFile;
+    private String[] myContents = new String[2];
+
+    public ContentChangesListener(VirtualFile f) {
+      myFile = f;
+    }
+
+    public String getContentBefore() {
+      return myContents[0];
+    }
+
+    public String getContentAfter() {
+      return myContents[1];
+    }
+
+    @Override
+    public void beforeContentsChange(VirtualFileEvent e) {
+      logContent(e, 0);
+    }
+
+    @Override
+    public void contentsChanged(VirtualFileEvent e) {
+      logContent(e, 1);
+    }
+
+    private void logContent(VirtualFileEvent e, int i) {
+      try {
+        if (!e.getFile().equals(myFile)) return;
+        myContents[i] = new String(myFile.contentsToByteArray());
+      }
+      catch (IOException ex) {
+        throw new RuntimeException(ex);
+      }
+    }
+
+  }
+
   protected String createFileExternally(String name) throws Exception {
     File f = new File(root.getPath(), name);
     f.createNewFile();
+    return FileUtil.toSystemIndependentName(f.getPath());
+  }
+
+  protected String createDirectoryExternally(String name) throws Exception {
+    File f = new File(root.getPath(), name);
+    f.mkdirs();
     return FileUtil.toSystemIndependentName(f.getPath());
   }
 

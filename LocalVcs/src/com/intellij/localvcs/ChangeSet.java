@@ -27,6 +27,7 @@ public class ChangeSet {
       }
     }
     else {
+      // todo get rid of this. ideally change set can't be empty
       myChanges = Collections.emptyList();
     }
   }

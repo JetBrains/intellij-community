@@ -21,7 +21,7 @@ import java.util.List;
 public class BasicsTest extends PerformanceTest {
   private LocalVcs vcs;
   private Storage s;
-  private static final long VCS_TIMESTAMP = 1L;
+  private static final long VCS_ENTRIES_TIMESTAMP = 1L;
 
   @Before
   public void initVcs() {
@@ -95,19 +95,38 @@ public class BasicsTest extends PerformanceTest {
 
   @Test
   public void testUpdatingWithCleanVcs() throws Exception {
-    measureUpdateTime(1, buildVFSTree(1L));
+    measureUpdateTime(1, 1L);
   }
 
   @Test
   public void testUpdatingWithAllFilesUpToDate() throws Exception {
     buildTree();
-    measureUpdateTime(1, buildVFSTree(VCS_TIMESTAMP));
+    measureUpdateTime(1, VCS_ENTRIES_TIMESTAMP);
   }
 
   @Test
   public void testUpdatingWithAllFilesOutdated() throws Exception {
     buildTree();
-    measureUpdateTime(1000, buildVFSTree(VCS_TIMESTAMP + 1));
+    measureUpdateTime(1000, VCS_ENTRIES_TIMESTAMP + 1);
+  }
+
+  private void measureUpdateTime(int expected, long timestamp) throws IOException {
+    final LocalFileSystem fs = createMock(LocalFileSystem.class);
+    expect(fs.physicalContentsToByteArray((VirtualFile)anyObject())).andStubReturn(new byte[0]);
+
+    final VirtualFile root = buildVFSTree(timestamp);
+    assertExecutionTime(expected, new Task() {
+      public void execute() {
+        Updater u = new Updater(vcs, new TestFileFilter(), root);
+        CacheUpdaterHelper.performUpdate(u);
+      }
+    });
+  }
+
+  private void updateFromTreeWithTimestamp(long timestamp) {
+    TestVirtualFile root = buildVFSTree(timestamp);
+    Updater u = new Updater(vcs, new TestFileFilter(), root);
+    CacheUpdaterHelper.performUpdate(u);
   }
 
   @Test
@@ -122,14 +141,15 @@ public class BasicsTest extends PerformanceTest {
     });
   }
 
-  private void measureUpdateTime(int expected, final TestVirtualFile root) throws IOException {
-    final LocalFileSystem fs = createMock(LocalFileSystem.class);
-    expect(fs.physicalContentsToByteArray((VirtualFile)anyObject())).andStubReturn(new byte[0]);
+  @Test
+  public void testPurging() {
+    setCurrentTimestamp(10);
+    buildTree();
+    updateFromTreeWithTimestamp(VCS_ENTRIES_TIMESTAMP + 1);
 
-    assertExecutionTime(expected, new Task() {
+    assertExecutionTime(1, new Task() {
       public void execute() {
-        Updater u = new Updater(vcs, new TestFileFilter(), root);
-        CacheUpdaterHelper.performUpdate(u);
+        vcs.purgeUpTo(20);
       }
     });
   }
@@ -149,7 +169,7 @@ public class BasicsTest extends PerformanceTest {
 
     for (Integer i = 0; i < 10; i++) {
       String filePath = parent + "/file" + i;
-      vcs.createFile(filePath, b(""), VCS_TIMESTAMP);
+      vcs.createFile(filePath, b(""), VCS_ENTRIES_TIMESTAMP);
 
       String dirPath = parent + "/dir" + i;
       vcs.createDirectory(dirPath, null);
@@ -166,7 +186,7 @@ public class BasicsTest extends PerformanceTest {
   private void createVFSChildren(TestVirtualFile parent, long timestamp, int countdown) {
     if (countdown == 0) return;
 
-    for (Integer i = 0; i < 10; i++) {
+    for (int i = 0; i < 10; i++) {
       parent.addChild(new TestVirtualFile("file" + i, null, timestamp));
 
       TestVirtualFile dir = new TestVirtualFile("dir" + i, null);

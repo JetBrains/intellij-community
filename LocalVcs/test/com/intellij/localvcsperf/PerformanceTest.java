@@ -16,13 +16,7 @@ public class PerformanceTest extends TempDirTestCase {
     long delta = ((actual * 100) / expected) - 100;
 
     String message = "delta: " + delta + "% expected: " + expected + "ms actual: " + actual + "ms";
-    boolean success = delta < 10;
-    if (success) {
-      System.out.println("success with " + message);
-    }
-    else {
-      fail("failure with " + message);
-    }
+    assertTrue(message, Math.abs(delta) < 15);
   }
 
   private long measureExecutionTime(Task task) {
