@@ -76,7 +76,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
 
     public boolean isCellEditable(Object object) {
       if (!(object instanceof CvsFileRevision)) return false;
-      return ((CvsFileRevision)object).getTags().size() > 1;
+      return getValues(((CvsFileRevision)object)).size() > 1;
     }
 
     public TableCellEditor getEditor(final Object object) {

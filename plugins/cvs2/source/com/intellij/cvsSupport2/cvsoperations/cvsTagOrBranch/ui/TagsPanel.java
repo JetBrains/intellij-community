@@ -43,10 +43,6 @@ public class TagsPanel extends JPanel implements TableCellRenderer{
       public void mouseClicked(MouseEvent e) {
         showTags();
       }
-
-      public void mousePressed(MouseEvent e) {
-        showTags();
-      }
     });
   }
 
