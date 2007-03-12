@@ -166,6 +166,9 @@ public class DirectoryNode extends PackageDependenciesNode {
   }
 
   public void setCompactedDirNode(final DirectoryNode compactedDirNode) {
+    if (myCompactedDirNode != null) {
+      myCompactedDirNode.myWrapper = null;
+    }
     myCompactedDirNode = compactedDirNode;
     if (myCompactedDirNode != null) {
       myCompactedDirNode.myWrapper = this;

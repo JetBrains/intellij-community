@@ -399,8 +399,11 @@ public class TreeModelBuilder {
       PsiDirectory directory = parent.getParentDirectory();
       parentNode = (DefaultMutableTreeNode)node.getParent();
       node.removeFromParent();
-      if (parentNode instanceof DirectoryNode) {
-        getMap(myModuleDirNodes, ScopeType.SOURCE).put(parent, null);
+      if (node instanceof DirectoryNode) {
+        while (node != null) {  //clear all compacted links
+          getMap(myModuleDirNodes, ScopeType.SOURCE).put((PsiDirectory)((DirectoryNode)node).getPsiElement(), null);
+          node = ((DirectoryNode)node).getCompactedDirNode();
+        }
       } else if (parentNode instanceof ModuleNode) {
         getMap(myModuleNodes, ScopeType.SOURCE).put(((ModuleNode)parentNode).getModule(), null);
       } else if (parentNode instanceof ModuleGroupNode) {
@@ -469,17 +472,15 @@ public class TreeModelBuilder {
           return new PackageDependenciesNode[] {node};
         }
         if (element instanceof PsiFile) {
-          final PsiElement psiElement;
+          PsiFile psiFile = null;
           if (node instanceof ClassNode) {
-            psiElement = ((ClassNode)node).getContainingFile();
-            if (element == psiElement) {
-              result.add(node);
-            }
+            psiFile = ((ClassNode)node).getContainingFile();
           }
           else if (node instanceof FileNode) { //non java files
-            if (((PsiFile)node.getPsiElement()).getVirtualFile() == ((PsiFile)element).getVirtualFile()) {
-              result.add(node);
-            }
+            psiFile = ((PsiFile)node.getPsiElement());
+          }
+          if (psiFile != null && psiFile.getVirtualFile() == ((PsiFile)element).getVirtualFile()) {
+            result.add(node);
           }
         }
       }
@@ -589,20 +590,15 @@ public class TreeModelBuilder {
           for (int i = parentWrapper.getChildCount() - 1; i >= 0; i--) {
             nestedNode.add((MutableTreeNode)parentWrapper.getChildAt(i));
           }
-          nestedNode.removeUpReference();
           ((DirectoryNode)directoryNode).setCompactedDirNode(null);
-          if (parentWrapper.getCompactedDirNode() != null) {
-            parentWrapper.add(nestedNode);
-            return parentWrapper;
-          }
-          else {
-            directoryNode.add(nestedNode);
-          }
+          parentWrapper.add(nestedNode);
+          nestedNode.removeUpReference();
+          return parentWrapper;
         }
-        else if (directoryNode.getParent() == null) {    //find first node in tree
+        if (directoryNode.getParent() == null) {    //find first node in tree
           DirectoryNode parentWrapper = ((DirectoryNode)directoryNode).getWrapper();
           if (parentWrapper != null) {
-            while (parentWrapper.getWrapper() != null && parentWrapper.getWrapper().getCompactedDirNode() != null) {
+            while (parentWrapper.getWrapper() != null) {
               parentWrapper = parentWrapper.getWrapper();
             }
             return parentWrapper;

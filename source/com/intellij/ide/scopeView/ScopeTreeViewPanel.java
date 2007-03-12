@@ -406,7 +406,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_NAME) || propertyName.equals(PsiTreeChangeEvent.PROP_FILE_TYPES)) {
           queueUpdate(new Runnable() {
             public void run() {
-              processFileRenamed(scope, element.getContainingFile());
+              processRenamed(scope, element.getContainingFile());
             }
           }, false);
         }
@@ -419,10 +419,11 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     public void childReplaced(final PsiTreeChangeEvent event) {
       final NamedScope scope = getCurrentScope();
       final PsiElement element = event.getNewChild();
-      if (element instanceof PsiFile && element.isValid()) {
+      final PsiFile psiFile = event.getFile();
+      if (psiFile != null) {
         queueUpdate(new Runnable() {
           public void run() {
-            processFileRenamed(scope, ((PsiFile)element));
+            processRenamed(scope, psiFile);
           }
         }, false);
       }
@@ -432,6 +433,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     }
 
     private void queueRefreshScope(final NamedScope scope) {
+      myUpdateQueue.cancelAllUpdates();
       queueUpdate(new Runnable() {
         public void run() {
           refreshScope(scope, true);
@@ -439,13 +441,13 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       }, false);
     }
 
-    private void processFileRenamed(final NamedScope scope, final PsiFile psiFile) {
+    private void processRenamed(final NamedScope scope, final PsiFile file) {
       final PackageSet packageSet = scope.getValue();
       LOG.assertTrue(packageSet != null);
-      if (packageSet.contains(psiFile, NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager))) {
-        reload(myBuilder.getFileParentNode(psiFile));
+      if (packageSet.contains(file, NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager))) {
+        reload(myBuilder.getFileParentNode(file));
       } else {
-        reload(myBuilder.removeNode(psiFile, psiFile.getParent()));
+        reload(myBuilder.removeNode(file, file.getParent()));
       }
     }
 
