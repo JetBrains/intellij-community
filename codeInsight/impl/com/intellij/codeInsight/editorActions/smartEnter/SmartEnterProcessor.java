@@ -203,7 +203,9 @@ public class SmartEnterProcessor {
     }
 
     final TextRange range = atCaret.getTextRange();
-    CodeStyleManager.getInstance(myProject).reformatText(atCaret.getContainingFile(), range.getStartOffset(), range.getEndOffset());
+    final PsiFile file = atCaret.getContainingFile();
+    final PsiFile baseFile = file.getViewProvider().getPsi(file.getViewProvider().getBaseLanguage());
+    CodeStyleManager.getInstance(myProject).reformatText(baseFile, range.getStartOffset(), range.getEndOffset());
   }
 
   private static void collectAllElements(PsiElement atCaret, List<PsiElement> res, boolean recurse) {
