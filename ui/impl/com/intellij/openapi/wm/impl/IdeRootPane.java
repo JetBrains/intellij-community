@@ -45,6 +45,8 @@ public class IdeRootPane extends JRootPane{
   private UISettings myUISettings;
   private static Component myWelcomePane;
 
+  private boolean myGlassPaneInitialized;
+
   IdeRootPane(ActionManager actionManager, UISettings uiSettings, DataManager dataManager, KeymapManager keymapManager){
     myActionManager = actionManager;
     myUISettings = uiSettings;
@@ -68,7 +70,15 @@ public class IdeRootPane extends JRootPane{
 
     final IdeGlassPaneImpl gp = new IdeGlassPaneImpl(this);
     setGlassPane(gp);
+    myGlassPaneInitialized = true;
+
     gp.setVisible(false);
+  }
+
+
+  public void setGlassPane(final Component glass) {
+    if (myGlassPaneInitialized) throw new IllegalStateException("Setting of glass pane for IdeFrame is prohibited");
+    super.setGlassPane(glass);
   }
 
   /**
