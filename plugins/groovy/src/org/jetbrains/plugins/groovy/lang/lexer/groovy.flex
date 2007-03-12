@@ -116,7 +116,7 @@ mTRIPLE_QUOTED_STRING = "\'\'\'" ({mSTRING_ESC}
     | "$"
     | [^\']
     | {mSTRING_NL}
-    | \'(\')?[^\'] )* (\'\'\')?
+    | \'(\')?[^\'] )* (\'\'\' | \\)?
 
 mSTRING_LITERAL = {mTRIPLE_QUOTED_STRING}
     | {mSINGLE_QUOTED_STRING}
@@ -144,7 +144,7 @@ mGSTRING_TRIPLE_CTOR_END = ( {mSTRING_ESC}
     | \'
     | \" (\")? [^\"]
     | [^\""$"]
-    | {mSTRING_NL} )* (\"\"\")?
+    | {mSTRING_NL} )* (\"\"\" | \\)?
 
 
 mGSTRING_LITERAL = \"\"
@@ -154,7 +154,7 @@ mGSTRING_LITERAL = \"\"
 
 
 /////////////////////////////////////////// Regular expressions ////////////////////////////////////////////////////////
-
+/*
 mREGEXP_SYMBOL = (( "*"
         | "$"
         | \\
@@ -172,7 +172,7 @@ mREGEXP_LITERAL = "/" [^"*"/] (
   | "/="
 
 mAFTER_REGEXP = !( "(" | "{" | {mIDENT} | {mNUM_INT} | "[" )
-
+*/
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////  states ///////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -195,14 +195,16 @@ mAFTER_REGEXP = !( "(" | "{" | {mIDENT} | {mNUM_INT} | "[" )
                                              blockStack.peek().push(mLPAREN);
                                              yybegin(IN_INNER_BLOCK);
                                              return mLCURLY; }
-  [^{[:jletter:]\n\r] [^\n\r]*/{mONE_NL}  {  clearGStack();
+  [^{[:jletter:]\n\r] [^\n\r]*            {  clearGStack();
                                              yybegin(YYINITIAL);
                                              return mWRONG_GSTRING_LITERAL;  }
   {mNLS}                                  {  yybegin(YYINITIAL);
                                              clearGStack();
+                                             clearBlockStack();
                                              return mNLS;}
   .                                       {  yybegin(WRONG_STRING);
                                              clearGStack();
+                                             clearBlockStack();
                                              return mWRONG_GSTRING_LITERAL; }
 }
 
@@ -216,12 +218,15 @@ mAFTER_REGEXP = !( "(" | "{" | {mIDENT} | {mNUM_INT} | "[" )
                                                yybegin(IN_INNER_BLOCK);
                                              }
                                              return mGSTRING_SINGLE_END; }
-  {mGSTRING_SINGLE_CONTENT} / {mONE_NL}   {  clearGStack();
+  {mGSTRING_SINGLE_CONTENT}               {  clearGStack();
                                              yybegin(YYINITIAL);
                                              return mWRONG_GSTRING_LITERAL; }
   .                                       {  yybegin(WRONG_STRING);
+                                             clearBlockStack();
+                                             clearGStack();
                                              return mWRONG_GSTRING_LITERAL; }
   {mNLS}                                  {  clearGStack();
+                                             clearBlockStack();
                                              yybegin(YYINITIAL);
                                              return mNLS; }
 }
@@ -229,7 +234,7 @@ mAFTER_REGEXP = !( "(" | "{" | {mIDENT} | {mNUM_INT} | "[" )
 <WRONG_STRING>{
   {mNLS}                                  {  yybegin(YYINITIAL);
                                              return mNLS; }
-  .* / {mONE_NL}                          {  yybegin(YYINITIAL);
+  [^\r\n]*                                {  yybegin(YYINITIAL);
                                              return mWRONG_GSTRING_LITERAL;  }
 }
 
@@ -312,7 +317,7 @@ mAFTER_REGEXP = !( "(" | "{" | {mIDENT} | {mNUM_INT} | "[" )
 
 // Java strings
 {mSTRING_LITERAL}                                          {  return mSTRING_LITERAL; }
-{mSINGLE_QUOTED_STRING_BEGIN}/{mSTRING_NL}                 {  return mWRONG_STRING_LITERAL; }
+{mSINGLE_QUOTED_STRING_BEGIN}                              {  return mWRONG_STRING_LITERAL; }
 
 // GStrings
 {mGSTRING_SINGLE_BEGIN}                                    {  yybegin(IN_SINGLE_GSTRING_DOLLAR);
@@ -325,18 +330,15 @@ mAFTER_REGEXP = !( "(" | "{" | {mIDENT} | {mNUM_INT} | "[" )
 
 {mGSTRING_LITERAL}                                         {  return mGSTRING_LITERAL; }
 
-( \" ([^\"] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT}
-  | \")/{mSTRING_NL}                                       {  return mWRONG_GSTRING_LITERAL; }
-
-
-
-//{mREGEXP_LITERAL} / {mWS}* {mAFTER_REGEXP}              {  return mREGEXP_LITERAL; }
+\" ([^\""$"] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT}
+| \"\"\"[^"$"]                                             {  return mWRONG_GSTRING_LITERAL; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Reserved shorthands //////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 "?"                                       {  return(mQUESTION);  }
+"/"                                       {  return(mDIV);  }
 "("                                       {  return(mLPAREN);  }
 ")"                                       {  return(mRPAREN);  }
 "["                                       {  return(mLBRACK);  }

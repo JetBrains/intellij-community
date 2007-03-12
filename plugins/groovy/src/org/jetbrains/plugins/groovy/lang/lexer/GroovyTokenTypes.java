@@ -54,7 +54,7 @@ public interface GroovyTokenTypes {
   IElementType mGSTRING_LITERAL = new GroovyElementType("Gstring");
 
   IElementType mWRONG_STRING_LITERAL = new GroovyElementType("wrong string");
-  IElementType mWRONG_GSTRING_LITERAL = new GroovyElementType("wrong string");
+  IElementType mWRONG_GSTRING_LITERAL = new GroovyElementType("wrong gstring");
   IElementType mREGEXP_LITERAL = new GroovyElementType("regexp");
 
   /* **************************************************************************************************
@@ -62,6 +62,7 @@ public interface GroovyTokenTypes {
  * ****************************************************************************************************/
 
   IElementType mQUESTION = new GroovyElementType("?");
+  IElementType mDIV = new GroovyElementType("/");
   IElementType mLPAREN = new GroovyElementType("(");
   IElementType mRPAREN = new GroovyElementType(")");
   IElementType mLBRACK = new GroovyElementType("[");
