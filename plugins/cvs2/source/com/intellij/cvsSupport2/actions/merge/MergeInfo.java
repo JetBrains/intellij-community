@@ -181,8 +181,9 @@ class MergeInfo implements MergeDataProvider{
   @NotNull
   private MergeData loadRevisionsInternal(final String firstRevision, final String secondRevision) throws VcsException {
     try {
+      final SimpleRevision firstRevisionNumber = new SimpleRevision(firstRevision);
       final GetFileContentOperation fileToMergeWithContentOperation = GetFileContentOperation.
-        createForFile(myFile, new SimpleRevision(firstRevision));
+        createForFile(myFile, firstRevisionNumber);
 
 
       final GetFileContentOperation originalFileContentOperation = GetFileContentOperation.
@@ -208,6 +209,7 @@ class MergeInfo implements MergeDataProvider{
       result.CURRENT = getStoredContent();
       result.ORIGINAL = originalFileContentOperation.getFileBytes();
       result.LAST = fileToMergeWithContentOperation.getFileBytes();
+      result.LAST_REVISION_NUMBER = firstRevisionNumber.getCvsRevisionNumber();
       return result;
     }
     catch (CannotFindCvsRootException e) {
