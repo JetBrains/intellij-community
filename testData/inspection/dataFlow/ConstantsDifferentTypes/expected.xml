@@ -12,7 +12,7 @@
         <display_name>Test</display_name>
       </class>
     </method>
-    <description>Condition &lt;code&gt;L == 5&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+    <description>Condition &lt;code&gt;L == 5&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
   </problem>
 
   <problem>
@@ -27,7 +27,7 @@
         <display_name>Test</display_name>
       </class>
     </method>
-    <description>Condition &lt;code&gt;l == 0f&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+    <description>Condition &lt;code&gt;l == 0f&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
   </problem>
 
   <problem>
@@ -42,6 +42,6 @@
         <display_name>Test</display_name>
       </class>
     </method>
-    <description>Condition &lt;code&gt;c == 1L&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+    <description>Condition &lt;code&gt;c == 1L&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
   </problem>
 </problems>

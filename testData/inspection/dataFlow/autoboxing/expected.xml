@@ -13,7 +13,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Condition &lt;code&gt;i==j&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+  <description>Condition &lt;code&gt;i==j&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
 </problem>
 
 
@@ -30,7 +30,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Condition &lt;code&gt;i==j2&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;.</description>
+  <description>Condition &lt;code&gt;i==j2&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;</description>
 </problem>
 
 
@@ -47,7 +47,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Condition &lt;code&gt;i==0&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+  <description>Condition &lt;code&gt;i==0&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
 </problem>
 
 
@@ -64,7 +64,7 @@
     </class>
   </method>
   <problem_class>Constant conditions &amp; exceptions</problem_class>
-  <description>Condition &lt;code&gt;i==1&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;.</description>
+  <description>Condition &lt;code&gt;i==1&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;</description>
 </problem>
 
   <problem>
@@ -80,7 +80,7 @@
       </class>
     </method>
     <problem_class>Constant conditions &amp; exceptions</problem_class>
-    <description>Condition &lt;code&gt;big1==333&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+    <description>Condition &lt;code&gt;big1==333&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
   </problem>
 
 
@@ -98,7 +98,7 @@
       </class>
     </method>
     <problem_class>Constant conditions &amp; exceptions</problem_class>
-    <description>Condition &lt;code&gt;333 == big2&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+    <description>Condition &lt;code&gt;333 == big2&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
   </problem>
 
 
@@ -116,7 +116,7 @@
       </class>
     </method>
     <problem_class>Constant conditions &amp; exceptions</problem_class>
-    <description>Condition &lt;code&gt;333==333&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+    <description>Condition &lt;code&gt;333==333&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
   </problem>
 
 
@@ -134,7 +134,7 @@
       </class>
     </method>
     <problem_class>Constant conditions &amp; exceptions</problem_class>
-    <description>Condition &lt;code&gt;big1==big2&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;.</description>
+    <description>Condition &lt;code&gt;big1==big2&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;</description>
   </problem>
 
 
@@ -152,7 +152,7 @@
       </class>
     </method>
     <problem_class>Constant conditions &amp; exceptions</problem_class>
-    <description>Condition &lt;code&gt;prim==big2&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+    <description>Condition &lt;code&gt;prim==big2&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
   </problem>
 
 
@@ -170,7 +170,7 @@
       </class>
     </method>
     <problem_class>Constant conditions &amp; exceptions</problem_class>
-    <description>Condition &lt;code&gt;big1 == 0&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;.</description>
+    <description>Condition &lt;code&gt;big1 == 0&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;</description>
   </problem>
 
 
@@ -188,7 +188,7 @@
       </class>
     </method>
     <problem_class>Constant conditions &amp; exceptions</problem_class>
-    <description>Condition &lt;code&gt;big1 == 332&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;.</description>
+    <description>Condition &lt;code&gt;big1 == 332&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;</description>
   </problem>
 
 
@@ -206,7 +206,7 @@
       </class>
     </method>
     <problem_class>Constant conditions &amp; exceptions</problem_class>
-    <description>Condition &lt;code&gt;c==1234&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+    <description>Condition &lt;code&gt;c==1234&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
   </problem>
 
 
@@ -224,7 +224,7 @@
       </class>
     </method>
     <problem_class>Constant conditions &amp; exceptions</problem_class>
-    <description>Condition &lt;code&gt;c==124&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;.</description>
+    <description>Condition &lt;code&gt;c==124&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;</description>
   </problem>
 
 
@@ -242,7 +242,7 @@
       </class>
     </method>
     <problem_class>Constant conditions &amp; exceptions</problem_class>
-    <description>Condition &lt;code&gt;c==1234&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;.</description>
+    <description>Condition &lt;code&gt;c==1234&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;</description>
   </problem>
 
 
@@ -260,7 +260,7 @@
       </class>
     </method>
     <problem_class>Constant conditions &amp; exceptions</problem_class>
-    <description>Condition &lt;code&gt;c==c&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+    <description>Condition &lt;code&gt;c==c&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
   </problem>
 
 
@@ -278,7 +278,7 @@
       </class>
     </method>
     <problem_class>Constant conditions &amp; exceptions</problem_class>
-    <description>Condition &lt;code&gt;c==c2&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+    <description>Condition &lt;code&gt;c==c2&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
   </problem>
 
   <problem>
@@ -294,7 +294,7 @@
       </class>
     </method>
     <problem_class>Constant conditions &amp; exceptions</problem_class>
-    <description>Condition &lt;code&gt;a == 5&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;.</description>
+    <description>Condition &lt;code&gt;a == 5&lt;/code&gt; is always &lt;code&gt;false&lt;/code&gt;</description>
   </problem>
   <problem>
     <file>Test.java</file>
@@ -309,6 +309,6 @@
       </class>
     </method>
     <problem_class>Constant conditions &amp; exceptions</problem_class>
-    <description>Condition &lt;code&gt;i1 == i2&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;.</description>
+    <description>Condition &lt;code&gt;i1 == i2&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
   </problem>
 </problems>
