@@ -12,12 +12,38 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompiler;
 import org.jetbrains.plugins.groovy.compiler.CompilationUnitsFactory;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Main application component, that loads Groovy language support
  *
  * @author Ilya.Sergey
  */
 public class GroovyLoader implements ApplicationComponent {
+
+    @NotNull
+    public static final String GROOVY_EXTENTION = "groovy";
+
+    @NotNull
+    public static final String GVY_EXTENTION = "gvy";
+
+    @NotNull
+    public static final String GY_EXTENTION = "gy";
+
+    @NotNull
+    public static final String GROOVY_SCRIPT_EXTENTION = "gsh";
+
+    @NotNull
+    public static final Set<String> GROOVY_EXTENTIONS = new HashSet<String>();
+
+    static  {
+        GROOVY_EXTENTIONS.add(GROOVY_EXTENTION);
+        GROOVY_EXTENTIONS.add(GVY_EXTENTION);
+        GROOVY_EXTENTIONS.add(GY_EXTENTION);
+        GROOVY_EXTENTIONS.add(GROOVY_SCRIPT_EXTENTION);
+    }
+
   public GroovyLoader() {
   }
 
@@ -29,7 +55,7 @@ public class GroovyLoader implements ApplicationComponent {
     ApplicationManager.getApplication().runWriteAction(
             new Runnable() {
               public void run() {
-                FileTypeManager.getInstance().registerFileType(GroovyFileType.GROOVY_FILE_TYPE, new String[]{"groovy", "gvy", "gy", "gsh"});
+                FileTypeManager.getInstance().registerFileType(GroovyFileType.GROOVY_FILE_TYPE, GROOVY_EXTENTIONS.toArray(new String[GROOVY_EXTENTIONS.size()]));
               }
             }
     );
