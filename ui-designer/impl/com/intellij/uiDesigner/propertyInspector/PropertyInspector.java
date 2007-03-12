@@ -144,7 +144,8 @@ public final class PropertyInspector extends JPanel{
   }
 
   private boolean showSelectedColumnProperties() {
-    if (myCustomPropertiesPanel != null && IJSwingUtilities.hasFocus(myCustomPropertiesPanel.getComponent())) {
+    if (myCustomPropertiesPanel != null && myPropertiesPanelContainer != null &&
+        IJSwingUtilities.hasFocus(myCustomPropertiesPanel.getComponent())) {
       return true;
     }
     if (myEditor == null) return false;
