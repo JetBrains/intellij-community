@@ -11,6 +11,7 @@ import com.intellij.facet.FacetTypeId;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.Collection;
 
@@ -18,6 +19,7 @@ import java.util.Collection;
  * @author nik
 */
 public class AddFacetAction extends AnAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.actions.AddFacetAction");
   private FacetEditorFacade myEditor;
   private FacetType myType;
 
@@ -36,7 +38,17 @@ public class AddFacetAction extends AnAction {
       facetName = myType.getPresentableName() + i;
       i++;
     }
-    myEditor.createFacet(parent, myType, facetName);
+    final FacetTypeId underlyingFacetType = myType.getUnderlyingFacetType();
+    if (parent == null && underlyingFacetType == null || parent != null && parent.getFacetType().getId() == underlyingFacetType) {
+      myEditor.createFacet(parent, myType, facetName);
+    }
+    else {
+      LOG.assertTrue(parent != null);
+      final FacetInfo grandParent = myEditor.getParent(parent);
+      LOG.assertTrue(grandParent == null && underlyingFacetType == null ||
+                     grandParent != null && grandParent.getFacetType().getId() == underlyingFacetType);
+      myEditor.createFacet(grandParent, myType, facetName);
+    }
   }
 
   private static boolean facetExists(final String facetName, final Collection<FacetInfo> facetInfos) {
@@ -58,17 +70,22 @@ public class AddFacetAction extends AnAction {
       return false;
     }
 
+    final FacetTypeId underlyingTypeId = type.getUnderlyingFacetType();
     final FacetInfo selectedFacet = editor.getSelectedFacetInfo();
-    if (!canAddFacet(selectedFacet, type, editor)) {
+    if (selectedFacet == null) {
+      return underlyingTypeId == null && canAddFacet(null, type, editor);
+    }
+
+    final FacetTypeId selectedFacetType = selectedFacet.getFacetType().getId();
+    if (selectedFacetType == underlyingTypeId) {
+      return canAddFacet(selectedFacet, type, editor);
+    }
+
+    final FacetInfo parent = editor.getParent(selectedFacet);
+    if (!canAddFacet(parent, type, editor)) {
       return false;
     }
-
-    final FacetTypeId underlyingTypeId = type.getUnderlyingFacetType();
-    if (selectedFacet == null) {
-      return underlyingTypeId == null;
-    }
-
-    return underlyingTypeId != null && selectedFacet.getFacetType().getId() == underlyingTypeId;
+    return parent == null && underlyingTypeId == null || parent != null && parent.getFacetType().getId() == underlyingTypeId;
   }
 
   private static boolean canAddFacet(final FacetInfo selectedFacet, final FacetType<?, ?> type, final FacetEditorFacade editor) {
