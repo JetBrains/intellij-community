@@ -1,9 +1,6 @@
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.Commenter;
-import com.intellij.lang.PsiParser;
+import com.intellij.lang.*;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -13,8 +10,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.highlighter.GroovyCommenter;
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
+import org.jetbrains.plugins.groovy.highlighter.GroovyBraceMatcher;
 
 /**
+ * All main properties for Groovy language
+ *
  * @author Ilya.Sergey
  */
 public class GroovyLanguage extends Language {
@@ -35,4 +35,10 @@ public class GroovyLanguage extends Language {
   public Commenter getCommenter() {
     return new GroovyCommenter();
   }
+
+  @Nullable
+  public PairedBraceMatcher getPairedBraceMatcher() {
+    return new GroovyBraceMatcher();
+  }
+
 }
