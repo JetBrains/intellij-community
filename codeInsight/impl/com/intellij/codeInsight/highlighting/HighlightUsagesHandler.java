@@ -91,7 +91,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     createHighlightAction(project, file, targets, editor).run();
   }
 
-  protected static PsiElement getTargetElement(Editor editor) {
+  private static PsiElement getTargetElement(Editor editor) {
     PsiElement target = TargetElementUtil.findTargetElement(editor,
                                                             TargetElementUtil.ELEMENT_NAME_ACCEPTED |
                                                             TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
@@ -427,10 +427,14 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
           for (final PsiClassType actualType : exceptionTypes) {
             if (type.isAssignableFrom(actualType) && typeFilter.accept(actualType)) {
               PsiExpression psiExpression = statement.getException();
-              if (!(psiExpression instanceof PsiNewExpression)) continue;
-              PsiJavaCodeReferenceElement ref = ((PsiNewExpression) psiExpression).getClassReference();
-              if (refs.contains(ref)) continue;
-              refs.add(ref);
+              if (psiExpression instanceof PsiReferenceExpression) {
+                PsiReferenceExpression referenceExpression = (PsiReferenceExpression)psiExpression;
+                if (!refs.contains(referenceExpression)) refs.add(referenceExpression);
+              }
+              else if (!(psiExpression instanceof PsiNewExpression)) {
+                PsiJavaCodeReferenceElement ref = ((PsiNewExpression)psiExpression).getClassReference();
+                if (!refs.contains(ref)) refs.add(ref);
+              }
             }
           }
         }

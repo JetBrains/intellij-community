@@ -28,6 +28,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -447,7 +448,7 @@ public class HighlightClassUtil {
 
 
   //@top
-  private static String checkDefaultConstructorThrowsException(PsiMethod constructor, PsiClassType[] handledExceptions) {
+  private static String checkDefaultConstructorThrowsException(PsiMethod constructor, @NotNull PsiClassType[] handledExceptions) {
     PsiClassType[] referencedTypes = constructor.getThrowsList().getReferencedTypes();
     List<PsiClassType> exceptions = new ArrayList<PsiClassType>();
     for (PsiClassType referencedType : referencedTypes) {
@@ -477,7 +478,7 @@ public class HighlightClassUtil {
                                                                       RefCountHolder refCountHolder,
                                                                       PsiResolveHelper resolveHelper,
                                                                       TextRange textRange,
-                                                                      PsiClassType[] handledExceptions) {
+                                                                      @NotNull PsiClassType[] handledExceptions) {
     PsiClass baseClass = aClass.getSuperClass();
     if (baseClass == null) return null;
     PsiMethod[] constructors = baseClass.getConstructors();
