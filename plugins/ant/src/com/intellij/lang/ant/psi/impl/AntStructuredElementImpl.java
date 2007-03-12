@@ -17,7 +17,9 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SpinAllocator;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.StringSetSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -38,7 +41,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   private volatile int myLastFoundElementOffset = -1;
   private volatile AntElement myLastFoundElement;
   private volatile boolean myIsImported;
-  private volatile boolean myComputingAttrValue;
+  private volatile Set<String> myComputingAttrValue;
   protected volatile boolean myInGettingChildren;
   @NonNls private static final String ANTLIB_NS_PREFIX = "antlib:";
   @NonNls private static final String ANTLIB_XML = "antlib.xml";
@@ -229,15 +232,32 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
   public String computeAttributeValue(final String value) {
     synchronized (PsiLock.LOCK) {
       if (value != null) {
-        if (!myComputingAttrValue) {
-          myComputingAttrValue = true;
-          final Set<PsiElement> set = PsiElementSetSpinAllocator.alloc();
+        if (myComputingAttrValue == null || !myComputingAttrValue.contains(value)) {
           try {
-            return computeAttributeValue(value, set);
+            if (myComputingAttrValue == null) {
+              myComputingAttrValue = StringSetSpinAllocator.alloc();
+            }
+            myComputingAttrValue.add(value);
+            try {
+              final Set<PsiElement> set = PsiElementSetSpinAllocator.alloc();
+              try {
+                return computeAttributeValue(value, set);
+              }
+              finally {
+                PsiElementSetSpinAllocator.dispose(set);
+              }
+            }
+            catch (SpinAllocator.AllocatorExhaustedException e) {
+              return computeAttributeValue(value, new HashSet<PsiElement>());
+            }
           }
           finally {
-            PsiElementSetSpinAllocator.dispose(set);
-            myComputingAttrValue = false;
+            myComputingAttrValue.remove(value);
+            if (myComputingAttrValue.size() == 0) {
+              final Set<String> _strSet = myComputingAttrValue;
+              myComputingAttrValue = null;
+              StringSetSpinAllocator.dispose(_strSet);
+            }
           }
         }
         else if (value.indexOf('$') < 0){

@@ -1,5 +1,7 @@
 package com.intellij.util;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -18,6 +20,19 @@ public class SpinAllocator<T> {
     void disposeInstance(T instance);
   }
 
+  public static class AllocatorExhaustedException extends RuntimeException {
+    public AllocatorExhaustedException() {
+      //noinspection HardCodedStringLiteral
+      super("SpinAllocator has exhausted! Too many threads or you're going to get StackOverflow.");
+    }
+  }
+
+  public static class AllocatorDisposeException extends RuntimeException {
+    public AllocatorDisposeException(@NonNls final String message) {
+      super(message);
+    }
+  }
+  
   private AtomicBoolean[] myEmployed = new AtomicBoolean[MAX_SIMULTANEOUS_ALLOCATIONS];
   private Object[] myObjects = new Object[MAX_SIMULTANEOUS_ALLOCATIONS];
   protected final ICreator<T> myCreator;
@@ -41,20 +56,20 @@ public class SpinAllocator<T> {
         return result;
       }
     }
-    throw new RuntimeException("SpinAllocator has exhausted! Too many threads or you're going to get StackOverflow.");
+    throw new AllocatorExhaustedException();
   }
 
   public void dispose(T instance) {
     for (int i = 0; i < MAX_SIMULTANEOUS_ALLOCATIONS; ++i) {
       if (myObjects[i] == instance) {
         if (!myEmployed[i].get()) {
-          throw new RuntimeException("Instance is already disposed.");
+          throw new AllocatorDisposeException("Instance is already disposed.");
         }
         myDisposer.disposeInstance(instance);
         myEmployed[i].set(false);
         return;
       }
     }
-    throw new RuntimeException("Attempt to dispose non-allocated instance.");
+    throw new AllocatorDisposeException("Attempt to dispose non-allocated instance.");
   }
 }

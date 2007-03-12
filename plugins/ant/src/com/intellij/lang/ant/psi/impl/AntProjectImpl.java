@@ -32,7 +32,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
 
   private volatile AntTarget[] myTargets;
   private volatile AntTarget[] myImportedTargets;
-  private volatile AntFile[] myImports;
+  private volatile List<AntFile> myImports;
+  private AntFile[] myCachedImportsArray;
   private Set<String> myImportsDependentProperties;
     
   private volatile List<AntProperty> myPredefinedProps = new ArrayList<AntProperty>();
@@ -75,12 +76,17 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
       super.clearCaches();
       myTargets = null;
       myImportedTargets = null;
-      myImports = null;
-      myImportsDependentProperties = null;
+      clearImports();
       myReferencedElements = null;
       myRefIdsArray = null;
       myEnvPrefixes = null;
     }
+  }
+
+  private void clearImports() {
+    myImports = null;
+    myCachedImportsArray = null;
+    myImportsDependentProperties = null;
   }
 
   @Nullable
@@ -169,38 +175,24 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
     synchronized (PsiLock.LOCK) {
       if (myImports == null) {
         // this is necessary to avoid recurrent getImportedFiles() and stack overflow
-        myImports = AntFile.NO_FILES;
+        myImports = new ArrayList<AntFile>();
         final XmlTag se = getSourceElement();
         final PsiFile psiFile = se.getContainingFile();
-        final List<AntFile> imports = new ArrayList<AntFile>();
         final StringBuilder builder = StringBuilderSpinAllocator.alloc();
         try {
           for (final XmlTag tag : se.getSubTags()) {
-            //
             // !!! a tag doesn't belong to the current file, so we decide it's resolved via an entity ref
-            //
             if (!psiFile.equals(tag.getContainingFile())) {
               buildTagText(tag, builder);
-
             }
             else if (AntFileImpl.IMPORT_TAG.equals(tag.getName())) {
               final String fileName = tag.getAttributeValue(AntFileImpl.FILE_ATTR);
               final AntFile imported = AntImportImpl.getImportedFile(fileName, this);
               if (imported != null) {
-                imports.add(imported);
+                addImportedFile(imported);
               }
               else {
-                int startProp = 0;
-                while ((startProp = fileName.indexOf("${", startProp)) >= 0) {
-                  final int endProp = fileName.indexOf('}', startProp + 2);
-                  if (endProp > startProp + 2) {
-                    if (myImportsDependentProperties == null) {
-                      myImportsDependentProperties = new HashSet<String>();
-                    }
-                    myImportsDependentProperties.add(fileName.substring(startProp + 2, endProp));
-                  }
-                  startProp += 2;
-                }
+                registerImportsDependentProperties(fileName);
               }
             }
           }
@@ -213,9 +205,14 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
             builder.insert(0, "<project basedir=\"");
             builder.append("</project>");
             final PsiElementFactory elementFactory = getManager().getElementFactory();
-            final XmlFile xmlFile = (XmlFile)elementFactory
-              .createFileFromText("dummyEntities.xml", StdFileTypes.XML, builder.toString(), LocalTimeCounter.currentTime(), false, false);
-            imports.add(new AntFileImpl(xmlFile.getViewProvider()) {
+            final XmlFile xmlFile = (XmlFile)elementFactory.createFileFromText(
+              "dummyEntities.xml", 
+              StdFileTypes.XML, 
+              builder.toString(), 
+              LocalTimeCounter.currentTime(), 
+              false, false
+            );
+            addImportedFile(new AntFileImpl(xmlFile.getViewProvider()) {
               //
               // this is necessary for computing file paths in tags resolved as entity references
               //
@@ -228,12 +225,34 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
         finally {
           StringBuilderSpinAllocator.dispose(builder);
         }
-        final int importedFiles = imports.size();
-        if (importedFiles > 0) {
-          myImports = imports.toArray(new AntFile[importedFiles]);
-        }
       }
-      return myImports;
+      if (myCachedImportsArray == null) {
+        myCachedImportsArray = myImports.toArray(new AntFile[myImports.size()]);
+      }
+      return myCachedImportsArray;
+    }
+  }
+
+  private void registerImportsDependentProperties(final String fileName) {
+    int startProp = 0;
+    while ((startProp = fileName.indexOf("${", startProp)) >= 0) {
+      final int endProp = fileName.indexOf('}', startProp + 2);
+      if (endProp > startProp + 2) {
+        if (myImportsDependentProperties == null) {
+          myImportsDependentProperties = new HashSet<String>();
+        }
+        myImportsDependentProperties.add(fileName.substring(startProp + 2, endProp));
+      }
+      startProp += 2;
+    }
+  }
+
+  private void addImportedFile(final AntFile imported) {
+    try {
+      myImports.add(imported);
+    }
+    finally {
+      myCachedImportsArray = null;
     }
   }
 
@@ -327,7 +346,7 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
         super.setProperty(name, element);
         // hack: if there are any imports defined in terms of this property, they will be recalculated 
         if (myImportsDependentProperties != null && myImportsDependentProperties.contains(name)) {
-          myImports = null;
+          clearImports();
         }
       }
     }
