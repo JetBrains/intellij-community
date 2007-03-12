@@ -264,7 +264,6 @@ public class JavacCompiler extends ExternalCompiler {
       }
     }
     else {
-      //noinspection HardCodedStringLiteral
       File sourcesFile = FileUtil.createTempFile("javac", ".tmp");
       sourcesFile.deleteOnExit();
       myTempFiles.add(sourcesFile);
@@ -297,7 +296,6 @@ public class JavacCompiler extends ExternalCompiler {
       commandLine.add(jdk.getToolsPath() + File.pathSeparator + cpString);
     }
     else {
-      //noinspection HardCodedStringLiteral
       File cpFile = FileUtil.createTempFile(tempFileName, ".tmp");
       cpFile.deleteOnExit();
       myTempFiles.add(cpFile);
@@ -326,11 +324,6 @@ public class JavacCompiler extends ExternalCompiler {
   }
 
   public void compileFinished() {
-    if (myTempFiles.size() > 0) {
-      for (final File myTempFile : myTempFiles) {
-        FileUtil.delete(myTempFile);
-      }
-      myTempFiles.clear();
-    }
+    FileUtil.asyncDelete(myTempFiles);
   }
 }

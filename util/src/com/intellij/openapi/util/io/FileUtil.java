@@ -545,7 +545,7 @@ public class FileUtil {
     if (dirs == null) return;
     for (File dir : dirs) {
       if (dir.isFile()) {
-        final String path = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(absoluteRoot, dir));
+        final String path = toSystemIndependentName(getRelativePath(absoluteRoot, dir));
         if (pattern.matcher(path).matches()) {
           files.add(dir);
         }

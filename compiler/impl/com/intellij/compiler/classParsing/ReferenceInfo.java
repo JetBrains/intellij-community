@@ -10,8 +10,6 @@ import java.io.IOException;
 
 public class ReferenceInfo extends ItemInfo {
 
-  public static final ReferenceInfo[] EMPTY_ARRAY = new ReferenceInfo[0];
-
   public ReferenceInfo(int declaringClassName) {
     super(declaringClassName);
   }

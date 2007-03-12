@@ -125,9 +125,9 @@ public abstract class CompilerParsingThread implements Runnable, OutputParser.Ca
 
 
   private String readLine(final Reader reader) throws IOException {
-    boolean first = true;
     StringBuilder buffer = StringBuilderSpinAllocator.alloc();
     try {
+      boolean first = true;
       while (true) {
         int c = reader.read();
         if (c == -1) break;

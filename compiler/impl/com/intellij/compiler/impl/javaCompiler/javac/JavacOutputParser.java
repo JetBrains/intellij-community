@@ -123,7 +123,7 @@ public class JavacOutputParser extends OutputParser {
 
           if (colNum > 0){
             messages = convertMessages(messages);
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             for (final String m : messages) {
               if (buf.length() > 0) {
                 buf.append("\n");

@@ -13,6 +13,7 @@ import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,11 +39,8 @@ public class ClassFileReader {
   private AnnotationConstantValue[] myRuntimeInvisibleAnnotations;
   @NonNls private static final String CONSTRUCTOR_NAME = "<init>";
 
-  public ClassFileReader(File file, SymbolTable symbolTable) throws ClsFormatException {
+  public ClassFileReader(@NotNull File file, SymbolTable symbolTable) {
     mySymbolTable = symbolTable;
-    if (file == null) {
-      throw new ClsFormatException();
-    }
     myFile = file;
   }
 
@@ -276,7 +274,7 @@ public class ClassFileReader {
     return myRuntimeInvisibleAnnotations;
   }
 
-  public boolean isInterface(){
+  private boolean isInterface(){
     return (getAccessFlags() & ClsUtil.ACC_INTERFACE) != 0;
   }
 

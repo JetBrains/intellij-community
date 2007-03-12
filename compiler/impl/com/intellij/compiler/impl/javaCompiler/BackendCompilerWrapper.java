@@ -641,12 +641,11 @@ public class BackendCompilerWrapper {
     paths.add(new CompiledClass(classQName, relativePathToSource, pathToClass));
   }
 
-  private void updateOutputItemsList(
-    final String outputDir, VirtualFile javaFile, Set<VirtualFile> compiledWithErrors, VirtualFile sourceRoot, final String packagePrefix) throws CacheCorruptedException {
+  private void updateOutputItemsList(final String outputDir, VirtualFile javaFile, Set<VirtualFile> compiledWithErrors, VirtualFile sourceRoot, final String packagePrefix) throws CacheCorruptedException {
 
     final Cache newCache = myCompileContext.getDependencyCache().getNewClassesCache();
     final Set<CompiledClass> paths = myFileNameToSourceMap.get(javaFile.getName());
-    if (paths != null && paths.size() > 0) {
+    if (paths != null && !paths.isEmpty()) {
       final String prefix = packagePrefix != null && packagePrefix.length() > 0 ? packagePrefix.replace('.', '/') + "/" : "";
       final String filePath = "/" + prefix + VfsUtil.getRelativePath(javaFile, sourceRoot, '/');
 

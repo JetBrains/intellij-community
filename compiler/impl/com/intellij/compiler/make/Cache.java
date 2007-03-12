@@ -17,7 +17,6 @@ import java.util.Collection;
  * Date: Aug 8, 2003
  * Time: 7:03:56 PM
  */
-@SuppressWarnings({"SynchronizeOnThis"})
 public class Cache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.Cache");
 
@@ -31,7 +30,7 @@ public class Cache {
   @NonNls private static final String DECLARATIONS_INDEX_FILE_NAME = "declarations_index.dat";
   @NonNls private static final String CLASSINFO_INDEX_FILE_NAME = "classinfo_index.dat";
 
-  public Cache(String storePath, final int initialCacheSize, final boolean canResize) throws CacheCorruptedException {
+  public Cache(@NonNls String storePath, final int initialCacheSize, final boolean canResize) {
     myViewPool = new ViewPool(storePath, initialCacheSize, canResize);
     myDeclarationsIndexFile = new File(storePath + "/" + DECLARATIONS_INDEX_FILE_NAME);
     myClassInfosIndexFile = new File(storePath + "/" + CLASSINFO_INDEX_FILE_NAME);
@@ -81,7 +80,7 @@ public class Cache {
       classInfoView.setPath(reader.getPath());
 
       final String superClass = reader.getSuperClass();
-      final int superQName = "".equals(superClass)? Cache.UNKNOWN : symbolTable.getId(superClass);
+      final int superQName = "".equals(superClass)? UNKNOWN : symbolTable.getId(superClass);
 
       LOG.assertTrue(superQName != qName);
 
@@ -323,8 +322,7 @@ public class Cache {
   public synchronized int getSuperQualifiedName(int classId) throws CacheCorruptedException {
     try {
       final ClassInfoView view = myViewPool.getClassInfoView(classId);
-      final int superQualifiedName = view.getSuperQualifiedName();
-      return superQualifiedName;
+      return view.getSuperQualifiedName();
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -411,7 +409,7 @@ public class Cache {
           return id;
         }
       }
-      return Cache.UNKNOWN;
+      return UNKNOWN;
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -428,7 +426,7 @@ public class Cache {
           return id;
         }
       }
-      return Cache.UNKNOWN;
+      return UNKNOWN;
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -445,7 +443,7 @@ public class Cache {
           return id;
         }
       }
-      return Cache.UNKNOWN;
+      return UNKNOWN;
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -480,7 +478,7 @@ public class Cache {
           return methodId;
         }
       }
-      return Cache.UNKNOWN;
+      return UNKNOWN;
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -850,7 +848,7 @@ public class Cache {
     }
   }
 
-  public synchronized MemberDeclarationInfo[] getMemberDeclarations(int classQName) throws CacheCorruptedException {
+  private MemberDeclarationInfo[] getMemberDeclarations(int classQName) throws CacheCorruptedException {
     final int classDeclarationId = getClassDeclarationId(classQName);
     final int[] fieldIds = getFieldIds(classDeclarationId);
     final int[] methodIds = getMethodIds(classDeclarationId);
@@ -937,14 +935,14 @@ public class Cache {
         }
       }
 
-      if (fieldsToRemove.size() > 0) {
+      if (!fieldsToRemove.isEmpty()) {
         final int[] fieldsArray = fieldsToRemove.toArray();
         for (int aFieldsArray : fieldsArray) {
           removeFieldDeclaration(classDeclarationId, aFieldsArray);
         }
       }
 
-      if (methodsToRemove.size() > 0) {
+      if (!methodsToRemove.isEmpty()) {
         final int[] methodsArray = methodsToRemove.toArray();
         for (int aMethodsArray : methodsArray) {
           removeMethodDeclaration(classDeclarationId, aMethodsArray);

@@ -29,10 +29,6 @@ public class JobImpl<T> implements Job<T> {
     myPriority = priority;
   }
 
-  public JobImpl(final String title) {
-    this(title, DEFAULT_PRIORITY);
-  }
-
   public String getTitle() {
     return myTitle;
   }

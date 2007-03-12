@@ -63,7 +63,7 @@ public class DependencyProcessor {
     addRemovedMembers(oldFields, oldMethods, newFields, newMethods, myRemovedMembers);
     addChangedMembers(oldFields, oldMethods, newFields, newMethods, myChangedMembers);
 
-    myMembersChanged = myAddedMembers.size() > 0 || myRemovedMembers.size() > 0 || myChangedMembers.size() > 0;
+    myMembersChanged = !myAddedMembers.isEmpty() || !myRemovedMembers.isEmpty() || !myChangedMembers.isEmpty();
     // track changes in super list
     final int oldCacheClassId = cache.getClassId(qName);
     final int newCacheClassId = newClassesCache.getClassId(qName);
@@ -156,11 +156,11 @@ public class DependencyProcessor {
         markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: added annotation type member without default " + myDependencyCache.resolve(myQName) : "");
         return;
       }
-      if (myRemovedMembers.size() > 0) {
+      if (!myRemovedMembers.isEmpty()) {
         markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: removed annotation type member " + myDependencyCache.resolve(myQName) : "");
         return;
       }
-      if (myChangedMembers.size() > 0) { // for annotations "changed" means return type changed
+      if (!myChangedMembers.isEmpty()) { // for annotations "changed" means return type changed
         markAll(myBackDependencies, LOG.isDebugEnabled()? "; reason: changed annotation member's type " + myDependencyCache.resolve(myQName) : "");
         return;
       }
@@ -275,7 +275,7 @@ public class DependencyProcessor {
     extractMethods(myRemovedMembers, methodsToCheck, false);
     extractMethods(myAddedMembers, methodsToCheck, false);
 
-    processInheritanceDependencies(methodsToCheck.size() > 0);
+    processInheritanceDependencies(!methodsToCheck.isEmpty());
 
     if (!MakeUtil.isAnonymous(myDependencyCache.resolve(myQName))) {
       // these checks make no sence for anonymous classes
@@ -283,7 +283,7 @@ public class DependencyProcessor {
       extractFieldNames(myAddedMembers, fieldNames);
       int addedFieldsCount = fieldNames.size();
       extractFieldNames(myRemovedMembers, fieldNames);
-      if (fieldNames.size() > 0) {
+      if (!fieldNames.isEmpty()) {
         cacheNavigator.walkSuperClasses(myQName, new ClassInfoProcessor() {
           public boolean process(final int classQName) throws CacheCorruptedException {
             markUseDependenciesOnFields(classQName, fieldNames);
@@ -313,7 +313,7 @@ public class DependencyProcessor {
         });
       }
 
-      if (methodsToCheck.size() > 0) {
+      if (!methodsToCheck.isEmpty()) {
         cacheNavigator.walkSuperClasses(myQName, new ClassInfoProcessor() {
           public boolean process(int classQName) throws CacheCorruptedException {
             markUseDependenciesOnEquivalentMethods(classQName, methodsToCheck, myQName);
@@ -359,13 +359,10 @@ public class DependencyProcessor {
     // if retention policy changed from SOURCE to CLASS or RUNTIME, all sources should be recompiled to propagate changes
     final int oldPolicy = MakeUtil.getAnnotationRetentionPolicy(myQName, oldCache, myDependencyCache.getSymbolTable());
     final int newPolicy = MakeUtil.getAnnotationRetentionPolicy(myQName, newCache, myDependencyCache.getSymbolTable());
-    if ((oldPolicy == RetentionPolicies.SOURCE) && (newPolicy == RetentionPolicies.CLASS || newPolicy == RetentionPolicies.RUNTIME)) {
+    if (oldPolicy == RetentionPolicies.SOURCE && (newPolicy == RetentionPolicies.CLASS || newPolicy == RetentionPolicies.RUNTIME)) {
       return true;
     }
-    if ((oldPolicy == RetentionPolicies.CLASS) && (newPolicy == RetentionPolicies.RUNTIME)) {
-      return true;
-    }
-    return false;
+    return oldPolicy == RetentionPolicies.CLASS && newPolicy == RetentionPolicies.RUNTIME;
   }
 
   private void markAll(Dependency[] backDependencies, @NonNls String reason) throws CacheCorruptedException {
@@ -453,7 +450,7 @@ public class DependencyProcessor {
 
   private boolean isDependentOnEquivalentMethods(MethodInfo[] checkedMembers, Set<MemberInfo> members) throws CacheCorruptedException {
     // check if 'members' contains method with the same name and the same numbers of parameters, but with different types
-    if (members.size() == 0) return false; // optimization
+    if (members.isEmpty()) return false; // optimization
     for (MethodInfo checkedMethod : checkedMembers) {
       if (hasEquivalentMethod(members, checkedMethod)) {
         return true;
@@ -714,7 +711,7 @@ public class DependencyProcessor {
   }
 
   private boolean hasBaseAbstractMethodsInHierarchy(int fromClassQName, final Set methodsToCheck) throws CacheCorruptedException {
-    if (fromClassQName == Cache.UNKNOWN || methodsToCheck.size() == 0) {
+    if (fromClassQName == Cache.UNKNOWN || methodsToCheck.isEmpty()) {
       return false;
     }
     final Cache cache = myDependencyCache.getCache();
@@ -724,7 +721,7 @@ public class DependencyProcessor {
         return true;
       }
     }
-    if (methodsToCheck.size() == 0) {
+    if (methodsToCheck.isEmpty()) {
       return false;
     }
     int[] superInterfaces = cache.getSuperInterfaces(cache.getClassId(fromClassQName));
@@ -802,7 +799,7 @@ public class DependencyProcessor {
   @SuppressWarnings({"HardCodedStringLiteral"})
   private @NonNls String getMethodText(MethodInfo methodInfo) throws CacheCorruptedException {
     final SymbolTable symbolTable = myDependencyCache.getSymbolTable();
-    StringBuffer text = new StringBuffer(16);
+    StringBuilder text = new StringBuilder(16);
     final String returnType = signatureToSourceTypeName(methodInfo.getReturnTypeDescriptor(symbolTable));
     text.append(returnType);
     text.append(" ");
@@ -826,7 +823,7 @@ public class DependencyProcessor {
     for (int oldInterface : oldInterfaces) {
       boolean found = false;
       for (int newInterface : newInterfaces) {
-        found = (oldInterface == newInterface);
+        found = oldInterface == newInterface;
         if (found) {
           break;
         }
@@ -871,7 +868,7 @@ public class DependencyProcessor {
 
   private static void addAddedMembers(TIntObjectHashMap<FieldInfo> oldFields, Map<String, MethodInfoContainer> oldMethods,
                                TIntObjectHashMap<FieldInfo> newFields, Map<String, MethodInfoContainer> newMethods,
-                               Collection<MemberInfo> members) throws CacheCorruptedException {
+                               Collection<MemberInfo> members) {
 
     for (final TIntObjectIterator<FieldInfo> it = newFields.iterator(); it.hasNext();) {
       it.advance();
@@ -890,7 +887,7 @@ public class DependencyProcessor {
 
   private static void addRemovedMembers(TIntObjectHashMap<FieldInfo> oldFields, Map<String, MethodInfoContainer> oldMethods,
                                TIntObjectHashMap<FieldInfo> newFields, Map<String, MethodInfoContainer> newMethods,
-                               Collection<MemberInfo> members) throws CacheCorruptedException {
+                               Collection<MemberInfo> members)  {
     addAddedMembers(newFields, newMethods, oldFields, oldMethods, members);
   }
 
@@ -911,7 +908,7 @@ public class DependencyProcessor {
       }
     }
 
-    if (oldMethods.size() > 0) {
+    if (!oldMethods.isEmpty()) {
       final SymbolTable symbolTable = myDependencyCache.getSymbolTable();
       final Set<MethodInfo> processed = new HashSet<MethodInfo>();
       for (final String signature : oldMethods.keySet()) {
@@ -987,7 +984,7 @@ public class DependencyProcessor {
     return false;
   }
 
-  public static @NonNls
+  private static @NonNls
   String signatureToSourceTypeName(String signature)
   {
     try {
