@@ -62,17 +62,18 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
             final PsiElement parent = methodNameIdentifier.getParent();
             assert parent != null;
             final PsiMethodCallExpression callExpression =
-                    (PsiMethodCallExpression)parent .getParent();
+                    (PsiMethodCallExpression)parent.getParent();
+            if (isAssertTrueThatCouldBeAssertSame(callExpression)) {
+                replaceAssertTrueWithAssertSame(callExpression, project);
+                return;
+            }
             if (isAssertTrueThatCouldBeAssertEquality(callExpression)) {
                 replaceAssertTrueWithAssertEquals(callExpression, project);
-            }
-            else if (isAssertEqualsThatCouldBeAssertLiteral(callExpression)) {
+            } else if (isAssertEqualsThatCouldBeAssertLiteral(callExpression)) {
                 replaceAssertEqualsWithAssertLiteral(callExpression, project);
-            }
-            else if (isAssertTrueThatCouldBeFail(callExpression)) {
+            } else if (isAssertTrueThatCouldBeFail(callExpression)) {
                 replaceAssertWithFail(callExpression);
-            }
-            else if (isAssertFalseThatCouldBeFail(callExpression)) {
+            } else if (isAssertFalseThatCouldBeFail(callExpression)) {
                 replaceAssertWithFail(callExpression);
             }
         }
@@ -187,6 +188,78 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
                     newExpression.toString());
         }
 
+        private static void replaceAssertTrueWithAssertSame(
+                PsiMethodCallExpression callExpression, Project project)
+                throws IncorrectOperationException {
+            final PsiReferenceExpression methodExpression =
+                    callExpression.getMethodExpression();
+            final PsiMethod method = (PsiMethod)methodExpression.resolve();
+            assert method != null;
+            final PsiParameterList parameterList = method.getParameterList();
+            final PsiParameter[] parameters = parameterList.getParameters();
+            final PsiManager psiManager = callExpression.getManager();
+            final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+            final PsiType stringType =
+                    PsiType.getJavaLangString(psiManager, scope);
+            final PsiType paramType1 = parameters[0].getType();
+            final PsiExpressionList argumentList =
+                    callExpression.getArgumentList();
+            final PsiExpression[] args = argumentList.getExpressions();
+            final int testPosition;
+            final PsiExpression message;
+            if (paramType1.equals(stringType) && parameters.length >= 2) {
+                testPosition = 1;
+                message = args[0];
+            } else {
+                testPosition = 0;
+                message = null;
+            }
+            final PsiExpression testArg = args[testPosition];
+            PsiExpression lhs = null;
+            PsiExpression rhs = null;
+            if (testArg instanceof PsiBinaryExpression) {
+                lhs = ((PsiBinaryExpression)testArg).getLOperand();
+                rhs = ((PsiBinaryExpression)testArg).getROperand();
+            } else if (testArg instanceof PsiMethodCallExpression) {
+                final PsiMethodCallExpression call =
+                        (PsiMethodCallExpression)testArg;
+                final PsiReferenceExpression equalityMethodExpression =
+                        call.getMethodExpression();
+                final PsiExpressionList equalityArgumentList =
+                        call.getArgumentList();
+                final PsiExpression[] equalityArgs =
+                        equalityArgumentList.getExpressions();
+                rhs = equalityArgs[0];
+                lhs = equalityMethodExpression.getQualifierExpression();
+            }
+            if (!(lhs instanceof PsiLiteralExpression) &&
+                    rhs instanceof PsiLiteralExpression) {
+                final PsiExpression temp = lhs;
+                lhs = rhs;
+                rhs = temp;
+            }
+            @NonNls final StringBuilder newExpression = new StringBuilder();
+            final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(
+                    callExpression, PsiMethod.class);
+            if (containingMethod != null && AnnotationUtil.isAnnotated(
+                    containingMethod, "org.junit.Test", true)) {
+                newExpression.append("org.junit.Assert.");
+            }
+            newExpression.append("assertSame(");
+            if (message != null) {
+                newExpression.append(message.getText());
+                newExpression.append(',');
+            }
+            assert lhs != null;
+            newExpression.append(lhs.getText());
+            newExpression.append(',');
+            assert rhs != null;
+            newExpression.append(rhs.getText());
+            newExpression.append(')');
+            replaceExpressionAndShorten(callExpression,
+                    newExpression.toString());
+        }
+
         private static void replaceAssertEqualsWithAssertLiteral(
                 PsiMethodCallExpression callExpression, Project project)
                 throws IncorrectOperationException {
@@ -266,6 +339,10 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
+            if (isAssertTrueThatCouldBeAssertSame(expression)) {
+                registerMethodCallError(expression);
+                return;
+            }
             if (isAssertTrueThatCouldBeAssertEquality(expression)) {
                 registerMethodCallError(expression);
             } else if (isAssertEqualsThatCouldBeAssertLiteral(expression)) {
@@ -309,10 +386,41 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         final PsiExpressionList argumentList = expression.getArgumentList();
         final PsiExpression[] args = argumentList.getExpressions();
         final PsiExpression testArg = args[testPosition];
-        if (testArg == null) {
+        return testArg != null && isEqualityComparison(testArg);
+    }
+
+    static boolean isAssertTrueThatCouldBeAssertSame(
+            PsiMethodCallExpression expression) {
+        if (!isAssertTrue(expression)) {
             return false;
         }
-        return isEqualityComparison(testArg);
+        final PsiReferenceExpression methodExpression =
+                expression.getMethodExpression();
+        final PsiMethod method = (PsiMethod)methodExpression.resolve();
+        if (method == null) {
+            return false;
+        }
+        final PsiParameterList parameterList = method.getParameterList();
+        final PsiParameter[] parameters = parameterList.getParameters();
+        if (parameters.length < 1) {
+            return false;
+        }
+        final PsiManager psiManager = expression.getManager();
+        final Project project = psiManager.getProject();
+        final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+        final PsiType stringType =
+                PsiType.getJavaLangString(psiManager, scope);
+        final PsiType paramType1 = parameters[0].getType();
+        final int testPosition;
+        if (paramType1.equals(stringType) && parameters.length > 1) {
+            testPosition = 1;
+        } else {
+            testPosition = 0;
+        }
+        final PsiExpressionList argumentList = expression.getArgumentList();
+        final PsiExpression[] args = argumentList.getExpressions();
+        final PsiExpression testArg = args[testPosition];
+        return testArg != null && isIdentityComparison(testArg);
     }
 
     static boolean isAssertTrueThatCouldBeFail(
@@ -346,10 +454,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         final PsiExpressionList argumentList = expression.getArgumentList();
         final PsiExpression[] args = argumentList.getExpressions();
         final PsiExpression testArg = args[testPosition];
-        if (testArg == null) {
-            return false;
-        }
-        return PsiKeyword.FALSE.equals(testArg.getText());
+        return testArg != null && PsiKeyword.FALSE.equals(testArg.getText());
     }
 
     static boolean isAssertFalseThatCouldBeFail(
@@ -383,10 +488,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         final PsiExpressionList argumentList = expression.getArgumentList();
         final PsiExpression[] args = argumentList.getExpressions();
         final PsiExpression testArg = args[testPosition];
-        if (testArg == null) {
-            return false;
-        }
-        return PsiKeyword.TRUE.equals(testArg.getText());
+        return testArg != null && PsiKeyword.TRUE.equals(testArg.getText());
     }
 
     static boolean isAssertEqualsThatCouldBeAssertLiteral(
@@ -427,10 +529,8 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         if (firstTestArg == null) {
             return false;
         }
-        if (secondTestArg == null) {
-            return false;
-        }
-        return isSimpleLiteral(firstTestArg) || isSimpleLiteral(secondTestArg);
+        return secondTestArg != null && (isSimpleLiteral(firstTestArg) ||
+                isSimpleLiteral(secondTestArg));
     }
 
     static boolean isSimpleLiteral(PsiExpression arg) {
@@ -458,10 +558,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
                 return false;
             }
             final PsiType type = lhs.getType();
-            if (type == null) {
-                return false;
-            }
-            return ClassUtils.isPrimitive(type);
+            return type != null && ClassUtils.isPrimitive(type);
         } else if (testArg instanceof PsiMethodCallExpression) {
             final PsiMethodCallExpression call =
                     (PsiMethodCallExpression)testArg;
@@ -471,6 +568,20 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
             return methodExpression.getQualifierExpression() != null;
+        }
+        return false;
+    }
+
+    private static boolean isIdentityComparison(PsiExpression testArg) {
+        if (testArg instanceof PsiBinaryExpression) {
+            final PsiBinaryExpression expression = (PsiBinaryExpression)testArg;
+            final IElementType tokenType = expression.getOperationTokenType();
+            if (!tokenType.equals(JavaTokenType.EQEQ)) {
+                return false;
+            }
+            final PsiExpression rhs =
+                    expression.getROperand();
+            return rhs != null;
         }
         return false;
     }
