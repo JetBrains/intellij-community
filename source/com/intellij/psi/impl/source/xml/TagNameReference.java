@@ -27,6 +27,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import com.intellij.xml.impl.schema.SchemaNSDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -106,12 +107,11 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
       final String namespacePrefix = element.getNamespacePrefix();
 
       if (namespacePrefix.length() > 0) {
-        if (PsiUtil.isInJspFile(element.getContainingFile())) {
-          final XmlNSDescriptor nsDescriptor = element.getNSDescriptor(element.getNamespace(), true);
 
-          if (nsDescriptor instanceof TldDescriptor) {
-            newElementName = namespacePrefix + ":" + newElementName;
-          }
+        final XmlNSDescriptor nsDescriptor = element.getNSDescriptor(element.getNamespace(), true);
+
+        if (nsDescriptor instanceof TldDescriptor || nsDescriptor instanceof SchemaNSDescriptor) {
+          newElementName = namespacePrefix + ":" + newElementName;
         }
       }
     }
