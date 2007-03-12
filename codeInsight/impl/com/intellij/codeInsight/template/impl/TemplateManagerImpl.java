@@ -3,12 +3,11 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.TemplateEditingListener;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
@@ -174,6 +173,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
     if (template == null) return false;
 
+    /*    Seems to work so far. TODO: remove
     if (StdLanguages.JSPX.equals(file.getLanguage())) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
@@ -183,6 +183,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
       return false;
     }
+    */
 
     if (shortcutChar != 0 && getShortcutChar(template) != shortcutChar) {
       return false;
