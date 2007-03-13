@@ -11,6 +11,7 @@
 package com.intellij.cvsSupport2.changeBrowser;
 
 import com.intellij.CvsBundle;
+import com.intellij.peer.PeerFactory;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
@@ -52,9 +53,12 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
 
   public List<CvsChangeList> getAllCommittedChanges(ChangeBrowserSettings settings, final int maxCount) throws VcsException {
     LinkedHashSet<CvsChangeList> result = new LinkedHashSet<CvsChangeList>();
-    final VirtualFile[] files = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(CvsVcs2.getInstance(myProject));
+    final CvsVcs2 vcs = CvsVcs2.getInstance(myProject);
+    final VirtualFile[] files = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(vcs);
     for(VirtualFile file: files) {
-      result.addAll(getCommittedChanges(settings, file, 0));
+      if (vcs.fileIsUnderVcs(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+        result.addAll(getCommittedChanges(settings, file, 0));
+      }
     }
     return new ArrayList<CvsChangeList>(result);
   }
