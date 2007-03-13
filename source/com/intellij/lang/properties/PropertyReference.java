@@ -11,28 +11,14 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiElementResolveResult;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ResolveResult;
-import com.intellij.psi.ElementManipulator;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author cdr
@@ -151,7 +137,7 @@ public class PropertyReference implements PsiPolyVariantReference, QuickFixProvi
     variants.add(property);
   }
 
-  private void addVariantsFromFile(final PropertiesFile propertiesFile, final Set<Object> variants) {
+  protected void addVariantsFromFile(final PropertiesFile propertiesFile, final Set<Object> variants) {
     if (propertiesFile == null) return;
     List<Property> properties = propertiesFile.getProperties();
     for (Property property : properties) {
