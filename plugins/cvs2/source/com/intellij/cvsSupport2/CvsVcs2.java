@@ -262,6 +262,7 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
     return myCvsHistoryProvider;
   }
 
+  @NotNull
   public VcsHistoryProvider getVcsHistoryProvider() {
     return myCvsHistoryProvider;
   }

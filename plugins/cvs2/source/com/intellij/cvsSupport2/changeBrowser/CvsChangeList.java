@@ -44,7 +44,7 @@ public class CvsChangeList implements CommittedChangeList {
   private List<Change> myChanges;
   @NonNls static final String EXP_STATE = "Exp";
   @NonNls public static final String ADDED_STATE = "added";
-  @NonNls static final String DEAD_STATE = "dead";
+  @NonNls public static final String DEAD_STATE = "dead";
 
 
   public CvsChangeList(final long number, final String description, final long date,
