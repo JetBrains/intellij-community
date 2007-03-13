@@ -26,17 +26,11 @@ import org.jetbrains.annotations.NotNull;
 %{
 
   private Stack <IElementType> gStringStack = new Stack<IElementType>();
-  private void clearGStack() {
-    while (!gStringStack.isEmpty()){
-      gStringStack.pop();
-    }
-  }
+  private Stack <IElementType> blockStack = new Stack<IElementType>();
 
-  private Stack <Stack<IElementType>> blockStack = new Stack<Stack<IElementType>>();
-  private void clearBlockStack() {
-    while (!blockStack.isEmpty()){
-      blockStack.pop();
-    }
+  private void clearStacks(){
+    gStringStack.clear();
+    blockStack.clear();
   }
 
 %}
@@ -191,21 +185,16 @@ mAFTER_REGEXP = !( "(" | "{" | {mIDENT} | {mNUM_INT} | "[" )
 
   {mIDENT}("."{mIDENT})*                  {  yybegin(IN_SINGLE_GSTRING);
                                              return mIDENT; }
-  "{"                                     {  blockStack.push(new Stack<IElementType>());
-                                             blockStack.peek().push(mLPAREN);
+  "{"                                     {  blockStack.push(mLPAREN);
+
                                              yybegin(IN_INNER_BLOCK);
                                              return mLCURLY; }
-  [^{[:jletter:]\n\r] [^\n\r]*            {  clearGStack();
+  [^{[:jletter:]\n\r] [^\n\r]*            {  gStringStack.clear();
                                              yybegin(YYINITIAL);
                                              return mWRONG_GSTRING_LITERAL;  }
   {mNLS}                                  {  yybegin(YYINITIAL);
-                                             clearGStack();
-                                             clearBlockStack();
+                                             clearStacks();
                                              return mNLS;}
-  .                                       {  yybegin(WRONG_STRING);
-                                             clearGStack();
-                                             clearBlockStack();
-                                             return mWRONG_GSTRING_LITERAL; }
 }
 
 <IN_SINGLE_GSTRING> {
@@ -218,35 +207,25 @@ mAFTER_REGEXP = !( "(" | "{" | {mIDENT} | {mNUM_INT} | "[" )
                                                yybegin(IN_INNER_BLOCK);
                                              }
                                              return mGSTRING_SINGLE_END; }
-  {mGSTRING_SINGLE_CONTENT}               {  clearGStack();
+  {mGSTRING_SINGLE_CONTENT}               {  gStringStack.clear();
                                              yybegin(YYINITIAL);
                                              return mWRONG_GSTRING_LITERAL; }
-  .                                       {  yybegin(WRONG_STRING);
-                                             clearBlockStack();
-                                             clearGStack();
-                                             return mWRONG_GSTRING_LITERAL; }
-  {mNLS}                                  {  clearGStack();
-                                             clearBlockStack();
+  {mNLS}                                  {  clearStacks();
                                              yybegin(YYINITIAL);
                                              return mNLS; }
 }
 
 <WRONG_STRING>{
-  {mNLS}                                  {  yybegin(YYINITIAL);
-                                             return mNLS; }
-  [^\r\n]*                                {  yybegin(YYINITIAL);
+  [^]*                                    {  yybegin(YYINITIAL);
                                              return mWRONG_GSTRING_LITERAL;  }
 }
 
 <IN_INNER_BLOCK>{
 
   "}"                                     {  if (!blockStack.isEmpty()) {
-                                               IElementType br = blockStack.peek().pop();
-                                               if (blockStack.peek().isEmpty()) {
-                                                 blockStack.pop();
-                                                 if (br.equals(mLPAREN)) yybegin(IN_SINGLE_GSTRING);
-                                                 if (br.equals(mLBRACK)) yybegin(IN_TRIPLE_GSTRING);
-                                               }
+                                               IElementType br = blockStack.pop();
+                                               if (br.equals(mLPAREN)) yybegin(IN_SINGLE_GSTRING);
+                                               if (br.equals(mLBRACK)) yybegin(IN_TRIPLE_GSTRING);
                                              }
                                              return mRCURLY; }
 }
@@ -256,12 +235,10 @@ mAFTER_REGEXP = !( "(" | "{" | {mIDENT} | {mNUM_INT} | "[" )
 
   {mIDENT}("."{mIDENT})*                  {  yybegin(IN_TRIPLE_GSTRING);
                                              return mIDENT; }
-  "{"                                     {  blockStack.push(new Stack<IElementType>());
-                                             blockStack.peek().push(mLBRACK);
+  "{"                                     {  blockStack.push(mLBRACK);
                                              yybegin(IN_INNER_BLOCK);
                                              return mLCURLY; }
-  [^{[:jletter:]](. | mONE_NL)*           {  clearGStack();
-                                             clearBlockStack();
+  [^{[:jletter:]](. | mONE_NL)*           {  clearStacks();
                                              return mWRONG_GSTRING_LITERAL; }
 }
 
@@ -275,8 +252,7 @@ mAFTER_REGEXP = !( "(" | "{" | {mIDENT} | {mNUM_INT} | "[" )
                                                yybegin(IN_INNER_BLOCK);
                                              }
                                              return mGSTRING_SINGLE_END; }
-  .                                       {  clearGStack();
-                                             clearBlockStack();
+  .                                       {  clearStacks();
                                              yybegin(WRONG_STRING);
                                              return mWRONG_GSTRING_LITERAL; }
 }

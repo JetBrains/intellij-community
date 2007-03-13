@@ -14,6 +14,7 @@ public class GroovyLexer extends MergingLexerAdapter {
         GroovyTokenTypes.mSH_COMMENT,
         GroovyTokenTypes.mSL_COMMENT,
         GroovyTokenTypes.mML_COMMENT,
+        GroovyTokenTypes.mWS,
         GroovyTokenTypes.mWRONG_GSTRING_LITERAL
       ));
   }

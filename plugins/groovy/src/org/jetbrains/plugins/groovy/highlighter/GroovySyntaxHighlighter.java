@@ -30,16 +30,22 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
           GroovyTokenTypes.mNUM_INT
   );
 
+  static final TokenSet tBAD_CHARACTERS = TokenSet.create(
+          GroovyTokenTypes.WRONG
+  );
+
+  static final TokenSet tWRONG_STRING = TokenSet.create(
+          GroovyTokenTypes.mWRONG_GSTRING_LITERAL,
+          GroovyTokenTypes.mWRONG_STRING_LITERAL
+  );
+
   static final TokenSet tSTRINGS = TokenSet.create(
           GroovyTokenTypes.mSTRING_LITERAL,
 
           GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
           GroovyTokenTypes.mGSTRING_SINGLE_CONTENT,
           GroovyTokenTypes.mGSTRING_SINGLE_END,
-          GroovyTokenTypes.mGSTRING_LITERAL,
-
-          GroovyTokenTypes.mWRONG_STRING_LITERAL,
-          GroovyTokenTypes.mWRONG_GSTRING_LITERAL
+          GroovyTokenTypes.mGSTRING_LITERAL
   );
 
   static final TokenSet tREGEXP = TokenSet.create(
@@ -159,8 +165,10 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
           GroovyTokenTypes.kNULL
   );
 
-  static {
+  static {   
     fillMap(ATTRIBUTES, tCOMMENTS, DefaultHighlighter.LINE_COMMENT);
+    fillMap(ATTRIBUTES, tBAD_CHARACTERS, DefaultHighlighter.BAD_CHARACTER);
+    fillMap(ATTRIBUTES, tWRONG_STRING, DefaultHighlighter.WRONG_STRING);
     fillMap(ATTRIBUTES, tKEYWORDS, DefaultHighlighter.KEYWORD);
     fillMap(ATTRIBUTES, tNUMBERS, DefaultHighlighter.NUMBER);
     fillMap(ATTRIBUTES, tSTRINGS, DefaultHighlighter.STRING);
