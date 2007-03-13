@@ -2,7 +2,7 @@
 <idea-plugin>
     <name>TestNG-J</name>
     <description>TestNG Integration</description>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <vendor logo="/resources/testng.gif">Theory In Practice</vendor>
     <idea-version since-build="5594"/>
     <application-components>
@@ -36,7 +36,7 @@
     </project-components>
     <change-notes>
         <![CDATA[
-            Fix for convert JUnit test case intention not showing up
+            Fix for module specifc run configurations.
         ]]>
     </change-notes>
 </idea-plugin>

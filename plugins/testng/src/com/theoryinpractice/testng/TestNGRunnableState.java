@@ -166,11 +166,20 @@ public class TestNGRunnableState extends JavaCommandLineState
             config.appendCoverageArgument(javaParameters);
         }
 
+        LOGGER.info("Test scope is: " + config.getPersistantData().getScope());
         if (config.getPersistantData().getScope() == TestSearchScope.WHOLE_PROJECT) {
-            JavaParametersUtil.configureConfiguration(
+            LOGGER.info("Configuring for whole project");
+            //JavaParametersUtil.configureClassPath(
+            //        javaParameters,
+            //        project,
+            //        config.ALTERNATIVE_JRE_PATH_ENABLED ? config.ALTERNATIVE_JRE_PATH : jdk.getHomePath());
+            JavaParametersUtil.configureProject(
+                    config.getProject(),
                     javaParameters,
-                    config);
+                    JavaParameters.JDK_AND_CLASSES_AND_TESTS,
+                    config.ALTERNATIVE_JRE_PATH_ENABLED ? config.ALTERNATIVE_JRE_PATH : null);
         } else {
+            LOGGER.info("Configuring for module:" + config.getConfigurationModule().getModuleName());
             JavaParametersUtil.configureModule(
                     config.getConfigurationModule(),
                     javaParameters,

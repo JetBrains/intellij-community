@@ -7,7 +7,7 @@
     <property name="dst.dir" value="dist"/>
 
     <property name="idea.home" value="${user.home}/app/idea"/>
-    <property name="idea.plugins.home" value="${user.home}/.IntelliJIdea60/config/plugins"/>
+    <property name="idea.plugins.home" value="${user.home}/.IntelliJIdea70/config/plugins"/>
 
     <path id="compile.classpath">
         <fileset dir="${idea.home}/lib">
