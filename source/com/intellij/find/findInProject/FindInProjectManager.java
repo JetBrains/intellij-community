@@ -23,7 +23,7 @@ public class FindInProjectManager {
   private Project myProject;
   private ArrayList<Content> myUsagesContents = new ArrayList<Content>();
   private boolean myToOpenInNewTab = false;
-  private boolean myIsFindInProgress = false;
+  private volatile boolean myIsFindInProgress = false;
 
   public static FindInProjectManager getInstance(Project project) {
     return ServiceManager.getService(project, FindInProjectManager.class);
@@ -97,24 +97,22 @@ public class FindInProjectManager {
       FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
 
       manager.searchAndShowUsages(
-        new UsageTarget[] { new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind()) },
+        new UsageTarget[] { new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind())},
         new Factory<UsageSearcher>() {
           public UsageSearcher create() {
             return new UsageSearcher() {
+              public void generate(final Processor<Usage> processor) {
+                myIsFindInProgress = true;
 
-            public void generate(final Processor<Usage> processor) {
-              myIsFindInProgress = true;
-
-              FindInProjectUtil.findUsages(
-                findModelCopy,
-                psiDirectory,
-                myProject,
-                new FindInProjectUtil.AsyncFindUsagesProcessListener2ProcessorAdapter(processor)
-              );
-              
-              myIsFindInProgress = false;
-            }
-          };
+                try {
+                  FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject,
+                                               new FindInProjectUtil.AsyncFindUsagesProcessListener2ProcessorAdapter(processor));
+                }
+                finally {
+                  myIsFindInProgress = false;
+                }
+              }
+            };
           }
         },
         processPresentation,
