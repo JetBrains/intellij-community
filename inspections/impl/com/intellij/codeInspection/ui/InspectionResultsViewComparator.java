@@ -33,6 +33,10 @@ public class InspectionResultsViewComparator implements Comparator {
   public int compare(Object o1, Object o2) {
     InspectionTreeNode node1 = (InspectionTreeNode)o1;
     InspectionTreeNode node2 = (InspectionTreeNode)o2;
+    
+    if (node1 instanceof InspectionSeverityGroupNode && node2 instanceof InspectionSeverityGroupNode) {
+      return -((InspectionSeverityGroupNode)node1).getSeverityLevel().getSeverity().compareTo(((InspectionSeverityGroupNode)node2).getSeverityLevel().getSeverity());
+    }
 
     if (node1 instanceof InspectionNode && node2 instanceof InspectionGroupNode) return -1;
     if (node2 instanceof InspectionNode && node1 instanceof InspectionGroupNode) return 1;

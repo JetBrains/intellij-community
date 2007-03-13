@@ -29,4 +29,8 @@ public class InspectionSeverityGroupNode extends InspectionTreeNode{
   public String toString() {
     return StringUtil.capitalize(myLevel.toString().toLowerCase());
   }
+
+  public HighlightDisplayLevel getSeverityLevel() {
+    return myLevel;
+  }
 }
