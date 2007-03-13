@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.ui.experts.importToCvs;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfo;
 import com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfoImpl;
@@ -16,10 +17,9 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Icons;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.Icons;
-import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 import org.netbeans.lib.cvsclient.util.IIgnoreFileFilter;
@@ -28,14 +28,13 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.io.File;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
  * author: lesya
  */
 public class ImportTree extends NodeRenderer {
-  private Collection myExcludedFiles = new HashSet();
+  private Collection<VirtualFile> myExcludedFiles = new HashSet<VirtualFile>();
   private final FileSystemTree myFileSystemTree;
   private final CvsWizard myWizard;
 
@@ -89,8 +88,8 @@ public class ImportTree extends NodeRenderer {
 
       public void actionPerformed(AnActionEvent e) {
         VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
-        for (int i = 0; i < selectedFiles.length; i++) {
-          exclude(selectedFiles[i]);
+        for (VirtualFile selectedFile : selectedFiles) {
+          exclude(selectedFile);
         }
         myWizard.updateStep();
         myFileSystemTree.getTree().repaint();
@@ -100,8 +99,7 @@ public class ImportTree extends NodeRenderer {
 
   private boolean allFilesAreIncluded(VirtualFile[] selectedFiles) {
     if (selectedFiles == null || selectedFiles.length == 0) return false;
-    for (int i = 0; i < selectedFiles.length; i++) {
-      VirtualFile selectedFile = selectedFiles[i];
+    for (VirtualFile selectedFile : selectedFiles) {
       if (isExcluded(selectedFile)) return false;
     }
     return true;
@@ -117,8 +115,8 @@ public class ImportTree extends NodeRenderer {
 
       public void actionPerformed(AnActionEvent e) {
         VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
-        for (int i = 0; i < selectedFiles.length; i++) {
-          include(selectedFiles[i]);
+        for (VirtualFile selectedFile : selectedFiles) {
+          include(selectedFile);
         }
         myWizard.updateStep();
         myFileSystemTree.getTree().repaint();
@@ -137,8 +135,7 @@ public class ImportTree extends NodeRenderer {
 
   private boolean allFilesAreInExcluded(VirtualFile[] selectedFiles) {
     if (selectedFiles == null || selectedFiles.length == 0) return false;
-    for (int i = 0; i < selectedFiles.length; i++) {
-      VirtualFile selectedFile = selectedFiles[i];
+    for (VirtualFile selectedFile : selectedFiles) {
       if (!myExcludedFiles.contains(selectedFile)) return false;
     }
     return true;
@@ -151,8 +148,7 @@ public class ImportTree extends NodeRenderer {
   }
 
   public boolean isExcluded(VirtualFile file) {
-    for (Iterator iterator = myExcludedFiles.iterator(); iterator.hasNext();) {
-      VirtualFile virtualFile = (VirtualFile)iterator.next();
+    for (final VirtualFile virtualFile : myExcludedFiles) {
       if (VfsUtil.isAncestor(virtualFile, file, false)) return true;
     }
     return false;
@@ -160,8 +156,8 @@ public class ImportTree extends NodeRenderer {
 
   public IIgnoreFileFilter getIgnoreFileFilter() {
     final Collection<File> ignoredFiles = new HashSet<File>();
-    for (Iterator iterator = myExcludedFiles.iterator(); iterator.hasNext();) {
-      ignoredFiles.add(CvsVfsUtil.getFileFor((VirtualFile)iterator.next()));
+    for (final VirtualFile myExcludedFile : myExcludedFiles) {
+      ignoredFiles.add(CvsVfsUtil.getFileFor((VirtualFile)myExcludedFile));
 
     }
     return new IIgnoreFileFilter() {

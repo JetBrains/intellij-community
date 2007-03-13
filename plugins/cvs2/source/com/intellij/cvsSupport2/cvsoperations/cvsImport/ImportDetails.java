@@ -4,38 +4,33 @@ import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
 import com.intellij.cvsSupport2.ui.experts.importToCvs.FileExtension;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 import org.netbeans.lib.cvsclient.command.importcmd.ImportCommand;
 import org.netbeans.lib.cvsclient.util.IIgnoreFileFilter;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * author: lesya
  */
 
 public class ImportDetails {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.ImportDetails");
-
   private final File myBaseImportDirectory;
   private final String myVendor;
   private final String myReleaseTag;
   private final String myLogMessage;
   private final String myModuleName;
   private final CvsEnvironment myEnvironment;
-  private final Collection myWrappers;
+  private final Collection<FileExtension> myWrappers;
   private final IIgnoreFileFilter myIgnoreFileFilter;
 
-  public ImportDetails(File sourceLocation, String vendor, String releaseTag, String logMessage,
+  public ImportDetails(@NotNull File sourceLocation, String vendor, String releaseTag, String logMessage,
                        String moduleName, CvsEnvironment env,
-                       Collection wrappers,
+                       Collection<FileExtension> wrappers,
                        IIgnoreFileFilter ignoreFileFilter) {
-    LOG.assertTrue(sourceLocation != null);
     myBaseImportDirectory = sourceLocation;
     myVendor = vendor;
     myReleaseTag = releaseTag;
@@ -52,8 +47,7 @@ public class ImportDetails {
     result.setModule(getModulePath());
     result.setLogMessage(myLogMessage);
 
-    for (Iterator iterator = myWrappers.iterator(); iterator.hasNext();) {
-      FileExtension fileExtension = (FileExtension)iterator.next();
+    for (final FileExtension fileExtension : myWrappers) {
       result.addWrapper("*." + fileExtension.getExtension(), fileExtension.getKeywordSubstitution().getSubstitution());
     }
 
