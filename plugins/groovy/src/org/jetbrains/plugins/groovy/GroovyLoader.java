@@ -37,50 +37,48 @@ public class GroovyLoader implements ApplicationComponent {
     @NotNull
     public static final Set<String> GROOVY_EXTENTIONS = new HashSet<String>();
 
-    static  {
+    static {
         GROOVY_EXTENTIONS.add(GROOVY_EXTENTION);
         GROOVY_EXTENTIONS.add(GVY_EXTENTION);
         GROOVY_EXTENTIONS.add(GY_EXTENTION);
         GROOVY_EXTENTIONS.add(GROOVY_SCRIPT_EXTENTION);
     }
 
-  public GroovyLoader() {
-  }
+    public GroovyLoader() {
+    }
 
-  public void initComponent() {
-    loadGroovy();
-  }
+    public void initComponent() {
+        loadGroovy();
+    }
 
-  public static void loadGroovy() {
-    ApplicationManager.getApplication().runWriteAction(
-            new Runnable() {
-              public void run() {
-                FileTypeManager.getInstance().registerFileType(GroovyFileType.GROOVY_FILE_TYPE, GROOVY_EXTENTIONS.toArray(new String[GROOVY_EXTENTIONS.size()]));
-              }
-            }
-    );
+    public static void loadGroovy() {
+        ApplicationManager.getApplication().runWriteAction(
+                new Runnable() {
+                    public void run() {
+                        FileTypeManager.getInstance().registerFileType(GroovyFileType.GROOVY_FILE_TYPE, GROOVY_EXTENTIONS.toArray(new String[GROOVY_EXTENTIONS.size()]));
+                    }
+                }
+        );
 
 /*
     CompletionUtil.registerCompletionData(ScalaFileType.SCALA_FILE_TYPE,
             ScalaToolsFactory.getInstance().createScalaCompletionData());
 */
 
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
-      public void projectOpened(Project project) {
-        CompilerManager compilerManager = CompilerManager.getInstance(project);
-        compilerManager.addCompiler(new GroovyCompiler(new CompilationUnitsFactory()));
-        compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
-      }
-    });
+        ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+            public void projectOpened(Project project) {
+                CompilerManager compilerManager = CompilerManager.getInstance(project);
+                compilerManager.addCompiler(new GroovyCompiler(new CompilationUnitsFactory()));
+                compilerManager.addCompilableFileType(GroovyFileType.GROOVY_FILE_TYPE);
+            }
+        });
+    }
 
+    public void disposeComponent() {
+    }
 
-  }
-
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "groovy.support.loader";
-  }
+    @NotNull
+    public String getComponentName() {
+        return "groovy.support.loader";
+    }
 }
