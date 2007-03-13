@@ -51,11 +51,13 @@ public class LogConsolePreferences extends LogFilterRegistrar {
   public String CUSTOM_FILTER = null;
   @NonNls public static final String ERROR = "ERROR";
   @NonNls public static final String WARNING = "WARNING";
+  @NonNls private static final String WARN = "WARN";
   @NonNls public static final String INFO = "INFO";
   @NonNls public static final String CUSTOM = "CUSTOM";
 
   public final static Pattern ERROR_PATTERN = Pattern.compile(".*" + ERROR + ".*");
   public final static Pattern WARNING_PATTERN = Pattern.compile(".*" + WARNING + ".*");
+  public final static Pattern WARN_PATTERN = Pattern.compile(".*" + WARN + ".*");
   public final static Pattern INFO_PATTERN = Pattern.compile(".*" + INFO + ".*");
   @NonNls public final static Pattern EXCEPTION_PATTERN = Pattern.compile(".*at .*");
 
@@ -68,42 +70,36 @@ public class LogConsolePreferences extends LogFilterRegistrar {
 
   public void updateCustomFilter(String customFilter) {
     CUSTOM_FILTER = customFilter;
-    fireStateChanged(customFilter);
+    fireStateChanged();
   }
 
   public boolean isApplicable(@NotNull String text, String prevType){
     if (CUSTOM_FILTER != null) {
       if (!Pattern.compile(".*" + CUSTOM_FILTER.toUpperCase() + ".*").matcher(text.toUpperCase()).matches()) return false;
     }
+    final String type = getType(text);
     boolean selfTyped = false;
-    if (ERROR_PATTERN.matcher(text.toUpperCase()).matches()) {
+    if (type != null) {
+      if (!isApplicable(type)) return false;
       selfTyped = true;
-      if (FILTER_ERRORS) return false;
-    }
-    if (WARNING_PATTERN.matcher(text.toUpperCase()).matches()) {
-      selfTyped = true;
-      if (FILTER_WARNINGS) return false;
-    }
-    if (INFO_PATTERN.matcher(text.toUpperCase()).matches()) {
-      selfTyped = true;
-      if (FILTER_INFO) return false;
     }
     for (LogFilter filter : myRegisteredLogFilters.keySet()) {
       if (myRegisteredLogFilters.get(filter).booleanValue() && !filter.isAcceptable(text)) return false;
     }
-    if (!selfTyped && prevType != null) {
-      if (prevType.equals(ERROR)){
-        return !FILTER_ERRORS;
-      }
-      if (prevType.equals(WARNING)){
-        return !FILTER_WARNINGS;
-      }
-      if (prevType.equals(INFO)){
-        return !FILTER_INFO;
-      }
+    return selfTyped || prevType == null || isApplicable(prevType);
+  }
+
+  private boolean isApplicable(final String type) {
+    if (type.equals(ERROR)){
+      return !FILTER_ERRORS;
+    }
+    if (type.equals(WARNING)){
+      return !FILTER_WARNINGS;
+    }
+    if (type.equals(INFO)){
+      return !FILTER_INFO;
     }
     return true;
-
   }
 
   public static ConsoleViewContentType getContentType(String type){
@@ -114,7 +110,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
   @Nullable
   public static String getType(@NotNull String text){
     if (ERROR_PATTERN.matcher(text.toUpperCase()).matches()) return ERROR;
-    if (WARNING_PATTERN.matcher(text.toUpperCase()).matches()) return WARNING;
+    if (WARNING_PATTERN.matcher(text.toUpperCase()).matches() || WARN_PATTERN.matcher(text.toUpperCase()).matches()) return WARNING;
     if (INFO_PATTERN.matcher(text.toUpperCase()).matches()) return INFO;
     return null;
   }
@@ -172,7 +168,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
       return isSelected.booleanValue();
     }
     if (filter.getName().indexOf(ERROR) != -1) return FILTER_ERRORS;
-    if (filter.getName().indexOf(WARNING) != -1) return FILTER_WARNINGS;
+    if (filter.getName().indexOf(WARN) != -1) return FILTER_WARNINGS;
     return filter.getName().indexOf(INFO) == -1 || FILTER_INFO;
   }
 
@@ -184,25 +180,25 @@ public class LogConsolePreferences extends LogFilterRegistrar {
       if (filterName.indexOf(ERROR) != -1){
         FILTER_ERRORS = state;
       }
-      if (filterName.indexOf(WARNING) != -1){
+      if (filterName.indexOf(WARN) != -1){
         FILTER_WARNINGS = state;
       }
       if (filterName.indexOf(INFO) != -1){
         FILTER_INFO = state;
       }
     }
-    fireStateChanged(filter, state);
+    fireStateChanged(filter);
   }
 
-  private void fireStateChanged(final LogFilter filter, final boolean state) {
+  private void fireStateChanged(final LogFilter filter) {
     for (FilterListener listener : myListeners) {
-      listener.onFilterStateChange(filter, state);
+      listener.onFilterStateChange(filter);
     }
   }
 
-  private void fireStateChanged(final String customFilter) {
+  private void fireStateChanged() {
     for (FilterListener listener : myListeners) {
-      listener.onTextFilterChange(customFilter);
+      listener.onTextFilterChange();
     }
   }
 
@@ -215,7 +211,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
   }
 
   public interface FilterListener {
-    void onFilterStateChange(LogFilter filter, boolean state);
-    void onTextFilterChange(String newText);
+    void onFilterStateChange(LogFilter filter);
+    void onTextFilterChange();
   }
 }

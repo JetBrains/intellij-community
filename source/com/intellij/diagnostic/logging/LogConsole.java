@@ -109,7 +109,7 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
     return panel;
   }
 
-  public void onFilterStateChange(final LogFilter filter, final boolean state) {
+  public void onFilterStateChange(final LogFilter filter) {
     filterConsoleOutput(new Condition<String>() {
       public boolean value(final String line) {
         return filter.isAcceptable(line);
@@ -117,7 +117,7 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
     });
   }
 
-  public void onTextFilterChange(final String newText) {
+  public void onTextFilterChange() {
     filterConsoleOutput(new Condition<String>() {
       public boolean value(final String line) {
         return getPreferences().isApplicable(line, myPrevType);
