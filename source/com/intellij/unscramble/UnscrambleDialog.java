@@ -303,11 +303,11 @@ public class UnscrambleDialog extends DialogWrapper{
     text = text.replaceAll("\\nat\\n", "\nat ");
     text = text.replaceAll("(\\S)[\\s&&[^\\n]]*at ", "$1\n at ");
     text = text.replaceAll("(\\S)\\nat ", "$1\n at ");
-    // merge (inadvertently) splitted lines (unless next line begins with 'at' or 'Caused by')
-    text = text.replaceAll("\\s*\\n\\s*+([^aC]|(a[^t])|[^Ca]|(C[^a])|(Ca[^u])|(Cau[^s])|(Caus[^e])|(Cause[^d]))", "$1");
+    // merge (inadvertently) splitted lines (unless next line begins with 'at' or 'Caused by' or ("); " is used in thread names in thread dumps)
+    text = text.replaceAll("\\s*\\n\\s*+([^a\"C]|(a[^t])|[^Ca\"]|(C[^a])|(Ca[^u])|(Cau[^s])|(Caus[^e])|(Cause[^d]))", "$1");
 
-    // remove empty lines
-    text = text.replaceAll("(\\n\\s*)+\\n", "\n");
+    // remove empty lines that aren't followed by line started with "
+    text = text.replaceAll("(\\n\\s*)+\\n([^\"])", "\n$2");
     return text;
   }
 
