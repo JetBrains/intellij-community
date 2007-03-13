@@ -86,7 +86,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }                                                              
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
-    throw new IncorrectOperationException("Rebind cannot be performed");
+    throw new IncorrectOperationException("Rebind cannot be performed for " + getClass());
   }
 
   public boolean isReferenceTo(PsiElement element) {
