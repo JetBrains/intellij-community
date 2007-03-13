@@ -64,12 +64,13 @@ public class CvsCommittedChangesProvider implements CommittedChangesProvider<Cvs
   }
 
   public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, VirtualFile root, final int maxCount) throws VcsException {
+    final VirtualFile rootDir = root.isDirectory() ? root : root.getParent();
     final String module = CvsUtil.getModuleName(root);
     if (module != null) {
       CvsHistoryCache cache = CvsHistoryCache.create();
 
       try {
-        final CvsConnectionSettings connectionSettings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(root);
+        final CvsConnectionSettings connectionSettings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(rootDir);
         final CvsHistoryCacheElement cacheElement = cache.getCache(connectionSettings, module);
 
         final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, connectionSettings, myProject);
