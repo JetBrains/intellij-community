@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -165,6 +166,7 @@ class FoldingPolicy {
 
   public static TextRange getRangeToFold(PsiElement element) {
     if (element instanceof PsiMethod) {
+      if (element instanceof JspHolderMethod) return null;
       PsiCodeBlock body = ((PsiMethod)element).getBody();
       if (body == null) return null;
       return body.getTextRange();
