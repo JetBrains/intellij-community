@@ -1,6 +1,5 @@
 package com.intellij.cvsSupport2.changeBrowser;
 
-import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
@@ -52,7 +51,7 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
     return command;
   }
 
-  public static void doesNotSuppressEmptyHeaders(CvsConnectionSettings root) {
+  public static void doesNotSuppressEmptyHeaders(CvsEnvironment root) {
     ourDoNotSupportingSOptionServers.add(root.getCvsRootAsString());
   }
 

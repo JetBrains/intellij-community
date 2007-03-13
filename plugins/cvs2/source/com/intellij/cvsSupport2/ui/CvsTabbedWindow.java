@@ -2,6 +2,7 @@ package com.intellij.cvsSupport2.ui;
 
 import com.intellij.CvsBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -20,6 +21,7 @@ import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ui.ErrorTreeView;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -104,7 +106,9 @@ public class CvsTabbedWindow {
                     boolean selectTab,
                     boolean replaceContent,
                     boolean lockable,
-                    boolean addDefaultToolbar, @NonNls String helpId) {
+                    boolean addDefaultToolbar,
+                    @Nullable final ActionGroup toolbarActions,
+                    @NonNls String helpId) {
 
     int existing = getComponentNumNamed(s);
     if (existing != -1) {
@@ -120,7 +124,7 @@ public class CvsTabbedWindow {
     }
 
     CvsTabbedWindowComponent newComponent = new CvsTabbedWindowComponent(component,
-                                                                         addDefaultToolbar, getContentManager(), helpId);
+                                                                         addDefaultToolbar, toolbarActions, getContentManager(), helpId);
     Content content = PeerFactory.getInstance().getContentFactory().createContent(newComponent.getShownComponent(), s, lockable);
     newComponent.setContent(content);
     getContentManager().addContent(content);
@@ -140,7 +144,7 @@ public class CvsTabbedWindow {
   public Editor addOutput(Editor output) {
     LOG.assertTrue(myOutput == null);
     if (myOutput == null) {
-      addTab(CvsBundle.message("tab.title.cvs.output"), output.getComponent(), false, false, false, true, "cvs.cvsOutput");
+      addTab(CvsBundle.message("tab.title.cvs.output"), output.getComponent(), false, false, false, true, null, "cvs.cvsOutput");
       myOutput = output;
     }
     return myOutput;
@@ -148,7 +152,7 @@ public class CvsTabbedWindow {
 
   public ErrorTreeView addErrorsTreeView(ErrorTreeView view) {
     if (myErrorsView == null) {
-      addTab(CvsBundle.message("tab.title.errors"), view.getComponent(), true, false, true, false, "cvs.errors");
+      addTab(CvsBundle.message("tab.title.errors"), view.getComponent(), true, false, true, false, null, "cvs.errors");
       myErrorsView = view;
     }
     return myErrorsView;

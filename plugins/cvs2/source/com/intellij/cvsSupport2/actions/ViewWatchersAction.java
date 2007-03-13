@@ -42,7 +42,7 @@ public class ViewWatchersAction extends AsbtractActionFromEditGroup {
       }
       else {
         tabbedWindow.addTab(CvsBundle.message("message.watchers.for.file", filePath), new WatchersPanel(watchers), true, true, true, true,
-                            "cvs.watchers");
+                            null, "cvs.watchers");
         tabbedWindow.ensureVisible(context.getProject());
       }
     }

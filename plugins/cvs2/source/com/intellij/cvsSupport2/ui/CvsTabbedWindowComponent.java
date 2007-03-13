@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,6 +21,7 @@ public class CvsTabbedWindowComponent extends JPanel implements DataProvider {
 
 
   public CvsTabbedWindowComponent(JComponent component, boolean addDefaultToolbar,
+                                  @Nullable ActionGroup toolbarActions,
                                   ContentManager contentManager, String helpId) {
     super(new BorderLayout());
     myAddToolbar = addDefaultToolbar;
@@ -32,6 +34,9 @@ public class CvsTabbedWindowComponent extends JPanel implements DataProvider {
     if (myAddToolbar) {
       DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
       actionGroup.add(new CloseAction());
+      if (toolbarActions != null) {
+        actionGroup.add(toolbarActions);
+      }
       actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
       add(ActionManager.getInstance().
           createActionToolbar("DefaultCvsComponentToolbar", actionGroup, false).getComponent(),

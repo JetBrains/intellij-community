@@ -1,10 +1,14 @@
 package com.intellij.cvsSupport2.cvsBrowser.ui;
 
+import com.intellij.CvsBundle;
+import com.intellij.pom.Navigatable;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.cvsSupport2.CvsVcs2;
-import com.intellij.cvsSupport2.checkout.CheckoutAction;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsDataConstants;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsLightweightFile;
+import com.intellij.cvsSupport2.changeBrowser.CvsCommittedChangesProvider;
+import com.intellij.cvsSupport2.checkout.CheckoutAction;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.cvsBrowser.CheckoutHelper;
@@ -18,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,6 +30,8 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIHelper;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.OpenSourceUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreeSelectionModel;
@@ -60,24 +67,45 @@ public class BrowserPanel extends JPanel implements DataProvider {
     PopupHandler.installPopupHandler(myTree.getTree(), group, ActionPlaces.CHECKOUT_POPUP, ActionManager.getInstance());
   }
 
-  private ActionGroup getActionGroup() {
+  public ActionGroup getActionGroup() {
     DefaultActionGroup result = new DefaultActionGroup();
-    result.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
+    result.add(new EditSourceAction());
     result.add(new MyCheckoutAction());
     //TODO lesya
     //result.add(new ShowLightCvsFileHistoryAction());
     result.add(new MyAnnotateAction());
+    result.add(new BrowseChangesAction());
     return result;
+  }
+
+  private class EditSourceAction extends AnAction {
+    public EditSourceAction() {
+      super(ActionsBundle.actionText("EditSource"),
+            ActionsBundle.actionDescription("EditSource"),
+            IconLoader.getIcon("/actions/editSource.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      final Navigatable[] navigatableArray = e.getData(DataKeys.NAVIGATABLE_ARRAY);
+      if (navigatableArray != null && navigatableArray.length > 0) {
+        OpenSourceUtil.navigate(navigatableArray, true);
+      }
+    }
+
+    public void update(final AnActionEvent e) {
+      final Navigatable[] navigatableArray = e.getData(DataKeys.NAVIGATABLE_ARRAY);
+      e.getPresentation().setEnabled(navigatableArray != null && navigatableArray.length > 0);
+    }
   }
 
   private class MyCheckoutAction extends AnAction {
     public MyCheckoutAction() {
-      super(com.intellij.CvsBundle.message("operation.name.check.out"));
+      super(CvsBundle.message("operation.name.check.out"), null, IconLoader.getIcon("/actions/checkOut.png"));
     }
 
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      presentation.setVisible(canPerformCheckout());
+      presentation.setEnabled(canPerformCheckout());
     }
 
     private boolean canPerformCheckout() {
@@ -111,7 +139,7 @@ public class BrowserPanel extends JPanel implements DataProvider {
 
   private class MyAnnotateAction extends AnAction {
     public MyAnnotateAction() {
-      super(com.intellij.CvsBundle.message("operation.name.annotate"), null, IconLoader.getIcon("/actions/annotate.png"));
+      super(CvsBundle.message("operation.name.annotate"), null, IconLoader.getIcon("/actions/annotate.png"));
     }
 
     public void update(AnActionEvent e) {
@@ -134,8 +162,27 @@ public class BrowserPanel extends JPanel implements DataProvider {
         AbstractVcsHelper.getInstance(myProject).showAnnotation(annotation, vcsVirtualFile);
       }
       catch (VcsException e1) {
-        AbstractVcsHelper.getInstance(myProject).showError(e1, com.intellij.CvsBundle.message("operation.name.annotate"));
+        AbstractVcsHelper.getInstance(myProject).showError(e1, CvsBundle.message("operation.name.annotate"));
       }
+    }
+  }
+
+  private class BrowseChangesAction extends AnAction {
+    public BrowseChangesAction() {
+      super(VcsBundle.message("browse.changes.action"), "", IconLoader.getIcon("/actions/showChangesOnly.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      CvsElement[] currentSelection = myTree.getCurrentSelection();
+      assert currentSelection.length == 1;
+      final String moduleName = currentSelection [0].getElementPath();
+      CvsCommittedChangesProvider provider = new CvsCommittedChangesProvider(myProject, myCvsRootConfiguration, moduleName);
+      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(provider, null, VcsBundle.message("browse.changes.scope", moduleName), BrowserPanel.this);
+    }
+
+    public void update(final AnActionEvent e) {
+      CvsElement[] currentSelection = myTree.getCurrentSelection();
+      e.getPresentation().setEnabled(currentSelection.length == 1);
     }
   }
 
@@ -159,6 +206,7 @@ public class BrowserPanel extends JPanel implements DataProvider {
     }
   }
 
+  @Nullable
   private VirtualFile getCvsVirtualFile() {
     CvsElement[] currentSelection = myTree.getCurrentSelection();
     if (currentSelection.length != 1) return null;
@@ -168,6 +216,7 @@ public class BrowserPanel extends JPanel implements DataProvider {
     return file;
   }
 
+  @Nullable
   private CvsLightweightFile getCvsLightFile() {
     CvsElement[] currentSelection = myTree.getCurrentSelection();
     if (currentSelection.length != 1) return null;

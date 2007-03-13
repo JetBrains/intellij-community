@@ -59,8 +59,9 @@ public class BrowseCvsRepositoryAction extends AbstractAction{
       Project project = context.getProject();
       LOG.assertTrue(project != null);
       LOG.assertTrue(mySelectedConfiguration != null);
-      tabbedWindow.addTab(TITLE, new BrowserPanel(mySelectedConfiguration, project),
-                          true, true, true, true, "cvs.browse");
+      final BrowserPanel browserPanel = new BrowserPanel(mySelectedConfiguration, project);
+      tabbedWindow.addTab(TITLE, browserPanel,
+                          true, true, true, true, browserPanel.getActionGroup(), "cvs.browse");
       tabbedWindow.ensureVisible(project);
 
     }
