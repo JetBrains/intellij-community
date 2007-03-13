@@ -38,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.peer.PeerFactory;
@@ -304,6 +305,11 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     };
     myContentListeners.put(log, l);
     myViewsContentManager.addContentManagerListener(l);
+    Disposer.register(this, new Disposable() {
+      public void dispose() {
+        myViewsContentManager.removeContentManagerListener(myContentListeners.remove(log));
+      }
+    });
   }
 
   public void removeLogConsole(final String path) {
@@ -375,10 +381,6 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     myFramePanel.dispose();
     myWatchPanel.dispose();
     myViewsContentManager.removeAllContents();
-    for (AdditionalTabComponent tabComponent : myAdditionalContent.keySet()) {
-      tabComponent.dispose();
-    }
-    myAdditionalContent.clear();
     myManager.unregisterFileMatcher();
     myConsole = null;
   }
@@ -482,11 +484,16 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     return myDebuggerSession;
   }
 
-  public void addAdditionalTabComponent(AdditionalTabComponent tabComponent) {
+  public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent) {
     Content logContent = createContent(tabComponent.getComponent(), tabComponent.getTabTitle(), null, CONSOLE_CONTENT);
     logContent.setDescription(tabComponent.getTooltip());
     myAdditionalContent.put(tabComponent, logContent);
     myViewsContentManager.addContent(logContent);
+    Disposer.register(this, new Disposable() {
+      public void dispose() {
+        removeAdditionalTabComponent(tabComponent);
+      }
+    });
   }
 
   public void removeAdditionalTabComponent(AdditionalTabComponent component) {

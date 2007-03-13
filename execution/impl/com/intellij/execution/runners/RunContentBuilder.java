@@ -206,8 +206,15 @@ public class RunContentBuilder implements LogConsoleManager {
     return descriptor;
   }
 
-  public void addAdditionalTabComponent(AdditionalTabComponent tabComponent) {
-    myDisposeables.add(tabComponent);
+  public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent) {
+    myDisposeables.add(new Disposable(){
+      public void dispose() {
+        if (tabComponent instanceof LogConsole) {
+          ((JTabbedPane)myComponent).removeChangeListener((LogConsole)tabComponent);
+        }
+        removeAdditionalTabComponent(tabComponent);
+      }
+    });
     if (! (myComponent instanceof JTabbedPane)) {
       JComponent component = myComponent;
       myComponent = new JTabbedPane();

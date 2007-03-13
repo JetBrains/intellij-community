@@ -29,6 +29,7 @@ public class LogFilesManager {
     myUpdateRequest = new Runnable() {
       public void run() {
         if (project.isDisposed()) return;
+        if (myUpdateAlarm == null) return; //already disposed
         myUpdateAlarm.cancelAllRequests();
         for (LogFileOptions logFile : myLogFileManagerMap.keySet()) {
           Set<String> oldFiles = myLogFileManagerMap.get(logFile);
@@ -67,6 +68,9 @@ public class LogFilesManager {
   }
 
   public void unregisterFileMatcher(){
-    myUpdateAlarm.cancelAllRequests();    
+    if (myUpdateAlarm != null) {
+      myUpdateAlarm.cancelAllRequests();
+      myUpdateAlarm = null;
+    }
   }
 }

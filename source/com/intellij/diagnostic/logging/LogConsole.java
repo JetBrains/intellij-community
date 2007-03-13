@@ -27,6 +27,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.ArrayList;
 
@@ -69,6 +70,7 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
     getPreferences().addFilterListener(this);
   }
 
+  @SuppressWarnings({"NonStaticInitializer"})
   private JComponent createToolbar(){
     DefaultActionGroup group = new DefaultActionGroup();
     final LogConsolePreferences registrar = getPreferences();
@@ -106,6 +108,14 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
     myFilter.reset();
     myFilter.setSelectedItem(registrar.CUSTOM_FILTER != null ? registrar.CUSTOM_FILTER : "");
     panel.add(myFilter, BorderLayout.EAST);
+    new AnAction(){
+      {
+        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, KeyEvent.SHIFT_DOWN_MASK)), LogConsole.this);
+      }
+      public void actionPerformed(final AnActionEvent e) {
+        myFilter.requestFocusInWindow();
+      }
+    };
     return panel;
   }
 
@@ -165,6 +175,7 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
   public void dispose() {
     getPreferences().removeFilterListener(this);
     if (myReaderThread != null && myReaderThread.myFileStream != null) {
+      myReaderThread.stopRunning();
       try {
         myReaderThread.myFileStream.close();
       }
@@ -355,6 +366,9 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
 
     public void stopRunning() {
       myRunning = false;
+      synchronized (this) {
+        notifyAll();
+      }
     }
   }
 }
