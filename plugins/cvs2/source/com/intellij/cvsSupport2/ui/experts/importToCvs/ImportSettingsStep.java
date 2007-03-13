@@ -4,6 +4,7 @@ import com.intellij.cvsSupport2.config.ImportConfiguration;
 import com.intellij.cvsSupport2.ui.experts.CvsWizard;
 import com.intellij.cvsSupport2.ui.experts.WizardStep;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.CvsBundle;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -41,7 +42,7 @@ public class ImportSettingsStep extends WizardStep {
   public ImportSettingsStep(CvsWizard wizard,
                             SelectImportLocationStep selectImportLocationStep,
                             ImportConfiguration importConfiguration) {
-    super(com.intellij.CvsBundle.message("dialog.title.import.settings"), wizard);
+    super(CvsBundle.message("dialog.title.import.settings"), wizard);
 
     myCheckoutAfterImport.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
