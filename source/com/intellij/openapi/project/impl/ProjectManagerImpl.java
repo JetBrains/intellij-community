@@ -573,7 +573,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       myDefaultProject.save();
     }
 
-    assert myDefaultProjectRootElement != null;
+    if (myDefaultProjectRootElement == null) { //read external isn't called if config folder is absent
+      myDefaultProjectRootElement = new Element(ELEMENT_DEFAULT_PROJECT);
+    }
+
     myDefaultProjectRootElement.detach();
     parentNode.addContent(myDefaultProjectRootElement);
   }
