@@ -44,6 +44,7 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
 
   private String myPrevType = null;
   private String myLineUnderSelection = null;
+  private int myLineOffset = -1;
 
   private FilterComponent myFilter = new FilterComponent("LOG_FILTER_HISTORY", 5) {
     public void filter() {
@@ -247,8 +248,9 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
       if (caretOffset > -1) {
         int line = document.getLineNumber(caretOffset);
         if (line > -1 && line < document.getLineCount()) {
-          myLineUnderSelection = document.getText().substring(document.getLineStartOffset(line),
-                                                              document.getLineEndOffset(line));
+          final int startOffset = document.getLineStartOffset(line);
+          myLineUnderSelection = document.getText().substring(startOffset, document.getLineEndOffset(line));
+          myLineOffset = caretOffset - startOffset;
         }
       }
       myConsole.clear();
@@ -266,6 +268,7 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
           if (!caretPositioned) {
             if (Comparing.strEqual(myLineUnderSelection, line)) {
               caretPositioned = true;
+              offset += myLineOffset != -1 ? myLineOffset : 0;
             } else {
               offset += line.length() + 1;
             }
@@ -275,9 +278,7 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
           myPrevType = contentType;
         }
       }
-      if (caretPositioned) {
-        myConsole.scrollTo(offset);
-      }
+      myConsole.scrollTo(offset);
     }
   }
 
