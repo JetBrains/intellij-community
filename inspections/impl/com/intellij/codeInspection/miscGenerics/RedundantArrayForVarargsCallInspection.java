@@ -122,7 +122,8 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
           if (arrayElements.length > 0) {
             copyArgumentList.addRange(arrayElements[0], arrayElements[arrayElements.length - 1]);
           }
-          return copy.resolveMethod() == oldRefMethod;
+          final JavaResolveResult resolveResult = copy.resolveMethodGenerics();
+          return resolveResult.isValidResult() && resolveResult.getElement() == oldRefMethod;
         } catch (IncorrectOperationException e) {
           return false;
         }
@@ -132,14 +133,17 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
     return problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.VERBOSE_GROUP_NAME;
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.redundant.array.creation.display.name");
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return "RedundantArrayCreation";
