@@ -1,7 +1,7 @@
 package com.intellij.xml.impl.schema;
 
+import com.intellij.openapi.util.SimpleFieldCache;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -20,12 +20,44 @@ import java.util.*;
 public class ComplexTypeDescriptor extends TypeDescriptor {
   private final XmlNSDescriptorImpl myDocumentDescriptor;
   private XmlTag myTag;
+
+  private static final SimpleFieldCache<XmlElementDescriptor[],ComplexTypeDescriptor> myElementDescriptorsCache = new SimpleFieldCache<XmlElementDescriptor[], ComplexTypeDescriptor>() {
+    protected final XmlElementDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor) {
+      return complexTypeDescriptor.doCollectElements();
+    }
+
+    protected final XmlElementDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor) {
+      return complexTypeDescriptor.myElementDescriptors;
+    }
+
+    protected final void putValue(final XmlElementDescriptor[] xmlElementDescriptors,
+                            final ComplexTypeDescriptor complexTypeDescriptor) {
+      complexTypeDescriptor.myElementDescriptors = xmlElementDescriptors;
+    }
+  };
+
+  private static final SimpleFieldCache<XmlAttributeDescriptor[], ComplexTypeDescriptor> myAttributeDescriptorsCache = new SimpleFieldCache<XmlAttributeDescriptor[], ComplexTypeDescriptor>() {
+    protected final XmlAttributeDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor) {
+      return complexTypeDescriptor.doCollectAttributes();
+    }
+
+    protected final XmlAttributeDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor) {
+      return complexTypeDescriptor.myAttributeDescriptors;
+    }
+
+    protected final void putValue(final XmlAttributeDescriptor[] xmlAttributeDescriptors,
+                            final ComplexTypeDescriptor complexTypeDescriptor) {
+      complexTypeDescriptor.myAttributeDescriptors = xmlAttributeDescriptors;
+    }
+  };
+
   private volatile XmlElementDescriptor[] myElementDescriptors = null;
   private volatile XmlAttributeDescriptor[] myAttributeDescriptors = null;
   @NonNls
-  public static final String PROHIBITED_ATTR_VALUE = "prohibited";
+  private static final String PROHIBITED_ATTR_VALUE = "prohibited";
   @NonNls
-  public static final String OTHER_NAMESPACE_ATTR_VALUE = "##other";
+  private static final String OTHER_NAMESPACE_ATTR_VALUE = "##other";
+
   @NonNls private static final String TRUE_ATTR_VALUE = "true";
   @NonNls private static final String REF_ATTR_NAME = "ref";
   @NonNls private static final String NAME_ATTR_NAME = "name";
@@ -42,18 +74,18 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
 
   public XmlElementDescriptor[] getElements() {
-    if(myElementDescriptors != null) return myElementDescriptors;
+    return myElementDescriptorsCache.get(this);
+  }
 
-    synchronized(PsiLock.LOCK) {
-      if(myElementDescriptors != null) return myElementDescriptors;
-      Map<String,XmlElementDescriptor> map = new LinkedHashMap<String,XmlElementDescriptor>(5);
-      collectElements(map, myTag, new HashSet<XmlTag>());
-      addSubstitutionGroups(map);
-      filterAbstractElements(map);
-      return myElementDescriptors = map.values().toArray(
-        new XmlElementDescriptor[map.values().size()]
-      );
-    }
+  // Read-only calculation
+  private XmlElementDescriptor[] doCollectElements() {
+    Map<String,XmlElementDescriptor> map = new LinkedHashMap<String,XmlElementDescriptor>(5);
+    collectElements(map, myTag, new HashSet<XmlTag>());
+    addSubstitutionGroups(map);
+    filterAbstractElements(map);
+    return map.values().toArray(
+      new XmlElementDescriptor[map.values().size()]
+    );
   }
 
   private void addSubstitutionGroups(Map<String, XmlElementDescriptor> result) {
@@ -86,17 +118,17 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
 
   public XmlAttributeDescriptor[] getAttributes() {
-    if(myAttributeDescriptors != null) return myAttributeDescriptors;
+    return myAttributeDescriptorsCache.get(this);
+  }
 
-    synchronized(PsiLock.LOCK) {
-      if(myAttributeDescriptors != null) return myAttributeDescriptors;
-      List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
-      collectAttributes(result, myTag, new ArrayList<XmlTag>());
+  // Read-only calculation
+  private XmlAttributeDescriptor[] doCollectAttributes() {
+    List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
+    collectAttributes(result, myTag, new ArrayList<XmlTag>());
 
-      if (myDocumentDescriptor.supportsStdAttributes()) addStdAttributes(result);
+    if (myDocumentDescriptor.supportsStdAttributes()) addStdAttributes(result);
 
-      return myAttributeDescriptors = result.toArray(new XmlAttributeDescriptor[result.size()]);
-    }
+    return result.toArray(new XmlAttributeDescriptor[result.size()]);
   }
 
   private static void addStdAttributes(List<XmlAttributeDescriptor> result) {

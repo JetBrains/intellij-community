@@ -1,43 +1,27 @@
 package com.intellij.psi.impl.source.html.dtd;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.jsp.impl.RelaxedNsXmlElementDescriptor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.jsp.impl.RelaxedNsXmlElementDescriptor;
+import com.intellij.xml.impl.dtd.BaseXmlElementDescriptorImpl;
 
 import java.util.HashMap;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Nov 2, 2004
- * Time: 4:19:28 PM
- * To change this template use File | Settings | File Templates.
+ * @by Maxim.Mossienko
  */
-public class HtmlElementDescriptorImpl implements XmlElementDescriptor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl");
-
+public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
   private XmlElementDescriptor myDelegate;
   private boolean myRelaxed;
-  private volatile HashMap<String,XmlElementDescriptor> cachedDescriptors;
-  private volatile HashMap<String,XmlAttributeDescriptor> cachedAttributeDescriptors;
-  private volatile XmlElementDescriptor[] myElementDescriptors = null;
-  private volatile XmlAttributeDescriptor[] myAttributeDescriptors;
 
   public HtmlElementDescriptorImpl(XmlElementDescriptor _delegate) {
     myDelegate = _delegate;
     myRelaxed = myDelegate instanceof RelaxedNsXmlElementDescriptor;
-  }
-
-  public HtmlElementDescriptorImpl() {
-    LOG.error("Should not be called");
   }
 
   public String getQualifiedName() {
@@ -48,46 +32,22 @@ public class HtmlElementDescriptorImpl implements XmlElementDescriptor {
     return myDelegate.getDefaultName();
   }
 
-  public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
+  // Read-only calculation
+  protected final XmlElementDescriptor[] doCollectXmlDescriptors(final XmlTag context) {
+    XmlElementDescriptor[] elementsDescriptors = myDelegate.getElementsDescriptors(context);
+    XmlElementDescriptor[] temp = new XmlElementDescriptor[elementsDescriptors.length];
 
-    if (myElementDescriptors==null) {
-      synchronized(PsiLock.LOCK) {
-        if (myElementDescriptors == null) {
-          XmlElementDescriptor[] elementsDescriptors = myDelegate.getElementsDescriptors(context);
-          XmlElementDescriptor[] temp = new XmlElementDescriptor[elementsDescriptors.length];
-
-          for (int i = 0; i < elementsDescriptors.length; i++) {
-            temp[i] = new HtmlElementDescriptorImpl( elementsDescriptors[i] );
-          }
-
-          myElementDescriptors = temp;
-        }
-      }
+    for (int i = 0; i < elementsDescriptors.length; i++) {
+      temp[i] = new HtmlElementDescriptorImpl( elementsDescriptors[i] );
     }
-
-    return myElementDescriptors;
+    return temp;
   }
 
   public XmlElementDescriptor getElementDescriptor(XmlTag element) {
     String name = element.getName();
     name = name.toLowerCase();
 
-    if (cachedDescriptors == null) {
-      synchronized (PsiLock.LOCK) {
-        if (cachedDescriptors == null) {
-          final HashMap<String, XmlElementDescriptor> hashMap = new HashMap<String, XmlElementDescriptor>();
-          final XmlElementDescriptor[] elementDescriptors = myDelegate.getElementsDescriptors(element);
-
-          for (XmlElementDescriptor elementDescriptor : elementDescriptors) {
-            hashMap.put(elementDescriptor.getName(), new HtmlElementDescriptorImpl(elementDescriptor));
-          }
-
-          cachedDescriptors = hashMap;
-        }
-      }
-    }
-
-    XmlElementDescriptor xmlElementDescriptor = cachedDescriptors.get(name);
+    XmlElementDescriptor xmlElementDescriptor = getElementDescriptor(name, element);
     if (xmlElementDescriptor == null && myRelaxed) {
       xmlElementDescriptor = myDelegate.getElementDescriptor(element);
     }
@@ -95,50 +55,44 @@ public class HtmlElementDescriptorImpl implements XmlElementDescriptor {
     return xmlElementDescriptor;
   }
 
-  public XmlAttributeDescriptor[] getAttributesDescriptors() {
+  // Read-only calculation
+  protected HashMap<String, XmlElementDescriptor> collectElementDescriptorsMap(final XmlTag element) {
+    final HashMap<String, XmlElementDescriptor> hashMap = new HashMap<String, XmlElementDescriptor>();
+    final XmlElementDescriptor[] elementDescriptors = myDelegate.getElementsDescriptors(element);
 
-    if (myAttributeDescriptors == null) {
-      synchronized (PsiLock.LOCK) {
-        if (myAttributeDescriptors == null) {
-          final XmlAttributeDescriptor[] attributesDescriptors = myDelegate.getAttributesDescriptors();
-          XmlAttributeDescriptor[] temp = new XmlAttributeDescriptor[attributesDescriptors.length];
-
-          for (int i = 0; i < attributesDescriptors.length; i++) {
-            temp[i] = new HtmlAttributeDescriptorImpl(attributesDescriptors[i]);
-          }
-
-          myAttributeDescriptors = temp;
-        }
-      }
+    for (XmlElementDescriptor elementDescriptor : elementDescriptors) {
+      hashMap.put(elementDescriptor.getName(), new HtmlElementDescriptorImpl(elementDescriptor));
     }
-    return myAttributeDescriptors;
+    return hashMap;
+  }
+
+  // Read-only calculation
+  protected XmlAttributeDescriptor[] collectAttributeDescriptors() {
+    final XmlAttributeDescriptor[] attributesDescriptors = myDelegate.getAttributesDescriptors();
+    XmlAttributeDescriptor[] temp = new XmlAttributeDescriptor[attributesDescriptors.length];
+
+    for (int i = 0; i < attributesDescriptors.length; i++) {
+      temp[i] = new HtmlAttributeDescriptorImpl(attributesDescriptors[i]);
+    }
+    return temp;
   }
 
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName) {
-    attributeName = attributeName.toLowerCase();
-
-    if (cachedAttributeDescriptors==null) {
-      synchronized(PsiLock.LOCK) {
-        if (cachedAttributeDescriptors == null) {
-          final HashMap<String, XmlAttributeDescriptor> hashMap = new HashMap<String, XmlAttributeDescriptor>();
-          XmlAttributeDescriptor[] elementAttributeDescriptors = myDelegate.getAttributesDescriptors();
-
-          for (final XmlAttributeDescriptor attributeDescriptor : elementAttributeDescriptors) {
-            hashMap.put(
-              attributeDescriptor.getName(),
-              new HtmlAttributeDescriptorImpl(attributeDescriptor)
-            );
-          }
-
-          cachedAttributeDescriptors = hashMap;
-        }
-      }
-    }
-    return cachedAttributeDescriptors.get(attributeName);
+    return super.getAttributeDescriptor(attributeName.toLowerCase());
   }
 
-  public XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attr) {
-    return getAttributeDescriptor(attr.getName());
+  // Read-only calculation
+  protected HashMap<String, XmlAttributeDescriptor> collectAttributeDescriptorsMap() {
+    final HashMap<String, XmlAttributeDescriptor> hashMap = new HashMap<String, XmlAttributeDescriptor>();
+    XmlAttributeDescriptor[] elementAttributeDescriptors = myDelegate.getAttributesDescriptors();
+
+    for (final XmlAttributeDescriptor attributeDescriptor : elementAttributeDescriptors) {
+      hashMap.put(
+        attributeDescriptor.getName(),
+        new HtmlAttributeDescriptorImpl(attributeDescriptor)
+      );
+    }
+    return hashMap;
   }
 
   public XmlNSDescriptor getNSDescriptor() {

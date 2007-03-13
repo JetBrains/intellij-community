@@ -1,16 +1,16 @@
 package com.intellij.psi.impl.source.html.dtd;
 
+import com.intellij.jsp.impl.RelaxedNsXmlNSDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SimpleFieldCache;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlDocument;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.jsp.impl.RelaxedNsXmlNSDescriptor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +23,20 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
 
   private XmlNSDescriptor myDelegate;
   private boolean myRelaxed;
+  private static SimpleFieldCache<Map<String, XmlElementDescriptor>, HtmlNSDescriptorImpl> myCachedDeclsCache = new SimpleFieldCache<Map<String, XmlElementDescriptor>, HtmlNSDescriptorImpl>() {
+    protected Map<String, XmlElementDescriptor> compute(final HtmlNSDescriptorImpl htmlNSDescriptor) {
+      return htmlNSDescriptor.doBuildCachedMap();
+    }
+
+    protected Map<String, XmlElementDescriptor> getValue(final HtmlNSDescriptorImpl htmlNSDescriptor) {
+      return htmlNSDescriptor.myCachedDecls;
+    }
+
+    protected void putValue(final Map<String, XmlElementDescriptor> map, final HtmlNSDescriptorImpl htmlNSDescriptor) {
+      htmlNSDescriptor.myCachedDecls = map;
+    }
+  };
+
   private volatile Map<String, XmlElementDescriptor> myCachedDecls;
 
   public HtmlNSDescriptorImpl(XmlNSDescriptor _delegate) {
@@ -35,23 +49,21 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
   }
 
   private Map<String,XmlElementDescriptor> buildDeclarationMap() {
-    if (myCachedDecls == null) {
-      synchronized(PsiLock.LOCK) {
-        if (myCachedDecls == null) {
-          HashMap<String, XmlElementDescriptor> decls = new HashMap<String, XmlElementDescriptor>();
-          XmlElementDescriptor[] elements = myDelegate == null ? XmlElementDescriptor.EMPTY_ARRAY : myDelegate.getRootElementsDescriptors(null);
+    return myCachedDeclsCache.get(this);
+  }
 
-          for (XmlElementDescriptor element : elements) {
-            decls.put(
-              element.getName(),
-              new HtmlElementDescriptorImpl(element)
-            );
-          }
-          myCachedDecls = decls;
-        }
-      }
+  // Read-only calculation
+  private HashMap<String, XmlElementDescriptor> doBuildCachedMap() {
+    HashMap<String, XmlElementDescriptor> decls = new HashMap<String, XmlElementDescriptor>();
+    XmlElementDescriptor[] elements = myDelegate == null ? XmlElementDescriptor.EMPTY_ARRAY : myDelegate.getRootElementsDescriptors(null);
+
+    for (XmlElementDescriptor element : elements) {
+      decls.put(
+        element.getName(),
+        new HtmlElementDescriptorImpl(element)
+      );
     }
-    return myCachedDecls;
+    return decls;
   }
 
   public XmlElementDescriptor getElementDescriptor(XmlTag tag) {
