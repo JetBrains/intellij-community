@@ -136,7 +136,8 @@ public class TestData implements Cloneable
         if (WORKING_DIRECTORY != null && WORKING_DIRECTORY.length() > 0)
             return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
 
-        return project.getBaseDir().getPath();
+        return project.getProjectFile().getParent().getPath();
+        // return project.getBaseDir().getPath();
     }
 
     public void setProperty(int type, String value, Project project) {
