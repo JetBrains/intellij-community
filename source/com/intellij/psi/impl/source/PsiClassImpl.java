@@ -17,6 +17,7 @@ import com.intellij.psi.impl.cache.RepositoryElementType;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.impl.meta.MetaRegistry;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
@@ -29,6 +30,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -323,7 +325,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   @Nullable
   public PsiClass getContainingClass() {
     PsiElement parent = getDefaultParentByRepository();
-    return parent instanceof PsiClass ? (PsiClass)parent : null;
+    return parent instanceof PsiClass ? (PsiClass)parent : PsiTreeUtil.getParentOfType(this, JspClass.class);
   }
 
   @NotNull
