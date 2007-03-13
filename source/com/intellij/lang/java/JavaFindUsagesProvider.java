@@ -77,6 +77,8 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
         return LangBundle.message("java.terms.enum");
       } else if (((PsiClass)element).isInterface()) {
         return LangBundle.message("java.terms.interface");
+      } else if (element instanceof PsiTypeParameter) {
+        return LangBundle.message("java.terms.type.parameter");
       }
       return LangBundle.message("java.terms.class");
     }

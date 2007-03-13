@@ -89,7 +89,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       else if (aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
         return containingClass != null ? containingClass.getUseScope() : maximalUseScope;
       }
-      else if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+      else if (aClass.hasModifierProperty(PsiModifier.PRIVATE) || aClass instanceof PsiTypeParameter) {
         PsiClass topClass = PsiUtil.getTopLevelClass(aClass);
         return new LocalSearchScope(topClass == null ? aClass.getContainingFile() : topClass);
       }
