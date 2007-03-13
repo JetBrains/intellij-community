@@ -695,9 +695,14 @@ public class GenericsHighlightUtil {
     }
     if (type instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
-      final PsiClass aClass = resolveResult.getElement();
+      PsiClass aClass = resolveResult.getElement();
       if (aClass == null) return null;
       final PsiManager manager = aClass.getManager();
+      final String qName = aClass.getQualifiedName();
+      if (qName != null) {
+        final PsiClass myClass = manager.findClass(qName, expression.getResolveScope());
+        if (myClass != null) aClass = myClass;
+      }
       final PsiClass iterable = manager.findClass("java.lang.Iterable", aClass.getResolveScope());
       if (iterable == null) return null;
       final PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(iterable, aClass, PsiSubstitutor.EMPTY);
