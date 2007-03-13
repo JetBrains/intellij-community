@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -299,16 +300,32 @@ public class UnscrambleDialog extends DialogWrapper{
   }
 
   static String normalizeText(@NonNls String text) {
-    // move 'at' to the line start
-    text = text.replaceAll("\\nat\\n", "\nat ");
-    text = text.replaceAll("(\\S)[\\s&&[^\\n]]*at ", "$1\n at ");
-    text = text.replaceAll("(\\S)\\nat ", "$1\n at ");
-    // merge (inadvertently) splitted lines (unless next line begins with 'at' or 'Caused by' or ("); " is used in thread names in thread dumps)
-    text = text.replaceAll("\\s*\\n\\s*+([^a\"C]|(a[^t])|[^Ca\"]|(C[^a])|(Ca[^u])|(Cau[^s])|(Caus[^e])|(Cause[^d]))", "$1");
+    StringBuilder builder = new StringBuilder(text.length());
+    String[] lines = text.split("\n");
+    boolean first = true;
+    for (String line : lines) {
+      if (!first && mustHaveNewLineBefore(line)) {
+        builder.append("\n");
+        if (line.startsWith("\"")) builder.append("\n"); // Additional linebreak for thread names
+      }
+      first = false;
+      builder.append(line);
+    }
+    return builder.toString();
+  }
 
-    // remove empty lines that aren't followed by line started with "
-    text = text.replaceAll("(\\n\\s*)+\\n([^\"])", "\n$2");
-    return text;
+  private static boolean mustHaveNewLineBefore(String line) {
+    final int nonws = CharArrayUtil.shiftForward(line, 0, " \t");
+    if (nonws < line.length()) {
+      line = line.substring(nonws);
+    }
+
+    if (line.startsWith("at")) return true;       // Start of the new stackframe entry
+    if (line.startsWith("Caused")) return true;   // Caused by message
+    if (line.startsWith("- locked")) return true; // Locked a monitor logging
+    if (line.startsWith("\"")) return true;       // Start of the new thread (thread name)
+
+    return false;
   }
 
   private static final class EditorPanel extends JPanel implements DataProvider{
