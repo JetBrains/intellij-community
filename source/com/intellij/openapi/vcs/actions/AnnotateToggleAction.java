@@ -136,7 +136,7 @@ public class AnnotateToggleAction extends ToggleAction {
     FileAnnotation fileAnnotation = fileAnnotationRef.get();
     String upToDateContent = fileAnnotation.getAnnotatedContent();
 
-    final UpToDateLineNumberProvider getUpToDateLineNumber = LocalVcs.getInstance(context.getProject()).getUpToDateLineNumberProvider(
+    final UpToDateLineNumberProvider getUpToDateLineNumber = LocalVcs.getInstance(project).getUpToDateLineNumberProvider(
       editor.getDocument(),
       upToDateContent);
 
