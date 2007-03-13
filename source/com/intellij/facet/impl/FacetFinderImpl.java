@@ -96,12 +96,14 @@ public class FacetFinderImpl extends FacetFinder {
   @NotNull
   public <F extends Facet & FacetRootsProvider> List<F> findFacets(VirtualFile file, FacetTypeId<F> type) {
     final Map<VirtualFile, List<Facet>> map = getRootToFacetsMap(type);
-    while (file != null) {
-      final List<F> list = (List<F>)((List)map.get(file));
-      if (list != null) {
-        return list;
+    if (!map.isEmpty()) {
+      while (file != null) {
+        final List<F> list = (List<F>)((List)map.get(file));
+        if (list != null) {
+          return list;
+        }
+        file = file.getParent();
       }
-      file = file.getParent();
     }
     return Collections.<F>emptyList();
   }
