@@ -320,10 +320,11 @@ public class UnscrambleDialog extends DialogWrapper{
       line = line.substring(nonws);
     }
 
-    if (line.startsWith("at")) return true;       // Start of the new stackframe entry
-    if (line.startsWith("Caused")) return true;   // Caused by message
-    if (line.startsWith("- locked")) return true; // Locked a monitor logging
-    if (line.startsWith("\"")) return true;       // Start of the new thread (thread name)
+    if (line.startsWith("at")) return true;        // Start of the new stackframe entry
+    if (line.startsWith("Caused")) return true;    // Caused by message
+    if (line.startsWith("- locked")) return true;  // "Locked a monitor" logging
+    if (line.startsWith("- waiting")) return true; // "Waiting for monitor" logging
+    if (line.startsWith("\"")) return true;        // Start of the new thread (thread name)
 
     return false;
   }
