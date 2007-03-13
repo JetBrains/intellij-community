@@ -80,7 +80,11 @@ public class CvsContentRevision implements ContentRevision {
       throw result.composeError();
     }
 
-    return operation.getFileBytes();
+    final byte[] fileBytes = operation.getFileBytes();
+    if (operation.isDeleted()) {
+      throw new VcsException(CvsBundle.message("message.text.revision.was.deleted.from.repository", myRevision.getRevision()));
+    }
+    return fileBytes;
   }
 
   @NotNull

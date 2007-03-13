@@ -96,6 +96,9 @@ public class RevisionOrDateImpl implements RevisionOrDate {
   }
 
   public String getRevision() {
+    if (myStickyTag == null) {
+      return "HEAD";
+    }
     return myStickyTag;
   }
 
