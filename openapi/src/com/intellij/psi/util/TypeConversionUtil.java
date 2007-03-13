@@ -320,6 +320,14 @@ public class TypeConversionUtil {
     return type instanceof PsiPrimitiveType && !isNullType(type);
   }
 
+  public static boolean isEnumType(PsiType type) {
+    if (type instanceof PsiClassType) {
+      final PsiClass psiClass = ((PsiClassType)type).resolve();
+      return psiClass != null && psiClass.isEnum();
+    }
+    return false;
+  }
+
   public static boolean isNullType(PsiType type) {
     return PsiType.NULL == type;
   }

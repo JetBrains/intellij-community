@@ -493,7 +493,12 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
     if (caseExpression != null /*&& !(caseExpression instanceof PsiReferenceExpression)*/) {
       caseExpression.accept(this);
+
       generateBoxingUnboxingInstructionFor(caseExpression, PsiType.INT);
+      if (TypeConversionUtil.isEnumType(caseExpression.getType())) {
+        addInstruction(new FieldReferenceInstruction(caseExpression, "switch statement expression"));
+      }
+
       addInstruction(new PopInstruction());
     }
 

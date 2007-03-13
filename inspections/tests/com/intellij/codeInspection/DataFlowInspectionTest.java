@@ -127,4 +127,6 @@ public class DataFlowInspectionTest extends InspectionTestCase {
   public void testCheckedExceptionDominance() throws Exception { doTest15();}
   public void testIDEADEV10489() throws Exception { doTest15();}
   public void testPlusOnStrings() throws Exception { doTest15();}
+
+  public void testSwitchQualifierProducesNPE() throws Exception {doTest15();}
 }

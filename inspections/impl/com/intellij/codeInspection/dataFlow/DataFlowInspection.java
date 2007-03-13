@@ -145,7 +145,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         }
         else {
           LocalQuickFix[] fix = createNPEFixes((PsiExpression)elementToAssert);
-          holder.registerProblem(expression,
+          holder.registerProblem(elementToAssert,
                                  InspectionsBundle.message("dataflow.message.npe.field.access"),
                                  fix);
         }

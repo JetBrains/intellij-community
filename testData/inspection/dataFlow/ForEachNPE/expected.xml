@@ -3,6 +3,6 @@
 <problem>
   <file>Test.java</file>
   <line>4</line>
-  <description>Member variable access &lt;code&gt;path&lt;/code&gt; may produce &lt;code&gt;java.lang.NullPointerException&lt;/code&gt;.</description>
+  <description>Dereference of 'path' may produce java.lang.NullPointerException</description>
 </problem>
 </problems>
