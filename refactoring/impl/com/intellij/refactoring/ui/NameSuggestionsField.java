@@ -91,7 +91,7 @@ public class NameSuggestionsField implements Focusable {
 
   private JComponent createTextFieldForName(String[] nameSuggestions, FileType fileType) {
     final String text;
-    if (nameSuggestions != null && nameSuggestions.length > 0) {
+    if (nameSuggestions != null && nameSuggestions.length > 0 && nameSuggestions[0] != null) {
       text = nameSuggestions[0];
     }
     else {

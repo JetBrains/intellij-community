@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,11 +53,11 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     this("");
   }
 
-  public EditorTextField(String text) {
+  public EditorTextField(@NotNull String text) {
     this(EditorFactory.getInstance().createDocument(text), null, StdFileTypes.PLAIN_TEXT);
   }
 
-  public EditorTextField(String text, Project project, FileType fileType) {
+  public EditorTextField(@NotNull String text, Project project, FileType fileType) {
     this(EditorFactory.getInstance().createDocument(text), project, fileType, false);
   }
 
@@ -124,15 +125,13 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   }
 
   public void beforeDocumentChange(DocumentEvent event) {
-    for (int i = 0; i < myDocumentListeners.size(); i++) {
-      DocumentListener documentListener = myDocumentListeners.get(i);
+    for (DocumentListener documentListener : myDocumentListeners) {
       documentListener.beforeDocumentChange(event);
     }
   }
 
   public void documentChanged(DocumentEvent event) {
-    for (int i = 0; i < myDocumentListeners.size(); i++) {
-      DocumentListener documentListener = myDocumentListeners.get(i);
+    for (DocumentListener documentListener : myDocumentListeners) {
       documentListener.documentChanged(event);
     }
   }
@@ -178,14 +177,14 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   }
 
   private void installDocumentListener() {
-    if (myDocument != null && myDocumentListeners.size() > 0 && !myIsListenerInstalled) {
+    if (myDocument != null && !myDocumentListeners.isEmpty() && !myIsListenerInstalled) {
       myIsListenerInstalled = true;
       myDocument.addDocumentListener(this);
     }
   }
 
   private void uninstallDocumentListener(boolean force) {
-    if (myDocument != null && myIsListenerInstalled && (force || myDocumentListeners.size() == 0)) {
+    if (myDocument != null && myIsListenerInstalled && (force || myDocumentListeners.isEmpty())) {
       myIsListenerInstalled = false;
       myDocument.removeDocumentListener(this);
     }
