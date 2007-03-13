@@ -215,15 +215,13 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
             final PsiExpression testArgument = arguments[testPosition];
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression)testArgument;
-            PsiExpression lhs = binaryExpression.getLOperand();
+            final PsiExpression lhs = binaryExpression.getLOperand();
             PsiExpression rhs = binaryExpression.getROperand();
             final IElementType tokenType =
                     binaryExpression.getOperationTokenType();
             if (!(lhs instanceof PsiLiteralExpression) &&
                     rhs instanceof PsiLiteralExpression) {
-                final PsiExpression temp = lhs;
-                lhs = rhs;
-                rhs = temp;
+                rhs = lhs;
             }
             @NonNls final StringBuilder newExpression = new StringBuilder();
             final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(
@@ -243,15 +241,11 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
                 newExpression.append(message.getText());
                 newExpression.append(',');
             }
-            newExpression.append(lhs.getText());
-            newExpression.append(',');
-            assert rhs != null;
             newExpression.append(rhs.getText());
             newExpression.append(')');
             replaceExpressionAndShorten(callExpression,
                     newExpression.toString());
         }
-
 
         private static void replaceAssertWithAssertSame(
                 PsiMethodCallExpression callExpression, Project project)
