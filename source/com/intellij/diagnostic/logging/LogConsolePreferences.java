@@ -75,13 +75,23 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     if (CUSTOM_FILTER != null) {
       if (!Pattern.compile(".*" + CUSTOM_FILTER.toUpperCase() + ".*").matcher(text.toUpperCase()).matches()) return false;
     }
-    if (ERROR_PATTERN.matcher(text.toUpperCase()).matches() && FILTER_ERRORS) return false;
-    if (WARNING_PATTERN.matcher(text.toUpperCase()).matches() && FILTER_WARNINGS) return false;
-    if (INFO_PATTERN.matcher(text.toUpperCase()).matches() && FILTER_INFO) return false;
+    boolean selfTyped = false;
+    if (ERROR_PATTERN.matcher(text.toUpperCase()).matches()) {
+      selfTyped = true;
+      if (FILTER_ERRORS) return false;
+    }
+    if (WARNING_PATTERN.matcher(text.toUpperCase()).matches()) {
+      selfTyped = true;
+      if (FILTER_WARNINGS) return false;
+    }
+    if (INFO_PATTERN.matcher(text.toUpperCase()).matches()) {
+      selfTyped = true;
+      if (FILTER_INFO) return false;
+    }
     for (LogFilter filter : myRegisteredLogFilters.keySet()) {
       if (myRegisteredLogFilters.get(filter).booleanValue() && !filter.isAcceptable(text)) return false;
     }
-    if (prevType != null) {
+    if (!selfTyped && prevType != null) {
       if (prevType.equals(ERROR)){
         return !FILTER_ERRORS;
       }
