@@ -23,16 +23,11 @@ import com.intellij.util.Processor;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 
 public class FindUsagesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findUsages.FindUsagesUtil");
 
   public static void processUsages(PsiElement element, final Processor<UsageInfo> processor, final FindUsagesOptions options) {
-    if (LOG.isDebugEnabled()){
-      LOG.debug("findUsages: element = " + element + ", options = " + options);
-    }
-
     if (element instanceof PsiVariable){
       if (options.isReadAccess || options.isWriteAccess){
         if (options.isReadAccess && options.isWriteAccess){
@@ -53,10 +48,8 @@ public class FindUsagesUtil {
         }
       }
     }
-    else{
-      if (options.isUsages){
-        addElementUsages(element, processor, options);
-      }
+    else if (options.isUsages) {
+      addElementUsages(element, processor, options);
     }
 
     if (ThrowSearchUtil.isSearchable (element) && options.isThrowUsages) {
@@ -80,12 +73,7 @@ public class FindUsagesUtil {
     }
 
     if (element instanceof PsiClass){
-      if (!((PsiClass)element).isInterface()){
-        if (options.isDerivedClasses){
-          addInheritors((PsiClass)element, processor, options);
-        }
-      }
-      else{
+      if (((PsiClass)element).isInterface()) {
         if (options.isDerivedInterfaces){
           if (options.isImplementingClasses){
             addInheritors((PsiClass)element, processor, options);
@@ -98,18 +86,21 @@ public class FindUsagesUtil {
           addImplementingClasses((PsiClass)element, processor, options);
         }
       }
+      else if (options.isDerivedClasses){
+          addInheritors((PsiClass)element, processor, options);
+      }
     }
 
     if (element instanceof PsiMethod){
       PsiSearchHelper searchHelper = element.getManager().getSearchHelper();
       final PsiMethod psiMethod = (PsiMethod)element;
-      if (!psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)){
-        if (options.isOverridingMethods){
+      if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        if (options.isImplementingMethods){
           processOverridingMethods(psiMethod, processor, searchHelper, options);
         }
       }
-      else{
-        if (options.isImplementingMethods){
+      else {
+        if (options.isOverridingMethods){
           processOverridingMethods(psiMethod, processor, searchHelper, options);
         }
       }
@@ -136,23 +127,6 @@ public class FindUsagesUtil {
       }
 
     }, psiMethod, options.searchScope, options.isCheckDeepInheritance);
-  }
-
-  /**
-   * @deprecated use processUsages instead. 
-   * @param element
-   * @param options
-   * @return
-   */
-  public static UsageInfo[] findUsages(PsiElement element, final FindUsagesOptions options) {
-    final List<UsageInfo> results = new ArrayList<UsageInfo>();
-    processUsages(element, new Processor<UsageInfo>() {
-      public boolean process(UsageInfo t) {
-        results.add(t);
-        return true;
-      }
-    }, options);
-    return results.toArray(new UsageInfo[results.size()]);
   }
 
   private static String getStringToSearch(PsiElement element) {
@@ -198,13 +172,13 @@ public class FindUsagesUtil {
   private static void addMethodUsages(final PsiMethod method, final Processor<UsageInfo> result, final FindUsagesOptions options, SearchScope searchScope) {
     PsiSearchHelper helper = method.getManager().getSearchHelper();
     if (method.isConstructor()) {
-      if (!options.isIncludeOverloadUsages) {
-        addConstructorUsages(method, searchScope, result, options);
-      }
-      else {
+      if (options.isIncludeOverloadUsages) {
         for (PsiMethod constructor : method.getContainingClass().getConstructors()) {
           addConstructorUsages(constructor, searchScope, result, options);
         }
+      }
+      else {
+        addConstructorUsages(method, searchScope, result, options);
       }
     }
     else {
@@ -345,13 +319,7 @@ public class FindUsagesUtil {
   }
 
   private static void addMethodsUsages(final PsiClass aClass, final Processor<UsageInfo> results, final FindUsagesOptions options) {
-    if (!options.isIncludeInherited){
-      PsiMethod[] methods = aClass.getMethods();
-      for (PsiMethod method : methods) {
-        addMethodUsages(method, results, options, options.searchScope);
-      }
-    }
-    else{
+    if (options.isIncludeInherited) {
       final PsiManager manager = aClass.getManager();
       PsiSearchHelper helper = manager.getSearchHelper();
       PsiMethod[] methods = aClass.getAllMethods();
@@ -385,20 +353,16 @@ public class FindUsagesUtil {
           }
         }
     }
+    else {
+      PsiMethod[] methods = aClass.getMethods();
+      for (PsiMethod method : methods) {
+        addMethodUsages(method, results, options, options.searchScope);
+      }
+    }
   }
 
   private static void addFieldsUsages(final PsiClass aClass, final Processor<UsageInfo> results, final FindUsagesOptions options) {
-    if (!options.isIncludeInherited) {
-      PsiField[] fields = ApplicationManager.getApplication().runReadAction(new Computable<PsiField[]>() {
-        public PsiField[] compute() {
-          return aClass.getFields();
-        }
-      });
-      for (PsiField field : fields) {
-        addElementUsages(field, results, options);
-      }
-    }
-    else {
+    if (options.isIncludeInherited) {
       final PsiManager manager = aClass.getManager();
       PsiField[] fields = aClass.getAllFields();
       FieldsLoop:
@@ -428,6 +392,16 @@ public class FindUsagesUtil {
             }
           });
         }
+      }
+    }
+    else {
+      PsiField[] fields = ApplicationManager.getApplication().runReadAction(new Computable<PsiField[]>() {
+        public PsiField[] compute() {
+          return aClass.getFields();
+        }
+      });
+      for (PsiField field : fields) {
+        addElementUsages(field, results, options);
       }
     }
   }
@@ -513,35 +487,35 @@ public class FindUsagesUtil {
   }
 
   private static boolean filterUsage(PsiElement usage, FindUsagesOptions options, PsiElement refElement) {
-    if (usage instanceof PsiJavaCodeReferenceElement){
-      if (refElement instanceof PsiPackage && !options.isIncludeSubpackages){
-        if (((PsiJavaCodeReferenceElement)usage).resolve() instanceof PsiPackage){
-          PsiElement parent = usage.getParent();
-          if (parent instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)parent).resolve() instanceof PsiPackage){
-            return false;
-          }
+    if (!(usage instanceof PsiJavaCodeReferenceElement)) {
+      return true;
+    }
+    if (refElement instanceof PsiPackage && !options.isIncludeSubpackages &&
+        ((PsiJavaCodeReferenceElement)usage).resolve() instanceof PsiPackage) {
+      PsiElement parent = usage.getParent();
+      if (parent instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)parent).resolve() instanceof PsiPackage) {
+        return false;
+      }
+    }
+
+    if (!(usage instanceof PsiReferenceExpression)){
+      if (options.isSkipImportStatements){
+        PsiElement parent = usage.getParent();
+        while(parent instanceof PsiJavaCodeReferenceElement){
+          parent = parent.getParent();
+        }
+        if (parent instanceof PsiImportStatement){
+          return false;
         }
       }
 
-      if (!(usage instanceof PsiReferenceExpression)){
-        if (options.isSkipImportStatements){
-          PsiElement parent = usage.getParent();
-          while(parent instanceof PsiJavaCodeReferenceElement){
-            parent = parent.getParent();
-          }
-          if (parent instanceof PsiImportStatement){
-            return false;
-          }
+      if (options.isSkipPackageStatements){
+        PsiElement parent = usage.getParent();
+        while(parent instanceof PsiJavaCodeReferenceElement){
+          parent = parent.getParent();
         }
-
-        if (options.isSkipPackageStatements){
-          PsiElement parent = usage.getParent();
-          while(parent instanceof PsiJavaCodeReferenceElement){
-            parent = parent.getParent();
-          }
-          if (parent instanceof PsiPackageStatement){
-            return false;
-          }
+        if (parent instanceof PsiPackageStatement){
+          return false;
         }
       }
     }
