@@ -5,6 +5,7 @@
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.peer.PeerFactory;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
@@ -24,6 +25,7 @@ public class BrowseChangesAction extends AnAction {
     VirtualFile vFile = e.getData(DataKeys.VIRTUAL_FILE);
     assert vFile != null;
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(vFile);
+    assert vcs != null;
     final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
     assert provider != null;
     ChangeBrowserSettings settings = provider.createDefaultSettings();
@@ -60,6 +62,10 @@ public class BrowseChangesAction extends AnAction {
     VirtualFile vFile = e.getData(DataKeys.VIRTUAL_FILE);
     if (vFile == null) return false;
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(vFile);
-    return vcs != null && vcs.getCommittedChangesProvider() != null;
+    if (vcs == null || vcs.getCommittedChangesProvider() == null) {
+      return false;
+    }
+    FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(vFile);
+    return vcs.fileExistsInVcs(filePath);
   }
 }
