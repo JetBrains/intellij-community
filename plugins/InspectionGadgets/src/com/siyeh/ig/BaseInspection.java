@@ -92,7 +92,9 @@ public abstract class BaseInspection extends LocalInspectionTool {
         if (m_shortName == null) {
             final Class<? extends BaseInspection> aClass = getClass();
             final String name = aClass.getName();
-            assert name.endsWith(INSPECTION) : "class name must end with the 'Inspection' to correctly calculate the short name: "+name;
+            assert name.endsWith(INSPECTION) :
+                    "class name must end with 'Inspection' to correctly" +
+                            " calculate the short name: " + name;
             m_shortName = name.substring(name.lastIndexOf((int)'.') + 1,
                     name.length() - INSPECTION.length());
         }
