@@ -12,8 +12,8 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
@@ -27,11 +27,17 @@ public class MergeAction extends AnAction {
 
   public MergeAction() {
     myVisibility.shouldNotBePerformedOnDirectory();
+    myVisibility.canBePerformedOnSeveralFiles();
     myVisibility.addCondition(new CvsActionVisibility.Condition() {
       public boolean isPerformedOn(CvsContext context) {
-        VirtualFile file = context.getSelectedFile();
-        FileStatus status = FileStatusManager.getInstance(context.getProject()).getStatus(file);
-        return status == FileStatus.MERGE || status == FileStatus.MERGED_WITH_CONFLICTS;
+        VirtualFile[] files = context.getSelectedFiles();
+        for(VirtualFile file: files) {
+          FileStatus status = FileStatusManager.getInstance(context.getProject()).getStatus(file);
+          if (status != FileStatus.MERGE && status != FileStatus.MERGED_WITH_CONFLICTS) {
+            return false;
+          }
+        }
+        return true;
       }
     });
   }
@@ -40,14 +46,17 @@ public class MergeAction extends AnAction {
     try {
 
       final VcsContext context = CvsContextWrapper.createCachedInstance(e);
-      final VirtualFile file = context.getSelectedFile();
-      if (file == null) return;
-      if (!file.isWritable()) {
-        VirtualFileManager.getInstance().fireReadOnlyModificationAttempt(file);
+      final VirtualFile[] files = context.getSelectedFiles();
+      if (files == null || files.length == 0) return;
+      final ReadonlyStatusHandler.OperationStatus operationStatus =
+        ReadonlyStatusHandler.getInstance(context.getProject()).ensureFilesWritable(files);
+      if (operationStatus.hasReadonlyFiles()) {
         return;
       }
       final Map<VirtualFile, List<String>> fileToRevisions = new HashMap<VirtualFile, List<String>>();
-      fileToRevisions.put(file, CvsUtil.getAllRevisionsForFile(file));
+      for(VirtualFile file: files) {
+        fileToRevisions.put(file, CvsUtil.getAllRevisionsForFile(file));
+      }
       final Project project = context.getProject();
       AbstractVcsHelper.getInstance(project).showMergeDialog(new ArrayList<VirtualFile>(fileToRevisions.keySet()),
                                                              new CvsMergeProvider(fileToRevisions, project),
