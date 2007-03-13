@@ -558,7 +558,6 @@ public class FileUtil {
   public static String convertAntToRegexp(String pattern) {
     final StringBuilder buf = StringBuilderSpinAllocator.alloc();
     try {
-      buf.append(pattern);
       int cur = 0;
       boolean isAfterAsterix = false;
       while (cur < pattern.length()) {
