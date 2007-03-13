@@ -259,7 +259,7 @@ public class Cache {
     }
   }
 
-  public synchronized int[] getReferencedClasses(int classId) throws CacheCorruptedException {
+  public synchronized int[] getReferencedClassQNames(int classId) throws CacheCorruptedException {
     try {
       final ClassInfoView view = myViewPool.getClassInfoView(classId);
       return view.getReferencedClasses();
@@ -821,27 +821,6 @@ public class Cache {
         view.getRuntimeInvisibleParamAnnotations(),
         view.getAnnotationDefault()
       );
-    }
-    catch (Throwable e) {
-      throw new CacheCorruptedException(e);
-    }
-  }
-
-  public synchronized void forEachDeclaration(DeclarationProcessor processor) throws CacheCorruptedException {
-    try {
-      final TIntIntHashMap declarationsMap = getQNameToClassDeclarationIdMap();
-      final int[] qNames = declarationsMap.keys();
-      for (final int qName : qNames) {
-        if (!processor.process(new DeclarationInfo(qName))) {
-          return;
-        }
-        final MemberDeclarationInfo[] memberDeclarations = getMemberDeclarations(qName);
-        for (MemberDeclarationInfo memberDeclaration : memberDeclarations) {
-          if (!processor.process(memberDeclaration)) {
-            return;
-          }
-        }
-      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);

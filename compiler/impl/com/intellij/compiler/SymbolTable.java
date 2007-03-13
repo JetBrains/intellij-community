@@ -36,15 +36,6 @@ public class SymbolTable {
     }
   }
 
-  public synchronized void save() throws CacheCorruptedException {
-    try {
-      myTrie.flush();
-    }
-    catch (IOException e) {
-      throw new CacheCorruptedException(e);
-    }
-  }
-
   public synchronized int getId(String symbol) throws CacheCorruptedException {
     LOG.assertTrue(symbol != null);
     if (symbol.length() == 0) {

@@ -146,7 +146,7 @@ public class DependencyCache {
       Runnable runnable = new Runnable() {
         public void run() {
           try {
-            final int[] referencedClasses = cache.getReferencedClasses(oldClassId);
+            final int[] referencedClasses = cache.getReferencedClassQNames(oldClassId);
             for (int referencedClassQName : referencedClasses) {
               final int referencedClassDeclarationId = cache.getClassDeclarationId(referencedClassQName);
               if (referencedClassDeclarationId == Cache.UNKNOWN) {
@@ -675,6 +675,7 @@ public class DependencyCache {
     try {
       if (myNewClassesCache != null) {
         myNewClassesCache.wipe();
+        myNewClassesCache = null;
       }
     }
     catch (CacheCorruptedException e) {
@@ -683,12 +684,12 @@ public class DependencyCache {
     try {
       if (myCache != null) {
         myCache.dispose();
+        myCache = null;
       }
     }
     catch (CacheCorruptedException e) {
       LOG.error(e); // todo
     }
-    //mySymbolTable = null;
     try {
       if (mySymbolTable != null) {
         mySymbolTable.dispose();
