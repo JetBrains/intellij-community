@@ -128,6 +128,6 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myFileList;
+    return getRootPane().getDefaultButton();
   }
 }
