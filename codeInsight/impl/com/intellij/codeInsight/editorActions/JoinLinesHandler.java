@@ -49,7 +49,8 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       public void run() {
         LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
 
-        PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(doc);
+        final PsiDocumentManager docManager = PsiDocumentManager.getInstance(project);
+        PsiFile psiFile = docManager.getPsiFile(doc);
 
         if (psiFile == null) {
           myOriginalHandler.execute(editor, dataContext);
@@ -69,7 +70,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
           if (i >= doc.getLineCount() - 1) break;
           int lineEndOffset = doc.getLineEndOffset(startLine);
 
-          PsiDocumentManager.getInstance(project).commitDocument(doc);
+          docManager.commitDocument(doc);
           CharSequence text = doc.getCharsSequence();
           int firstNonSpaceOffsetInNextLine = doc.getLineStartOffset(startLine + 1);
           while (text.charAt(firstNonSpaceOffsetInNextLine) == ' ' || text.charAt(firstNonSpaceOffsetInNextLine) == '\t') firstNonSpaceOffsetInNextLine++;
@@ -99,7 +100,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
 
             int indent = -1;
             try {
-              PsiDocumentManager.getInstance(project).commitDocument(doc);
+              docManager.commitDocument(doc);
               indent = CodeStyleManager.getInstance(project).adjustLineIndent(
                   psiFile,
                   startLine == 0 ? 0 : doc.getLineStartOffset(startLine)
@@ -126,7 +127,9 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
 
 
           // Check if we're joining splitted string literal.
-          PsiDocumentManager.getInstance(project).commitDocument(doc);
+          docManager.commitDocument(doc);
+
+
           int rc = tryJoinStringLiteral(doc, psiFile, start);
 
           if (rc == -1) {
@@ -167,7 +170,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
 
           if (start <= doc.getLineStartOffset(startLine)) {
             try {
-              PsiDocumentManager.getInstance(project).commitDocument(doc);
+              docManager.commitDocument(doc);
               CodeStyleManager.getInstance(project).adjustLineIndent(psiFile, doc.getLineStartOffset(startLine));
             } catch (IncorrectOperationException e) {
               LOG.error(e);
@@ -176,7 +179,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
 
           int prevLineCount = doc.getLineCount();
 
-          PsiDocumentManager.getInstance(project).commitDocument(doc);
+          docManager.commitDocument(doc);
           try {
             CodeStyleManager.getInstance(project).reformatText(psiFile, start+1, end);
           } catch (IncorrectOperationException e) {
@@ -195,7 +198,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
             doc.replaceString(start, end, " ");
           }
 
-          PsiDocumentManager.getInstance(project).commitDocument(doc);
+          docManager.commitDocument(doc);
         }
 
         if (editor.getSelectionModel().hasSelection()) {
