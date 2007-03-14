@@ -83,57 +83,77 @@ public class EscapedJavaLexer extends LexerBase {
     return myBufferEnd;
   }
 
-  private void locateToken(){
+  private void locateToken() {
     if (myTokenType != null) return;
     if (myCurOffset >= myBufferEnd) return;
 
-    int state = 0; // 0 -- start/end
-                   // 1 -- start of escape in the string start
-                   // 2 -- escape start inside string
-                   // 3 -- inside string
-                   // 4 -- error
+    boolean esc = false;
     int offset = myCurOffset;
-    do{
-      final char c = myBuffer.charAt(offset);
-      switch(c){
-        case '\\':
-          state += state % 2 == 0 ? 1 : -1;
-          if(state % 5 == 0) state = 4;
-        case '"':
-        case '\'':
-          if((state == 1 || state == 2) && c == mySurroundingQuote){
-            state = 6 - state * 3 ;
-            offset++;
-            break;
-          }
-        default:
-          offset+=state > 0 ? 1 : 0;
-          break;
-        case '\n':
-        case '\r':
-          state = 0; // break string at the end of line
-          //offset++;
-          break;
+    int state = 0; // 0 -- start/end
+                   // 1 -- inside string
+                   // 2 -- after escape (/) in string literal
+
+    char literalStarter = 0;
+    do {
+      char c = myBuffer.charAt(offset);
+      boolean wasEsc = esc;
+      esc = false;
+      if (c == '\\') {
+        if (!wasEsc) {
+          esc = true;
+        }
+        else {
+          state = 2;
+        }
       }
-      if(offset == myBufferEnd - 1) state = 0;
-      switch (state){
-        case 0:
-          if(offset == myCurOffset){
-            myJavaLexer.start(myBuffer, myCurOffset, myBufferEnd,0);
-            myTokenType = myJavaLexer.getTokenType();
-            myTokenEnd = myJavaLexer.getTokenEnd();
-          }
-          else {
-            myTokenType = myTokenType = mySurroundingQuote == '"' ? JavaTokenType.STRING_LITERAL : JavaTokenType.CHARACTER_LITERAL;
-            myTokenEnd = offset;
-          }
-          break;
-        case 4:
-          myTokenType = JavaTokenType.BAD_CHARACTER;
-          myTokenEnd = offset;
+      else if (state == 0) {
+        if (c == '\'' || c == '\"') {
+          literalStarter = c;
+          state = 1;
+        }
+      }
+      else if (state == 1) {
+        if (c == literalStarter) {
           state = 0;
+          offset++;
+          break;
+        }
       }
+      else if (state == 2) {
+        state = 1;
+      }
+
+      if (!esc && state == 0 || offset >= myBufferEnd) {
+        break;
+      }
+
+      offset++;
     }
-    while (state > 0);
+    while (true);
+
+    if(offset == myBufferEnd - 1) state = 0;
+    switch (state){
+      case 0:
+        if(offset == myCurOffset){
+          myJavaLexer.start(myBuffer, myCurOffset, myBufferEnd,0);
+          myTokenType = myJavaLexer.getTokenType();
+          myTokenEnd = myJavaLexer.getTokenEnd();
+        }
+        else {
+          myTokenType = literalStarter == '\"' ? JavaTokenType.STRING_LITERAL : JavaTokenType.CHARACTER_LITERAL;
+          myTokenEnd = offset;
+        }
+        break;
+
+      case 1:
+        myTokenType = literalStarter == '\"' ? JavaTokenType.STRING_LITERAL : JavaTokenType.CHARACTER_LITERAL;
+        myTokenEnd = offset;
+        break;
+
+      default:
+        myTokenType = JavaTokenType.BAD_CHARACTER;
+        myTokenEnd = offset;
+        break;
+    }
   }
 }
