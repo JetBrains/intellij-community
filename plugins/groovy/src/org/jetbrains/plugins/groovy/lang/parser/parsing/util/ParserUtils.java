@@ -53,6 +53,11 @@ public abstract class ParserUtils {
    * @return true if following sequence is like a given
    */
   public static boolean lookAhead(PsiBuilder builder, IElementType... elems) {
+
+    if (elems.length == 1) {
+      return elems[0].equals(builder.getTokenType());
+    }
+
     PsiBuilder.Marker rb = builder.mark();
     int i = 0;
     for (; !builder.eof() && i < elems.length && elems[i].equals(builder.getTokenType());) {
@@ -61,6 +66,18 @@ public abstract class ParserUtils {
     }
     rb.rollbackTo();
     return i == elems.length;
+  }
+
+  /**
+   * Wraps current token to node with specified element type
+   *
+   * @param builder Given builder
+   * @param elem Node element
+   */
+  public static void eatElement(PsiBuilder builder, IElementType elem){
+    PsiBuilder.Marker marker = builder.mark();
+    builder.advanceLexer();
+    marker.done(elem);
   }
 
 }
