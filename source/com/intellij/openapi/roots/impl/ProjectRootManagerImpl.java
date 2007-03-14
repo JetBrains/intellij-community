@@ -15,9 +15,9 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.module.impl.scopes.JdkScope;
 import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
-import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -86,7 +86,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private Runnable myReloadProjectRequest = null;
   @NonNls private static final String ATTRIBUTE_VERSION = "version";
 
-  private Map<List<Module>, GlobalSearchScope> myLibraryScopes = new HashMap<List<Module>, GlobalSearchScope>();
+  private Map<List<Module>, GlobalSearchScope> myLibraryScopes = new com.intellij.util.containers.ConcurrentHashMap<List<Module>, GlobalSearchScope>();
   private Map<String, GlobalSearchScope> myJdkScopes = new HashMap<String, GlobalSearchScope>();
 
   private VirtualFilePointer myCompilerOutput;
