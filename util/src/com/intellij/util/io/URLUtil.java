@@ -1,5 +1,6 @@
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.FileNotFoundException;
@@ -38,7 +39,7 @@ public class URLUtil {
 
     String resource = file.substring(file.indexOf("!/") + 2);
     file = file.substring(0, file.indexOf("!"));
-    final ZipFile zipFile = new ZipFile(file);
+    final ZipFile zipFile = new ZipFile(FileUtil.unquote(file));
     final ZipEntry zipEntry = zipFile.getEntry(resource);
     if (zipEntry == null) throw new FileNotFoundException("Entry " + resource + " not found in " + file);
     return new FilterInputStream(zipFile.getInputStream(zipEntry)) {
