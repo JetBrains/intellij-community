@@ -34,11 +34,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -46,6 +44,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlTag;
@@ -502,5 +501,24 @@ public class VcsUtil
         collectFiles(child, files, recursive, false);
       }
     }
+  }
+
+  public static boolean runVcsProcessWithProgress(final VcsRunnable runnable, String progressTitle,
+                                                  boolean canBeCanceled, Project project) throws VcsException {
+    final Ref<VcsException> ex = new Ref<VcsException>();
+    boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        try {
+          runnable.run();
+        }
+        catch (VcsException e) {
+          ex.set(e);
+        }
+      }
+    }, progressTitle, canBeCanceled, project);
+    if (!ex.isNull()) {
+      throw ex.get();
+    }
+    return result;
   }
 }
