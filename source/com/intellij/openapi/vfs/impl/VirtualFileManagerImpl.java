@@ -233,7 +233,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
             if (!asynchronous) mySynchronousRefreshCount--;
             LOG.assertTrue(myRefreshCount >= 0 && mySynchronousRefreshCount >= 0);
 
-            if (mySynchronousRefreshCount != 0 || (asynchronous && myRefreshCount != 0)) {
+            if (mySynchronousRefreshCount != 0 || asynchronous && myRefreshCount != 0) {
               return;
             }
 
@@ -386,7 +386,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     }
 
     public void fileDeleted(VirtualFileEvent event) {
-      final VirtualFile parent = event.getParent();
+      final VirtualFile parent = event.getParent();  
       LOG.debug("fileDeleted: file = " + event.getFile().getName() + ", parent = " + (parent != null ? parent.getUrl() : null) +
                 ", requestor = " + event.getRequestor());
     }

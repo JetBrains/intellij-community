@@ -232,6 +232,7 @@ public class FindInProjectUtil {
               processAllLarge = true;
             }
             else {
+              if (retCode == -1) retCode = PROCESS_FILE; //ESC pressed
               assert retCode == PROCESS_FILE : retCode;
             }
           }
