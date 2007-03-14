@@ -41,7 +41,7 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
 
   public void start() {
     synchronized (this) {
-      LOG.assertTrue(!isRunning());
+      LOG.assertTrue(!isRunning(), "Attempt to start ProgressIndicator which is already running");
       myText = "";
       myFraction = 0;
       myText2 = "";
