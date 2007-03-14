@@ -51,8 +51,9 @@ public class MetaRegistry extends MetaDataRegistrar {
 
       addMetadataBinding(
           new AndFilter(
-              new NamespaceFilter(SCHEMA_URIS),
-              new TextFilter("schema")
+            new ClassFilter(XmlTag.class),
+            new NamespaceFilter(SCHEMA_URIS),
+           new TextFilter("schema")
           ),
           SchemaNSDescriptor.class
       );
@@ -77,6 +78,7 @@ public class MetaRegistry extends MetaDataRegistrar {
 
     {
       addMetadataBinding(new AndFilter(
+          new ClassFilter(XmlTag.class),
           new NamespaceFilter(SCHEMA_URIS),
           new TextFilter("element")
       ),
@@ -86,6 +88,7 @@ public class MetaRegistry extends MetaDataRegistrar {
     {
       addMetadataBinding(
           new AndFilter(
+              new ClassFilter(XmlTag.class),
               new NamespaceFilter(SCHEMA_URIS),
               new TextFilter("attribute")
           ),
@@ -119,8 +122,9 @@ public class MetaRegistry extends MetaDataRegistrar {
 
     {
       addMetadataBinding(new AndFilter(
+          new ClassFilter(XmlTag.class),
           new NamespaceFilter(SCHEMA_URIS),
-          new TextFilter(new String[] {"complexType","simpleType", "group","attributeGroup" })
+          new TextFilter("complexType","simpleType", "group","attributeGroup")
       ),
                          NamedObjectDescriptor.class);
     }
