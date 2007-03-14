@@ -27,6 +27,7 @@ import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -109,13 +110,14 @@ public class InspectionTree extends Tree {
     return tool;
   }
 
+  @NotNull
   public RefEntity[] getSelectedElements() {
     TreePath[] selectionPaths = getSelectionPaths();
     if (selectionPaths != null) {
       final InspectionTool selectedTool = getSelectedTool();
       if (selectedTool == null) return EMPTY_ELEMENTS_ARRAY;
 
-      Set<RefEntity> result = new HashSet<RefEntity>();
+      List<RefEntity> result = new ArrayList<RefEntity>();
       for (TreePath selectionPath : selectionPaths) {
         final InspectionTreeNode node = (InspectionTreeNode)selectionPath.getLastPathComponent();
         addElementsInNode(node, result);
@@ -125,13 +127,19 @@ public class InspectionTree extends Tree {
     return EMPTY_ELEMENTS_ARRAY;
   }
 
-  private static void addElementsInNode(InspectionTreeNode node, Collection<RefEntity> out) {
+  private static void addElementsInNode(InspectionTreeNode node, List<RefEntity> out) {
     if (!node.isValid()) return;
     if (node instanceof RefElementNode) {
-      out.add(((RefElementNode)node).getElement());
+      final RefElement element = ((RefElementNode)node).getElement();
+      if (!out.contains(element)) {
+        out.add(0, element);
+      }
     }
     if (node instanceof ProblemDescriptionNode) {
-      out.add(((ProblemDescriptionNode)node).getElement());
+      final RefEntity element = ((ProblemDescriptionNode)node).getElement();
+      if (!out.contains(element)) {
+        out.add(0, element);
+      }
     }
     final Enumeration children = node.children();
     while (children.hasMoreElements()) {
@@ -144,7 +152,7 @@ public class InspectionTree extends Tree {
     final InspectionTool tool = getSelectedTool();
     if (getSelectionCount() == 0 || !(tool instanceof DescriptorProviderInspection)) return EMPTY_DESCRIPTORS;
     final TreePath[] paths = getSelectionPaths();
-    HashSet<CommonProblemDescriptor> descriptors = new HashSet<CommonProblemDescriptor>();
+    List<CommonProblemDescriptor> descriptors = new ArrayList<CommonProblemDescriptor>();
     for (TreePath path : paths) {
       Object node = path.getLastPathComponent();
       traverseDescriptors((InspectionTreeNode)node, descriptors);
@@ -152,12 +160,11 @@ public class InspectionTree extends Tree {
     return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
   }
 
-  private static void traverseDescriptors(InspectionTreeNode node, Set<CommonProblemDescriptor> descriptors){
+  private static void traverseDescriptors(InspectionTreeNode node, List<CommonProblemDescriptor> descriptors){
     if (node instanceof ProblemDescriptionNode) {
-      final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
-      descriptors.add(problemNode.getDescriptor());
+      descriptors.add(((ProblemDescriptionNode)node).getDescriptor());
     }
-    for(int i = 0; i < node.getChildCount(); i++){
+    for(int i = node.getChildCount() - 1; i >= 0; i--){
       traverseDescriptors((InspectionTreeNode)node.getChildAt(i), descriptors);
     }
   }

@@ -36,9 +36,8 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
 
   @Nullable
   public QuickFixAction[] getQuickFixes(final InspectionTool tool, final InspectionTree tree) {
-    final List<RefEntity> selectedElements = new ArrayList<RefEntity>();
-    selectedElements.addAll(Arrays.asList(tree.getSelectedElements()));
-    return selectedElements.isEmpty() ? null : tool.getQuickFixes(selectedElements.toArray(new RefEntity[selectedElements.size()]));
+    final RefEntity[] refEntities = tree.getSelectedElements();
+    return refEntities.length == 0 ? null : tool.getQuickFixes(refEntities);
   }
 
   public void appendToolNodeContent(final InspectionNode toolNode, final InspectionTreeNode parentNode, final boolean showStructure) {
