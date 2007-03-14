@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.util;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 
 /**
  * Utility class, that contains various useful methods for
@@ -46,6 +47,23 @@ public abstract class ParserUtils {
   }
 
   /**
+   * method for construction like
+   * <BNF>
+   * token?
+   * </BNF>
+   * parsing
+   * <p/>
+   * if token matches with one from suitable tokens returrn true
+   *
+   * @param builder current builder
+   * @param tokens  -   suitable token set
+   * @return true if element parsed
+   */
+  public static boolean getToken(PsiBuilder builder, TokenSet tokens) {
+    return tokens.contains(builder.getTokenType());
+  }
+
+  /**
    * Checks, that following element sequence is like given
    *
    * @param builder Given PsiBuilder
@@ -69,15 +87,29 @@ public abstract class ParserUtils {
   }
 
   /**
+   * lookAhead for TokenSet
+   *
+   * @param builder Given PsiBuilder
+   * @param elems   Array of need elements in order
+   * @return true if following sequence is like a given
+   */
+
+  public static boolean lookAhead(PsiBuilder builder, TokenSet elems) {
+    return lookAhead(builder, elems.getTypes());
+  }
+
+  /**
    * Wraps current token to node with specified element type
    *
    * @param builder Given builder
-   * @param elem Node element
+   * @param elem    Node element
+   * @return elem type
    */
-  public static void eatElement(PsiBuilder builder, IElementType elem){
+  public static IElementType eatElement(PsiBuilder builder, IElementType elem) {
     PsiBuilder.Marker marker = builder.mark();
     builder.advanceLexer();
     marker.done(elem);
+    return elem;
   }
 
 }

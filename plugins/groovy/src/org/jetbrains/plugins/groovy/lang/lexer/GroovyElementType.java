@@ -20,8 +20,4 @@ public class GroovyElementType extends IElementType {
     public String toString() {
         return debugName;
     }
-
-//    public TokenSet asTokenSet () {
-//        return TokenSet.create(this);
-//    }
 }

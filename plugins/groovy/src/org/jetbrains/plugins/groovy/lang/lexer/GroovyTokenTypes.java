@@ -149,12 +149,14 @@ public interface GroovyTokenTypes {
   IElementType kPRIVATE = new GroovyElementType("private");
   IElementType kPUBLIC = new GroovyElementType("public");
   IElementType kPROTECTED = new GroovyElementType("protected");
+  IElementType kABSTRACT = new GroovyElementType("abstract");
   IElementType kTRANSIENT = new GroovyElementType("transient");
   IElementType kNATIVE = new GroovyElementType("native");
   IElementType kSYNCHRONIZED = new GroovyElementType("synchronized");
   IElementType kVOLATILE = new GroovyElementType("volatile");
   IElementType kDEFAULT = new GroovyElementType("default");
   IElementType kTHROWS = new GroovyElementType("throws");
+  IElementType kTHREADSAFE = new GroovyElementType("threadsafe");
   IElementType kIMPLEMENTS = new GroovyElementType("implements");
   IElementType kTHIS = new GroovyElementType("this");
   IElementType kIF = new GroovyElementType("if");
@@ -172,6 +174,7 @@ public interface GroovyTokenTypes {
   IElementType kCASE = new GroovyElementType("case");
   IElementType kTRY = new GroovyElementType("try");
   IElementType kFINALLY = new GroovyElementType("finally");
+  IElementType kFINAL = new GroovyElementType("final");
   IElementType kCATCH = new GroovyElementType("catch");
   IElementType kINSTANCEOF = new GroovyElementType("instanceof");
   IElementType kNEW = new GroovyElementType("new");
