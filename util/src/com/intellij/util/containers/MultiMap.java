@@ -32,4 +32,13 @@ public class MultiMap<K, V> extends FactoryMap<K, List<V>> {
     final List<V> list = get(key);
     list.add(value);
   }
+
+  public boolean isEmpty() {
+    for(List<V> valueList: myMap.values()) {
+      if (!valueList.isEmpty()) {
+        return false;
+      }
+    }
+    return true;    
+  }
 }
