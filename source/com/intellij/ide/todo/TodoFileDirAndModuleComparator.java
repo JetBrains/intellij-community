@@ -40,14 +40,14 @@ public final class TodoFileDirAndModuleComparator implements Comparator{
       }else if(psiPackage1==null&&psiPackage2!=null){
         return 1;
       }else if(psiPackage1!=null){
-        return psiPackage1.getQualifiedName().compareTo(psiPackage2.getQualifiedName());
+        return psiPackage1.getQualifiedName().compareToIgnoreCase(psiPackage2.getQualifiedName());
       }else{
         return compareDirs(psiDirectory1, psiDirectory2);
       }
     } else if ((obj1 instanceof PackageElementNode) && (obj2 instanceof PackageElementNode)){
-      return ((PackageElementNode)obj1).getValue().getPackage().getQualifiedName().compareTo(((PackageElementNode)obj2).getValue().getPackage().getQualifiedName());
+      return ((PackageElementNode)obj1).getValue().getPackage().getQualifiedName().compareToIgnoreCase(((PackageElementNode)obj2).getValue().getPackage().getQualifiedName());
     } else if (obj1 instanceof ModuleToDoNode && obj2 instanceof ModuleToDoNode){
-      return ((ModuleToDoNode)obj1).getValue().getName().compareTo(((ModuleToDoNode)obj2).getValue().getName());
+      return ((ModuleToDoNode)obj1).getValue().getName().compareToIgnoreCase(((ModuleToDoNode)obj2).getValue().getName());
     } else if(obj1 instanceof ModuleToDoNode) {
       return -1;
     } else if(obj2 instanceof ModuleToDoNode) {
