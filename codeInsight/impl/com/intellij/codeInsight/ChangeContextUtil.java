@@ -34,10 +34,17 @@ public class ChangeContextUtil {
       scope.putCopyableUserData(ENCODED_KEY, "");
 
       PsiThisExpression thisExpr = (PsiThisExpression)scope;
-      if (thisExpr.getQualifier() == null){
+      final PsiJavaCodeReferenceElement qualifier = thisExpr.getQualifier();
+      if (qualifier == null){
         PsiClass thisClass = RefactoringUtil.getThisClass(thisExpr);
         if (thisClass != null && !(thisClass instanceof PsiAnonymousClass)){
           thisExpr.putCopyableUserData(THIS_QUALIFIER_CLASS_KEY, thisClass);
+        }
+      }
+      else {
+        final PsiElement resolved = qualifier.resolve();
+        if (resolved instanceof PsiClass && resolved == topLevelScope) {
+          thisExpr.putCopyableUserData(THIS_QUALIFIER_CLASS_KEY, (PsiClass)topLevelScope);
         }
       }
     }
@@ -133,21 +140,25 @@ public class ChangeContextUtil {
                                                  PsiClass thisClass,
                                                  PsiExpression thisAccessExpr) throws IncorrectOperationException {
     final PsiJavaCodeReferenceElement qualifier = thisExpr.getQualifier();
+    PsiClass encodedQualifierClass = thisExpr.getCopyableUserData(THIS_QUALIFIER_CLASS_KEY);
+    thisExpr.putCopyableUserData(THIS_QUALIFIER_CLASS_KEY, null);
     if (qualifier == null){
-      PsiClass qualifierClass = thisExpr.getCopyableUserData(THIS_QUALIFIER_CLASS_KEY);
-      thisExpr.putCopyableUserData(THIS_QUALIFIER_CLASS_KEY, null);
-
-      if (qualifierClass != null && qualifierClass.isValid()){
-        if (qualifierClass.equals(thisClass) && thisAccessExpr != null){
+      if (encodedQualifierClass != null && encodedQualifierClass.isValid()){
+        if (encodedQualifierClass.equals(thisClass) && thisAccessExpr != null){
           return thisExpr.replace(thisAccessExpr);
         }
       }
     }
-    else{
+    else {
       PsiClass qualifierClass = (PsiClass)qualifier.resolve();
-      if (qualifierClass != null){
-        if (qualifierClass.equals(thisClass) && thisAccessExpr != null){
-          return thisExpr.replace(thisAccessExpr);
+      if (encodedQualifierClass == qualifierClass && thisClass != null) {
+        qualifier.bindToElement(thisClass);
+      }
+      else {
+        if (qualifierClass != null) {
+          if (qualifierClass.equals(thisClass) && thisAccessExpr != null) {
+            return thisExpr.replace(thisAccessExpr);
+          }
         }
       }
     }

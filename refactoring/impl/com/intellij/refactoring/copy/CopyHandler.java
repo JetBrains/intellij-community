@@ -25,8 +25,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 
@@ -262,7 +262,7 @@ public class CopyHandler {
               assert classes.length > 0;
               createdFile.deleteChildRange(classes[0], classes[classes.length - 1]);
               PsiClass newClass = (PsiClass) createdFile.add(classCopy);
-              ChangeContextUtil.decodeContextInfo(newClass, null, null);
+              ChangeContextUtil.decodeContextInfo(newClass, newClass, null);
               updateSelectionInActiveProjectView(newClass, project, selectInActivePanel);
               EditorHelper.openInEditor(newClass);
 
