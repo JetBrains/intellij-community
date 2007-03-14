@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +68,7 @@ public class TreeModelBuilder {
                                      final List<VirtualFile> unversionedFiles,
                                      final List<FilePath> locallyDeletedFiles,
                                      final List<VirtualFile> modifiedWithoutEditing,
+                                     final MultiMap<String, VirtualFile> switchedFiles,
                                      @Nullable final List<VirtualFile> ignoredFiles) {
 
     for (ChangeList list : changeLists) {
@@ -84,6 +86,9 @@ public class TreeModelBuilder {
     }
     if (!unversionedFiles.isEmpty()) {
       buildVirtualFiles(unversionedFiles, ChangesListView.UNVERSIONED_FILES_TAG);
+    }
+    if (!switchedFiles.isEmpty()) {
+      buildSwitchedFiles(switchedFiles);
     }
     if (ignoredFiles != null && !ignoredFiles.isEmpty()) {
       buildVirtualFiles(ignoredFiles, ChangesListView.IGNORED_FILES_TAG);
@@ -123,6 +128,24 @@ public class TreeModelBuilder {
     for (FilePath file : filePaths) {
       final ChangesBrowserNode node = ChangesBrowserNode.create(myProject, file);
       model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, baseNode), 0);
+    }
+  }
+
+  private void buildSwitchedFiles(final MultiMap<String, VirtualFile> switchedFiles) {
+    ChangesBrowserNode baseNode = ChangesBrowserNode.create(myProject, ChangesListView.SWITCHED_FILES_TAG);
+    model.insertNodeInto(baseNode, root, root.getChildCount());
+    for(String branchName: switchedFiles.keySet()) {
+      final List<VirtualFile> switchedFileList = switchedFiles.get(branchName);
+      if (switchedFileList.size() > 0) {
+        ChangesBrowserNode branchNode = ChangesBrowserNode.create(myProject, branchName);
+        model.insertNodeInto(branchNode, baseNode, baseNode.getChildCount());
+
+        final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
+        final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
+        for (VirtualFile file : switchedFileList) {
+          insertChangeNode(file, foldersCache, moduleCache, branchNode);
+        }
+      }
     }
   }
 

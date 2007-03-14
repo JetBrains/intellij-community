@@ -186,6 +186,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
                        changeListManager.getUnversionedFiles(),
                        changeListManager.getDeletedFiles(),
                        changeListManager.getModifiedWithoutEditing(),
+                       changeListManager.getSwitchedFilesMap(),
                        SHOW_IGNORED_MODE ? changeListManager.getIgnoredFiles() : null);
   }
 

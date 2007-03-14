@@ -9,9 +9,9 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.diff.DiffProvider;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -26,6 +26,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.Tree;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,6 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
@@ -83,6 +83,12 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     }
   };
 
+  public static final Object SWITCHED_FILES_TAG = new Object() {
+    public String toString() {
+      return VcsBundle.message("changes.nodetitle.switched.files");
+    }
+  };
+
   public ChangesListView(final Project project) {
     myProject = project;
 
@@ -103,11 +109,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     if (o instanceof FilePath) return (FilePath)o;
     return null;
   }
-
-  public synchronized void addMouseListener(MouseListener l) {
-    super.addMouseListener(l);    //To change body of overridden methods use File | Settings | File Templates.
-  }
-
 
   public static String getRelativePath(FilePath parent, FilePath child) {
     if (parent == null) return child.getPath().replace('/', File.separatorChar);
@@ -151,11 +152,14 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   }
 
   public void updateModel(List<LocalChangeList> changeLists, List<VirtualFile> unversionedFiles, final List<FilePath> locallyDeletedFiles,
-                          List<VirtualFile> modifiedWithoutEditing, @Nullable List<VirtualFile> ignoredFiles) {
+                          List<VirtualFile> modifiedWithoutEditing,
+                          MultiMap<String, VirtualFile> switchedFiles, 
+                          @Nullable List<VirtualFile> ignoredFiles) {
     storeState();
 
     TreeModelBuilder builder = new TreeModelBuilder(myProject, isShowFlatten());
-    final DefaultTreeModel model = builder.buildModel(changeLists, unversionedFiles, locallyDeletedFiles, modifiedWithoutEditing, ignoredFiles);
+    final DefaultTreeModel model = builder.buildModel(changeLists, unversionedFiles, locallyDeletedFiles, modifiedWithoutEditing, 
+                                                      switchedFiles, ignoredFiles);
     setModel(model);
     setCellRenderer(new ChangesBrowserNodeRenderer(myProject, isShowFlatten(), true));
 

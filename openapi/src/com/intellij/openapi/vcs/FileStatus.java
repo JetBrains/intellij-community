@@ -28,6 +28,7 @@ public interface FileStatus extends NamedComponent {
   Color COLOR_ADDED = new Color(10, 119, 0);
   Color COLOR_OUT_OF_DATE = Color.yellow.darker().darker();
   Color COLOR_HIJACKED = Color.ORANGE.darker();
+  Color COLOR_SWITCHED = new Color(0x72A038);
   Color COLOR_UNKNOWN = new Color(153, 51, 0);
 
   FileStatus NOT_CHANGED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("NOT_CHANGED", VcsBundle.message("file.status.name.up.to.date"), COLOR_NOT_CHANGED);
@@ -43,6 +44,7 @@ public interface FileStatus extends NamedComponent {
   FileStatus DELETED_FROM_FS = PeerFactory.getInstance().getFileStatusFactory()
    .createFileStatus("IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM", VcsBundle.message("file.status.name.deleted.from.file.system"),
                      new Color(119, 56, 149));
+  FileStatus SWITCHED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("SWITCHED", VcsBundle.message("file.status.name.switched"), COLOR_SWITCHED);
 
   Color getColor();
 

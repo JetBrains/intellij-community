@@ -64,6 +64,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   private VirtualFileHolder myModifiedWithoutEditingHolder;
   private VirtualFileHolder myIgnoredFilesHolder;
   private DeletedFilesHolder myDeletedFilesHolder = new DeletedFilesHolder();
+  private SwitchedFileHolder mySwitchedFilesHolder;
   private final List<LocalChangeList> myChangeLists = new ArrayList<LocalChangeList>();
   private VcsException myUpdateException = null;
 
@@ -111,6 +112,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     myUnversionedFilesHolder = new VirtualFileHolder(project);
     myModifiedWithoutEditingHolder = new VirtualFileHolder(project);
     myIgnoredFilesHolder = new VirtualFileHolder(project);
+    mySwitchedFilesHolder = new SwitchedFileHolder(project);
   }
 
   public void projectOpened() {
@@ -237,6 +239,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       final VirtualFileHolder modifiedWithoutEditingHolder;
       final VirtualFileHolder ignoredHolder;
       final DeletedFilesHolder deletedHolder;
+      final SwitchedFileHolder switchedHolder;
 
       if (wasEverythingDirty) {
         myUpdateException = null;
@@ -247,12 +250,14 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         deletedHolder = myDeletedFilesHolder.copy();
         modifiedWithoutEditingHolder = myModifiedWithoutEditingHolder.copy();
         ignoredHolder = myIgnoredFilesHolder.copy();
+        switchedHolder = mySwitchedFilesHolder.copy();
 
         if (wasEverythingDirty) {
           unversionedHolder.cleanAll();
           deletedHolder.cleanAll();
           modifiedWithoutEditingHolder.cleanAll();
           ignoredHolder.cleanAll();
+          switchedHolder.cleanAll();
         }
       }
       else {
@@ -260,6 +265,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         deletedHolder = myDeletedFilesHolder;
         modifiedWithoutEditingHolder = myModifiedWithoutEditingHolder;
         ignoredHolder = myIgnoredFilesHolder;
+        switchedHolder = mySwitchedFilesHolder;
       }
 
       for (final VcsDirtyScope scope : scopes) {
@@ -284,6 +290,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
           deletedHolder.cleanScope(scope);
           modifiedWithoutEditingHolder.cleanScope(scope);
           ignoredHolder.cleanScope(scope);
+          switchedHolder.cleanScope(scope);
         }
 
         try {
@@ -372,6 +379,15 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                   }
                 }
 
+                public void processSwitchedFile(final VirtualFile file, final String branch, final boolean recursive) {
+                  if (file == null || !updateUnversionedFiles) return;
+                  if (myDisposed) throw new DisposedException();
+                  if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
+                  if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+                    switchedHolder.addFile(file, branch, recursive);
+                  }
+                }
+
                 public boolean isUpdatingUnversionedFiles() {
                   return updateUnversionedFiles;
                 }
@@ -407,6 +423,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
           myDeletedFilesHolder = deletedHolder;
           myModifiedWithoutEditingHolder = modifiedWithoutEditingHolder;
           myIgnoredFilesHolder = ignoredHolder;
+          mySwitchedFilesHolder = switchedHolder;
         }
       }
     }
@@ -509,6 +526,10 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   List<FilePath> getDeletedFiles() {
     return new ArrayList<FilePath>(myDeletedFilesHolder.getFiles());
+  }
+
+  MultiMap<String, VirtualFile> getSwitchedFilesMap() {
+    return mySwitchedFilesHolder.getBranchToFileMap();
   }
 
   VcsException getUpdateException() {
@@ -646,7 +667,11 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     if (myModifiedWithoutEditingHolder.containsFile(file)) return FileStatus.HIJACKED;
     if (myIgnoredFilesHolder.containsFile(file)) return FileStatus.IGNORED;
     final Change change = getChange(file);
-    return change == null ? FileStatus.NOT_CHANGED : change.getFileStatus();
+    if (change != null) {
+      return change.getFileStatus();
+    }
+    if (mySwitchedFilesHolder.containsFile(file)) return FileStatus.SWITCHED;
+    return FileStatus.NOT_CHANGED;
   }
 
   @NotNull
@@ -994,6 +1019,11 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
       }
       return false;
     }
+  }
+
+  @Nullable
+  public String getSwitchedBranch(final VirtualFile file) {
+    return mySwitchedFilesHolder.getBranchForFile(file);    
   }
 
   private static VirtualFile[] collectFiles(final List<FilePath> paths) {

@@ -6,6 +6,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
@@ -59,9 +60,14 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> {
       if (parentFile != null) {
         renderer.append(" (" + parentFile.getPath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
+      appendSwitched(renderer);
     }
     else if (getCount() != 1 || getDirectoryCount() != 0) {
+      appendSwitched(renderer);
       appendCount(renderer);
+    }
+    else {
+      appendSwitched(renderer);
     }
 
     if (filePath.isDirectory() || !isLeaf()) {
@@ -69,6 +75,16 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> {
     }
     else {
       renderer.setIcon(filePath.getFileType().getIcon());
+    }
+  }
+
+  private void appendSwitched(final ChangesBrowserNodeRenderer renderer) {
+    final VirtualFile virtualFile = ChangesUtil.getFilePath(getUserObject()).getVirtualFile();
+    if (virtualFile != null) {
+      String branch = ChangeListManager.getInstance(myProject).getSwitchedBranch(virtualFile);
+      if (branch != null) {
+        renderer.append(" [switched to " + branch + "]", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
     }
   }
 
