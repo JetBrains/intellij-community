@@ -5,30 +5,30 @@
 package com.intellij.openapi.vcs.merge;
 
 import com.intellij.CommonBundle;
-import com.intellij.peer.PeerFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diff.ActionButtonPresentation;
+import com.intellij.openapi.diff.DiffManager;
+import com.intellij.openapi.diff.DiffRequestFactory;
+import com.intellij.openapi.diff.MergeRequest;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diff.*;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.ui.table.TableView;
+import com.intellij.peer.PeerFactory;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
@@ -36,15 +36,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableCellRenderer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.ArrayList;
-import java.nio.ByteBuffer;
 
 /**
  * @author yole
@@ -221,25 +221,15 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   private void showMergeDialog() {
     final Collection<VirtualFile> files = myTable.getSelection();
     for(final VirtualFile file: files) {
-      final Ref<MergeData> mergeDataRef = new Ref<MergeData>();
-      final Ref<VcsException> exRef = new Ref<VcsException>();
-      Task task = new Task.Modal(myProject, VcsBundle.message("multiple.file.merge.loading.progress.title"), false) {
-        public void run(ProgressIndicator indicator) {
-          try {
-            mergeDataRef.set(myProvider.loadRevisions(file));
-          }
-          catch (VcsException e) {
-            exRef.set(e);
-          }
-        }
-      };
-      ProgressManager.getInstance().run(task);
-      if (!exRef.isNull()) {
-        Messages.showErrorDialog(myRootPanel, "Error loading revisions to merge: " + exRef.get().getMessage());
+      final MergeData mergeData;
+      try {
+        mergeData = myProvider.loadRevisions(file);
+      }
+      catch(VcsException ex) {
+        Messages.showErrorDialog(myRootPanel, "Error loading revisions to merge: " + ex.getMessage());
         break;
       }
 
-      final MergeData mergeData = mergeDataRef.get();
       if (mergeData.CURRENT == null || mergeData.LAST == null || mergeData.ORIGINAL == null) {
         Messages.showErrorDialog(myRootPanel, "Error loading revisions to merge");
         break;
