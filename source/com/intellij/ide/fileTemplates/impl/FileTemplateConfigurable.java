@@ -31,6 +31,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IElementType;
@@ -44,6 +45,7 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -276,9 +278,18 @@ public class FileTemplateConfigurable implements Configurable {
 
   // TODO: needs to be generalized someday for other profiles
   private static boolean isValidFilename(final String filename) {
-    for (int i = 0; i != filename.length(); i++) {
-      final char ch = filename.charAt(i);
-      if (ch !='.' && !Character.isJavaIdentifierPart(ch)) {
+    if ( filename.contains("/") || filename.contains("\\")) {
+      return false;
+    }
+    final File tempFile = new File (FileUtil.getTempDirectory() + File.separator + filename);
+    if (!tempFile.exists ()) {
+      try {
+        if (!tempFile.createNewFile()) {
+          return false;
+        }
+        FileUtil.delete(tempFile);
+      }
+      catch (IOException e) {
         return false;
       }
     }
