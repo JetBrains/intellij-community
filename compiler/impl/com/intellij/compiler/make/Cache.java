@@ -36,16 +36,22 @@ public class Cache {
     myClassInfosIndexFile = new File(storePath + "/" + CLASSINFO_INDEX_FILE_NAME);
   }
 
-  public synchronized void dispose() throws CacheCorruptedException {
-    myViewPool.dispose(true);
+  public void dispose() throws CacheCorruptedException {
+    synchronized (myViewPool) {
+      myViewPool.dispose(true);
+    }
     try {
-      if (myQNameToClassDeclarationIdMap != null) {
-        writeIndexMap(myQNameToClassDeclarationIdMap, myDeclarationsIndexFile);
-        myQNameToClassDeclarationIdMap = null;
+      synchronized (myViewPool.getClassDeclarationsLock()) {
+        if (myQNameToClassDeclarationIdMap != null) {
+          writeIndexMap(myQNameToClassDeclarationIdMap, myDeclarationsIndexFile);
+          myQNameToClassDeclarationIdMap = null;
+        }
       }
-      if (myQNameToClassInfoIdMap != null) {
-        writeIndexMap(myQNameToClassInfoIdMap, myClassInfosIndexFile);
-        myQNameToClassInfoIdMap = null;
+      synchronized (myViewPool.getClassInfosLock()) {
+        if (myQNameToClassInfoIdMap != null) {
+          writeIndexMap(myQNameToClassInfoIdMap, myClassInfosIndexFile);
+          myQNameToClassInfoIdMap = null;
+        }
       }
     }
     catch (IOException e) {
@@ -55,63 +61,68 @@ public class Cache {
     }
   }
 
-  public synchronized int[] getAllClassNames() throws CacheCorruptedException {
+  public int[] getAllClassNames() throws CacheCorruptedException {
     try {
-      return getQNameToClassInfoIdMap().keys();
+      synchronized (myViewPool.getClassInfosLock()) {
+        return getQNameToClassInfoIdMap().keys();
+      }
     }
     catch (IOException e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int importClassInfo(ClassFileReader reader, SymbolTable symbolTable) throws ClsFormatException, CacheCorruptedException {
+  public int importClassInfo(ClassFileReader reader, SymbolTable symbolTable) throws ClsFormatException, CacheCorruptedException {
     final int qName = symbolTable.getId(reader.getQualifiedName());
 
     try {
-      final ClassInfoView classInfoView = myViewPool.getClassInfoView(getClassId(qName));
-      final int id = classInfoView.getRecordId();
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView classInfoView = myViewPool.getClassInfoView(getClassId(qName));
+        final int id = classInfoView.getRecordId();
 
-      classInfoView.setQualifiedName(qName);
+        classInfoView.setQualifiedName(qName);
 
-      final String signature = reader.getGenericSignature();
-      final int genericSignature = signature != null? symbolTable.getId(signature) : -1;
-      classInfoView.setGenericSignature(genericSignature);
+        final String signature = reader.getGenericSignature();
+        final int genericSignature = signature != null? symbolTable.getId(signature) : -1;
+        classInfoView.setGenericSignature(genericSignature);
 
-      classInfoView.setPath(reader.getPath());
+        classInfoView.setPath(reader.getPath());
 
-      final String superClass = reader.getSuperClass();
-      final int superQName = "".equals(superClass)? UNKNOWN : symbolTable.getId(superClass);
+        final String superClass = reader.getSuperClass();
+        final int superQName = "".equals(superClass)? UNKNOWN : symbolTable.getId(superClass);
 
-      LOG.assertTrue(superQName != qName);
+        LOG.assertTrue(superQName != qName);
 
-      classInfoView.setSuperQualifiedName(superQName);
+        classInfoView.setSuperQualifiedName(superQName);
 
-      final String[] superInterfaces = reader.getSuperInterfaces();
-      final int[] interfaceNames = new int[superInterfaces.length];
-      for (int idx = 0; idx < superInterfaces.length; idx++) {
-        interfaceNames[idx] = symbolTable.getId(superInterfaces[idx]);
+        final String[] superInterfaces = reader.getSuperInterfaces();
+        final int[] interfaceNames = new int[superInterfaces.length];
+        for (int idx = 0; idx < superInterfaces.length; idx++) {
+          interfaceNames[idx] = symbolTable.getId(superInterfaces[idx]);
+        }
+        classInfoView.setSuperInterfaces(interfaceNames);
+
+        final String sourceFileName = reader.getSourceFileName();
+        if (sourceFileName != null) {
+          classInfoView.setSourceFileName(sourceFileName);
+        }
+
+        classInfoView.setFlags(reader.getAccessFlags());
+
+        classInfoView.setRuntimeVisibleAnnotations(reader.getRuntimeVisibleAnnotations());
+
+        classInfoView.setRuntimeInvisibleAnnotations(reader.getRuntimeInvisibleAnnotations());
+
+        classInfoView.setReferences(reader.getReferences());
+
+        getQNameToClassInfoIdMap().put(qName, id);
       }
-      classInfoView.setSuperInterfaces(interfaceNames);
-
-      final String sourceFileName = reader.getSourceFileName();
-      if (sourceFileName != null) {
-        classInfoView.setSourceFileName(sourceFileName);
-      }
-
-      classInfoView.setFlags(reader.getAccessFlags());
-
-      classInfoView.setRuntimeVisibleAnnotations(reader.getRuntimeVisibleAnnotations());
-
-      classInfoView.setRuntimeInvisibleAnnotations(reader.getRuntimeInvisibleAnnotations());
-
-      classInfoView.setReferences(reader.getReferences());
 
       final FieldInfo[] fields = reader.getFields();
       final MethodInfo[] methods = reader.getMethods();
       MemberInfo[] members = ArrayUtil.mergeArrays(fields, methods, MemberInfo.class);
       updateMemberDeclarations(qName, members);
 
-      registerClassId(qName, id);
     }
     catch (ClsFormatException e) {
       throw e;
@@ -122,33 +133,34 @@ public class Cache {
     return qName;
   }
 
-  public synchronized void importClassInfo(Cache fromCache, final int qName) throws CacheCorruptedException {
+  public void importClassInfo(Cache fromCache, final int qName) throws CacheCorruptedException {
     try {
       final int fromClassId = fromCache.getClassId(qName);
 
       LOG.assertTrue(fromClassId != UNKNOWN);
 
-      final ClassInfoView view = myViewPool.getClassInfoView(getClassId(qName));
-      final int id = view.getRecordId();
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView classInfoView = myViewPool.getClassInfoView(getClassId(qName));
+        classInfoView.setQualifiedName(qName);
+        classInfoView.setGenericSignature(fromCache.getGenericSignature(fromClassId));
+        classInfoView.setPath(fromCache.getPath(fromClassId));
 
-      final ClassInfoView classInfoView = myViewPool.getClassInfoView(id);
-      classInfoView.setQualifiedName(qName);
-      classInfoView.setGenericSignature(fromCache.getGenericSignature(fromClassId));
-      classInfoView.setPath(fromCache.getPath(fromClassId));
+        final int superQualifiedName = fromCache.getSuperQualifiedName(fromClassId);
+        LOG.assertTrue(qName != superQualifiedName);
+        classInfoView.setSuperQualifiedName(superQualifiedName);
 
-      final int superQualifiedName = fromCache.getSuperQualifiedName(fromClassId);
-      LOG.assertTrue(qName != superQualifiedName);
-      classInfoView.setSuperQualifiedName(superQualifiedName);
+        classInfoView.setSuperInterfaces(fromCache.getSuperInterfaces(fromClassId));
 
-      classInfoView.setSuperInterfaces(fromCache.getSuperInterfaces(fromClassId));
+        classInfoView.setSourceFileName(fromCache.getSourceFileName(fromClassId));
 
-      classInfoView.setSourceFileName(fromCache.getSourceFileName(fromClassId));
+        classInfoView.setFlags(fromCache.getFlags(fromClassId));
 
-      classInfoView.setFlags(fromCache.getFlags(fromClassId));
+        classInfoView.setRuntimeVisibleAnnotations(fromCache.getRuntimeVisibleAnnotations(fromClassId));
 
-      classInfoView.setRuntimeVisibleAnnotations(fromCache.getRuntimeVisibleAnnotations(fromClassId));
+        classInfoView.setRuntimeInvisibleAnnotations(fromCache.getRuntimeInvisibleAnnotations(fromClassId));
 
-      classInfoView.setRuntimeInvisibleAnnotations(fromCache.getRuntimeInvisibleAnnotations(fromClassId));
+        getQNameToClassInfoIdMap().put(qName, classInfoView.getRecordId());
+      }
 
       final int fromClassDeclarationId = fromCache.getClassDeclarationId(qName);
       final int[] fromFieldIds = fromCache.getFieldIds(fromClassDeclarationId);
@@ -162,39 +174,43 @@ public class Cache {
         members[currentMemberIndex++] = fromCache.createMethodInfo(methodId);
       }
       updateMemberDeclarations(qName, members);
-
-      registerClassId(qName, id);
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized AnnotationConstantValue[] getRuntimeVisibleAnnotations(int classId) throws CacheCorruptedException {
+  public AnnotationConstantValue[] getRuntimeVisibleAnnotations(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfoView view = myViewPool.getClassInfoView(classId);
-      return view.getRuntimeVisibleAnnotations();
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView view = myViewPool.getClassInfoView(classId);
+        return view.getRuntimeVisibleAnnotations();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized AnnotationConstantValue[] getRuntimeInvisibleAnnotations(int classId) throws CacheCorruptedException {
+  public AnnotationConstantValue[] getRuntimeInvisibleAnnotations(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfoView view = myViewPool.getClassInfoView(classId);
-      return view.getRuntimeInvisibleAnnotations();
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView view = myViewPool.getClassInfoView(classId);
+        return view.getRuntimeInvisibleAnnotations();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int getClassId(int qName) throws CacheCorruptedException {
+  public int getClassId(int qName) throws CacheCorruptedException {
     try {
-      final TIntIntHashMap classInfoMap = getQNameToClassInfoIdMap();
-      if (classInfoMap.containsKey(qName)) {
-        return classInfoMap.get(qName);
+      synchronized (myViewPool.getClassInfosLock()) {
+        final TIntIntHashMap classInfoMap = getQNameToClassInfoIdMap();
+        if (classInfoMap.containsKey(qName)) {
+          return classInfoMap.get(qName);
+        }
       }
       return UNKNOWN;
     }
@@ -203,210 +219,238 @@ public class Cache {
     }
   }
 
-  private synchronized void registerClassId(final int qName, final int id) throws CacheCorruptedException {
+  public int getClassDeclarationId(final int qName) throws CacheCorruptedException {
     try {
-      final TIntIntHashMap classInfoMap = getQNameToClassInfoIdMap();
-      classInfoMap.put(qName, id);
-    }
-    catch (IOException e) {
-      throw new CacheCorruptedException(e);
-    }
-  }
-
-  public synchronized int getClassDeclarationId(int qName) throws CacheCorruptedException {
-    try {
-      final TIntIntHashMap declarationsMap = getQNameToClassDeclarationIdMap();
-      if (declarationsMap.containsKey(qName)) {
-        return declarationsMap.get(qName);
+      synchronized (myViewPool.getClassDeclarationsLock()) {
+        final TIntIntHashMap declarationsMap = getQNameToClassDeclarationIdMap();
+        if (declarationsMap.containsKey(qName)) {
+          return declarationsMap.get(qName);
+        }
+        final ClassDeclarationView view = myViewPool.getClassDeclarationView(UNKNOWN);
+        final int id = view.getRecordId();
+        declarationsMap.put(qName, id);
+        return id;
       }
-      final ClassDeclarationView view = myViewPool.getClassDeclarationView(UNKNOWN);
-      final int id = view.getRecordId();
-      declarationsMap.put(qName, id);
-      return id;
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int[] getSubclasses(int classId) throws CacheCorruptedException {
+  public int[] getSubclasses(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfoView view = myViewPool.getClassInfoView(classId);
-      return view.getSubclasses();
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView view = myViewPool.getClassInfoView(classId);
+        return view.getSubclasses();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized void addSubclass(int classId, int subclassQName) throws CacheCorruptedException {
+  public void addSubclass(int classId, int subclassQName) throws CacheCorruptedException {
     try {
-      final ClassInfoView reader = myViewPool.getClassInfoView(classId);
-      reader.addSubclass(subclassQName);
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView reader = myViewPool.getClassInfoView(classId);
+        reader.addSubclass(subclassQName);
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized void removeSubclass(int classId, int subclassQName) throws CacheCorruptedException {
+  public void removeSubclass(int classId, int subclassQName) throws CacheCorruptedException {
     try {
-      final ClassInfoView view = myViewPool.getClassInfoView(classId);
-      view.removeSubclass(subclassQName);
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView view = myViewPool.getClassInfoView(classId);
+        view.removeSubclass(subclassQName);
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int[] getReferencedClassQNames(int classId) throws CacheCorruptedException {
+  public int[] getReferencedClassQNames(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfoView view = myViewPool.getClassInfoView(classId);
-      return view.getReferencedClasses();
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView view = myViewPool.getClassInfoView(classId);
+        return view.getReferencedClasses();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized Collection<ReferenceInfo> getReferences(int classId) throws CacheCorruptedException {
+  public Collection<ReferenceInfo> getReferences(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfoView view = myViewPool.getClassInfoView(classId);
-      return view.getReferences();
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView view = myViewPool.getClassInfoView(classId);
+        return view.getReferences();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized String getSourceFileName(int classId) throws CacheCorruptedException {
+  public String getSourceFileName(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfoView view = myViewPool.getClassInfoView(classId);
-      return view.getSourceFileName();
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView view = myViewPool.getClassInfoView(classId);
+        return view.getSourceFileName();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized void setSourceFileName(int classId, String name) throws CacheCorruptedException {
+  public void setSourceFileName(int classId, String name) throws CacheCorruptedException {
     try {
-      final ClassInfoView view = myViewPool.getClassInfoView(classId);
-      view.setSourceFileName(name);
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView view = myViewPool.getClassInfoView(classId);
+        view.setSourceFileName(name);
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized boolean isRemote(int classId) throws CacheCorruptedException {
+  public boolean isRemote(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfoView view = myViewPool.getClassInfoView(classId);
-      return view.isRemote();
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView view = myViewPool.getClassInfoView(classId);
+        return view.isRemote();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized void setRemote(int classId, boolean remote) throws CacheCorruptedException {
+  public void setRemote(int classId, boolean remote) throws CacheCorruptedException {
     try {
-      final ClassInfoView view = myViewPool.getClassInfoView(classId);
-      view.setRemote(remote);
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView view = myViewPool.getClassInfoView(classId);
+        view.setRemote(remote);
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int getSuperQualifiedName(int classId) throws CacheCorruptedException {
+  public int getSuperQualifiedName(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfoView view = myViewPool.getClassInfoView(classId);
-      return view.getSuperQualifiedName();
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView view = myViewPool.getClassInfoView(classId);
+        return view.getSuperQualifiedName();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized String getPath(int classId) throws CacheCorruptedException {
+  public String getPath(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfoView view = myViewPool.getClassInfoView(classId);
-      return view.getPath();
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView view = myViewPool.getClassInfoView(classId);
+        return view.getPath();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized void setPath(int classId, String path) throws CacheCorruptedException {
+  public void setPath(int classId, String path) throws CacheCorruptedException {
     try {
-      final ClassInfoView view = myViewPool.getClassInfoView(classId);
-      view.setPath(path);
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView view = myViewPool.getClassInfoView(classId);
+        view.setPath(path);
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int getGenericSignature(int classId) throws CacheCorruptedException {
+  public int getGenericSignature(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfoView view = myViewPool.getClassInfoView(classId);
-      return view.getGenericSignature();
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView view = myViewPool.getClassInfoView(classId);
+        return view.getGenericSignature();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int[] getSuperInterfaces(int classId) throws CacheCorruptedException {
+  public int[] getSuperInterfaces(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfoView view = myViewPool.getClassInfoView(classId);
-      return view.getSuperInterfaces();
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView view = myViewPool.getClassInfoView(classId);
+        return view.getSuperInterfaces();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int getFlags(int classId) throws CacheCorruptedException {
+  public int getFlags(int classId) throws CacheCorruptedException {
     try {
-      final ClassInfoView view = myViewPool.getClassInfoView(classId);
-      return view.getFlags();
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView view = myViewPool.getClassInfoView(classId);
+        return view.getFlags();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized void addReferencedClass(int classId, int referencedClassName) throws CacheCorruptedException {
+  public void addReferencedClass(int classId, int referencedClassName) throws CacheCorruptedException {
     try {
-      final ClassInfoView view = myViewPool.getClassInfoView(classId);
-      view.addReferencedClass(referencedClassName);
+      synchronized (myViewPool.getClassInfosLock()) {
+        final ClassInfoView view = myViewPool.getClassInfoView(classId);
+        view.addReferencedClass(referencedClassName);
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int[] getFieldIds(int classDeclarationId) throws CacheCorruptedException{
+  public int[] getFieldIds(int classDeclarationId) throws CacheCorruptedException{
     try {
-      final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
-      return view.getFieldIds();
+      synchronized (myViewPool.getClassDeclarationsLock()) {
+        final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
+        return view.getFieldIds();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int findField(final int classDeclarationId, final int name, final int descriptor) throws CacheCorruptedException{
+  public int findField(final int classDeclarationId, final int name, final int descriptor) throws CacheCorruptedException{
     try {
-      final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
-      final int[] ids = view.getFieldIds();
-      for (final int id : ids) {
-        final NameDescriptorPair pair = view.getFieldNameAndDescriptor(id);
-        if (pair != null && pair.name == name && pair.descriptor == descriptor) {
-          return id;
+      synchronized (myViewPool.getClassDeclarationsLock()) {
+        final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
+        final int[] ids = view.getFieldIds();
+        for (final int id : ids) {
+          final NameDescriptorPair pair = view.getFieldNameAndDescriptor(id);
+          if (pair != null && pair.name == name && pair.descriptor == descriptor) {
+            return id;
+          }
         }
       }
       return UNKNOWN;
@@ -416,14 +460,16 @@ public class Cache {
     }
   }
 
-  public synchronized int findFieldByName(final int classDeclarationId, final int name) throws CacheCorruptedException{
+  public int findFieldByName(final int classDeclarationId, final int name) throws CacheCorruptedException{
     try {
-      final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
-      final int[] ids = view.getFieldIds();
-      for (final int id : ids) {
-        final NameDescriptorPair pair = view.getFieldNameAndDescriptor(id);
-        if (pair != null && pair.name == name) {
-          return id;
+      synchronized (myViewPool.getClassDeclarationsLock()) {
+        final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
+        final int[] ids = view.getFieldIds();
+        for (final int id : ids) {
+          final NameDescriptorPair pair = view.getFieldNameAndDescriptor(id);
+          if (pair != null && pair.name == name) {
+            return id;
+          }
         }
       }
       return UNKNOWN;
@@ -433,14 +479,16 @@ public class Cache {
     }
   }
 
-  public synchronized int findMethod(final int classDeclarationId, final int name, final int descriptor) throws CacheCorruptedException{
+  public int findMethod(final int classDeclarationId, final int name, final int descriptor) throws CacheCorruptedException{
     try {
-      final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
-      final int[] ids = view.getMethodIds();
-      for (final int id : ids) {
-        final NameDescriptorPair pair = view.getMethodNameAndDescriptor(id);
-        if (pair != null && pair.name == name && pair.descriptor == descriptor) {
-          return id;
+      synchronized (myViewPool.getClassDeclarationsLock()) {
+        final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
+        final int[] ids = view.getMethodIds();
+        for (final int id : ids) {
+          final NameDescriptorPair pair = view.getMethodNameAndDescriptor(id);
+          if (pair != null && pair.name == name && pair.descriptor == descriptor) {
+            return id;
+          }
         }
       }
       return UNKNOWN;
@@ -450,15 +498,18 @@ public class Cache {
     }
   }
 
-  public synchronized int[] findMethodsByName(final int classDeclarationId, final int name) throws CacheCorruptedException{
+  public int[] findMethodsByName(final int classDeclarationId, final int name) throws CacheCorruptedException{
     try {
-      final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
-      final int[] ids = view.getMethodIds();
-      final TIntArrayList list = new TIntArrayList();
-      for (final int id : ids) {
-        final NameDescriptorPair pair = view.getMethodNameAndDescriptor(id);
-        if (pair != null && pair.name == name) {
-          list.add(id);
+      final TIntArrayList list;
+      synchronized (myViewPool.getClassDeclarationsLock()) {
+        final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
+        final int[] ids = view.getMethodIds();
+        list = new TIntArrayList();
+        for (final int id : ids) {
+          final NameDescriptorPair pair = view.getMethodNameAndDescriptor(id);
+          if (pair != null && pair.name == name) {
+            list.add(id);
+          }
         }
       }
       return list.toNativeArray();
@@ -468,14 +519,16 @@ public class Cache {
     }
   }
 
-  public synchronized int findMethodsBySignature(final int classDeclarationId, final String signature, SymbolTable symbolTable) throws CacheCorruptedException{
+  public int findMethodsBySignature(final int classDeclarationId, final String signature, SymbolTable symbolTable) throws CacheCorruptedException{
     try {
-      final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
-      final int[] ids = view.getMethodIds();
-      for (int methodId : ids) {
-        final NameDescriptorPair pair = view.getMethodNameAndDescriptor(methodId);
-        if (pair != null && signature.equals(CacheUtils.getMethodSignature(symbolTable.getSymbol(pair.name), symbolTable.getSymbol(pair.descriptor)))) {
-          return methodId;
+      synchronized (myViewPool.getClassDeclarationsLock()) {
+        final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
+        final int[] ids = view.getMethodIds();
+        for (int methodId : ids) {
+          final NameDescriptorPair pair = view.getMethodNameAndDescriptor(methodId);
+          if (pair != null && signature.equals(CacheUtils.getMethodSignature(symbolTable.getSymbol(pair.name), symbolTable.getSymbol(pair.descriptor)))) {
+            return methodId;
+          }
         }
       }
       return UNKNOWN;
@@ -485,274 +538,323 @@ public class Cache {
     }
   }
 
-  public synchronized int[] getMethodIds(int classDeclarationId) throws CacheCorruptedException{
+  public int[] getMethodIds(int classDeclarationId) throws CacheCorruptedException{
     try {
-      final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
-      return view.getMethodIds();
+      synchronized (myViewPool.getClassDeclarationsLock()) {
+        final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
+        return view.getMethodIds();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized void addClassReferencer(int classDeclarationId, int referencerQName) throws CacheCorruptedException {
+  public void addClassReferencer(int classDeclarationId, int referencerQName) throws CacheCorruptedException {
     try {
-      final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
-      view.addReferencer(referencerQName);
+      synchronized (myViewPool.getClassDeclarationsLock()) {
+        final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
+        view.addReferencer(referencerQName);
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized void removeClassReferencer(int classDeclarationId, int referencerQName) throws CacheCorruptedException {
+  public void removeClassReferencer(int classDeclarationId, int referencerQName) throws CacheCorruptedException {
     try {
-      final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
-      view.removeReferencer(referencerQName);
+      synchronized (myViewPool.getClassDeclarationsLock()) {
+        final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
+        view.removeReferencer(referencerQName);
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int getFieldName(int fieldDeclarationId) throws CacheCorruptedException {
+  public int getFieldName(int fieldDeclarationId) throws CacheCorruptedException {
     try {
-      final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldDeclarationId);
-      return view.getName();
+      synchronized (myViewPool.getFieldDeclarationsLock()) {
+        final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldDeclarationId);
+        return view.getName();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int getFieldDescriptor(int fieldDeclarationId) throws CacheCorruptedException {
+  public int getFieldDescriptor(int fieldDeclarationId) throws CacheCorruptedException {
     try {
-      final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldDeclarationId);
-      return view.getDescriptor();
+      synchronized (myViewPool.getFieldDeclarationsLock()) {
+        final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldDeclarationId);
+        return view.getDescriptor();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int getFieldGenericSignature(int fieldDeclarationId) throws CacheCorruptedException {
+  public int getFieldGenericSignature(int fieldDeclarationId) throws CacheCorruptedException {
     try {
-      final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldDeclarationId);
-      return view.getGenericSignature();
+      synchronized (myViewPool.getFieldDeclarationsLock()) {
+        final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldDeclarationId);
+        return view.getGenericSignature();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int getFieldFlags(int fieldDeclarationId) throws CacheCorruptedException {
+  public int getFieldFlags(int fieldDeclarationId) throws CacheCorruptedException {
     try {
-      final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldDeclarationId);
-      return view.getFlags();
+      synchronized (myViewPool.getFieldDeclarationsLock()) {
+        final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldDeclarationId);
+        return view.getFlags();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized ConstantValue getFieldConstantValue(int fieldDeclarationId) throws CacheCorruptedException {
+  public ConstantValue getFieldConstantValue(int fieldDeclarationId) throws CacheCorruptedException {
     try {
-      final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldDeclarationId);
-      return view.getConstantValue();
+      synchronized (myViewPool.getFieldDeclarationsLock()) {
+        final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldDeclarationId);
+        return view.getConstantValue();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized AnnotationConstantValue[] getFieldRuntimeVisibleAnnotations(int fieldDeclarationId) throws CacheCorruptedException {
+  public AnnotationConstantValue[] getFieldRuntimeVisibleAnnotations(int fieldDeclarationId) throws CacheCorruptedException {
     try {
-      final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldDeclarationId);
-      return view.getRuntimeVisibleAnnotations();
+      synchronized (myViewPool.getFieldDeclarationsLock()) {
+        final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldDeclarationId);
+        return view.getRuntimeVisibleAnnotations();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized AnnotationConstantValue[] getFieldRuntimeInvisibleAnnotations(int fieldDeclarationId) throws CacheCorruptedException {
+  public AnnotationConstantValue[] getFieldRuntimeInvisibleAnnotations(int fieldDeclarationId) throws CacheCorruptedException {
     try {
-      final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldDeclarationId);
-      return view.getRuntimeInvisibleAnnotations();
+      synchronized (myViewPool.getFieldDeclarationsLock()) {
+        final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldDeclarationId);
+        return view.getRuntimeInvisibleAnnotations();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized void addFieldReferencer(int fieldId, int referencerQName) throws CacheCorruptedException {
+  public void addFieldReferencer(int fieldId, int referencerQName) throws CacheCorruptedException {
     try {
-      final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldId);
-      view.addReferencer(referencerQName);
+      synchronized (myViewPool.getFieldDeclarationsLock()) {
+        final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldId);
+        view.addReferencer(referencerQName);
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized void removeFieldReferencer(int fieldId, int referencerQName) throws CacheCorruptedException {
+  public void removeFieldReferencer(int fieldId, int referencerQName) throws CacheCorruptedException {
     try {
-      final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldId);
-      view.removeReferencer(referencerQName);
+      synchronized (myViewPool.getFieldDeclarationsLock()) {
+        final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldId);
+        view.removeReferencer(referencerQName);
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int getMethodName(int methodDeclarationId) throws CacheCorruptedException {
+  public int getMethodName(int methodDeclarationId) throws CacheCorruptedException {
     try {
-      final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
-      return view.getName();
+      synchronized (myViewPool.getMethodDeclarationsLock()) {
+        final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
+        return view.getName();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int getMethodDescriptor(int methodDeclarationId) throws CacheCorruptedException {
+  public int getMethodDescriptor(int methodDeclarationId) throws CacheCorruptedException {
     try {
-      final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
-      return view.getDescriptor();
+      synchronized (myViewPool.getMethodDeclarationsLock()) {
+        final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
+        return view.getDescriptor();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int getMethodGenericSignature(int methodDeclarationId) throws CacheCorruptedException {
+  public int getMethodGenericSignature(int methodDeclarationId) throws CacheCorruptedException {
     try {
-      final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
-      return view.getGenericSignature();
+      synchronized (myViewPool.getMethodDeclarationsLock()) {
+        final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
+        return view.getGenericSignature();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int getMethodFlags(int methodDeclarationId) throws CacheCorruptedException {
+  public int getMethodFlags(int methodDeclarationId) throws CacheCorruptedException {
     try {
-      final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
-      return view.getFlags();
+      synchronized (myViewPool.getMethodDeclarationsLock()) {
+        final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
+        return view.getFlags();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized AnnotationConstantValue[] getMethodRuntimeVisibleAnnotations(int methodDeclarationId) throws CacheCorruptedException {
+  public AnnotationConstantValue[] getMethodRuntimeVisibleAnnotations(int methodDeclarationId) throws CacheCorruptedException {
     try {
-      final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
-      return view.getRuntimeVisibleAnnotations();
+      synchronized (myViewPool.getMethodDeclarationsLock()) {
+        final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
+        return view.getRuntimeVisibleAnnotations();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized AnnotationConstantValue[] getMethodRuntimeInvisibleAnnotations(int methodDeclarationId) throws CacheCorruptedException {
+  public AnnotationConstantValue[] getMethodRuntimeInvisibleAnnotations(int methodDeclarationId) throws CacheCorruptedException {
     try {
-      final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
-      return view.getRuntimeInvisibleAnnotations();
+      synchronized (myViewPool.getMethodDeclarationsLock()) {
+        final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
+        return view.getRuntimeInvisibleAnnotations();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized AnnotationConstantValue[][] getMethodRuntimeVisibleParamAnnotations(int methodDeclarationId) throws CacheCorruptedException {
+  public AnnotationConstantValue[][] getMethodRuntimeVisibleParamAnnotations(int methodDeclarationId) throws CacheCorruptedException {
     try {
-      final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
-      return view.getRuntimeVisibleParamAnnotations();
+      synchronized (myViewPool.getMethodDeclarationsLock()) {
+        final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
+        return view.getRuntimeVisibleParamAnnotations();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized AnnotationConstantValue[][] getMethodRuntimeInvisibleParamAnnotations(int methodDeclarationId) throws CacheCorruptedException {
+  public AnnotationConstantValue[][] getMethodRuntimeInvisibleParamAnnotations(int methodDeclarationId) throws CacheCorruptedException {
     try {
-      final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
-      return view.getRuntimeInvisibleParamAnnotations();
+      synchronized (myViewPool.getMethodDeclarationsLock()) {
+        final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
+        return view.getRuntimeInvisibleParamAnnotations();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized ConstantValue getAnnotationDefault(int methodDeclarationId) throws CacheCorruptedException {
+  public ConstantValue getAnnotationDefault(int methodDeclarationId) throws CacheCorruptedException {
     try {
-      final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
-      return view.getAnnotationDefault();
+      synchronized (myViewPool.getMethodDeclarationsLock()) {
+        final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
+        return view.getAnnotationDefault();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized boolean isConstructor(int methodDeclarationId) throws CacheCorruptedException {
+  public boolean isConstructor(int methodDeclarationId) throws CacheCorruptedException {
     try {
-      final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
-      return view.isConstructor();
+      synchronized (myViewPool.getMethodDeclarationsLock()) {
+        final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
+        return view.isConstructor();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int[] getMethodThrownExceptions(int methodDeclarationId) throws CacheCorruptedException {
+  public int[] getMethodThrownExceptions(int methodDeclarationId) throws CacheCorruptedException {
     try {
-      final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
-      return view.getThrownExceptions();
+      synchronized (myViewPool.getMethodDeclarationsLock()) {
+        final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
+        return view.getThrownExceptions();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized void addMethodReferencer(int methodDeclarationId, int referencerQName) throws CacheCorruptedException {
+  public void addMethodReferencer(int methodDeclarationId, int referencerQName) throws CacheCorruptedException {
     try {
-      final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
-      view.addReferencer(referencerQName);
+      synchronized (myViewPool.getMethodDeclarationsLock()) {
+        final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
+        view.addReferencer(referencerQName);
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized void removeMethodReferencer(int methodDeclarationId, int referencerQName) throws CacheCorruptedException {
+  public void removeMethodReferencer(int methodDeclarationId, int referencerQName) throws CacheCorruptedException {
     try {
-      final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
-      view.removeReferencer(referencerQName);
+      synchronized (myViewPool.getMethodDeclarationsLock()) {
+        final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
+        view.removeReferencer(referencerQName);
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized Dependency[] getBackDependencies(int classQName) throws CacheCorruptedException{
+  public Dependency[] getBackDependencies(final int classQName) throws CacheCorruptedException{
     final int classDeclarationId = getClassDeclarationId(classQName);
     if (classDeclarationId == UNKNOWN) {
       return null;
     }
     try {
       final TIntObjectHashMap<Dependency> dependencies = new TIntObjectHashMap<Dependency>();
-      final int[] classReferencers = myViewPool.getClassDeclarationView(classDeclarationId).getReferencers();
+      final int[] classReferencers = getClassReferencers(classDeclarationId);
       for (final int referencer : classReferencers) {
         if (referencer != classQName) { // skip self-dependencies
           addDependency(dependencies, referencer);
         }
       }
 
-      final int[] fieldIds = myViewPool.getClassDeclarationView(classDeclarationId).getFieldIds();
+      final int[] fieldIds = getFieldIds(classDeclarationId);
       for (final int fieldId : fieldIds) {
-        final FieldDeclarationView fieldDeclarationView = myViewPool.getFieldDeclarationView(fieldId);
-        final int[] fieldReferencers = fieldDeclarationView.getReferencers();
+        final int[] fieldReferencers = getFieldReferencers(fieldId);
         for (int referencer : fieldReferencers) {
           if (referencer != classQName) { // skip self-dependencies
             final Dependency dependency = addDependency(dependencies, referencer);
@@ -761,9 +863,9 @@ public class Cache {
         }
       }
 
-      final int[] methodIds = myViewPool.getClassDeclarationView(classDeclarationId).getMethodIds();
+      final int[] methodIds = getMethodIds(classDeclarationId);
       for (final int methodId : methodIds) {
-        final int[] methodReferencers = myViewPool.getMethodDeclarationView(methodId).getReferencers();
+        final int[] methodReferencers = getMethodReferencers(methodId);
         for (int referencer : methodReferencers) {
           if (referencer != classQName) {
             final Dependency dependency = addDependency(dependencies, referencer);
@@ -787,59 +889,48 @@ public class Cache {
     }
   }
 
-  public synchronized FieldInfo createFieldInfo(final int fieldId) throws CacheCorruptedException {
+  public FieldInfo createFieldInfo(final int fieldId) throws CacheCorruptedException {
     try {
-      final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldId);
-      return new FieldInfo(
-        view.getName(),
-        view.getDescriptor(),
-        view.getGenericSignature(),
-        view.getFlags(),
-        view.getConstantValue(),
-        view.getRuntimeVisibleAnnotations(),
-        view.getRuntimeInvisibleAnnotations()
-      );
+      synchronized (myViewPool.getFieldDeclarationsLock()) {
+        final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldId);
+        return new FieldInfo(
+          view.getName(),
+          view.getDescriptor(),
+          view.getGenericSignature(),
+          view.getFlags(),
+          view.getConstantValue(),
+          view.getRuntimeVisibleAnnotations(),
+          view.getRuntimeInvisibleAnnotations()
+        );
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized MethodInfo createMethodInfo(final int methodId) throws CacheCorruptedException {
+  public MethodInfo createMethodInfo(final int methodId) throws CacheCorruptedException {
     try {
-      final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodId);
-      return new MethodInfo(
-        view.getName(),
-        view.getDescriptor(),
-        view.getGenericSignature(),
-        view.getFlags(),
-        view.getThrownExceptions(),
-        view.isConstructor(),
-        view.getRuntimeVisibleAnnotations(),
-        view.getRuntimeInvisibleAnnotations(),
-        view.getRuntimeVisibleParamAnnotations(),
-        view.getRuntimeInvisibleParamAnnotations(),
-        view.getAnnotationDefault()
-      );
+      synchronized (myViewPool.getMethodDeclarationsLock()) {
+        final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodId);
+        return new MethodInfo(
+          view.getName(),
+          view.getDescriptor(),
+          view.getGenericSignature(),
+          view.getFlags(),
+          view.getThrownExceptions(),
+          view.isConstructor(),
+          view.getRuntimeVisibleAnnotations(),
+          view.getRuntimeInvisibleAnnotations(),
+          view.getRuntimeVisibleParamAnnotations(),
+          view.getRuntimeInvisibleParamAnnotations(),
+          view.getAnnotationDefault()
+        );
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
-  }
-
-  private MemberDeclarationInfo[] getMemberDeclarations(int classQName) throws CacheCorruptedException {
-    final int classDeclarationId = getClassDeclarationId(classQName);
-    final int[] fieldIds = getFieldIds(classDeclarationId);
-    final int[] methodIds = getMethodIds(classDeclarationId);
-    final MemberDeclarationInfo[] infos = new MemberDeclarationInfo[fieldIds.length + methodIds.length];
-    int index = 0;
-    for (int fieldId : fieldIds) {
-      infos[index++] = new MemberDeclarationInfo(classQName, createFieldInfo(fieldId));
-    }
-    for (int methodId : methodIds) {
-      infos[index++] = new MemberDeclarationInfo(classQName, createMethodInfo(methodId));
-    }
-    return infos;
   }
 
   private static Dependency addDependency(TIntObjectHashMap<Dependency> container, int classQName) {
@@ -851,30 +942,36 @@ public class Cache {
     return dependency;
   }
 
-  public synchronized int[] getFieldReferencers(int fieldDeclarationId) throws CacheCorruptedException {
+  public int[] getFieldReferencers(int fieldDeclarationId) throws CacheCorruptedException {
     try {
-      final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldDeclarationId);
-      return view.getReferencers();
+      synchronized (myViewPool.getFieldDeclarationsLock()) {
+        final FieldDeclarationView view = myViewPool.getFieldDeclarationView(fieldDeclarationId);
+        return view.getReferencers();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int[] getMethodReferencers(int methodDeclarationId) throws CacheCorruptedException {
+  public int[] getMethodReferencers(int methodDeclarationId) throws CacheCorruptedException {
     try {
-      final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
-      return view.getReferencers();
+      synchronized (myViewPool.getMethodDeclarationsLock()) {
+        final MethodDeclarationView view = myViewPool.getMethodDeclarationView(methodDeclarationId);
+        return view.getReferencers();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
     }
   }
 
-  public synchronized int[] getClassReferencers(int classDeclarationId) throws CacheCorruptedException {
+  public int[] getClassReferencers(int classDeclarationId) throws CacheCorruptedException {
     try {
-      final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
-      return view.getReferencers();
+      synchronized (myViewPool.getClassDeclarationsLock()) {
+        final ClassDeclarationView view = myViewPool.getClassDeclarationView(classDeclarationId);
+        return view.getReferencers();
+      }
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);
@@ -887,7 +984,7 @@ public class Cache {
 
       final int[] fieldIds = getFieldIds(classDeclarationId);
       final int[] methodIds = getMethodIds(classDeclarationId);
-      TObjectIntHashMap<MemberInfo> currentMembers = new TObjectIntHashMap<MemberInfo>();
+      final TObjectIntHashMap<MemberInfo> currentMembers = new TObjectIntHashMap<MemberInfo>();
       for (final int fieldId : fieldIds) {
         currentMembers.put(createFieldInfo(fieldId), fieldId);
       }
@@ -934,54 +1031,73 @@ public class Cache {
   }
 
   private void removeMethodDeclaration(int classDeclarationId, int methodId) throws IOException, CacheCorruptedException {
-    final ClassDeclarationView classDeclarationView = myViewPool.getClassDeclarationView(classDeclarationId);
-    classDeclarationView.removeMethodId(methodId);
-    myViewPool.removeMethodDeclarationRecord(myViewPool.getMethodDeclarationView(methodId));
+    synchronized (myViewPool.getClassDeclarationsLock()) {
+      final ClassDeclarationView classDeclarationView = myViewPool.getClassDeclarationView(classDeclarationId);
+      classDeclarationView.removeMethodId(methodId);
+    }
+    synchronized (myViewPool.getMethodDeclarationsLock()) {
+      myViewPool.removeMethodDeclarationRecord(myViewPool.getMethodDeclarationView(methodId));
+    }
   }
 
 
   private void removeFieldDeclaration(int classDeclarationId, int fieldId) throws IOException, CacheCorruptedException {
-    final ClassDeclarationView classDeclarationView = myViewPool.getClassDeclarationView(classDeclarationId);
-    classDeclarationView.removeFieldId(fieldId);
-    final FieldDeclarationView fieldDeclarationView = myViewPool.getFieldDeclarationView(fieldId);
-    myViewPool.removeFieldDeclarationRecord(fieldDeclarationView);
+    synchronized (myViewPool.getClassDeclarationsLock()) {
+      final ClassDeclarationView classDeclarationView = myViewPool.getClassDeclarationView(classDeclarationId);
+      classDeclarationView.removeFieldId(fieldId);
+    }
+    synchronized (myViewPool.getFieldDeclarationsLock()) {
+      myViewPool.removeFieldDeclarationRecord(myViewPool.getFieldDeclarationView(fieldId));
+    }
   }
 
-  public synchronized int putMember(final int classDeclarationId, int memberId, final MemberInfo classMember) throws CacheCorruptedException {
+  public int putMember(final int classDeclarationId, int memberId, final MemberInfo classMember) throws CacheCorruptedException {
     try {
       if (classMember instanceof FieldInfo) {
-        FieldInfo fieldInfo = (FieldInfo)classMember;
+        final FieldInfo fieldInfo = (FieldInfo)classMember;
         if (memberId == UNKNOWN) {
-          memberId = myViewPool.getFieldDeclarationView(memberId).getRecordId();
-          myViewPool.getClassDeclarationView(classDeclarationId).addFieldId(memberId, fieldInfo.getName(), fieldInfo.getDescriptor());
+          synchronized (myViewPool.getFieldDeclarationsLock()) {
+            memberId = myViewPool.getFieldDeclarationView(memberId).getRecordId();
+          }
+          synchronized (myViewPool.getClassDeclarationsLock()) {
+            myViewPool.getClassDeclarationView(classDeclarationId).addFieldId(memberId, fieldInfo.getName(), fieldInfo.getDescriptor());
+          }
         }
-        final FieldDeclarationView view = myViewPool.getFieldDeclarationView(memberId);
-        view.setName(fieldInfo.getName());
-        view.setDescriptor(fieldInfo.getDescriptor());
-        view.setGenericSignature(fieldInfo.getGenericSignature());
-        view.setFlags(fieldInfo.getFlags());
-        view.setConstantValue(fieldInfo.getConstantValue());
-        view.setRuntimeVisibleAnnotations(fieldInfo.getRuntimeVisibleAnnotations());
-        view.setRuntimeInvisibleAnnotations(fieldInfo.getRuntimeInvisibleAnnotations());
+        synchronized (myViewPool.getFieldDeclarationsLock()) {
+          final FieldDeclarationView view = myViewPool.getFieldDeclarationView(memberId);
+          view.setName(fieldInfo.getName());
+          view.setDescriptor(fieldInfo.getDescriptor());
+          view.setGenericSignature(fieldInfo.getGenericSignature());
+          view.setFlags(fieldInfo.getFlags());
+          view.setConstantValue(fieldInfo.getConstantValue());
+          view.setRuntimeVisibleAnnotations(fieldInfo.getRuntimeVisibleAnnotations());
+          view.setRuntimeInvisibleAnnotations(fieldInfo.getRuntimeInvisibleAnnotations());
+        }
       }
       else if (classMember instanceof MethodInfo) {
-        MethodInfo methodInfo = (MethodInfo)classMember;
+        final MethodInfo methodInfo = (MethodInfo)classMember;
         if (memberId == UNKNOWN) {
-          memberId = myViewPool.getMethodDeclarationView(memberId).getRecordId();
-          myViewPool.getClassDeclarationView(classDeclarationId).addMethodId(memberId, methodInfo.getName(), methodInfo.getDescriptor());
+          synchronized (myViewPool.getMethodDeclarationsLock()) {
+            memberId = myViewPool.getMethodDeclarationView(memberId).getRecordId();
+          }
+          synchronized (myViewPool.getClassDeclarationsLock()) {
+            myViewPool.getClassDeclarationView(classDeclarationId).addMethodId(memberId, methodInfo.getName(), methodInfo.getDescriptor());
+          }
         }
-        final MethodDeclarationView view = myViewPool.getMethodDeclarationView(memberId);
-        view.setName(methodInfo.getName());
-        view.setDescriptor(methodInfo.getDescriptor());
-        view.setGenericSignature(methodInfo.getGenericSignature());
-        view.setFlags(methodInfo.getFlags());
-        view.setIsConstructor(methodInfo.isConstructor());
-        view.setThrownExceptions(methodInfo.getThrownExceptions());
-        view.setRuntimeVisibleAnnotations(methodInfo.getRuntimeVisibleAnnotations());
-        view.setRuntimeInvisibleAnnotations(methodInfo.getRuntimeInvisibleAnnotations());
-        view.setRuntimeVisibleParamAnnotations(methodInfo.getRuntimeVisibleParameterAnnotations());
-        view.setRuntimeInvisibleParamAnnotations(methodInfo.getRuntimeInvisibleParameterAnnotations());
-        view.setAnnotationDefault(methodInfo.getAnnotationDefault());
+        synchronized (myViewPool.getMethodDeclarationsLock()) {
+          final MethodDeclarationView view = myViewPool.getMethodDeclarationView(memberId);
+          view.setName(methodInfo.getName());
+          view.setDescriptor(methodInfo.getDescriptor());
+          view.setGenericSignature(methodInfo.getGenericSignature());
+          view.setFlags(methodInfo.getFlags());
+          view.setIsConstructor(methodInfo.isConstructor());
+          view.setThrownExceptions(methodInfo.getThrownExceptions());
+          view.setRuntimeVisibleAnnotations(methodInfo.getRuntimeVisibleAnnotations());
+          view.setRuntimeInvisibleAnnotations(methodInfo.getRuntimeInvisibleAnnotations());
+          view.setRuntimeVisibleParamAnnotations(methodInfo.getRuntimeVisibleParameterAnnotations());
+          view.setRuntimeInvisibleParamAnnotations(methodInfo.getRuntimeInvisibleParameterAnnotations());
+          view.setAnnotationDefault(methodInfo.getAnnotationDefault());
+        }
       }
       else {
         LOG.assertTrue(false, "Unknown member info: "+ classMember.getClass().getName());
@@ -1041,10 +1157,16 @@ public class Cache {
     }
   }
 
-  public synchronized void wipe() throws CacheCorruptedException {
-    myViewPool.wipe();
-    myQNameToClassDeclarationIdMap = null;
-    myQNameToClassInfoIdMap = null;
+  public void wipe() throws CacheCorruptedException {
+    synchronized (myViewPool) {
+      myViewPool.wipe();
+    }
+    synchronized (myViewPool.getClassDeclarationsLock()) {
+      myQNameToClassDeclarationIdMap = null;
+    }
+    synchronized (myViewPool.getClassInfosLock()) {
+      myQNameToClassInfoIdMap = null;
+    }
     myClassInfosIndexFile.delete();
     myDeclarationsIndexFile.delete();
   }
@@ -1065,31 +1187,39 @@ public class Cache {
     return myQNameToClassDeclarationIdMap;
   }
 
-  public synchronized void removeClass(final int qName) throws CacheCorruptedException {
+  public void removeClass(final int qName) throws CacheCorruptedException {
     try {
       final int classDeclarationId = getClassDeclarationId(qName);
       if (classDeclarationId != UNKNOWN) {
         final int[] fieldIds = getFieldIds(classDeclarationId);
-        for (int fieldId : fieldIds) {
-          final FieldDeclarationView fieldDeclarationView = myViewPool.getFieldDeclarationView(fieldId);
-          myViewPool.removeFieldDeclarationRecord(fieldDeclarationView);
+        synchronized (myViewPool.getFieldDeclarationsLock()) {
+          for (int fieldId : fieldIds) {
+            final FieldDeclarationView fieldDeclarationView = myViewPool.getFieldDeclarationView(fieldId);
+            myViewPool.removeFieldDeclarationRecord(fieldDeclarationView);
+          }
         }
         final int[] methodIds = getMethodIds(classDeclarationId);
-        for (int methodId : methodIds) {
-          final MethodDeclarationView methodDeclarationView = myViewPool.getMethodDeclarationView(methodId);
-          myViewPool.removeMethodDeclarationRecord(methodDeclarationView);
+        synchronized (myViewPool.getMethodDeclarationsLock()) {
+          for (int methodId : methodIds) {
+            final MethodDeclarationView methodDeclarationView = myViewPool.getMethodDeclarationView(methodId);
+            myViewPool.removeMethodDeclarationRecord(methodDeclarationView);
+          }
         }
 
-        myViewPool.removeClassDeclarationRecord(myViewPool.getClassDeclarationView(classDeclarationId));
-        getQNameToClassDeclarationIdMap().remove(qName);
+        synchronized (myViewPool.getClassDeclarationsLock()) {
+          myViewPool.removeClassDeclarationRecord(myViewPool.getClassDeclarationView(classDeclarationId));
+          getQNameToClassDeclarationIdMap().remove(qName);
+        }
       }
 
       final int classId = getClassId(qName);
       if (classId != UNKNOWN) {
-        final ClassInfoView classInfoView = myViewPool.getClassInfoView(classId);
-        //classInfoView.removeRecord();
-        myViewPool.removeClassInfoRecord(classInfoView);
-        getQNameToClassInfoIdMap().remove(qName);
+        synchronized (myViewPool.getClassInfosLock()) {
+          final ClassInfoView classInfoView = myViewPool.getClassInfoView(classId);
+          //classInfoView.removeRecord();
+          myViewPool.removeClassInfoRecord(classInfoView);
+          getQNameToClassInfoIdMap().remove(qName);
+        }
       }
     }
     catch (Throwable e) {
