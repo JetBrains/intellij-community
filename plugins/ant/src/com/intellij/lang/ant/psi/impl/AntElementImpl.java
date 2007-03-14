@@ -370,11 +370,18 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
           if (psiFile instanceof PropertiesFile) {
             final PropertiesFile propFile = (PropertiesFile)psiFile;
             String prefix = element.computeAttributeValue(tag.getAttributeValue(AntFileImpl.PREFIX_ATTR));
-            if (prefix != null && !prefix.endsWith(".")) {
-              prefix += '.';
+            Property property = null;
+            if (prefix == null) {
+              property = propFile.findPropertyByKey(propName);
             }
-            final String key = prefix == null ? propName : prefix + propName;
-            final Property property = propFile.findPropertyByKey(key);
+            else {
+              if (!prefix.endsWith(".")) {
+                prefix += '.';
+              }
+              if (propName.startsWith(prefix)) {
+                property = propFile.findPropertyByKey(propName.substring(prefix.length()));
+              }
+            }
             if (property != null) {
               result = property;
               break;
