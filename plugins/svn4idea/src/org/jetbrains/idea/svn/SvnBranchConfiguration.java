@@ -69,6 +69,35 @@ public class SvnBranchConfiguration {
   }
 
   @Nullable
+  public String getBaseName(String url) {
+    String baseUrl = getBaseUrl(url);
+    if (baseUrl == null) {
+      return null;
+    }
+    if (myBranchUrls.size() == 0) {
+      return baseUrl;
+    }
+    int commonPrefixLength = getCommonPrefixLength(url, myTrunkUrl);
+    for(String branchUrl: myBranchUrls) {
+      commonPrefixLength = Math.min(commonPrefixLength, getCommonPrefixLength(url, branchUrl));
+      if (commonPrefixLength <= 0) {
+        return baseUrl;
+      }
+    }
+    return baseUrl.substring(commonPrefixLength);
+  }
+
+  private static int getCommonPrefixLength(final String s1, final String s2) {
+    final int minLength = Math.min(s1.length(), s2.length());
+    for(int i=0; i< minLength; i++) {
+      if (s1.charAt(i) != s2.charAt(i)) {
+        return i;
+      }
+    }
+    return minLength;
+  }
+
+  @Nullable
   public String getRelativeUrl(String url) {
     String baseUrl = getBaseUrl(url);
     return baseUrl == null ? null : url.substring(baseUrl.length());

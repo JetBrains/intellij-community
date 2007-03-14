@@ -134,7 +134,6 @@ public class SvnVcs extends AbstractVcs {
     dumpFileStatus(FileStatus.UNKNOWN);
 
     dumpFileStatus(SvnFileStatus.REPLACED);
-    dumpFileStatus(SvnFileStatus.SWITCHED);
     dumpFileStatus(SvnFileStatus.EXTERNAL);
     dumpFileStatus(SvnFileStatus.OBSTRUCTED);
 
@@ -533,8 +532,7 @@ public class SvnVcs extends AbstractVcs {
   public FileStatus[] getProvidedStatuses() {
     return new FileStatus[]{SvnFileStatus.EXTERNAL,
       SvnFileStatus.OBSTRUCTED,
-      SvnFileStatus.REPLACED,
-      SvnFileStatus.SWITCHED};
+      SvnFileStatus.REPLACED};
   }
 
 

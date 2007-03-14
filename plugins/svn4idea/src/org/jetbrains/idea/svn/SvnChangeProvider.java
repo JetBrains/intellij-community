@@ -1,18 +1,18 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -20,8 +20,8 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
@@ -31,14 +31,19 @@ import java.util.List;
 
 /**
  * @author max
+ * @author yole
  */
 public class SvnChangeProvider implements ChangeProvider {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnChangeProvider");
+
   private SvnVcs myVcs;
   private VcsContextFactory myFactory;
+  private SvnBranchConfigurationManager myBranchConfigurationManager;
 
   public SvnChangeProvider(final SvnVcs vcs) {
     myVcs = vcs;
     myFactory = PeerFactory.getInstance().getVcsContextFactory();
+    myBranchConfigurationManager = SvnBranchConfigurationManager.getInstance(myVcs.getProject());
   }
 
   public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, ProgressIndicator progress) throws VcsException {
@@ -47,11 +52,12 @@ public class SvnChangeProvider implements ChangeProvider {
       final List<SvnChangedFile> copiedFiles = new ArrayList<SvnChangedFile>();
       final List<SvnChangedFile> deletedFiles = new ArrayList<SvnChangedFile>();
       for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
-        processFile(path, client, builder, copiedFiles, deletedFiles, true);
+        processFile(path, client, builder, copiedFiles, deletedFiles, null, true);
       }
 
       for (FilePath path : dirtyScope.getDirtyFiles()) {
-        processFile(path, client, builder, copiedFiles, deletedFiles, false);
+        FileStatus status = getParentStatus(client, path);
+        processFile(path, client, builder, copiedFiles, deletedFiles, status, false);
       }
 
       for(SvnChangedFile copiedFile: copiedFiles) {
@@ -90,16 +96,46 @@ public class SvnChangeProvider implements ChangeProvider {
         }
 
         if (!foundRename) {
-          processStatus(copiedFile.getFilePath(), copiedStatus, builder);
+          processStatus(copiedFile.getFilePath(), copiedStatus, builder, null);
         }
       }
       for(SvnChangedFile deletedFile: deletedFiles) {
-        processStatus(deletedFile.getFilePath(), deletedFile.getStatus(), builder);
+        processStatus(deletedFile.getFilePath(), deletedFile.getStatus(), builder, null);
       }
     }
     catch (SVNException e) {
       throw new VcsException(e);
     }
+  }
+
+  /**
+   * Check if some of the parents of the specified path are switched and/or ignored. These statuses should propagate to
+   * the files for which the status was requested even if none of these files are switched or ignored by themselves.
+   * (See IDEADEV-13393)
+   */
+  @Nullable
+  private FileStatus getParentStatus(final SVNStatusClient client, final FilePath path) {
+    final FilePath parentPath = path.getParentPath();
+    if (parentPath == null) {
+      return null;
+    }
+    VirtualFile file = parentPath.getVirtualFile();
+    if (file == null) {
+      return null;
+    }
+    FileStatus status = FileStatusManager.getInstance(myVcs.getProject()).getStatus(file);
+    if (status == FileStatus.IGNORED) {
+      return status;
+    }
+    FileStatus parentStatus = getParentStatus(client, parentPath);
+    if (parentStatus != null) {
+      return parentStatus;
+    }
+    // we care about switched only if none of the parents is ignored
+    if (status== FileStatus.SWITCHED) {
+      return status;
+    }
+    return null;
   }
 
   private static File guessWorkingCopyPath(final File file, final SVNURL url, final String copyFromURL) throws SVNException {
@@ -125,14 +161,15 @@ public class SvnChangeProvider implements ChangeProvider {
     return true;
   }
 
-  private static void processFile(FilePath path, SVNStatusClient stClient, final ChangelistBuilder builder,
-                                  final List<SvnChangedFile> copiedFiles, final List<SvnChangedFile> deletedFiles, final boolean recursively) throws SVNException {
+  private void processFile(FilePath path, SVNStatusClient stClient, final ChangelistBuilder builder,
+                           final List<SvnChangedFile> copiedFiles, final List<SvnChangedFile> deletedFiles,
+                           final FileStatus parentStatus, final boolean recursively) throws SVNException {
     try {
       if (path.isDirectory()) {
         stClient.doStatus(path.getIOFile(), recursively, false, false, true, new ISVNStatusHandler() {
           public void handleStatus(SVNStatus status) throws SVNException {
             FilePath path = VcsUtil.getFilePath(status.getFile(), status.getKind().equals(SVNNodeKind.DIR));
-            processStatusFirstPass(path, status, builder, copiedFiles, deletedFiles);
+            processStatusFirstPass(path, status, builder, copiedFiles, deletedFiles, parentStatus);
             if (status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED && path.isDirectory()) {
               // process children of this file with another client.
               SVNStatusClient client = new SVNStatusClient(null, null);
@@ -140,14 +177,14 @@ public class SvnChangeProvider implements ChangeProvider {
                 VirtualFile[] children = path.getVirtualFile().getChildren();
                 for (VirtualFile aChildren : children) {
                   FilePath filePath = VcsUtil.getFilePath(aChildren.getPath(), aChildren.isDirectory());
-                  processFile(filePath, client, builder, copiedFiles, deletedFiles, recursively);
+                  processFile(filePath, client, builder, copiedFiles, deletedFiles, parentStatus, recursively);
                 }
               }
             }
           }
         });
       } else {
-        processFile(path, stClient, builder, copiedFiles, deletedFiles);
+        processFile(path, stClient, builder, copiedFiles, deletedFiles, parentStatus);
       }
     } catch (SVNException e) {
       if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
@@ -158,7 +195,7 @@ public class SvnChangeProvider implements ChangeProvider {
           VirtualFile[] children = virtualFile.getChildren();
           for (VirtualFile child : children) {
             FilePath filePath = VcsUtil.getFilePath(child.getPath(), child.isDirectory());
-            processFile(filePath, stClient, builder, copiedFiles, deletedFiles, recursively);
+            processFile(filePath, stClient, builder, copiedFiles, deletedFiles, parentStatus, recursively);
           }
         }
       }
@@ -168,14 +205,16 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
-  private static void processFile(FilePath filePath, SVNStatusClient stClient, ChangelistBuilder builder,
-                                  final List<SvnChangedFile> copiedFiles, final List<SvnChangedFile> deletedFiles) throws SVNException {
+  private void processFile(FilePath filePath, SVNStatusClient stClient, ChangelistBuilder builder,
+                           final List<SvnChangedFile> copiedFiles, final List<SvnChangedFile> deletedFiles,
+                           FileStatus parentStatus) throws SVNException {
     SVNStatus status = stClient.doStatus(filePath.getIOFile(), false, false);
-    processStatusFirstPass(filePath, status, builder, copiedFiles, deletedFiles);
+    processStatusFirstPass(filePath, status, builder, copiedFiles, deletedFiles, parentStatus);
   }
 
-  private static void processStatusFirstPass(final FilePath filePath, final SVNStatus status, final ChangelistBuilder builder,
-                                             final List<SvnChangedFile> copiedFiles, final List<SvnChangedFile> deletedFiles) throws SVNException {
+  private void processStatusFirstPass(final FilePath filePath, final SVNStatus status, final ChangelistBuilder builder,
+                                      final List<SvnChangedFile> copiedFiles, final List<SvnChangedFile> deletedFiles,
+                                      final FileStatus parentStatus) throws SVNException {
     if (status.getContentsStatus() == SVNStatusType.STATUS_ADDED && status.getCopyFromURL() != null) {
       copiedFiles.add(new SvnChangedFile(filePath, status));
     }
@@ -183,11 +222,12 @@ public class SvnChangeProvider implements ChangeProvider {
       deletedFiles.add(new SvnChangedFile(filePath, status));
     }
     else {
-      processStatus(filePath, status, builder);
+      processStatus(filePath, status, builder, parentStatus);
     }
   }
 
-  private static void processStatus(final FilePath filePath, final SVNStatus status, final ChangelistBuilder builder) throws SVNException {
+  private void processStatus(final FilePath filePath, final SVNStatus status, final ChangelistBuilder builder,
+                             final FileStatus parentStatus) throws SVNException {
     loadEntriesFile(filePath);
     if (status != null) {
       FileStatus fStatus = convertStatus(status, filePath.getIOFile());
@@ -203,6 +243,7 @@ public class SvnChangeProvider implements ChangeProvider {
                propStatus == SVNStatusType.STATUS_MODIFIED) {
         builder.processChange(new Change(SvnContentRevision.create(filePath, status.getRevision()),
                                          CurrentContentRevision.create(filePath), fStatus));
+        checkSwitched(filePath, builder, status, parentStatus);
       }
       else if (statusType == SVNStatusType.STATUS_ADDED) {
         builder.processChange(new Change(null, CurrentContentRevision.create(filePath), fStatus));
@@ -213,16 +254,33 @@ public class SvnChangeProvider implements ChangeProvider {
       else if (statusType == SVNStatusType.STATUS_MISSING) {
         builder.processLocallyDeletedFile(filePath);
       }
-      else if (statusType == SVNStatusType.STATUS_IGNORED) {
+      else if (statusType == SVNStatusType.STATUS_IGNORED || parentStatus == FileStatus.IGNORED) {
         builder.processIgnoredFile(filePath.getVirtualFile());
       }
-      else if (fStatus == FileStatus.NOT_CHANGED && statusType != SVNStatusType.STATUS_NONE) {
+      else if ((fStatus == FileStatus.NOT_CHANGED || fStatus == FileStatus.SWITCHED) && statusType != SVNStatusType.STATUS_NONE) {
         VirtualFile file = filePath.getVirtualFile();
         if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
           builder.processChange(new Change(SvnContentRevision.create(filePath, status.getRevision()),
                                            CurrentContentRevision.create(filePath), FileStatus.MODIFIED));
         }
+        checkSwitched(filePath, builder, status, parentStatus);
       }
+    }
+  }
+
+  private void checkSwitched(final FilePath filePath, final ChangelistBuilder builder, final SVNStatus status, final FileStatus parentStatus) {
+    if (status.isSwitched() || parentStatus == FileStatus.SWITCHED) {
+      final VirtualFile virtualFile = filePath.getVirtualFile();
+      final String switchUrl = status.getURL().toString();
+      final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsRootFor(virtualFile);
+      String baseUrl = null;
+      try {
+        baseUrl = myBranchConfigurationManager.get(vcsRoot).getBaseName(switchUrl);
+      }
+      catch (VcsException e) {
+        LOG.error(e);
+      }
+      builder.processSwitchedFile(virtualFile, baseUrl == null ? switchUrl : baseUrl, true);
     }
   }
 
@@ -263,7 +321,7 @@ public class SvnChangeProvider implements ChangeProvider {
       return FileStatus.MODIFIED;
     }
     else if (status.isSwitched()) {
-      return SvnFileStatus.SWITCHED;
+      return FileStatus.SWITCHED;
     }
     else if (status.isCopied()) {
       return FileStatus.ADDED;
@@ -296,7 +354,7 @@ public class SvnChangeProvider implements ChangeProvider {
             if (parentURL != null && !SVNWCUtil.isWorkingCopyRoot(file)) {
               parentURL = SVNPathUtil.append(parentURL, SVNEncodingUtil.uriEncode(file.getName()));
               if (childURL != null && !parentURL.equals(childURL)) {
-                return SvnFileStatus.SWITCHED;
+                return FileStatus.SWITCHED;
               }
             }
         } catch (SVNException e) {
