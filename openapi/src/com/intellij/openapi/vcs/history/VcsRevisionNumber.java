@@ -44,6 +44,21 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
       }
       return 0;
     }
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final Int anInt = (Int)o;
+
+      if (myValue != anInt.myValue) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      return myValue;
+    }
   }
 
   class Long implements VcsRevisionNumber{
@@ -66,6 +81,21 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
 
     public long getLongValue() {
       return myValue;
+    }
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final Long aLong = (Long)o;
+
+      if (myValue != aLong.myValue) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      return (int)(myValue ^ (myValue >>> 32));
     }
   }
 
