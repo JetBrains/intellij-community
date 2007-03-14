@@ -31,6 +31,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Alarm;
+import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.IntrospectionHelper;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Target;
@@ -332,12 +333,22 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
           }
           finally {
             if (projectHelper != null) {
-              projectHelper.buildFinished(null);
+              clearHelper(projectHelper);
             }
           }
         }
       }
       return myTypeDefinitions.get(className);
+    }
+  }
+
+  private static void clearHelper(final IntrospectionHelper projectHelper) {
+    try {
+      final Method method = projectHelper.getClass().getDeclaredMethod("buildFinished", BuildEvent.class);
+      method.invoke(projectHelper, new Object[] {null});
+    }
+    catch (Throwable e) {
+      // ignore. Method is not there since Ant 1.7
     }
   }
 
