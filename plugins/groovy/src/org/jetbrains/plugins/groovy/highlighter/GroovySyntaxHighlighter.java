@@ -31,7 +31,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
   );
 
   static final TokenSet tBAD_CHARACTERS = TokenSet.create(
-          GroovyTokenTypes.WRONG
+          GroovyTokenTypes.mWRONG
   );
 
   static final TokenSet tWRONG_STRING = TokenSet.create(

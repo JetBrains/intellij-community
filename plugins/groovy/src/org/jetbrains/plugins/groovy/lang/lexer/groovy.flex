@@ -418,7 +418,7 @@ mGSTRING_LITERAL = \"\"
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Unknown symbol is using for debug goals.
-.                                         {   return WRONG; }
+.                                         {   return mWRONG; }
 
 
 

@@ -10,9 +10,16 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
  */
 public interface GroovyElementTypes {
 
-    GroovyElementType NONE = new GroovyElementType("there is no node");
+  // Indicates the wrongway of parsing
+  GroovyElementType WRONGWAY = new GroovyElementType("Wrong way!");
 
-    GroovyElementType FILE = new GroovyElementType("Groovy file");
-    GroovyElementType COMPILATION_UNIT = new GroovyElementType("Compilation unit");
+  // Auxiliary elements
+  GroovyElementType SEP = new GroovyElementType("Statement separator");
+
+  // Top-level elements
+  GroovyElementType FILE = new GroovyElementType("Groovy file");
+  GroovyElementType COMPILATION_UNIT = new GroovyElementType("Compilation unit");
+
+  GroovyElementType STATEMENT = new GroovyElementType("Any statement");
 
 }

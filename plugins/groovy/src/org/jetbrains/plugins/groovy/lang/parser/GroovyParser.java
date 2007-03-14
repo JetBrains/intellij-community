@@ -5,6 +5,7 @@ import com.intellij.lang.PsiParser;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.CompilationUnit;
 
 /**
  * Parser for Groovy script files
@@ -18,9 +19,7 @@ public class GroovyParser implements PsiParser {
 
     PsiBuilder.Marker rootMarker = builder.mark();
 
-    while (!builder.eof()) {
-      builder.advanceLexer();
-    }
+    CompilationUnit.parse(builder);
 
     rootMarker.done(root);
     return builder.getTreeBuilt();

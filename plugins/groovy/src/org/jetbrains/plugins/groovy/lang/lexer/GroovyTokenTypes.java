@@ -12,7 +12,7 @@ public interface GroovyTokenTypes {
   /**
    * Wrong token. Use for debug needs
    */
-  IElementType WRONG = new GroovyElementType("wrong token");
+  IElementType mWRONG = new GroovyElementType("wrong token");
 
   /* **************************************************************************************************
  *  Whitespaces & NewLines
