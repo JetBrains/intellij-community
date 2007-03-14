@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -163,12 +164,22 @@ public class InspectionApplication {
           for (Module module : modules) {
             final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
             final ProjectJdk jdk = rootManager.getJdk();
-            if (jdk == null) {
-              final OrderEntry[] entries = rootManager.getOrderEntries();
-              for (OrderEntry entry : entries) {
-                if (entry instanceof JdkOrderEntry) {
-                  logError(InspectionsBundle.message("offline.inspections.module.jdk.not.found", 
+            final OrderEntry[] entries = rootManager.getOrderEntries();
+            for (OrderEntry entry : entries) {
+              if (entry instanceof JdkOrderEntry) {
+                if (jdk == null) {
+                  logError(InspectionsBundle.message("offline.inspections.module.jdk.not.found",
                                                      ((JdkOrderEntry)entry).getJdkName(),
+                                                     module.getName()));
+                  if (myErrorCodeRequired) System.exit(1);
+                  return;
+                }
+              } else if (entry instanceof LibraryOrderEntry) {
+                final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+                final Library library = libraryOrderEntry.getLibrary();
+                if (library == null || library.getFiles(OrderRootType.CLASSES).length != library.getUrls(OrderRootType.CLASSES).length) {
+                  logError(InspectionsBundle.message("offline.inspections.library.was.not.resolved",
+                                                     libraryOrderEntry.getLibraryName(),
                                                      module.getName()));
                   if (myErrorCodeRequired) System.exit(1);
                   return;
