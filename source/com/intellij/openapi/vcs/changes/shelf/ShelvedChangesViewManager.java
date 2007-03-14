@@ -11,6 +11,7 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -40,11 +42,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeModel;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -96,6 +97,22 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     ActionManager.getInstance().getAction("ChangesView.Diff").registerCustomShortcutSet(diffShortcut, myTree);
 
     PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", ActionPlaces.UNKNOWN);
+
+    myTree.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(final MouseEvent e) {
+        if (e.getClickCount() != 2) return;
+        if (myTree.getPathForLocation(e.getX(), e.getY()) == null) return;
+        final TreePath selectionPath = myTree.getSelectionPath();
+        if (selectionPath == null) return;
+        final Object lastPathComponent = selectionPath.getLastPathComponent();
+        if (((TreeNode) lastPathComponent).isLeaf()) {
+          DataContext context = DataManager.getInstance().getDataContext(myTree);
+          final Change[] changes = DataKeys.CHANGES.getData(context);
+          ShowDiffAction.showDiffForChange(changes, 0, myProject);
+          e.consume();
+        }
+      }
+    });
   }
 
   public void projectOpened() {
