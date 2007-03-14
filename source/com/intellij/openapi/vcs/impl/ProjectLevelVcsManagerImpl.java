@@ -439,6 +439,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void unregisterVcs(AbstractVcs vcs) {
+    if (myActiveVcss.contains(vcs)) {
+      vcs.deactivate();
+      myActiveVcss.remove(vcs);
+    }
     try {
       vcs.shutdown();
     }
