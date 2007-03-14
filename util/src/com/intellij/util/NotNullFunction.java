@@ -10,6 +10,13 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public interface NotNullFunction<Dom, Img> extends Function<Dom,Img> {
+  NotNullFunction ID = new NotNullFunction() {
+    @NotNull
+    public Object fun(final Object o) {
+      return o;
+    }
+  };
+
   @NotNull
   Img fun(final Dom dom);
 }

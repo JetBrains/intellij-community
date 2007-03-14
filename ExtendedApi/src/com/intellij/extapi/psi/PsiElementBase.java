@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class PsiElementBase extends ElementBase implements PsiElement, NavigationItem {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.extapi.psi.PsiElementBase");
 
   public PsiElement copy() {
     return (PsiElement)clone();
@@ -219,5 +221,14 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement, 
       if (aClass.isInstance(child)) return (T)child;
     }
     return null;
+  }
+
+  @NotNull
+  protected <T> T findNotNullChildByClass(Class<T> aClass) {
+    final T child = findChildByClass(aClass);
+    if (child == null) {
+      LOG.assertTrue(false, getText());
+    }
+    return child;
   }
 }

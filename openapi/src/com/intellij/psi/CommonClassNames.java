@@ -24,4 +24,16 @@ public interface CommonClassNames {
   @NonNls String JAVA_UTIL_PROPERTIES = "java.util.Properties";
   @NonNls String JAVA_UTIL_PROPERTY_RESOURCE_BUNDLE = "java.util.PropertyResourceBundle";
 
+  @NonNls String JAVA_IO_SERIALIZABLE = "java.io.Serializable";
+
+  @NonNls String JAVA_LANG_BOOLEAN = "java.lang.Boolean";
+  @NonNls String JAVA_LANG_BYTE = "java.lang.Byte";
+  @NonNls String JAVA_LANG_SHORT = "java.lang.Short";
+  @NonNls String JAVA_LANG_INTEGER = "java.lang.Integer";
+  @NonNls String JAVA_LANG_LONG = "java.lang.Long";
+  @NonNls String JAVA_LANG_FLOAT = "java.lang.Float";
+  @NonNls String JAVA_LANG_DOUBLE = "java.lang.Double";
+  @NonNls String JAVA_LANG_CHARACTER = "java.lang.Character";
+
+
 }
