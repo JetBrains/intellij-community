@@ -1,15 +1,14 @@
 package org.jetbrains.plugins.groovy.lang.parser;
 
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
 
 /**
  * Creates Groovy PSI element by given AST node
  *
- * @author Ilya.Sergey
+ * @author Ilya.Sergey, Dmitry.Krasilschikov
  */
 public abstract class GroovyPsiCreator {
 
