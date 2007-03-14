@@ -10,14 +10,18 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
  */
 public class GroovyElementType extends IElementType {
 
-  private String debugName = null;
+    private String debugName = null;
 
-  public GroovyElementType(String debugName) {
-    super(debugName, GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
-    this.debugName = debugName;
-  }
+    public GroovyElementType(String debugName) {
+        super(debugName, GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
+        this.debugName = debugName;
+    }
 
-  public String toString() {
-    return debugName;
-  }
+    public String toString() {
+        return debugName;
+    }
+
+//    public TokenSet asTokenSet () {
+//        return TokenSet.create(this);
+//    }
 }
