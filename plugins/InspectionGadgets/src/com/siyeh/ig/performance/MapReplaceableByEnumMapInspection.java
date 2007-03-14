@@ -77,12 +77,7 @@ public class MapReplaceableByEnumMapInspection extends BaseInspection {
             if (!argumentClass.isEnum()) {
                 return;
             }
-            final PsiJavaCodeReferenceElement classReference =
-                    expression.getClassReference();
-            if (classReference == null) {
-                return;
-            }
-            registerError(classReference);
+            registerNewExpressionError(expression);
         }
     }
 }

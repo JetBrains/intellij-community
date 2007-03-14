@@ -111,17 +111,12 @@ public class ObsoleteCollectionInspection extends BaseInspection {
             if (!isObsoleteCollectionType(type)){
                 return;
             }
-            final PsiJavaCodeReferenceElement classNameElement =
-                    newExpression.getClassReference();
-            if (classNameElement == null) {
-                return;
-            }
             if (ignoreLibraryArguments &&
                     isObsoleteCollectionTypeElementArgumentOfLibraryMethod(
                             newExpression)) {
                 return;
             }
-            registerError(classNameElement);
+            registerNewExpressionError(newExpression);
         }
 
         private boolean isObsoleteCollectionType(PsiType type) {

@@ -119,7 +119,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             if (!isUnnecessarilyQualifiedAccess(classReference)) {
                 return;
             }
-            registerError(classReference, Boolean.FALSE);
+            registerNewExpressionError(expression, Boolean.FALSE);
         }
 
         public void visitReferenceList(PsiReferenceList list) {
@@ -174,20 +174,20 @@ public class UnnecessarilyQualifiedStaticUsageInspection
         }
 
         private boolean isUnnecessarilyQualifiedAccess(
-                @NotNull PsiJavaCodeReferenceElement expression) {
+                @NotNull PsiJavaCodeReferenceElement referenceElement) {
             final PsiElement qualifierElement =
-                    expression.getQualifier();
+                    referenceElement.getQualifier();
             if(!(qualifierElement instanceof PsiJavaCodeReferenceElement)){
                 return false;
             }
-            final PsiElement element = expression.resolve();
-            if (!(element instanceof PsiField) &&
-                    !(element instanceof PsiClass)) {
+            final PsiElement target = referenceElement.resolve();
+            if (!(target instanceof PsiField) &&
+                    !(target instanceof PsiClass)) {
                 return false;
             }
             if (m_ignoreStaticAccessFromStaticContext) {
                 final PsiMember containingMember =
-                        PsiTreeUtil.getParentOfType(expression,
+                        PsiTreeUtil.getParentOfType(referenceElement,
                                 PsiMember.class);
                 if (containingMember != null &&
                         !containingMember.hasModifierProperty(
@@ -195,27 +195,27 @@ public class UnnecessarilyQualifiedStaticUsageInspection
                     return false;
                 }
             }
-            final String referenceName = expression.getReferenceName();
+            final String referenceName = referenceElement.getReferenceName();
             if(referenceName == null) {
                 return false;
             }
-            final PsiManager manager = expression.getManager();
+            final PsiManager manager = referenceElement.getManager();
             final PsiResolveHelper resolveHelper = manager.getResolveHelper();
-            final PsiMember member = (PsiMember) element;
-            if (element instanceof PsiField) {
+            final PsiMember member = (PsiMember) target;
+            if (target instanceof PsiField) {
                 if (!member.hasModifierProperty(PsiModifier.STATIC)) {
                     return false;
                 }
                 final PsiVariable variable =
                         resolveHelper.resolveReferencedVariable(referenceName,
-                                expression);
+                                referenceElement);
                 if (variable == null || !variable.equals(member)) {
                     return false;
                 }
             } else {
                 final PsiClass aClass =
                         resolveHelper.resolveReferencedClass(referenceName,
-                                expression);
+                                referenceElement);
                 if (aClass == null || !aClass.equals(member)) {
                     return false;
                 }
@@ -227,7 +227,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
                 return false;
             }
             final PsiClass containingClass =
-                    ClassUtils.getContainingClass(expression);
+                    ClassUtils.getContainingClass(referenceElement);
             return resolvedQualifier.equals(containingClass);
         }
 

@@ -50,12 +50,7 @@ public class ClassLoaderInstantiationInspection extends BaseInspection {
                     expression)) {
                 return;
             }
-            final PsiJavaCodeReferenceElement reference =
-                    expression.getClassReference();
-            if (reference == null) {
-                return;
-            }
-            registerError(reference);
+            registerNewExpressionError(expression);
         }
     }
 }

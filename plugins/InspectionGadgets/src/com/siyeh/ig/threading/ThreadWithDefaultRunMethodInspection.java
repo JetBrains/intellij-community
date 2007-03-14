@@ -80,7 +80,7 @@ public class ThreadWithDefaultRunMethodInspection extends BaseInspection {
                         return;
                     }
                 }
-                registerError(baseClassReference);
+                registerNewExpressionError(expression);
             } else {
                 final PsiJavaCodeReferenceElement classReference =
                         expression.getClassReference();
@@ -109,7 +109,7 @@ public class ThreadWithDefaultRunMethodInspection extends BaseInspection {
                         return;
                     }
                 }
-                registerError(classReference);
+                registerNewExpressionError(expression);
             }
         }
 

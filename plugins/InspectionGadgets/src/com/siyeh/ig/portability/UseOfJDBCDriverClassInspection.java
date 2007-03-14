@@ -98,12 +98,7 @@ public class UseOfJDBCDriverClassInspection extends BaseInspection {
             if(!ClassUtils.isSubclass(resolveClass, "java.sql.Driver")) {
                 return;
             }
-            final PsiJavaCodeReferenceElement classNameElement =
-                    newExpression.getClassReference();
-            if (classNameElement == null) {
-                return;
-            }
-            registerError(classNameElement);
+            registerNewExpressionError(newExpression);
         }
     }
 }

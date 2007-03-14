@@ -79,7 +79,7 @@ public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
             if(outOfMemoryExceptionCaught(expression)){
                 return;
             }
-            registerError(expression);
+            registerNewExpressionError(expression);
         }
 
         private boolean outOfMemoryExceptionCaught(PsiElement element){

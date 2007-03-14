@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,35 +16,50 @@
 package com.siyeh.ig;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public abstract class BaseInspectionVisitor extends PsiElementVisitor{
 
     private BaseInspection inspection = null;
     private boolean onTheFly = false;
-    private List<ProblemDescriptor> errors = null;
     private ProblemsHolder holder = null;
 
-    public void setInspection(BaseInspection inspection){
+    final void setInspection(BaseInspection inspection){
         this.inspection = inspection;
     }
 
-    protected void setOnTheFly(boolean onTheFly){
+    final void setOnTheFly(boolean onTheFly){
         this.onTheFly = onTheFly;
     }
 
-    public boolean isOnTheFly() {
+    public final boolean isOnTheFly() {
         return onTheFly;
     }
 
-    protected void registerMethodCallError(PsiMethodCallExpression expression,
-                                           Object... infos){
+    protected final void registerNewExpressionError(
+            @NotNull PsiNewExpression expression, Object... infos) {
+        final PsiJavaCodeReferenceElement classReference =
+                expression.getClassReference();
+        if (classReference == null) {
+            final PsiAnonymousClass anonymousClass =
+                    expression.getAnonymousClass();
+            if (anonymousClass == null) {
+                registerError(expression, infos);
+            } else {
+                final PsiJavaCodeReferenceElement baseClassReference =
+                        anonymousClass.getBaseClassReference();
+                registerError(baseClassReference, infos);
+            }
+        } else {
+            registerError(classReference, infos);
+        }
+    }
+
+    protected final void registerMethodCallError(
+            @NotNull PsiMethodCallExpression expression, Object... infos) {
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
         final PsiElement nameToken = methodExpression.getReferenceNameElement();
@@ -55,7 +70,7 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         }
     }
 
-    protected void registerStatementError(PsiStatement statement,
+    protected final void registerStatementError(@NotNull PsiStatement statement,
                                           Object... infos){
         final PsiElement statementToken = statement.getFirstChild();
         if (statementToken == null) {
@@ -65,7 +80,8 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         }
     }
 
-    protected void registerClassError(PsiClass aClass, Object... infos){
+    protected final void registerClassError(@NotNull PsiClass aClass,
+                                      Object... infos){
         final PsiElement nameIdentifier;
         if (aClass instanceof PsiEnumConstantInitializer) {
             final PsiEnumConstantInitializer enumConstantInitializer =
@@ -86,7 +102,8 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         }
     }
 
-    protected void registerMethodError(PsiMethod method, Object... infos){
+    protected final void registerMethodError(@NotNull PsiMethod method,
+                                       Object... infos){
         final PsiElement nameIdentifier = method.getNameIdentifier();
         if (nameIdentifier == null) {
             registerError(method.getContainingFile(), infos);
@@ -95,7 +112,8 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         }
     }
 
-    protected void registerVariableError(PsiVariable variable, Object... infos){
+    protected final void registerVariableError(@NotNull PsiVariable variable,
+                                         Object... infos){
         final PsiElement nameIdentifier = variable.getNameIdentifier();
         if (nameIdentifier == null) {
             registerError(variable, infos);
@@ -104,8 +122,8 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         }
     }
 
-    protected void registerTypeParameterError(PsiTypeParameter typeParameter,
-                                              Object... infos){
+    protected final void registerTypeParameterError(
+            @NotNull PsiTypeParameter typeParameter, Object... infos) {
         final PsiElement nameIdentifier = typeParameter.getNameIdentifier();
         if (nameIdentifier == null) {
             registerError(typeParameter, infos);
@@ -114,14 +132,15 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         }
     }
 
-    protected void registerFieldError(PsiField field, Object... infos){
+    protected final void registerFieldError(@NotNull PsiField field,
+                                            Object... infos){
         final PsiElement nameIdentifier = field.getNameIdentifier();
         registerError(nameIdentifier, infos);
     }
 
-    protected void registerModifierError(@NotNull String modifier,
-                                         @NotNull PsiModifierListOwner parameter,
-                                         Object... infos){
+    protected final void registerModifierError(
+            @NotNull String modifier, @NotNull PsiModifierListOwner parameter,
+            Object... infos){
         final PsiModifierList modifiers = parameter.getModifierList();
         if(modifiers == null){
             return;
@@ -135,7 +154,8 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         }
     }
 
-    protected void registerError(@NotNull PsiElement location, Object... infos){
+    protected final void registerError(@NotNull PsiElement location,
+                                       Object... infos){
         final LocalQuickFix[] fixes = createFixes(location);
         final String description = inspection.buildErrorString(infos);
         holder.registerProblem(location, description, fixes);
@@ -157,16 +177,6 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         return new InspectionGadgetsFix[]{fix};
     }
 
-    @Nullable
-    public ProblemDescriptor[] getErrors(){
-        if(errors == null){
-            return null;
-        } else{
-            final int numErrors = errors.size();
-            return errors.toArray(new ProblemDescriptor[numErrors]);
-        }
-    }
-
     public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitExpression(expression);
     }
@@ -176,7 +186,7 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         // so this is a performance optimization
     }
 
-    public void setProblemsHolder(ProblemsHolder holder) {
+    public final void setProblemsHolder(ProblemsHolder holder) {
         this.holder = holder;
     }
 }

@@ -66,12 +66,7 @@ public class UseOfProcessBuilderInspection extends BaseInspection {
             if(!"java.lang.ProcessBuilder".equals(typeString)) {
                 return;
             }
-            final PsiJavaCodeReferenceElement classNameElement =
-                    newExpression.getClassReference();
-            if (classNameElement == null) {
-                return;
-            }
-            registerError(classNameElement);
+            registerNewExpressionError(newExpression);
         }
     }
 }

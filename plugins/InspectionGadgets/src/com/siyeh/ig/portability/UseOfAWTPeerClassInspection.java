@@ -100,12 +100,7 @@ public class UseOfAWTPeerClassInspection extends BaseInspection {
                     "java.awt.peer.ComponentPeer")) {
                 return;
             }
-            final PsiJavaCodeReferenceElement classNameElement =
-                    newExpression.getClassReference();
-            if (classNameElement == null) {
-                return;
-            }
-            registerError(classNameElement);
+            registerNewExpressionError(newExpression);
         }
     }
 }

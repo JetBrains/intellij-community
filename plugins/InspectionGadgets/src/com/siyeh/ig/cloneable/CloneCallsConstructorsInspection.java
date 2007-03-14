@@ -70,12 +70,7 @@ public class CloneCallsConstructorsInspection extends BaseInspection {
                                 PsiThrowStatement.class) != null) {
                             return;
                         }
-                        final PsiJavaCodeReferenceElement classReference =
-                                newExpression.getClassReference();
-                        if (classReference == null) {
-                            return;
-                        }
-                        registerError(classReference);
+                        registerError(newExpression);
                     }
                 });
             }

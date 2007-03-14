@@ -62,12 +62,7 @@ public class SimpleDateFormatWithoutLocaleInspection
                     return;
                 }
             }
-            final PsiJavaCodeReferenceElement classReference =
-                    expression.getClassReference();
-            if (classReference == null) {
-                return;
-            }
-            registerError(classReference);
+            registerError(expression);
         }
     }
 }

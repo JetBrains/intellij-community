@@ -1000,6 +1000,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(OverlyComplexArithmeticExpressionInspection.class);
         m_inspectionClasses.add(PointlessArithmeticExpressionInspection.class);
         m_inspectionClasses.add(UnaryPlusInspection.class);
+        m_inspectionClasses.add(UnpredictableBigDecimalConstructorCallInspection.class);
     }
 
     private void registerJUnitInspections() {

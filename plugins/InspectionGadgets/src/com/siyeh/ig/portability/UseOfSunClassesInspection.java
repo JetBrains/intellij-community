@@ -75,12 +75,7 @@ public class UseOfSunClassesInspection extends BaseInspection {
             if (className==null || !className.startsWith("sun.")) {
                 return;
             }
-            final PsiJavaCodeReferenceElement classNameElement =
-                    newExpression.getClassReference();
-            if (classNameElement == null) {
-                return;
-            }
-            registerError(classNameElement);
+            registerNewExpressionError(newExpression);
         }
     }
 }

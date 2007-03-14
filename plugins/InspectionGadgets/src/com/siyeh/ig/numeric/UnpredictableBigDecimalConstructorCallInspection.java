@@ -45,12 +45,12 @@ public class UnpredictableBigDecimalConstructorCallInspection
 
         public void visitNewExpression(PsiNewExpression expression) {
             super.visitNewExpression(expression);
-            final PsiJavaCodeReferenceElement referenceElement =
+            final PsiJavaCodeReferenceElement classReference =
                     expression.getClassReference();
-            if (referenceElement == null) {
+            if (classReference == null) {
                 return;
             }
-            final String name = referenceElement.getReferenceName();
+            final String name = classReference.getReferenceName();
             if (!"BigDecimal".equals(name)) {
                 return;
             }
@@ -70,7 +70,7 @@ public class UnpredictableBigDecimalConstructorCallInspection
             if (type != PsiType.DOUBLE) {
                 return;
             }
-            registerError(expression);
+            registerNewExpressionError(expression);
         }
     }
 }

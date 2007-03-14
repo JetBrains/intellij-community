@@ -54,12 +54,7 @@ public class InstantiationOfUtilityClassInspection extends BaseInspection {
             if(!UtilityClassUtil.isUtilityClass(aClass)){
                 return;
             }
-            final PsiJavaCodeReferenceElement classReference =
-                    expression.getClassReference();
-            if (classReference == null) {
-                return;
-            }
-            registerError(classReference);
+            registerNewExpressionError(expression);
         }
     }
 }
