@@ -18,13 +18,13 @@ class FieldChangeDescription extends ChangeDescription {
 
     final int oldGenericSignature = oldCache.getFieldGenericSignature(oldFieldId);
     final int newGenericSignature = newCache.getFieldGenericSignature(newFieldId);
-    genericSignatureChanged = (oldGenericSignature != newGenericSignature);
+    genericSignatureChanged = oldGenericSignature != newGenericSignature;
   }
 
-  public FieldChangeDescription(final FieldInfo oldField, final FieldInfo newField) throws CacheCorruptedException {
+  public FieldChangeDescription(final FieldInfo oldField, final FieldInfo newField) {
     descriptorChanged = oldField.getDescriptor() != newField.getDescriptor();
     flagsChanged = oldField.getFlags() != newField.getFlags();
-    genericSignatureChanged = (oldField.getGenericSignature() != newField.getGenericSignature());
+    genericSignatureChanged = oldField.getGenericSignature() != newField.getGenericSignature();
   }
 
   public boolean isChanged() {

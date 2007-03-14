@@ -56,7 +56,7 @@ public class DependencyCache {
   }
 
 
-  public DependencyCacheNavigator getCacheNavigator() throws CacheCorruptedException {
+  public DependencyCacheNavigator getCacheNavigator() {
     if (myCacheNavigator == null) {
       myCacheNavigator = new DependencyCacheNavigator(getCache());
     }
@@ -645,7 +645,7 @@ public class DependencyCache {
     return markClassInfo(qualifiedName, force);
   }
 
-  public boolean isTargetClassInfoMarked(Dependency dependency) throws CacheCorruptedException {
+  public boolean isTargetClassInfoMarked(Dependency dependency) {
     return isClassInfoMarked(dependency.getClassQualifiedName());
   }
 

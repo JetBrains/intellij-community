@@ -722,6 +722,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     if (myUsagePreviewPanel != null) {
       UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS = ((Splitter)myUsagePreviewPanel.getParent()).getProportion();
       myUsagePreviewPanel.dispose();
+      myUsagePreviewPanel = null;
     }
   }
 

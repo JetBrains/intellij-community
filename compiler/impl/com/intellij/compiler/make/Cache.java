@@ -8,6 +8,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.ClsFormatException;
 import gnu.trove.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.Collection;
@@ -838,10 +839,11 @@ public class Cache {
     }
   }
 
+  @NotNull
   public Dependency[] getBackDependencies(final int classQName) throws CacheCorruptedException{
     final int classDeclarationId = getClassDeclarationId(classQName);
     if (classDeclarationId == UNKNOWN) {
-      return null;
+      return Dependency.EMPTY_ARRAY;
     }
     try {
       final TIntObjectHashMap<Dependency> dependencies = new TIntObjectHashMap<Dependency>();

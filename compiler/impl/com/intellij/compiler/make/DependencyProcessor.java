@@ -144,10 +144,8 @@ public class DependencyProcessor {
     final Cache newCache = myDependencyCache.getNewClassesCache();
 
     if (!myMembersChanged &&
-        (oldCache.getFlags(oldCache.getClassId(myQName)) == newCache.getFlags(newCache.getClassId(myQName))) &&
-        !superListChanged &&
-        !myWereAnnotationTargetsRemoved &&
-        !myRetentionPolicyChanged) {
+        oldCache.getFlags(oldCache.getClassId(myQName)) == newCache.getFlags(newCache.getClassId(myQName)) &&
+        !superListChanged && !myWereAnnotationTargetsRemoved && !myRetentionPolicyChanged) {
       return; // nothing to do
     }
 
