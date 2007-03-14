@@ -90,6 +90,8 @@ public class BinopInstruction extends BranchingInstruction {
       }
       else if ("+".equals(myOperationSign)) {
         memState.push(getNonNullStringValue(factory));
+        setTrueReachable();  // Not a branching instruction actually.
+        setFalseReachable();
       }
       else {
         if (PsiKeyword.INSTANCEOF.equals(myOperationSign) &&
