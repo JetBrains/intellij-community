@@ -87,18 +87,6 @@ public abstract class ParserUtils {
   }
 
   /**
-   * lookAhead for TokenSet
-   *
-   * @param builder Given PsiBuilder
-   * @param elems   Array of need elements in order
-   * @return true if following sequence is like a given
-   */
-
-  public static boolean lookAhead(PsiBuilder builder, TokenSet elems) {
-    return lookAhead(builder, elems.getTypes());
-  }
-
-  /**
    * Wraps current token to node with specified element type
    *
    * @param builder Given builder
@@ -111,5 +99,4 @@ public abstract class ParserUtils {
     marker.done(elem);
     return elem;
   }
-
 }
