@@ -1,0 +1,236 @@
+<?xml version="1.0"?>
+
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<!--
+  =======================================================================
+    Build file to fetch optional libraries for Apache Ant
+  =======================================================================
+-->
+<project name="fetch" default="all" basedir=".">
+
+<description>
+  This build file downloads JAR files that optional Ant tasks use,
+  and installs them in a location that is accessible the next time Ant runs.
+
+  You can choose three locations, by going -Ddest=LOCATION on the command line
+  -Ddest=user     user lib dir  ${user.home}/.ant/lib
+  -Ddest=system   ant lib dir   ${ant.home}/lib --Default--
+  -Ddest=optional optional dir  ${ant.home}/lib/optional  (for Ant developers)
+
+  You may also need to set proxy settings. On Java1.5, Ant tries to get
+  this from the OS, unless you use the -noproxy option.
+
+  Proxies can be configured manually setting the JVM proxy values in the
+  ANT_OPTS environment variable.
+
+  For example, to set the proxy up in the tcsh shell, the command would be
+  something like:
+
+  For csh/tcsh:
+    setenv ANT_OPTS "-Dhttp.proxyHost=proxy -Dhttp.proxyPort=8080"
+  For bash:
+    export ANT_OPTS="-Dhttp.proxyHost=proxy -Dhttp.proxyPort=8080"
+  For Windows, set the environment variable in the appropriate dialog box
+  and open a new console. or, by hand
+    set ANT_OPTS = -Dhttp.proxyHost=proxy -Dhttp.proxyPort=8080
+</description>
+
+  <!-- Give user a chance to override without editing this file
+       (and without typing -D each time it compiles it) -->
+  <property file="${user.home}/.ant/ant.properties"/>
+  <property name="lib.dir" location="lib" />
+  <property name="optional.dir" location="${lib.dir}/optional" />
+  <property name="userlib.dir" location="${user.home}/.ant/lib" />
+
+  <!-- load in our properties table -->
+  <property file="${lib.dir}/libraries.properties"/>
+
+  <import file="get-m2.xml" />
+
+  <target name="pick-dest">
+    <property name="dest" value="system" />
+    <condition property="dest.dir"
+      value="${lib.dir}">
+      <equals arg1="${dest}" arg2="system" />
+    </condition>
+    <condition property="dest.dir"
+      value="${optional.dir}">
+      <equals arg1="${dest}" arg2="optional" />
+    </condition>
+    <condition property="dest.dir"
+      value="${userlib.dir}">
+      <equals arg1="${dest}" arg2="user" />
+    </condition>
+    <fail unless="dest.dir">Unknown destination : ${dest}</fail>
+    <echo>Downloading to ${dest.dir}</echo>
+    <property name="m2.dest.dir" value="${dest.dir}" />
+  </target>
+
+
+  <target name="macros" depends="pick-dest,get-m2"
+    xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+
+    <macrodef name="f2">
+      <attribute name="project" />
+      <attribute name="archive" default="@{project}"/>
+      <sequential>
+        <fail>
+        Unknown archive @{archive} -no property @{archive}.version defined.
+          <condition>
+            <not>
+            <isset property="@{archive}.version"/>
+            </not>
+          </condition>
+        </fail>
+        <artifact:dependencies pathID="@{archive}.path">
+          <dependency groupID="@{project}"
+            artifactID="@{archive}"
+            version="${@{archive}.version}"/>
+        </artifact:dependencies>
+        <!-- now we are left with the problem of getting the files
+             into our directory -->
+        <copypath destdir="${dest.dir}" pathref="@{archive}.path">
+          <flattenmapper/>
+        </copypath>
+      </sequential>
+    </macrodef>
+  </target>
+
+
+
+  <!-- any init stuff -->
+  <target name="init" depends="macros" />
+
+
+  <target name="diag" depends="init">
+    <echoproperties />
+  </target>
+
+  <target name="logging"
+    description="load logging libraries"
+    depends="init">
+    <f2 project="log4j" />
+    <f2 project="commons-logging" archive="commons-logging-api" />
+  </target>
+
+  <target name="junit"
+    description="load junit libraries"
+    depends="init">
+    <f2 project="junit" />
+  </target>
+
+  <target name="xml"
+    description="load full XML libraries (xalan, resolver)"
+    depends="init">
+    <f2 project="xalan" />
+    <f2 project="xml-resolver" />
+  </target>
+
+  <!--
+   This is not used as
+   1. we want the names of the libraries to be fixed, or it will break  Ant's manifest.
+   2. We like to get the more recent artifacts than are in the repo at the time of writing (2006-10-16)
+   3. Xerces has a dependency on v 1.3.03 of Xml-apis, which is wrong.
+   If/when the artifacts stabilize, we could switch to it.
+   -->
+
+  <target name="xerces"
+      description="load an updated version of Xerces"
+      depends="init">
+    <f2 project="xerces" archive="xercesImpl"/>
+    <f2 project="xerces" archive="xmlParserAPIs" />
+  </target>
+
+  <target name="networking"
+    description="load networking libraries (commons-net; jsch)"
+    depends="init">
+    <f2 project="commons-net" />
+    <f2 project="com.jcraft" archive="jsch"/>
+  </target>
+
+  <target name="regexp"
+    description="load regexp libraries"
+    depends="init">
+    <f2 project="regexp" />
+    <f2 project="oro" />
+  </target>
+
+  <target name="antlr"
+    description="load antlr libraries"
+    depends="init">
+    <f2 project="antlr" />
+  </target>
+
+  <target name="bcel"
+    description="load bcel libraries"
+    depends="init">
+    <f2 project="bcel" />
+  </target>
+
+  <target name="jdepend"
+    description="load jdepend libraries"
+    depends="init">
+    <f2 project="jdepend" />
+  </target>
+
+  <target name="bsf"
+    description="load bsf libraries"
+    depends="init">
+    <f2 project="bsf" />
+  </target>
+
+  <target name="jruby"
+          description="load jruby"
+          depends="bsf">
+    <f2 project="org.jruby" archive="jruby"/>
+  </target>
+
+  <target name="beanshell"
+          description="load beanshell support"
+          depends="bsf">
+    <f2 project="org.beanshell" archive="bsh"/>
+    <f2 project="org.beanshell" archive="bsh-core"/>
+  </target>
+
+  <target name="jython"
+          description="load jython"
+          depends="bsf">
+    <f2 project="jython" archive="jython"/>
+  </target>
+
+  <target name="rhino"
+          description="load rhino"
+          depends="bsf">
+    <f2 project="rhino" archive="js"/>
+  </target>
+
+  <target name="script"
+          description="load script languages"
+          depends="bsf,jruby,jython,beanshell,rhino"/>
+
+  <target name="debugging"
+    description="internal ant debugging"
+    depends="init">
+    <f2 project="which" />
+  </target>
+
+  <target name="all"
+    description="load all the libraries"
+    depends="logging,junit,xml,networking,regexp,antlr,bcel,jdepend,bsf,debugging,script" />
+
+</project>
