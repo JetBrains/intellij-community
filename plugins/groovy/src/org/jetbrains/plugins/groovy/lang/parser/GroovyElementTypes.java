@@ -16,10 +16,14 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
 
   // Auxiliary elements
   GroovyElementType SEP = new GroovyElementType("Statement separator");
+  GroovyElementType IDENTIFIER = new GroovyElementType("Statement separator");
 
   // Top-level elements
   GroovyElementType FILE = new GroovyElementType("Groovy file");
   GroovyElementType COMPILATION_UNIT = new GroovyElementType("Compilation unit");
+
+  //Packaging
+  GroovyElementType PACKAGE_DEFINITION = new GroovyElementType("Package definition");
 
   // Import elements
   GroovyElementType IMPORT_STATEMENT = new GroovyElementType("Import statement");
@@ -30,9 +34,9 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType STATEMENT = new GroovyElementType("Any statement");
 
   //declaration
-  GroovyElementType DECLARATION_START = new GroovyElementType("declaration start");
+  GroovyElementType DECLARATION_START = new GroovyElementType("Declaration start");
 
-  GroovyElementType UPPER_CASE_IDENT = new GroovyElementType("upper case identifier");
+  GroovyElementType UPPER_CASE_IDENT = new GroovyElementType("Upper case identifier");
 
-  TokenSet WRONG_SET = TokenSet.create(WRONGWAY, mWRONG, mWRONG_GSTRING_LITERAL, mWRONG_STRING_LITERAL);
+  TokenSet tWRONG_SET = TokenSet.create(WRONGWAY, mWRONG, mWRONG_GSTRING_LITERAL, mWRONG_STRING_LITERAL);
 }

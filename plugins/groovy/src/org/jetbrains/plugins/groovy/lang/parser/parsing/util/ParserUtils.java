@@ -60,7 +60,7 @@ public abstract class ParserUtils {
    * @param tokens  -   suitable token set
    * @return true if element parsed
    */
-  public static boolean getToken(PsiBuilder builder, TokenSet tokens) {
+  public static boolean validateToken(PsiBuilder builder, TokenSet tokens) {
     return tokens.contains(builder.getTokenType());
   }
 
@@ -111,7 +111,7 @@ public abstract class ParserUtils {
 
     PsiBuilder.Marker rb = builder.mark();
     int i = 0;
-    for (; !builder.eof() && i < elems.length && elems[i].equals(builder.getTokenType());) {
+    while ( !builder.eof() && i < elems.length && elems[i].equals(builder.getTokenType())) {
       builder.advanceLexer();
       i++;
     }

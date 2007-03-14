@@ -70,6 +70,7 @@ public class IdentifierStar implements Construction {
     } else if (ParserUtils.lookAhead(builder, mIDENT) ||
             ParserUtils.lookAhead(builder, mNLS, mIDENT)) {
       marker.drop();
+      ParserUtils.getToken(builder, mNLS);
       ParserUtils.eatElement(builder, IMPORT_END);
     } else {
       builder.error(GroovyBundle.message("identifier.expected"));
