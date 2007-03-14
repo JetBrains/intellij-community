@@ -19,14 +19,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-import java.util.Iterator;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Yura Cangea
@@ -46,9 +44,9 @@ public class RegexpFilter implements Filter {
 
   private Pattern myPattern;
   private Project myProject;
-  @NonNls protected static final String FILE_STR = "file";
-  @NonNls protected static final String LINE_STR = "line";
-  @NonNls protected static final String COLUMN_STR = "column";
+  @NonNls private static final String FILE_STR = "file";
+  @NonNls private static final String LINE_STR = "line";
+  @NonNls private static final String COLUMN_STR = "column";
 
   public RegexpFilter(Project project, @NonNls String expression) {
     myProject = project;
@@ -84,16 +82,17 @@ public class RegexpFilter implements Filter {
 
     // The block below determines the registers based on the sorted map.
     int count = 0;
-    final Iterator<Integer> itr = map.keySet().iterator();
-    while (itr.hasNext()) {
+    for (final Integer integer : map.keySet()) {
       count++;
-      final String s = map.get(itr.next());
+      final String s = map.get(integer);
 
       if (FILE_STR.equals(s)) {
         filePathIndex = count;
-      } else if (LINE_STR.equals(s)) {
+      }
+      else if (LINE_STR.equals(s)) {
         lineIndex = count;
-      } else if (COLUMN_STR.equals(s)) {
+      }
+      else if (COLUMN_STR.equals(s)) {
         columnIndex = count;
       }
     }
@@ -149,12 +148,12 @@ public class RegexpFilter implements Filter {
     final String filePath = matcher.group(myFileRegister);
 
     String lineNumber = "0";
-    String columnNumber = "0";
 
     if (myLineRegister != -1) {
       lineNumber = matcher.group(myLineRegister);
     }
 
+    String columnNumber = "0";
     if (myColumnRegister != -1) {
       columnNumber = matcher.group(myColumnRegister);
     }

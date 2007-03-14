@@ -204,7 +204,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private void _saveDocument(final Document document) {
     boolean committed = false;
     try{
-      Writer writer = null;
       VirtualFile file = getFile(document);
 
       if (file == null || !file.isValid() || file instanceof LightVirtualFile){
@@ -238,6 +237,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
       LOG.assertTrue(file.isValid());
 
+      Writer writer = null;
       try{
         String text = document.getText();
         String lineSeparator = getLineSeparator(document, file);

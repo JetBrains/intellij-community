@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public final class OpenFileHyperlinkInfo implements HyperlinkInfo {
   private final OpenFileDescriptor myDescriptor;
 
-  public OpenFileHyperlinkInfo(final OpenFileDescriptor descriptor) {
+  public OpenFileHyperlinkInfo(@NotNull OpenFileDescriptor descriptor) {
     myDescriptor = descriptor;
   }
 
@@ -45,7 +45,7 @@ public final class OpenFileHyperlinkInfo implements HyperlinkInfo {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final VirtualFile file = myDescriptor.getFile();
-        if(file != null && file.isValid()) {
+        if(file.isValid()) {
           FileEditorManager.getInstance(project).openTextEditor(myDescriptor, true);
         }
       }

@@ -21,12 +21,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 
 public class ChangeParameterClassFix extends ExtendsListFix {
   private ChangeParameterClassFix(PsiClass aClassToExtend, PsiClassType parameterClass) {
     super(aClassToExtend, parameterClass, true);
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("change.parameter.class.family");
   }
