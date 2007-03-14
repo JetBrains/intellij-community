@@ -8,7 +8,7 @@ import org.junit.Test;
 public class FileListenerFilteringTest extends FileListenerTestCase {
   @Before
   public void setUp() {
-    l = new FileListener(vcs, fileSystem, new MyFileFilter());
+    l = new FileListener(vcs, new TestIdeaGateway(), new MyFileFilter());
   }
 
   @Test

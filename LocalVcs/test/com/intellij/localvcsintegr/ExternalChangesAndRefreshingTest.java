@@ -2,6 +2,7 @@ package com.intellij.localvcsintegr;
 
 
 import com.intellij.localvcs.Paths;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.*;
@@ -47,6 +48,14 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     UIUtil.dispatchAllInvocationEvents();
   }
 
+  public void testRefreshInsideCommand() {
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
+        forceRefreshVFS(false);
+      }
+    }, "", null);
+  }
+
   public void testContentOfFileChangedDuringRefresh() throws Exception {
     final VirtualFile f = root.createChildData(null, "file.java");
     f.setBinaryContent("before".getBytes());
@@ -62,13 +71,13 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
       }
     });
 
-    // todo unrelyable test because content recorder before LvcsFileListener do it's job
+    // todo unrelable test because content recorded before LvcsFileListener does its job
     assertEquals("before", l.getContentBefore());
     assertEquals("after", l.getContentAfter());
   }
 
   private void performAllPendingJobs() {
-    forceRefreshVFS(false);
+    //forceRefreshVFS(false);
   }
 
   public void testFileCreationDuringRefresh() throws Exception {

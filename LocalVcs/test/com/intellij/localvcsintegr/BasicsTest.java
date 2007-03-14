@@ -6,8 +6,10 @@ import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.LongContent;
 import com.intellij.localvcs.Storage;
 import com.intellij.localvcs.integration.LocalVcsAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.io.IOException;
 import java.util.List;
 
 public class BasicsTest extends IntegrationTestCase {
@@ -23,6 +25,26 @@ public class BasicsTest extends IntegrationTestCase {
     LocalVcs vcs = new LocalVcs(s);
     s.close();
     assertTrue(vcs.hasEntry(f.getPath()));
+  }
+
+  public void ignoreTestProcessingCommands() throws Exception {
+    // TODO unignore after rework!!!
+    final VirtualFile[] f = new VirtualFile[1];
+
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
+        try {
+          f[0] = root.createChildData(null, "f1.java");
+          f[0].setBinaryContent(new byte[]{1});
+          f[0].setBinaryContent(new byte[]{2});
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }, "name", null);
+
+    assertEquals(1, getVcs().getLabelsFor(f[0].getPath()).size());
   }
 
   public void testProvidingContent() throws Exception {

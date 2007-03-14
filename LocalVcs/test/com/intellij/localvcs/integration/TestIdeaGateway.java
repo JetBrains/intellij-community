@@ -26,6 +26,11 @@ public class TestIdeaGateway extends IdeaGateway {
   }
 
   @Override
+  public byte[] getPhysicalContent(VirtualFile f) throws IOException {
+    return f.contentsToByteArray();
+  }
+
+  @Override
   public byte[] getDocumentByteContent(VirtualFile f) {
     try {
       return f.contentsToByteArray();

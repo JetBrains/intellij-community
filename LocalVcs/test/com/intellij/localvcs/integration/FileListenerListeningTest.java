@@ -7,13 +7,14 @@ import static org.easymock.classextension.EasyMock.*;
 import org.junit.Before;
 import org.junit.Test;
 
-public class FileListenerTest extends FileListenerTestCase {
-  private TestFileFilter filter;
+import java.io.IOException;
+
+public class FileListenerListeningTest extends FileListenerTestCase {
+  private TestFileFilter filter = new TestFileFilter();
 
   @Before
   public void setUp() {
-    filter = new TestFileFilter();
-    l = new FileListener(vcs, fileSystem, filter);
+    l = new FileListener(vcs, new TestIdeaGateway(), filter);
   }
 
   @Test
@@ -32,7 +33,7 @@ public class FileListenerTest extends FileListenerTestCase {
 
   @Test
   public void testTakingPhysicalFileContentOnCreation() {
-    configureLocalFileSystemToReturnPhysicalContent("physical");
+    configureToReturnPhysicalContent("physical");
 
     VirtualFile f = new TestVirtualFile("f", "memory", null);
     fireCreated(f);
@@ -96,7 +97,7 @@ public class FileListenerTest extends FileListenerTestCase {
 
   @Test
   public void testTakingPhysicalFileContentOnContentChange() {
-    configureLocalFileSystemToReturnPhysicalContent("physical");
+    configureToReturnPhysicalContent("physical");
 
     vcs.createFile("f", b("content"), null);
     vcs.apply();
@@ -106,7 +107,6 @@ public class FileListenerTest extends FileListenerTestCase {
 
     assertEquals(c("physical"), vcs.getEntry("f").getContent());
   }
-
 
   @Test
   public void testRenaming() {
@@ -130,7 +130,6 @@ public class FileListenerTest extends FileListenerTestCase {
     VirtualFile f = new TestVirtualFile(null, null, null);
     firePropertyChanged(f, "another property", null);
   }
-
 
   @Test
   public void testMoving() {
@@ -304,5 +303,17 @@ public class FileListenerTest extends FileListenerTestCase {
     fireMoved(f, f, f);
 
     verify(vcs);
+  }
+
+  private void configureToReturnPhysicalContent(String c) {
+    try {
+      IdeaGateway gw = createMock(IdeaGateway.class);
+      expect(gw.getPhysicalContent((VirtualFile)anyObject())).andReturn(c.getBytes());
+      replay(gw);
+      l = new FileListener(vcs, gw, filter);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

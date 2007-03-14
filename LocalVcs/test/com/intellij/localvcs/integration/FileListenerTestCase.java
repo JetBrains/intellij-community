@@ -1,21 +1,16 @@
 package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.LocalVcsTestCase;
 import com.intellij.localvcs.TestLocalVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileMoveEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import org.junit.Before;
 
-public class FileListenerTestCase extends MockedLocalFileSystemTestCase {
+public class FileListenerTestCase extends LocalVcsTestCase {
   LocalVcs vcs = new TestLocalVcs();
-  FileListener l;
-
-  @Before
-  public void setUp() {
-    l = new FileListener(vcs, fileSystem, new TestFileFilter());
-  }
+  FileListener l = new FileListener(vcs, new TestIdeaGateway(), new TestFileFilter());
 
   protected void fireCreated(VirtualFile f) {
     l.fileCreated(new VirtualFileEvent(null, f, null, null));

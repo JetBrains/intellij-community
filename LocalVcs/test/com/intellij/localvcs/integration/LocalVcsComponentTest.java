@@ -107,7 +107,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
 
   @Test
   public void testCleaningOnDisposeInUnitTestMode() {
-    final boolean[] isUnitTestMode = new boolean[] { true };
+    final boolean[] isUnitTestMode = new boolean[]{true};
     LocalVcsComponent c = new LocalVcsComponent(null, null, null, null, null, null, null) {
       @Override
       public File getStorageDir() {

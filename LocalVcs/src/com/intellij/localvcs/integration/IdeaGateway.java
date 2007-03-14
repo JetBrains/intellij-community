@@ -4,9 +4,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.io.IOException;
 import java.util.concurrent.Callable;
 
 public class IdeaGateway {
@@ -36,6 +38,10 @@ public class IdeaGateway {
   public boolean ensureFilesAreWritable(VirtualFile... ff) {
     ReadonlyStatusHandler h = ReadonlyStatusHandler.getInstance(myProject);
     return !h.ensureFilesWritable(ff).hasReadonlyFiles();
+  }
+
+  public byte[] getPhysicalContent(VirtualFile f) throws IOException {
+    return LocalFileSystem.getInstance().physicalContentsToByteArray(f);
   }
 
   public byte[] getDocumentByteContent(VirtualFile f) {

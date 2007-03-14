@@ -62,4 +62,42 @@ public class FileListenerRefreshingTest extends FileListenerTestCase {
     l.beforeRefreshStart(false);
     assertFalse(l.isFileContentChangedByRefresh(f));
   }
+
+  @Test
+  public void testStartingRefreshingTwiceThrowsException() {
+    l.beforeRefreshStart(false);
+    try {
+      l.beforeRefreshStart(false);
+      fail();
+    }
+    catch (IllegalStateException e) {
+    }
+  }
+
+  @Test
+  public void testFinishingRefreshingBeforeStartingItThrowsException() {
+    try {
+      l.afterRefreshFinish(false);
+      fail();
+    }
+    catch (IllegalStateException e) {
+    }
+  }
+
+  @Test
+  public void testProcessingCommandDuringRefreshThrowsException() {
+    l.beforeRefreshStart(false);
+    try {
+      l.commandStarted(null);
+      fail();
+    }
+    catch (IllegalStateException e) {
+    }
+    try {
+      l.commandFinished(null);
+      fail();
+    }
+    catch (IllegalStateException e) {
+    }
+  }
 }

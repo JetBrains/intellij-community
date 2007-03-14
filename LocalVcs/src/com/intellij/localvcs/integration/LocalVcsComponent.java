@@ -7,6 +7,7 @@ import com.intellij.localvcs.Storage;
 import com.intellij.localvcs.ThreadSafeLocalVcs;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -14,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +27,9 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   private StartupManagerEx myStartupManager;
   private ProjectRootManagerEx myRootManager;
   private VirtualFileManagerEx myFileManager;
-  private LocalFileSystem myFileSystem;
   private FileDocumentManager myDocumentManager;
   private FileTypeManager myTypeManager;
+  private CommandProcessor myCommandProcessor;
   private Storage myStorage;
   private ILocalVcs myVcs;
   private LocalVcsService myService;
@@ -48,16 +48,16 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
                            StartupManager sm,
                            ProjectRootManagerEx rm,
                            VirtualFileManagerEx fm,
-                           LocalFileSystem fs,
                            FileDocumentManager dm,
-                           FileTypeManager tm) {
+                           FileTypeManager tm,
+                           CommandProcessor cp) {
     myProject = p;
     myStartupManager = (StartupManagerEx)sm;
     myRootManager = rm;
     myFileManager = fm;
-    myFileSystem = fs;
     myDocumentManager = dm;
     myTypeManager = tm;
+    myCommandProcessor = cp;
   }
 
   public void initComponent() {
@@ -81,7 +81,8 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
 
   protected void initService() {
     FileFilter f = new FileFilter(myRootManager.getFileIndex(), myTypeManager);
-    myService = new LocalVcsService(myVcs, myStartupManager, myRootManager, myFileManager, myFileSystem, myDocumentManager, f);
+    myService = new LocalVcsService(myVcs, new IdeaGateway(myProject), myStartupManager, myRootManager, myFileManager, myDocumentManager, f,
+                                    myCommandProcessor);
   }
 
   public File getStorageDir() {

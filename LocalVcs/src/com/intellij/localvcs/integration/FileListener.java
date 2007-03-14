@@ -2,7 +2,8 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.Paths;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -12,25 +13,35 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class FileListener extends VirtualFileAdapter implements VirtualFileManagerListener {
-  protected static final Key<String> DELETED_FILE_PATH_KEY = new Key<String>("deleted.file.path");
-
+public class FileListener extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener {
   private ILocalVcs myVcs;
   private FileFilter myFileFilter;
-  private FileListenerState myState;
+  private ServiceState myState;
 
-  public FileListener(ILocalVcs vcs, LocalFileSystem fs, FileFilter f) {
+  public FileListener(ILocalVcs vcs, IdeaGateway gw, FileFilter f) {
     myVcs = vcs;
     myFileFilter = f;
-    myState = new FileListenerState(vcs, fs);
+    goToState(new ListeningServiceState(this, vcs, gw));
   }
 
   public void beforeRefreshStart(boolean asynchonous) {
-    myState.enterRefreshingState();
+    myState.startRefreshing();
   }
 
   public void afterRefreshFinish(boolean asynchonous) {
-    myState.leaveRefreshingState();
+    myState.finishRefreshing();
+  }
+
+  public void commandStarted(CommandEvent e) {
+    myState.startCommand();
+  }
+
+  public void commandFinished(CommandEvent e) {
+    myState.finishCommand();
+  }
+
+  protected void goToState(ServiceState s) {
+    myState = s;
   }
 
   public boolean isFileContentChangedByRefresh(VirtualFile f) {
@@ -122,6 +133,15 @@ public class FileListener extends VirtualFileAdapter implements VirtualFileManag
 
   private boolean isMovedToOutside(VirtualFileMoveEvent e) {
     return !myFileFilter.isUnderContentRoot(e.getNewParent());
+  }
+
+  public void beforeCommandFinished(CommandEvent e) {
+  }
+
+  public void undoTransparentActionStarted() {
+  }
+
+  public void undoTransparentActionFinished() {
   }
 
   private class ReparentedVirtualFile extends NullVirtualFile {

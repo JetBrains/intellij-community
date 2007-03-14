@@ -3,10 +3,13 @@ package com.intellij.localvcs.integration;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.localvcs.LocalVcs;
+import com.intellij.localvcs.LocalVcsTestCase;
 import com.intellij.localvcs.TestLocalVcs;
+import com.intellij.localvcs.integration.stubs.StubCommandProcessor;
 import com.intellij.localvcs.integration.stubs.StubProjectRootManagerEx;
 import com.intellij.localvcs.integration.stubs.StubStartupManagerEx;
 import com.intellij.localvcs.integration.stubs.StubVirtualFileManagerEx;
+import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.FileContentProvider;
 import org.junit.Before;
@@ -15,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // todo review LocalVcsServiceTests...
-public class LocalVcsServiceTestCase extends MockedLocalFileSystemTestCase {
+public class LocalVcsServiceTestCase extends LocalVcsTestCase {
   // todo 2 test broken storage
   // todo 3 take a look at the old-lvcs tests
 
@@ -26,6 +29,7 @@ public class LocalVcsServiceTestCase extends MockedLocalFileSystemTestCase {
   protected MyProjectRootManagerEx rootManager;
   protected MyVirtualFileManagerEx fileManager;
   protected TestFileFilter fileFilter;
+  protected MyCommandProcessor commandProcessor;
   protected TestFileDocumentManager documentManager;
 
   @Before
@@ -47,10 +51,12 @@ public class LocalVcsServiceTestCase extends MockedLocalFileSystemTestCase {
     startupManager = new MyStartupManager();
     rootManager = new MyProjectRootManagerEx();
     fileManager = new MyVirtualFileManagerEx();
-    fileFilter = new TestFileFilter();
     documentManager = new TestFileDocumentManager();
+    fileFilter = new TestFileFilter();
+    commandProcessor = new MyCommandProcessor();
 
-    service = new LocalVcsService(vcs, startupManager, rootManager, fileManager, fileSystem, documentManager, fileFilter);
+    service = new LocalVcsService(vcs, new TestIdeaGateway(), startupManager, rootManager, fileManager, documentManager, fileFilter,
+                                  commandProcessor);
   }
 
   protected LocalVcs createLocalVcs() {
@@ -170,6 +176,31 @@ public class LocalVcsServiceTestCase extends MockedLocalFileSystemTestCase {
 
     public FileContentProvider getFileContentProvider() {
       return myProvider;
+    }
+  }
+
+  protected class MyCommandProcessor extends StubCommandProcessor {
+    CommandListener myListener;
+
+    @Override
+    public void executeCommand(Runnable runnable, String name, Object groupId) {
+      if (hasListener()) myListener.commandStarted(null);
+      runnable.run();
+      if (hasListener()) myListener.commandFinished(null);
+    }
+
+    @Override
+    public void addCommandListener(CommandListener l) {
+      myListener = l;
+    }
+
+    @Override
+    public void removeCommandListener(CommandListener l) {
+      if (myListener == l) myListener = null;
+    }
+
+    public boolean hasListener() {
+      return myListener != null;
     }
   }
 }

@@ -5,10 +5,10 @@ import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.localvcs.Entry;
 import com.intellij.localvcs.ILocalVcs;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.ex.FileContentProvider;
@@ -16,41 +16,45 @@ import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.Nullable;
 
-// todo test exceptions...
 public class LocalVcsService {
   private ILocalVcs myVcs;
+  private IdeaGateway myGateway;
   private StartupManager myStartupManager;
   private ProjectRootManagerEx myRootManager;
   private VirtualFileManagerEx myFileManager;
-  private LocalFileSystem myFileSystem;
   private FileDocumentManager myDocumentManager;
   private FileFilter myFileFilter;
+  private CommandProcessor myCommandProcessor;
+
   private FileListener myFileListener;
   private CacheUpdater myCacheUpdater;
   private FileContentProvider myFileContentProvider;
 
   public LocalVcsService(ILocalVcs vcs,
+                         IdeaGateway gw,
                          StartupManager sm,
                          ProjectRootManagerEx rm,
                          VirtualFileManagerEx fm,
-                         LocalFileSystem fs,
                          FileDocumentManager dm,
-                         FileFilter f) {
+                         FileFilter f,
+                         CommandProcessor cp) {
     myVcs = vcs;
+    myGateway = gw;
     myStartupManager = sm;
     myRootManager = rm;
     myFileManager = fm;
-    myFileSystem = fs;
     myDocumentManager = dm;
     myFileFilter = f;
+    myCommandProcessor = cp;
 
     registerStartupActivity();
     subscribeForRootChanges();
   }
 
   public void shutdown() {
-    myFileManager.removeVirtualFileManagerListener(myFileListener);
     myFileManager.unregisterFileContentProvider(myFileContentProvider);
+    myFileManager.removeVirtualFileManagerListener(myFileListener);
+    myCommandProcessor.removeCommandListener(myFileListener);
     myRootManager.unregisterChangeUpdater(myCacheUpdater);
   }
 
@@ -58,19 +62,18 @@ public class LocalVcsService {
     FileSystemSynchronizer fs = myStartupManager.getFileSystemSynchronizer();
     fs.registerCacheUpdater(new CacheUpdaterAdaptor(new Runnable() {
       public void run() {
-        registerFileListenerAndContentProvider();
+        registerListenersAndContentProvider();
       }
     }));
   }
 
   private void subscribeForRootChanges() {
     myCacheUpdater = new CacheUpdaterAdaptor(null);
-    myFileManager.removeVirtualFileManagerListener(myFileListener);
     myRootManager.registerChangeUpdater(myCacheUpdater);
   }
 
-  private void registerFileListenerAndContentProvider() {
-    myFileListener = new FileListener(myVcs, myFileSystem, myFileFilter);
+  private void registerListenersAndContentProvider() {
+    myFileListener = new FileListener(myVcs, myGateway, myFileFilter);
     myFileContentProvider = new FileContentProvider() {
       public VirtualFile[] getCoveredDirectories() {
         return myRootManager.getContentRoots();
@@ -87,6 +90,7 @@ public class LocalVcsService {
     };
 
     // todo check the order of vfm-listener
+    myCommandProcessor.addCommandListener(myFileListener);
     myFileManager.addVirtualFileManagerListener(myFileListener);
     myFileManager.registerFileContentProvider(myFileContentProvider);
   }
