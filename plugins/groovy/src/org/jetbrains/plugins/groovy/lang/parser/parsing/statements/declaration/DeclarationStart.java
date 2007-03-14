@@ -14,6 +14,6 @@ public class DeclarationStart implements Construction {
 
     public static IElementType parse(PsiBuilder builder) {
         if (ParserUtils.getToken(builder, kDEF)) return kDEF;
-        
+        return WRONGWAY;
     }
 }
