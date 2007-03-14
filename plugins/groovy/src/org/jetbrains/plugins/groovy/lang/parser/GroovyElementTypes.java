@@ -20,8 +20,12 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   // Top-level elements
   GroovyElementType FILE = new GroovyElementType("Groovy file");
   GroovyElementType COMPILATION_UNIT = new GroovyElementType("Compilation unit");
+
+  // Import elements
   GroovyElementType IMPORT_STATEMENT = new GroovyElementType("Import statement");
   GroovyElementType IDENITFIER_STAR = new GroovyElementType("Import identifier");
+  GroovyElementType IMPORT_END = new GroovyElementType("Import end");
+  GroovyElementType IMPORT_SELECTOR = new GroovyElementType("Import selector");
 
   GroovyElementType STATEMENT = new GroovyElementType("Any statement");
 

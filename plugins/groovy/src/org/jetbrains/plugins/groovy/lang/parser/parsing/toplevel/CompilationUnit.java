@@ -25,12 +25,37 @@ public class CompilationUnit implements Construction {
     // TODO add package statement parsing
 
     Statement.parse(builder);
+    cleanAfterError(builder);
     GroovyElementType sepResult = Separators.parse(builder);
     while (!WRONGWAY.equals(sepResult)) {
       Statement.parse(builder);
+      cleanAfterError(builder);
       sepResult = Separators.parse(builder);
     }
 
     return GroovyElementTypes.COMPILATION_UNIT;
   }
+
+  /**
+   * Marks some trash after statement parsing as error
+   *
+   * @param builder PsiBuilder
+   */
+  private static void cleanAfterError(PsiBuilder builder) {
+    int i = 0;
+    PsiBuilder.Marker em = builder.mark();
+    while (!builder.eof() &&
+            !(mNLS.equals(builder.getTokenType()) ||
+                    mSEMI.equals(builder.getTokenType()))
+            ) {
+      builder.advanceLexer();
+      i++;
+    }
+    if (i>0) {
+      em.error(GroovyBundle.message("separator.expected"));
+    } else {
+      em.drop();
+    }
+  }
+
 }

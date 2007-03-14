@@ -1,6 +1,10 @@
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportSelector;
+import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportEnd;
+import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportQualId;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -11,7 +15,7 @@ import com.intellij.extapi.psi.ASTWrapperPsiElement;
  *
  * @author Ilya.Sergey, Dmitry.Krasilschikov
  */
-public abstract class GroovyPsiCreator {
+public abstract class GroovyPsiCreator implements GroovyElementTypes{
 
   /**
    * Creates Groovy PSI element by given AST node
@@ -21,6 +25,12 @@ public abstract class GroovyPsiCreator {
    */
   public static PsiElement createElement(ASTNode node) {
     IElementType elem = node.getElementType();
+
+    // Imports
+    if (elem.equals(IMPORT_STATEMENT)) return new GrImportStatement(node);
+    if (elem.equals(IMPORT_SELECTOR)) return new GrImportSelector(node);
+    if (elem.equals(IMPORT_END)) return new GrImportEnd(node);
+    if (elem.equals(IDENITFIER_STAR)) return new GrImportQualId(node);
 
     return new ASTWrapperPsiElement(node);
   }

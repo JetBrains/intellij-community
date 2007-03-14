@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.util;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiBuilder.Marker;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
@@ -72,6 +73,38 @@ public abstract class ParserUtils {
    */
   public static boolean lookAhead(PsiBuilder builder, IElementType... elems) {
 
+    if (elems.length == 0) {
+      return false;
+    }
+
+    if (elems.length == 1) {
+      return elems[0].equals(builder.getTokenType());
+    }
+
+    Marker rb = builder.mark();
+    int i = 0;
+    while (!builder.eof() && i < elems.length && elems[i].equals(builder.getTokenType())) {
+      builder.advanceLexer();
+      i++;
+    }
+    rb.rollbackTo();
+    return i == elems.length;
+  }
+
+    /**
+   * Checks, that following element sequence is like given
+   *
+   * @param builder Given PsiBuilder
+   * @param dropMarker to drop marker after successful checking or rollback it?
+   * @param elems   Array of need elements in order
+   * @return true if following sequence is like a given
+   */
+  public static boolean lookAhead(PsiBuilder builder, boolean dropMarker, IElementType... elems) {
+
+    if (elems.length == 0) {
+      return false;
+    }
+
     if (elems.length == 1) {
       return elems[0].equals(builder.getTokenType());
     }
@@ -82,7 +115,11 @@ public abstract class ParserUtils {
       builder.advanceLexer();
       i++;
     }
-    rb.rollbackTo();
+    if (dropMarker && i == elems.length) {
+      rb.drop();
+    } else {
+      rb.rollbackTo();
+    }
     return i == elems.length;
   }
 
@@ -94,7 +131,7 @@ public abstract class ParserUtils {
    * @return elem type
    */
   public static IElementType eatElement(PsiBuilder builder, IElementType elem) {
-    PsiBuilder.Marker marker = builder.mark();
+    Marker marker = builder.mark();
     builder.advanceLexer();
     marker.done(elem);
     return elem;
