@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,15 +94,24 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   public String getCanonicalText(){
-    return chooseReference().getCanonicalText();
+    final PsiReference reference = chooseReference();
+    return reference == null ? myReferences.get(0).getCanonicalText() : reference.getCanonicalText();
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException{
-    return chooseReference().handleElementRename(newElementName);
+    final PsiReference reference = chooseReference();
+    if (reference != null) {
+      return reference.handleElementRename(newElementName);
+    }
+    return myElement;
   }
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException{
-    return chooseReference().bindToElement(element);
+    final PsiReference reference = chooseReference();
+    if (reference != null) {
+      return reference.bindToElement(element);
+    }
+    return myElement;
   }
 
   public boolean isReferenceTo(PsiElement element){
@@ -171,13 +181,12 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     return result.toArray(new ResolveResult[result.size()]);
   }
 
-  @NotNull
+  @Nullable
   private PsiReference chooseReference(){
     if(myChoosenOne != -1){
       return myReferences.get(myChoosenOne);
     }
     boolean flag = false;
-    myChoosenOne = 0;
     for(int i = 0; i < myReferences.size(); i++){
       final PsiReference reference = myReferences.get(i);
       if(reference.isSoft() && flag) continue;
@@ -190,7 +199,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
         myChoosenOne = i;
       }
     }
-    return myReferences.get(myChoosenOne);
+    return myChoosenOne >= 0 ? myReferences.get(myChoosenOne) : null;
   }
 
   public boolean isSoft() {
