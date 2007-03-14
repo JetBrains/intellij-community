@@ -98,6 +98,7 @@ public class FindModel implements Cloneable {
     moduleName = model.moduleName;
     customScopeName = model.customScopeName;
     customScope = model.customScope;
+    isFindAll = model.isFindAll;
   }
 
   /**
