@@ -5,7 +5,7 @@ import com.intellij.psi.tree.TokenSet;
 /**
  * Utility class, tha contains various useful TokenSets
  *
- * @author Ilya.Sergey
+ * @author Ilya Sergey
  */
 public abstract class TokenSets implements GroovyTokenTypes {
 

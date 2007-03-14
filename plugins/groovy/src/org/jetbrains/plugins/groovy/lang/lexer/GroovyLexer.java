@@ -4,7 +4,7 @@ import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.psi.tree.TokenSet;
 
 /**
- * @author Ilya.Sergey
+ * @author Ilya Sergey
  */
 public class GroovyLexer extends MergingLexerAdapter {
 

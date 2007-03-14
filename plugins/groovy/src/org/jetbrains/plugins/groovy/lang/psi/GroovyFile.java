@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 /**
  * Implements all abstractionos related to Groovy file
  * 
- * @author Ilya.Sergey
+ * @author Ilya Sergey
  */
 public class GroovyFile extends PsiFileBase {
 

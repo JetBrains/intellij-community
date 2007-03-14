@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 /**
- * @author Ilya.Sergey
+ * @author Ilya Sergey
  */
 public class GroovyParserDefinition implements ParserDefinition {
 

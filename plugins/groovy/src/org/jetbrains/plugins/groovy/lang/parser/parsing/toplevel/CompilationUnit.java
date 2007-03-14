@@ -18,8 +18,8 @@ public class CompilationUnit implements Construction {
 
   public static GroovyElementType parse(PsiBuilder builder) {
 
-    if (ParserUtils.tokenQuestion(builder, mSH_COMMENT)) {
-      ParserUtils.tokenStrict(builder, mNLS, GroovyBundle.message("separator.expected"));
+    if (ParserUtils.getToken(builder, mSH_COMMENT)) {
+      ParserUtils.getToken(builder, mNLS, GroovyBundle.message("separator.expected"));
     }
 
     // TODO add package statement parsing

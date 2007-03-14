@@ -5,7 +5,7 @@ import com.intellij.psi.tree.IElementType;
 /**
  * Interface, that contains all tokens, retruned by GroovyLexer
  *
- * @author Ilya.Sergey
+ * @author Ilya Sergey
  */
 public interface GroovyTokenTypes {
 

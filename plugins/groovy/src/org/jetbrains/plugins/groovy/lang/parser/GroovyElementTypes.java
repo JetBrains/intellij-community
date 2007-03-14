@@ -6,7 +6,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 /**
  * Utility interface that contains all Groovy non-token element types
  *
- * @author Ilya.Sergey
+ * @author Ilya Sergey
  */
 public interface GroovyElementTypes {
 
@@ -19,6 +19,8 @@ public interface GroovyElementTypes {
   // Top-level elements
   GroovyElementType FILE = new GroovyElementType("Groovy file");
   GroovyElementType COMPILATION_UNIT = new GroovyElementType("Compilation unit");
+  GroovyElementType IMPORT_STATEMENT = new GroovyElementType("Import statement");
+  GroovyElementType IDENITFIER_STAR = new GroovyElementType("Import identifier");
 
   GroovyElementType STATEMENT = new GroovyElementType("Any statement");
 

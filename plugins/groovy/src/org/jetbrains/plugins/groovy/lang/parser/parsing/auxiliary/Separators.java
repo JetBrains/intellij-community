@@ -8,21 +8,21 @@ import com.intellij.lang.PsiBuilder;
 /**
  * Parse separators
  *
- * @author Ilya.Sergey
+ * @author Ilya Sergey
  */
 public class Separators implements Construction {
 
   public static GroovyElementType parse(PsiBuilder builder){
     if (mSEMI.equals(builder.getTokenType())){
       builder.advanceLexer();
-      while (ParserUtils.tokenQuestion(builder, mNLS)) {
+      while (ParserUtils.getToken(builder, mNLS)) {
         // Parse newLines
       }
       return SEP;
     } else if (mNLS.equals(builder.getTokenType())) {
       builder.advanceLexer();
-      while (ParserUtils.tokenQuestion(builder, mSEMI)) {
-        while (ParserUtils.tokenQuestion(builder, mNLS)){
+      while (ParserUtils.getToken(builder, mSEMI)) {
+        while (ParserUtils.getToken(builder, mNLS)){
           // Parse newLines
         }
       }

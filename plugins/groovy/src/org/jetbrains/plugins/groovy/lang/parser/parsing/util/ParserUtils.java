@@ -7,7 +7,7 @@ import com.intellij.psi.tree.IElementType;
  * Utility class, that contains various useful methods for
  * parser needs.
  *
- * @author Ilya.Sergey
+ * @author Ilya Sergey
  */
 public abstract class ParserUtils {
 
@@ -19,7 +19,7 @@ public abstract class ParserUtils {
      * @param errorMsg Message, that displays if element was not found; if errorMsg == null nothing displays
      * @return true if element parsed
      */
-    public static boolean tokenStrict(PsiBuilder builder, IElementType elem, String errorMsg) {
+    public static boolean getToken(PsiBuilder builder, IElementType elem, String errorMsg) {
         if (elem.equals(builder.getTokenType())) {
             builder.advanceLexer();
             return true;
@@ -41,7 +41,26 @@ public abstract class ParserUtils {
      * @param elem    given element
      * @return true if element parsed
      */
-    public static boolean tokenStrict(PsiBuilder builder, IElementType elem) {
-        return tokenStrict(builder, elem, null);
+    public static boolean getToken(PsiBuilder builder, IElementType elem) {
+        return getToken(builder, elem, null);
     }
+
+  /**
+   * Checks, that following element sequence is like given
+   *
+   * @param builder Given PsiBuilder
+   * @param elems Array of need elements in order
+   * @return true if following sequence is like a given
+   */
+  public static boolean lookAhead(PsiBuilder builder, IElementType... elems ){
+    PsiBuilder.Marker rb = builder.mark();
+    int i = 0;
+    for (; !builder.eof() && i < elems.length-1 && elems[i].equals(builder.getTokenType()) ;) {
+      builder.advanceLexer();
+      i++;
+    }
+    rb.rollbackTo();
+    return i == elems.length;
+  }
+
 }

@@ -6,7 +6,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 /**
  * Main class for Groovy element types, such as lexems or AST nodes
  *
- * @author Ilya.Sergey
+ * @author Ilya Sergey
  */
 public class GroovyElementType extends IElementType {
 
