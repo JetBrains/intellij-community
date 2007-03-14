@@ -42,7 +42,7 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
   private MethodReferencesSearch() {}
 
   public static Query<PsiReference> search(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch) {
-    return INSTANCE.createUniqueResultsQuery(new MethodReferencesSearch.SearchParameters(method, scope, strictSignatureSearch));
+    return INSTANCE.createUniqueResultsQuery(new SearchParameters(method, scope, strictSignatureSearch));
   }
 
   public static Query<PsiReference> search(final PsiMethod method, final boolean strictSignatureSearch) {

@@ -23,7 +23,7 @@ import com.intellij.util.QueryExecutor;
 import com.intellij.util.QueryFactory;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -32,7 +32,7 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
   private boolean myExtensionsLoaded = false;
 
   @Override
-  protected ArrayList<QueryExecutor<Result, Parameters>> getExecutors() {
+  protected List<QueryExecutor<Result, Parameters>> getExecutors() {
     synchronized(myExecutors) {
       if (!myExtensionsLoaded) {
         myExtensionsLoaded = true;

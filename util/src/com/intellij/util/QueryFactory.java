@@ -5,24 +5,21 @@ package com.intellij.util;
 
 import gnu.trove.TObjectHashingStrategy;
 
-import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author max
  */
 public class QueryFactory<Result, Parameters> {
-  protected final ArrayList<QueryExecutor<Result, Parameters>> myExecutors = new ArrayList<QueryExecutor<Result, Parameters>>();
+  protected final List<QueryExecutor<Result, Parameters>> myExecutors = new CopyOnWriteArrayList<QueryExecutor<Result,Parameters>>();
 
   public final void registerExecutor(QueryExecutor<Result, Parameters> executor) {
-    synchronized(myExecutors) {
-      myExecutors.add(executor);
-    }
+    myExecutors.add(executor);
   }
 
   public final void unregisterExecutor(QueryExecutor<Result, Parameters> executor) {
-    synchronized(myExecutors) {
-      myExecutors.remove(executor);
-    }
+    myExecutors.remove(executor);
   }
 
   /**
@@ -33,10 +30,8 @@ public class QueryFactory<Result, Parameters> {
     return new ExecutorsQuery<Result, Parameters>(parameters, getExecutors());
   }
 
-  protected ArrayList<QueryExecutor<Result, Parameters>> getExecutors() {
-    synchronized(myExecutors) {
-      return myExecutors;
-    }
+  protected List<QueryExecutor<Result, Parameters>> getExecutors() {
+    return myExecutors;
   }
 
   /**

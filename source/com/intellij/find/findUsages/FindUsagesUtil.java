@@ -99,11 +99,9 @@ public class FindUsagesUtil {
           processOverridingMethods(psiMethod, processor, searchHelper, options);
         }
       }
-      else {
-        if (options.isOverridingMethods){
+      else if (options.isOverridingMethods){
           processOverridingMethods(psiMethod, processor, searchHelper, options);
         }
-      }
     }
 
     if (options.isSearchForTextOccurences && options.searchScope instanceof GlobalSearchScope) {

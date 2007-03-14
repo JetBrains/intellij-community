@@ -113,10 +113,8 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
                                                                               searchContext, true);
     if (!toContinue) return false;
 
-    if (PropertyUtil.isSimplePropertyAccessor(method)) {
-      final String propertyName = PropertyUtil.getPropertyName(method);
-
-      //if (psiManager.getNameHelper().isIdentifier(propertyName)) {
+    final String propertyName = PropertyUtil.getPropertyName(method);
+    if (propertyName != null) {
       if (searchScope instanceof GlobalSearchScope) {
         searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes(
           (GlobalSearchScope)searchScope,
@@ -130,7 +128,6 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
                                                                         propertyName,
                                                                         UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
       if (!toContinue) return false;
-      //}
     }
 
     return true;
