@@ -47,10 +47,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class AntConfigurationImpl extends AntConfigurationBase implements JDOMExternalizable, ModificationTracker {
 
@@ -330,17 +327,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
           Element element = new Element(BUILD_FILE);
           element.setAttribute(URL, buildFile.getVirtualFile().getUrl());
           ((AntBuildFileBase)buildFile).writeProperties(element);
-          for (final ExecutionEvent event : myEventToTargetMap.keySet()) {
-            Pair pair = myEventToTargetMap.get(event);
-            if (buildFile.equals(pair.first)) {
-              Element eventElement = new Element(EXECUTE_ON_ELEMENT);
-              eventElement.setAttribute(EVENT_ELEMENT, event.getTypeId());
-              eventElement.setAttribute(TARGET_ELEMENT, (String)pair.second);
-              event.writeExternal(eventElement);
-              element.addContent(eventElement);
-            }
-          }
-
+          saveEvents(element, buildFile);
           parentNode.addContent(element);
         }
       }
@@ -348,10 +335,41 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
     try {
       ActionRunner.runInsideReadAction(action);
     }
-    catch (Exception e) {
-      if (e instanceof WriteExternalException) throw(WriteExternalException)e;
-      if (e instanceof RuntimeException) throw(RuntimeException)e;
+    catch (WriteExternalException e) {
       LOG.error(e);
+      throw e;
+    }
+    catch (RuntimeException e) {
+      LOG.error(e);
+      throw e;
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
+  private void saveEvents(final Element element, final AntBuildFile buildFile) {
+    List<Element> events = null;
+    for (final ExecutionEvent event : myEventToTargetMap.keySet()) {
+      final Pair<AntBuildFile, String> pair = myEventToTargetMap.get(event);
+      if (!buildFile.equals(pair.first)) {
+        continue;
+      }
+      Element eventElement = new Element(EXECUTE_ON_ELEMENT);
+      eventElement.setAttribute(EVENT_ELEMENT, event.getTypeId());
+      eventElement.setAttribute(TARGET_ELEMENT, pair.second);
+      event.writeExternal(eventElement);
+      if (events == null) {
+        events = new ArrayList<Element>();
+      }
+      events.add(eventElement);
+    }
+    
+    if (events != null) {
+      Collections.sort(events, EventElementComparator.INSTANCE);
+      for (Element eventElement : events) {
+        element.addContent(eventElement);
+      }
     }
   }
 
@@ -602,5 +620,14 @@ public class AntConfigurationImpl extends AntConfigurationBase implements JDOMEx
       }
     }
     return null;
+  }
+
+  private static class EventElementComparator implements Comparator<Element> {
+    static final Comparator<? super Element> INSTANCE = new EventElementComparator();
+
+    public int compare(final Element o1, final Element o2) {
+      final int typesEqual = o1.getAttributeValue(EVENT_ELEMENT).compareTo(o2.getAttributeValue(EVENT_ELEMENT));
+      return typesEqual == 0? o1.getAttributeValue(TARGET_ELEMENT).compareTo(o2.getAttributeValue(TARGET_ELEMENT)) : typesEqual;
+    }
   }
 }
