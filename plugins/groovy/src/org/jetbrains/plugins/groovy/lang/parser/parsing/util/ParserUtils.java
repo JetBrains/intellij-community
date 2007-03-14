@@ -55,7 +55,7 @@ public abstract class ParserUtils {
   public static boolean lookAhead(PsiBuilder builder, IElementType... elems ){
     PsiBuilder.Marker rb = builder.mark();
     int i = 0;
-    for (; !builder.eof() && i < elems.length-1 && elems[i].equals(builder.getTokenType()) ;) {
+    for (; !builder.eof() && i < elems.length && elems[i].equals(builder.getTokenType()) ;) {
       builder.advanceLexer();
       i++;
     }
