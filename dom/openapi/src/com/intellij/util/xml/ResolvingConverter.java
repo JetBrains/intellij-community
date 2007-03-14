@@ -94,6 +94,17 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
   }
 
   /**
+   * Delegate from {@link com.intellij.psi.PsiReference#handleElementRename(String)}
+   * @param genericValue generic value
+   * @param context context
+   * @param newElementName new element name
+   */
+  public void handleElementRename(final GenericDomValue<T> genericValue, final ConvertContext context,
+                                  final String newElementName) {
+    genericValue.setStringValue(newElementName);
+  }
+
+  /**
    * Delegate from {@link com.intellij.psi.PsiReference#bindToElement(com.intellij.psi.PsiElement)}
    * @param genericValue generic value
    * @param context context

@@ -95,6 +95,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   private final ModificationTracker myModificationTracker;
   private final ProjectRootManager myProjectRootManager;
   private final CachedValuesManager myCachedValuesManager;
+  private long myModificationCount;
 
   public DomElementAnnotationsManagerImpl(Project project, InspectionProfileManager manager, ProjectRootManager projectRootManager,
                                           PsiManager psiManager) {
@@ -104,21 +105,24 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
                                           final CachedValuesManager cachedValuesManager) {
     myCachedValuesManager = cachedValuesManager;
     myProjectRootManager = projectRootManager;
-    final int[] modCount = new int[]{0};
     myModificationTracker = new ModificationTracker() {
       public long getModificationCount() {
-        return modCount[0];
+        return myModificationCount;
       }
     };
     inspectionProfileManager.addProfileChangeListener(new ProfileChangeAdapter() {
       public void profileActivated(@Nullable NamedScope scope, Profile oldProfile, Profile profile) {
-        modCount[0]++;
+        dropAnnotationsCache();
       }
 
       public void profileChanged(Profile profile) {
-        modCount[0]++;
+        dropAnnotationsCache();
       }
     }, project);
+  }
+
+  public void dropAnnotationsCache() {
+    myModificationCount++;
   }
 
   public final List<DomElementProblemDescriptor> appendProblems(@NotNull DomFileElement element, @NotNull DomElementAnnotationHolder annotationHolder, Class<? extends DomElementsInspection> inspectionClass) {

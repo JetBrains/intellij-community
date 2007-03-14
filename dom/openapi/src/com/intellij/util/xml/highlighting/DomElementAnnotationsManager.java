@@ -60,6 +60,8 @@ public abstract class DomElementAnnotationsManager {
   @NotNull
   public abstract <T extends DomElement> List<DomElementProblemDescriptor> checkFileElement(@NotNull DomFileElement<T> element, @NotNull DomElementsInspection<T> inspection);
 
+  public abstract void dropAnnotationsCache();
+
   public interface DomHighlightingListener extends EventListener {
 
     /**

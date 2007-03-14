@@ -19,6 +19,7 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.impl.ConvertContextImpl;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.impl.GenericValueReferenceProvider;
+import com.intellij.util.xml.impl.GenericDomValueReference;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
@@ -140,7 +141,17 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     if (valueElement != null && !isSoftReference(element)) {
       final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
       final PsiReference[] psiReferences = myProvider.getReferencesByElement(valueElement);
+      boolean hasBadResolve = false;
+      boolean hasDomValueReference = false;
       for (final PsiReference reference : psiReferences) {
+        hasDomValueReference = hasDomValueReference || reference instanceof GenericDomValueReference;
+        if (hasBadResolve(element, reference)) {
+          hasBadResolve = true;
+          list.add(holder.createResolveProblem(element, reference));
+        }
+      }
+      if (!hasBadResolve && !hasDomValueReference && element.getConverter() instanceof ResolvingConverter) {
+        final GenericDomValueReference reference = new GenericDomValueReference(element);
         if (hasBadResolve(element, reference)) {
           list.add(holder.createResolveProblem(element, reference));
         }
