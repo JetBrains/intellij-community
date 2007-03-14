@@ -34,14 +34,21 @@ import java.util.*;
  * Date: 07-Feb-2006
  */
 public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
-  private Map<String, Set<OptionDescription>> myStorage = new THashMap<String, Set<OptionDescription>>(1500, 0.9f);
-  private Map<String, String> myId2Name = new THashMap<String, String>(20, 0.9f);
+  private Map<String, Set<OptionDescription>> myStorage = Collections.synchronizedMap(new THashMap<String, Set<OptionDescription>>(1500, 0.9f));
+  private Map<String, String> myId2Name = Collections.synchronizedMap(new THashMap<String, String>(20, 0.9f));
 
-  private Set<String> myStopWords = new HashSet<String>();
-  private Map<Pair<String, String>, Set<String>> myHighlightOption2Synonym = new THashMap<Pair<String, String>, Set<String>>();
+  private Set<String> myStopWords = Collections.synchronizedSet(new HashSet<String>());
+  private Map<Pair<String, String>, Set<String>> myHighlightOption2Synonym = Collections.synchronizedMap(new THashMap<Pair<String, String>, Set<String>>());
 
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-  private StringInterner myIdentifierTable = new StringInterner();
+  private StringInterner myIdentifierTable = new StringInterner() {
+    public String intern(final String name) {
+      synchronized (this) {
+        return super.intern(name);
+      }
+    }
+  };
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl");
   public static final int LOAD_FACTOR = 20;
 

@@ -10,9 +10,9 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class RefManagerImpl extends RefManager {
 
@@ -61,6 +63,8 @@ public class RefManagerImpl extends RefManager {
   private GlobalInspectionContextImpl myContext;
 
   private EntryPointsManager myEntryPointsManager = null;
+
+  private ReadWriteLock myLock = new ReentrantReadWriteLock();
 
   public RefManagerImpl(Project project, AnalysisScope scope, GlobalInspectionContextImpl context) {
     myDeclarationsFound = false;
@@ -88,26 +92,32 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void iterate(RefVisitor visitor) {
-    final Map<PsiElement, RefElement> refTable = getRefTable();
-    for (RefElement refElement : refTable.values()) {
-      refElement.accept(visitor);
-      if (refElement instanceof RefClass) {
-        RefClass refClass = (RefClass)refElement;
-        RefMethod refDefaultConstructor = refClass.getDefaultConstructor();
-        if (refDefaultConstructor instanceof RefImplicitConstructor) {
-          refClass.getDefaultConstructor().accept(visitor);
+    myLock.readLock().lock();
+    try {
+      final Map<PsiElement, RefElement> refTable = getRefTable();
+      for (RefElement refElement : refTable.values()) {
+        refElement.accept(visitor);
+        if (refElement instanceof RefClass) {
+          RefClass refClass = (RefClass)refElement;
+          RefMethod refDefaultConstructor = refClass.getDefaultConstructor();
+          if (refDefaultConstructor instanceof RefImplicitConstructor) {
+            refClass.getDefaultConstructor().accept(visitor);
+          }
+        }
+      }
+      if (myModules != null) {
+        for (RefModule refModule : myModules.values()) {
+          refModule.accept(visitor);
+        }
+      }
+      if (myPackages != null) {
+        for (RefPackage refPackage : myPackages.values()) {
+          refPackage.accept(visitor);
         }
       }
     }
-    if (myModules != null) {
-      for (RefModule refModule : myModules.values()) {
-        refModule.accept(visitor);
-      }
-    }
-    if (myPackages != null) {
-      for (RefPackage refPackage : myPackages.values()) {
-        refPackage.accept(visitor);
-      }
+    finally {
+      myLock.readLock().unlock();
     }
   }
 
@@ -248,24 +258,30 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void removeReference(RefElement refElem) {
-    final Map<PsiElement, RefElement> refTable = getRefTable();
+    myLock.writeLock().lock();
+    try {
+      final Map<PsiElement, RefElement> refTable = getRefTable();
 
-    if (refElem instanceof RefMethod) {
-      RefMethod refMethod = (RefMethod)refElem;
-      RefParameter[] params = refMethod.getParameters();
-      for (RefParameter param : params) {
-        removeReference(param);
+      if (refElem instanceof RefMethod) {
+        RefMethod refMethod = (RefMethod)refElem;
+        RefParameter[] params = refMethod.getParameters();
+        for (RefParameter param : params) {
+          removeReference(param);
+        }
+      }
+
+      if (refTable.remove(refElem.getElement()) != null) return;
+
+      //PsiElement may have been invalidated and new one returned by getElement() is different so we need to do this stuff.
+      for (PsiElement psiElement : refTable.keySet()) {
+        if (refTable.get(psiElement) == refElem) {
+          refTable.remove(psiElement);
+          return;
+        }
       }
     }
-
-    if (refTable.remove(refElem.getElement()) != null) return;
-
-    //PsiElement may have been invalidated and new one returned by getElement() is different so we need to do this stuff.
-    for (PsiElement psiElement : refTable.keySet()) {
-      if (refTable.get(psiElement) == refElem) {
-        refTable.remove(psiElement);
-        return;
-      }
+    finally {
+      myLock.writeLock().unlock();
     }
   }
 
@@ -416,7 +432,7 @@ public class RefManagerImpl extends RefManager {
     if (elem != null && !(elem instanceof PsiPackage) && RefUtil.getInstance().belongsToScope(elem, this)) {
       if (!elem.isValid()) return null;
 
-      RefElement ref = getRefTable().get(elem);
+      RefElement ref = getFromRefTable(elem);
       if (ref == null) {
         if (!isValidPointForReference()){
           //LOG.assertTrue(true, "References may become invalid after process is finished");
@@ -441,7 +457,7 @@ public class RefManagerImpl extends RefManager {
             else {
               return null;
             }
-            getRefTable().put(elem, refElement);
+            putToRefTable(elem, refElement);
             refElement.initialize();
             return refElement;
           }
@@ -462,12 +478,12 @@ public class RefManagerImpl extends RefManager {
   public RefMethod getMethodReference(RefClass refClass, PsiMethod psiMethod) {
     LOG.assertTrue(isValidPointForReference(), "References may become invalid after process is finished");
 
-    RefMethodImpl ref = (RefMethodImpl)getRefTable().get(psiMethod);
+    RefMethodImpl ref = (RefMethodImpl)getFromRefTable(psiMethod);
 
     if (ref == null) {
       ref = new RefMethodImpl(refClass, psiMethod, this);
       ref.initialize();
-      getRefTable().put(psiMethod, ref);
+      putToRefTable(psiMethod, ref);
     }
 
     return ref;
@@ -475,28 +491,49 @@ public class RefManagerImpl extends RefManager {
 
   public RefField getFieldReference(RefClass refClass, PsiField psiField) {
     LOG.assertTrue(isValidPointForReference(), "References may become invalid after process is finished");
-    RefFieldImpl ref = (RefFieldImpl)getRefTable().get(psiField);
+    RefFieldImpl ref = (RefFieldImpl)getFromRefTable(psiField);
 
     if (ref == null) {
       ref = new RefFieldImpl(refClass, psiField, this);
       ref.initialize();
-      getRefTable().put(psiField, ref);
+      putToRefTable(psiField, ref);
     }
 
     return ref;
   }
 
+  private RefElement getFromRefTable(final PsiElement element) {
+    myLock.readLock().lock();
+    try {
+      return getRefTable().get(element);
+    }
+    finally {
+      myLock.readLock().unlock();
+    }
+
+  }
+
   public RefParameter getParameterReference(PsiParameter param, int index) {
     LOG.assertTrue(isValidPointForReference(), "References may become invalid after process is finished");
-    RefElement ref = getRefTable().get(param);
+    RefElement ref = getFromRefTable(param);
 
     if (ref == null) {
       ref = new RefParameterImpl(param, index, this);
       ((RefParameterImpl)ref).initialize();
-      getRefTable().put(param, ref);
+      putToRefTable(param, ref);
     }
 
     return (RefParameter)ref;
+  }
+
+  private void putToRefTable(final PsiElement element, final RefElement ref) {
+    myLock.writeLock().lock();
+    try {
+      getRefTable().put(element, ref);
+    }
+    finally {
+      myLock.writeLock().unlock();
+    }
   }
 
   public RefModule getRefModule(Module module) {

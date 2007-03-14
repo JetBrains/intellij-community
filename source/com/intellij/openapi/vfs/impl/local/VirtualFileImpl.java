@@ -327,14 +327,22 @@ public class VirtualFileImpl extends VirtualFile {
       }
 
       if (createIfNotCached) {
-        File physicalFile = new File(path);
-        if (physicalFile.exists()) {
-          child = new VirtualFileImpl(this, physicalFile, physicalFile.isDirectory());
-          ourFileSystem.myUnaccountedFiles.put(path, child);
-          return child;
+        try {
+          ourFileSystem.READ_LOCK.unlock();
+          ourFileSystem.WRITE_LOCK.lock();
+          File physicalFile = new File(path);
+          if (physicalFile.exists()) {
+            child = new VirtualFileImpl(this, physicalFile, physicalFile.isDirectory());
+            ourFileSystem.myUnaccountedFiles.put(path, child);
+            return child;
+          }
+          else {
+            ourFileSystem.myUnaccountedFiles.put(path, null);
+          }
         }
-        else {
-          ourFileSystem.myUnaccountedFiles.put(path, null);
+        finally {
+          ourFileSystem.WRITE_LOCK.unlock();
+          ourFileSystem.READ_LOCK.lock();
         }
       }
     }
