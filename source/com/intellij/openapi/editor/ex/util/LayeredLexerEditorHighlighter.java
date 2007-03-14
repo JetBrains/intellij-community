@@ -53,16 +53,22 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     super.setText(text);
   }
 
-  protected void updateLayers() {}
+  protected boolean updateLayers() { return false; }
 
   public synchronized void documentChanged(DocumentEvent e) {
     myText = e.getDocument().getCharsSequence();
-    updateLayers();
-
-    super.documentChanged(e);
+    if (updateLayers()) {
+      setText(myText);
+    }
+    else {
+      super.documentChanged(e);
+    }
   }
 
   public HighlighterIterator createIterator(int startOffset) {
+    if (updateLayers()) {
+      setText(myText);
+    }
     return new LayeredHighlighterIterator(startOffset);
   }
 
