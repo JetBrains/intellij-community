@@ -48,7 +48,7 @@ public class GroovyParserDefinition implements ParserDefinition {
 
   @NotNull
   public PsiElement createElement(ASTNode node) {
-    return new ASTWrapperPsiElement(node);
+    return GroovyPsiCreator.createElement(node);
   }
 
   public PsiFile createFile(FileViewProvider viewProvider) {
