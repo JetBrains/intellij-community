@@ -2,9 +2,10 @@
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package com.intellij.util.concurrency;
+package com.intellij.util;
 
 import org.jetbrains.annotations.NonNls;
+import junit.framework.Assert;
 
 
 /**
@@ -75,4 +76,11 @@ public abstract class WaitFor {
   }
 
   protected abstract boolean condition();
+
+  public void assertCompleted() {
+    assertCompleted("");
+  }
+  public void assertCompleted(String message) {
+    Assert.assertTrue(message, condition());
+  }
 }
