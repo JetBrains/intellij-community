@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.peer.PeerFactory;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -125,6 +126,7 @@ public class CvsChangeProvider implements ChangeProvider {
     final FileStatus status = CvsStatusProvider.getStatus(filePath.getVirtualFile(), entry);
     VcsRevisionNumber number = entry != null ? new CvsRevisionNumber(entry.getRevision()) : VcsRevisionNumber.NULL;
     processStatus(filePath, dir.findChild(filePath.getName()), status, number, entry != null && entry.isBinary(), builder);
+    checkSwitched(filePath, builder, dir, entry);
   }
 
   private void processFile(final VirtualFile dir, @Nullable VirtualFile file, Entry entry, final ChangelistBuilder builder) {
@@ -132,6 +134,28 @@ public class CvsChangeProvider implements ChangeProvider {
     final FileStatus status = CvsStatusProvider.getStatus(file, entry);
     final VcsRevisionNumber number = new CvsRevisionNumber(entry.getRevision());
     processStatus(filePath, file, status, number, entry.isBinary(), builder);
+    checkSwitched(filePath, builder, dir, entry);
+  }
+
+  private static void checkSwitched(final FilePath filePath, final ChangelistBuilder builder, final VirtualFile dir, final Entry entry) {
+    final Entry dirEntry = CvsEntriesManager.getInstance().getEntryFor(dir);
+    if (dirEntry != null && entry != null && !Comparing.equal(entry.getStickyInformation(), dirEntry.getStickyInformation())) {
+      VirtualFile file = filePath.getVirtualFile();
+      if (file != null) {
+        if (entry.getStickyTag() != null) {
+          builder.processSwitchedFile(file, "tag " + entry.getStickyTag(), true);
+        }
+        else if (entry.getStickyDate() != null) {
+          builder.processSwitchedFile(file, "date " + entry.getStickyDate(), true);
+        }
+        else if (entry.getStickyRevision() != null) {
+          builder.processSwitchedFile(file, "revision " + entry.getStickyRevision(), true);
+        }
+        else {
+          builder.processSwitchedFile(file, "HEAD", true);
+        }
+      }
+    }
   }
 
   private void processStatus(final FilePath filePath,
@@ -169,7 +193,7 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   @Nullable
-  private byte[] getLastUpToDateContentFor(VirtualFile vFile) throws VcsException {
+  private byte[] getLastUpToDateContentFor(VirtualFile vFile) {
     if (!myEntriesManager.isActive()) return null;
     LvcsFile file = LocalVcs.getInstance(myVcs.getProject()).findFile(CvsVfsUtil.getPathFor(vFile));
     if (file != null) {
