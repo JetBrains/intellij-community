@@ -88,12 +88,12 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   private void renewFile() {
     if (myFile == null || !myFile.isValid()) {
       myFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-      if (myFile != null) {
-        LOG.assertTrue(myFile.isValid());
-      }
       myCompiled = myFile instanceof PsiCompiledElement;
       if (myCompiled) {
         myFile = (PsiFile)((PsiCompiledElement)myFile).getMirror();
+      }
+      if (myFile != null && !myFile.isValid()) {
+        myFile = null;
       }
     }
   }
