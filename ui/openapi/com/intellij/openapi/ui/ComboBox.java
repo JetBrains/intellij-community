@@ -36,7 +36,7 @@ import java.awt.event.KeyEvent;
  *
  * @author Vladimir Kondratyev
  */
-public class ComboBox extends JComboBox {
+public class ComboBox extends JBComboBox {
   private int myMinimumAndPreferredWidth;
 
   public ComboBox() {
@@ -118,6 +118,10 @@ public class ComboBox extends JComboBox {
     }
     final int height = getPreferredHeight();
     return new Dimension(width, height);
+  }
+
+  protected Dimension getOriginalPreferredSize() {
+    return super.getPreferredSize();
   }
 
   private int getPreferredHeight() {

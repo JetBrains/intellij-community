@@ -19,6 +19,7 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.JBComboBox;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
@@ -53,7 +54,7 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     super(project, stateManager);
     setBorder(null);
 
-    myThreadsCombo = new JComboBox();
+    myThreadsCombo = new JBComboBox();
     myThreadsCombo.setRenderer(new DebuggerComboBoxRenderer());
     myThreadsListener = new ThreadsListener();
     myThreadsCombo.addItemListener(myThreadsListener);
