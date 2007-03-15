@@ -9,6 +9,7 @@ import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.ColorRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
@@ -55,7 +56,7 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
   }
 
   public JComponent getComponent(RadComponent component, ColorDescriptor value, boolean inplace) {
-    myValue = value;
+    myValue = value != null ? value : new ColorDescriptor(new Color(0));
     myProject = component.getModule().getProject();
     updateTextField();
     return myTextField;
@@ -174,7 +175,7 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
       return result;
     }
 
-    public void setSelectedValue(final ColorDescriptor value) {
+    public void setSelectedValue(@NotNull final ColorDescriptor value) {
       myColorChooser.setColor(new ColorDescriptorWrapper(value));
       selectTabForColor(value);
     }
@@ -228,10 +229,12 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
       return myDisplayName;
     }
 
+    @Nullable
     public Icon getSmallDisplayIcon() {
       return null;
     }
 
+    @Nullable
     public Icon getLargeDisplayIcon() {
       return null;
     }
