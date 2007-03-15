@@ -22,11 +22,11 @@ public class InspectionModuleNode extends InspectionTreeNode{
     return myModule.getModuleType().getNodeIcon(expanded);
   }
 
-  public Module getModule(){
-    return myModule;
-  }
-
   public String getName(){
     return myModule.getName();
+  }
+
+  public String toString() {
+    return getName();
   }
 }

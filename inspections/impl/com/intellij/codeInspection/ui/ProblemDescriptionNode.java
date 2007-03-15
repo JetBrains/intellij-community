@@ -88,27 +88,23 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   }
 
   public String toString() {
-    return isValid() ? renderDescriptionMessage(getDescriptor(), myReplaceProblemDescriptorTemplateMessage) : "";
+    return renderDescriptionMessage(getDescriptor(), myReplaceProblemDescriptorTemplateMessage);
   }
 
-  private static String renderDescriptionMessage(CommonProblemDescriptor descriptor, boolean isReplaceProblemDescriptorTemplateMessage) {
+  private static String renderDescriptionMessage(@Nullable CommonProblemDescriptor descriptor, boolean isReplaceProblemDescriptorTemplateMessage) {
     PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
-    @NonNls String message = descriptor.getDescriptionTemplate();
-
-    if (psiElement != null && psiElement.isValid()) {
-      message = message.replaceAll("<[^>]*>", "");
-      if (isReplaceProblemDescriptorTemplateMessage){
-        message = StringUtil.replace(message, "#ref", psiElement.getText());
-      } else {
-        final int endIndex = message.indexOf("#end");
-        if (endIndex > 0){
-          message = message.substring(0, endIndex);
-        }
-      }
-      message = StringUtil.replace(message, "#loc", "");
-      message = XmlUtil.unescape(message);
-      return message;
+    @NonNls String message = descriptor != null ? descriptor.getDescriptionTemplate().replaceAll("<[^>]*>", "") : "";
+    if (isReplaceProblemDescriptorTemplateMessage) {
+      message = StringUtil.replace(message, "#ref", psiElement != null && psiElement.isValid() ? psiElement.getText() : "");
     }
+    else {
+      final int endIndex = message.indexOf("#end");
+      if (endIndex > 0) {
+        message = message.substring(0, endIndex);
+      }
+    }
+    message = StringUtil.replace(message, "#loc", "");
+    message = XmlUtil.unescape(message);
     return message;
   }
 }

@@ -8,7 +8,10 @@
  */
 package com.intellij.codeInspection.ex;
 
+import com.intellij.codeInspection.deadCode.DeadCodeInspection;
+import com.intellij.codeInspection.deadCode.DummyEntryPointsTool;
 import com.intellij.codeInspection.ui.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -21,6 +24,7 @@ import java.util.*;
 
 public abstract class InspectionRVContentProvider {
   private Project myProject;
+  private static final Logger LOG = Logger.getInstance("#" + InspectionRVContentProvider.class.getName());
 
   public InspectionRVContentProvider(final Project project) {
     myProject = project;
@@ -109,7 +113,23 @@ public abstract class InspectionRVContentProvider {
       for (Map<String, InspectionPackageNode> packageNodes : module2PackageMap.values()) {
         for (InspectionPackageNode pNode : packageNodes.values()) {
           for (int i = 0; i < pNode.getChildCount(); i++) {
-            content.add(((RefElementNode)pNode.getChildAt(i)));
+            final RefElementNode elementNode = (RefElementNode)pNode.getChildAt(i);
+            content.add(elementNode);
+            if (!(tool instanceof DeadCodeInspection || tool instanceof DummyEntryPointsTool)) {
+              final List<ProblemDescriptionNode> nodes = new ArrayList<ProblemDescriptionNode>();
+              TreeUtil.traverse(elementNode, new TreeUtil.Traverse() {
+                public boolean accept(final Object node) {
+                  if (node instanceof ProblemDescriptionNode) {
+                    nodes.add((ProblemDescriptionNode)node);
+                  }
+                  return true;
+                }
+              });
+              elementNode.removeAllChildren();
+              for (ProblemDescriptionNode node : nodes) {
+                elementNode.add(node);
+              }
+            }
           }
         }
       }
@@ -160,9 +180,7 @@ public abstract class InspectionRVContentProvider {
     }
   }
 
-  @SuppressWarnings({"ConstantConditions"})
   protected static void merge(InspectionTreeNode child, InspectionTreeNode parent, boolean merge) {
-    if (child.getChildCount() == 0) return; //do not add empty nodes
     if (merge) {
       for (int i = 0; i < parent.getChildCount(); i++) {
         InspectionTreeNode current = (InspectionTreeNode)parent.getChildAt(i);

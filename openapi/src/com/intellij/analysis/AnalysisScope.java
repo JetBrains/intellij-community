@@ -191,8 +191,10 @@ public class AnalysisScope {
   }
 
   public boolean contains(PsiElement psiElement) {
+    if (myType == PROJECT) { //optimization
+      return myProject == psiElement.getProject();
+    }
     if (myFilesSet == null) initFilesSet();
-
     return myFilesSet.contains(psiElement.getContainingFile().getVirtualFile());
   }
 
