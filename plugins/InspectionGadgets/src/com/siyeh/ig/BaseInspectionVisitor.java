@@ -42,17 +42,9 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
     protected final void registerNewExpressionError(
             @NotNull PsiNewExpression expression, Object... infos) {
         final PsiJavaCodeReferenceElement classReference =
-                expression.getClassReference();
+                expression.getClassOrAnonymousClassReference();
         if (classReference == null) {
-            final PsiAnonymousClass anonymousClass =
-                    expression.getAnonymousClass();
-            if (anonymousClass == null) {
-                registerError(expression, infos);
-            } else {
-                final PsiJavaCodeReferenceElement baseClassReference =
-                        anonymousClass.getBaseClassReference();
-                registerError(baseClassReference, infos);
-            }
+            registerError(expression, infos);
         } else {
             registerError(classReference, infos);
         }
