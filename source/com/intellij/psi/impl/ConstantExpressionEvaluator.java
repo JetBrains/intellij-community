@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-@SuppressWarnings({"UnnecessaryBoxing"})
 public class ConstantExpressionEvaluator extends PsiElementVisitor {
   private Set<PsiVariable> myVisitedVars;
   private boolean myThrowExceptionOnOverflow;
@@ -33,15 +32,18 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
   }
 
   public void visitBinaryExpression(PsiBinaryExpression expression) {
+    Object rOperandValue = accept(expression.getROperand()); //right operand size tends to me smaller
+    if (rOperandValue == null) {
+      myValue = null;
+      return;
+    }
     Object lOperandValue = accept(expression.getLOperand());
-    Object rOperandValue = accept(expression.getROperand());
-
-    final PsiJavaToken operationSign = expression.getOperationSign();
-    if (operationSign == null) {
+    if (lOperandValue == null) {
       myValue = null;
       return;
     }
 
+    PsiJavaToken operationSign = expression.getOperationSign();
     final IElementType tokenType = operationSign.getTokenType();
 
     Object value = null;
@@ -100,10 +102,6 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
       }
     }
     else if (tokenType == JavaTokenType.PLUS) {
-      if (lOperandValue == null || rOperandValue == null) {
-        myValue = null;
-        return;
-      }
       if (lOperandValue instanceof String || rOperandValue instanceof String) {
         value = (lOperandValue.toString() + rOperandValue.toString()).intern();
       }
@@ -323,10 +321,6 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
       }
     }
     else if (tokenType == JavaTokenType.ANDAND) {
-      if (lOperandValue == null || rOperandValue == null) {
-        myValue = null;
-        return;
-      }
       if (lOperandValue instanceof Boolean && !((Boolean)lOperandValue).booleanValue()) {
         myValue = Boolean.FALSE;
         return;
@@ -340,10 +334,6 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
       }
     }
     else if (tokenType == JavaTokenType.OROR) {
-      if (lOperandValue == null || rOperandValue == null) {
-        myValue = null;
-        return;
-      }
       if (lOperandValue instanceof Boolean && ((Boolean)lOperandValue).booleanValue()) {
         myValue = Boolean.TRUE;
         return;
