@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl");
@@ -128,6 +129,19 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
     ASTNode anonymousClass = TreeUtil.findChild(this, ANONYMOUS_CLASS);
     if (anonymousClass == null) return null;
     return (PsiAnonymousClass)SourceTreeToPsiMap.treeElementToPsi(anonymousClass);
+  }
+
+  @Nullable
+  public PsiJavaCodeReferenceElement getClassOrAnonymousClassReference() {
+    PsiJavaCodeReferenceElement classReference = getClassReference();
+    if (classReference != null) {
+      return classReference;
+    }
+    final PsiAnonymousClass anonymousClass = getAnonymousClass();
+    if (anonymousClass != null) {
+      classReference = anonymousClass.getBaseClassReference();
+    }
+    return classReference;
   }
 
   public void deleteChildInternal(@NotNull ASTNode child) {

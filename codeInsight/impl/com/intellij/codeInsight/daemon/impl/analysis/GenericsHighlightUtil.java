@@ -346,11 +346,7 @@ public class GenericsHighlightUtil {
   }
 
   public static HighlightInfo checkTypeParameterInstantiation(PsiNewExpression expression) {
-    PsiJavaCodeReferenceElement classReference = expression.getClassReference();
-    if (classReference == null) {
-      final PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
-      if (anonymousClass != null) classReference = anonymousClass.getBaseClassReference();
-    }
+    PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
     if (classReference == null) return null;
     final JavaResolveResult result = classReference.advancedResolve(false);
     final PsiElement element = result.getElement();

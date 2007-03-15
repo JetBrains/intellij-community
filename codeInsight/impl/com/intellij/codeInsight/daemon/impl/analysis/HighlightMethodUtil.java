@@ -997,11 +997,7 @@ public class HighlightMethodUtil {
       if (aClass == null) return null;
     }
 
-    PsiJavaCodeReferenceElement classReference = expression.getClassReference();
-    if (classReference == null) {
-      PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
-      if (anonymousClass != null) classReference = anonymousClass.getBaseClassReference();
-    }
+    PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
     return checkConstructorCall(typeResult, expression, type, classReference);
   }
 

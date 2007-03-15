@@ -224,7 +224,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       final PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
       if (myExceptionClasses.length == 1) {
         ArrayList<PsiReference> refs = new ArrayList<PsiReference>();
-        findExceptionThrownPlaces(refs, factory.createType(myExceptionClasses[0]), myHighlightInPlace, myTypeFilter);
+        addExceptionThrownPlaces(refs, factory.createType(myExceptionClasses[0]), myHighlightInPlace, myTypeFilter);
         new DoHighlightRunnable(refs, myProject, myTarget,
                                 myEditor, myFile).run();
       }
@@ -248,14 +248,14 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
             if (idx < 0) return;
             ArrayList<PsiReference> refs = new ArrayList<PsiReference>();
             if (idx > 0) {
-              findExceptionThrownPlaces(refs,
+              addExceptionThrownPlaces(refs,
                                         factory.createType(myExceptionClasses[idx - 1]),
                                         myHighlightInPlace,
                                         myTypeFilter);
             }
             else {
               for (PsiClass exceptionClass : myExceptionClasses) {
-                findExceptionThrownPlaces(refs,
+                addExceptionThrownPlaces(refs,
                                           factory.createType(exceptionClass),
                                           myHighlightInPlace,
                                           myTypeFilter);
@@ -295,8 +295,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
         final PsiClassType[] psiClassTypes = ExceptionUtil.collectUnhandledExceptions(tryStatement.getTryBlock(),
                                                                                       tryStatement.getTryBlock());
 
-        return createChoosingRunnable(project, psiClassTypes, tryStatement.getTryBlock(), target, editor, file,
-                                      ANY_TYPE);
+        return createChoosingRunnable(project, psiClassTypes, tryStatement.getTryBlock(), target, editor, file, ANY_TYPE);
       }
 
       if (PsiKeyword.CATCH.equals(target.getText())) {
@@ -413,8 +412,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   };
 
-  private static void findExceptionThrownPlaces(final List<PsiReference> refs, final PsiType type, final PsiElement block,
-                                         final TypeFilter typeFilter) {
+  private static void addExceptionThrownPlaces(final List<PsiReference> refs, final PsiType type, final PsiElement block, final TypeFilter typeFilter) {
     if (type instanceof PsiClassType) {
       block.accept(new PsiRecursiveElementVisitor() {
         public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -433,7 +431,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
               }
               else if (!(psiExpression instanceof PsiNewExpression)) {
                 PsiJavaCodeReferenceElement ref = ((PsiNewExpression)psiExpression).getClassReference();
-                if (!refs.contains(ref)) refs.add(ref);
+                if (ref != null && !refs.contains(ref)) refs.add(ref);
               }
             }
           }
@@ -441,22 +439,26 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
         public void visitMethodCallExpression(PsiMethodCallExpression expression) {
           super.visitMethodCallExpression(expression);
-          if (refs.contains(expression.getMethodExpression().getReference())) return;
+          PsiReference reference = expression.getMethodExpression().getReference();
+          if (reference == null || refs.contains(reference)) return;
           PsiClassType[] exceptionTypes = ExceptionUtil.getUnhandledExceptions(expression, block);
           for (final PsiClassType actualType : exceptionTypes) {
             if (type.isAssignableFrom(actualType) && typeFilter.accept(actualType)) {
-              refs.add(expression.getMethodExpression().getReference());
+              refs.add(reference);
+              break;
             }
           }
         }
 
         public void visitNewExpression(PsiNewExpression expression) {
           super.visitNewExpression(expression);
-          if (refs.contains(expression.getClassReference())) return;
+          PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
+          if (classReference == null || refs.contains(classReference)) return;
           PsiClassType[] exceptionTypes = ExceptionUtil.getUnhandledExceptions(expression, block);
           for (PsiClassType actualType : exceptionTypes) {
             if (type.isAssignableFrom(actualType) && typeFilter.accept(actualType)) {
-              refs.add(expression.getClassReference());
+              refs.add(classReference);
+              break;
             }
           }
         }

@@ -78,13 +78,7 @@ public class MoveInstanceMembersUtil {
       final PsiNewExpression newExpression = (PsiNewExpression)expression;
       final PsiExpression qualifier = newExpression.getQualifier();
       if (qualifier == null || qualifier instanceof PsiThisExpression) {
-        PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-        if (classReference == null) {
-          final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
-          if (anonymousClass != null) {
-            classReference = anonymousClass.getBaseClassReference();
-          }
-        }
+        PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
         if (classReference != null) {
           final PsiClass resolved = (PsiClass)classReference.resolve();
           if (resolved != null && !resolved.hasModifierProperty(PsiModifier.STATIC)) {

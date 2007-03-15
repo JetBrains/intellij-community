@@ -271,15 +271,9 @@ public class PsiScopesUtil {
     } else{
       LOG.assertTrue(call instanceof PsiNewExpression);
       PsiNewExpression newExpr = (PsiNewExpression)call;
-      PsiJavaCodeReferenceElement classRef = newExpr.getClassReference();
+      PsiJavaCodeReferenceElement classRef = newExpr.getClassOrAnonymousClassReference();
       if (classRef == null) {
-        PsiAnonymousClass anonymousClass = newExpr.getAnonymousClass();
-        if (anonymousClass != null) {
-          classRef = anonymousClass.getBaseClassReference();
-        }
-        if (classRef == null) {
-          throw new MethodProcessorSetupFailedException("Cant get reference to class in new expression");
-        }
+        throw new MethodProcessorSetupFailedException("Cant get reference to class in new expression");
       }
 
       final JavaResolveResult result = classRef.advancedResolve(false);

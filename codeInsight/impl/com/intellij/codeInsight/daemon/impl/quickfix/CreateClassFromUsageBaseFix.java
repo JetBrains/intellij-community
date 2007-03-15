@@ -62,11 +62,8 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
       if (parent instanceof PsiMethodCallExpression) {
         return false;
       }
-      if (parent.getParent() instanceof PsiMethodCallExpression && myKind != CreateClassKind.CLASS) return false;
-
-      return true;
+      return !(parent.getParent() instanceof PsiMethodCallExpression) || myKind == CreateClassKind.CLASS;
     }
-
     return false;
   }
 

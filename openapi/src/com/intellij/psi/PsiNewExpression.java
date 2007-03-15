@@ -68,4 +68,12 @@ public interface PsiNewExpression extends PsiCallExpression, PsiConstructorCall 
    */
   @Nullable
   PsiAnonymousClass getAnonymousClass();
+
+  /**
+   * Returns the reference element specifying the class the instance of which is created,
+   * or, if it's an anonymous class creation, corresponding base class reference.
+   *
+   * @return class reference, or null if the expression is incomplete.
+   */
+  @Nullable PsiJavaCodeReferenceElement getClassOrAnonymousClassReference();
 }

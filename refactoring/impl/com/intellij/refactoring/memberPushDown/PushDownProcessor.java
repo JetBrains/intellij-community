@@ -25,7 +25,7 @@ import java.util.Set;
 
 public class PushDownProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPushDown.PushDownProcessor");
-  private MemberInfo myMemberInfos[];
+  private MemberInfo[] myMemberInfos;
   private PsiClass myClass;
   private JavaDocPolicy myJavaDocPolicy;
 
@@ -174,7 +174,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     });
   }
 
-  private void decodeRef(final PsiJavaCodeReferenceElement ref,
+  private static void decodeRef(final PsiJavaCodeReferenceElement ref,
                          final PsiElementFactory factory,
                          final PsiClass targetClass,
                          final PsiElement toGet) {

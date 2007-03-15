@@ -373,15 +373,8 @@ public class Util {
         final PsiTypeParameter[] parms = result.getElement().getTypeParameters();
 
         if (parms.length > 0 && subst.substitute(parms[0]) != null) {
-          PsiJavaCodeReferenceElement classReference = newx.getClassReference();
-          PsiReferenceParameterList list;
-
-          if (classReference == null) {
-            list = newx.getAnonymousClass().getBaseClassReference().getParameterList();
-          }
-          else {
-            list = classReference.getParameterList();
-          }
+          PsiJavaCodeReferenceElement classReference = newx.getClassOrAnonymousClassReference();
+          PsiReferenceParameterList list = classReference.getParameterList();
 
           if (list == null) {
             return;

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
@@ -114,8 +115,8 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     templateBuilder.setEndVariableAfter(constructor.getBody().getLBrace());
   }
 
-  private void setupGenericParameters(PsiNewExpression expr, PsiClass targetClass) throws IncorrectOperationException {
-    PsiJavaCodeReferenceElement ref = expr.getClassReference();
+  private static void setupGenericParameters(PsiNewExpression expr, PsiClass targetClass) throws IncorrectOperationException {
+    PsiJavaCodeReferenceElement ref = getReferenceElement(expr);
     int numParams = ref.getTypeParameters().length;
     if (numParams == 0) return;
     PsiElementFactory factory = expr.getManager().getElementFactory();
@@ -126,7 +127,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   }
 
   private void setupInheritance(PsiNewExpression element, PsiClass targetClass) throws IncorrectOperationException {
-    if ((element.getParent() instanceof PsiReferenceExpression)) return;
+    if (element.getParent() instanceof PsiReferenceExpression) return;
 
     ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getInstance(getNewExpression().getProject()).getExpectedTypes(element, false);
 
@@ -152,11 +153,12 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   }
 
 
-  private PsiFile getTargetFile(PsiElement element) {
+  private static PsiFile getTargetFile(PsiElement element) {
     PsiJavaCodeReferenceElement referenceElement = getReferenceElement((PsiNewExpression)element);
 
-    if (referenceElement.getQualifier() instanceof PsiJavaCodeReferenceElement) {
-      PsiJavaCodeReferenceElement qualifier = (PsiJavaCodeReferenceElement)referenceElement.getQualifier();
+    PsiElement q = referenceElement.getQualifier();
+    if (q instanceof PsiJavaCodeReferenceElement) {
+      PsiJavaCodeReferenceElement qualifier = (PsiJavaCodeReferenceElement)q;
       PsiElement psiElement = qualifier.resolve();
       if (psiElement instanceof PsiClass) {
         PsiClass psiClass = (PsiClass)psiElement;
@@ -183,9 +185,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
 
   protected boolean isValidElement(PsiElement element) {
     PsiJavaCodeReferenceElement ref = PsiTreeUtil.getChildOfType(element, PsiJavaCodeReferenceElement.class);
-    if (ref == null) return false;
-
-    return ref.resolve() != null;
+    return ref != null && ref.resolve() != null;
   }
 
   protected boolean isAvailableImpl(int offset) {
@@ -204,16 +204,17 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     return false;
   }
 
-  private PsiJavaCodeReferenceElement getReferenceElement(PsiNewExpression expression) {
-    return expression.getClassReference();
+  private static PsiJavaCodeReferenceElement getReferenceElement(PsiNewExpression expression) {
+    return expression.getClassOrAnonymousClassReference();
   }
 
-  private PsiElement getNameElement(PsiNewExpression targetElement) {
+  private static PsiElement getNameElement(PsiNewExpression targetElement) {
     PsiJavaCodeReferenceElement referenceElement = getReferenceElement(targetElement);
     if (referenceElement == null) return null;
     return referenceElement.getReferenceNameElement();
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.class.from.new.family");
   }

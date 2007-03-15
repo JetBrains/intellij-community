@@ -150,7 +150,7 @@ public class DuplicatesFinder {
   }
 
 
-  public Match isDuplicateFragment(PsiElement candidate) {
+  private Match isDuplicateFragment(PsiElement candidate) {
     if (candidate == myPattern[0]) return null;
     PsiElement sibling = candidate;
     ArrayList<PsiElement> candidates = new ArrayList<PsiElement>();
@@ -166,7 +166,7 @@ public class DuplicatesFinder {
     LOG.assertTrue(myPattern.length == candidates.size());
     if (myPattern.length == 1 && myPattern[0] instanceof PsiExpression) {
       if (candidates.get(0) instanceof PsiExpression) {
-        final PsiExpression candidateExpression = ((PsiExpression)candidates.get(0));
+        final PsiExpression candidateExpression = (PsiExpression)candidates.get(0);
         if (PsiUtil.isAccessedForWriting(candidateExpression)) return null;
         final PsiType patternType = ((PsiExpression)myPattern[0]).getType();
         final PsiType candidateType = candidateExpression.getType();
@@ -231,7 +231,7 @@ public class DuplicatesFinder {
     } else if (pattern instanceof PsiNewExpression) {
       final PsiJavaCodeReferenceElement classReference1 = ((PsiNewExpression)pattern).getClassReference();
       final PsiJavaCodeReferenceElement classReference2 = ((PsiNewExpression)candidate).getClassReference();
-      if ((classReference1 == null) || classReference2 == null) return false;
+      if (classReference1 == null || classReference2 == null) return false;
       final PsiElement resolved1 = classReference1.resolve();
       final PsiElement resolved2 = classReference2.resolve();
       if (!pattern.getManager().areElementsEquivalent(resolved1, resolved2)) return false;
@@ -252,8 +252,7 @@ public class DuplicatesFinder {
       final PsiReferenceExpression candidateRefExpr = (PsiReferenceExpression)candidate;
       if (patternRefExpr.getQualifierExpression() == null) {
         PsiClass contextClass = PsiTreeUtil.getParentOfType(pattern, PsiClass.class);
-        if (contextClass == null) return false;
-        return match.registerInstanceExpression(candidateRefExpr.getQualifierExpression(), contextClass);
+        return contextClass != null && match.registerInstanceExpression(candidateRefExpr.getQualifierExpression(), contextClass);
       }
     }
 

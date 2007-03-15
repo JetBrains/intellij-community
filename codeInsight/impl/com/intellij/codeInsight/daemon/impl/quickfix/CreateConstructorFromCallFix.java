@@ -135,9 +135,8 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
 
   private static PsiJavaCodeReferenceElement getReferenceElement(PsiConstructorCall constructorCall) {
     if (constructorCall instanceof PsiNewExpression) {
-      return ((PsiNewExpression)constructorCall).getClassReference();
+      return ((PsiNewExpression)constructorCall).getClassOrAnonymousClassReference();
     }
-
     return null;
   }
 
@@ -146,7 +145,8 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
       PsiJavaCodeReferenceElement referenceElement = getReferenceElement((PsiNewExpression)targetElement);
       if (referenceElement == null) return null;
       return referenceElement.getReferenceNameElement();
-    } else if (targetElement instanceof PsiEnumConstant) {
+    }
+    else if (targetElement instanceof PsiEnumConstant) {
       return targetElement;
     }
 
