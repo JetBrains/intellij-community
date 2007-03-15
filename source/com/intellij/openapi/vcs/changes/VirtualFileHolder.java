@@ -68,4 +68,19 @@ public class VirtualFileHolder {
   public synchronized boolean containsFile(final VirtualFile file) {
     return myFiles.contains(file);
   }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final VirtualFileHolder that = (VirtualFileHolder)o;
+
+    if (!myFiles.equals(that.myFiles)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return myFiles.hashCode();
+  }
 }

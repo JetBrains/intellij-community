@@ -419,11 +419,19 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         }
 
         if (updateUnversionedFiles) {
+          boolean statusChanged = (!myUnversionedFilesHolder.equals(unversionedHolder)) ||
+                                  (!myDeletedFilesHolder.equals(deletedHolder)) ||
+                                  (!myModifiedWithoutEditingHolder.equals(modifiedWithoutEditingHolder)) ||
+                                  (!myIgnoredFilesHolder.equals(ignoredHolder)) ||
+                                  (!mySwitchedFilesHolder.equals(switchedHolder));
           myUnversionedFilesHolder = unversionedHolder;
           myDeletedFilesHolder = deletedHolder;
           myModifiedWithoutEditingHolder = modifiedWithoutEditingHolder;
           myIgnoredFilesHolder = ignoredHolder;
           mySwitchedFilesHolder = switchedHolder;
+          if (statusChanged) {
+            myListeners.getMulticaster().unchangedFileStatusChanged();
+          }
         }
       }
     }

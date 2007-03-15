@@ -41,6 +41,9 @@ public class ChangeListAdapter implements ChangeListListener {
   public void defaultListChanged(ChangeList newDefaultList) {
   }
 
+  public void unchangedFileStatusChanged() {
+  }
+
   public void changeListUpdateDone() {
   }
 }

@@ -73,6 +73,10 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
           fileStatusesChanged();
         }
       }
+
+      @Override public void unchangedFileStatusChanged() {
+        fileStatusesChanged();
+      }
     });
   }
 

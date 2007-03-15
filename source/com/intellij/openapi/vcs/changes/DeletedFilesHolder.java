@@ -43,4 +43,19 @@ public class DeletedFilesHolder {
     copyHolder.myFiles.addAll(myFiles);
     return copyHolder;
   }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final DeletedFilesHolder that = (DeletedFilesHolder)o;
+
+    if (!myFiles.equals(that.myFiles)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return myFiles.hashCode();
+  }
 }

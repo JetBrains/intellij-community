@@ -86,4 +86,19 @@ public class SwitchedFileHolder {
   public String getBranchForFile(final VirtualFile file) {
     return myFiles.get(file);
   }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final SwitchedFileHolder that = (SwitchedFileHolder)o;
+
+    if (!myFiles.equals(that.myFiles)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return myFiles.hashCode();
+  }
 }

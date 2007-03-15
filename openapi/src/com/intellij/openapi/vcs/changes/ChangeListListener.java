@@ -13,5 +13,6 @@ public interface ChangeListListener extends EventListener {
   void changeListRenamed(ChangeList list, String oldName);
   void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList);
   void defaultListChanged(ChangeList newDefaultList);
+  void unchangedFileStatusChanged();
   void changeListUpdateDone();
 }
