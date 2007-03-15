@@ -73,18 +73,19 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement identifier = descriptor.getPsiElement();
-            final PsiModifierListOwner parent =
-                    (PsiModifierListOwner)identifier.getParent();
-            if (parent == null) {
+            final PsiElement parent = identifier.getParent();
+            if (!(parent instanceof PsiModifierListOwner)) {
                 return;
             }
-            final PsiManager psiManager = parent.getManager();
+            final PsiModifierListOwner modifierListOwner =
+                    (PsiModifierListOwner)parent;
+            final PsiManager psiManager = modifierListOwner.getManager();
             final PsiElementFactory factory = psiManager.getElementFactory();
             final PsiAnnotation annotation =
                     factory.createAnnotationFromText("@java.lang.Override",
-                            parent);
+                            modifierListOwner);
             final PsiModifierList modifierList =
-                    parent.getModifierList();
+                    modifierListOwner.getModifierList();
             if (modifierList == null) {
                 return;
             }
