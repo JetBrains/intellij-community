@@ -19,13 +19,13 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
@@ -160,11 +160,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
             }
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression)containingExpression;
-            final PsiJavaToken operationSign =
-                    binaryExpression.getOperationSign();
-            final IElementType tokenType = operationSign.getTokenType();
-            if (!JavaTokenType.EQEQ.equals(tokenType) &&
-                    !JavaTokenType.NE.equals(tokenType)) {
+            if (!ComparisonUtils.isEqualityComparison(binaryExpression)) {
                 return false;
             }
             final PsiExpression lhs = binaryExpression.getLOperand();

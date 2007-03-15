@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -217,6 +218,9 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
                     (PsiBinaryExpression)testArgument;
             final PsiExpression lhs = binaryExpression.getLOperand();
             PsiExpression rhs = binaryExpression.getROperand();
+            if (rhs == null) {
+                return;
+            }
             final IElementType tokenType =
                     binaryExpression.getOperationTokenType();
             if (!(lhs instanceof PsiLiteralExpression) &&
@@ -642,9 +646,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         }
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression)expression;
-        final IElementType tokenType = binaryExpression.getOperationTokenType();
-        if (!JavaTokenType.EQEQ.equals(tokenType) &&
-                !JavaTokenType.NE.equals(tokenType)) {
+        if (!ComparisonUtils.isEqualityComparison(binaryExpression)) {
             return false;
         }
         final PsiExpression rhs =
@@ -658,9 +660,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         }
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression) expression;
-        final IElementType tokenType = binaryExpression.getOperationTokenType();
-        if (!JavaTokenType.EQEQ.equals(tokenType) &&
-                !JavaTokenType.NE.equals(tokenType)) {
+        if (!ComparisonUtils.isEqualityComparison(binaryExpression)) {
             return false;
         }
         final PsiExpression rhs = binaryExpression.getROperand();

@@ -86,8 +86,7 @@ public class ComparisonUtils {
 
     public static boolean isEqualityComparison(
             @NotNull PsiBinaryExpression expression) {
-        final PsiJavaToken sign = expression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
+        final IElementType tokenType = expression.getOperationTokenType();
         return tokenType.equals(JavaTokenType.EQEQ) ||
                tokenType.equals(JavaTokenType.NE);
     }
