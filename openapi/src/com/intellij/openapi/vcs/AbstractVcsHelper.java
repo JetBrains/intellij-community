@@ -21,6 +21,7 @@ import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
@@ -114,6 +115,7 @@ public abstract class AbstractVcsHelper {
   public abstract void showCodeSmellErrors(final List<CodeSmellInfo> smells);
     
   public abstract void showFileHistory(VcsHistoryProvider vcsHistoryProvider, FilePath path);
+  public abstract void showFileHistory(VcsHistoryProvider vcsHistoryProvider, AnnotationProvider annotationProvider, FilePath path);
 
   /**
    * Shows the "Rollback Changes" dialog with the specified list of changes.

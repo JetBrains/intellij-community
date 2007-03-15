@@ -19,6 +19,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.fileView.DualViewColumnInfo;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
@@ -70,6 +72,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   private final Project myProject;
   private final VcsHistoryProvider myProvider;
+  private final AnnotationProvider myAnnotationProvider;
   private VcsHistorySession myHistorySession;
   private final FilePath myFilePath;
   private final DualView myDualView;
@@ -173,9 +176,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                               FilePath filePath,
                               VcsHistorySession session,
                               VcsHistoryProvider provider,
+                              AnnotationProvider annotationProvider,
                               ContentManager contentManager) {
     super(contentManager, provider.getHelpId());
     myProvider = provider;
+    myAnnotationProvider = annotationProvider;
     myProject = project;
     myHistorySession = session;
     myFilePath = filePath;
@@ -494,6 +499,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
     result.add(diffWithCurrent);
     result.add(new MyGetVersionAction());
+    result.add(new MyAnnotateAction());
     AnAction[] additionalActions = getHistoryProvider().getAdditionalActions(this);
     if (additionalActions != null) {
       for (AnAction additionalAction : additionalActions) {
@@ -768,6 +774,36 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                                                     }, VcsBundle.message("message.title.get.version"), null);
     }
 
+  }
+
+  private class MyAnnotateAction extends AnAction {
+    public MyAnnotateAction() {
+      super(VcsBundle.message("annotate.action.name"), VcsBundle.message("annotate.action.description"), IconLoader.getIcon("/actions/annotate.png"));
+    }
+
+    public void update(AnActionEvent e) {
+      VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
+      VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
+      FileType fileType = revisionVirtualFile == null ? null : revisionVirtualFile.getFileType();
+      e.getPresentation().setEnabled(revision != null &&
+                                     revisionVirtualFile != null
+                                     && !fileType.isBinary()
+                                     && myAnnotationProvider != null);
+    }
+
+
+    public void actionPerformed(AnActionEvent e) {
+      VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
+      VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
+      try {
+        final FileAnnotation annotation = myAnnotationProvider.annotate(revisionVirtualFile, revision);
+        AbstractVcsHelper.getInstance(myProject).showAnnotation(annotation, revisionVirtualFile);
+      }
+      catch (VcsException e1) {
+        AbstractVcsHelper.getInstance(myProject).showError(e1, VcsBundle.message("operation.name.annotate"));
+      }
+
+    }
   }
 
   public Object getData(String dataId) {

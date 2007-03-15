@@ -2,7 +2,6 @@ package com.intellij.cvsSupport2.history;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
-import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
@@ -13,17 +12,9 @@ import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.cvsLog.LocalPathIndifferentLogOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui.TagsPanel;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.*;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.TreeItem;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
@@ -211,30 +202,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
   }
 
   public AnAction[] getAdditionalActions(final FileHistoryPanel panel) {
-    return new AnAction[]{new AnAction(CvsBundle.message("annotate.action.name"), CvsBundle.message("annotate.action.description"), IconLoader.getIcon("/actions/annotate.png")) {
-      public void update(AnActionEvent e) {
-        VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
-        CvsFileRevision revision = (CvsFileRevision)e.getData(VcsDataKeys.VCS_FILE_REVISION);
-        FileType fileType = revisionVirtualFile == null ? null : revisionVirtualFile.getFileType();
-        e.getPresentation().setEnabled(revision != null &&
-                                       revisionVirtualFile != null
-                                       && !fileType.isBinary());
-      }
-
-
-      public void actionPerformed(AnActionEvent e) {
-        CvsFileRevision revision = (CvsFileRevision)e.getData(VcsDataKeys.VCS_FILE_REVISION);
-        VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
-        try {
-          final FileAnnotation annotation = CvsVcs2.getInstance(myProject).getAnnotationProvider().annotate(revisionVirtualFile, revision);
-          AbstractVcsHelper.getInstance(myProject).showAnnotation(annotation, revisionVirtualFile);
-        }
-        catch (VcsException e1) {
-          AbstractVcsHelper.getInstance(myProject).showError(e1, CvsBundle.message("operation.name.annotate"));
-        }
-
-      }
-    }};
+    return AnAction.EMPTY_ARRAY;
   }
 
   public HistoryAsTreeProvider getTreeHistoryProvider() {

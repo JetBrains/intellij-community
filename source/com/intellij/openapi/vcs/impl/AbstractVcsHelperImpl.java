@@ -30,6 +30,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.Annotater;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
@@ -132,30 +133,34 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   }
 
-    public void showFileHistory(VcsHistoryProvider vcsHistoryProvider, FilePath path) {
-        try {
-          VcsHistorySession session = vcsHistoryProvider.createSessionFor(path);
-          if (session == null) return;
-          List<VcsFileRevision> revisionsList = session.getRevisionList();
-          if (revisionsList.isEmpty()) return;
-    
-          String actionName = VcsBundle.message("action.name.file.history", path.getName());
-    
-          ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject).getContentManager();
-    
-          FileHistoryPanelImpl fileHistoryPanel = new FileHistoryPanelImpl(myProject,
-                                                                           path, session, vcsHistoryProvider, contentManager);
-          Content content = PeerFactory.getInstance().getContentFactory().createContent(fileHistoryPanel, actionName, true);
-          ContentsUtil.addOrReplaceContent(contentManager, content, true);
-    
-          ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
-          toolWindow.activate(null);
-        }
-        catch (Exception exception) {
-          reportError(exception);
-        }
-        
+  public void showFileHistory(final VcsHistoryProvider vcsHistoryProvider, final FilePath path) {
+    showFileHistory(vcsHistoryProvider, null, path);
+  }
+
+  public void showFileHistory(VcsHistoryProvider vcsHistoryProvider, AnnotationProvider annotationProvider, FilePath path) {
+    try {
+      VcsHistorySession session = vcsHistoryProvider.createSessionFor(path);
+      if (session == null) return;
+      List<VcsFileRevision> revisionsList = session.getRevisionList();
+      if (revisionsList.isEmpty()) return;
+
+      String actionName = VcsBundle.message("action.name.file.history", path.getName());
+
+      ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject).getContentManager();
+
+      FileHistoryPanelImpl fileHistoryPanel =
+        new FileHistoryPanelImpl(myProject, path, session, vcsHistoryProvider, annotationProvider, contentManager);
+      Content content = PeerFactory.getInstance().getContentFactory().createContent(fileHistoryPanel, actionName, true);
+      ContentsUtil.addOrReplaceContent(contentManager, content, true);
+
+      ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
+      toolWindow.activate(null);
     }
+    catch (Exception exception) {
+      reportError(exception);
+    }
+
+  }
 
   public void showRollbackChangesDialog(List<Change> changes) {
     RollbackChangesDialog.rollbackChanges(myProject, changes);
