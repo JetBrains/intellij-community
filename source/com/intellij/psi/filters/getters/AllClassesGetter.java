@@ -7,12 +7,11 @@ import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ArrayUtil;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,8 +27,18 @@ public class AllClassesGetter implements ContextGetter{
   public Object[] get(PsiElement context, CompletionContext completionContext) {
     if(context == null || !context.isValid()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
 
-    final List<PsiClass> classesList = new ArrayList<PsiClass>();
     final PsiManager manager = context.getManager();
+    final Set<PsiClass> classesSet = new THashSet<PsiClass>(new TObjectHashingStrategy<PsiClass>() {
+      public int computeHashCode(final PsiClass object) {
+        final String name = object.getQualifiedName();
+        return name != null ? name.hashCode() : 0;
+      }
+
+      public boolean equals(final PsiClass o1, final PsiClass o2) {
+        return manager.areElementsEquivalent(o1, o2);
+      }
+    });
+
     final PsiShortNamesCache cache = manager.getShortNamesCache();
 
     final GlobalSearchScope scope = context.getContainingFile().getResolveScope();
@@ -53,9 +62,11 @@ public class AllClassesGetter implements ContextGetter{
         if (CompletionUtil.isInExcludedPackage(psiClass)) {
           continue;
         }
-        classesList.add(psiClass);
+        classesSet.add(psiClass);
       }
     }
+
+    List<PsiClass> classesList = new ArrayList<PsiClass>(classesSet);
 
     Collections.sort(classesList, new Comparator<PsiClass>() {
       public int compare(PsiClass psiClass, PsiClass psiClass1) {
