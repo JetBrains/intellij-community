@@ -28,7 +28,7 @@ public interface FileStatus extends NamedComponent {
   Color COLOR_ADDED = new Color(10, 119, 0);
   Color COLOR_OUT_OF_DATE = Color.yellow.darker().darker();
   Color COLOR_HIJACKED = Color.ORANGE.darker();
-  Color COLOR_SWITCHED = new Color(0x72A038);
+  Color COLOR_SWITCHED = new Color(8, 151, 143);
   Color COLOR_UNKNOWN = new Color(153, 51, 0);
 
   FileStatus NOT_CHANGED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("NOT_CHANGED", VcsBundle.message("file.status.name.up.to.date"), COLOR_NOT_CHANGED);
