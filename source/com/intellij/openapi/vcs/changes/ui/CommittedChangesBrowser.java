@@ -103,6 +103,7 @@ public class CommittedChangesBrowser extends JPanel {
       mySelectedChangeList = list;
       myChangesView.setChangesToDisplay(list != null ? new ArrayList<Change>(list.getChanges()) : Collections.<Change>emptyList());
       myCommitMessageArea.setText(list != null ? list.getComment() : "");
+      myCommitMessageArea.select(0, 0);
     }
   }
 
