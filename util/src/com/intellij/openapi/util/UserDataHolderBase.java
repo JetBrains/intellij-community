@@ -26,7 +26,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.UserDataHolderBase");
 
-  private Map<Key, Object> myUserMap = null;
+  private volatile Map<Key, Object> myUserMap = null;
 
   private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
   private static final Lock r = rwl.readLock();
