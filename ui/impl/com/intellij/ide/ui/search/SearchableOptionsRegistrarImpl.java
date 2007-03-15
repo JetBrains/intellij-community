@@ -209,11 +209,12 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     if (stemmedPrefix == null) return null;
     Set<OptionDescription> result = null;
     for (String option : myStorage.keySet()) {
-      if (option.startsWith(prefix) || option.startsWith(stemmedPrefix)) {
+      final Set<OptionDescription> descriptions = myStorage.get(option);
+      if (descriptions != null && (option.startsWith(prefix) || option.startsWith(stemmedPrefix))) {
         if (result == null) {
           result = new THashSet<OptionDescription>();
         }
-        result.addAll(myStorage.get(option));
+        result.addAll(descriptions);
       }
     }
     return result;
