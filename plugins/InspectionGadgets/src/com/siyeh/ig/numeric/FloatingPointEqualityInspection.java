@@ -22,7 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ComparisonUtils;
-import org.jetbrains.annotations.NonNls;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class FloatingPointEqualityInspection extends BaseInspection {
@@ -60,12 +60,7 @@ public class FloatingPointEqualityInspection extends BaseInspection {
             if (!isFloatingPointType(lhs) && !isFloatingPointType(rhs)) {
                 return;
             }
-            @NonNls final String lhsText = lhs.getText();
-            if (lhsText.equals("0.0") || lhsText.equals("-0.0")) {
-                return;
-            }
-            @NonNls final String rhsText = rhs.getText();
-            if (rhsText.equals("0.0") || rhsText.equals("-0.0")) {
+            if (ExpressionUtils.isZero(lhs) || ExpressionUtils.isZero(rhs)) {
                 return;
             }
             registerError(expression);
