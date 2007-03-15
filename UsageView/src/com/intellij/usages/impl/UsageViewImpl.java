@@ -679,6 +679,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private void updateImmediately() {
     if (myProject.isDisposed()) return;
     checkNodeValidity((DefaultMutableTreeNode)myTree.getModel().getRoot());
+    if (myUsagePreviewPanel != null) {
+      myUsagePreviewPanel.update();
+    }
   }
 
   private void checkNodeValidity(DefaultMutableTreeNode node) {
@@ -691,16 +694,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private void updateLater() {
     myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(
-        new Runnable() {
-        public void run() {
-          if (myProject.isDisposed()) return;
+    myUpdateAlarm.addRequest(new Runnable() {
+      public void run() {
+        if (myProject.isDisposed()) return;
 
-          updateImmediately();
-        }
-      },
-      300
-    );
+        updateImmediately();
+      }
+    }, 300);
   }
 
   public void close() {

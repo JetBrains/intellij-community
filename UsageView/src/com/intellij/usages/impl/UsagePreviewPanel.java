@@ -28,15 +28,17 @@ import java.util.List;
  */
 public class UsagePreviewPanel extends JPanel implements Disposable {
   private Editor myEditor;
+  private final UsageViewImpl myUsageView;
 
   public UsagePreviewPanel(final JTree usageTree, final UsageViewImpl usageView) {
+    myUsageView = usageView;
     usageTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(final TreeSelectionEvent e) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             List<UsageInfo> infos = usageView.getSelectedUsageInfos();
             if (infos != null) {
-              resetEditor(infos);
+              resetEditor(infos, false);
             }
           }
         });
@@ -46,7 +48,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     setLayout(new BorderLayout());
   }
 
-  private void resetEditor(@NotNull final List<UsageInfo> infos) {
+  private void resetEditor(@NotNull final List<UsageInfo> infos, final boolean force) {
     PsiElement psiElement = infos.get(0).getElement();
     if (psiElement == null) return;
     PsiFile psiFile = psiElement.getContainingFile();
@@ -54,7 +56,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
 
     Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
     if (document == null) return;
-    if (myEditor == null || document != myEditor.getDocument()) {
+    if (force || myEditor == null || document != myEditor.getDocument()) {
       releaseEditor();
       removeAll();
       myEditor = createEditor(psiFile, document);
@@ -121,6 +123,13 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     if (myEditor != null) {
       EditorFactory.getInstance().releaseEditor(myEditor);
       myEditor = null;
+    }
+  }
+
+  public void update() {
+    List<UsageInfo> infos = myUsageView.getSelectedUsageInfos();
+    if (infos != null) {
+      resetEditor(infos, true);
     }
   }
 }

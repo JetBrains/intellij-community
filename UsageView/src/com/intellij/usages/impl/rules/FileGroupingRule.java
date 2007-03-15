@@ -53,7 +53,7 @@ public class FileGroupingRule implements UsageGroupingRule {
   protected static class FileUsageGroup implements UsageGroup, TypeSafeDataProvider {
     private final Project myProject;
     private final VirtualFile myFile;
-    private final String myPresentableName;
+    private String myPresentableName;
     private Icon myIcon;
 
     public FileUsageGroup(Project project, VirtualFile file) {
@@ -70,6 +70,7 @@ public class FileGroupingRule implements UsageGroupingRule {
     public void update() {
       if (isValid()) {
         myIcon = getIconImpl();
+        myPresentableName = myFile.getPresentableName();
       }
     }
 
