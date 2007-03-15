@@ -58,4 +58,5 @@ public interface CheckinEnvironment {
   List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files);
   List<VcsException> rollbackMissingFileDeletion(List<FilePath> files);
   List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files);
+  List<VcsException> rollbackModifiedWithoutCheckout(List<VirtualFile> files);
 }

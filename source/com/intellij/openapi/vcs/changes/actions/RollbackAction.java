@@ -140,35 +140,23 @@ public class RollbackAction extends AnAction {
       return;
     }
     final List<VcsException> exceptions = new ArrayList<VcsException>();
-    EditAction.editFiles(project, modifiedWithoutEditing, exceptions);
-    if (exceptions.size() == 0) {
-      final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-      changeListManager.ensureUpToDate(true);
-      List<Change> changesToRollback = new ArrayList<Change>();
-      for(VirtualFile virtualFile: modifiedWithoutEditing) {
-        final Change change = changeListManager.getChange(virtualFile);
-        if (change != null) {
-          changesToRollback.add(change);
+    ChangesUtil.processVirtualFilesByVcs(project, modifiedWithoutEditing, new ChangesUtil.PerVcsProcessor<VirtualFile>() {
+      public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
+        final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
+        if (checkinEnvironment != null) {
+          exceptions.addAll(checkinEnvironment.rollbackModifiedWithoutCheckout(items));
         }
       }
-      if (changesToRollback.size() > 0) {
-        ChangesUtil.processChangesByVcs(project, changesToRollback, new ChangesUtil.PerVcsProcessor<Change>() {
-          public void process(final AbstractVcs vcs, final List<Change> items) {
-            final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
-            if (checkinEnvironment != null) {
-              checkinEnvironment.rollbackChanges(items);
-            }
-          }
-        });
-        VirtualFileManager.getInstance().refresh(true, new Runnable() {
-          public void run() {
-            for(VirtualFile virtualFile: modifiedWithoutEditing) {
-              VcsDirtyScopeManager.getInstance(project).fileDirty(virtualFile);
-              FileStatusManager.getInstance(project).fileStatusChanged(virtualFile);
-            }
-          }
-        });
-      }
+    });
+    if (!exceptions.isEmpty()) {
+      AbstractVcsHelper.getInstance(project).showErrors(exceptions, VcsBundle.message("rollback.modified.without.checkout.error.tab"));
     }
+    VirtualFileManager.getInstance().refresh(true, new Runnable() {
+      public void run() {
+        for(VirtualFile virtualFile: modifiedWithoutEditing) {
+          VcsDirtyScopeManager.getInstance(project).fileDirty(virtualFile);
+        }
+      }
+    });
   }
 }

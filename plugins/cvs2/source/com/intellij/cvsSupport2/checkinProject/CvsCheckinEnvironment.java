@@ -166,4 +166,8 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
     return Collections.emptyList();
   }
+
+  public List<VcsException> rollbackModifiedWithoutCheckout(final List<VirtualFile> files) {
+    throw new UnsupportedOperationException();
+  }
 }
