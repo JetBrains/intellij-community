@@ -388,6 +388,10 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return exceptions;
   }
 
+  public List<VcsException> rollbackModifiedWithoutCheckout(final List<VirtualFile> files) {
+    throw new UnsupportedOperationException();
+  }
+
   private class KeepLocksComponent implements RefreshableOnComponent {
     private JCheckBox myKeepLocksBox;
     private boolean myIsKeepLocks;
