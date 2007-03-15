@@ -932,9 +932,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private static Navigatable getNavigatableForNode(DefaultMutableTreeNode node) {
-    if (node == null) {
-      return null;
-    }
     Object userObject = node.getUserObject();
     if (userObject instanceof Navigatable) {
       final Navigatable navigatable = (Navigatable)userObject;
@@ -972,7 +969,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       mySupport = new OccurenceNavigatorSupport(tree) {
         protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
           if (node.getChildCount() > 0) return null;
-          if (!((Node)node).isValid()) return null;
+          if (node instanceof Node && !((Node)node).isValid()) return null;
           return getNavigatableForNode(node);
         }
 
