@@ -210,7 +210,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     }
   }
 
-  private class MyChangeListListener implements ChangeListListener {
+  private class MyChangeListListener extends ChangeListAdapter {
     public void changeListAdded(ChangeList list) {
       Runnable runnable = new Runnable() {
         public void run() {
@@ -225,24 +225,6 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
       else {
         ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(MultipleChangeListBrowser.this));
       }
-    }
-
-    public void changeListRemoved(ChangeList list) {
-    }
-
-    public void changeListChanged(ChangeList list) {
-    }
-
-    public void changeListRenamed(ChangeList list, String oldName) {
-    }
-
-    public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
-    }
-
-    public void defaultListChanged(ChangeList newDefaultList) {
-    }
-
-    public void changeListUpdateDone() {
     }
   }
 

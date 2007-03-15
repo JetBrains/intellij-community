@@ -25,7 +25,6 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -54,7 +53,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       }
     });
 
-    changeListManager.addChangeListListener(new ChangeListListener() {
+    changeListManager.addChangeListListener(new ChangeListAdapter() {
       public void changeListAdded(ChangeList list) {
         fileStatusesChanged();
       }
@@ -64,17 +63,6 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       }
 
       public void changeListChanged(ChangeList list) {
-        fileStatusesChanged();
-      }
-
-      public void changeListRenamed(ChangeList list, String oldName) {
-      }
-
-      public void changesMoved(Collection<Change> change, ChangeList fromList, ChangeList toList) {
-        // Moving a change should NOT cause file status invalidation
-      }
-
-      public void defaultListChanged(ChangeList newDefaultList) {
         fileStatusesChanged();
       }
 

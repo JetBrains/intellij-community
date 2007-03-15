@@ -218,7 +218,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     }
   }
 
-  private class MyChangeListListener implements ChangeListListener {
+  private class MyChangeListListener extends ChangeListAdapter {
 
     public void changeListAdded(ChangeList list) {
       scheduleRefresh();
@@ -226,10 +226,6 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
 
     public void changeListRemoved(ChangeList list) {
       scheduleRefresh();
-    }
-
-    public void changeListChanged(ChangeList list) {
-      //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public void changeListRenamed(ChangeList list, String oldName) {
