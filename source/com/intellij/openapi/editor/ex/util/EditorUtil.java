@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.IterationState;
 
@@ -157,30 +158,8 @@ public class EditorUtil {
       return offset - start + shift;
     }
 
-    EditorImpl editorImpl = (EditorImpl) editor;
-    IterationState state = new IterationState(editorImpl, start, false);
-    int fontType = state.getMergedAttributes().getFontType();
-    int column = 0;
-    int x = 0;
-    int spaceSize = editorImpl.getSpaceWidth(fontType);
-    for (int i = start; i < offset; i++) {
-      if (i >= state.getEndOffset()) {
-        state.advance();
-        fontType = state.getMergedAttributes().getFontType();
-      }
-
-      char c = text.charAt(i);
-      if (c == '\t') {
-        int prevX = x;
-        x = editorImpl.nextTabStop(x);
-        column += (x - prevX) / spaceSize;
-      } else {
-        x += editorImpl.charWidth(c, fontType);
-        column++;
-      }
-    }
-
-    return column;
+    EditorEx editorImpl = (EditorEx) editor;
+    return editorImpl.calcColumnNumber(text, start, offset, tabSize);
   }
 }
 

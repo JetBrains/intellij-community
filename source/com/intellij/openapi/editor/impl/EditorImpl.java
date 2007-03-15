@@ -3977,4 +3977,31 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public EditorGutter getGutter() {
     return getGutterComponentEx();
   }
+
+  public int calcColumnNumber(CharSequence text, int start, int offset, int tabSize) {
+    IterationState state = new IterationState(this, start, false);
+    int fontType = state.getMergedAttributes().getFontType();
+    int column = 0;
+    int x = 0;
+    int spaceSize = getSpaceWidth(fontType);
+    for (int i = start; i < offset; i++) {
+      if (i >= state.getEndOffset()) {
+        state.advance();
+        fontType = state.getMergedAttributes().getFontType();
+      }
+
+      char c = text.charAt(i);
+      if (c == '\t') {
+        int prevX = x;
+        x = nextTabStop(x);
+        column += (x - prevX) / spaceSize;
+      } else {
+        x += charWidth(c, fontType);
+        column++;
+      }
+    }
+
+    return column;
+  }
+
 }

@@ -118,7 +118,7 @@ public class EditorDelegate implements EditorEx, UserDataHolderEx {
     return myDelegate.offsetToLogicalPosition(offsetInParent);
   }
 
-  public void disposeModel() {
+  private void disposeModel() {
     assert !myDisposed;
     myCaretModelDelegate.disposeModel();
 
@@ -524,6 +524,7 @@ public class EditorDelegate implements EditorEx, UserDataHolderEx {
     myDelegate.putUserData(key, value);
   }
 
+  @NotNull
   public <T> T putUserDataIfAbsent(@NotNull final Key<T> key, @NotNull final T value) {
     return myDelegate.putUserDataIfAbsent(key, value);
   }
@@ -547,5 +548,12 @@ public class EditorDelegate implements EditorEx, UserDataHolderEx {
 
   public Editor getDelegate() {
     return myDelegate;
+  }
+
+  public int calcColumnNumber(final CharSequence text, final int start, final int offset, final int tabSize) {
+    String hostText = getDocument().getPrefix() + text + getDocument().getSuffix();
+    int hostStart = myDocument.injectedToHost(start);
+    int hostOffset = myDocument.injectedToHost(offset);
+    return myDelegate.calcColumnNumber(hostText, hostStart, hostOffset, tabSize);
   }
 }

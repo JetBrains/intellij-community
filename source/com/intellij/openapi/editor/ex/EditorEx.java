@@ -100,4 +100,6 @@ public interface EditorEx extends Editor {
   void setEmbeddedIntoDialogWrapper(boolean b);
 
   VirtualFile getVirtualFile();
+
+  int calcColumnNumber(CharSequence text, int start, int offset, int tabSize);
 }
