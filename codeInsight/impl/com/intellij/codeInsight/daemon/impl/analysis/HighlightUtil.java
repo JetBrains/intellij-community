@@ -575,12 +575,16 @@ public class HighlightUtil {
   static HighlightInfo checkVariableAlreadyDefined(PsiVariable variable) {
     boolean isIncorrect = false;
     PsiIdentifier identifier = variable.getNameIdentifier();
-    String name = identifier.getText();
+    String name = variable.getName();
     if (variable instanceof PsiLocalVariable ||
         variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiCatchSection ||
         variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement) {
       PsiElement scope = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class);
-      VariablesNotProcessor proc = new VariablesNotProcessor(variable, false);
+      VariablesNotProcessor proc = new VariablesNotProcessor(variable, false){
+        protected boolean check(final PsiVariable var, final PsiSubstitutor substitutor) {
+          return (var instanceof PsiLocalVariable || var instanceof PsiParameter) && super.check(var, substitutor);
+        }
+      };
       PsiScopesUtil.treeWalkUp(proc, identifier, scope);
       if (proc.size() > 0) {
         isIncorrect = true;
@@ -1850,13 +1854,15 @@ public class HighlightUtil {
             QuickFixAction.registerQuickFixAction(info, fixRange, new CreateParameterFromUsageFix(refExpr), null, null);
           }
         }
-        QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));
         QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageFix(ref, CreateClassKind.INTERFACE));
         QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
         QuickFixAction.registerQuickFixAction(info, new CreateInnerClassFromUsageFix(ref, CreateClassKind.CLASS));
         PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
         if (parent instanceof PsiNewExpression) {
           QuickFixAction.registerQuickFixAction(info, new CreateClassFromNewFix((PsiNewExpression)parent));
+        }
+        else {
+          QuickFixAction.registerQuickFixAction(info, new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));
         }
         return info;
       }
