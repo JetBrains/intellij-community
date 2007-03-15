@@ -126,8 +126,9 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
     }
   }
 
-  @Override
+  @Override @Nullable
   public JComponent getPreferredFocusedComponent() {
-    return getRootPane().getDefaultButton();
+    final JRootPane pane = getRootPane();
+    return pane != null ? pane.getDefaultButton() : null;
   }
 }
