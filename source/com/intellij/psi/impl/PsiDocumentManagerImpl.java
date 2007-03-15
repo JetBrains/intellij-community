@@ -173,8 +173,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   public void commitDocument(final Document doc) {
     final Document document = doc instanceof DocumentRange ? ((DocumentRange)doc).getDelegate() : doc;
-    doPostponedOperationsAndUnblockDocument(document);
-
     if (!isUncommited(document)) return;
 
     ApplicationManager.getApplication().runWriteAction(
