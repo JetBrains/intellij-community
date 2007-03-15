@@ -4,6 +4,7 @@ import com.intellij.AppTopics;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -281,13 +283,13 @@ final class TextEditorComponent extends JPanel implements DataProvider{
       PsiFile psiFile = (PsiFile)getData(AnActionEvent.injectedId(DataConstants.PSI_FILE));
       Editor editor = (Editor)getData(AnActionEvent.injectedId(DataConstants.EDITOR));
       if (psiFile == null || editor == null) return null;
-      return PsiUtil.getLanguageAtOffset(psiFile, editor.getCaretModel().getOffset());
+      return getLanguageAtCurrentPositionInEditor(editor, psiFile);
     }
     if (DataConstants.LANGUAGE.equals(dataId)) {
       final Editor editor = myEditor;
       final PsiFile psiFile = getPsiFile();
       if (psiFile == null) return null;
-      return PsiUtil.getLanguageAtOffset(psiFile, editor.getCaretModel().getOffset());
+      return getLanguageAtCurrentPositionInEditor(editor, psiFile);
     }
     if (dataId.equals(AnActionEvent.injectedId(DataConstants.VIRTUAL_FILE))) {
       PsiFile psiFile = (PsiFile)getData(AnActionEvent.injectedId(DataConstants.PSI_FILE));
@@ -329,6 +331,17 @@ final class TextEditorComponent extends JPanel implements DataProvider{
       return null;
     }
     return null;
+  }
+
+  private static Language getLanguageAtCurrentPositionInEditor(final Editor editor, final PsiFile psiFile) {
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    int caretOffset = editor.getCaretModel().getOffset();
+    int mostProbablyCorrectLanguageOffset = caretOffset == selectionModel.getSelectionStart() ||
+                                            caretOffset == selectionModel.getSelectionEnd()
+                                            ? selectionModel.getSelectionStart()
+                                            : caretOffset;
+
+    return PsiUtil.getLanguageAtOffset(psiFile, mostProbablyCorrectLanguageOffset);
   }
 
   private Object getPsiElementIn(final Editor editor) {
