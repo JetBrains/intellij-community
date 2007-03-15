@@ -6,6 +6,7 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.MenuDragMouseEvent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.EventListener;
@@ -189,7 +190,44 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
 
   private MouseEvent convertEvent(final MouseEvent e, final Component target) {
     final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), target);
-    return new MouseEvent(target, e.getID(), e.getWhen(), e.getModifiersEx(), point.x, point.y, e.getClickCount(), e.isPopupTrigger(), e.getButton());
+    if (e instanceof MouseWheelEvent) {
+      final MouseWheelEvent mwe = (MouseWheelEvent)e;
+      return new MouseWheelEvent(target,
+                                 mwe.getID(),
+                                 mwe.getWhen(),
+                                 mwe.getModifiersEx(),
+                                 point.x,
+                                 point.y,
+                                 mwe.getClickCount(),
+                                 mwe.isPopupTrigger(),
+                                 mwe.getScrollType(),
+                                 mwe.getScrollAmount(),
+                                 mwe.getWheelRotation());
+    }
+    else if (e instanceof MenuDragMouseEvent) {
+      final MenuDragMouseEvent de = (MenuDragMouseEvent)e;
+      return new MenuDragMouseEvent(target,
+                            de.getID(),
+                            de.getWhen(),
+                            de.getModifiersEx(),
+                            point.x,
+                            point.y,
+                            e.getClickCount(),
+                            e.isPopupTrigger(),
+                            de.getPath(),
+                            de.getMenuSelectionManager());
+
+    } else {
+      return new MouseEvent(target,
+                            e.getID(),
+                            e.getWhen(),
+                            e.getModifiersEx(),
+                            point.x,
+                            point.y,
+                            e.getClickCount(),
+                            e.isPopupTrigger(),
+                            e.getButton());
+    }
   }
 
   private static @Nullable Container getParentOf(final Component actualTarget) {
