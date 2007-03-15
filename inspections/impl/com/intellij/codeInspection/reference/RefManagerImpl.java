@@ -354,7 +354,11 @@ public class RefManagerImpl extends RefManager {
             if (listOwner != null){
               final RefElementImpl element = (RefElementImpl)getReference(listOwner);
               if (element != null) {
-                element.addSuppression(dataElements[0].getText());
+                String suppressions = "";
+                for (PsiElement dataElement : dataElements) {
+                  suppressions += "," + dataElement.getText();
+                }
+                element.addSuppression(suppressions);
               }
             }
           }

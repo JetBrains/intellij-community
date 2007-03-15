@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -420,7 +421,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   protected abstract void initialize();
 
   public void addSuppression(final String text) {
-    mySuppressions = text.split(", ");
+    mySuppressions = text.split("[, ]");    
   }
 
   public boolean isSuppressed(final String toolId) {
