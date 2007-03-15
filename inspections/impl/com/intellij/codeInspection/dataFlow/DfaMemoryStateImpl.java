@@ -213,7 +213,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public void push(DfaValue value) {
-    myStack.push(value);
+    myStack.push(value != null ? value : DfaUnknownValue.getInstance());
   }
 
   public int popOffset() {
@@ -275,7 +275,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @NotNull
-  private DfaValue[] getEqClassesFor(DfaValue dfaValue) {
+  private DfaValue[] getEqClassesFor(@NotNull DfaValue dfaValue) {
     int index = getEqClassIndex(dfaValue);
     List<DfaValue> result = new ArrayList<DfaValue>();
     SortedIntSet set = index == -1 ? null : myEqClasses.get(index);
@@ -289,7 +289,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return result.toArray(new DfaValue[result.size()]);
   }
 
-  public  boolean canBeNaN(DfaValue dfaValue) {
+  public  boolean canBeNaN(@NotNull DfaValue dfaValue) {
     DfaValue[] eqClasses = getEqClassesFor(dfaValue);
     for (DfaValue eqClass : eqClasses) {
       if (isNaN(eqClass)) return true;
