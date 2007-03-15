@@ -73,7 +73,11 @@ public class RollbackChangesDialog extends DialogWrapper {
 
     Set<AbstractVcs> affectedVcs = new HashSet<AbstractVcs>();
     for(Change c: changes) {
-      affectedVcs.add(ChangesUtil.getVcsForChange(c, project));
+      final AbstractVcs vcs = ChangesUtil.getVcsForChange(c, project);
+      if (vcs != null) {
+        // vcs may be null if we have turned off VCS integration and are in process of refreshing
+        affectedVcs.add(vcs);
+      }
     }
     if (affectedVcs.size() == 1) {
       AbstractVcs vcs = (AbstractVcs) affectedVcs.toArray() [0];
