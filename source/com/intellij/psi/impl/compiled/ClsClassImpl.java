@@ -90,10 +90,6 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     }
   }
 
-  public PsiDirectory getContainingPackage() {
-    return getContainingFile().getContainingDirectory();
-  }
-
   public PsiElement getParent() {
     if (myParent == null) {
         long repositoryId = getRepositoryId();
@@ -819,7 +815,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     return name.substring(0, i) + ".java";
   }
 
-  public String getSignatureAttribute() throws ClsFormatException {
+  private String getSignatureAttribute() throws ClsFormatException {
     return getClassFileData().readUtf8Attribute(readClassAttribute("Signature"));
   }
 
@@ -846,24 +842,24 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public boolean isInterface() {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        return (getAccessFlags() & ClsUtil.ACC_INTERFACE) != 0;
-      }
-      else {
-        return getRepositoryManager().getClassView().isInterface(repositoryId);
-      }
+    long repositoryId = getRepositoryId();
+    if (repositoryId < 0) {
+      return (getAccessFlags() & ClsUtil.ACC_INTERFACE) != 0;
     }
+    else {
+      return getRepositoryManager().getClassView().isInterface(repositoryId);
+    }
+  }
 
   public boolean isAnnotationType() {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        return (getAccessFlags() & ClsUtil.ACC_ANNOTATION) != 0;
-      }
-      else {
-        return getRepositoryManager().getClassView().isAnnotationType(repositoryId);
-      }
+    long repositoryId = getRepositoryId();
+    if (repositoryId < 0) {
+      return (getAccessFlags() & ClsUtil.ACC_ANNOTATION) != 0;
     }
+    else {
+      return getRepositoryManager().getClassView().isAnnotationType(repositoryId);
+    }
+  }
 
   public boolean isEnum() {
     PsiField[] fields = getFields();
