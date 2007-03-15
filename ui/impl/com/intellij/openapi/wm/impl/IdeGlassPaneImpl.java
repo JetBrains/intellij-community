@@ -133,7 +133,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
 
     if (isEndComponent(actualTarget)) return false;
 
-    MouseEvent targetEvent = SwingUtilities.convertMouseEvent(originalEvent.getComponent(), originalEvent, actualTarget);
+    MouseEvent targetEvent = convertEvent(originalEvent, actualTarget);
     for (EventListener eachListener : myMouseListeners) {
       if (isMotion && eachListener instanceof MouseMotionListener) {
         fireMouseMotion((MouseMotionListener)eachListener, targetEvent);
@@ -151,7 +151,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
     Set<Component> processed = new HashSet<Component>();
     while (true) {
       if (actualTarget == null || actualContainer == null) break;
-      targetEvent = SwingUtilities.convertMouseEvent(originalEvent.getComponent(), originalEvent, actualTarget);
+      targetEvent = convertEvent(originalEvent, actualTarget);
 
       actualTarget.dispatchEvent(targetEvent);
       processed.add(actualTarget);
@@ -185,6 +185,11 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
     }
 
     return false;
+  }
+
+  private MouseEvent convertEvent(final MouseEvent e, final Component target) {
+    final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), target);
+    return new MouseEvent(target, e.getID(), e.getWhen(), e.getModifiersEx(), point.x, point.y, e.getClickCount(), e.isPopupTrigger(), e.getButton());
   }
 
   private static @Nullable Container getParentOf(final Component actualTarget) {
