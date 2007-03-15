@@ -943,7 +943,7 @@ public class StringUtil {
       final String kbs = kbytes / 100 + "." + kbytes % 100;
       return CommonBundle.message("file.size.format.kbytes", kbs);
     }
-    long mbytes = fileSize * 100 / 1024;
+    long mbytes = fileSize * 100 / 1024 / 1024;
     final String size = mbytes / 100 + "." + mbytes % 100;
     return CommonBundle.message("file.size.format.mbytes", size);
   }
