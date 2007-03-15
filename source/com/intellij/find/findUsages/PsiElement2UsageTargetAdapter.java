@@ -63,7 +63,7 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget, TypeSafeDataP
   }
 
   private NavigationItem getNavigationItem() {
-    return (NavigationItem)myPointer.getElement();
+    return (NavigationItem)getElement();
   }
 
   public FileStatus getFileStatus() {
@@ -75,7 +75,7 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget, TypeSafeDataP
   }
 
   public void findUsages() {
-    PsiElement element = myPointer.getElement();
+    PsiElement element = getElement();
     FindManager.getInstance(element.getProject()).findUsages(element);
   }
 
@@ -84,22 +84,22 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget, TypeSafeDataP
   }
 
   public void findUsagesInEditor(FileEditor editor) {
-    PsiElement element = myPointer.getElement();
+    PsiElement element = getElement();
     FindManager.getInstance(element.getProject()).findUsagesInEditor(element, editor);
   }
 
   public boolean isValid() {
-    return myPointer.getElement() != null;
+    return getElement() != null;
   }
 
   public boolean isReadOnly() {
-    return isValid() && !myPointer.getElement().isWritable();
+    return isValid() && !getElement().isWritable();
   }
 
   public VirtualFile[] getFiles() {
     if (!isValid()) return null;
 
-    final PsiFile psiFile = myPointer.getElement().getContainingFile();
+    final PsiFile psiFile = getElement().getContainingFile();
     if (psiFile == null) return null;
 
     final VirtualFile virtualFile = psiFile.getVirtualFile();
@@ -121,7 +121,10 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget, TypeSafeDataP
 
   public void calcData(final DataKey key, final DataSink sink) {
     if (key == UsageView.USAGE_INFO_KEY) {
-      sink.put(UsageView.USAGE_INFO_KEY, new UsageInfo(getElement()));
+      PsiElement element = getElement();
+      if (element != null) {
+        sink.put(UsageView.USAGE_INFO_KEY, new UsageInfo(element));
+      }
     }
   }
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class UsageInfo {
   public static final UsageInfo[] EMPTY_ARRAY = new UsageInfo[0];
@@ -34,7 +35,7 @@ public class UsageInfo {
 
   public final boolean isNonCodeUsage;
 
-  public UsageInfo(PsiElement element, int startOffset, int endOffset, boolean isNonCodeUsage) {
+  public UsageInfo(@NotNull PsiElement element, int startOffset, int endOffset, boolean isNonCodeUsage) {
     LOG.assertTrue(element.isValid());
     LOG.assertTrue(element == element.getNavigationElement());
     mySmartPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
@@ -43,7 +44,7 @@ public class UsageInfo {
     this.isNonCodeUsage = isNonCodeUsage;
   }
 
-  public UsageInfo(PsiElement element, boolean isNonCodeUsage) {
+  public UsageInfo(@NotNull PsiElement element, boolean isNonCodeUsage) {
     LOG.assertTrue(element.isValid());
     element = element.getNavigationElement();
     mySmartPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
@@ -58,19 +59,19 @@ public class UsageInfo {
     this.isNonCodeUsage = isNonCodeUsage;
   }
 
-  public UsageInfo(PsiElement element, int startOffset, int endOffset) {
+  public UsageInfo(@NotNull PsiElement element, int startOffset, int endOffset) {
     this(element, startOffset, endOffset, false);
   }
 
-  public UsageInfo(PsiReference reference) {
+  public UsageInfo(@NotNull PsiReference reference) {
     this(reference.getElement(), reference.getRangeInElement().getStartOffset(), reference.getRangeInElement().getEndOffset());
   }
 
-  public UsageInfo(PsiJavaCodeReferenceElement reference) {
+  public UsageInfo(@NotNull PsiJavaCodeReferenceElement reference) {
     this((PsiElement)reference);
   }
 
-  public UsageInfo(PsiElement element) {
+  public UsageInfo(@NotNull PsiElement element) {
     this(element, false);
   }
 
