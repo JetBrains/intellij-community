@@ -54,7 +54,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
   public void fillGroups(UpdatedFiles updatedFiles) {
   }
 
-  public UpdateSession updateDirectories(FilePath[] contentRoots,
+  public UpdateSession updateDirectories(final FilePath[] contentRoots,
                                          final UpdatedFiles updatedFiles,
                                          final ProgressIndicator progressIndicator)
     throws ProcessCanceledException {
@@ -80,6 +80,10 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
     final Collection<String> conflictedFiles = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
     return new UpdateSessionAdapter(exceptions, false) {
       public void onRefreshFilesCompleted() {
+        for(FilePath contentRoot: contentRoots) {
+          // update switched/ignored status of directories
+          VcsDirtyScopeManager.getInstance(myVcs.getProject()).fileDirty(contentRoot);
+        }
         if (conflictedFiles != null && !conflictedFiles.isEmpty() && !isDryRun()) {
           List<VirtualFile> vfFiles = new ArrayList<VirtualFile>();
           for (final String conflictedFile : conflictedFiles) {
