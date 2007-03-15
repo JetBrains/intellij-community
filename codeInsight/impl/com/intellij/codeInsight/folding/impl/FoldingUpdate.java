@@ -132,7 +132,7 @@ class FoldingUpdate {
         info.addRegion(region, element);
 
         if (myApplyDefaultState) {
-          region.setExpanded(!FoldingPolicy.isCollapseByDefault(element));
+          region.setExpanded(!FoldingPolicy.isCollapseByDefault(element) || FoldingUtil.caretInsideElement(myEditor, element));
         }
         else {
           Boolean status = rangeToExpandStatusMap.get(range);

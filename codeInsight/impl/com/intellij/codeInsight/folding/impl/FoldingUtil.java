@@ -67,4 +67,8 @@ class FoldingUtil {
 
     return regions;
   }
+
+  public static boolean caretInsideElement(final Editor editor, final PsiElement element) {
+    return element.getTextRange().contains(editor.getCaretModel().getOffset());
+  }
 }
