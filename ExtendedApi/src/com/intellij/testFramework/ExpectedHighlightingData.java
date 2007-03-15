@@ -8,17 +8,19 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 
+import java.awt.*;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.awt.*;
 
 public class ExpectedHighlightingData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.ExpectedHighlightingData");
@@ -193,8 +194,21 @@ public class ExpectedHighlightingData {
     return result;
   }
 
+  @NonNls
+  private String formatFileName(int line, int col) {
+    if (myFile == null) {
+      return "";
+    }
+    else {
+      final VirtualFile virtualFile = myFile.getVirtualFile();
+      if (virtualFile == null) {
+        return myFile.getName() + ": ";
+      }
+      return virtualFile.getPath() + " (" + line + "," + col + "): ";
+    }
+  }
+
   public void checkResult(Collection<HighlightInfo> infos, String text) {
-    String fileName = myFile == null ? "" : myFile.getName() + ": ";
     for (HighlightInfo info : infos) {
       if (!expectedInfosContainsInfo(info)) {
         final int startOffset = info.startOffset;
@@ -202,14 +216,15 @@ public class ExpectedHighlightingData {
         String s = text.substring(startOffset, endOffset);
         String desc = info.description;
 
-        int y1 = StringUtil.offsetToLineNumber(text, startOffset);
-        int y2 = StringUtil.offsetToLineNumber(text, endOffset);
-        int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
-        int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
+        int startLine = StringUtil.offsetToLineNumber(text, startOffset);
+        int endLine = StringUtil.offsetToLineNumber(text, endOffset);
+        int x1 = startOffset - StringUtil.lineColToOffset(text, startLine, 0);
+        int x2 = endOffset - StringUtil.lineColToOffset(text, endLine, 0);
 
-        Assert.fail(fileName + "Extra text fragment highlighted " +
-                          "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
-                          "(" + (x2 + 1) + ", " + (y2 + 1) + ")" +
+
+        Assert.fail(formatFileName(startLine, startOffset - x1) + "Extra text fragment highlighted " +
+                          "(" + (x1 + 1) + ", " + (startLine + 1) + ")" + "-" +
+                          "(" + (x2 + 1) + ", " + (endLine + 1) + ")" +
                           " :'" +
                           s +
                           "'" + (desc == null ? "" : " (" + desc + ")")
@@ -226,18 +241,17 @@ public class ExpectedHighlightingData {
           String s = text.substring(startOffset, endOffset);
           String desc = expectedInfo.description;
 
-          int y1 = StringUtil.offsetToLineNumber(text, startOffset);
-          int y2 = StringUtil.offsetToLineNumber(text, endOffset);
-          int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
-          int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
+          int startLine = StringUtil.offsetToLineNumber(text, startOffset);
+          int endLine = StringUtil.offsetToLineNumber(text, endOffset);
+          int x1 = startOffset - StringUtil.lineColToOffset(text, startLine, 0);
+          int x2 = endOffset - StringUtil.lineColToOffset(text, endLine, 0);
 
-          Assert.assertTrue(fileName + "Text fragment was not highlighted " +
-                            "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
-                            "(" + (x2 + 1) + ", " + (y2 + 1) + ")" +
+          Assert.fail(formatFileName(startLine, startOffset - x1) + "Text fragment was not highlighted " +
+                            "(" + (x1 + 1) + ", " + (startLine + 1) + ")" + "-" +
+                            "(" + (x2 + 1) + ", " + (endLine + 1) + ")" +
                             " :'" +
                             s +
-                            "'" + (desc == null ? "" : " (" + desc + ")"),
-                            false);
+                            "'" + (desc == null ? "" : " (" + desc + ")"));
         }
       }
     }

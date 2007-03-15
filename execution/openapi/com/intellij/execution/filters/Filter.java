@@ -16,6 +16,7 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Yura Cangea
@@ -54,5 +55,6 @@ public interface Filter {
    * @return
    *    <tt>null</tt>, if there was no match, otherwise, an instance of {@link Result}
    */
+  @Nullable
   Result applyFilter(String line, int entireLength);
 }

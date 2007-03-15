@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.TreeMap;
@@ -178,6 +179,7 @@ public class RegexpFilter implements Filter {
     return new Result(highlightStartOffset, highlightEndOffset, info);
   }
 
+  @Nullable
   protected HyperlinkInfo createOpenFileHyperlink(String fileName, final int line, final int column) {
     fileName = fileName.replace(File.separatorChar, '/');
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(fileName);
