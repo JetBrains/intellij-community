@@ -291,9 +291,15 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
     return myCvsAnnotationProvider;
   }
 
-  public FileAnnotation createAnnotation(File cvsLightweightFile, VirtualFile cvsVirtualFile, String revision, CvsEnvironment environment)
-    throws VcsException {
-    final AnnotateOperation annotateOperation = new AnnotateOperation(cvsLightweightFile, revision, environment);
+  public FileAnnotation createAnnotation(VirtualFile cvsVirtualFile, String revision, CvsEnvironment environment) throws VcsException {
+    // the VirtualFile has a full path if annotate is called from history (when we have a real file on disk),
+    // and has the path equal to a CVS module name if annotate is called from the CVS repository browser
+    // (when there's no real path)
+    File cvsFile = new File(cvsVirtualFile.getPath());
+    if (cvsFile.isAbsolute()) {
+      cvsFile = new File(CvsUtil.getModuleName(cvsVirtualFile));
+    }
+    final AnnotateOperation annotateOperation = new AnnotateOperation(cvsFile, revision, environment);
     CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(new CommandCvsHandler(CvsBundle.getAnnotateOperationName(), annotateOperation),
                                CvsOperationExecutorCallback.EMPTY);

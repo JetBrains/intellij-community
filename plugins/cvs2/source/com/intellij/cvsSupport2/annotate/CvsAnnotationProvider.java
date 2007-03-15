@@ -34,6 +34,8 @@ package com.intellij.cvsSupport2.annotate;
 import com.intellij.CvsBundle;
 import com.intellij.peer.PeerFactory;
 import com.intellij.cvsSupport2.CvsVcs2;
+import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
+import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
@@ -74,6 +76,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
   }
 
   public FileAnnotation annotate(VirtualFile file, VcsFileRevision revision) throws VcsException {
-    return null;
+    final CvsConnectionSettings settings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(file.getParent());
+    return CvsVcs2.getInstance(myProject).createAnnotation(file, revision.getRevisionNumber().asString(), settings);
   }
 }

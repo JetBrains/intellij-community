@@ -15,7 +15,6 @@ import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui.TagsPanel;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -214,17 +213,9 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
   public AnAction[] getAdditionalActions(final FileHistoryPanel panel) {
     return new AnAction[]{new AnAction(CvsBundle.message("annotate.action.name"), CvsBundle.message("annotate.action.description"), IconLoader.getIcon("/actions/annotate.png")) {
       public void update(AnActionEvent e) {
-        FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
-        if (filePath == null) {
-          e.getPresentation().setEnabled(false);
-          return;
-        }
-        VirtualFile vFile = filePath.getVirtualFile();
-        FileType fileType = vFile == null
-                            ? FileTypeManager.getInstance().getFileTypeByFileName(filePath.getName())
-                            : vFile.getFileType();
-        CvsFileRevision revision = (CvsFileRevision)e.getData(VcsDataKeys.VCS_FILE_REVISION);
         VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
+        CvsFileRevision revision = (CvsFileRevision)e.getData(VcsDataKeys.VCS_FILE_REVISION);
+        FileType fileType = revisionVirtualFile == null ? null : revisionVirtualFile.getFileType();
         e.getPresentation().setEnabled(revision != null &&
                                        revisionVirtualFile != null
                                        && !fileType.isBinary());
@@ -232,16 +223,10 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
 
 
       public void actionPerformed(AnActionEvent e) {
-        FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
         CvsFileRevision revision = (CvsFileRevision)e.getData(VcsDataKeys.VCS_FILE_REVISION);
         VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
         try {
-          final FileAnnotation annotation = CvsVcs2.getInstance(myProject)
-            .createAnnotation(CvsUtil.getCvsLightweightFileForFile(filePath.getIOFile()),
-                              revisionVirtualFile, revision.getRevisionNumber()
-              .asString(),
-                              CvsEntriesManager.getInstance()
-                                .getCvsConnectionSettingsFor(filePath.getVirtualFileParent()));
+          final FileAnnotation annotation = CvsVcs2.getInstance(myProject).getAnnotationProvider().annotate(revisionVirtualFile, revision);
           AbstractVcsHelper.getInstance(myProject).showAnnotation(annotation, revisionVirtualFile);
         }
         catch (VcsException e1) {

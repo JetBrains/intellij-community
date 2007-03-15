@@ -158,7 +158,7 @@ public class BrowserPanel extends JPanel implements DataProvider {
       VcsVirtualFile vcsVirtualFile = (VcsVirtualFile)getCvsVirtualFile();
       try {
         final FileAnnotation annotation = CvsVcs2.getInstance(myProject)
-            .createAnnotation(getCvsLightFile().getCvsFile(), vcsVirtualFile, vcsVirtualFile.getRevision(), myCvsRootConfiguration);
+            .createAnnotation(vcsVirtualFile, vcsVirtualFile.getRevision(), myCvsRootConfiguration);
         AbstractVcsHelper.getInstance(myProject).showAnnotation(annotation, vcsVirtualFile);
       }
       catch (VcsException e1) {
