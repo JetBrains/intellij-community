@@ -93,7 +93,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           highlightVisitors[i] = highlightVisitor.clone();
         }
       }
-      myProject.putUserData(HIGHLIGHT_VISITOR_THREADS_IN_USE, num + 1);
+      myProject.putUserData(HIGHLIGHT_VISITOR_THREADS_IN_USE, num.intValue() + 1);
     }
     for (final HighlightVisitor highlightVisitor : highlightVisitors) {
       highlightVisitor.init();
@@ -222,7 +222,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       PsiElement element = elements.get(i);
       progressManager.checkCanceled();
 
-      if (element != myFile && skipParentsSet.contains(element)) {
+      if (element != myFile && skipParentsSet.size() > 0 && element.getFirstChild() != null && skipParentsSet.remove(element)) {
         skipParentsSet.add(element.getParent());
         continue;
       }
