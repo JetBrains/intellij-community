@@ -35,8 +35,8 @@ public class AssignmentExpression implements Construction {
     if (ParserUtils.getToken(builder, ASSIGNMENTS)) {
       ParserUtils.getToken(builder, mNLS);
       parse(builder);
-      marker.done(ASSIGNMENT_EXXPRESSION);
-      return ASSIGNMENT_EXXPRESSION;
+      marker.done(ASSIGNMENT_EXPRESSION);
+      return ASSIGNMENT_EXPRESSION;
     } else {
       marker.drop();
     }

@@ -38,8 +38,20 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
 
   // Expression statements
   GroovyElementType EXPRESSION_STATEMENT = new GroovyElementType("Expression statement");
-  GroovyElementType ASSIGNMENT_EXXPRESSION = new GroovyElementType("Assignment expressions");
-  GroovyElementType CONDITIONAL_EXXPRESSION = new GroovyElementType("Conditional expressions");
+  GroovyElementType CONDITIONAL_EXPRESSION = new GroovyElementType("Conditional expression");
+  GroovyElementType ASSIGNMENT_EXPRESSION = new GroovyElementType("Assignment expression");
+  GroovyElementType LOGICAL_OR_EXPRESSION = new GroovyElementType("Logical OR expression");
+  GroovyElementType LOGICAL_AND_EXPRESSION = new GroovyElementType("Logical AND expression");
+  GroovyElementType INCLUSIVE_OR_EXPRESSION = new GroovyElementType("Inclusive OR expression");
+  GroovyElementType EXCLUSIVE_OR_EXPRESSION = new GroovyElementType("Exclusive OR expression");
+  GroovyElementType AND_EXPRESSION = new GroovyElementType("AND expression");
+  GroovyElementType REGEX_EXPRESSION = new GroovyElementType("Regex expression");
+  GroovyElementType EQUALITY_EXPRESSION = new GroovyElementType("Equality expression");
+  GroovyElementType RELATIONAL_EXPRESSION = new GroovyElementType("Relational expression");
+
+  GroovyElementType POSTFIX_EXPRESSION = new GroovyElementType("Postfix expression");
+
+
 
 
   GroovyElementType ADDITIVE_EXXPRESSION = new GroovyElementType("Additive expressions");

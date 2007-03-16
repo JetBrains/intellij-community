@@ -1,14 +1,16 @@
 package org.jetbrains.plugins.groovy.lang.parser;
 
-import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportSelector;
-import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportEnd;
-import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportQualId;
-import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging.GrPackageDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrIdentifier;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.AdditiveExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportStatementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportSelectorImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportEndImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportQualIdImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging.GrPackageDefinitionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrIdentifierImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrAssignmentExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -31,20 +33,26 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     IElementType elem = node.getElementType();
 
     //Identifiers
-    if (elem.equals(IDENTIFIER)) return new GrIdentifier(node);
+    if (elem.equals(IDENTIFIER)) return new GrIdentifierImpl(node);
 
     // Imports
-    if (elem.equals(IMPORT_STATEMENT)) return new GrImportStatement(node);
-    if (elem.equals(IMPORT_SELECTOR)) return new GrImportSelector(node);
-    if (elem.equals(IMPORT_END)) return new GrImportEnd(node);
-    if (elem.equals(IDENITFIER_STAR)) return new GrImportQualId(node);
+    if (elem.equals(IMPORT_STATEMENT)) return new GrImportStatementImpl(node);
+    if (elem.equals(IMPORT_SELECTOR)) return new GrImportSelectorImpl(node);
+    if (elem.equals(IMPORT_END)) return new GrImportEndImpl(node);
+    if (elem.equals(IDENITFIER_STAR)) return new GrImportQualIdImpl(node);
 
     // Packaging
-    if (elem.equals(PACKAGE_DEFINITION)) return new GrPackageDefinition(node);
+    if (elem.equals(PACKAGE_DEFINITION)) return new GrPackageDefinitionImpl(node);
 
     //statements
-    if (elem.equals(ADDITIVE_EXXPRESSION)) return new GrAdditiveExpression(node);
-    if (elem.equals(ASSIGNMENT_EXXPRESSION)) return new GrAssignmentExpression(node);
+    if (elem.equals(ADDITIVE_EXXPRESSION)) return new GrAdditiveExpressionImpl(node);
+    if (elem.equals(LOGICAL_OR_EXPRESSION)) return new GrLogicalOrExprImpl(node);
+    if (elem.equals(LOGICAL_AND_EXPRESSION)) return new GrLogicalAndExprImpl(node);
+    if (elem.equals(EXCLUSIVE_OR_EXPRESSION)) return new GrExclusiveOrExprImpl(node);
+    if (elem.equals(INCLUSIVE_OR_EXPRESSION)) return new GrInclusiveOrExprImpl(node);
+    if (elem.equals(AND_EXPRESSION)) return new GrAndExprImpl(node);
+    if (elem.equals(REGEX_EXPRESSION)) return new GrRegexExprImpl(node);
+    if (elem.equals(EQUALITY_EXPRESSION)) return new GrEqualityExprImpl(node);
 
 
 //    if (elem.equals(DECLARATION)) return new GrDeclarationImpl(node);
