@@ -11,13 +11,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -41,6 +40,7 @@ public class FileReference
   private TextRange myRange;
   private final String myText;
   @NotNull private final FileReferenceSet myFileReferenceSet;
+  private ResolveResult[] myCachedResult;
 
   public FileReference(final @NotNull FileReferenceSet fileReferenceSet, TextRange range, int index, String text) {
     myFileReferenceSet = fileReferenceSet;
@@ -65,11 +65,10 @@ public class FileReference
 
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
-    final PsiManager manager = getElement().getManager();
-    if (manager instanceof PsiManagerImpl) {
-      return ((PsiManagerImpl)manager).getResolveCache().resolveWithCaching(this, MyResolver.INSTANCE, false, false);
+    if (myCachedResult == null) {
+      myCachedResult = innerResolve();
     }
-    return innerResolve();
+    return myCachedResult;
   }
 
   protected ResolveResult[] innerResolve() {
@@ -296,10 +295,7 @@ public class FileReference
   }
 
   public void clearResolveCaches() {
-    final PsiManager manager = getElement().getManager();
-    if (manager instanceof PsiManagerImpl) {
-      ((PsiManagerImpl)manager).getResolveCache().clearResolveCaches(this);
-    }
+    myCachedResult = null;
   }
 
   public LocalQuickFix[] getQuickFixes() {
@@ -308,13 +304,5 @@ public class FileReference
       result.addAll(helper.registerFixes(null, this));
     }
     return result.toArray(new LocalQuickFix[result.size()]);
-  }
-
-  static class MyResolver implements ResolveCache.PolyVariantResolver {
-    static MyResolver INSTANCE = new MyResolver();
-
-    public ResolveResult[] resolve(PsiPolyVariantReference ref, boolean incompleteCode) {
-      return ((FileReference)ref).innerResolve();
-    }
   }
 }
