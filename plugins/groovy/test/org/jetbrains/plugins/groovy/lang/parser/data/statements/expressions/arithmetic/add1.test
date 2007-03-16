@@ -1,0 +1,9 @@
+27 + a
+-----
+Groovy script
+  Additive expression
+    PsiElement(number)('27')
+    PsiWhiteSpace(' ')
+    PsiElement(+)('+')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
