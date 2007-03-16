@@ -169,7 +169,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     if (debugProcess != null) {
       BuildNodeCommand command = getBuildNodeCommand(node);
       command.getNode().add(myNodeManager.createMessageNode(MessageDescriptor.EVALUATING));
-      debugProcess.getManagerThread().invokeLater(command);
+      debugProcess.getManagerThread().invokeLater(command, DebuggerManagerThreadImpl.MEDIUM_PRIORITY);
     }
   }
 
@@ -334,7 +334,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
     if(ApplicationManager.getApplication().isUnitTestMode() || debuggerSession.getState() == DebuggerSession.STATE_PAUSED) {
       showMessage(MessageDescriptor.EVALUATING);
-      context.getDebugProcess().getManagerThread().invokeLater(command);
+      context.getDebugProcess().getManagerThread().invokeLater(command, DebuggerManagerThreadImpl.MEDIUM_PRIORITY);
     }
     else {
       showMessage(context.getDebuggerSession().getStateDescription());
@@ -353,7 +353,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       public void threadAction() {
         getNodeFactory().setHistoryByContext(context);
       }
-    });
+    }, DebuggerManagerThreadImpl.MEDIUM_PRIORITY);
 
     build(context);
   }

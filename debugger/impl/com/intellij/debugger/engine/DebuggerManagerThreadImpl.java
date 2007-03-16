@@ -24,14 +24,15 @@ import com.sun.jdi.VMDisconnectedException;
  */
 public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerCommandImpl> implements DebuggerManagerThread {
   public static final int HIGH_PRIORITY = 0;
-  public static final int NORMAL_PRIORITY = 1;
+  public static final int MEDIUM_PRIORITY = 1;
+  public static final int NORMAL_PRIORITY = 2;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebuggerManagerThreadImpl");
   public static final int COMMAND_TIMEOUT = 3000;
 
   DebuggerManagerThreadImpl() {
     //noinspection HardCodedStringLiteral
-    super("DebuggerManagerThreadImpl", 2);
+    super("DebuggerManagerThreadImpl", 3);
   }
 
   public static DebuggerManagerThreadImpl createTestInstance() {

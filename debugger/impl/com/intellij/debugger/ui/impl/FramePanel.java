@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.impl;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.DebuggerActions;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.SuspendManagerUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -19,10 +20,10 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ui.JBComboBox;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.JBComboBox;
 import com.intellij.ui.PopupHandler;
 import com.sun.jdi.ObjectCollectedException;
 import org.jetbrains.annotations.NonNls;
@@ -174,15 +175,18 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
 
   private void selectFrame(StackFrameProxy frame) {
     final int count = myFramesList.getElementCount();
-    final StackFrameDescriptorImpl selectedValue = (StackFrameDescriptorImpl)myFramesList.getSelectedValue();
+    final Object selectedValue = myFramesList.getSelectedValue();
     final DefaultListModel model = myFramesList.getModel();
     for (int idx = 0; idx < count; idx++) {
-      StackFrameDescriptorImpl item = (StackFrameDescriptorImpl)model.getElementAt(idx);
-      if (frame.equals(item.getFrameProxy())) {
-        if (!item.equals(selectedValue)) {
-          myFramesList.setSelectedIndex(idx);
+      final Object elem = model.getElementAt(idx);
+      if (elem instanceof StackFrameDescriptorImpl) {
+        final StackFrameDescriptorImpl item = (StackFrameDescriptorImpl)elem;
+        if (frame.equals(item.getFrameProxy())) {
+          if (!item.equals(selectedValue)) {
+            myFramesList.setSelectedIndex(idx);
+          }
+          return;
         }
-        return;
       }
     }
   }
@@ -379,9 +383,12 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
       final DefaultListModel model = myFramesList.getModel();
       final int size = model.getSize();
       for (int i = 0; i < size; i++) {
-        final StackFrameDescriptorImpl descriptor = (StackFrameDescriptorImpl)model.getElementAt(i);
-        descriptor.setContext(evaluationContext);
-        descriptor.updateRepresentation(evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
+        final Object elem = model.getElementAt(i);
+        if (elem instanceof StackFrameDescriptorImpl) {
+          final StackFrameDescriptorImpl descriptor = (StackFrameDescriptorImpl)elem;
+          descriptor.setContext(evaluationContext);
+          descriptor.updateRepresentation(evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
+        }
       }
     }
 
@@ -399,19 +406,80 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     }
 
     public void contextAction() throws Exception {
-      final List<StackFrameDescriptorImpl> frameItems = getFrameList(myDebuggerContext.getThreadProxy());
+      final ThreadReferenceProxyImpl thread = myDebuggerContext.getThreadProxy();
+      try {
+        if(!getSuspendContext().getDebugProcess().getSuspendManager().isSuspended(thread)) {
+          return;
+        }
+      }
+      catch (ObjectCollectedException e) {
+        return;
+      }
+      
+      List<StackFrameProxyImpl> frames;
+      try {
+        frames = thread.frames();
+      }
+      catch (EvaluateException e) {
+        frames = Collections.emptyList();
+      }
+
+      final StackFrameProxyImpl contextFrame = myDebuggerContext.getFrameProxy();
+      final EvaluationContextImpl evaluationContext = myDebuggerContext.createEvaluationContext();
+      final DebuggerManagerThreadImpl managerThread = myDebuggerContext.getDebugProcess().getManagerThread();
+      final MethodsTracker tracker = new MethodsTracker();
+      final int totalFramesCount = frames.size();
+      int index = 0;
+      for (StackFrameProxyImpl stackFrameProxy : frames) {
+        managerThread.invokeLater(
+          new AppendFrameCommand(getSuspendContext(), stackFrameProxy, evaluationContext, tracker, index++, stackFrameProxy.equals(contextFrame), totalFramesCount)
+        );
+      }
+    }
+  }
+
+  private class AppendFrameCommand extends SuspendContextCommandImpl {
+    private final StackFrameProxyImpl myFrame;
+    private final EvaluationContextImpl myEvaluationContext;
+    private final MethodsTracker myTracker;
+    private final int myIndexToInsert;
+    private final boolean myIsContextFrame;
+    private final int myTotalFramesCount;
+
+    public AppendFrameCommand(SuspendContextImpl suspendContext, StackFrameProxyImpl frame, EvaluationContextImpl evaluationContext,
+                              MethodsTracker tracker, int indexToInsert, final boolean isContextFrame, final int totalFramesCount) {
+      super(suspendContext);
+      myFrame = frame;
+      myEvaluationContext = evaluationContext;
+      myTracker = tracker;
+      myIndexToInsert = indexToInsert;
+      myIsContextFrame = isContextFrame;
+      myTotalFramesCount = totalFramesCount;
+    }
+
+    public void contextAction() throws Exception {
+      final StackFrameDescriptorImpl descriptor = new StackFrameDescriptorImpl(myFrame, myTracker);
+      descriptor.setContext(myEvaluationContext);
+      descriptor.updateRepresentation(myEvaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
         public void run() {
           try {
             myFramesListener.setEnabled(false);
-            myFramesList.clear();
-            final DefaultListModel listModel = myFramesList.getModel();
-            for (final StackFrameDescriptorImpl frameItem : frameItems) {
-              listModel.addElement(frameItem);
+            final DefaultListModel model = myFramesList.getModel();
+            if (model.size() == 0) {
+              for (int idx = 0; idx < myTotalFramesCount; idx++) {
+                final String label = "<frame " + idx + ">";
+                model.addElement(new Object() {
+                  public String toString() {
+                    return label;
+                  }
+                });
+              }
             }
-            final StackFrameProxyImpl contextFrame = getDebuggerContext().getFrameProxy();
-            if(contextFrame != null) {
-              selectFrame(contextFrame);
+            model.remove(myIndexToInsert); // remove placeholder
+            model.insertElementAt(descriptor, myIndexToInsert);
+            if (myIsContextFrame) {
+              myFramesList.setSelectedIndex(myIndexToInsert);
             }
           }
           finally {
@@ -419,43 +487,6 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
           }
         }
       });
-
-    }
-
-    private List<StackFrameDescriptorImpl> getFrameList(ThreadReferenceProxyImpl thread) {
-      try {
-        if(!getSuspendContext().getDebugProcess().getSuspendManager().isSuspended(thread)) {
-          return Collections.emptyList();
-        }
-      }
-      catch (ObjectCollectedException e) {
-        return Collections.emptyList();
-      }
-
-      List<StackFrameProxyImpl> frames;
-      try {
-        frames = thread.frames();
-      }
-      catch (EvaluateException e) {
-        frames = new ArrayList<StackFrameProxyImpl>();
-      }
-
-      final List<StackFrameDescriptorImpl> frameItems = new ArrayList<StackFrameDescriptorImpl>(frames.size());
-
-      EvaluationContextImpl evaluationContext = getDebuggerContext().createEvaluationContext();
-      final MethodsTracker tracker = new MethodsTracker();
-      for (StackFrameProxyImpl stackFrameProxy : frames) {
-        StackFrameDescriptorImpl descriptor = new StackFrameDescriptorImpl(stackFrameProxy, tracker);
-        descriptor.setContext(evaluationContext);
-        descriptor.updateRepresentation(evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
-        frameItems.add(descriptor);
-      }
-
-      return frameItems;
-    }
-
-    public DebuggerContextImpl getDebuggerContext() {
-      return myDebuggerContext;
     }
   }
 
