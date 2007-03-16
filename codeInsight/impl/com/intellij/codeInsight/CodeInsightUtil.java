@@ -187,9 +187,9 @@ public class CodeInsightUtil {
       }
 
       public void visitElement(PsiElement element) {
-        if (element.getFirstChild() != null) {
+        PsiElement child = element.getFirstChild();
+        if (child != null) {
           // composite element
-          PsiElement child = element.getFirstChild();
           while (child != null) {
             if (offset > endOffset) break;
             int start = offset;
@@ -231,7 +231,7 @@ public class CodeInsightUtil {
     return Collections.unmodifiableList(list);
   }
 
-  public static PsiElement findCommonParent(final PsiElement root, final int startOffset, final int endOffset) {
+  private static PsiElement findCommonParent(final PsiElement root, final int startOffset, final int endOffset) {
     final PsiElement left = findElementAtInRoot(root, startOffset);
     PsiElement right = findElementAtInRoot(root, endOffset);
     if (right == null) right = findElementAtInRoot(root, endOffset - 1);
