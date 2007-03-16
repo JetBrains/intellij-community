@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.imports;
+package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.imports;
 
 import org.jetbrains.plugins.groovy.lang.parser.parsing.Construction;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
