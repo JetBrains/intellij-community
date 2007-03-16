@@ -1,15 +1,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrAdditiveExpression;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
 
 /**
  * @author Ilya.Sergey
  */
-public class GrAdditiveExpression extends GroovyPsiElementImpl {
+public class GrAdditiveExpressionImpl extends GroovyPsiElementImpl implements GrAdditiveExpression {
 
-  public GrAdditiveExpression(@NotNull ASTNode node) {
+  public GrAdditiveExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 

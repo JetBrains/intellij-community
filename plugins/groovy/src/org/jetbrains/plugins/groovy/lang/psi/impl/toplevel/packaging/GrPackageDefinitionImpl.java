@@ -1,15 +1,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging;
 
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
 
 /**
  * @author Ilya.Sergey
  */
-public class GrPackageDefinition extends GroovyPsiElementImpl {
+public class GrPackageDefinitionImpl extends GroovyPsiElementImpl implements GrPackageDefinition {
 
-  public GrPackageDefinition(@NotNull ASTNode node) {
+  public GrPackageDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
