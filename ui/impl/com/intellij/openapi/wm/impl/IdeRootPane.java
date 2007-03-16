@@ -46,6 +46,7 @@ public class IdeRootPane extends JRootPane{
   private static Component myWelcomePane;
 
   private boolean myGlassPaneInitialized;
+  private IdeGlassPaneImpl myGlassPane;
 
   IdeRootPane(ActionManager actionManager, UISettings uiSettings, DataManager dataManager, KeymapManager keymapManager){
     myActionManager = actionManager;
@@ -68,11 +69,11 @@ public class IdeRootPane extends JRootPane{
       myContentPane.add(myWelcomePane);
     }
 
-    final IdeGlassPaneImpl gp = new IdeGlassPaneImpl(this);
-    setGlassPane(gp);
+    myGlassPane = new IdeGlassPaneImpl(this);
+    setGlassPane(myGlassPane);
     myGlassPaneInitialized = true;
 
-    gp.setVisible(false);
+    myGlassPane.setVisible(false);
   }
 
 
@@ -214,6 +215,6 @@ public class IdeRootPane extends JRootPane{
   }
 
   public boolean isOptimizedDrawingEnabled() {
-    return true;
+    return !myGlassPane.hasPainters();
   }
 }

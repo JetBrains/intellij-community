@@ -1,6 +1,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeGlassPane;
 import org.jetbrains.annotations.Nullable;
@@ -9,10 +10,7 @@ import javax.swing.*;
 import javax.swing.event.MenuDragMouseEvent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.EventListener;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
 
@@ -22,6 +20,9 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
   private Component myCurrentOverComponent;
   private Component myMousePressedComponent;
   private Container myMousePressedContainer;
+
+  private Set<Painter> myPainters = new LinkedHashSet<Painter>();
+  private Map<Painter, Component> myPainter2Component = new LinkedHashMap<Painter, Component>();
 
   public IdeGlassPaneImpl(JRootPane rootPane) {
     myRootPane = rootPane;
@@ -59,33 +60,45 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
 
   private void process(final MouseEvent e, boolean motionEvent) {
     final boolean processingDragEnd = myMousePressedComponent != null && e.getID() == MouseEvent.MOUSE_RELEASED;
+    boolean repaint = true;
     if (processingDragEnd) {
       final Point releasePoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), myMousePressedComponent);
       redispatch(convertEvent(e, myMousePressedComponent, releasePoint, MouseEvent.MOUSE_RELEASED), motionEvent, myMousePressedComponent);
 
       myMousePressedComponent = null;
       myMousePressedContainer = null;
-      return;
-    }
-
-    final boolean processingDrag = myMousePressedComponent != null && e.getID() == MouseEvent.MOUSE_DRAGGED;
-    final JLayeredPane lp = myRootPane.getLayeredPane();
-    final Point lpPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), lp);
-    if (processForContainer(e, motionEvent, lp, lpPoint)) return;
-
-    final Container cp = myRootPane.getContentPane();
-    final Point cpPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), cp);
-    if (!processingDrag && cpPoint.y < 0) {
-      final JMenuBar mb = myRootPane.getJMenuBar();
-      if (mb != null) {
-        if (processForContainer(e, motionEvent, mb, SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), mb))) return;
+    } else {
+      final boolean processingDrag = myMousePressedComponent != null && e.getID() == MouseEvent.MOUSE_DRAGGED;
+      final JLayeredPane lp = myRootPane.getLayeredPane();
+      final Point lpPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), lp);
+      if (!processForContainer(e, motionEvent, lp, lpPoint)) {
+        boolean processed = false;
+        final Container cp = myRootPane.getContentPane();
+        final Point cpPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), cp);
+        if (!processingDrag && cpPoint.y < 0) {
+          final JMenuBar mb = myRootPane.getJMenuBar();
+          if (mb != null) {
+            processed = processForContainer(e, motionEvent, mb, SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), mb));
+            if (processed) {
+              repaint = false;
+            }
+          }
+        }
+        if (!processed) {
+          processForContainer(e, motionEvent, cp, cpPoint);
+        }
       }
     }
 
-    processForContainer(e, motionEvent, cp, cpPoint);
+    if (repaint) {
+      repaint();
+    }
   }
 
-  private boolean processForContainer(final MouseEvent e, final boolean motionEvent, final Container container, final Point containerPoint) {
+  private boolean processForContainer(final MouseEvent e,
+                                      final boolean motionEvent,
+                                      final Container container,
+                                      final Point containerPoint) {
     final boolean dragEvent = e.getID() == MouseEvent.MOUSE_DRAGGED;
     Component target = SwingUtilities.getDeepestComponentAt(container, containerPoint.x, containerPoint.y);
 
@@ -161,7 +174,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
         return true;
       }
 
-      boolean shouldProceed = isMotion ? actualTarget.getMouseMotionListeners().length == 0  : actualTarget.getMouseListeners().length == 0;
+      boolean shouldProceed = isMotion ? actualTarget.getMouseMotionListeners().length == 0 : actualTarget.getMouseListeners().length == 0;
       if (shouldProceed) {
         Component sibling = null;
         Point containerPoint = SwingUtilities.convertPoint(originalEvent.getComponent(), originalEvent.getPoint(), actualContainer);
@@ -175,11 +188,13 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
         }
         if (sibling != null) {
           actualTarget = sibling;
-        } else {
+        }
+        else {
           actualTarget = getParentOf(actualTarget);
           actualContainer = getParentOf(actualTarget);
         }
-      } else {
+      }
+      else {
         break;
       }
       if (isEndComponent(actualTarget)) return false;
@@ -192,45 +207,24 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
     final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), target);
     if (e instanceof MouseWheelEvent) {
       final MouseWheelEvent mwe = (MouseWheelEvent)e;
-      return new MouseWheelEvent(target,
-                                 mwe.getID(),
-                                 mwe.getWhen(),
-                                 mwe.getModifiersEx(),
-                                 point.x,
-                                 point.y,
-                                 mwe.getClickCount(),
-                                 mwe.isPopupTrigger(),
-                                 mwe.getScrollType(),
-                                 mwe.getScrollAmount(),
-                                 mwe.getWheelRotation());
+      return new MouseWheelEvent(target, mwe.getID(), mwe.getWhen(), mwe.getModifiersEx(), point.x, point.y, mwe.getClickCount(),
+                                 mwe.isPopupTrigger(), mwe.getScrollType(), mwe.getScrollAmount(), mwe.getWheelRotation());
     }
     else if (e instanceof MenuDragMouseEvent) {
       final MenuDragMouseEvent de = (MenuDragMouseEvent)e;
-      return new MenuDragMouseEvent(target,
-                            de.getID(),
-                            de.getWhen(),
-                            de.getModifiersEx(),
-                            point.x,
-                            point.y,
-                            e.getClickCount(),
-                            e.isPopupTrigger(),
-                            de.getPath(),
-                            de.getMenuSelectionManager());
+      return new MenuDragMouseEvent(target, de.getID(), de.getWhen(), de.getModifiersEx(), point.x, point.y, e.getClickCount(),
+                                    e.isPopupTrigger(), de.getPath(), de.getMenuSelectionManager());
 
-    } else {
-      return new MouseEvent(target,
-                            e.getID(),
-                            e.getWhen(),
-                            e.getModifiersEx(),
-                            point.x,
-                            point.y,
-                            e.getClickCount(),
-                            e.isPopupTrigger(),
+    }
+    else {
+      return new MouseEvent(target, e.getID(), e.getWhen(), e.getModifiersEx(), point.x, point.y, e.getClickCount(), e.isPopupTrigger(),
                             e.getButton());
     }
   }
 
-  private static @Nullable Container getParentOf(final Component actualTarget) {
+  private static
+  @Nullable
+  Container getParentOf(final Component actualTarget) {
     return actualTarget != null ? actualTarget.getParent() : null;
   }
 
@@ -243,13 +237,13 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
   }
 
   private static MouseEvent convertEventType(MouseEvent template, int id) {
-    return new MouseEvent(template.getComponent(), id, System.currentTimeMillis(), template.getModifiersEx(), template.getX(), template.getY(),
-                          template.getClickCount(), template.isPopupTrigger(), template.getButton());
+    return new MouseEvent(template.getComponent(), id, System.currentTimeMillis(), template.getModifiersEx(), template.getX(),
+                          template.getY(), template.getClickCount(), template.isPopupTrigger(), template.getButton());
   }
 
   private static MouseEvent convertEvent(MouseEvent template, Component source, Point point, int id) {
-    return new MouseEvent(source, id, System.currentTimeMillis(), template.getModifiersEx(), point.x, point.y,
-                          template.getClickCount(), template.isPopupTrigger(), template.getButton());
+    return new MouseEvent(source, id, System.currentTimeMillis(), template.getModifiersEx(), point.x, point.y, template.getClickCount(),
+                          template.isPopupTrigger(), template.getButton());
   }
 
 
@@ -293,21 +287,29 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
 
   private void _addListener(final EventListener listener, final Disposable parent) {
     myMouseListeners.add(listener);
-    if (!isVisible()) {
-      setVisible(true);
-    }
+    setVisibleIfNeeded();
     Disposer.register(parent, new Disposable() {
       public void dispose() {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             myMouseListeners.remove(listener);
-            if (myMouseListeners.size() == 0) {
-              setVisible(false);
-            }
+            setInvisibleIfNeeded();
           }
         });
       }
     });
+  }
+
+  private void setInvisibleIfNeeded() {
+    if (myMouseListeners.size() == 0 && myPainters.size() == 0) {
+      setVisible(false);
+    }
+  }
+
+  private void setVisibleIfNeeded() {
+    if (!isVisible()) {
+      setVisible(true);
+    }
   }
 
   public Component getTargetComponentFor(MouseEvent e) {
@@ -322,6 +324,79 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
     final Point lpPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), container);
     final Component lpComponent = SwingUtilities.getDeepestComponentAt(container, lpPoint.x, lpPoint.y);
     return lpComponent;
+  }
+
+  public void addPainter(final Component component, final Painter painter, final Disposable parent) {
+    myPainters.add(painter);
+    myPainter2Component.put(painter, component == null ? this : component);
+    setVisibleIfNeeded();
+    Disposer.register(parent, new Disposable() {
+      public void dispose() {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            removePainter(painter);
+          }
+        });
+      }
+    });
+  }
+
+  public void removePainter(final Painter painter) {
+    myPainters.remove(painter);
+    myPainter2Component.remove(painter);
+    setInvisibleIfNeeded();
+  }
+
+  protected void paintComponent(final Graphics g) {
+    final Rectangle clip = g.getClipBounds();
+
+    Graphics2D g2d = (Graphics2D)g;
+    for (Painter painter : myPainters) {
+      final Component component = myPainter2Component.get(painter);
+      if (component.getParent() == null) continue;
+      final Rectangle componentBounds = SwingUtilities.convertRectangle(component.getParent(), component.getBounds(), this);
+      if (clip.contains(componentBounds) || clip.intersects(componentBounds)) {
+        final Point targetPoint = SwingUtilities.convertPoint(this, 0, 0, component);
+        final Rectangle targetRect = new Rectangle(targetPoint, component.getSize());
+        g2d.translate(-targetRect.x, -targetRect.y);
+        painter.paint(component, g2d);
+        g2d.translate(targetRect.x, targetRect.y);
+      }
+    }
+  }
+
+  public boolean hasPainters() {
+    return myPainters.size() > 0;
+  }
+
+  public static void main(String[] args) {
+    final Disposable parent = new Disposable() {
+      public void dispose() {
+      }
+    };
+
+    final JFrame frame = new JFrame();
+    frame.getContentPane().setLayout(new BorderLayout());
+    final JPanel content = new JPanel(new FlowLayout());
+    frame.getContentPane().add(content, BorderLayout.CENTER);
+
+    final IdeGlassPaneImpl gp = new IdeGlassPaneImpl(frame.getRootPane());
+    frame.getRootPane().setGlassPane(gp);
+
+    final JButton button = new JButton("one");
+    content.add(button);
+    gp.addPainter(button, new Painter() {
+      public void paint(final Component component, final Graphics2D g) {
+        g.setColor(Color.blue);
+        g.drawRect(0, 0, component.getWidth(), component.getHeight());
+      }
+    }, parent);
+
+    content.add(new JScrollPane(new JTree()));
+
+
+    frame.setBounds(300, 300, 300, 300);
+    frame.show();
   }
 
 

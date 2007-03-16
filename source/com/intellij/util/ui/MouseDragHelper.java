@@ -4,6 +4,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
@@ -33,10 +34,7 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
   public void start() {
     if (myGlassPane != null) return;
 
-    final Component gp = myDragComponent.getRootPane().getGlassPane();
-    if (!(gp instanceof IdeGlassPane)) throw new IllegalStateException("Glass pane should be " + IdeGlassPane.class.getName());
-    myGlassPane = (IdeGlassPane)gp;
-
+    myGlassPane = IdeGlassPaneUtil.find(myDragComponent);
     myGlassPane.addMousePreprocessor(this, myParentDisposable);
     myGlassPane.addMouseMotionPreprocessor(this, myParentDisposable);
 
