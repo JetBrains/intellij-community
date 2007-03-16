@@ -58,10 +58,10 @@ public class DfaValueFactory {
           DfaValue constValue = getConstFactory().create(variable);
           if (constValue != null) return constValue;
 
-          if (variable.getInitializer() instanceof PsiBinaryExpression &&
-              variable.hasModifierProperty(PsiModifier.FINAL)) {
-            PsiType type = variable.getInitializer().getType();
-            if (type.equalsToText("java.lang.String")) {
+          PsiExpression initializer = variable.getInitializer();
+          if (initializer instanceof PsiBinaryExpression && variable.hasModifierProperty(PsiModifier.FINAL)) {
+            PsiType type = initializer.getType();
+            if (type != null && type.equalsToText("java.lang.String")) {
               return getNotNullFactory().create(type);
             }
           }
