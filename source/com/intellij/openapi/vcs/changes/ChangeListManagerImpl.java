@@ -268,22 +268,18 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         switchedHolder = mySwitchedFilesHolder;
       }
 
+      if (wasEverythingDirty) {
+        notifyStartProcessingChanges(null);
+      }
       for (final VcsDirtyScope scope : scopes) {
         final AbstractVcs vcs = scope.getVcs();
         if (vcs == null) continue;
 
         myCurrentlyUpdatingScope = scope;
         ChangesViewManager.getInstance(myProject).updateProgressText(VcsBundle.message("changes.update.progress.message", vcs.getDisplayName()), false);
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            synchronized (myChangeLists) {
-              for (LocalChangeList list : getChangeLists()) {
-                if (myDisposed) throw new DisposedException();
-                list.startProcessingChanges(scope);
-              }
-            }
-          }
-        });
+        if (!wasEverythingDirty) {
+          notifyStartProcessingChanges(scope);
+        }
 
         if (updateUnversionedFiles && !wasEverythingDirty) {
           unversionedHolder.cleanScope(scope);
@@ -403,35 +399,27 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         }
         finally {
           myCurrentlyUpdatingScope = null;
-          if (!myDisposed) {
-            List<ChangeList> changedLists = new ArrayList<ChangeList>();
-            synchronized (myChangeLists) {
-              for (LocalChangeList list : myChangeLists) {
-                if (list.doneProcessingChanges()) {
-                  changedLists.add(list);
-                }
-              }
-            }
-            for(ChangeList changeList: changedLists) {
-              myListeners.getMulticaster().changeListChanged(changeList);
-            }
+          if (!myDisposed && !wasEverythingDirty) {
+            notifyDoneProcessingChanges();
           }
         }
-
-        if (updateUnversionedFiles) {
-          boolean statusChanged = (!myUnversionedFilesHolder.equals(unversionedHolder)) ||
-                                  (!myDeletedFilesHolder.equals(deletedHolder)) ||
-                                  (!myModifiedWithoutEditingHolder.equals(modifiedWithoutEditingHolder)) ||
-                                  (!myIgnoredFilesHolder.equals(ignoredHolder)) ||
-                                  (!mySwitchedFilesHolder.equals(switchedHolder));
-          myUnversionedFilesHolder = unversionedHolder;
-          myDeletedFilesHolder = deletedHolder;
-          myModifiedWithoutEditingHolder = modifiedWithoutEditingHolder;
-          myIgnoredFilesHolder = ignoredHolder;
-          mySwitchedFilesHolder = switchedHolder;
-          if (statusChanged) {
-            myListeners.getMulticaster().unchangedFileStatusChanged();
-          }
+      }
+      if (wasEverythingDirty) {
+        notifyDoneProcessingChanges();
+      }
+      if (updateUnversionedFiles) {
+        boolean statusChanged = (!myUnversionedFilesHolder.equals(unversionedHolder)) ||
+                                (!myDeletedFilesHolder.equals(deletedHolder)) ||
+                                (!myModifiedWithoutEditingHolder.equals(modifiedWithoutEditingHolder)) ||
+                                (!myIgnoredFilesHolder.equals(ignoredHolder)) ||
+                                (!mySwitchedFilesHolder.equals(switchedHolder));
+        myUnversionedFilesHolder = unversionedHolder;
+        myDeletedFilesHolder = deletedHolder;
+        myModifiedWithoutEditingHolder = modifiedWithoutEditingHolder;
+        myIgnoredFilesHolder = ignoredHolder;
+        mySwitchedFilesHolder = switchedHolder;
+        if (statusChanged) {
+          myListeners.getMulticaster().unchangedFileStatusChanged();
         }
       }
     }
@@ -447,6 +435,33 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         myUpdateInProgress = false;
         myPendingUpdatesLock.notifyAll();
       }
+    }
+  }
+
+  private void notifyStartProcessingChanges(final VcsDirtyScope scope) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        synchronized (myChangeLists) {
+          for (LocalChangeList list : getChangeLists()) {
+            if (myDisposed) throw new DisposedException();
+            list.startProcessingChanges(myProject, scope);
+          }
+        }
+      }
+    });
+  }
+
+  private void notifyDoneProcessingChanges() {
+    List<ChangeList> changedLists = new ArrayList<ChangeList>();
+    synchronized (myChangeLists) {
+      for (LocalChangeList list : myChangeLists) {
+        if (list.doneProcessingChanges()) {
+          changedLists.add(list);
+        }
+      }
+    }
+    for(ChangeList changeList: changedLists) {
+      myListeners.getMulticaster().changeListChanged(changeList);
     }
   }
 
@@ -580,7 +595,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
     // handle changelists created during the update process
     if (myCurrentlyUpdatingScope != null) {
-      list.startProcessingChanges(myCurrentlyUpdatingScope);
+      list.startProcessingChanges(myProject, myCurrentlyUpdatingScope);
     }
     return list;
   }

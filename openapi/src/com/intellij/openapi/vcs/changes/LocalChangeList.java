@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.Project;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,15 +104,15 @@ public class LocalChangeList implements Cloneable, ChangeList {
     return wasRemoved;
   }
 
-  synchronized void startProcessingChanges(final VcsDirtyScope scope) {
+  synchronized void startProcessingChanges(final Project project, @Nullable final VcsDirtyScope scope) {
     createReadChangesCache();
     myChangesBeforeUpdate = new ChangeHashSet(myChanges);
     myOutdatedChanges = new ArrayList<Change>();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(scope.getProject()).getFileIndex();
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     for (Change oldBoy : myChangesBeforeUpdate) {
       final ContentRevision before = oldBoy.getBeforeRevision();
       final ContentRevision after = oldBoy.getAfterRevision();
-      if (before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())
+      if (scope == null || before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())
         || isIgnoredChange(oldBoy, fileIndex)) {
         myIsInUpdate = true;
         removeChange(oldBoy);
