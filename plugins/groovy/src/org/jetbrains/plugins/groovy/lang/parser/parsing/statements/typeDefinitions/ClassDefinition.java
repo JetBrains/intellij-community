@@ -10,6 +10,11 @@ import com.intellij.lang.PsiBuilder;
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
+
+/*
+ * ClassDefinition ::= class IDENT nls [TypeParameters] superClassClause implementsClause classBlock
+ */
+  
 public class ClassDefinition implements Construction {
   public static IElementType parse(PsiBuilder builder) {
     PsiBuilder.Marker classDefMarker = builder.mark();
