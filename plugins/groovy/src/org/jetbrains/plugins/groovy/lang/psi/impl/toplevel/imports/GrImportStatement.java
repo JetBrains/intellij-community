@@ -14,6 +14,6 @@ public class GrImportStatement extends GroovyPsiElementImpl {
   }
 
   public String toString(){
-    return "Import expression";
+    return "Import expressions";
   }
 }
