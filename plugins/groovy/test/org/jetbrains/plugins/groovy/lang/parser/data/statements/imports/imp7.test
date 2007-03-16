@@ -1,0 +1,21 @@
+import static a
+import b as c
+-----
+Groovy script
+  Import expression
+    PsiElement(import)('import')
+    PsiWhiteSpace(' ')
+    PsiElement(static)('static')
+    PsiWhiteSpace(' ')
+    Import end
+      PsiElement(identifier)('a')
+  PsiElement(new line)('\n')
+  Import expression
+    PsiElement(import)('import')
+    PsiWhiteSpace(' ')
+    Import selector
+      PsiElement(identifier)('b')
+      PsiWhiteSpace(' ')
+      PsiElement(as)('as')
+      PsiWhiteSpace(' ')
+      PsiElement(identifier)('c')

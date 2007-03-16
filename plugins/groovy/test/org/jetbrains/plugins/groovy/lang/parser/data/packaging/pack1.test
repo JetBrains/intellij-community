@@ -1,0 +1,12 @@
+package org.jetbrains.groovy
+-----
+Groovy script
+  Package definition
+    PsiElement(package)('package')
+    PsiWhiteSpace(' ')
+    Qualified identifier
+      PsiElement(identifier)('org')
+      PsiElement(.)('.')
+      PsiElement(identifier)('jetbrains')
+      PsiElement(.)('.')
+      PsiElement(identifier)('groovy')

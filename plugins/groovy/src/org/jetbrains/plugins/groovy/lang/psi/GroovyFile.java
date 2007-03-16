@@ -21,5 +21,9 @@ public class GroovyFile extends PsiFileBase {
   public FileType getFileType() {
     return GroovyFileType.GROOVY_FILE_TYPE;
   }
+
+  public String toString() {
+    return "Groovy script";
+  }
 }
 
