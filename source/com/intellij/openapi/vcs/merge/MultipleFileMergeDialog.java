@@ -255,7 +255,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       request.setVersionTitles(new String[]{VcsBundle.message("merge.version.title.local.changes"),
         VcsBundle.message("merge.version.title.merge.result"),
         lastVersionTitle});
-      request.setWindowTitle(VcsBundle.message("multiple.file.merge.request.title"));
+      request.setWindowTitle(VcsBundle.message("multiple.file.merge.request.title", FileUtil.toSystemDependentName(file.getPresentableUrl())));
       DiffManager.getInstance().getDiffTool().show(request);
       if (request.getResult() == DialogWrapper.OK_EXIT_CODE) {
         myFiles.remove(file);
