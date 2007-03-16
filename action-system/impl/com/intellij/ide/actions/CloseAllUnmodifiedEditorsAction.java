@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.ide.IdeBundle;
 
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
   private ArrayList<Pair<EditorComposite, EditorWindow>> getFilesToClose (final AnActionEvent event) {
     final ArrayList<Pair<EditorComposite, EditorWindow>> res = new ArrayList<Pair<EditorComposite, EditorWindow>>();
     final DataContext dataContext = event.getDataContext();
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = event.getData(DataKeys.PROJECT);
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(project);
     final EditorWindow editorWindow = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
     final EditorWindow[] windows;
@@ -34,10 +35,9 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
       for (int i = 0; i != windows.length; ++ i) {
         final EditorWindow window = windows [i];
         final EditorComposite [] editors = window.getEditors ();
-        for (int j = 0; j < editors.length; j++) {
-          final EditorComposite editor = editors [j];
+        for (final EditorComposite editor : editors) {
           if (isFileToClose(editor, window)) {
-            res.add (Pair.create (editor, window));
+            res.add(Pair.create(editor, window));
           }
         }
       }
@@ -51,7 +51,7 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
 
 
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    final Project project = e.getData(DataKeys.PROJECT);
     final CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
       project, new Runnable(){
@@ -72,12 +72,16 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
     final EditorWindow editorWindow = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
     final boolean inSplitter = editorWindow != null && editorWindow.inSplitter();
     presentation.setText(getPresentationText(inSplitter));
-    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final Project project = event.getData(DataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
-    presentation.setEnabled(getFilesToClose (event).size () > 0);
+    presentation.setEnabled(getFilesToClose (event).size () > 0 && isValidForProject(project));
+  }
+
+  protected boolean isValidForProject(final Project project) {
+    return ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().length > 0;
   }
 
   protected String getPresentationText(final boolean inSplitter) {
