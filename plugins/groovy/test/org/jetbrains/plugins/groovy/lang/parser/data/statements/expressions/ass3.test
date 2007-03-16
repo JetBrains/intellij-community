@@ -1,0 +1,15 @@
+a = b =
+c
+-----
+Groovy script
+  Assignment expression
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    Assignment expression
+      PsiElement(identifier)('b')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiElement(new line)('\n')
+      PsiElement(identifier)('c')
