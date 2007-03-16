@@ -335,7 +335,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return data;
   }
 
-  private static Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context) {
+  private Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context) {
     final FileType fileType = context.file.getFileType();
     final CompletionData completionData = CompletionUtil.getCompletionDataByFileType(fileType);
     final PsiFile fileCopy = createFileCopy(context.file);
@@ -432,7 +432,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return true;
   }
 
-  protected static PsiFile createFileCopy(PsiFile file) {
+  protected PsiFile createFileCopy(PsiFile file) {
     final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
       public void visitClass(PsiClass aClass) {
         aClass.putCopyableUserData(PsiUtil.ORIGINAL_KEY, aClass);

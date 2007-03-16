@@ -119,6 +119,41 @@ public class CandidateInfo implements JavaResolveResult {
     return candidateInfo;
   }
 
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final CandidateInfo that = (CandidateInfo)o;
+
+    if (myPackagePrefixPackageReference != that.myPackagePrefixPackageReference) return false;
+    if (myStaticsProblem != that.myStaticsProblem) return false;
+    if (myAccessClass != null ? !myAccessClass.equals(that.myAccessClass) : that.myAccessClass != null) return false;
+    if (myAccessProblem != null ? !myAccessProblem.equals(that.myAccessProblem) : that.myAccessProblem != null) return false;
+    if (myCandidate != null ? !myCandidate.equals(that.myCandidate) : that.myCandidate != null) return false;
+    if (myCurrentFileResolveContext != null
+        ? !myCurrentFileResolveContext.equals(that.myCurrentFileResolveContext)
+        : that.myCurrentFileResolveContext != null) {
+      return false;
+    }
+    if (myPlace != null ? !myPlace.equals(that.myPlace) : that.myPlace != null) return false;
+    if (mySubstitutor != null ? !mySubstitutor.equals(that.mySubstitutor) : that.mySubstitutor != null) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = (myPlace != null ? myPlace.hashCode() : 0);
+    result = 31 * result + (myAccessClass != null ? myAccessClass.hashCode() : 0);
+    result = 31 * result + (myCandidate != null ? myCandidate.hashCode() : 0);
+    result = 31 * result + (myAccessProblem != null ? myAccessProblem.hashCode() : 0);
+    result = 31 * result + (myStaticsProblem ? 1 : 0);
+    result = 31 * result + (mySubstitutor != null ? mySubstitutor.hashCode() : 0);
+    result = 31 * result + (myCurrentFileResolveContext != null ? myCurrentFileResolveContext.hashCode() : 0);
+    result = 31 * result + (myPackagePrefixPackageReference ? 1 : 0);
+    return result;
+  }
+
   public static final JavaResolveResult[] RESOLVE_RESULT_FOR_PACKAGE_PREFIX_PACKAGE =
           new JavaResolveResult[]{createCandidateInfoForPackagePrefixPart()};
 }

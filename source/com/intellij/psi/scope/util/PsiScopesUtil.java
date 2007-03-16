@@ -20,6 +20,8 @@ import com.intellij.psi.scope.processor.MethodsProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiScopesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.scope.util.PsiScopesUtil");
@@ -27,7 +29,7 @@ public class PsiScopesUtil {
   private PsiScopesUtil() {
   }
 
-  public static boolean treeWalkUp(PsiScopeProcessor processor, PsiElement entrance, PsiElement maxScope) {
+  public static boolean treeWalkUp(@NotNull PsiScopeProcessor processor, @NotNull PsiElement entrance, @Nullable PsiElement maxScope) {
     PsiElement prevParent = entrance;
     PsiElement scope = entrance;
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;

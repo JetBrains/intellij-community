@@ -122,6 +122,9 @@ public class MockPsiManager extends PsiManagerEx {
     if (superPackage instanceof MockPsiPackage) {
       ((MockPsiPackage)superPackage).addDeclaration(declaration);
     }
+    if (declaration instanceof MockPsiElement) {
+      ((MockPsiElement)declaration).setParent(superPackage);
+    }
     return declaration;
   }
 
