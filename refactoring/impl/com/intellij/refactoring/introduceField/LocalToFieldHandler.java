@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -64,7 +63,7 @@ public class LocalToFieldHandler {
                                                                           local
     );
     if (editor != null) {
-      RefactoringUtil.highlightOccurences(myProject, occurences, editor);
+      RefactoringUtil.highlightAllOccurences(myProject, occurences, editor);
     }
 
     //LocalToFieldDialog dialog = new LocalToFieldDialog(project, aClass, local, isStatic);

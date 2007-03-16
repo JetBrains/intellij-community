@@ -11,21 +11,23 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 public class RefactoringSettings implements JDOMExternalizable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.RefactoringSettings");
   // properties should be public in order to get saved by DefaultExternalizable implementation
-  public boolean IS_SHOW_ACTION_INFO = true;
 
   //public boolean RENAME_PREVIEW_USAGES = true;
-  public boolean RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE = true;
-  public boolean RENAME_SEARCH_IN_COMMENTS_FOR_CLASS = true;
-  public boolean RENAME_SEARCH_IN_COMMENTS_FOR_METHOD = true;
-  public boolean RENAME_SEARCH_IN_COMMENTS_FOR_FIELD = true;
-  public boolean RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_SEARCH_IN_COMMENTS_FOR_CLASS = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_SEARCH_IN_COMMENTS_FOR_METHOD = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_SEARCH_IN_COMMENTS_FOR_FIELD = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_SEARCH_IN_COMMENTS_FOR_FILE = true;
 
-  public boolean RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE = true;
-  public boolean RENAME_SEARCH_FOR_TEXT_FOR_CLASS = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_SEARCH_FOR_TEXT_FOR_CLASS = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_SEARCH_FOR_TEXT_FOR_FILE = true;
   //public boolean RENAME_SEARCH_IN_NONJAVA_FOR_METHOD;
   //public boolean RENAME_SEARCH_IN_NONJAVA_FOR_FIELD;
   //public boolean RENAME_SEARCH_IN_NONJAVA_FOR_VARIABLE;
@@ -115,10 +117,10 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
     else if (element instanceof XmlAttributeValue) {
       return false;
     }
-    else if (element instanceof PsiNamedElement) {
-      return false;
-    }
     else if (element instanceof PsiFileSystemItem) {
+      return RENAME_SEARCH_IN_COMMENTS_FOR_FILE;
+    }
+    else if (element instanceof PsiNamedElement) {
       return false;
     }
     else{
@@ -136,6 +138,9 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
     }
     else if (element instanceof PsiClass){
       return RENAME_SEARCH_FOR_TEXT_FOR_CLASS;
+    }
+    else if (element instanceof PsiFileSystemItem){
+      return RENAME_SEARCH_FOR_TEXT_FOR_FILE;
     }
     /*
     else if (element instanceof PsiMethod){
@@ -178,6 +183,9 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
     else if (element instanceof PsiVariable){
       RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE = value;
     }
+    else if (element instanceof PsiFileSystemItem){
+      RENAME_SEARCH_IN_COMMENTS_FOR_FILE = value;
+    }
     else if (element instanceof PsiNamedElement ||
              element instanceof XmlAttributeValue) {
 
@@ -212,6 +220,9 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
     else if (element instanceof XmlAttributeValue) {
 
     }
+    else if (element instanceof PsiFileSystemItem) {
+      RENAME_SEARCH_FOR_TEXT_FOR_FILE = value;
+    }
     else if (element instanceof PsiNamedElement) {
 
     }
@@ -220,6 +231,7 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
     }
   }
 
+  @NotNull
   public String getComponentName() {
     return "RefactoringSettings";
   }

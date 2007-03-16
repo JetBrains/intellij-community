@@ -255,7 +255,7 @@ public abstract class DialogWrapper {
     String text = button.getText();
     if (text != null) {
       int mnemonic = 0;
-      StringBuffer plainText = new StringBuffer();
+      StringBuilder plainText = new StringBuilder();
       for (int i = 0; i < text.length(); i++) {
         char ch = text.charAt(i);
         if (ch == '_' || ch == '&') {

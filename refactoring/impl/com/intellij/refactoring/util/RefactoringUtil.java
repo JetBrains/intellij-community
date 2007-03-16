@@ -51,6 +51,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -521,7 +522,7 @@ public class RefactoringUtil {
 
   public static PsiMethod getEnclosingMethod(PsiElement element) {
     final PsiElement container = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
-    return container instanceof PsiMethod ? ((PsiMethod)container) : null;
+    return container instanceof PsiMethod ? (PsiMethod)container : null;
   }
 
   public static void renameVariableReferences(PsiVariable variable, String newName, SearchScope scope) throws IncorrectOperationException {
@@ -776,20 +777,13 @@ public class RefactoringUtil {
   /**
    * @return List of highlighters
    */
-  public static ArrayList<RangeHighlighter> highlightAllOccurences(Project project, PsiElement[] occurences, Editor editor) {
+  public static List<RangeHighlighter> highlightAllOccurences(Project project, PsiElement[] occurences, Editor editor) {
     ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     highlightManager.addOccurrenceHighlights(editor, occurences, attributes, true, highlighters);
     return highlighters;
-  }
-
-  public static ArrayList<RangeHighlighter> highlightOccurences(Project project, PsiElement[] occurences, Editor editor) {
-    if (occurences.length > 1) {
-      return highlightAllOccurences(project, occurences, editor);
-    }
-    return new ArrayList<RangeHighlighter>();
   }
 
   public static String createTempVar(PsiExpression expr, PsiElement context, boolean declareFinal) throws IncorrectOperationException {
@@ -865,7 +859,7 @@ public class RefactoringUtil {
     return expression;
   }
 
-  public static PsiExpression createNewExpressionFromArrayInitializer(PsiArrayInitializerExpression initializer, PsiType forcedType)
+  private static PsiExpression createNewExpressionFromArrayInitializer(PsiArrayInitializerExpression initializer, PsiType forcedType)
     throws IncorrectOperationException {
     PsiType initializerType = null;
     if (initializer != null) {
@@ -983,8 +977,8 @@ public class RefactoringUtil {
     return replaceDotsWithDollars(qName, aClass);
   }
 
-  public static String replaceDotsWithDollars(final String qName, PsiClass aClass) {
-    StringBuffer qNameBuffer = new StringBuffer(qName);
+  private static String replaceDotsWithDollars(final String qName, PsiClass aClass) {
+    StringBuilder qNameBuffer = new StringBuilder(qName);
 
     int fromIndex = qNameBuffer.length();
     PsiElement parent = aClass.getParent();
@@ -1000,7 +994,7 @@ public class RefactoringUtil {
 
   public static String getNewInnerClassName(PsiClass aClass, String oldInnerClassName, String newName) {
     if (!oldInnerClassName.endsWith(aClass.getName())) return newName;
-    StringBuffer buffer = new StringBuffer(oldInnerClassName);
+    StringBuilder buffer = new StringBuilder(oldInnerClassName);
     buffer.replace(buffer.length() - aClass.getName().length(), buffer.length(), newName);
     return buffer.toString();
   }
@@ -1022,7 +1016,6 @@ public class RefactoringUtil {
 
   public static void visitImplicitConstructorUsages(PsiClass aClass, final ImplicitConstructorUsageVisitor implicitConstructorUsageVistor) {
     PsiManager manager = aClass.getManager();
-    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
     final PsiClass[] inheritors = manager.getSearchHelper().findInheritors(aClass, aClass.getUseScope(), false);
 
     for (PsiClass inheritor : inheritors) {
@@ -1146,7 +1139,7 @@ public class RefactoringUtil {
     return false;
   }
 
-  public static String getNameOfReferencedParameter(PsiDocTag tag) {
+  private static String getNameOfReferencedParameter(PsiDocTag tag) {
     LOG.assertTrue("param".equals(tag.getName()));
     final PsiElement[] dataElements = tag.getDataElements();
     if (dataElements.length < 1) return null;
@@ -1265,7 +1258,7 @@ public class RefactoringUtil {
   }
 
   public static String calculatePsiElementDescriptionList(PsiElement[] elements) {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     for (int i = 0; i < elements.length; i++) {
       if (i > 0) buffer.append(", ");
       buffer.append(UsageViewUtil.getType(elements[i]));
@@ -1297,26 +1290,6 @@ public class RefactoringUtil {
         return false;
       }
       return myTrueSet.contains(object);
-    }
-  }
-
-  public static class IsInheritorOf implements Condition<PsiClass> {
-    private final PsiClass myClass;
-    private final ConditionCache<PsiClass> myConditionCache;
-
-    public IsInheritorOf(PsiClass aClass) {
-      myClass = aClass;
-      myConditionCache = new ConditionCache<PsiClass>(new MyCondition());
-    }
-
-    public boolean value(PsiClass object) {
-      return myConditionCache.value(object);
-    }
-
-    private class MyCondition implements Condition<PsiClass> {
-      public boolean value(PsiClass aClass) {
-        return aClass.isInheritor(myClass, true);
-      }
     }
   }
 
@@ -1403,7 +1376,7 @@ public class RefactoringUtil {
     NextUsage:
     for (UsageInfo usage : usages) {
       if (usage instanceof MoveRenameUsageInfo) {
-        final MoveRenameUsageInfo moveRenameUsageInfo = ((MoveRenameUsageInfo)usage);
+        final MoveRenameUsageInfo moveRenameUsageInfo = (MoveRenameUsageInfo)usage;
         final PsiElement element = usage.getElement();
         if (element != null && PsiTreeUtil.getParentOfType(element, PsiImportStatement.class, false) == null) {
 
@@ -1452,7 +1425,7 @@ public class RefactoringUtil {
   @Nullable
   public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final @NotNull PsiElement... elements) {
     if (elements.length == 0) return null;
-    final Set<PsiTypeParameter> used = new com.intellij.util.containers.HashSet<PsiTypeParameter>();
+    final Set<PsiTypeParameter> used = new HashSet<PsiTypeParameter>();
     for (final PsiElement element : elements) {
       element.accept(new PsiRecursiveElementVisitor() {
 

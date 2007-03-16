@@ -44,12 +44,6 @@ import java.awt.event.ActionEvent;
  */
 public abstract class RefactoringDialog extends DialogWrapper {
 
-  /** The default exit code for "Refactor" action. */
-  public static final int REFACTOR_EXIT_CODE = 3;
-
-  /** The default exit code for "Preview" action. */
-  public static final int PREVIEW_EXIT_CODE = 4;
-
   private Action myRefactorAction;
   private Action myPreviewAction;
   private boolean myCbPreviewResults;
@@ -87,16 +81,15 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
   protected abstract void doAction();
 
-  final protected void doPreviewAction () {
+  private void doPreviewAction () {
     myCbPreviewResults = true;
-    doAction ();
+    doAction();
   }
 
-  final protected void doRefactorAction () {
+  private void doRefactorAction () {
     myCbPreviewResults = false;
-    doAction ();
+    doAction();
   }
-
 
   final protected void closeOKAction() { super.doOKAction(); }
 
@@ -110,10 +103,6 @@ public abstract class RefactoringDialog extends DialogWrapper {
     final boolean enabled = areButtonsValid ();
     getPreviewAction().setEnabled(enabled);
     getRefactorAction().setEnabled(enabled);
-  }
-
-  final protected boolean isActionsEnabled () {
-    return getRefactorAction ().isEnabled () && getPreviewAction ().isEnabled ();
   }
 
   protected boolean hasHelpAction () {

@@ -142,14 +142,13 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     }
 
     if (myReplaceAllOccurences) {
-      PsiElement[] exprs;
       final OccurenceManager occurenceManager;
       if(myLocalVariable == null) {
         occurenceManager = new ExpressionOccurenceManager(myExpressionToSearch, myMethodToReplaceIn, null);
       } else {
         occurenceManager = new LocalVariableOccurenceManager(myLocalVariable, null);
       }
-      exprs = occurenceManager.getOccurences();
+      PsiElement[] exprs = occurenceManager.getOccurences();
       for (i = 0; i < exprs.length; i++) {
         PsiElement expr = exprs[i];
 
@@ -166,7 +165,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
-  private void addImplicitDefaultConstructorUsages(final ArrayList<UsageInfo> result, PsiClass aClass) {
+  private static void addImplicitDefaultConstructorUsages(final ArrayList<UsageInfo> result, PsiClass aClass) {
     final RefactoringUtil.ImplicitConstructorUsageVisitor implicitConstructorUsageVistor
             = new DefaultConstructorUsageCollector(result);
 
@@ -248,7 +247,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
   }
 
 
-  public class AnySupers extends PsiRecursiveElementVisitor {
+  public static class AnySupers extends PsiRecursiveElementVisitor {
     private boolean myResult = false;
     public void visitSuperExpression(PsiSuperExpression expression) {
       myResult = true;
@@ -311,14 +310,13 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
 
       // Converting myParameterInitializer
-      if (myParameterInitializer != null) {
-        myParameterInitializer =
-                RefactoringUtil.convertInitializerToNormalExpression(myParameterInitializer, initializerType);
-      } else {
+      if (myParameterInitializer == null) {
         LOG.assertTrue(myLocalVariable != null);
         myParameterInitializer = factory.createExpressionFromText(myLocalVariable.getName(), myLocalVariable);
       }
-
+      else {
+        myParameterInitializer = RefactoringUtil.convertInitializerToNormalExpression(myParameterInitializer, initializerType);
+      }
 
       // Changing external occurences (the tricky part)
       ChangeContextUtil.encodeContextInfo(myParameterInitializer, true);
@@ -470,7 +468,6 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     PsiExpressionList argList = callExpression.getArgumentList();
     PsiExpression[] oldArgs = argList.getExpressions();
 
-    PsiExpression newArg;
     final PsiExpression anchor;
     if (!myMethodToSearchFor.isVarArgs()) {
       anchor = getLast(oldArgs);
@@ -486,14 +483,14 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         anchor = lastNonVararg >= 0 ? oldArgs[lastNonVararg] : null;
       }
     }
-    newArg = (PsiExpression) argList.addAfter(myParameterInitializer, anchor);
+    PsiExpression newArg = (PsiExpression)argList.addAfter(myParameterInitializer, anchor);
     ChangeContextUtil.decodeContextInfo(newArg, null, null);
 
     // here comes some postprocessing...
     new OldReferencesResolver(callExpression, newArg, myReplaceFieldsWithGetters).resolve();
   }
 
-  private PsiExpression getLast(PsiExpression[] oldArgs) {
+  private static PsiExpression getLast(PsiExpression[] oldArgs) {
     PsiExpression anchor;
     if (oldArgs.length > 0) {
       anchor = oldArgs[oldArgs.length - 1];
@@ -504,7 +501,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     return anchor;
   }
 
-  static PsiElement getClassContainingResolve (final JavaResolveResult result) {
+  private static PsiElement getClassContainingResolve (final JavaResolveResult result) {
     final PsiElement elem = result.getElement ();
     if (elem != null) {
       if (elem instanceof PsiLocalVariable || elem instanceof PsiParameter) {
@@ -608,11 +605,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
           else if ((subj instanceof PsiField || subj instanceof PsiMethod)
                    && oldRef.getQualifierExpression() == null) {
 
-            boolean isStatic =
-              ((subj instanceof PsiField)
-               && ((PsiField) subj).hasModifierProperty(PsiModifier.STATIC))
-              || ((subj instanceof PsiMethod)
-                  && ((PsiMethod) subj).hasModifierProperty(PsiModifier.STATIC));
+            boolean isStatic = subj instanceof PsiField && ((PsiField)subj).hasModifierProperty(PsiModifier.STATIC) ||
+                               subj instanceof PsiMethod && ((PsiMethod)subj).hasModifierProperty(PsiModifier.STATIC);
 
             if (myInstanceRef != null && !isStatic) {
               String name = ((PsiNamedElement) subj).getName();
@@ -631,8 +625,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
             // probably replacing field with a getter
             if (myReplaceFieldsWithGetters != IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE) {
               if (myReplaceFieldsWithGetters == IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL ||
-                  (myReplaceFieldsWithGetters == IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE &&
-                   !myManager.getResolveHelper().isAccessible((PsiMember)subj, newExpr, null))) {
+                  myReplaceFieldsWithGetters == IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE &&
+                  !myManager.getResolveHelper().isAccessible((PsiMember)subj, newExpr, null)) {
                 newExpr = replaceFieldWithGetter(newExpr, (PsiField) subj);
               }
             }
@@ -746,7 +740,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     javaDocHelper.addParameterAfter(myParameterName, tagForAnchorParameter);
   }
 
-  private PsiParameter getAnchorParameter(PsiMethod methodToReplaceIn) {
+  private static PsiParameter getAnchorParameter(PsiMethod methodToReplaceIn) {
     PsiParameterList parameterList = methodToReplaceIn.getParameterList();
     final PsiParameter anchorParameter;
     final PsiParameter[] parameters = parameterList.getParameters();

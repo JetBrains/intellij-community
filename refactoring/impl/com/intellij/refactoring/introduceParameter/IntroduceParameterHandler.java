@@ -134,7 +134,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       occurences = CodeInsightUtil.findReferenceExpressions(method, localVar);
     }
     if (editor != null) {
-      RefactoringUtil.highlightOccurences(myProject, occurences, editor);
+      RefactoringUtil.highlightAllOccurences(myProject, occurences, editor);
     }
 
     ArrayList localVars = new ArrayList();

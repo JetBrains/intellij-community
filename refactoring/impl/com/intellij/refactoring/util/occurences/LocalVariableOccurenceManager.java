@@ -9,7 +9,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
  * @author dsl
  */
 public class LocalVariableOccurenceManager extends BaseOccurenceManager {
-  final PsiLocalVariable myLocalVariable;
+  private final PsiLocalVariable myLocalVariable;
 
   public LocalVariableOccurenceManager(PsiLocalVariable localVariable, OccurenceFilter filter) {
     super(filter);
