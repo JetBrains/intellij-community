@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.parser;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import com.intellij.psi.tree.TokenSet;
 
 /**
  * Utility interface that contains all Groovy non-token element types
@@ -27,14 +28,27 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   //Packaging
   GroovyElementType PACKAGE_DEFINITION = new GroovyElementType("Package definition");
 
+  // Statements
+  GroovyElementType STATEMENT = new GroovyElementType("Any statement");
+
   // Import elements
   GroovyElementType IMPORT_STATEMENT = new GroovyElementType("Import statement");
   GroovyElementType IDENITFIER_STAR = new GroovyElementType("Import identifier");
   GroovyElementType IMPORT_END = new GroovyElementType("Import end");
   GroovyElementType IMPORT_SELECTOR = new GroovyElementType("Import selector");
 
-  //statements
-  GroovyElementType STATEMENT = new GroovyElementType("Any statement"); //doesn't need
+  // Expression statements
+  GroovyElementType EXPRESSION_STATEMENT = new GroovyElementType("Expression statement");
+  GroovyElementType ASSIGNMENT_EXXPRESSION = new GroovyElementType("Assignment expression");
+  GroovyElementType CONDITIONAL_EXXPRESSION = new GroovyElementType("Conditional expression");
+
+
+  GroovyElementType ADDITIVE_EXXPRESSION = new GroovyElementType("Additive expression");
+
+  GroovyElementType PRIMARY_EXXPRESSION = new GroovyElementType("Primary expression");
+
+  // GStrings
+  GroovyElementType GSTRING = new GroovyElementType("GString");
 
   GroovyElementType DECLARATION = new GroovyElementType("declaration"); //node
   GroovyElementType TYPE_DEFINITION = new GroovyElementType("type definition"); //node
@@ -43,6 +57,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType INTERFACE_DEFINITION = new GroovyElementType("interface definition"); //node
   GroovyElementType ENUM_DEFINITION = new GroovyElementType("enumeration definition"); //node
   GroovyElementType ANNOTATION_DEFINITION = new GroovyElementType("annotation definition"); //node
+
 
 
   //declaration

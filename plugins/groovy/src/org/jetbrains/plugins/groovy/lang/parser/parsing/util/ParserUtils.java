@@ -48,6 +48,35 @@ public abstract class ParserUtils {
   }
 
   /**
+   * Same as simple getToken() method but with TokenSet
+   *
+   * @param builder
+   * @param tokenSet
+   * @return
+   */
+  public static boolean getToken(PsiBuilder builder, TokenSet tokenSet) {
+    if (tokenSet.contains(builder.getTokenType())) {
+      return getToken(builder, builder.getTokenType(), null);
+    }
+    return false;
+  }
+
+  /**
+   * Same as simple getToken() method but with TokenSet
+   *
+   * @param builder
+   * @param tokenSet
+   * @return
+   */
+  public static boolean getToken(PsiBuilder builder, TokenSet tokenSet, String msg) {
+    if (tokenSet.contains(builder.getTokenType())) {
+      return getToken(builder, builder.getTokenType(), msg);
+    }
+    return false;
+  }
+
+
+  /**
    * method for construction like
    * <BNF>
    * token?
@@ -91,12 +120,12 @@ public abstract class ParserUtils {
     return i == elems.length;
   }
 
-    /**
+  /**
    * Checks, that following element sequence is like given
    *
-   * @param builder Given PsiBuilder
+   * @param builder    Given PsiBuilder
    * @param dropMarker to drop marker after successful checking or rollback it?
-   * @param elems   Array of need elements in order
+   * @param elems      Array of need elements in order
    * @return true if following sequence is like a given
    */
   public static boolean lookAhead(PsiBuilder builder, boolean dropMarker, IElementType... elems) {
@@ -111,7 +140,7 @@ public abstract class ParserUtils {
 
     PsiBuilder.Marker rb = builder.mark();
     int i = 0;
-    while ( !builder.eof() && i < elems.length && elems[i].equals(builder.getTokenType())) {
+    while (!builder.eof() && i < elems.length && elems[i].equals(builder.getTokenType())) {
       builder.advanceLexer();
       i++;
     }
