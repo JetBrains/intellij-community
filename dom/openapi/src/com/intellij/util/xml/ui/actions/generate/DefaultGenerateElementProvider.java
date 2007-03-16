@@ -6,34 +6,40 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
  * User: Sergey.Vasiliev
  */
-public abstract class DefaultGenerateElementProvider extends GenerateDomElementProvider {
+public abstract class DefaultGenerateElementProvider<T extends DomElement> extends GenerateDomElementProvider<T> {
   private Class<? extends DomElement> myChildElementClass;
 
-  public DefaultGenerateElementProvider(final String name, Class<? extends DomElement> childElementClass) {
-      super(name);
+  public DefaultGenerateElementProvider(final String name, Class<T> childElementClass) {
+    super(name);
 
     myChildElementClass = childElementClass;
   }
 
 
-  public DomElement generate(final Project project, final Editor editor, final PsiFile file) {
+  @Nullable
+  public T generate(final Project project, final Editor editor, final PsiFile file) {
     return generate(getParentDomElement(project, editor, file));
   }
 
+  @Nullable
   protected abstract DomElement getParentDomElement(final Project project, final Editor editor, final PsiFile file);
 
-  public DomElement generate(final DomElement parent) {
-    final List<? extends DomCollectionChildDescription> list = parent.getGenericInfo().getCollectionChildrenDescriptions();
+  @Nullable
+  public T generate(@Nullable final DomElement parent) {
+    if (parent != null) {
+      final List<? extends DomCollectionChildDescription> list = parent.getGenericInfo().getCollectionChildrenDescriptions();
 
-    for (DomCollectionChildDescription childDescription : list) {
-      if (ReflectionUtil.getRawType(childDescription.getType()).isAssignableFrom(myChildElementClass)) {
-        return childDescription.addValue(parent, myChildElementClass);
+      for (DomCollectionChildDescription childDescription : list) {
+        if (ReflectionUtil.getRawType(childDescription.getType()).isAssignableFrom(myChildElementClass)) {
+          return (T)childDescription.addValue(parent, myChildElementClass);
+        }
       }
     }
 

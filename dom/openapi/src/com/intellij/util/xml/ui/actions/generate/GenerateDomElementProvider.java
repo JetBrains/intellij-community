@@ -1,12 +1,13 @@
 package com.intellij.util.xml.ui.actions.generate;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigationProvider;
 import com.intellij.util.xml.DomElementsNavigationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: Sergey.Vasiliev
@@ -18,6 +19,7 @@ public abstract class GenerateDomElementProvider<T extends DomElement> {
     myDescription = description;
   }
 
+  @Nullable
   public abstract T generate(final Project project, final Editor editor, final PsiFile file);
 
   public void navigate(final DomElement element) {

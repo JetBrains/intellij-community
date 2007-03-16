@@ -8,6 +8,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigationProvider;
 import com.intellij.util.xml.DomElementsNavigationManager;
@@ -55,10 +57,13 @@ public class DomElementsNavigationManagerImpl extends DomElementsNavigationManag
     }
 
     public void navigate(DomElement domElement, boolean requestFocus) {
-
       VirtualFile file = domElement.getRoot().getFile().getVirtualFile();
-      final OpenFileDescriptor fileDescriptor = domElement.getXmlTag() != null ?
-        new OpenFileDescriptor(myProject, file, domElement.getXmlTag().getTextOffset()) :
+      if (file == null) return;
+
+      XmlElement xmlElement = domElement.getXmlElement();
+      if (xmlElement instanceof XmlAttribute) xmlElement = ((XmlAttribute)xmlElement).getValueElement();
+      final OpenFileDescriptor fileDescriptor = xmlElement != null ?
+        new OpenFileDescriptor(myProject, file, xmlElement.getTextOffset()) :
         new OpenFileDescriptor(myProject, file);
 
       FileEditorManagerEx.getInstanceEx(myProject).openTextEditor(fileDescriptor, requestFocus);
