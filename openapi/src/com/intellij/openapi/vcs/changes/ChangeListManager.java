@@ -42,6 +42,9 @@ public abstract class ChangeListManager {
   @Nullable
   public abstract Change getChange(VirtualFile file);
 
+  @Nullable
+  public abstract Change getChange(FilePath file);
+
   public abstract boolean isUnversioned(VirtualFile file);
 
   @NotNull

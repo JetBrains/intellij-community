@@ -665,6 +665,26 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
+  @Nullable
+  public Change getChange(final FilePath file) {
+    synchronized (myChangeLists) {
+      for (ChangeList list : myChangeLists) {
+        for (Change change : list.getChanges()) {
+          final ContentRevision afterRevision = change.getAfterRevision();
+          if (afterRevision != null && afterRevision.getFile().equals(file)) {
+            return change;
+          }
+          final ContentRevision beforeRevision = change.getBeforeRevision();
+          if (beforeRevision != null && beforeRevision.getFile().equals(file)) {
+            return change;
+          }
+        }
+      }
+
+      return null;
+    }
+  }
+
   public boolean isUnversioned(VirtualFile file) {
     return myUnversionedFilesHolder.containsFile(file);
   }

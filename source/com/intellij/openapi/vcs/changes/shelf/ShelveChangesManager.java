@@ -20,6 +20,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -183,9 +185,9 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return FileUtil.findSequentNonexistentFile(file, defaultPath, PATCH_EXTENSION);
   }
 
-  public List<VirtualFile> unshelveChangeList(final ShelvedChangeList changeList, @Nullable final List<ShelvedChange> changes,
-                                              @Nullable final List<ShelvedBinaryFile> binaryFiles) {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+  public List<FilePath> unshelveChangeList(final ShelvedChangeList changeList, @Nullable final List<ShelvedChange> changes,
+                                           @Nullable final List<ShelvedBinaryFile> binaryFiles) {
+    List<FilePath> result = new ArrayList<FilePath>();
     List<FilePatch> remainingPatches = new ArrayList<FilePatch>();
     try {
       List<FilePatch> patches = loadPatches(changeList.PATH);
@@ -225,16 +227,16 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
         return null;
       }
 
-      if (ApplyPatchAction.applyFilePatches(myProject, patches, context) == ApplyPatchStatus.FAILURE) {
+      if (ApplyPatchAction.applyFilePatches(myProject, patches, context, result) == ApplyPatchStatus.FAILURE) {
         return null;
       }
-      result.addAll(filesToMakeWritable);
       for(ShelvedBinaryFile file: binaryFilesToUnshelve) {
-        boolean success = unshelveBinaryFile(file);
-        if (!success) {
+        FilePath unshelvedFile = unshelveBinaryFile(file);
+        if (unshelvedFile == null) {
           break;
         }
         changeList.getBinaryFiles().remove(file);
+        result.add(unshelvedFile);
       }
     }
     catch (IOException e) {
@@ -267,7 +269,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return result;
   }
 
-  private boolean unshelveBinaryFile(final ShelvedBinaryFile file) throws IOException {
+  private FilePath unshelveBinaryFile(final ShelvedBinaryFile file) throws IOException {
     final String beforePath = file.BEFORE_PATH == null ? null : file.BEFORE_PATH.replace(File.separatorChar, '/');
     final String afterPath = file.AFTER_PATH == null ? null : file.AFTER_PATH.replace(File.separatorChar, '/');
     final boolean isNewFile = beforePath == null;
@@ -275,6 +277,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     final VirtualFile patchTarget = FilePatch.findPatchTarget(context, beforePath, afterPath, isNewFile);
     if (patchTarget != null) {
       final Ref<IOException> ex = new Ref<IOException>();
+      final Ref<VirtualFile> patchedFileRef = new Ref<VirtualFile>();
       final File shelvedFile = new File(file.SHELVED_PATH);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
@@ -284,6 +287,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
               fileToPatch = fileToPatch.createChildData(this, new File(afterPath).getName());
             }
             fileToPatch.setBinaryContent(FileUtil.loadFileBytes(shelvedFile));
+            patchedFileRef.set(fileToPatch);
           }
           catch (IOException e) {
             ex.set(e);
@@ -294,12 +298,12 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
         throw ex.get();
       }
       FileUtil.delete(shelvedFile);
-      return true;
+      return new FilePathImpl(patchedFileRef.get());
     }
     else {
       Messages.showErrorDialog(myProject, "Failed to unshelve binary file " + (afterPath != null ? afterPath : beforePath),
         "Unshelve Changes");
-      return false;
+      return null;
     }
   }
 

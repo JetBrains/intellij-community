@@ -10,10 +10,10 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,14 +21,14 @@ import com.intellij.openapi.diff.ActionButtonPresentation;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -36,10 +36,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -73,11 +75,12 @@ public class ApplyPatchAction extends AnAction {
     if (readonlyStatus.hasReadonlyFiles()) {
       return ApplyPatchStatus.FAILURE;
     }
-    return applyFilePatches(project, patches, context);
+    return applyFilePatches(project, patches, context, null);
   }
 
   public static ApplyPatchStatus applyFilePatches(final Project project, final List<FilePatch> patches,
-                                                  final ApplyPatchContext context) {
+                                                  final ApplyPatchContext context,
+                                                  @Nullable final List<FilePath> affectedFiles) {
     final Ref<ApplyPatchStatus> statusRef = new Ref<ApplyPatchStatus>();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -85,7 +88,7 @@ public class ApplyPatchAction extends AnAction {
           public void run() {
             ApplyPatchStatus status = null;
             for(FilePatch patch: patches) {
-              final ApplyPatchStatus patchStatus = applySinglePatch(project, patch, context);
+              final ApplyPatchStatus patchStatus = applySinglePatch(project, patch, context, affectedFiles);
               status = ApplyPatchStatus.and(status, patchStatus);
             }
             if (status == ApplyPatchStatus.ALREADY_APPLIED) {
@@ -147,7 +150,8 @@ public class ApplyPatchAction extends AnAction {
   }
 
   private static ApplyPatchStatus applySinglePatch(final Project project, final FilePatch patch,
-                                                   final ApplyPatchContext context) {
+                                                   final ApplyPatchContext context,
+                                                   @Nullable final List<FilePath> affectedFiles) {
     VirtualFile file;
     try {
       file = patch.findFileToPatch(context);
@@ -162,6 +166,9 @@ public class ApplyPatchAction extends AnAction {
     }
 
     try {
+      if (affectedFiles != null) {
+        affectedFiles.add(patch.getTarget(file));
+      }
       return patch.apply(file);
     }
     catch(ApplyPatchException ex) {

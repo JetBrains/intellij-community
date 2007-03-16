@@ -15,6 +15,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,6 +88,13 @@ public class FilePatch {
     return apply(fileToPatch);
   }
 
+  public FilePath getTarget(final VirtualFile file) {
+    if (isNewFile()) {
+      return new FilePathImpl(file, getBeforeFileName(), false);
+    }
+    return new FilePathImpl(file);
+  }
+
   public ApplyPatchStatus apply(final VirtualFile fileToPatch) throws IOException, ApplyPatchException {
     if (isNewFile()) {
       if (fileToPatch.findChild(getBeforeFileName()) != null) {
@@ -148,7 +157,7 @@ public class FilePatch {
     if (file == null) {
       file = findFileToPatchByName(context, afterName, isNewFile);
     }
-    else if (context.isAllowRename() && !beforeName.equals(afterName)) {
+    else if (context.isAllowRename() && beforeName != null && afterName != null && !beforeName.equals(afterName)) {
       String[] beforeNameComponents = beforeName.split("/");
       String[] afterNameComponents = afterName.split("/");
       if (!beforeNameComponents [beforeNameComponents.length-1].equals(afterNameComponents [afterNameComponents.length-1])) {

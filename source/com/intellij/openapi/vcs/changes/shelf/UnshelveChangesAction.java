@@ -16,15 +16,15 @@ import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class UnshelveChangesAction extends AnAction {
   private Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction");
@@ -53,10 +53,10 @@ public class UnshelveChangesAction extends AnAction {
     }
 
     FileDocumentManager.getInstance().saveAllDocuments();
-    List<VirtualFile> unshelvedFiles = new ArrayList<VirtualFile>();
+    List<FilePath> unshelvedFiles = new ArrayList<FilePath>();
 
     for(ShelvedChangeList changeList: changeLists) {
-      final List<VirtualFile> result = ShelveChangesManager.getInstance(project).unshelveChangeList(changeList, changes, binaryFiles);
+      final List<FilePath> result = ShelveChangesManager.getInstance(project).unshelveChangeList(changeList, changes, binaryFiles);
       if (result == null) {
         break;
       }
@@ -66,7 +66,7 @@ public class UnshelveChangesAction extends AnAction {
     if (chooser.getSelectedList() != changeListManager.getDefaultChangeList()) {
       changeListManager.ensureUpToDate(false);
       List<Change> unshelvedChanges = new ArrayList<Change>();
-      for(VirtualFile file: unshelvedFiles) {
+      for(FilePath file: unshelvedFiles) {
         final Change change = changeListManager.getChange(file);
         if (change != null) {
           unshelvedChanges.add(change);
