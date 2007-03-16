@@ -147,9 +147,11 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
     final int offset = myEditor.logicalPositionToOffset(position);
 
-    final XmlDocument xmlDocument = ((XmlFile)myFile).getDocument();
-    assert xmlDocument != null;
-    return xmlDocument.findElementAt(offset);
+    //final XmlDocument xmlDocument = ((XmlFile)myFile).getDocument();
+    //assert xmlDocument != null;
+    //return xmlDocument.findElementAt(offset);
+
+    return myFile.getViewProvider().findElementAt(offset);
   }
 
   @NotNull
@@ -177,14 +179,16 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     myQueue = null;
   }
 
-  private void updateCrumbs(final LogicalPosition positon) {
-    if (PsiDocumentManager.getInstance(myFile.getProject()).isUncommited(myEditor.getDocument())) {
-      return;
-    }
+  private void updateCrumbs(final LogicalPosition position) {
+    if (myFile != null && myEditor != null) {
+      if (PsiDocumentManager.getInstance(myFile.getProject()).isUncommited(myEditor.getDocument())) {
+        return;
+      }
 
-    final PsiElement element = getCaretElement(positon);
-    if (element != null) {
-      myLine.setCrumbs(getLineElements(element));
+      final PsiElement element = getCaretElement(position);
+      if (element != null) {
+        myLine.setCrumbs(getLineElements(element));
+      }
     }
   }
 
