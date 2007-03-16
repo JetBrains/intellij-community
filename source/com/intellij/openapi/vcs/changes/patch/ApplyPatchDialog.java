@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -145,7 +146,7 @@ public class ApplyPatchDialog extends DialogWrapper {
       int skipTopDirs = myDetectedStripLeadingDirs >= 0 ? myDetectedStripLeadingDirs : 0;
       VirtualFile fileToPatch;
       try {
-        fileToPatch = patch.findFileToPatch(baseDir, skipTopDirs, false, false);
+        fileToPatch = patch.findFileToPatch(new ApplyPatchContext(baseDir, skipTopDirs, false, false));
       }
       catch (IOException e) {
         continue;
@@ -285,5 +286,9 @@ public class ApplyPatchDialog extends DialogWrapper {
 
   public int getStripLeadingDirectories() {
     return ((Integer) myStripLeadingDirectoriesSpinner.getValue()).intValue();
+  }
+
+  public ApplyPatchContext getApplyPatchContext() {
+    return new ApplyPatchContext(getBaseDirectory(), getStripLeadingDirectories(), false, false);
   }
 }

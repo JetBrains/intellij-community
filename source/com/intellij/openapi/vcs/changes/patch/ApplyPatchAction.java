@@ -24,6 +24,7 @@ import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -58,13 +59,13 @@ public class ApplyPatchAction extends AnAction {
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
     }
-    applyPatch(project, dialog.getPatches(), dialog.getBaseDirectory(), dialog.getStripLeadingDirectories(), false, false);
+    applyPatch(project, dialog.getPatches(), dialog.getApplyPatchContext());
   }
 
-  public static ApplyPatchStatus applyPatch(final Project project, final List<FilePatch> patches, final VirtualFile baseDirectory,
-                                            final int stripLeadingDirectories, final boolean createDirectories, final boolean allowRename) {
+  public static ApplyPatchStatus applyPatch(final Project project, final List<FilePatch> patches,
+                                            final ApplyPatchContext context) {
     List<VirtualFile> filesToMakeWritable = new ArrayList<VirtualFile>();
-    if (!prepareFiles(project, patches, baseDirectory, stripLeadingDirectories, filesToMakeWritable)) {
+    if (!prepareFiles(project, patches, context, filesToMakeWritable)) {
       return ApplyPatchStatus.FAILURE;
     }
     final VirtualFile[] fileArray = filesToMakeWritable.toArray(new VirtualFile[filesToMakeWritable.size()]);
@@ -72,13 +73,11 @@ public class ApplyPatchAction extends AnAction {
     if (readonlyStatus.hasReadonlyFiles()) {
       return ApplyPatchStatus.FAILURE;
     }
-    return applyFilePatches(project, patches, baseDirectory, stripLeadingDirectories, createDirectories, allowRename);
+    return applyFilePatches(project, patches, context);
   }
 
-  public static ApplyPatchStatus applyFilePatches(final Project project, final List<FilePatch> patches, final VirtualFile baseDirectory,
-                                                  final int stripLeadingDirectories,
-                                                  final boolean createDirectories,
-                                                  final boolean allowRename) {
+  public static ApplyPatchStatus applyFilePatches(final Project project, final List<FilePatch> patches,
+                                                  final ApplyPatchContext context) {
     final Ref<ApplyPatchStatus> statusRef = new Ref<ApplyPatchStatus>();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -86,8 +85,7 @@ public class ApplyPatchAction extends AnAction {
           public void run() {
             ApplyPatchStatus status = null;
             for(FilePatch patch: patches) {
-              final ApplyPatchStatus patchStatus = applySinglePatch(project, patch, baseDirectory, stripLeadingDirectories, createDirectories,
-                                                                    allowRename);
+              final ApplyPatchStatus patchStatus = applySinglePatch(project, patch, context);
               status = ApplyPatchStatus.and(status, patchStatus);
             }
             if (status == ApplyPatchStatus.ALREADY_APPLIED) {
@@ -106,13 +104,13 @@ public class ApplyPatchAction extends AnAction {
     return statusRef.get();
   }
 
-  public static boolean prepareFiles(final Project project, final List<FilePatch> patches, final VirtualFile baseDirectory,
-                                     final int stripLeadingDirectories,
+  public static boolean prepareFiles(final Project project, final List<FilePatch> patches,
+                                     final ApplyPatchContext context,
                                      final List<VirtualFile> filesToMakeWritable) {
     for(FilePatch patch: patches) {
       VirtualFile fileToPatch;
       try {
-        fileToPatch = patch.findFileToPatch(baseDirectory, stripLeadingDirectories, false, false);
+        fileToPatch = patch.findFileToPatch(context.getPrepareContext());
       }
       catch (IOException e) {
         Messages.showErrorDialog(project, "Error when searching for file to patch: " + patch.getBeforeName() + ": " + e.getMessage(),
@@ -148,12 +146,11 @@ public class ApplyPatchAction extends AnAction {
     return true;
   }
 
-  private static ApplyPatchStatus applySinglePatch(final Project project, final FilePatch patch, final VirtualFile baseDirectory,
-                                                   final int stripLeadingDirectories, final boolean createDirectories,
-                                                   final boolean allowRename) {
+  private static ApplyPatchStatus applySinglePatch(final Project project, final FilePatch patch,
+                                                   final ApplyPatchContext context) {
     VirtualFile file;
     try {
-      file = patch.findFileToPatch(baseDirectory, stripLeadingDirectories, createDirectories, allowRename);
+      file = patch.findFileToPatch(context);
     }
     catch (IOException e) {
       Messages.showErrorDialog(project, "Error when searching for file to patch: " + patch.getBeforeName() + ": " + e.getMessage(), "Apply Patch");

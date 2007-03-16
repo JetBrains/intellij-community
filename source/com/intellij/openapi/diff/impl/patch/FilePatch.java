@@ -15,8 +15,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -75,9 +75,9 @@ public class FilePatch {
     return Collections.unmodifiableList(myHunks);
   }
 
-  public ApplyPatchStatus apply(VirtualFile patchedDir, int skipTopDirs, boolean createDirectories, boolean allowRename)
+  public ApplyPatchStatus apply(ApplyPatchContext context)
     throws ApplyPatchException, IOException {
-    VirtualFile fileToPatch = findFileToPatch(patchedDir, skipTopDirs, createDirectories, allowRename);
+    VirtualFile fileToPatch = findFileToPatch(context);
 
     if (fileToPatch == null) {
       throw new ApplyPatchException("Cannot find file to patch: " + myBeforeName);
@@ -134,24 +134,21 @@ public class FilePatch {
   }
 
   @Nullable
-  public VirtualFile findFileToPatch(@NotNull final VirtualFile patchedDir, final int skipTopDirs, final boolean createDirectories,
-                                     final boolean allowRename) throws IOException {
-    return findPatchTarget(patchedDir, myBeforeName, myAfterName, skipTopDirs, isNewFile(), createDirectories, allowRename);
+  public VirtualFile findFileToPatch(@NotNull ApplyPatchContext context) throws IOException {
+    return findPatchTarget(context, myBeforeName, myAfterName, isNewFile());
   }
 
   @Nullable
-  public static VirtualFile findPatchTarget(final VirtualFile baseDir, final String beforeName, final String afterName, final int skipTopDirs,
-                                            final boolean isNewFile,
-                                            final boolean createDirectories,
-                                            final boolean allowRename) throws IOException {
+  public static VirtualFile findPatchTarget(final ApplyPatchContext context, final String beforeName, final String afterName,
+                                            final boolean isNewFile) throws IOException {
     VirtualFile file = null;
     if (beforeName != null) {
-      file = findFileToPatchByName(baseDir, skipTopDirs, beforeName, isNewFile, createDirectories);
+      file = findFileToPatchByName(context, beforeName, isNewFile);
     }
     if (file == null) {
-      file = findFileToPatchByName(baseDir, skipTopDirs, afterName, isNewFile, createDirectories);
+      file = findFileToPatchByName(context, afterName, isNewFile);
     }
-    else if (allowRename && !beforeName.equals(afterName)) {
+    else if (context.isAllowRename() && !beforeName.equals(afterName)) {
       String[] beforeNameComponents = beforeName.split("/");
       String[] afterNameComponents = afterName.split("/");
       if (!beforeNameComponents [beforeNameComponents.length-1].equals(afterNameComponents [afterNameComponents.length-1])) {
@@ -159,7 +156,7 @@ public class FilePatch {
       }
       boolean pathChanged = (beforeNameComponents.length != afterNameComponents.length);
       if (!pathChanged) {
-        for(int i=skipTopDirs; i<afterNameComponents.length-1; i++) {
+        for(int i=context.getSkipTopDirs(); i<afterNameComponents.length-1; i++) {
           if (!beforeNameComponents [i].equals(afterNameComponents [i])) {
             pathChanged = true;
             break;
@@ -167,8 +164,7 @@ public class FilePatch {
         }
       }
       if (pathChanged) {
-        VirtualFile moveTarget = findFileToPatchByComponents(baseDir, skipTopDirs, afterNameComponents, afterNameComponents.length-1,
-                                                             createDirectories);
+        VirtualFile moveTarget = findFileToPatchByComponents(context, afterNameComponents, afterNameComponents.length-1);
         if (moveTarget == null) {
           return null;
         }
@@ -179,20 +175,19 @@ public class FilePatch {
   }
 
   @Nullable
-  private static VirtualFile findFileToPatchByName(@NotNull final VirtualFile patchedDir, final int skipTopDirs, final String fileName,
-                                                   boolean isNewFile, final boolean createDirectories) {
+  private static VirtualFile findFileToPatchByName(@NotNull ApplyPatchContext context, final String fileName,
+                                                   boolean isNewFile) {
     String[] pathNameComponents = fileName.split("/");
     int lastComponentToFind = isNewFile ? pathNameComponents.length-1 : pathNameComponents.length;
-    return findFileToPatchByComponents(patchedDir, skipTopDirs, pathNameComponents, lastComponentToFind, createDirectories);
+    return findFileToPatchByComponents(context, pathNameComponents, lastComponentToFind);
   }
 
   @Nullable
-  private static VirtualFile findFileToPatchByComponents(VirtualFile patchedDir,
-                                                         final int skipTopDirs,
+  private static VirtualFile findFileToPatchByComponents(ApplyPatchContext context,
                                                          final String[] pathNameComponents,
-                                                         final int lastComponentToFind,
-                                                         final boolean createDirectories) {
-    for(int i=skipTopDirs; i<lastComponentToFind; i++) {
+                                                         final int lastComponentToFind) {
+    VirtualFile patchedDir = context.getBaseDir();
+    for(int i=context.getSkipTopDirs(); i<lastComponentToFind; i++) {
       VirtualFile nextChild;
       if (pathNameComponents [i].equals("..")) {
         nextChild = patchedDir.getParent();
@@ -201,7 +196,7 @@ public class FilePatch {
         nextChild = patchedDir.findChild(pathNameComponents [i]);
       }
       if (nextChild == null) {
-        if (createDirectories) {
+        if (context.isCreateDirectories()) {
           try {
             nextChild = patchedDir.createChildDirectory(null, pathNameComponents [i]);
           }

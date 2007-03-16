@@ -201,7 +201,8 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       }
       List<VirtualFile> filesToMakeWritable = new ArrayList<VirtualFile>();
       VirtualFile baseDir = myProject.getBaseDir();
-      if (!ApplyPatchAction.prepareFiles(myProject, patches, baseDir, 0, filesToMakeWritable)) {
+      ApplyPatchContext context = new ApplyPatchContext(baseDir, 0, true, true);
+      if (!ApplyPatchAction.prepareFiles(myProject, patches, context, filesToMakeWritable)) {
         return null;
       }
 
@@ -211,8 +212,8 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
           final String beforePath = file.BEFORE_PATH == null ? null : file.BEFORE_PATH.replace(File.separatorChar, '/');
           final String afterPath = file.AFTER_PATH == null ? null : file.AFTER_PATH.replace(File.separatorChar, '/');
           final boolean isNewFile = beforePath == null;
-          VirtualFile patchTarget = FilePatch.findPatchTarget(myProject.getBaseDir(), beforePath, afterPath, 0, isNewFile, true, true);
-            if (patchTarget != null) {
+          VirtualFile patchTarget = FilePatch.findPatchTarget(context, beforePath, afterPath, isNewFile);
+          if (patchTarget != null) {
             filesToMakeWritable.add(patchTarget);
           }
         }
@@ -224,7 +225,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
         return null;
       }
 
-      if (ApplyPatchAction.applyFilePatches(myProject, patches, baseDir, 0, true, true) == ApplyPatchStatus.FAILURE) {
+      if (ApplyPatchAction.applyFilePatches(myProject, patches, context) == ApplyPatchStatus.FAILURE) {
         return null;
       }
       result.addAll(filesToMakeWritable);
@@ -270,7 +271,8 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     final String beforePath = file.BEFORE_PATH == null ? null : file.BEFORE_PATH.replace(File.separatorChar, '/');
     final String afterPath = file.AFTER_PATH == null ? null : file.AFTER_PATH.replace(File.separatorChar, '/');
     final boolean isNewFile = beforePath == null;
-    final VirtualFile patchTarget = FilePatch.findPatchTarget(myProject.getBaseDir(), beforePath, afterPath, 0, isNewFile, true, true);
+    ApplyPatchContext context = new ApplyPatchContext(myProject.getBaseDir(), 0, true, true);
+    final VirtualFile patchTarget = FilePatch.findPatchTarget(context, beforePath, afterPath, isNewFile);
     if (patchTarget != null) {
       final Ref<IOException> ex = new Ref<IOException>();
       final File shelvedFile = new File(file.SHELVED_PATH);
