@@ -27,8 +27,8 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
         return soft;
       }
 
-      @NotNull public Collection<PsiFileSystemItem> getDefaultContexts(PsiElement position) {
-        return getRoots(position);
+      @NotNull public Collection<PsiFileSystemItem> computeDefaultContexts() {
+        return getRoots(getElement());
       }
 
       protected PsiScopeProcessor createProcessor(final List result, List<Class> allowedClasses, List<PsiConflictResolver> resolvers)

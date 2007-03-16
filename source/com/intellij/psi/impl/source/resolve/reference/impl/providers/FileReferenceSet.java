@@ -42,6 +42,7 @@ public class FileReferenceSet {
   private final PsiReferenceProvider myProvider;
   private boolean myCaseSensitive;
   private String myPathString;
+  private Collection<PsiFileSystemItem> myDefaultContexts;
 
   public boolean isEndingSlashNotAllowed() {
     return myEndingSlashNotAllowed;
@@ -213,11 +214,19 @@ public class FileReferenceSet {
   }
 
   @NotNull
-  public Collection<PsiFileSystemItem> getDefaultContexts(PsiElement element) {
-    Project project = element.getProject();
-    PsiFile file = element.getContainingFile();
+  public Collection<PsiFileSystemItem> getDefaultContexts() {
+    if (myDefaultContexts == null) {
+      myDefaultContexts = computeDefaultContexts();
+    }
+    return myDefaultContexts;
+  }
+
+  @NotNull
+  public Collection<PsiFileSystemItem> computeDefaultContexts() {
+    Project project = myElement.getProject();
+    PsiFile file = myElement.getContainingFile();
     if (file == null) {
-      LOG.assertTrue(false, "Invalid element: " + element);
+      LOG.assertTrue(false, "Invalid element: " + myElement);
     }
 
     if (!file.isPhysical()) file = file.getOriginalFile();

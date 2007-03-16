@@ -48,7 +48,7 @@ public class FileReferenceQuickFixProvider {
     if(index > 0) {
       context = fileReferenceSet.getReference(index - 1).resolve();
     } else { // index == 0
-      final Collection<PsiFileSystemItem> defaultContexts = fileReferenceSet.getDefaultContexts(reference.getElement());
+      final Collection<PsiFileSystemItem> defaultContexts = fileReferenceSet.getDefaultContexts();
       if (defaultContexts.isEmpty()) {
         return Collections.emptyList();
       }

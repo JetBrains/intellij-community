@@ -5,7 +5,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSetBase;
@@ -46,30 +45,29 @@ public class AntFileReferenceSet extends FileReferenceSetBase {
   }
 
   @NotNull
-  public Collection<PsiFileSystemItem> getDefaultContexts(PsiElement element) {
-    if (element instanceof AntElement) {
-      final AntFile file = ((AntElement)element).getAntFile();
-      if (file != null) {
-        final AntProject project = file.getAntProject();
-        if (project != null) {
-          final String path = project.getBaseDir();
-          VirtualFile vFile = file.getContainingPath();
+  public Collection<PsiFileSystemItem> computeDefaultContexts() {
+    final AntStructuredElement element = getElement();
+    final AntFile file = element.getAntFile();
+    if (file != null) {
+      final AntProject project = file.getAntProject();
+      if (project != null) {
+        final String path = project.getBaseDir();
+        VirtualFile vFile = file.getContainingPath();
+        if (vFile != null) {
+          if (path != null && !(element instanceof AntImport)) {
+            vFile = LocalFileSystem.getInstance()
+              .findFileByPath((new File(vFile.getPath(), path)).getAbsolutePath().replace(File.separatorChar, '/'));
+          }
           if (vFile != null) {
-            if (path != null && !(element instanceof AntImport)) {
-              vFile = LocalFileSystem.getInstance()
-                .findFileByPath((new File(vFile.getPath(), path)).getAbsolutePath().replace(File.separatorChar, '/'));
-            }
-            if (vFile != null) {
-              final PsiDirectory directory = file.getViewProvider().getManager().findDirectory(vFile);
-              if (directory != null) {
-                return Collections.<PsiFileSystemItem>singleton(directory);
-              }
+            final PsiDirectory directory = file.getViewProvider().getManager().findDirectory(vFile);
+            if (directory != null) {
+              return Collections.<PsiFileSystemItem>singleton(directory);
             }
           }
         }
       }
     }
-    return super.getDefaultContexts(element);
+    return super.computeDefaultContexts();
   }
 
   XmlAttributeValue getManipulatorElement() {

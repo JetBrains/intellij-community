@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -53,7 +52,7 @@ public class FileReference
   private Collection<PsiFileSystemItem> getContexts() {
     final FileReference contextRef = getContextReference();
     if (contextRef == null) {
-      return myFileReferenceSet.getDefaultContexts(myFileReferenceSet.getElement());
+      return myFileReferenceSet.getDefaultContexts();
     }
     ResolveResult[] resolveResults = contextRef.multiResolve(false);
     ArrayList<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
