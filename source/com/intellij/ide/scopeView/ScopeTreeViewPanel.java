@@ -111,6 +111,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   }
 
   public void dispose(){
+    TreeModelBuilder.clearCaches(myProject);
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeAdapter);
     WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
   }
