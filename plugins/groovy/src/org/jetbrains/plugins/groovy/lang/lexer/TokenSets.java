@@ -18,4 +18,36 @@ public abstract class TokenSets implements GroovyTokenTypes {
           mWS
   );
 
+  public static TokenSet SUSPICIOUS_EXPRESSION_STATEMENT_START_TOKEN_SET = TokenSet.create(
+          mMINUS,
+          mPLUS,
+          mLBRACK,
+          mLPAREN,
+          mLCURLY
+  );
+
+  public static final TokenSet CONSTANTS = TokenSet.create(
+          mNUM_INT,
+          kTRUE,
+          kFALSE,
+          kNULL,
+          mSTRING_LITERAL,
+          mGSTRING_LITERAL
+  );
+
+  public static final TokenSet BUILT_IN_TYPE = TokenSet.create(
+          kVOID,
+          kBOOLEAN,
+          kBYTE,
+          kCHAR,
+          kSHORT,
+          kINT,
+          kFLOAT,
+          kLONG,
+          kDOUBLE,
+          kANY
+  );
+
+  
+
 }

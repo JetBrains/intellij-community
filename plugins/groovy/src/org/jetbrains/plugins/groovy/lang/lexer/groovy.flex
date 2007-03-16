@@ -154,10 +154,23 @@ mGSTRING_LITERAL = \"\"
 %xstate IN_TRIPLE_GSTRING_DOLLAR
 %xstate IN_SINGLE_GSTRING
 %xstate IN_TRIPLE_GSTRING
+%xstate GSTRING_STAR_SINGLE
+%xstate GSTRING_STAR_TRIPLE
 %xstate WRONG_STRING
 %state IN_INNER_BLOCK
 
 %%
+// Star meeting in Gstring
+<GSTRING_STAR_SINGLE> {
+  "*"                                     { return mSTAR; }
+  [^"*"]                                  { yypushback(yytext().length());
+                                            yybegin(IN_SINGLE_GSTRING_DOLLAR);  }
+}
+<GSTRING_STAR_TRIPLE> {
+  "*"                                     { return mSTAR; }
+  [^"*"]                                  { yypushback(yytext().length());
+                                            yybegin(IN_TRIPLE_GSTRING_DOLLAR);  }
+}
 
 // Single double-quoted GString
 <IN_SINGLE_GSTRING_DOLLAR> {
@@ -272,11 +285,11 @@ mGSTRING_LITERAL = \"\"
 {mSINGLE_QUOTED_STRING_BEGIN}                              {  return mWRONG_STRING_LITERAL; }
 
 // GStrings
-{mGSTRING_SINGLE_BEGIN}                                    {  yybegin(IN_SINGLE_GSTRING_DOLLAR);
+{mGSTRING_SINGLE_BEGIN}                                    {  yybegin(GSTRING_STAR_SINGLE);
                                                               gStringStack.push(mLPAREN);
                                                               return mGSTRING_SINGLE_BEGIN; }
 
-{mGSTRING_TRIPLE_BEGIN}                                    {  yybegin(IN_TRIPLE_GSTRING_DOLLAR);
+{mGSTRING_TRIPLE_BEGIN}                                    {  yybegin(GSTRING_STAR_TRIPLE);
                                                               gStringStack.push(mLBRACK);
                                                               return mGSTRING_SINGLE_BEGIN; }
 
@@ -291,6 +304,7 @@ mGSTRING_LITERAL = \"\"
 
 "?"                                       {  return(mQUESTION);  }
 "/"                                       {  return(mDIV);  }
+"/="                                      {  return(mDIV_ASSIGN);  }
 "("                                       {  return(mLPAREN);  }
 ")"                                       {  return(mRPAREN);  }
 "["                                       {  return(mLBRACK);  }
