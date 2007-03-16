@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.lang.parser;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import com.intellij.psi.tree.TokenSet;
 
 /**
  * Utility interface that contains all Groovy non-token element types
@@ -39,13 +38,13 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
 
   // Expression statements
   GroovyElementType EXPRESSION_STATEMENT = new GroovyElementType("Expression statement");
-  GroovyElementType ASSIGNMENT_EXXPRESSION = new GroovyElementType("Assignment expression");
-  GroovyElementType CONDITIONAL_EXXPRESSION = new GroovyElementType("Conditional expression");
+  GroovyElementType ASSIGNMENT_EXXPRESSION = new GroovyElementType("Assignment expressions");
+  GroovyElementType CONDITIONAL_EXXPRESSION = new GroovyElementType("Conditional expressions");
 
 
-  GroovyElementType ADDITIVE_EXXPRESSION = new GroovyElementType("Additive expression");
+  GroovyElementType ADDITIVE_EXXPRESSION = new GroovyElementType("Additive expressions");
 
-  GroovyElementType PRIMARY_EXXPRESSION = new GroovyElementType("Primary expression");
+  GroovyElementType PRIMARY_EXXPRESSION = new GroovyElementType("Primary expressions");
 
   // GStrings
   GroovyElementType GSTRING = new GroovyElementType("GString");
