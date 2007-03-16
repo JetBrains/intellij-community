@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.groovy.lang.parser;
 
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import com.intellij.psi.tree.TokenSet;
 
 /**
  * Utility interface that contains all Groovy non-token element types
@@ -34,7 +34,13 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType STATEMENT = new GroovyElementType("Any statement");
 
   //declaration
-  GroovyElementType DECLARATION_START = new GroovyElementType("Declaration start");
+  GroovyElementType DECLARATION_START = new GroovyElementType("Declaration start"); //not node
+  GroovyElementType DECLARATION = new GroovyElementType("declaration"); //node
+
+  GroovyElementType BALANCED_BRACKETS = new GroovyElementType("balanced brackets"); //node
+
+  //balanced tokens
+  GroovyElementType BALANCED_TOKENS = new GroovyElementType("balanced tokens in the brackts"); //not node
 
   GroovyElementType UPPER_CASE_IDENT = new GroovyElementType("Upper case identifier");
 
