@@ -67,6 +67,7 @@ public interface GroovyTokenTypes {
 
   IElementType mQUESTION = new GroovyElementType("?");
   IElementType mDIV = new GroovyElementType("/");
+  IElementType mDIV_ASSIGN = new GroovyElementType("/=");
   IElementType mLPAREN = new GroovyElementType("(");
   IElementType mRPAREN = new GroovyElementType(")");
   IElementType mLBRACK = new GroovyElementType("[");
