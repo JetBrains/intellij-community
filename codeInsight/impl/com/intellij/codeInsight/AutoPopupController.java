@@ -11,7 +11,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -68,15 +70,11 @@ public class AutoPopupController implements Disposable {
       final Runnable request = new Runnable(){
         public void run(){
           PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          CommandProcessor.getInstance().executeCommand(
-              myProject, new Runnable() {
-              public void run(){
-                new DotAutoLookupHandler().invoke(myProject, editor, file);
-              }
-            },
-            "",
-            null
-          );
+          new WriteCommandAction(myProject) {
+            protected void run(Result result) throws Throwable {
+              new DotAutoLookupHandler().invoke(myProject, editor, file);
+            }
+          }.execute();
         }
       };
       // invoke later prevents cancelling request by keyPressed from the same action
