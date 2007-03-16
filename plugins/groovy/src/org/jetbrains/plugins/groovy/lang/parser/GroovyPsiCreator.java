@@ -7,6 +7,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportQualI
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrIdentifier;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.AdditiveExpression;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
@@ -42,9 +43,12 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(PACKAGE_DEFINITION)) return new GrPackageDefinition(node);
 
     //statements
-    if (elem.equals(DECLARATION)) return new GrDeclarationImpl(node);
+    if (elem.equals(ADDITIVE_EXXPRESSION)) return new GrAdditiveExpression(node);
+    if (elem.equals(ASSIGNMENT_EXXPRESSION)) return new GrAssignmentExpression(node);
 
-    if (elem.equals(BALANCED_BRACKETS)) return new GrBalancedBracketsImpl(node);
+
+//    if (elem.equals(DECLARATION)) return new GrDeclarationImpl(node);
+//    if (elem.equals(BALANCED_BRACKETS)) return new GrBalancedBracketsImpl(node);
 
     return new ASTWrapperPsiElement(node);
   }
