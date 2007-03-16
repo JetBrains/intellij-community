@@ -4,10 +4,10 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.Construction;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Modifier;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.identifier.UpperCaseIdent;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifier;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.identifier.UpperCaseIdent;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.auxilary.BalancedTokens;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.types.BuiltlnType;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.types.BuiltInType;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.QualifiedTypeName;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * DeclarationStart ::= "def"
  * | modifier
  * | @IDENT
- * | (upperCaseIdent | builtlnType | QulifiedTypeName)  {LBRACK balacedTokens RBRACK} IDENT
+ * | (upperCaseIdent | builtInType | QulifiedTypeName)  {LBRACK balacedTokens RBRACK} IDENT
  */
 
 public class DeclarationStart implements Construction {
@@ -35,23 +35,20 @@ public class DeclarationStart implements Construction {
     if (!tWRONG_SET.contains(elementType)) return elementType;
 
     //@IDENT
-
     if (ParserUtils.getToken(builder, mAT)) {
       if (!ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"))) {
         return WRONGWAY;
       }
-
       return DECLARATION_START;
     }
 
-    // (upperCaseIdent | builtlnType | QulifiedTypeName)  {LBRACK balacedTokens RBRACK} IDENT
-    if (!tWRONG_SET.contains(UpperCaseIdent.parse(builder)) || !tWRONG_SET.contains(BuiltlnType.parse(builder)) || !tWRONG_SET.contains(QualifiedTypeName.parse(builder))) {
+    // (upperCaseIdent | builtInType | QulifiedTypeName)  {LBRACK balacedTokens RBRACK} IDENT
+    if (!tWRONG_SET.contains(UpperCaseIdent.parse(builder)) || !tWRONG_SET.contains(BuiltInType.parse(builder)) || !tWRONG_SET.contains(QualifiedTypeName.parse(builder))) {
 
       IElementType balancedTokens;
 
       do {
         balancedTokens = parseBalancedTokensInBrackets(builder);
-
         if (!BALANCED_TOKENS.equals(balancedTokens)) {
           return WRONGWAY;
         }
@@ -65,7 +62,7 @@ public class DeclarationStart implements Construction {
       }
 
     } else {
-      builder.error(GroovyBundle.message("upper.case.ident.or.builtln.type.or.qualified.type.name.expected"));
+      builder.error(GroovyBundle.message("upper.case.ident.or.builtIn.type.or.qualified.type.name.expected"));
       return WRONGWAY;
     }
   }
@@ -94,4 +91,3 @@ public class DeclarationStart implements Construction {
     return BALANCED_TOKENS;
   }
 }
-

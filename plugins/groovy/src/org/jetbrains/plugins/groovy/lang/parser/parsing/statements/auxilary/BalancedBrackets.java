@@ -35,7 +35,6 @@ public class BalancedBrackets implements Construction {
 
     if (myBracket == null) {
       bbm.rollbackTo();
-      bbm.drop();
       builder.error(GroovyBundle.message("lbrack.or.lparen.or.lcurly.or.string_ctor_start.expected"));
       return WRONGWAY;
     }
@@ -44,7 +43,6 @@ public class BalancedBrackets implements Construction {
 
     if (tWRONG_SET.contains(balancedTokens)) {
       bbm.rollbackTo();
-      bbm.drop();
       return WRONGWAY;
     }
 
@@ -53,7 +51,6 @@ public class BalancedBrackets implements Construction {
         || ParserUtils.getToken(builder, mRCURLY) && !mRCURLY.equals(Pairs.pairElementsMap.get(myBracket))
         || ParserUtils.getToken(builder, mSTRING_CTOR_END) && !mSTRING_CTOR_END.equals(Pairs.pairElementsMap.get(myBracket))) {
       bbm.rollbackTo();
-      bbm.drop();
       return WRONGWAY;
     } else {
       bbm.done(BALANCED_BRACKETS);
