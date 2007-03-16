@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -59,7 +60,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
       boolean expanded = region.isExpanded();
       boolean collapseByDefault = element != null &&
                                   FoldingPolicy.isCollapseByDefault(element) &&
-                                  !FoldingUtil.caretInsideRange(editor, element.getTextRange());
+                                  !FoldingUtil.caretInsideRange(editor, new TextRange(region.getStartOffset(), region.getEndOffset()));
       if (collapseByDefault != !expanded || element == null) {
         if (element != null) {
           myPsiElementsOrRangeMarkers.add(element);
