@@ -427,10 +427,10 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @param place       the original element from which the tree up walk was initiated.
    * @return true if the declaration processing should continue or false if it should be stopped.
    */
-  boolean processDeclarations(PsiScopeProcessor processor,
-                              PsiSubstitutor substitutor,
-                              PsiElement lastParent,
-                              PsiElement place);
+  boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                              @NotNull PsiSubstitutor substitutor,
+                              @Nullable PsiElement lastParent,
+                              @NotNull PsiElement place);
 
   /**
    * Returns the element which should be used as the parent of this element in a tree up

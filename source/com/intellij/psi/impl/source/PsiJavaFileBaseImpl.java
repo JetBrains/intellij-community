@@ -273,7 +273,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }
   }
 
-  public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place){
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place){
     if(!processDeclarationsNoGuess(processor, substitutor, lastParent, place)){
       if(processor instanceof ClassResolverProcessor){
         final ClassResolverProcessor hint = (ClassResolverProcessor)processor;

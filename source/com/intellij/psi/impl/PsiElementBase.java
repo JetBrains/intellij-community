@@ -76,10 +76,10 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement {
     return getText().indexOf(c) >= 0;
   }
 
-  public boolean processDeclarations(PsiScopeProcessor processor,
-                                     PsiSubstitutor substitutor,
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiSubstitutor substitutor,
                                      PsiElement lastParent,
-                                     PsiElement place) {
+                                     @NotNull PsiElement place) {
     return true;
   }
 

@@ -17,6 +17,7 @@
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Trivial implementation of {@link ResolveResult}.
@@ -39,5 +40,10 @@ public class PsiElementResolveResult implements ResolveResult{
 
   public boolean isValidResult() {
     return true;
+  }
+
+  @NonNls
+  public String toString() {
+    return "PsiElementResolveResult: " + myElement.getText();
   }
 }

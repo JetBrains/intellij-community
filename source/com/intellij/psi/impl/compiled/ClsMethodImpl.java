@@ -770,10 +770,10 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     return "PsiMethod:" + getName();
   }
 
-  public boolean processDeclarations(PsiScopeProcessor processor,
-                                     PsiSubstitutor substitutor,
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiSubstitutor substitutor,
                                      PsiElement lastParent,
-                                     PsiElement place) {
+                                     @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     if (lastParent == null) return true;
 

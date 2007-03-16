@@ -383,10 +383,10 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return aPackage;
   }
 
-  public boolean processDeclarations(PsiScopeProcessor processor,
-                                     PsiSubstitutor substitutor,
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiSubstitutor substitutor,
                                      PsiElement lastParent,
-                                     PsiElement place) {
+                                     @NotNull PsiElement place) {
     GlobalSearchScope scope = place.getResolveScope();
 
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);

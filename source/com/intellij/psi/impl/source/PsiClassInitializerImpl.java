@@ -76,7 +76,7 @@ public class PsiClassInitializerImpl extends NonSlaveRepositoryPsiElement implem
     return "PsiClassInitializer";
   }
 
-  public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     if(lastParent == null) return true;
     return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);

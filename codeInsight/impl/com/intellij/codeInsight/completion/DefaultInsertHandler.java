@@ -217,14 +217,14 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     if(completion instanceof PsiMethod){
       final PsiMethod method = ((PsiMethod)completion);
       if (signatureSelected) {
-        if(PsiType.VOID.equals(method.getReturnType()) && !(myContext.file instanceof PsiCodeFragment)) {
+        if(PsiType.VOID.equals(method.getReturnType()) && !(myContext.file instanceof PsiCodeFragment) && (myContext.file instanceof PsiJavaFile)) {
           tailType = TailType.SEMICOLON;
         }
       }
       else {
         final boolean hasOverloads = hasOverloads();
         if (!hasOverloads) {
-          if(PsiType.VOID.equals(method.getReturnType()) && !(myContext.file instanceof PsiCodeFragment)) {
+          if(PsiType.VOID.equals(method.getReturnType()) && !(myContext.file instanceof PsiCodeFragment) && (myContext.file instanceof PsiJavaFile)) {
             tailType = TailType.SEMICOLON;
           }
         }
@@ -288,7 +288,12 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
           myState.caretOffset ++;
         }
         if (insertRightParenth) {
-          myDocument.insertString(myState.tailOffset, "()");
+          final CharSequence charsSequence = myDocument.getCharsSequence();
+          if (charsSequence.length() <= myState.tailOffset || charsSequence.charAt(myState.tailOffset) != '(') {
+            myDocument.insertString(myState.tailOffset, "(");
+          }
+
+          myDocument.insertString(myState.tailOffset + 1, ")");
           if (hasParams){
             myState.tailOffset += 2;
             myState.caretOffset++;

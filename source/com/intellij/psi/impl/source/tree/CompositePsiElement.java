@@ -202,10 +202,10 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     visitor.visitElement(this);
   }
 
-  public boolean processDeclarations(PsiScopeProcessor processor,
-                                     PsiSubstitutor substitutor,
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiSubstitutor substitutor,
                                      PsiElement lastParent,
-                                     PsiElement place) {
+                                     @NotNull PsiElement place) {
     return true;
   }
 

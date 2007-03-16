@@ -97,7 +97,7 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
     return getFileType() == StdFileTypes.XHTML || getFileType() == StdFileTypes.HTML;
   }
 
-  public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     if (!super.processDeclarations(processor, substitutor, lastParent, place)) return false;
 
     if (isWebFileType())

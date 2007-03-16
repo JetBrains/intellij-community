@@ -109,7 +109,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     return !myPseudoImports.isEmpty();
   }
 
-  public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     ElementClassHint classHint = processor.getHint(ElementClassHint.class);
     if (classHint == null || classHint.shouldProcess(PsiClass.class)) {
       final NameHint nameHint = processor.getHint(NameHint.class);

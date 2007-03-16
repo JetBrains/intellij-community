@@ -149,10 +149,10 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     return "PsiAnonymousClass";
   }
 
-  public boolean processDeclarations(PsiScopeProcessor processor,
-                                     PsiSubstitutor substitutor,
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiSubstitutor substitutor,
                                      PsiElement lastParent,
-                                     PsiElement place) {
+                                     @NotNull PsiElement place) {
     if (lastParent instanceof PsiExpressionList) return true;
     if (lastParent != null/* IMPORTANT: do not call getBaseClassReference() for lastParent == null - loads tree!*/
         && lastParent == getBaseClassReference()) {

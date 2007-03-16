@@ -75,7 +75,7 @@ public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements 
     }
   }
 
-  public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     final PsiSwitchStatement switchStatement = getEnclosingSwitchStatement();
     if (switchStatement != null) {
       final PsiExpression expression = switchStatement.getExpression();

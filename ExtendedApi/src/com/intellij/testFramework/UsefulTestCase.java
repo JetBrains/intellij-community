@@ -77,7 +77,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertSameElements(Arrays.asList(collection), expected);
   }
   
-  public static <T> void assertSameElements(Collection<T> collection, T... expected) {
+  public static <T> void assertSameElements(Collection<? extends T> collection, T... expected) {
     assertEquals(new HashSet<T>(Arrays.asList(expected)), new HashSet<T>(collection));
   }
   

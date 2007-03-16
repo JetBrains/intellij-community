@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.Disposable;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,7 @@ public abstract class ActionManagerEx extends ActionManager{
 
 
   public abstract void addAnActionListener(AnActionListener listener);
+  public abstract void addAnActionListener(AnActionListener listener, Disposable parentDisposable);
 
   public abstract void removeAnActionListener(AnActionListener listener);
 

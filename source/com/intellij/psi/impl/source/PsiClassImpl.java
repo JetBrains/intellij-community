@@ -649,7 +649,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     return "PsiClass:" + getName();
   }
 
-  public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     if (isEnum()) {
       String name = getName();
       if (name != null) {

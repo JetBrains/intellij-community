@@ -46,11 +46,6 @@
 
   <project-components>
     <component>
-      <interface-class>com.intellij.codeInsight.AutoPopupController</interface-class>
-      <implementation-class>com.intellij.codeInsight.AutoPopupController</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <interface-class>com.intellij.codeInsight.highlighting.BraceHighlighter</interface-class>
       <implementation-class>com.intellij.codeInsight.highlighting.BraceHighlighter</implementation-class>
       <skipForDummyProject/>

@@ -141,10 +141,10 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
     visitor.visitCodeFragment(this);
   }
 
-  public boolean processDeclarations(PsiScopeProcessor processor,
-                                     PsiSubstitutor substitutor,
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiSubstitutor substitutor,
                                      PsiElement lastParent,
-                                     PsiElement place) {
+                                     @NotNull PsiElement place) {
     final ElementClassHint classHint = processor.getHint(ElementClassHint.class);
 
     if (classHint == null || classHint.shouldProcess(PsiClass.class)) {

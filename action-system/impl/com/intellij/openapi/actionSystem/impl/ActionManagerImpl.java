@@ -23,8 +23,10 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -907,6 +909,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   public void addAnActionListener(AnActionListener listener) {
     myActionListeners.add(listener);
     myCachedActionListeners = null;
+  }
+
+  public void addAnActionListener(final AnActionListener listener, final Disposable parentDisposable) {
+    addAnActionListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        removeAnActionListener(listener);
+      }
+    });
   }
 
   public void removeAnActionListener(AnActionListener listener) {

@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -146,7 +147,7 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public boolean areElementsEquivalent(PsiElement element1, PsiElement element2) {
-    return false;
+    return Comparing.equal(element1, element2);
   }
 
   public LanguageLevel getEffectiveLanguageLevel() {

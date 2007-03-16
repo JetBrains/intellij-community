@@ -5,13 +5,14 @@ import com.intellij.codeInsight.completion.JavadocAutoLookupHandler;
 import com.intellij.codeInsight.completion.XmlAutoLookupHandler;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -22,35 +23,22 @@ import com.intellij.util.Alarm;
 /**
  *
  */
-public class AutoPopupController implements ProjectComponent {
+public class AutoPopupController implements Disposable {
   private final Project myProject;
-
   private final Alarm myAlarm = new Alarm();
 
-  private AnActionListener myAnActionListener;
-
-  private Runnable myActivityListener;
-
   public static AutoPopupController getInstance(Project project){
-    return project.getComponent(AutoPopupController.class);
+    return ServiceManager.getService(project, AutoPopupController.class);
   }
 
-  AutoPopupController(Project project){
+  public AutoPopupController(Project project) {
     myProject = project;
+    setupListeners();
   }
 
-  public String getComponentName() {
-    return "AutoPopupController";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
-
-  public void projectOpened() {
-    myAnActionListener = new AnActionListener() {
-      public void beforeActionPerformed(AnAction action, DataContext dataContext){
+  protected void setupListeners() {
+    ActionManagerEx.getInstanceEx().addAnActionListener(new AnActionListener() {
+      public void beforeActionPerformed(AnAction action, DataContext dataContext) {
         myAlarm.cancelAllRequests();
       }
 
@@ -61,20 +49,13 @@ public class AutoPopupController implements ProjectComponent {
 
       public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
       }
-    };
-    ActionManagerEx.getInstanceEx().addAnActionListener(myAnActionListener);
+    }, this);
 
-    myActivityListener = new Runnable() {
+    IdeEventQueue.getInstance().addActivityListener(new Runnable() {
       public void run() {
         myAlarm.cancelAllRequests();
       }
-    };
-    IdeEventQueue.getInstance().addActivityListener(myActivityListener);
-  }
-
-  public void projectClosed() {
-    ActionManagerEx.getInstanceEx().removeAnActionListener(myAnActionListener);
-    IdeEventQueue.getInstance().removeActivityListener(myActivityListener);
+    }, this);
   }
 
   public void autoPopupMemberLookup(final Editor editor){
@@ -185,5 +166,8 @@ public class AutoPopupController implements ProjectComponent {
             }
           });
     }
+  }
+
+  public void dispose() {
   }
 }

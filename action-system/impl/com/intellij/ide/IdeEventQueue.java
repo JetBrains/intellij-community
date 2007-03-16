@@ -12,8 +12,10 @@ import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -239,6 +241,12 @@ public class IdeEventQueue extends EventQueue {
     LOG.assertTrue(runnable != null);
     synchronized (myLock) {
       myActivityListeners.add(runnable);
+    }
+  }
+  public void addActivityListener(final Runnable runnable, Disposable parentDisposable) {
+    LOG.assertTrue(runnable != null);
+    synchronized (myLock) {
+      ContainerUtil.add(runnable, myActivityListeners, parentDisposable);
     }
   }
 

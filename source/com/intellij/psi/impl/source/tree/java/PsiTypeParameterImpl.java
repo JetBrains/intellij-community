@@ -198,7 +198,7 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
     return (PsiIdentifier) getMirrorTreeElement().findChildByRole(ChildRole.NAME);
   }
 
-  public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place){
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place){
     return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet<PsiClass>(), lastParent, place, false);
   }
 

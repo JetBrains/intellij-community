@@ -74,7 +74,7 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
     return "PsiDeclarationStatement";
   }
 
-  public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     PsiElement[] decls = getDeclaredElements();
     for (PsiElement decl : decls) {

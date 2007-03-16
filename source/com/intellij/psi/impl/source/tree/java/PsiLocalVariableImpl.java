@@ -227,7 +227,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     visitor.visitLocalVariable(this);
   }
 
-  public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     if (lastParent == null) return true;
     if (lastParent.getContext() instanceof DummyHolder) {
       return processor.execute(this, substitutor);
