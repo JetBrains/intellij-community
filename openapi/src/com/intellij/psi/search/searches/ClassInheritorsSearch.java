@@ -137,18 +137,20 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
               }
             }
 
-            if (candidate instanceof PsiAnonymousClass) {
-              result.set(consumer.process(candidate));
-            }
-            else if (PsiSearchScopeUtil.isInScope(searchScope, candidate)) {
-              if (searchScope instanceof GlobalSearchScope) {
-                String qName = candidate.getQualifiedName();
-                if (qName != null) {
-                  PsiClass[] candidateClasses = psiManager.findClasses(qName, (GlobalSearchScope)searchScope);
-                  if (ArrayUtil.find(candidateClasses, candidate) == -1) result.set(true);
-                }
+            if (PsiSearchScopeUtil.isInScope(searchScope, candidate)) {
+              if (candidate instanceof PsiAnonymousClass) {
+                result.set(consumer.process(candidate));
               }
-              if (!consumer.process(candidate)) result.set(false);
+              else {
+                if (searchScope instanceof GlobalSearchScope) {
+                  String qName = candidate.getQualifiedName();
+                  if (qName != null) {
+                    PsiClass[] candidateClasses = psiManager.findClasses(qName, (GlobalSearchScope)searchScope);
+                    if (ArrayUtil.find(candidateClasses, candidate) == -1) result.set(true);
+                  }
+                }
+                if (!consumer.process(candidate)) result.set(false);
+              }
             }
           }
         });
