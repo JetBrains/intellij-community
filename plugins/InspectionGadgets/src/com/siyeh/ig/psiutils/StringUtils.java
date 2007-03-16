@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -87,16 +88,7 @@ public class StringUtils{
         super();
     }
 
-    public static String capitalize(@NotNull String name){
-        final char startChar = name.charAt(0);
-        if(Character.isUpperCase(startChar)){
-            return name;
-        } else{
-            return Character.toUpperCase(startChar) + name.substring(1);
-        }
-    }
-
-    @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings({"HardCodedStringLiteral"})
     @NotNull public static String createSingularFromName(@NotNull String name){
         final int nameLength = name.length();
         final String singularName;
@@ -124,9 +116,9 @@ public class StringUtils{
             case 'i':
             case 'o':
             case 'u':
-                return AN + capitalize(singularName);
+              return AN + StringUtil.capitalize(singularName);
             default:
-                return 'a' + capitalize(singularName);
+              return 'a' + StringUtil.capitalize(singularName);
         }
     }
 }
