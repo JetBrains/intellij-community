@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions;
 
-import org.jetbrains.plugins.groovy.lang.parser.parsing.Construction;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import com.intellij.lang.PsiBuilder.*;
 import com.intellij.lang.PsiBuilder;
@@ -11,7 +11,7 @@ import com.intellij.psi.tree.TokenSet;
 /**
  * @author Ilya.Sergey
  */
-public class AssignmentExpression implements Construction {
+public class AssignmentExpression implements GroovyElementTypes {
 
   private static final TokenSet ASSIGNMENTS = TokenSet.create(
           mASSIGN,

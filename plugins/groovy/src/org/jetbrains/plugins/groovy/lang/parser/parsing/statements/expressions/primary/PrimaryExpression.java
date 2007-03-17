@@ -1,16 +1,15 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary;
 
-import org.jetbrains.plugins.groovy.lang.parser.parsing.Construction;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.TokenSet;
 
 /**
  * @author Ilya.Sergey
  */
-public class PrimaryExpression implements Construction {
+public class PrimaryExpression implements GroovyElementTypes {
 
   public static GroovyElementType parse(PsiBuilder builder){
 

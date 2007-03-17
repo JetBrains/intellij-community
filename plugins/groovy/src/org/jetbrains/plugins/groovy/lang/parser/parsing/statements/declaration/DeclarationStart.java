@@ -3,13 +3,13 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.Construction;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifier;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.identifier.UpperCaseIdent;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.auxilary.BalancedTokens;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.BuiltInType;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.QualifiedTypeName;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * | (upperCaseIdent | builtInType | QulifiedTypeName)  {LBRACK balacedTokens RBRACK} IDENT
  */
 
-public class DeclarationStart implements Construction {
+public class DeclarationStart implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
     IElementType elementType;
 

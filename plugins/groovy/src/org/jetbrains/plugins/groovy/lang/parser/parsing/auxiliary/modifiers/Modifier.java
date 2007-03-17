@@ -3,8 +3,8 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.Construction;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  *            | srtictfp
  */
 
-public class Modifier implements Construction {
+public class Modifier implements GroovyElementTypes {
   public static TokenSet modifiers = TokenSet.create(
       kPRIVATE,
       kPUBLIC,

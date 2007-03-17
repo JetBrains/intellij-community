@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary;
 
-import org.jetbrains.plugins.groovy.lang.parser.parsing.Construction;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import com.intellij.lang.PsiBuilder;
 
@@ -10,7 +10,7 @@ import com.intellij.lang.PsiBuilder;
  *
  * @author Ilya Sergey
  */
-public class Separators implements Construction {
+public class Separators implements GroovyElementTypes {
 
   public static GroovyElementType parse(PsiBuilder builder){
     if (mSEMI.equals(builder.getTokenType())){

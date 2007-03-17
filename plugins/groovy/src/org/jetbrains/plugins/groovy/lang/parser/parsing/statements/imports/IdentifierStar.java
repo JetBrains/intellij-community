@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.imports;
 
-import org.jetbrains.plugins.groovy.lang.parser.parsing.Construction;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 
@@ -13,7 +13,7 @@ import com.intellij.lang.PsiBuilder.Marker;
  *
  * @author Ilya Sergey
  */
-public class IdentifierStar implements Construction {
+public class IdentifierStar implements GroovyElementTypes {
 
   public static GroovyElementType parse(PsiBuilder builder) {
 

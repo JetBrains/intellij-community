@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions;
 
-import org.jetbrains.plugins.groovy.lang.parser.parsing.Construction;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.PsiBuilder;
 
@@ -16,7 +16,7 @@ import com.intellij.lang.PsiBuilder;
  *                          | AnnotationDefinition 
  */
   
-public class TypeDefinitionInternal implements Construction {
+public class TypeDefinitionInternal implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
     if (!tWRONG_SET.contains(ClassDefinition.parse(builder))) return CLASS_DEFINITION;
 

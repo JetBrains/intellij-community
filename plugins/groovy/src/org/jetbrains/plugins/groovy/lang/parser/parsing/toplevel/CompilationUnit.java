@@ -2,7 +2,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel;
 
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.Construction;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.packaging.PackageDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.Statement;
@@ -15,7 +14,7 @@ import com.intellij.lang.PsiBuilder;
  *
  * @autor: Dmitry.Krasilschikov, Ilya Sergey
  */
-public class CompilationUnit implements Construction {
+public class CompilationUnit implements GroovyElementTypes {
 
   public static GroovyElementType parse(PsiBuilder builder) {
 

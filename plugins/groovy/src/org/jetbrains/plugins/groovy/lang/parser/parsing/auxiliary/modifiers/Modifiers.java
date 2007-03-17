@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers;
 
-import org.jetbrains.plugins.groovy.lang.parser.parsing.Construction;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.PsiBuilder;
@@ -18,7 +18,7 @@ import com.intellij.lang.PsiBuilder;
  *              | {annotation nls}+
  */
 
-public class Modifiers implements Construction {
+public class Modifiers implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
     PsiBuilder.Marker modifiersMarker = builder.mark();
 

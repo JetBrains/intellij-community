@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.regex;
 
-import org.jetbrains.plugins.groovy.lang.parser.parsing.Construction;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.relational.EqualityExpression;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import com.intellij.lang.PsiBuilder;
@@ -11,7 +11,7 @@ import com.intellij.psi.tree.TokenSet;
 /**
  * @author Ilya.Sergey
  */
-public class RegexExpression implements Construction {
+public class RegexExpression implements GroovyElementTypes {
 
   private static TokenSet REGEX_DO = TokenSet.create(
           mREGEX_FIND,
