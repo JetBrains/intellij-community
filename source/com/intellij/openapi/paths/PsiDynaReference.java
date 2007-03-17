@@ -28,6 +28,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   private List<PsiReference> myReferences = new ArrayList<PsiReference>();
   private int myChoosenOne = -1;
   private boolean mySoft;
+  private ResolveResult[] myCachedResult;
 
   public PsiDynaReference(final T psiElement, boolean soft) {
     super(psiElement);
@@ -161,6 +162,13 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
+    if (myCachedResult == null) {
+      myCachedResult = innerResolve(incompleteCode);  
+    }
+    return myCachedResult;
+  }
+
+  protected ResolveResult[] innerResolve(final boolean incompleteCode) {
     List<ResolveResult> result = new ArrayList<ResolveResult>();
     for (PsiReference reference : myReferences) {
       if (reference instanceof PsiPolyVariantReference) {
