@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.jsp.impl.TldAttributeDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -23,7 +24,6 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.jsp.impl.TldAttributeDescriptor;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,13 +68,21 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(this, aspect) {
       public PomModelEvent runInner(){
+        final XmlAttributeImpl att = XmlAttributeImpl.this;
         if(value != null){
-          XmlAttributeImpl.this.replaceChild(value, newValue);
+          if (newValue != null) {
+            att.replaceChild(value, newValue.copyElement());
+          }
+          else {
+            att.removeChild(value);
+          }
         }
         else {
-          XmlAttributeImpl.this.addChild(newValue);
+          if (newValue != null) {
+            att.addChild(newValue.copyElement());
+          }
         }
-        return XmlAttributeSetImpl.createXmlAttributeSet(model, getParent(), getName(), value != null ? value.getText() : null);
+        return XmlAttributeSetImpl.createXmlAttributeSet(model, getParent(), getName(), newValue != null ? newValue.getText() : null);
       }
     });
   }
