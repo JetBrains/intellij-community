@@ -2,6 +2,7 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.NameMapper;
 import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -28,15 +29,19 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.jar.Attributes;
 
 public class DebuggerManagerImpl extends DebuggerManagerEx {
@@ -44,7 +49,8 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   private final Project myProject;
   private final HashMap<ProcessHandler, DebuggerSession> mySessions = new HashMap<ProcessHandler, DebuggerSession>();
   private BreakpointManager myBreakpointManager;
-
+  private List<NameMapper> myNameMappers = new CopyOnWriteArrayList<NameMapper>();
+  
   private final EventDispatcher<DebuggerManagerListener> myDispatcher = EventDispatcher.create(DebuggerManagerListener.class);
   private final MyDebuggerStateManager myDebuggerStateManager = new MyDebuggerStateManager();
 
@@ -72,6 +78,24 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   };
   private static final @NonNls String DEBUG_KEY_NAME = "idea.xdebug.key";
   private EditorColorsListener myColorsListener;
+
+  public void addClassNameMapper(final NameMapper mapper) {
+    myNameMappers.add(mapper);
+  }
+
+  public void removeClassNameMapper(final NameMapper mapper) {
+    myNameMappers.remove(mapper);
+  }
+
+  public String getVMClassQualifiedName(@NotNull final PsiClass aClass) {
+    for (NameMapper nameMapper : myNameMappers) {
+      final String qName = nameMapper.getQualifiedName(aClass);
+      if (qName != null) {
+        return qName;
+      }
+    }
+    return aClass.getQualifiedName();
+  }
 
   public void addDebuggerManagerListener(DebuggerManagerListener listener) {
     myDispatcher.addListener(listener);

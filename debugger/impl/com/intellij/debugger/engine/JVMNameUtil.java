@@ -1,6 +1,7 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -239,7 +240,7 @@ public class JVMNameUtil {
       }
       return parentName + "$" + aClass.getName();
     }
-    return aClass.getQualifiedName();
+    return DebuggerManager.getInstance(aClass.getProject()).getVMClassQualifiedName(aClass);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -282,8 +283,11 @@ public class JVMNameUtil {
 
     final PsiClass psiClass = getClassAt(position);
 
-    if(psiClass != null && psiClass.getQualifiedName() != null) {
-      return psiClass.getQualifiedName();
+    if(psiClass != null) {
+      final String qName = psiClass.getQualifiedName();
+      if(qName != null) {
+        return qName;
+      }
     }
 
     if(debugProcess != null && debugProcess.isAttached()) {

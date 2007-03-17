@@ -21,6 +21,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.psi.PsiClass;
 
 /**
  * Created by IntelliJ IDEA.
@@ -40,4 +41,10 @@ public abstract class DebuggerManager implements ProjectComponent, JDOMExternali
   public abstract void removeDebugProcessListener(ProcessHandler processHandler, DebugProcessListener listener);
 
   public abstract boolean isDebuggerManagerThread();
+  
+  public abstract void addClassNameMapper(NameMapper mapper);
+  public abstract void removeClassNameMapper(NameMapper mapper);
+  
+  public abstract String getVMClassQualifiedName(PsiClass aClass); 
+  
 }

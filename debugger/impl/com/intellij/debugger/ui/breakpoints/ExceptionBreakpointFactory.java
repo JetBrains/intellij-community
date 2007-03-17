@@ -7,6 +7,7 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.HelpID;
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.ui.breakpoints.actions.*;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -101,7 +102,7 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
           throwableClass, true, true, null);
       chooser.showDialog();
       PsiClass selectedClass = chooser.getSelectedClass();
-      String qName = (selectedClass != null)? selectedClass.getQualifiedName() : null;
+      String qName = (selectedClass != null)? JVMNameUtil.getNonAnonymousClassName(selectedClass) : null;
 
       if (qName != null && qName.length() > 0) {
         ExceptionBreakpoint breakpoint = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addExceptionBreakpoint(qName, ((PsiJavaFile)selectedClass.getContainingFile()).getPackageName());
