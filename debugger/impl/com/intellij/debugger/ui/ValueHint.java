@@ -7,13 +7,13 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.InvokeThread;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.InspectDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.*;
@@ -197,7 +197,7 @@ public class ValueHint {
           }
         }
 
-      }, DebuggerManagerThreadImpl.HIGH_PRIORITY);
+      }, InvokeThread.Priority.HIGH);
     }
     catch (EvaluateException e) {
       LOG.debug(e);

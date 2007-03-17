@@ -14,6 +14,9 @@ import java.util.concurrent.*;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class InvokeThread<E> {
+  public static enum Priority {
+    HIGH, NORMAL, LOW;
+  }
   private static final int RESTART_TIMEOUT = 500;
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.InvokeThread");
   private final String myWorkerThreadName;
@@ -96,8 +99,8 @@ public abstract class InvokeThread<E> {
 
   private volatile WorkerThreadRequest myCurrentRequest = null;
 
-  public InvokeThread(String name, int countPriorites) {
-    myEvents = new EventQueue<E>(countPriorites);
+  public InvokeThread(String name) {
+    myEvents = new EventQueue<E>(Priority.values().length);
     myWorkerThreadName = name;
     startNewWorkerThread();
   }
@@ -168,11 +171,11 @@ public abstract class InvokeThread<E> {
     return request != null? request.getOwner() : null;
   }
 
-  public void invokeLater(E r, int priority) {
+  public void invokeLater(E r, Priority priority) {
     if(LOG.isDebugEnabled()) {
       LOG.debug("invokeLater " + r + " in " + this);
     }
-    myEvents.put(r, priority);
+    myEvents.put(r, priority.ordinal());
   }
 
   protected void switchToRequest(WorkerThreadRequest newWorkerThread) {

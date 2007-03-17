@@ -23,16 +23,12 @@ import com.sun.jdi.VMDisconnectedException;
  * To change this template use File | Settings | File Templates.
  */
 public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerCommandImpl> implements DebuggerManagerThread {
-  public static final int HIGH_PRIORITY = 0;
-  public static final int MEDIUM_PRIORITY = 1;
-  public static final int NORMAL_PRIORITY = 2;
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebuggerManagerThreadImpl");
   public static final int COMMAND_TIMEOUT = 3000;
 
   DebuggerManagerThreadImpl() {
     //noinspection HardCodedStringLiteral
-    super("DebuggerManagerThreadImpl", 3);
+    super("DebuggerManagerThreadImpl");
   }
 
   public static DebuggerManagerThreadImpl createTestInstance() {
@@ -47,7 +43,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     LOG.assertTrue(isManagerThread(), "Should be invoked in manager thread, use DebuggerManagerThreadImpl.getInstance(..).invoke...");
   }
 
-  public void invokeAndWait(DebuggerCommandImpl managerCommand, int priority) {
+  public void invokeAndWait(DebuggerCommandImpl managerCommand, Priority priority) {
     LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     LOG.assertTrue(!(currentThread() instanceof DebuggerManagerThreadImpl),
                    "Should be invoked outside manager thread, use DebuggerManagerThreadImpl.getInstance(..).invoke...");
@@ -58,14 +54,14 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     LOG.assertTrue(!(currentThread() instanceof DebuggerManagerThreadImpl),
                    "Should be invoked outside manager thread, use DebuggerManagerThreadImpl.getInstance(..).invoke...");
-    super.invokeAndWait(managerCommand, NORMAL_PRIORITY);    
+    super.invokeAndWait(managerCommand, Priority.LOW);    
   }
 
   public void invoke(DebuggerCommandImpl managerCommand) {
-    invoke(managerCommand, NORMAL_PRIORITY);
+    invoke(managerCommand, Priority.LOW);
   }
 
-  public void invoke(DebuggerCommandImpl managerCommand, int priority) {
+  public void invoke(DebuggerCommandImpl managerCommand, Priority priority) {
     if (currentThread() instanceof DebuggerManagerThreadImpl) {
       processEvent(managerCommand);
     }
@@ -74,7 +70,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     }
   }
 
-  public void invokeLater(DebuggerCommandImpl managerCommand, int priority) {
+  public void invokeLater(DebuggerCommandImpl managerCommand, Priority priority) {
     if(myEvents.isClosed()) {
       managerCommand.notifyCancelled();
     }
@@ -84,7 +80,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   }
 
   public void  invokeLater(DebuggerCommandImpl managerCommand) {
-    invokeLater(managerCommand, NORMAL_PRIORITY);
+    invokeLater(managerCommand, Priority.LOW);
   }
 
   /**
@@ -102,7 +98,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
       }
     });
 
-    invoke(command, HIGH_PRIORITY);
+    invoke(command, Priority.HIGH);
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
     alarm.addRequest(new Runnable() {
       public void run() {
@@ -183,7 +179,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
       public void run() {
         ProgressManager.getInstance().runProcess(new Runnable() {
           public void run() {
-            invokeAndWait(command, HIGH_PRIORITY);
+            invokeAndWait(command, Priority.HIGH);
           }
         }, progressWindow);
       }
@@ -215,7 +211,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
           }
           request.interrupt();
         }
-      }, NORMAL_PRIORITY);
+      }, Priority.LOW);
     }
   }
 

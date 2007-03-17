@@ -209,7 +209,7 @@ public class DebuggerSession {
   /* Stepping */
   private void resumeAction(final SuspendContextCommandImpl command, int event) {
     getContextManager().setState(SESSION_EMPTY_CONTEXT, STATE_WAIT_EVALUATION, event, null);
-    myDebugProcess.getManagerThread().invokeLater(command, DebuggerManagerThreadImpl.HIGH_PRIORITY);
+    myDebugProcess.getManagerThread().invokeLater(command, InvokeThread.Priority.HIGH);
   }
 
   public void stepOut() {

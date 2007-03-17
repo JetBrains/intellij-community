@@ -8,12 +8,12 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.InvokeThread;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -52,7 +52,6 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   private final Project myProject;
   protected final NodeManagerImpl myNodeManager;
 
-  private int     myPriority = DebuggerManagerThreadImpl.NORMAL_PRIORITY;
   private NodeRendererSettingsListener mySettingsListener;
   private DebuggerContextImpl myDebuggerContext = DebuggerContextImpl.EMPTY_CONTEXT;
 
@@ -169,7 +168,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     if (debugProcess != null) {
       BuildNodeCommand command = getBuildNodeCommand(node);
       command.getNode().add(myNodeManager.createMessageNode(MessageDescriptor.EVALUATING));
-      debugProcess.getManagerThread().invokeLater(command, DebuggerManagerThreadImpl.MEDIUM_PRIORITY);
+      debugProcess.getManagerThread().invokeLater(command, InvokeThread.Priority.NORMAL);
     }
   }
 
@@ -319,14 +318,6 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
   public Project getProject() { return myProject; }
 
-  public int getPriority() {
-    return myPriority;
-  }
-
-  public void setEvaluationPriority(int priority) {
-    myPriority = priority;
-  }
-
   protected abstract void build(DebuggerContextImpl context);
 
   protected final void buildWhenPaused(DebuggerContextImpl context, RefreshDebuggerTreeCommand command) {
@@ -334,7 +325,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
     if(ApplicationManager.getApplication().isUnitTestMode() || debuggerSession.getState() == DebuggerSession.STATE_PAUSED) {
       showMessage(MessageDescriptor.EVALUATING);
-      context.getDebugProcess().getManagerThread().invokeLater(command, DebuggerManagerThreadImpl.MEDIUM_PRIORITY);
+      context.getDebugProcess().getManagerThread().invokeLater(command, InvokeThread.Priority.NORMAL);
     }
     else {
       showMessage(context.getDebuggerSession().getStateDescription());
@@ -353,7 +344,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       public void threadAction() {
         getNodeFactory().setHistoryByContext(context);
       }
-    }, DebuggerManagerThreadImpl.MEDIUM_PRIORITY);
+    }, InvokeThread.Priority.NORMAL);
 
     build(context);
   }

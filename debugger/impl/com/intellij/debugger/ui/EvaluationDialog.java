@@ -3,7 +3,6 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.actions.DebuggerActions;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.*;
@@ -159,7 +158,6 @@ public abstract class EvaluationDialog extends DialogWrapper {
     public MyEvaluationPanel(final Project project) {
       super(project, (DebuggerManagerEx.getInstanceEx(project)).getContextManager());
       final WatchDebuggerTree watchTree = getWatchTree();
-      watchTree.setEvaluationPriority(DebuggerManagerThreadImpl.HIGH_PRIORITY);
       final AnAction setValueAction  = ActionManager.getInstance().getAction(DebuggerActions.SET_VALUE);
       setValueAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), watchTree);
       registerDisposable(new Disposable() {

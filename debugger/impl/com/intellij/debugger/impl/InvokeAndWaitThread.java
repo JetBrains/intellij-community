@@ -11,17 +11,17 @@ package com.intellij.debugger.impl;
  */
 public abstract class InvokeAndWaitThread<E extends InvokeAndWaitEvent> extends InvokeThread<E>{
 
-  public InvokeAndWaitThread(String name, int countPriorities) {
-    super(name, countPriorities);
+  public InvokeAndWaitThread(String name) {
+    super(name);
   }
 
   //Do not remove this code
   //Otherwise it will be impossible to override invokeLater method
-  public void invokeLater(E e, int priority) {
+  public void invokeLater(E e, Priority priority) {
     super.invokeLater(e, priority);
   }
 
-  public void invokeAndWait(final E runnable, int priority) {
+  public void invokeAndWait(final E runnable, Priority priority) {
     runnable.hold();
     invokeLater(runnable, priority);
     runnable.waitFor();
