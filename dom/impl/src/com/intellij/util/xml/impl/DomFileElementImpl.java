@@ -269,10 +269,10 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     try {
       if (myRootHandler == null) {
         r.unlock();
+        final XmlTag tag = getRootTag(); // do not take root tag under our lock to prevent dead lock with PsiLock
         w.lock();
         try {
           if (myRootHandler == null) {
-            final XmlTag tag = getRootTag();
             myRootHandler = new DomRootInvocationHandler(myRootElementClass, tag, this, myRootTagName);
           }
         }
