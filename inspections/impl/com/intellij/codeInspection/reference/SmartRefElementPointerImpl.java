@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NonNls;
 public class SmartRefElementPointerImpl implements SmartRefElementPointer {
 
   private final boolean myIsPersistent;
-  private RefElement myRefElement;
+  private RefEntity myRefElement;
   private String myFQName;
   private String myType;
     @NonNls
@@ -23,7 +23,7 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
     public static final String TYPE_ATTR = "TYPE";
   @NonNls public static final String ENTRY_POINT = "entry_point";
 
-  public SmartRefElementPointerImpl(RefElement ref, boolean isPersistent) {
+  public SmartRefElementPointerImpl(RefEntity ref, boolean isPersistent) {
       myIsPersistent = isPersistent;
       myRefElement = ref;
       if (ref instanceof RefImplicitConstructor) {
@@ -42,6 +42,12 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
         myType = FILE;
       } else if (ref instanceof RefParameter) {
         myType = PARAMETER;
+      } else if (ref instanceof RefPackage) {
+        myType = PACKAGE;
+      } else if (ref instanceof RefModule) {
+        myType = MODULE;
+      } else if (ref instanceof RefProject) {
+        myType = PROJECT;
       } else {
         myType = null;
       }
@@ -74,6 +80,12 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
       myType = FILE;
     } else if (PARAMETER.equals(type)) {
       myType = PARAMETER;
+    } else if (PACKAGE.equals(type)) {
+      myType = PACKAGE;
+    } else if (MODULE.equals(type)) {
+      myType = MODULE;
+    } else if (PROJECT.equals(type)) {
+      myType = PROJECT;
     } else {
       myType = null;
     }
@@ -94,7 +106,7 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
     return myFQName;
   }
 
-  public RefElement getRefElement() {
+  public RefEntity getRefElement() {
     return myRefElement;
   }
 
@@ -105,7 +117,7 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
     if (myRefElement != null) {
       final RefEntity entity = myRefElement.getOwner();
       if (entity instanceof RefElement) {
-        new SmartRefElementPointerImpl((RefElement)entity, myIsPersistent).writeExternal(element);        
+        new SmartRefElementPointerImpl(entity, myIsPersistent).writeExternal(element);
       }
     }
     parentNode.addContent(element);
@@ -113,7 +125,7 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
 
   public boolean resolve(RefManager manager) {
     if (myRefElement != null) {
-      if (myRefElement.isValid()) return true;
+      if (myRefElement instanceof RefElement && ((RefElement)myRefElement).isValid()) return true;
       return false;
     }
 
@@ -131,6 +143,12 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
       myRefElement = RefFileImpl.fileFromExternalName(manager, getFQName());
     } else if (PARAMETER.equals(myType)) {
       myRefElement = RefParameterImpl.parameterFromExternalName(manager, getFQName());
+    } else if (MODULE.equals(myType)) {
+      myRefElement = RefModuleImpl.moduleFromName(manager, getFQName());
+    } else if (PACKAGE.equals(myType)) {
+      myRefElement = RefPackageImpl.packageFromFQName(manager, getFQName());
+    } else if (PROJECT.equals(myType)) {
+      myRefElement = manager.getRefProject();
     }
 
     return myRefElement != null;

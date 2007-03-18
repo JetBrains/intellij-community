@@ -475,7 +475,7 @@ public class RefManagerImpl extends RefManager {
 
   public
   @Nullable
-  RefElement getReference(final String type, final String fqName) {
+  RefEntity getReference(final String type, final String fqName) {
     return new SmartRefElementPointerImpl(type, fqName, this).getRefElement();
   }
 

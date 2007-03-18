@@ -10,6 +10,7 @@ package com.intellij.codeInspection.offline;
 
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
@@ -94,10 +95,10 @@ public class OfflineProblemDescriptor {
   }
 
   @Nullable
-  public RefElement getRefElement(final RefManager refManager) {
-    final RefElement refElement = refManager.getReference(myType, myFQName);
-    if (refElement != null) {
-      final PsiElement element = refElement.getElement();
+  public RefEntity getRefElement(final RefManager refManager) {
+    final RefEntity refElement = refManager.getReference(myType, myFQName);
+    if (refElement instanceof RefElement) {
+      final PsiElement element = ((RefElement)refElement).getElement();
       if (element != null && element.isValid()) {
         PsiDocumentManager.getInstance(element.getProject()).commitAllDocuments();
       }

@@ -29,12 +29,15 @@ public interface SmartRefElementPointer {
   @NonNls String FIELD = "field";
   @NonNls String FILE = "file";
   @NonNls String PARAMETER = "parameter";
+  @NonNls String MODULE = "module";
+  @NonNls String PACKAGE = "package";
+  @NonNls String PROJECT = "project";
 
   boolean isPersistent();
 
   String getFQName();
 
-  RefElement getRefElement();
+  RefEntity getRefElement();
 
   void writeExternal(Element parentNode);
 

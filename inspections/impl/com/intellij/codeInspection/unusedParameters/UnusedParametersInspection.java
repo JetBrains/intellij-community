@@ -74,7 +74,7 @@ public class UnusedParametersInspection extends GlobalInspectionTool {
                                              final GlobalInspectionContext globalContext,
                                              final ProblemDescriptionsProcessor processor) {
     for (SmartRefElementPointer entryPoint : globalContext.getRefManager().getEntryPointsManager().getEntryPoints()) {
-      final RefElement refElement = entryPoint.getRefElement();
+      final RefEntity refElement = entryPoint.getRefElement();
       if (refElement != null) {
         processor.ignoreElement(refElement);
       }

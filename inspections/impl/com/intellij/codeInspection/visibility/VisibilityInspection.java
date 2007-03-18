@@ -321,7 +321,7 @@ public class VisibilityInspection extends GlobalInspectionTool {
                                              final GlobalInspectionContext globalContext,
                                              final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     for (SmartRefElementPointer entryPoint : globalContext.getRefManager().getEntryPointsManager().getEntryPoints()) {
-      final RefElement refElement = entryPoint.getRefElement();
+      final RefEntity refElement = entryPoint.getRefElement();
       if (refElement != null) {
         ignoreElement(problemDescriptionsProcessor, refElement);
       }
@@ -407,7 +407,7 @@ public class VisibilityInspection extends GlobalInspectionTool {
     return false;
   }
 
-  private static void ignoreElement(ProblemDescriptionsProcessor processor, RefElement refElement){
+  private static void ignoreElement(ProblemDescriptionsProcessor processor, RefEntity refElement){
     processor.ignoreElement(refElement);
 
     if (refElement instanceof RefClass) {

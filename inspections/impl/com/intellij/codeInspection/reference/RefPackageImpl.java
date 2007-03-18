@@ -36,4 +36,12 @@ public class RefPackageImpl extends RefEntityImpl implements RefPackage {
       }
     });
   }
+
+  public String getExternalName() {
+    return getQualifiedName();
+  }
+
+  public static RefEntity packageFromFQName(final RefManager manager, final String name) {
+    return manager.getPackage(name);
+  }
 }

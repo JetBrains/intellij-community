@@ -56,15 +56,7 @@ public class XMLExportUtl {
 
       problem.addContent(fileElement);
       problem.addContent(lineElement);
-
-      new SmartRefElementPointerImpl(refElement, true).writeExternal(problem);
-
-      final RefModule refModule = refElement.getModule();
-      if (refModule != null) {
-        Element moduleElement = new Element("module");
-        moduleElement.addContent(refModule.getName());
-        problem.addContent(moduleElement);
-      }
+      appendModule(problem, refElement.getModule());
     }
     else if (refEntity instanceof RefModule) {
       final RefModule refModule = (RefModule)refEntity;
@@ -72,8 +64,11 @@ public class XMLExportUtl {
       final Element fileElement = new Element("file");
       fileElement.addContent(moduleFile.getUrl());
       problem.addContent(fileElement);
+      appendModule(problem, refModule);
       appendFakePackage(problem);
     }
+
+    new SmartRefElementPointerImpl(refEntity, true).writeExternal(problem);
 
     if (refEntity instanceof RefMethod) {
       RefMethod refMethod = (RefMethod)refEntity;
@@ -95,6 +90,14 @@ public class XMLExportUtl {
     parentNode.addContent(problem);
 
     return problem;
+  }
+
+  private static void appendModule(final Element problem, final RefModule refModule) {
+    if (refModule != null) {
+      Element moduleElement = new Element("module");
+      moduleElement.addContent(refModule.getName());
+      problem.addContent(moduleElement);
+    }
   }
 
   private static void appendFakePackage(final Element problem) {

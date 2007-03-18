@@ -95,7 +95,7 @@ public abstract class RefManager {
    * @return the node for the element, or null if the element is not found or does not have
    * a corresponding reference graph node type.
    */
-  public abstract @Nullable RefElement getReference(String type, String fqName);
+  public abstract @Nullable RefEntity getReference(String type, String fqName);
 
   /**
    * Creates (if necessary) and returns the reference graph node for the specified PSI parameter.

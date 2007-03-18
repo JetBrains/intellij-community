@@ -10,6 +10,7 @@ package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.RefElementNode;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,7 @@ public class OfflineRefElementNode extends RefElementNode {
       return (RefElement)userObject;
     }
     if (userObject == null) return null;
-    final RefElement refElement = ((OfflineProblemDescriptor)userObject).getRefElement(myTool.getContext().getRefManager());
+    final RefElement refElement = (RefElement)((OfflineProblemDescriptor)userObject).getRefElement(myTool.getContext().getRefManager());
     setUserObject(refElement);
     return refElement;
   }

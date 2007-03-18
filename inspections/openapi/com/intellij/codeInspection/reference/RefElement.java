@@ -51,13 +51,6 @@ public interface RefElement extends RefEntity {
   RefManager getRefManager();
 
   /**
-   * Returns a user-readable name for the element corresponding to the node.
-   *
-   * @return the user-readable name.
-   */
-  String getExternalName();
-
-  /**
    * Returns the PSI element corresponding to the node.
    *
    * @return the PSI element.

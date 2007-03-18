@@ -108,4 +108,8 @@ public abstract class RefEntityImpl implements RefEntity {
       myFlags &= ~mask;
     }
   }
+
+  public String getExternalName() {
+    return myName;
+  }
 }

@@ -155,7 +155,7 @@ public class CanBeFinalInspection extends GlobalInspectionTool {
                                              final GlobalInspectionContext globalContext,
                                              final ProblemDescriptionsProcessor problemsProcessor) {
     for (SmartRefElementPointer entryPoint : globalContext.getRefManager().getEntryPointsManager().getEntryPoints()) {
-      final RefElement refElement = entryPoint.getRefElement();
+      final RefEntity refElement = entryPoint.getRefElement();
       if (refElement != null) {
         problemsProcessor.ignoreElement(refElement);
       }
