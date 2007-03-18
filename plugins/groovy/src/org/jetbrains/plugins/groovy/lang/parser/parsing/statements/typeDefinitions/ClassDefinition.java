@@ -16,6 +16,8 @@ import com.intellij.lang.PsiBuilder;
  */
   
 public class ClassDefinition implements GroovyElementTypes {
+  private static boolean showErrors = false;
+
   public static IElementType parse(PsiBuilder builder) {
     PsiBuilder.Marker classDefMarker = builder.mark();
 

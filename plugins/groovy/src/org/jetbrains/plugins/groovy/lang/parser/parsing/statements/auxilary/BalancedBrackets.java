@@ -26,8 +26,8 @@ public class BalancedBrackets implements GroovyElementTypes {
       myBracket = mLCURLY;
     }
 
-    if (ParserUtils.getToken(builder, mSTRING_CTOR_START)) {
-      myBracket = mSTRING_CTOR_START;
+    if (ParserUtils.getToken(builder, mGSTRING_SINGLE_BEGIN)) {
+      myBracket = mGSTRING_SINGLE_BEGIN;
     }
 
     if (myBracket == null) {
@@ -46,7 +46,7 @@ public class BalancedBrackets implements GroovyElementTypes {
     if (ParserUtils.getToken(builder, mRPAREN) && !mRPAREN.equals(Pairs.pairElementsMap.get(myBracket))
         || ParserUtils.getToken(builder, mRBRACK) && !mRBRACK.equals(Pairs.pairElementsMap.get(myBracket))
         || ParserUtils.getToken(builder, mRCURLY) && !mRCURLY.equals(Pairs.pairElementsMap.get(myBracket))
-        || ParserUtils.getToken(builder, mSTRING_CTOR_END) && !mSTRING_CTOR_END.equals(Pairs.pairElementsMap.get(myBracket))) {
+        || ParserUtils.getToken(builder, mGSTRING_SINGLE_END) && !mGSTRING_SINGLE_END.equals(Pairs.pairElementsMap.get(myBracket))) {
       bbm.rollbackTo();
       return WRONGWAY;
     } else {

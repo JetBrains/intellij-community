@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions;
 
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.PsiBuilder;
 
@@ -25,6 +26,8 @@ public class TypeDefinitionInternal implements GroovyElementTypes {
     if (!tWRONG_SET.contains(EnumDefinition.parse(builder))) return ENUM_DEFINITION;
 
     if (!tWRONG_SET.contains(AnnotationDefinition.parse(builder))) return ANNOTATION_DEFINITION;
+
+    builder.error(GroovyBundle.message("class.or.interface.or.enum.or.annotation.expected"));
 
     return WRONGWAY;
   }

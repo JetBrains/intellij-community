@@ -52,8 +52,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType POSTFIX_EXPRESSION = new GroovyElementType("Postfix expression");
 
 
-
-
   GroovyElementType ADDITIVE_EXXPRESSION = new GroovyElementType("Additive expressions");
 
   GroovyElementType PRIMARY_EXXPRESSION = new GroovyElementType("Primary expressions");
@@ -62,14 +60,28 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType GSTRING = new GroovyElementType("GString");
 
   GroovyElementType DECLARATION = new GroovyElementType("declaration"); //node
-  GroovyElementType TYPE_DEFINITION = new GroovyElementType("type definition"); //node
 
   GroovyElementType CLASS_DEFINITION = new GroovyElementType("class definition"); //node
   GroovyElementType INTERFACE_DEFINITION = new GroovyElementType("interface definition"); //node
   GroovyElementType ENUM_DEFINITION = new GroovyElementType("enumeration definition"); //node
   GroovyElementType ANNOTATION_DEFINITION = new GroovyElementType("annotation definition"); //node
 
+  //blocks
+  GroovyElementType CLASS_BLOCK = new GroovyElementType("class block"); //node
+  GroovyElementType INTERFACE_BLOCK = new GroovyElementType("interface block"); //node
+  GroovyElementType ENUM_BLOCK = new GroovyElementType("enumeration block"); //node
+  GroovyElementType ANNOTATION_BLOCK = new GroovyElementType("annotation block"); //node
 
+  //statements
+  GroovyElementType IF_STATEMENT = new GroovyElementType("if statement"); //node
+  GroovyElementType FOR_STATEMENT = new GroovyElementType("for statement"); //node
+  GroovyElementType WHILE_STATEMENT = new GroovyElementType("while statement"); //node
+  GroovyElementType WITH_STATEMENT = new GroovyElementType("with statement"); //node
+  GroovyElementType SWITCH_STATEMENT = new GroovyElementType("switch statement"); //node
+  //todo: rename star expression
+  GroovyElementType STAR_STATEMENT = new GroovyElementType("star statement"); //node
+  GroovyElementType TRY_BLOCK_STATEMENT = new GroovyElementType("try block statement"); //node
+  GroovyElementType SYNCHRONIZED_BLOCK_STATEMENT = new GroovyElementType("synchronized block statement"); //node
 
   //declaration
   GroovyElementType DECLARATION_START = new GroovyElementType("Declaration start"); //not a node
@@ -81,6 +93,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
 
   //annotation
   GroovyElementType ANNOTATION = new GroovyElementType("annotation"); //node
+
 
   GroovyElementType BALANCED_BRACKETS = new GroovyElementType("balanced brackets"); //node
 
