@@ -463,25 +463,28 @@ public class ActionsTreeUtil {
       public boolean value(final AnAction action) {
         if (filter == null) return true;
         if (action == null) return false;
-        final String text = action.getTemplatePresentation().getText();
+        final String insensitiveFilter = filter.toLowerCase();
         final KeymapConfigurable keymapConfigurable =
           ShowSettingsUtil.getInstance().findApplicationConfigurable(KeymapConfigurable.class);
+        final String text = action.getTemplatePresentation().getText();
         if (text != null) {
+          final String lowerText = text.toLowerCase();
           if (SearchUtil
-            .isComponentHighlighted(text, filter, force, keymapConfigurable)) {
+            .isComponentHighlighted(lowerText, insensitiveFilter, force, keymapConfigurable)) {
             return true;
           }
-          else if (text.indexOf(filter) != -1) {
+          else if (lowerText.indexOf(insensitiveFilter) != -1) {
             return true;
           }
         }
         final String description = action.getTemplatePresentation().getDescription();
         if (description != null) {
+          final String insensitiveDescription = description.toLowerCase();
           if (SearchUtil
-            .isComponentHighlighted(description, filter, force, keymapConfigurable)) {
+            .isComponentHighlighted(insensitiveDescription, insensitiveFilter, force, keymapConfigurable)) {
             return true;
           }
-          else if (description.indexOf(filter) != -1) {
+          else if (insensitiveDescription.indexOf(insensitiveFilter) != -1) {
             return true;
           }
         }
