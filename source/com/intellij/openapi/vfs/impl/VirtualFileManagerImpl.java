@@ -227,87 +227,91 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
         application.assertIsDispatchThread();
         Runnable postRunnable = myPostRefreshRunnables.pop();
 
-        application.runWriteAction(new Runnable() {
-          public void run() {
-            myRefreshCount--;
-            if (!asynchronous) mySynchronousRefreshCount--;
-            LOG.assertTrue(myRefreshCount >= 0 && mySynchronousRefreshCount >= 0);
+        myRefreshCount--;
+        if (!asynchronous) mySynchronousRefreshCount--;
+        LOG.assertTrue(myRefreshCount >= 0 && mySynchronousRefreshCount >= 0);
 
-            if (mySynchronousRefreshCount != 0 || asynchronous && myRefreshCount != 0) {
-              return;
-            }
+        try {
+          if (mySynchronousRefreshCount != 0 || asynchronous && myRefreshCount != 0) {
+            return;
+          }
 
-            fireBeforeRefreshStart(asynchronous);
-            //noinspection ForLoopReplaceableByForEach
-            for (int i = 0; i < myRefreshEventsToFire.size(); i++) {
-              Runnable runnable = myRefreshEventsToFire.get(i);
-              try {
-                runnable.run();
-              }
-              catch (Exception e) {
-                LOG.error(e);
-              }
-            }
-            myRefreshEventsToFire.clear();
+          application.runWriteAction(new Runnable() {
+            public void run() {
 
-            final ProgressIndicator indicator = asynchronous ? myAsyncRefreshIndicator : myRefreshIndicator;
-            if (asynchronous) {
-              if (getAsynchronousRefreshCount() == 0) {
-                indicator.stop();
+              fireBeforeRefreshStart(asynchronous);
+              //noinspection ForLoopReplaceableByForEach
+              for (int i = 0; i < myRefreshEventsToFire.size(); i++) {
+                Runnable runnable = myRefreshEventsToFire.get(i);
+                try {
+                  runnable.run();
+                }
+                catch (Exception e) {
+                  LOG.error(e);
+                }
               }
-            }
-            else {
-              if (mySynchronousRefreshCount == 0) {
-                indicator.stop();
-              }
-            }
+              myRefreshEventsToFire.clear();
 
-            if (myRefreshCount > 0) {
-              if (!asynchronous && mySynchronousRefreshCount == 0) {
-                fireAfterRefreshFinish(asynchronous);
-              }
-            }
-            else {
-              final FileSystemSynchronizer synchronizer;
+              final ProgressIndicator indicator = asynchronous ? myAsyncRefreshIndicator : myRefreshIndicator;
               if (asynchronous) {
-                synchronizer = new FileSystemSynchronizer();
-                //noinspection ForLoopReplaceableByForEach
-                for (int i = 0; i < myRefreshParticipants.size(); i++) {
-                  CacheUpdater participant = myRefreshParticipants.get(i);
-                  synchronizer.registerCacheUpdater(participant);
+                if (getAsynchronousRefreshCount() == 0) {
+                  indicator.stop();
                 }
               }
               else {
-                synchronizer = null;
+                if (mySynchronousRefreshCount == 0) {
+                  indicator.stop();
+                }
               }
 
-              myRefreshEventsToFire = null;
-              fireAfterRefreshFinish(asynchronous);
-
-              if (asynchronous) {
-                int filesCount = synchronizer.collectFilesToUpdate();
-                if (filesCount > 0) {
-                  boolean runWithProgress = !application.isUnitTestMode() && filesCount > 5;
-                  if (runWithProgress) {
-                    Runnable process = new Runnable() {
-                      public void run() {
-                        synchronizer.execute();
-                      }
-                    };
-                    ProgressManager.getInstance()
-                      .runProcessWithProgressSynchronously(process, VfsBundle.message("file.update.modified.progress"), false, null);
+              if (myRefreshCount > 0) {
+                if (!asynchronous && mySynchronousRefreshCount == 0) {
+                  fireAfterRefreshFinish(asynchronous);
+                }
+              }
+              else {
+                final FileSystemSynchronizer synchronizer;
+                if (asynchronous) {
+                  synchronizer = new FileSystemSynchronizer();
+                  //noinspection ForLoopReplaceableByForEach
+                  for (int i = 0; i < myRefreshParticipants.size(); i++) {
+                    CacheUpdater participant = myRefreshParticipants.get(i);
+                    synchronizer.registerCacheUpdater(participant);
                   }
-                  else {
-                    synchronizer.execute();
+                }
+                else {
+                  synchronizer = null;
+                }
+
+                myRefreshEventsToFire = null;
+                fireAfterRefreshFinish(asynchronous);
+
+                if (asynchronous) {
+                  int filesCount = synchronizer.collectFilesToUpdate();
+                  if (filesCount > 0) {
+                    boolean runWithProgress = !application.isUnitTestMode() && filesCount > 5;
+                    if (runWithProgress) {
+                      Runnable process = new Runnable() {
+                        public void run() {
+                          synchronizer.execute();
+                        }
+                      };
+                      ProgressManager.getInstance()
+                        .runProcessWithProgressSynchronously(process, VfsBundle.message("file.update.modified.progress"), false, null);
+                    }
+                    else {
+                      synchronizer.execute();
+                    }
                   }
                 }
               }
             }
+          });
+        }
+        finally {
+          if (postRunnable != null) {
+            postRunnable.run();
           }
-        });
-
-        if (postRunnable != null) {
-          postRunnable.run();
         }
       }
     };
