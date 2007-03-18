@@ -314,7 +314,7 @@ public class AnalysisScope {
     accept(visitor, !ApplicationManager.getApplication().isReadAccessAllowed());
   }
 
-  public void accept(final PsiElementVisitor visitor, final boolean needReadAction) {
+  private void accept(final PsiElementVisitor visitor, final boolean needReadAction) {
     if (myType == VIRTUAL_FILES) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
       for (final VirtualFile file : myFilesSet) {
