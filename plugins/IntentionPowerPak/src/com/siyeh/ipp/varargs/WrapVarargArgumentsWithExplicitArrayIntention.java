@@ -15,11 +15,11 @@
  */
 package com.siyeh.ipp.varargs;
 
-import com.siyeh.ipp.base.Intention;
-import com.siyeh.ipp.base.PsiElementPredicate;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 public class WrapVarargArgumentsWithExplicitArrayIntention extends Intention {
@@ -53,12 +53,9 @@ public class WrapVarargArgumentsWithExplicitArrayIntention extends Intention {
         final PsiExpression[] arguments = argumentList.getExpressions();
         newExpression.append('(');
         final int varargParameterIndex = parametersCount - 1;
-        if (parametersCount > 1) {
-            newExpression.append(arguments[0].getText());
-            for (int i = 1; i < varargParameterIndex; i++) {
-                newExpression.append(", ");
-                newExpression.append(arguments[i].getText());
-            }
+        for (int i = 0; i < varargParameterIndex; i++) {
+            newExpression.append(arguments[i].getText());
+            newExpression.append(", ");
         }
         final PsiParameter[] parameters = parameterList.getParameters();
         final PsiParameter varargParameter = parameters[varargParameterIndex];
