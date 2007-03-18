@@ -442,7 +442,7 @@ public class RefManagerImpl extends RefManager {
           //LOG.assertTrue(true, "References may become invalid after process is finished");
           return null;
         }
-        return ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
+        return PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Computable<RefElementImpl>() {
           @Nullable
           public RefElementImpl compute() {
             RefElementImpl refElement;
