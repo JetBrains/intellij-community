@@ -42,12 +42,22 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
         if (arguments.length < parametersCount) {
             return false;
         }
+        if (arguments.length != parametersCount) {
+            return true;
+        }
         final PsiExpression lastExpression =
                 arguments[arguments.length - 1];
         final PsiType lastArgumentType = lastExpression.getType();
+        if (!(lastArgumentType instanceof PsiArrayType)) {
+            return true;
+        }
+        final PsiArrayType arrayType = (PsiArrayType)lastArgumentType;
+        final PsiType type = arrayType.getComponentType();
         final PsiParameter[] parameters = parameterList.getParameters();
         final PsiParameter lastParameter = parameters[parameters.length - 1];
-        final PsiType lastParameterType = lastParameter.getType();
-        return !lastParameterType.equals(lastArgumentType);
+        final PsiEllipsisType lastParameterType =
+                (PsiEllipsisType)lastParameter.getType();
+        final PsiType lastType = lastParameterType.getComponentType();
+        return !lastType.equals(type);
     }
 }
