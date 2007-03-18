@@ -311,7 +311,7 @@ public class AnalysisScope {
   }
 
   public void accept(final PsiElementVisitor visitor) {
-    accept(visitor, true);
+    accept(visitor, !ApplicationManager.getApplication().isReadAccessAllowed());
   }
 
   public void accept(final PsiElementVisitor visitor, final boolean needReadAction) {
@@ -416,7 +416,7 @@ public class AnalysisScope {
       return true;
     }
     if (needReadAction) {
-      ApplicationManager.getApplication().runReadAction(new Runnable(){
+      PsiDocumentManager.getInstance(psiManager.getProject()).commitAndRunReadAction(new Runnable(){
         public void run() {
           file.accept(visitor);
         }
