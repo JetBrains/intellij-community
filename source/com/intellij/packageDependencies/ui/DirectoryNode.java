@@ -76,8 +76,6 @@ public class DirectoryNode extends PackageDependenciesNode {
     if (myCompactPackages && myCompactedDirNode != null) {
       return myDirName + "/" + myCompactedDirNode.getDirName();
     }
-    final String locationString = getLocationString();
-    if (locationString != null) return locationString;
     return myDirName;
   }
 

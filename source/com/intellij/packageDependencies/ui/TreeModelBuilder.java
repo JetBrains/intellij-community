@@ -608,16 +608,26 @@ public class TreeModelBuilder {
       return directoryNode;
     }
 
+    final VirtualFile virtualFile = psiDirectory.getVirtualFile();
+
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    final VirtualFile sourceRoot = fileIndex.getSourceRootForFile(virtualFile);
+    final VirtualFile contentRoot = fileIndex.getContentRootForFile(virtualFile);
+
     directoryNode = new DirectoryNode(psiDirectory, myCompactEmptyMiddlePackages, myFlattenPackages);
-    ((DirectoryNode)directoryNode).setCompactedDirNode(childNode); //compact
     getMap(myModuleDirNodes, scopeType).put(psiDirectory, (DirectoryNode)directoryNode);
 
     final PsiDirectory directory = psiDirectory.getParentDirectory();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     if (!myFlattenPackages && directory != null) {
-      if (fileIndex.getModuleForFile(directory.getVirtualFile()) == module) {
+      if (myCompactEmptyMiddlePackages && sourceRoot != virtualFile && contentRoot != virtualFile) {//compact
+        ((DirectoryNode)directoryNode).setCompactedDirNode(childNode);
+      }
+      final VirtualFile parentDir = directory.getVirtualFile();
+      if (fileIndex.getModuleForFile(parentDir) == module) {
         DirectoryNode parentDirectoryNode = getMap(myModuleDirNodes, scopeType).get(directory);
-        if (parentDirectoryNode != null || !myCompactEmptyMiddlePackages) {
+        if (parentDirectoryNode != null
+            || !myCompactEmptyMiddlePackages
+            || parentDir == sourceRoot || parentDir == contentRoot) {
           getModuleDirNode(directory, module, scopeType, (DirectoryNode)directoryNode).add(directoryNode);
         }
         else {
@@ -629,12 +639,9 @@ public class TreeModelBuilder {
       }
     }
     else {
-      final VirtualFile virtualFile = psiDirectory.getVirtualFile();
-      final VirtualFile contentRoot = fileIndex.getContentRootForFile(virtualFile);
       if (contentRoot == virtualFile) {
         getModuleNode(module, scopeType).add(directoryNode);
       } else {
-        final VirtualFile sourceRoot = fileIndex.getSourceRootForFile(virtualFile);
         final PsiDirectory root;
         if (sourceRoot != virtualFile && sourceRoot != null) {
           root = myPsiManager.findDirectory(sourceRoot);
