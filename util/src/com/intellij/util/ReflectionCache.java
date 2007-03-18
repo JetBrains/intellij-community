@@ -15,7 +15,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.SoftFactoryMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,9 +42,16 @@ public class ReflectionCache {
       return key.getMethods();
     }
   };
-  private static final SoftFactoryMap<Pair<Class,Class>,Boolean> ourAssignables = new SoftFactoryMap<Pair<Class, Class>, Boolean>() {
-    protected Boolean create(final Pair<Class, Class> key) {
-      return key.getFirst().isAssignableFrom(key.getSecond());
+
+  private static final SoftFactoryMap<Class,SoftFactoryMap<Class,Boolean>> ourAssignables = new SoftFactoryMap<Class, SoftFactoryMap<Class, Boolean>>() {
+    @NotNull
+    protected SoftFactoryMap<Class, Boolean> create(final Class key1) {
+      return new SoftFactoryMap<Class, Boolean>() {
+        @NotNull
+        protected Boolean create(final Class key2) {
+          return key1.isAssignableFrom(key2);
+        }
+      };
     }
   };
 
@@ -94,7 +100,7 @@ public class ReflectionCache {
   }
 
   public static boolean isAssignable(Class ancestor, Class descendant) {
-    return ancestor == descendant || ourAssignables.get(Pair.create(ancestor, descendant));
+    return ancestor == descendant || ourAssignables.get(ancestor).get(descendant);
   }
 
   public static boolean isInstance(Object instance, Class clazz) {

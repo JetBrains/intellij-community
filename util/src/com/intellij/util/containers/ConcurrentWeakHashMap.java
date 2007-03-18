@@ -12,6 +12,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Fully copied from java.util.WeakHashMap except "get" method optimization.
@@ -63,8 +64,12 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
     private int myHash;
 
     public HardKey(Object object) {
+      setObject(object);
+    }
+
+    private void setObject(final Object object) {
       myObject = object;
-      myHash = object.hashCode();
+      myHash = object != null ? object.hashCode() : 0;
     }
 
     public Object get() {
@@ -142,11 +147,30 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
       return myMap.containsKey(NULL_KEY);
     }
     else{
-      HardKey hardKey = new HardKey(key);
+      HardKey hardKey = createHardKey(key);
       boolean result = myMap.containsKey(hardKey);
+      releaseHardKey(hardKey);
       return result;
     }
     //return myMap.containsKey(WeakKey.create(key));
+  }
+
+  private final AtomicReference<HardKey> myHardKeyPool = new AtomicReference<HardKey>(null);
+
+  private HardKey createHardKey(final Object key) {
+    HardKey hardKey = myHardKeyPool.getAndSet(null);
+    if (hardKey == null) {
+      hardKey = new HardKey(key);
+    }
+    else {
+      hardKey.setObject(key);
+    }
+    return hardKey;
+  }
+
+  private void releaseHardKey(HardKey key) {
+    key.setObject(null);
+    myHardKeyPool.set(key);
   }
 
   public V get(Object key) {
@@ -156,8 +180,9 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
       return (V)myMap.get(NULL_KEY);
     }
     else{
-      HardKey hardKey = new HardKey(key);
+      HardKey hardKey = createHardKey(key);
       Object result = myMap.get(hardKey);
+      releaseHardKey(hardKey);
       return (V)result;
     }
   }
@@ -176,8 +201,9 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
       return (V)myMap.remove(NULL_KEY);
     }
     else{
-      HardKey hardKey = new HardKey(key);
+      HardKey hardKey = createHardKey(key);
       Object result = myMap.remove(hardKey);
+      releaseHardKey(hardKey);
       return (V)result;
     }
     //return myMap.remove(WeakKey.create(key));
@@ -287,7 +313,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
       Object ev = e.getValue();
 
       // optimization:
-      HardKey key = new HardKey(o);
+      HardKey key = createHardKey(o);
       //WeakKey key = WeakKey.create(e.getKey());
 
       Object hv = myMap.get(key);
@@ -295,6 +321,8 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
       if (toRemove){
         myMap.remove(key);
       }
+
+      releaseHardKey(key);
       return toRemove;
     }
 
