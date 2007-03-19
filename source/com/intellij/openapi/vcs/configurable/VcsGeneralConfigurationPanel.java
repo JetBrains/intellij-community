@@ -47,6 +47,7 @@ public class VcsGeneralConfigurationPanel {
   private JCheckBox myCbCommitInBackground;
   private JButton myConfigureIgnoredFilesButton;
   private JCheckBox myCbEditInBackground;
+  private JCheckBox myCbAddRemoveInBackground;
 
   public VcsGeneralConfigurationPanel(final Project project) {
 
@@ -95,6 +96,7 @@ public class VcsGeneralConfigurationPanel {
     settings.PERFORM_COMMIT_IN_BACKGROUND = myCbCommitInBackground.isSelected();
     settings.PERFORM_UPDATE_IN_BACKGROUND = myCbUpdateInBackground.isSelected();
     settings.PERFORM_EDIT_IN_BACKGROUND = myCbEditInBackground.isSelected();
+    settings.PERFORM_ADD_REMOVE_IN_BACKGROUND = myCbAddRemoveInBackground.isSelected();
 
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       setting.setValue(myPromptOptions.get(setting).isSelected());
@@ -149,6 +151,9 @@ public class VcsGeneralConfigurationPanel {
     if (settings.PERFORM_EDIT_IN_BACKGROUND != myCbEditInBackground.isSelected()) {
       return true;
     }
+    if (settings.PERFORM_ADD_REMOVE_IN_BACKGROUND != myCbAddRemoveInBackground.isSelected()) {
+      return true;
+    }
 
     if (getReadOnlyStatusHandler().SHOW_DIALOG != myShowReadOnlyStatusDialog.isSelected()) {
       return true;
@@ -172,6 +177,7 @@ public class VcsGeneralConfigurationPanel {
     myCbCommitInBackground.setSelected(settings.PERFORM_COMMIT_IN_BACKGROUND);
     myCbUpdateInBackground.setSelected(settings.PERFORM_UPDATE_IN_BACKGROUND);
     myCbEditInBackground.setSelected(settings.PERFORM_EDIT_IN_BACKGROUND);
+    myCbAddRemoveInBackground.setSelected(settings.PERFORM_ADD_REMOVE_IN_BACKGROUND);
 
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       myPromptOptions.get(setting).setSelected(setting.getValue());

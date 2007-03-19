@@ -41,6 +41,7 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   public boolean PERFORM_UPDATE_IN_BACKGROUND = false;
   public boolean PERFORM_COMMIT_IN_BACKGROUND = false;
   public boolean PERFORM_EDIT_IN_BACKGROUND = true;
+  public boolean PERFORM_ADD_REMOVE_IN_BACKGROUND = true;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),
@@ -101,6 +102,7 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   private final PerformInBackgroundOption myUpdateOption = new UpdateInBackgroundOption();
   private final PerformInBackgroundOption myCommitOption = new CommitInBackgroundOption();
   private final PerformInBackgroundOption myEditOption = new EditInBackgroundOption();
+  private final PerformInBackgroundOption myAddRemoveOption = new AddRemoveInBackgroundOption();
 
   public static VcsConfiguration createEmptyConfiguration() {
     return new VcsConfiguration();
@@ -209,6 +211,10 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
     return myEditOption;
   }
 
+  public PerformInBackgroundOption getAddRemoveOption() {
+    return myAddRemoveOption;
+  }
+
   private class UpdateInBackgroundOption implements PerformInBackgroundOption {
     public boolean shouldStartInBackground() {
       return PERFORM_UPDATE_IN_BACKGROUND;
@@ -238,6 +244,20 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
 
     public void processRestoredToForeground() {
       PERFORM_EDIT_IN_BACKGROUND = false;
+    }
+  }
+
+  private class AddRemoveInBackgroundOption implements PerformInBackgroundOption {
+    public boolean shouldStartInBackground() {
+      return PERFORM_ADD_REMOVE_IN_BACKGROUND;
+    }
+
+    public void processSentToBackground() {
+      PERFORM_ADD_REMOVE_IN_BACKGROUND = true;
+    }
+
+    public void processRestoredToForeground() {
+      PERFORM_ADD_REMOVE_IN_BACKGROUND = false;
     }
   }
 
