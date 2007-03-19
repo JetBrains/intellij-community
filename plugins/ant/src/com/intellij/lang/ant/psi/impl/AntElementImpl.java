@@ -220,7 +220,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
       final TextRange textRange = element.getTextRange();
       if (textRange.contains(offsetInFile)) {
         PsiElement elementAt = element.findElementAt(offsetInFile - textRange.getStartOffset());
-        assert elementAt == null || elementAt.isValid();
+        assert elementAt == null || elementAt.isValid() : element + ": " + offset;
         return elementAt;
       }
     }
