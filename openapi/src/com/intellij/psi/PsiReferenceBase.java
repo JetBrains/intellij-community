@@ -68,11 +68,15 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
   public TextRange getRangeInElement() {
     if (myRange == null) {
-      final ElementManipulator<T> manipulator = getManipulator();
-      assert manipulator != null: "Cannot find manipulator for " + myElement;
-      myRange = manipulator.getRangeInElement(myElement);
+      myRange = calculateDefaultRangeInElement();
     }
     return myRange;
+  }
+
+  protected TextRange calculateDefaultRangeInElement() {
+    final ElementManipulator<T> manipulator = getManipulator();
+    assert manipulator != null: "Cannot find manipulator for " + myElement;
+    return manipulator.getRangeInElement(myElement);
   }
 
   public String getCanonicalText() {

@@ -12,13 +12,11 @@ package com.intellij.util.xml.converters;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceBase;
-import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.CustomReferenceConverter;
-import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xml.*;
 import com.intellij.xml.util.XmlTagTextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,49 +71,58 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
     final String originalValue = genericDomValue.getStringValue();
     if (originalValue == null) return PsiReference.EMPTY_ARRAY;
     final String unquotedValue = unquote(originalValue, getQuoteSigns());
-    if (originalValue == unquotedValue) {
-      return new PsiReference[]{createPsiReference(element, 1, element.getTextLength() - 1, context, genericDomValue)};
-    }
-    final int quoteLength = XmlTagTextUtil.escapeString(originalValue.substring(0, 1), false).length();
-    return new PsiReference[]{createPsiReference(element, quoteLength+1, element.getTextLength() - 1 - quoteLength, context, genericDomValue)};
+    int startOffset = originalValue == unquotedValue? 0 : XmlTagTextUtil.escapeString(originalValue.substring(0, 1), false).length();
+    int endOffset = originalValue == unquotedValue || quotationIsNotClosed(originalValue)? 0 : startOffset;
+    return new PsiReference[]{createPsiReference(element, startOffset+1, element.getTextLength() - 1 - endOffset, context, genericDomValue, startOffset != endOffset)};
+  }
+
+  @Nullable
+  public static String unquote(final String str) {
+    return unquote(str, QUOTE_SIGNS);
   }
 
   @Nullable
   public static String unquote(final String str, final char[] quoteSigns) {
     if (str != null && str.length() > 2) {
-      final char c;
-      if ((c = str.charAt(0)) == str.charAt(str.length() - 1)) {
-        for (char quote : quoteSigns) {
-          if (quote == c) {
-            return str.substring(1, str.length() - 1);
-          }
+      final char c = str.charAt(0);
+      for (char quote : quoteSigns) {
+        if (quote == c) {
+          return str.substring(1, c == str.charAt(str.length() - 1)? str.length() - 1 : str.length());
         }
       }
     }
     return str;
   }
 
+  public static boolean quotationIsNotClosed(final String str) {
+    return StringUtil.isNotEmpty(str) && str.charAt(0) != str.charAt(str.length()-1);
+  }
+
   @NotNull
   protected PsiReference createPsiReference(final PsiElement element,
                                             int start, int end,
                                             final ConvertContext context,
-                                            final GenericDomValue<T> genericDomValue) {
+                                            final GenericDomValue<T> genericDomValue, final boolean badQuotation) {
 
-    return new MyPsiReference(element, new TextRange(start, end), context, genericDomValue);
+    return new MyPsiReference(element, new TextRange(start, end), context, genericDomValue, badQuotation);
   }
 
   protected class MyPsiReference extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
     protected final ConvertContext myContext;
     protected final GenericDomValue<T> myGenericDomValue;
+    private final boolean myBadQuotation;
 
-    public MyPsiReference(final PsiElement element, final TextRange range, final ConvertContext context, final GenericDomValue<T> genericDomValue) {
+    public MyPsiReference(final PsiElement element, final TextRange range, final ConvertContext context, final GenericDomValue<T> genericDomValue,
+                          final boolean badQuotation) {
       super(element, range);
       myContext = context;
       myGenericDomValue = genericDomValue;
+      myBadQuotation = badQuotation;
     }
 
     @Nullable
     public PsiElement resolve() {
+      if (myBadQuotation) return null;
       final String value = getValue();
       return resolveReference(convertString(value, myContext), myContext);
     }
@@ -125,7 +132,7 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
     }
 
     public String getUnresolvedMessagePattern() {
-      return getUnresolvedMessage(getValue());
+      return myBadQuotation? DomBundle.message("message.invalid.value.quotation") : getUnresolvedMessage(getValue());
     }
   }
 }
