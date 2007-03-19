@@ -200,7 +200,7 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public static class BeanWithSet {
-    public Set<String> VALUES = new HashSet<String>(Arrays.asList("a", "b", "w"));
+    public Set<String> VALUES = new LinkedHashSet<String>(Arrays.asList("a", "b", "w"));
   }
 
   public void testSetSerialization() throws Exception {
@@ -209,22 +209,22 @@ public class XmlSerializerTest extends TestCase {
       "<BeanWithSet>\n" +
       "  <option name=\"VALUES\">\n" +
       "    <collection>\n" +
-      "      <option value=\"w\" />\n" +
       "      <option value=\"a\" />\n" +
       "      <option value=\"b\" />\n" +
+      "      <option value=\"w\" />\n" +
       "    </collection>\n" +
       "  </option>\n" +
       "</BeanWithSet>",
       bean);
-    bean.VALUES = new HashSet<String>(Arrays.asList("1", "2", "3"));
+    bean.VALUES = new LinkedHashSet<String>(Arrays.asList("1", "2", "3"));
 
     doSerializerTest(
       "<BeanWithSet>\n" +
       "  <option name=\"VALUES\">\n" +
       "    <collection>\n" +
-      "      <option value=\"3\" />\n" +
-      "      <option value=\"2\" />\n" +
       "      <option value=\"1\" />\n" +
+      "      <option value=\"2\" />\n" +
+      "      <option value=\"3\" />\n" +
       "    </collection>\n" +
       "  </option>\n" +
       "</BeanWithSet>",
