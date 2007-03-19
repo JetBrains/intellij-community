@@ -58,6 +58,10 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
     super.removeNotify();
   }
 
+  public boolean isOpaque() {
+    return false;
+  }
+
   private void process(final MouseEvent e, boolean motionEvent) {
     final boolean processingDragEnd = myMousePressedComponent != null && e.getID() == MouseEvent.MOUSE_RELEASED;
     boolean repaint = true;
@@ -91,7 +95,12 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
     }
 
     if (repaint) {
-      repaint();
+      for (Painter eachPainter : myPainters) {
+        if (eachPainter.needsRepaint()) {
+          repaint();
+          break;
+        }
+      }
     }
   }
 
@@ -348,10 +357,12 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
   }
 
   protected void paintComponent(final Graphics g) {
-    final Rectangle clip = g.getClipBounds();
+    if (myPainters.size() == 0) return;
 
     Graphics2D g2d = (Graphics2D)g;
     for (Painter painter : myPainters) {
+      final Rectangle clip = g.getClipBounds();
+
       final Component component = myPainter2Component.get(painter);
       if (component.getParent() == null) continue;
       final Rectangle componentBounds = SwingUtilities.convertRectangle(component.getParent(), component.getBounds(), this);
@@ -389,6 +400,10 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
       public void paint(final Component component, final Graphics2D g) {
         g.setColor(Color.blue);
         g.drawRect(0, 0, component.getWidth(), component.getHeight());
+      }
+
+      public boolean needsRepaint() {
+        return false;
       }
     }, parent);
 
