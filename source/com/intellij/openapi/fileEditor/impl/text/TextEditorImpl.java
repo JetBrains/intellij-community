@@ -41,6 +41,7 @@ public final class TextEditorImpl extends UserDataHolderBase implements TextEdit
     myComponent.dispose();
   }
 
+  @NotNull
   public JComponent getComponent() {
     return myComponent;
   }
@@ -184,14 +185,15 @@ public final class TextEditorImpl extends UserDataHolderBase implements TextEdit
   }
 
   public boolean canNavigateTo(@NotNull final Navigatable navigatable) {
-    return (navigatable instanceof OpenFileDescriptor) && (((OpenFileDescriptor)navigatable).getOffset() >= 0 || (
-      ((OpenFileDescriptor)navigatable).getLine() != -1 && ((OpenFileDescriptor)navigatable).getColumn() != -1));
+    return navigatable instanceof OpenFileDescriptor && (((OpenFileDescriptor)navigatable).getOffset() >= 0 ||
+                                                         ((OpenFileDescriptor)navigatable).getLine() != -1 &&
+                                                         ((OpenFileDescriptor)navigatable).getColumn() != -1);
   }
 
   public void navigateTo(@NotNull final Navigatable navigatable) {
     assert navigatable instanceof OpenFileDescriptor;
 
-    final OpenFileDescriptor descriptor = ((OpenFileDescriptor)navigatable);
+    final OpenFileDescriptor descriptor = (OpenFileDescriptor)navigatable;
 
     final Editor _editor = getEditor();
 

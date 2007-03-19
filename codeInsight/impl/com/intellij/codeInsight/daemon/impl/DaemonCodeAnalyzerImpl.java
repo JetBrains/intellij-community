@@ -101,7 +101,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
                 pass.applyInformationToEditor();
                 
                 if (fileEditor instanceof TextEditor) {
-                  log(updateProgress, "Apply ",pass);
+                  log(updateProgress, pass, "Apply ");
                   Editor editor = ((TextEditor)fileEditor).getEditor();
                   repaintErrorStripeRenderer(editor);
                 }

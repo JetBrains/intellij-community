@@ -74,6 +74,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     myHighlightVisitors = createHighlightVisitors();
     LOG.assertTrue(myFile.isValid());
+    setId(Pass.UPDATE_ALL);
   }
 
   private static final Key<Integer> HIGHLIGHT_VISITOR_THREADS_IN_USE = new Key<Integer>("HIGHLIGHT_VISITORS_POOL");
@@ -129,6 +130,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       setRefCountHolders(null);
     }
     Collection<HighlightInfo> result = new THashSet<HighlightInfo>(100);
+    List<LineMarkerInfo> lineMarkers = new ArrayList<LineMarkerInfo>();
     try {
       final FileViewProvider viewProvider = myFile.getViewProvider();
       final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
@@ -143,7 +145,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         //LOG.debug("Elements collected for: " + (System.currentTimeMillis() - time) / 1000.0 + "s");
         //time = System.currentTimeMillis();
 
-        myMarkers = collectLineMarkers(elements);
+        addLineMarkers(elements, lineMarkers);
         //LOG.debug("Line markers collected for: " + (System.currentTimeMillis() - time) / 1000.0 + "s");
 
         result.addAll(collectHighlights(elements));
@@ -158,6 +160,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
     }
     myHighlights = result;
+    myMarkers = lineMarkers;
     reportErrorsToWolf(result, myFile, myHasErrorElement);
   }
 
@@ -180,7 +183,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         // binary file? see IDEADEV-2809
         return Collections.emptyList();
       }
-      return collectLineMarkers(CodeInsightUtil.getElementsInRange(myFile, myStartOffset, myEndOffset));
+      ArrayList<LineMarkerInfo> result = new ArrayList<LineMarkerInfo>();
+      addLineMarkers(CodeInsightUtil.getElementsInRange(myFile, myStartOffset, myEndOffset), result);
+      return result;
     }
     catch (ProcessCanceledException e) {
       return null;
@@ -222,7 +227,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       PsiElement element = elements.get(i);
       progressManager.checkCanceled();
 
-      if (element != myFile && skipParentsSet.size() > 0 && element.getFirstChild() != null && skipParentsSet.remove(element)) {
+      if (element != myFile && !skipParentsSet.isEmpty() && element.getFirstChild() != null && skipParentsSet.remove(element)) {
         skipParentsSet.add(element.getParent());
         continue;
       }
@@ -275,19 +280,17 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return list;
   }
 
-  private Collection<LineMarkerInfo> collectLineMarkers(List<PsiElement> elements) throws ProcessCanceledException {
+  private void addLineMarkers(List<PsiElement> elements, List<LineMarkerInfo> result) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    List<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>();
     for (PsiElement element : elements) {
       ProgressManager.getInstance().checkCanceled();
 
       LineMarkerInfo info = getLineMarkerInfo(element);
       if (info != null) {
-        array.add(info);
+        result.add(info);
       }
     }
-    return array;
   }
 
   @Nullable
@@ -374,5 +377,4 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     // do not show progress of visible highlighters update
     return myUpdateAll ? super.getProgress() : -1;
   }
-
 }

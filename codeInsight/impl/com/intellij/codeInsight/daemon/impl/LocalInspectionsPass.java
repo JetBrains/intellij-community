@@ -61,6 +61,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     myFile = file;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
+    setId(Pass.LOCAL_INSPECTIONS);
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {

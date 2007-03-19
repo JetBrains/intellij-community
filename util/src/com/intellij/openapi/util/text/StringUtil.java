@@ -1062,4 +1062,8 @@ public class StringUtil {
 
     return -1;
   }
+
+  public static String first(final String text, final int length) {
+    return text.length() > length ? text.substring(0, length) : text;
+  }
 }

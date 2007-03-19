@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,7 +20,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,6 +53,7 @@ public abstract class PassExecutorService {
   }
 
   public void submitPasses(Map<FileEditor, HighlightingPass[]> passesMap, DaemonProgressIndicator updateProgress, final int jobPriority) {
+    log(updateProgress, null, "---------------------------------------------");
     final AtomicInteger threadsToStartCountdown = new AtomicInteger(0);
     int id = 1;
 
@@ -206,7 +207,7 @@ public abstract class PassExecutorService {
     }
 
     public void run() {
-      log(myUpdateProgress, "Started " , myPass);
+      log(myUpdateProgress, myPass, "Started ");
 
       if (myUpdateProgress.isCanceled()) return;
 
@@ -228,7 +229,7 @@ public abstract class PassExecutorService {
                 myPass.collectInformation(myUpdateProgress);
               }
               catch (ProcessCanceledException e) {
-                log(myUpdateProgress, "Canceled ",myPass);
+                log(myUpdateProgress, myPass, "Canceled ");
               }
             }
           });
@@ -252,14 +253,14 @@ public abstract class PassExecutorService {
         int toexec = myThreadsToStartCountdown.decrementAndGet();
         LOG.assertTrue(toexec >= 0);
         if (toexec == 0) {
-          log(myUpdateProgress, "Stopping ", myPass);
+          log(myUpdateProgress, myPass, "Stopping ");
           myUpdateProgress.stopIfRunning();
         }
         else {
-          log(myUpdateProgress, "Pass ", myPass ," finished but there are",toexec," passes in the queue");
+          log(myUpdateProgress, myPass, "Pass finished but there are" + toexec, " passes in the queue");
         }
       }
-      log(myUpdateProgress, "Finished " , myPass);
+      log(myUpdateProgress, myPass, "Finished ");
     }
   }
 
@@ -283,17 +284,18 @@ public abstract class PassExecutorService {
     return ConcurrencyUtil.cacheOrGet(threads, Thread.currentThread(), threads.size());
   }
 
-  public static void log(ProgressIndicator progressIndicator, @NonNls Object... info) {
+  public static void log(ProgressIndicator progressIndicator, TextEditorHighlightingPass pass, Object... info) {
     if (LOG.isDebugEnabled()) {
       synchronized (PassExecutorService.class) {
         StringBuffer s = new StringBuffer();
         for (Object o : info) {
           s.append(o.toString());
         }
-        LOG.debug(StringUtil.repeatSymbol(' ', getThreadNum() * 4) + s
+        LOG.debug(StringUtil.repeatSymbol(' ', getThreadNum() * 4)
+                  + " "+pass+" "
+                  + s
                   + "; progress=" + (progressIndicator == null ? null : progressIndicator.hashCode())
-                  + "; canceled=" + (progressIndicator != null && progressIndicator.isCanceled())
-                  + "; running=" + (progressIndicator != null && progressIndicator.isRunning())
+                  + " : '"+(pass == null ? "" : StringUtil.first(pass.getDocument().getText(), 30))
         );
       }
     }

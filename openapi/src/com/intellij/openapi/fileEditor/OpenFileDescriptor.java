@@ -27,8 +27,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiManager;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -70,6 +70,7 @@ public class OpenFileDescriptor implements Navigatable {
   }
 
 
+  @NotNull
   public VirtualFile getFile() {
     return myFile;
   }
@@ -127,7 +128,7 @@ public class OpenFileDescriptor implements Navigatable {
     if (type == null || myFile == null || !myFile.isValid()) return null;
 
     final List<FileEditor> fileEditors = FileEditorManager.getInstance(project).openEditor(this, focusEditor);
-    if (fileEditors.size() == 0) return null;
+    if (fileEditors.isEmpty()) return null;
     return fileEditors.get(0);
   }
 

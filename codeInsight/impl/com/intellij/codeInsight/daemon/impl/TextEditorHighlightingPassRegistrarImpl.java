@@ -50,22 +50,6 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       this.passFactory = passFactory;
     }
   }
-  public static class PassInfo {
-    public final TextEditorHighlightingPass pass;
-    public final int passId;
-    public final int[] predecessorIds;
-    public final boolean runIntentionsPassAfter;
-
-    public PassInfo(@NotNull final TextEditorHighlightingPass pass,
-                    final int passId,
-                    @NotNull final int[] predecessorIds,
-                    final boolean runIntentionsPassAfter) {
-      this.pass = pass;
-      this.passId = passId;
-      this.predecessorIds = predecessorIds;
-      this.runIntentionsPassAfter = runIntentionsPassAfter;
-    }
-  }
 
   public void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, int anchor, int anchorPass) {
     Anchor anc = Anchor.FIRST;

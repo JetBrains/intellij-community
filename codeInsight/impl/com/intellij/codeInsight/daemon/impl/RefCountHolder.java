@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiMatcherImpl;
@@ -31,6 +32,7 @@ public class RefCountHolder {
 
   public RefCountHolder(PsiFile file) {
     myFile = file;
+    LOG.debug("RefCountHolder created for '"+ StringUtil.first(file.getText(), 30));
   }
 
   public synchronized void clear() {
