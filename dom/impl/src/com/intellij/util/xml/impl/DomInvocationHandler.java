@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
@@ -37,12 +36,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
-import java.lang.annotation.Annotation;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author peter                  
@@ -89,6 +90,10 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
       return converter;
     }
   };
+
+  private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+  private static final Lock r = rwl.readLock();
+  private static final Lock w = rwl.writeLock();
 
   protected DomInvocationHandler(final Type type,
                                  final XmlTag tag,
@@ -589,36 +594,46 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
       throw new RuntimeException("element " + myType.toString() + " is not valid", myInvalidated);
     }
     checkParentInitialized();
-    synchronized (PsiLock.LOCK) {
+    r.lock();
+    try {
       if (myInitializedChildren.contains(qname)) {
         return;
       }
-      try {
-        myGenericInfo.buildMethodMaps();
+    }
+    finally {
+      r.unlock();
+    }
+    w.lock();
+    if (myInitializedChildren.contains(qname)) {
+      w.unlock();
+      return;
+    }
+    try {
+      myGenericInfo.buildMethodMaps();
 
-        if (ATTRIBUTES.equals(qname)) {
-          for (Map.Entry<JavaMethodSignature, XmlName> entry : myGenericInfo.getAttributeChildrenEntries()) {
-            getOrCreateAttributeChild(entry.getKey().findMethod(getRawType()), entry.getValue().createEvaluatedXmlName(this));
-          }
+      if (ATTRIBUTES.equals(qname)) {
+        for (Map.Entry<JavaMethodSignature, XmlName> entry : myGenericInfo.getAttributeChildrenEntries()) {
+          getOrCreateAttributeChild(entry.getKey().findMethod(getRawType()), entry.getValue().createEvaluatedXmlName(this));
         }
-
-        final XmlTag tag = getXmlTag();
-        if (myGenericInfo.isFixedChild(qname.getXmlName())) {
-          final int count = myGenericInfo.getFixedChildrenCount(qname.getXmlName());
-          for (int i = 0; i < count; i++) {
-            getOrCreateIndexedChild(findSubTag(tag, qname, i), Pair.create(qname, i));
-          }
-        }
-        else if (tag != null && myGenericInfo.isCollectionChild(qname.getXmlName())) {
-          for (XmlTag subTag : DomImplUtil.findSubTags(tag, qname, this)) {
-            new CollectionElementInvocationHandler(myGenericInfo.getCollectionChildrenType(qname.getXmlName()), qname, subTag, this);
-          }
-        }
-
       }
-      finally {
-        myInitializedChildren.add(qname);
+
+      final XmlTag tag = getXmlTag();
+      if (myGenericInfo.isFixedChild(qname.getXmlName())) {
+        final int count = myGenericInfo.getFixedChildrenCount(qname.getXmlName());
+        for (int i = 0; i < count; i++) {
+          getOrCreateIndexedChild(findSubTag(tag, qname, i), Pair.create(qname, i));
+        }
       }
+      else if (tag != null && myGenericInfo.isCollectionChild(qname.getXmlName())) {
+        for (XmlTag subTag : DomImplUtil.findSubTags(tag, qname, this)) {
+          new CollectionElementInvocationHandler(myGenericInfo.getCollectionChildrenType(qname.getXmlName()), qname, subTag, this);
+        }
+      }
+
+    }
+    finally {
+      myInitializedChildren.add(qname);
+      w.unlock();
     }
   }
 
@@ -687,7 +702,8 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   protected final void detach(boolean invalidate) {
-    synchronized (PsiLock.LOCK) {
+    w.lock();
+    try {
       if (invalidate && myInvalidated == null) {
         myInvalidated = new Throwable();
       }
@@ -705,6 +721,8 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
       myInitializedChildren.clear();
       removeFromCache();
       setXmlTagToNull();
+    } finally {
+      w.unlock();
     }
   }
 
@@ -713,9 +731,12 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   protected final void attach(final XmlTag tag) {
-    synchronized (PsiLock.LOCK) {
+    w.lock();
+    try {
       myXmlTag = tag;
       cacheInTag(tag);
+    } finally {
+      w.unlock();
     }
   }
 
@@ -776,14 +797,20 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   public final boolean isInitialized(final EvaluatedXmlName qname) {
-    synchronized (PsiLock.LOCK) {
+    r.lock();
+    try {
       return myInitializedChildren.contains(qname);
+    } finally{
+      r.unlock();
     }
   }
 
   public final boolean isAnythingInitialized() {
-    synchronized (PsiLock.LOCK) {
+    r.lock();
+    try {
       return !myInitializedChildren.isEmpty();
+    } finally{
+      r.unlock();
     }
   }
 
@@ -792,9 +819,12 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   public void setFixedChildClass(final EvaluatedXmlName tagName, final Class<? extends DomElement> aClass) {
-    synchronized (PsiLock.LOCK) {
+    w.lock();
+    try {
       assert !myInitializedChildren.contains(tagName);
       myFixedChildrenClasses.put(tagName, aClass);
+    } finally{
+      w.unlock();
     }
   }
 }
