@@ -1,7 +1,6 @@
 package com.intellij.pom.xml.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LanguageExtension;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
@@ -13,10 +12,11 @@ import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.TreeChangeImpl;
 import com.intellij.pom.xml.XmlAspect;
-import com.intellij.pom.xml.XmlChangeSet;
-import com.intellij.pom.xml.events.XmlChange;
 import com.intellij.pom.xml.impl.events.*;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.impl.source.tree.ChameleonElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -190,25 +190,6 @@ public class XmlAspectImpl implements XmlAspect {
           }
         }
       });
-    }
-
-    updateLanguageExtensions(xmlChangeSet);
-  }
-
-  private static void updateLanguageExtensions(XmlChangeSet changeSet) {
-    if(changeSet == null || changeSet.getChanges().size() == 0) return;
-    final XmlFile xmlFile = changeSet.getChangedFile();
-    if(xmlFile == null) return;
-    final FileViewProvider viewProvider = xmlFile.getViewProvider();
-    if(!(viewProvider instanceof CompositeLanguageFileViewProvider) || viewProvider.getBaseLanguage() != xmlFile.getLanguage()) return;
-    final CompositeLanguageFileViewProvider compositeLangViewProvider = (CompositeLanguageFileViewProvider)viewProvider;
-
-    final LanguageExtension[] languageExtensions = compositeLangViewProvider.getLanguageExtensions();
-
-    for (LanguageExtension languageExtension : languageExtensions) {
-      for (XmlChange xmlChange : changeSet.getChanges()) {
-        languageExtension.updateByChange(xmlChange);
-      }
     }
   }
 
