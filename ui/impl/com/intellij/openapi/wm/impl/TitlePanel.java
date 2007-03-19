@@ -19,8 +19,8 @@ public final class TitlePanel extends JPanel {
 
   private int myCurrentFrame;
 
-  private final static Color CNT_ENABLE_COLOR = new Color(105, 128, 180);
-  private final static Color BND_ENABLE_COLOR = CNT_ENABLE_COLOR.brighter();
+  public final static Color CNT_ENABLE_COLOR = new Color(105, 128, 180);
+  public final static Color BND_ENABLE_COLOR = CNT_ENABLE_COLOR.brighter();
 
   private final static Color BND_DISABLE_COLOR = new Color(184, 184, 184); //new Color(160, 160, 160);
   private final static Color CNT_DISABLE_COLOR = new Color(184, 184, 184);

@@ -13,6 +13,7 @@ public final class TabInfo {
   static final String TEXT = "text";
 
   private JComponent myComponent;
+  private JComponent myPreferredFocusableComponent;
 
   private ActionGroup myGroup;
 
@@ -25,6 +26,7 @@ public final class TabInfo {
 
   public TabInfo(final JComponent component) {
     myComponent = component;
+    myPreferredFocusableComponent = component;
   }
 
   PropertyChangeSupport getChangeSupport() {
@@ -80,5 +82,14 @@ public final class TabInfo {
 
   public Object getObject() {
     return myObject;
+  }
+
+  public JComponent getPreferredFocusableComponent() {
+    return myPreferredFocusableComponent;
+  }
+
+  public TabInfo setPreferredFocusableComponent(final JComponent component) {
+    myPreferredFocusableComponent = component;
+    return this;
   }
 }

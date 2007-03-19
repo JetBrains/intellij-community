@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.GraphicsConfig;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.ui.CaptionPanel;
 
 import javax.swing.*;
@@ -15,9 +16,7 @@ import java.util.*;
 import java.util.List;
 import java.awt.*;
 import java.awt.geom.GeneralPath;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +35,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
 
   private List<MouseListener> myTabMouseListeners = new ArrayList<MouseListener>();
   private List<TabsListener> myTabListeners = new ArrayList<TabsListener>();
+  private boolean myFocused;
 
   public TabsWithActions(ActionManager actionManager) {
     myActionManager = actionManager;
@@ -73,10 +73,10 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
   }
 
   private void updateSelected() {
-    setSelected(getSelectedInfo());
+    setSelected(getSelectedInfo(), false);
   }
 
-  public void setSelected(final TabInfo info) {
+  public void setSelected(final TabInfo info, final boolean requestFocus) {
     TabInfo oldInfo = mySelectedInfo;
     mySelectedInfo = info;
     final TabInfo newInfo = getSelectedInfo();
@@ -87,6 +87,10 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
       for (TabsListener eachListener : myTabListeners) {
         eachListener.selectionChanged(oldInfo, newInfo);
       }
+    }
+
+    if (requestFocus) {
+      newInfo.getPreferredFocusableComponent().requestFocus();
     }
   }
 
@@ -204,12 +208,26 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     path.lineTo(getWidth() - insets.right, bottomY);
     path.closePath();
 
-    final Color from = toAlpha(CaptionPanel.BND_ACTIVE_COLOR.brighter());
-    final Color to = toAlpha(CaptionPanel.CNT_ACTIVE_COLOR.darker());
+    final Color from;
+    final Color to;
+    final int alpha ;
+    if (myFocused) {
+      alpha = 150;
+      from = toAlpha(UIUtil.getListBackground(), alpha);
+      to = toAlpha(UIUtil.getListSelectionBackground(), alpha);
+    } else {
+      alpha = 150;
+      from = toAlpha(UIUtil.getListBackground(), alpha);
+      to = toAlpha(UIUtil.getPanelBackgound().darker(), alpha);
+    }
 
     g2d.setPaint(new GradientPaint(mySelectedBounds.x, topY, from, mySelectedBounds.x, bottomY, to));
     g2d.fill(path);
-    g2d.setColor(CaptionPanel.CNT_ACTIVE_COLOR.darker());
+    if (myFocused) {
+      g2d.setColor(UIUtil.getListSelectionBackground().darker().darker());      
+    } else {
+      g2d.setColor(CaptionPanel.CNT_ACTIVE_COLOR.darker());
+    }
     g2d.draw(path);
 
     g2d.drawRect(insets.left, bottomY, getWidth() - insets.left - insets.right - 1, getHeight() - bottomY - insets.bottom - 1);
@@ -217,8 +235,8 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     config.restore();
   }
 
-  private Color toAlpha(final Color color) {
-    return new Color(color.getRed(), color.getGreen(), color.getBlue(), 75);
+  private Color toAlpha(final Color color, final int alpha) {
+    return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
   }
 
   private Max computeMaxSize() {
@@ -381,7 +399,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
       addMouseListener(new MouseAdapter() {
         public void mousePressed(final MouseEvent e) {
           if (e.getClickCount() == 1 && e.getButton() == MouseEvent.BUTTON1) {
-            setSelected(info);
+            setSelected(info, true);
           }
         }
       });
@@ -401,6 +419,11 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     }
   }
 
+  public void setFocused(final boolean focused) {
+    myFocused = focused;
+    repaint();
+  }
+
   public static void main(String[] args) {
     final JFrame frame = new JFrame();
     frame.getContentPane().setLayout(new BorderLayout());
@@ -412,7 +435,14 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
         return jLabel;
       }
     };
-    frame.getContentPane().add(tabs);
+    frame.getContentPane().add(tabs, BorderLayout.CENTER);
+    final JCheckBox f = new JCheckBox("Focused");
+    f.addItemListener(new ItemListener() {
+      public void itemStateChanged(final ItemEvent e) {
+        tabs.setFocused(f.isSelected());
+      }
+    });
+    frame.getContentPane().add(f, BorderLayout.SOUTH);
 
     tabs.addListener(new TabsListener() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
@@ -428,6 +458,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
 
     frame.setBounds(200, 200, 300, 200);
     frame.show();
-
   }
+
+
 }

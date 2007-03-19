@@ -16,7 +16,9 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.treetable.TreeTableCellRenderer;
 import org.jetbrains.annotations.NonNls;
@@ -24,10 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.InvocationEvent;
+import java.awt.event.*;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.Map;
@@ -664,7 +663,15 @@ public class UIUtil {
     catch (InterruptedException e) {
       LOG.error(e);
     }
+  }
 
+  public static void addAwtListener(final AWTEventListener listener, long mask, Disposable parent) {
+    Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask);
+    Disposer.register(parent, new Disposable() {
+      public void dispose() {
+        Toolkit.getDefaultToolkit().removeAWTEventListener(listener);
+      }
+    });
   }
 }
 
