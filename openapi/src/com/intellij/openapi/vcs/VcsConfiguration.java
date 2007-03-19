@@ -40,6 +40,7 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT = true;
   public boolean PERFORM_UPDATE_IN_BACKGROUND = false;
   public boolean PERFORM_COMMIT_IN_BACKGROUND = false;
+  public boolean PERFORM_EDIT_IN_BACKGROUND = true;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),
@@ -99,6 +100,7 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
 
   private final PerformInBackgroundOption myUpdateOption = new UpdateInBackgroundOption();
   private final PerformInBackgroundOption myCommitOption = new CommitInBackgroundOption();
+  private final PerformInBackgroundOption myEditOption = new EditInBackgroundOption();
 
   public static VcsConfiguration createEmptyConfiguration() {
     return new VcsConfiguration();
@@ -203,6 +205,10 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
     return myCommitOption;
   }
 
+  public PerformInBackgroundOption getEditOption() {
+    return myEditOption;
+  }
+
   private class UpdateInBackgroundOption implements PerformInBackgroundOption {
     public boolean shouldStartInBackground() {
       return PERFORM_UPDATE_IN_BACKGROUND;
@@ -220,4 +226,19 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
     public void processSentToBackground() {}
     public void processRestoredToForeground() {}
   }
+
+  private class EditInBackgroundOption implements PerformInBackgroundOption {
+    public boolean shouldStartInBackground() {
+      return PERFORM_EDIT_IN_BACKGROUND;
+    }
+
+    public void processSentToBackground() {
+      PERFORM_EDIT_IN_BACKGROUND = true;
+    }
+
+    public void processRestoredToForeground() {
+      PERFORM_EDIT_IN_BACKGROUND = false;
+    }
+  }
+
 }

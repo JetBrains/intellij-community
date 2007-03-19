@@ -3,7 +3,7 @@
   <grid id="7e224" binding="myPanel" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="7" y="16" width="868" height="455"/>
+      <xy x="7" y="16" width="868" height="510"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -95,7 +95,9 @@
               </component>
               <component id="daddb" class="javax.swing.JRadioButton" binding="myDoNothingOnRemovingFile">
                 <constraints>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                    <preferred-size width="97" height="23"/>
+                  </grid>
                 </constraints>
                 <properties>
                   <margin top="2" left="2" bottom="2" right="2"/>
@@ -158,13 +160,15 @@
                   <text resource-bundle="messages/VcsBundle" key="checkbox.changelist.move.offer"/>
                 </properties>
               </component>
-              <grid id="d038a" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="d038a" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
-                <border type="none"/>
+                <border type="none" title="Background Operations">
+                  <font/>
+                </border>
                 <children>
                   <component id="5b88e" class="javax.swing.JCheckBox" binding="myCbUpdateInBackground">
                     <constraints>
@@ -185,6 +189,14 @@
                     </constraints>
                     <properties>
                       <text resource-bundle="messages/VcsBundle" key="perform.commit.in.bacground"/>
+                    </properties>
+                  </component>
+                  <component id="45c51" class="javax.swing.JCheckBox" binding="myCbEditInBackground">
+                    <constraints>
+                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text resource-bundle="messages/VcsBundle" key="perform.edit.in.background"/>
                     </properties>
                   </component>
                 </children>
