@@ -25,7 +25,11 @@ import java.util.HashSet;
  */
 public abstract class FactoryMap<T,V> {
   static final Object NULL = new Object();
-  protected final Map<T,V> myMap = new THashMap<T, V>();
+  protected final Map<T,V> myMap = createMap();
+
+  protected Map<T, V> createMap() {
+    return new THashMap<T, V>();
+  }
 
   protected abstract V create(T key);
   

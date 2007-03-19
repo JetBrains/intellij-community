@@ -15,7 +15,8 @@
  */
 package com.intellij.util;
 
-import com.intellij.util.containers.SoftFactoryMap;
+import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ConcurrentWeakFactoryMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
@@ -30,23 +31,23 @@ import java.util.WeakHashMap;
  */
 public class ReflectionCache {
   private static final Map<Class,Class> ourSuperClasses = new WeakHashMap<Class, Class>();
-  private static final SoftFactoryMap<Class,Class[]> ourInterfaces = new SoftFactoryMap<Class, Class[]>() {
+  private static final ConcurrentWeakFactoryMap<Class,Class[]> ourInterfaces = new ConcurrentWeakFactoryMap<Class, Class[]>() {
     @NotNull
     protected Class[] create(final Class key) {
       return key.getInterfaces();
     }
   };
-  private static final SoftFactoryMap<Class, Method[]> ourMethods = new SoftFactoryMap<Class, Method[]>() {
+  private static final ConcurrentWeakFactoryMap<Class, Method[]> ourMethods = new ConcurrentWeakFactoryMap<Class, Method[]>() {
     @NotNull
     protected Method[] create(final Class key) {
       return key.getMethods();
     }
   };
 
-  private static final SoftFactoryMap<Class,SoftFactoryMap<Class,Boolean>> ourAssignables = new SoftFactoryMap<Class, SoftFactoryMap<Class, Boolean>>() {
+  private static final ConcurrentWeakFactoryMap<Class, ConcurrentFactoryMap<Class,Boolean>> ourAssignables = new ConcurrentWeakFactoryMap<Class, ConcurrentFactoryMap<Class, Boolean>>() {
     @NotNull
-    protected SoftFactoryMap<Class, Boolean> create(final Class key1) {
-      return new SoftFactoryMap<Class, Boolean>() {
+    protected ConcurrentFactoryMap<Class, Boolean> create(final Class key1) {
+      return new ConcurrentFactoryMap<Class, Boolean>() {
         @NotNull
         protected Boolean create(final Class key2) {
           return key1.isAssignableFrom(key2);
@@ -55,25 +56,25 @@ public class ReflectionCache {
     }
   };
 
-  private static final SoftFactoryMap<Class,Boolean> ourIsInterfaces = new SoftFactoryMap<Class, Boolean>() {
+  private static final ConcurrentWeakFactoryMap<Class,Boolean> ourIsInterfaces = new ConcurrentWeakFactoryMap<Class, Boolean>() {
     @NotNull
     protected Boolean create(final Class key) {
       return key.isInterface();
     }
   };
-  private static final SoftFactoryMap<Class, TypeVariable[]> ourTypeParameters = new SoftFactoryMap<Class, TypeVariable[]>() {
+  private static final ConcurrentWeakFactoryMap<Class, TypeVariable[]> ourTypeParameters = new ConcurrentWeakFactoryMap<Class, TypeVariable[]>() {
     @NotNull
     protected TypeVariable[] create(final Class key) {
       return key.getTypeParameters();
     }
   };
-  private static final SoftFactoryMap<Class, Type[]> ourGenericInterfaces = new SoftFactoryMap<Class, Type[]>() {
+  private static final ConcurrentWeakFactoryMap<Class, Type[]> ourGenericInterfaces = new ConcurrentWeakFactoryMap<Class, Type[]>() {
     @NotNull
     protected Type[] create(final Class key) {
       return key.getGenericInterfaces();
     }
   };
-  private static final SoftFactoryMap<ParameterizedType, Type[]> ourActualTypeArguments = new SoftFactoryMap<ParameterizedType, Type[]>() {
+  private static final ConcurrentWeakFactoryMap<ParameterizedType, Type[]> ourActualTypeArguments = new ConcurrentWeakFactoryMap<ParameterizedType, Type[]>() {
     @NotNull
     protected Type[] create(final ParameterizedType key) {
       return key.getActualTypeArguments();

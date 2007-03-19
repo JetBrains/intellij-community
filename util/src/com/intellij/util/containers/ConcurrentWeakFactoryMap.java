@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2006 JetBrains s.r.o.
+ * Copyright 2000-2007 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,10 @@ import java.util.Map;
 /**
  * @author peter
  */
-public abstract class ConcurrentFactoryMap<T,V> extends FactoryMap<T,V> {
+public abstract class ConcurrentWeakFactoryMap<T,V> extends FactoryMap<T,V>{
+
   protected Map<T, V> createMap() {
-    return new ConcurrentHashMap<T,V>();
+    return new ConcurrentWeakHashMap<T,V>();
   }
+
 }
