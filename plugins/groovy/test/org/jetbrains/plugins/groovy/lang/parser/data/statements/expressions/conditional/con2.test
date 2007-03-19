@@ -1,0 +1,22 @@
+a||q?b=3:
+c?f:2
+-----
+Groovy script
+  Conditional expression
+    Logical OR expression
+      PsiElement(identifier)('a')
+      PsiElement(||)('||')
+      PsiElement(identifier)('q')
+    PsiElement(?)('?')
+    Assignment expression
+      PsiElement(identifier)('b')
+      PsiElement(=)('=')
+      PsiElement(number)('3')
+    PsiElement(:)(':')
+    PsiElement(new line)('\n')
+    Conditional expression
+      PsiElement(identifier)('c')
+      PsiElement(?)('?')
+      PsiElement(identifier)('f')
+      PsiElement(:)(':')
+      PsiElement(number)('2')
