@@ -3,13 +3,14 @@ package com.intellij.refactoring;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.idea.IdeaTestUtil;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.PsiTestUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -47,6 +48,7 @@ public abstract class MultiFileTestCase extends CodeInsightTestCase {
     PsiTestUtil.addSourceContentToRoots(myModule, rootDir);
   }
 
+  @NonNls
   protected abstract String getTestRoot();
 
   protected interface PerformAction {

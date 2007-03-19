@@ -22,6 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.*;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
@@ -41,7 +42,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
                                                 PsiMethod originalConstructor,
                                                 PsiClass originalClass,
                                                 PsiClass targetClass,
-                                                String factoryName) {
+                                                @NonNls String factoryName) {
     super(project);
     myOriginalClass = originalClass;
     myConstructor = originalConstructor;
@@ -93,24 +94,28 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
       if (element.getParent() instanceof PsiNewExpression) {
         usages.add(new UsageInfo(element.getParent()));
       }
-      else {
-        if ("super".equals(element.getText()) || "this".equals(element.getText())) {
+      else if ("super".equals(element.getText()) || "this".equals(element.getText())) {
           myNonNewConstructorUsages.add(element);
-        }
+      }
+      else if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
+        myNonNewConstructorUsages.add(element);
+      }
+      else if (element instanceof PsiClass) {
+        myNonNewConstructorUsages.add(element);
       }
     }
 
-    if (myConstructor != null && myConstructor.getParameterList().getParametersCount() == 0) {
-      RefactoringUtil.visitImplicitConstructorUsages(getConstructorContainingClass(), new RefactoringUtil.ImplicitConstructorUsageVisitor() {
-        public void visitConstructor(PsiMethod constructor, PsiMethod baseConstructor) {
-          myNonNewConstructorUsages.add(constructor);
-        }
-
-        public void visitClassWithoutConstructors(PsiClass aClass) {
-          myNonNewConstructorUsages.add(aClass);
-        }
-      });
-    }
+    //if (myConstructor != null && myConstructor.getParameterList().getParametersCount() == 0) {
+    //  RefactoringUtil.visitImplicitConstructorUsages(getConstructorContainingClass(), new RefactoringUtil.ImplicitConstructorUsageVisitor() {
+    //    public void visitConstructor(PsiMethod constructor, PsiMethod baseConstructor) {
+    //      myNonNewConstructorUsages.add(constructor);
+    //    }
+    //
+    //    public void visitClassWithoutConstructors(PsiClass aClass) {
+    //      myNonNewConstructorUsages.add(aClass);
+    //    }
+    //  });
+    //}
 
     return usages.toArray(new UsageInfo[usages.size()]);
   }

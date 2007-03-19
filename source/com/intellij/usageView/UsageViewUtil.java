@@ -109,19 +109,6 @@ public class UsageViewUtil {
     }
   }
 
-  public static String capitalize(String s) {
-    if (s == null || s.length() == 0) {
-      return s;
-    }
-    char c = Character.toUpperCase(s.charAt(0));
-    if (s.length() == 1) {
-      return String.valueOf(c);
-    }
-    else {
-      return String.valueOf(c) + s.substring(1);
-    }
-  }
-
   public static String getShortName(final PsiElement psiElement) {
     LOG.assertTrue(psiElement.isValid());
     if (psiElement instanceof PsiMetaBaseOwner) {

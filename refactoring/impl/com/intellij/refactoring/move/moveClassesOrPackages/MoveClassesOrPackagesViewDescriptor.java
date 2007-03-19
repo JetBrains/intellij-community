@@ -13,6 +13,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.openapi.util.text.StringUtil;
 
 class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
   private PsiElement[] myPsiElements;
@@ -34,15 +35,17 @@ class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
     myTargetPackage = newParent;
     myNewParentPackageName = MoveClassesOrPackagesUtil.getPackageName(myTargetPackage);
     if (psiElements.length == 1) {
-      myProcessedElementsHeader = UsageViewUtil.capitalize(RefactoringBundle.message("move.single.element.elements.header", UsageViewUtil.getType(psiElements[0]), myNewParentPackageName));
+      myProcessedElementsHeader = StringUtil.capitalize(
+        RefactoringBundle.message("move.single.element.elements.header", UsageViewUtil.getType(psiElements[0]), myNewParentPackageName));
       myCodeReferencesText = RefactoringBundle.message("references.in.code.to.0.1", UsageViewUtil.getType(psiElements[0]), UsageViewUtil.getLongName(psiElements[0]));
     }
     else {
       if (psiElements[0] instanceof PsiClass) {
-        myProcessedElementsHeader = UsageViewUtil.capitalize(RefactoringBundle.message("move.classes.elements.header", myNewParentPackageName));
+        myProcessedElementsHeader = StringUtil.capitalize(RefactoringBundle.message("move.classes.elements.header", myNewParentPackageName));
       }
       else if (psiElements[0] instanceof PsiDirectory){
-        myProcessedElementsHeader = UsageViewUtil.capitalize(RefactoringBundle.message("move.packages.elements.header", myNewParentPackageName));
+        myProcessedElementsHeader =
+          StringUtil.capitalize(RefactoringBundle.message("move.packages.elements.header", myNewParentPackageName));
       }
       myCodeReferencesText = RefactoringBundle.message("references.found.in.code");
     }

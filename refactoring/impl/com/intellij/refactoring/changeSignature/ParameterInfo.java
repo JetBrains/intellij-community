@@ -26,7 +26,7 @@ public class ParameterInfo {
     this.oldParameterIndex = oldParameterIndex;
   }
 
-  public ParameterInfo(int oldParameterIndex, String name, PsiType aType) {
+  public ParameterInfo(int oldParameterIndex, @NonNls String name, PsiType aType) {
     setName(name);
     this.oldParameterIndex = oldParameterIndex;
     setType(aType);

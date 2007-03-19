@@ -8,6 +8,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.openapi.util.text.StringUtil;
 
 class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
   private PsiElement[] myElementsToMove;
@@ -26,18 +27,20 @@ class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
     mySearchInComments = isSearchInComments;
     mySearchInNonJavaFiles = searchInNonJavaFiles;
     if (elementsToMove.length == 1) {
-      myProcessedElementsHeader = UsageViewUtil.capitalize(RefactoringBundle.message("move.single.element.elements.header", UsageViewUtil.getType(elementsToMove[0]), newParent.getVirtualFile().getPresentableUrl()));
+      myProcessedElementsHeader = StringUtil.capitalize(RefactoringBundle.message("move.single.element.elements.header",
+                                                                                  UsageViewUtil.getType(elementsToMove[0]),
+                                                                                  newParent.getVirtualFile().getPresentableUrl()));
       myCodeReferencesText = RefactoringBundle.message("references.in.code.to.0.1",
                                                        UsageViewUtil.getType(elementsToMove[0]), UsageViewUtil.getLongName(elementsToMove[0]));
     }
     else {
       if (elementsToMove[0] instanceof PsiFile) {
-        myProcessedElementsHeader = UsageViewUtil.capitalize(RefactoringBundle.message("move.files.elements.header",
-                                                                                       newParent.getVirtualFile().getPresentableUrl()));
+        myProcessedElementsHeader =
+          StringUtil.capitalize(RefactoringBundle.message("move.files.elements.header", newParent.getVirtualFile().getPresentableUrl()));
       }
       else if (elementsToMove[0] instanceof PsiDirectory){
-        myProcessedElementsHeader = UsageViewUtil.capitalize(RefactoringBundle.message("move.directories.elements.header",
-                                                                                       newParent.getVirtualFile().getPresentableUrl()));
+        myProcessedElementsHeader = StringUtil
+          .capitalize(RefactoringBundle.message("move.directories.elements.header", newParent.getVirtualFile().getPresentableUrl()));
       }
       myCodeReferencesText = RefactoringBundle.message("references.found.in.code");
     }

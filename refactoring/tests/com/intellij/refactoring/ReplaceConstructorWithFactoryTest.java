@@ -5,8 +5,10 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryProcessor;
 import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
@@ -30,14 +32,14 @@ public class ReplaceConstructorWithFactoryTest extends CodeInsightTestCase {
 
   public void testConstructorTypeParameters() throws Exception { runTest("08", null); }
 
-  private void runTest(final String testIndex, String targetClassName) throws Exception {
+  private void runTest(final String testIndex, @NonNls String targetClassName) throws Exception {
     configureByFile("/refactoring/replaceConstructorWithFactory/before" + testIndex + ".java");
     perform(targetClassName);
     checkResultByFile("/refactoring/replaceConstructorWithFactory/after" + testIndex + ".java");
   }
 
 
-  private void perform(String targetClassName) throws Exception {
+  private void perform(String targetClassName) {
     int offset = myEditor.getCaretModel().getOffset();
     PsiElement element = myFile.findElementAt(offset);
     PsiMethod constructor = null;
@@ -59,13 +61,13 @@ public class ReplaceConstructorWithFactoryTest extends CodeInsightTestCase {
       }
       element = element.getParent();
     }
-    final ReplaceConstructorWithFactoryProcessor replaceConstructorWithFactoryProcessor;
     PsiClass targetClass = null;
     if (targetClassName != null) {
-      targetClass = myPsiManager.findClass(targetClassName);
+      targetClass = myPsiManager.findClass(targetClassName, GlobalSearchScope.allScope(getProject()));
       assertTrue(targetClass != null);
     }
 
+    final ReplaceConstructorWithFactoryProcessor replaceConstructorWithFactoryProcessor;
     if (constructor != null) {
       if (targetClass == null) {
         targetClass = constructor.getContainingClass();

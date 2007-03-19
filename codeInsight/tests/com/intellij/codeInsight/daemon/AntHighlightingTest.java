@@ -32,8 +32,8 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testEntity() throws Exception {
-    configureByFiles(new VirtualFile[]{getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml"),
-      getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".ent")}, null);
+    configureByFiles(null, new VirtualFile[]{getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml"),
+      getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".ent")});
     doDoTest(true, false);
   }
 
@@ -54,15 +54,13 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testProperties() throws Exception {
-    configureByFiles(new VirtualFile[]{getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml"),
-      getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".properties")}, null);
+    configureByFiles(null, new VirtualFile[]{getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml"),
+      getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".properties")});
     doDoTest(true, false);
   }
 
   public void testProperties2() throws Exception {
-    configureByFiles(
-      new VirtualFile[]{getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml"), getVirtualFile(BASE_PATH + "/" + "yguard.jar")},
-      null);
+    configureByFiles(null, new VirtualFile[]{getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml"), getVirtualFile(BASE_PATH + "/" + "yguard.jar")});
     doDoTest(true, false);
   }
 
@@ -75,8 +73,8 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testBigFile() throws Exception {
-    configureByFiles(new VirtualFile[]{getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml"),
-      getVirtualFile(BASE_PATH + "/" + "buildserver.xml"), getVirtualFile(BASE_PATH + "/" + "buildserver.properties")}, null);
+    configureByFiles(null, new VirtualFile[]{getVirtualFile(BASE_PATH + "/" + getTestName(false) + ".xml"),
+      getVirtualFile(BASE_PATH + "/" + "buildserver.xml"), getVirtualFile(BASE_PATH + "/" + "buildserver.properties")});
 
     try {
       myIgnoreInfos = true;

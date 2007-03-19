@@ -16,6 +16,7 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
+import org.jetbrains.annotations.NonNls;
 
 public class IntroduceParameterTest extends CodeInsightTestCase {
   public void testNoUsages() throws Exception {
@@ -198,7 +199,7 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
 
   private boolean perform(boolean replaceAllOccurences,
                           int replaceFieldsWithGetters,
-                          String parameterName,
+                          @NonNls String parameterName,
                           boolean searchForSuper, boolean declareFinal) {
     int startOffset = myEditor.getSelectionModel().getSelectionStart();
     int endOffset = myEditor.getSelectionModel().getSelectionEnd();

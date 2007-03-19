@@ -2,6 +2,7 @@ package com.intellij.refactoring.typeCook;
 
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
@@ -45,7 +46,7 @@ public class TypeCookDialog extends RefactoringDialog {
     myElements = elements;
     for (int i = 0; i < elements.length; i++) {
       PsiElement element = elements[i];
-      name.append(UsageViewUtil.capitalize(UsageViewUtil.getType(element)));
+      name.append(StringUtil.capitalize(UsageViewUtil.getType(element)));
       name.append(" ");
       name.append(UsageViewUtil.getDescriptiveName(element));
       if (i < elements.length - 1) {

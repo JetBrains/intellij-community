@@ -125,7 +125,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   protected void doTest(VirtualFile[] vFile, boolean checkWarnings, boolean checkInfos) throws Exception {
-    configureByFiles(vFile,null);
+    configureByFiles(null, vFile);
     doDoTest(checkWarnings, checkInfos);
   }
 

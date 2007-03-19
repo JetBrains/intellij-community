@@ -198,58 +198,7 @@ public class FindUsagesUtil {
       }
     });
 
-    addImplicitConstructorCalls(method, result, searchScope);
-  }
-
-  private static void addImplicitConstructorCalls(final PsiMethod constructor, final Processor<UsageInfo> result, SearchScope searchScope){
-    if (constructor.getParameterList().getParametersCount() > 0) return;
-    if (constructor.hasModifierProperty(PsiModifier.PRIVATE)) return;
-
-    PsiClass parentClass = constructor.getContainingClass();
-
-    final PsiManager manager = constructor.getManager();
-    PsiSearchHelper helper = manager.getSearchHelper();
-    helper.processInheritors(new PsiElementProcessor<PsiClass>() {
-      public boolean execute(PsiClass inheritor) {
-        if (inheritor instanceof PsiAnonymousClass){
-          PsiMethod constructor1 = null;
-          PsiElement parent = inheritor.getParent();
-          if (parent instanceof PsiConstructorCall) {
-            constructor1 = ((PsiConstructorCall)parent).resolveConstructor();
-          }
-
-          if (constructor1 != null && manager.areElementsEquivalent(constructor, constructor1)){
-            result.process(new UsageInfo(inheritor));
-          }
-        }
-        else{
-          PsiMethod[] constructors = inheritor.getConstructors();
-          if (constructors.length == 0){
-            result.process(new UsageInfo(inheritor)); // implicit default constructor
-          }
-          else{
-            for (PsiMethod superConstructor : constructors) {
-              PsiCodeBlock body = superConstructor.getBody();
-              if (body == null) continue;
-              PsiStatement[] statements = body.getStatements();
-              if (statements.length > 0) {
-                PsiStatement firstStatement = statements[0];
-                if (firstStatement instanceof PsiExpressionStatement) {
-                  PsiExpression expr = ((PsiExpressionStatement)firstStatement).getExpression();
-                  if (expr instanceof PsiMethodCallExpression) {
-                    PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)expr).getMethodExpression();
-                    if (methodExpr.getText().equals(PsiKeyword.SUPER) || methodExpr.getText().equals(PsiKeyword.THIS)) continue;
-                  }
-                }
-              }
-              result.process(new UsageInfo(superConstructor));
-            }
-          }
-        }
-        return true;
-      }
-
-    }, parentClass, searchScope, false);
+    //addImplicitConstructorCalls(method, result, searchScope);
   }
 
   private static void addClassesUsages(PsiPackage aPackage, final Processor<UsageInfo> results, final FindUsagesOptions options) {

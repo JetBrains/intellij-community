@@ -4,6 +4,7 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -72,7 +73,7 @@ public abstract class FindUsagesDialog extends AbstractFindUsagesDialog {
   }
 
   public String getLabelText() {
-    return UsageViewUtil.capitalize(UsageViewUtil.getType(myPsiElement)) + " " + UsageViewUtil.getDescriptiveName(myPsiElement);
+    return StringUtil.capitalize(UsageViewUtil.getType(myPsiElement)) + " " + UsageViewUtil.getDescriptiveName(myPsiElement);
   }
 
   protected final PsiElement getPsiElement() {

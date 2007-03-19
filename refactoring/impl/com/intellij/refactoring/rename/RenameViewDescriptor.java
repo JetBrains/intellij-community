@@ -41,7 +41,7 @@ class RenameViewDescriptor implements UsageViewDescriptor{
         }
       }
 
-      processedElementsHeaders.add(UsageViewUtil.capitalize(
+      processedElementsHeaders.add(StringUtil.capitalize(
         RefactoringBundle.message("0.to.be.renamed.to.1.2", UsageViewUtil.getType(element), prefix, newName)));
       codeReferences.add(UsageViewUtil.getType(element) + " " + UsageViewUtil.getLongName(element));
     }

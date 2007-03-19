@@ -957,8 +957,8 @@ public class XmlUtil {
   }
 
   public static String generateDocumentDTD(XmlDocument doc) {
-    final Map<String, List<String>> tags = new HashMap<String, List<String>>();
-    final Map<String, List<MyAttributeInfo>> attributes = new HashMap<String, List<MyAttributeInfo>>();
+    final Map<String, List<String>> tags = new LinkedHashMap<String, List<String>>();
+    final Map<String, List<MyAttributeInfo>> attributes = new LinkedHashMap<String, List<MyAttributeInfo>>();
     final XmlTag rootTag = doc.getRootTag();
     computeTag(rootTag, tags, attributes);
 

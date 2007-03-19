@@ -7,7 +7,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightMemberReference;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -85,8 +87,9 @@ public class ConstructorReferencesSearchHelper {
 
     if (!ReferencesSearch.search(aClass, searchScope, ignoreAccessScope).forEach(processor1)) return false;
 
+    final boolean constructorCanBeCalledImplicitly = constructor.getParameterList().getParametersCount() == 0;
     // search usages like "this(..)"
-    if (!processConstructorReferencesViaSuperOrThis(processor, aClass, constructor, searchScope, isStrictSignatureSearch,
+    if (!processConstructorReferencesViaSuperOrThis(processor, aClass, constructor, constructorCanBeCalledImplicitly, searchScope, isStrictSignatureSearch,
                                                     PsiKeyword.THIS)) {
       return false;
     }
@@ -94,7 +97,7 @@ public class ConstructorReferencesSearchHelper {
     // search usages like "super(..)"
     Processor<PsiClass> processor2 = new Processor<PsiClass>() {
       public boolean process(PsiClass inheritor) {
-        return processConstructorReferencesViaSuperOrThis(processor, inheritor, constructor, searchScope, isStrictSignatureSearch,
+        return processConstructorReferencesViaSuperOrThis(processor, inheritor, constructor, constructorCanBeCalledImplicitly, searchScope, isStrictSignatureSearch,
                                                           PsiKeyword.SUPER);
       }
     };
@@ -104,41 +107,55 @@ public class ConstructorReferencesSearchHelper {
 
   private boolean processConstructorReferencesViaSuperOrThis(final Processor<PsiReference> processor,
                                                              final PsiClass inheritor,
-                                                             final PsiMethod constructor,
-                                                             final SearchScope searchScope,
+                                                             final PsiMethod constructor, final boolean constructorCanBeCalledImplicitly, final SearchScope searchScope,
                                                              final boolean isStrictSignatureSearch,
                                                              final String superOrThisKeyword) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
-        PsiMethod[] methods = inheritor.getMethods();
-        for (PsiMethod method : methods) {
-          if (method.isConstructor()) {
-            PsiCodeBlock body = method.getBody();
-            if (body != null) {
-              PsiStatement[] statements = body.getStatements();
-              if (statements.length > 0) {
-                PsiStatement statement = statements[0];
-                if (statement instanceof PsiExpressionStatement) {
-                  PsiExpression expr = ((PsiExpressionStatement)statement).getExpression();
-                  if (expr instanceof PsiMethodCallExpression) {
-                    PsiReferenceExpression refExpr = ((PsiMethodCallExpression)expr).getMethodExpression();
-                    if (PsiSearchScopeUtil.isInScope(searchScope, refExpr)) {
-                      if (refExpr.getText().equals(superOrThisKeyword)) {
-                        PsiElement referencedElement = refExpr.resolve();
-                        if (referencedElement instanceof PsiMethod) {
-                          PsiMethod constructor1 = (PsiMethod)referencedElement;
-                          if (isStrictSignatureSearch) {
-                            if (myManager.areElementsEquivalent(constructor1, constructor)) {
-                              if (!processor.process(refExpr)) return false;
-                            }
-                          }
-                          else {
-                            if (myManager.areElementsEquivalent(constructor.getContainingClass(), constructor1.getContainingClass())) {
-                              if (!processor.process(refExpr)) return false;
-                            }
-                          }
-                        }
-                      }
+        return processInReadAction(inheritor, searchScope, superOrThisKeyword, isStrictSignatureSearch, constructor,
+                                   constructorCanBeCalledImplicitly, processor);
+      }
+    });
+  }
+
+  private boolean processInReadAction(final PsiClass inheritor,
+                                      final SearchScope searchScope,
+                                      final String superOrThisKeyword,
+                                      final boolean isStrictSignatureSearch,
+                                      final PsiMethod constructor,
+                                      final boolean constructorCanBeCalledImplicitly,
+                                      final Processor<PsiReference> processor) {
+    PsiMethod[] constructors = inheritor.getConstructors();
+    if (constructors.length == 0) {
+      processImplicitConstructorCall(constructorCanBeCalledImplicitly, inheritor, processor, constructor, inheritor);
+    }
+    for (PsiMethod method : constructors) {
+      PsiCodeBlock body = method.getBody();
+      if (body == null) {
+        continue;
+      }
+      PsiStatement[] statements = body.getStatements();
+      if (statements.length != 0) {
+        PsiStatement statement = statements[0];
+        if (statement instanceof PsiExpressionStatement) {
+          PsiExpression expr = ((PsiExpressionStatement)statement).getExpression();
+          if (expr instanceof PsiMethodCallExpression) {
+            PsiReferenceExpression refExpr = ((PsiMethodCallExpression)expr).getMethodExpression();
+            if (PsiSearchScopeUtil.isInScope(searchScope, refExpr)) {
+              if (refExpr.getText().equals(superOrThisKeyword)) {
+                PsiElement referencedElement = refExpr.resolve();
+                if (referencedElement instanceof PsiMethod) {
+                  PsiMethod constructor1 = (PsiMethod)referencedElement;
+                  if (isStrictSignatureSearch) {
+                    if (myManager.areElementsEquivalent(constructor1, constructor)) {
+                      if (!processor.process(refExpr)) return false;
+                      continue;
+                    }
+                  }
+                  else {
+                    if (myManager.areElementsEquivalent(constructor.getContainingClass(), constructor1.getContainingClass())) {
+                      if (!processor.process(refExpr)) return false;
+                      continue;
                     }
                   }
                 }
@@ -146,8 +163,28 @@ public class ConstructorReferencesSearchHelper {
             }
           }
         }
-        return true;
       }
-    });
+      processImplicitConstructorCall(constructorCanBeCalledImplicitly, method, processor, constructor,inheritor);
+    }
+
+    return true;
+  }
+
+  private void processImplicitConstructorCall(final boolean constructorCanBeCalledImplicitly, final PsiMember usage, final Processor<PsiReference> processor,
+                                              final PsiMethod constructor,
+                                              final PsiClass containingClass) {
+    if (containingClass instanceof PsiAnonymousClass) return;
+    PsiClass superClass = containingClass.getSuperClass();
+    if (constructorCanBeCalledImplicitly && myManager.areElementsEquivalent(constructor.getContainingClass(), superClass)) {
+      processor.process(new LightMemberReference(myManager, usage, PsiSubstitutor.EMPTY) {
+        public PsiElement getElement() {
+          return usage;
+        }
+
+        public TextRange getRangeInElement() {
+          return usage.getTextRange();
+        }
+      });
+    }
   }
 }

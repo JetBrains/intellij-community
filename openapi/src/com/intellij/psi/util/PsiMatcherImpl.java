@@ -20,9 +20,11 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class PsiMatcherImpl implements PsiMatcher {
-  PsiElement myElement;
+  private PsiElement myElement;
 
   public PsiMatcherImpl(PsiElement element) {
     myElement = element;
@@ -46,9 +48,8 @@ public class PsiMatcherImpl implements PsiMatcher {
   }
 
   public PsiMatcher ancestor(PsiMatcherExpression e) {
-    Boolean res;
     while (myElement != null) {
-      res = e == null ? Boolean.TRUE : e.match(myElement);
+      Boolean res = e == null ? Boolean.TRUE : e.match(myElement);
       if (res == Boolean.TRUE) break;
       if (res == null) return NullPsiMatcherImpl.INSTANCE;
       myElement = myElement.getParent();
@@ -97,8 +98,15 @@ public class PsiMatcherImpl implements PsiMatcher {
     return new PsiMatcherExpression() {
       public Boolean match(PsiElement element) {
         if (element.getTextLength() != text.length()) return Boolean.FALSE;
-        if (text.equals(element.getText())) return Boolean.TRUE;
-        return Boolean.FALSE;
+        return text.equals(element.getText());
+      }
+    };
+  }
+  public static PsiMatcherExpression hasText(@NotNull final String... texts) {
+    return new PsiMatcherExpression() {
+      public Boolean match(PsiElement element) {
+        String text = element.getText();
+        return ArrayUtil.find(texts, text) != -1;
       }
     };
   }

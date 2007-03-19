@@ -14,6 +14,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.openapi.util.text.StringUtil;
 
 public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescriptor {
 
@@ -23,7 +24,7 @@ public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescripto
   public MakeMethodOrClassStaticViewDescriptor(PsiMember member
   ) {
     myMember = member;
-    String who = UsageViewUtil.capitalize(UsageViewUtil.getType(myMember));
+    String who = StringUtil.capitalize(UsageViewUtil.getType(myMember));
     myProcessedElementsHeader = RefactoringBundle.message("make.static.elements.header", who);
   }
 

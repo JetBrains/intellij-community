@@ -41,6 +41,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -127,7 +128,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
       List<PsiNamedElement> unusedDcls = myRefCountHolder.getUnusedDcls();
       for (PsiNamedElement unusedDcl : unusedDcls) {
-        String dclType = UsageViewUtil.capitalize(UsageViewUtil.getType(unusedDcl));
+        String dclType = StringUtil.capitalize(UsageViewUtil.getType(unusedDcl));
         if (dclType == null || dclType.length() == 0) dclType = LangBundle.message("java.terms.symbol");
         String message = MessageFormat.format(JavaErrorMessages.message("symbol.is.never.used"), dclType, unusedDcl.getName());
 

@@ -23,12 +23,12 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduceParameter.ExternalUsageInfo;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
-import com.intellij.refactoring.util.usageInfo.DefaultConstructorUsageCollector;
 import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -159,19 +159,27 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         if (RefactoringUtil.isMethodUsage(element)) {
           result.add(new MethodCallUsageInfo(element, isToModifyArgs, isToCatchExceptions));
         }
-        else if (ref.getElement() instanceof PsiDocTagValue) {
+        else if (element instanceof PsiDocTagValue) {
           result.add(new UsageInfo(ref.getElement()));
+        }
+        else if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
+          DefaultConstructorImplicitUsageInfo implicitUsageInfo = new DefaultConstructorImplicitUsageInfo((PsiMethod)element, method);
+          result.add(implicitUsageInfo);
+        }
+        else if(element instanceof PsiClass) {
+          result.add(new NoConstructorClassUsageInfo((PsiClass)element));
         }
         else {
           result.add(new MoveRenameUsageInfo(element, ref, method));
         }
       }
 
-      if (method.isConstructor() && parameterCount == 0) {
-          RefactoringUtil.visitImplicitConstructorUsages(method.getContainingClass(),
-                                                         new DefaultConstructorUsageCollector(result));
-      }
-    } else if (myChangeInfo.isParameterTypesChanged) {
+      //if (method.isConstructor() && parameterCount == 0) {
+      //    RefactoringUtil.visitImplicitConstructorUsages(method.getContainingClass(),
+      //                                                   new DefaultConstructorUsageCollector(result));
+      //}
+    }
+    else if (myChangeInfo.isParameterTypesChanged) {
       PsiReference[] refs = helper.findReferencesIncludingOverriding(method, projectScope, true);
       for (PsiReference reference : refs) {
         if (reference.getElement() instanceof PsiDocTagValue) { //types are mentioned in e.g @link, see SCR 40895
@@ -462,7 +470,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       List<UsageInfo> postponedUsages = new ArrayList<UsageInfo>();
 
       for (UsageInfo usage : usages) {
-        if (usage.getElement() == null) continue;
+        PsiElement element = usage.getElement();
+        if (element == null) continue;
 
         if (usage instanceof DefaultConstructorImplicitUsageInfo) {
           final DefaultConstructorImplicitUsageInfo defConstructorUsage = (DefaultConstructorImplicitUsageInfo)usage;
@@ -471,7 +480,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         else if (usage instanceof NoConstructorClassUsageInfo) {
           addDefaultConstructor(((NoConstructorClassUsageInfo)usage).getPsiClass());
         }
-        else if (usage.getElement() instanceof PsiJavaCodeReferenceElement) {
+        else if (element instanceof PsiJavaCodeReferenceElement) {
           if (usage instanceof MethodCallUsageInfo) {
             final MethodCallUsageInfo methodCallInfo = (MethodCallUsageInfo)usage;
             processMethodUsage(methodCallInfo.getElement(), myChangeInfo, methodCallInfo.isToChangeArguments(),
@@ -480,13 +489,13 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
           else if (usage instanceof MyParameterUsageInfo) {
             String newName = ((MyParameterUsageInfo)usage).newParameterName;
             String oldName = ((MyParameterUsageInfo)usage).oldParameterName;
-            processParameterUsage((PsiReferenceExpression)usage.getElement(), oldName, newName);
+            processParameterUsage((PsiReferenceExpression)element, oldName, newName);
           } else {
             postponedUsages.add(usage);
           }
         }
-        else if (usage.getElement() instanceof PsiEnumConstant) {
-          fixActualArgumentsList(((PsiEnumConstant)usage.getElement()).getArgumentList(), myChangeInfo, true);
+        else if (element instanceof PsiEnumConstant) {
+          fixActualArgumentsList(((PsiEnumConstant)element).getArgumentList(), myChangeInfo, true);
         }
         else if (!(usage instanceof OverriderUsageInfo)) {
           postponedUsages.add(usage);
@@ -524,6 +533,18 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  private PsiMethod getDefaultConstructorInSuperClass(final PsiMethod psiMethod) {
+    PsiClass aClass = psiMethod.getContainingClass();
+    if (aClass == null) return null;
+    PsiClass superClass = aClass.getSuperClass();
+    if (superClass == null) return null;
+    PsiMethod[] constructors = superClass.getConstructors();
+    for (PsiMethod constructor : constructors) {
+      if (constructor.getParameterList().getParametersCount() == 0) return constructor;
+    }
+    return null;
   }
 
   private void generateDelegate() throws IncorrectOperationException {

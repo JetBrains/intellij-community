@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewUtil;
@@ -66,7 +67,7 @@ public class ShowRecentFindUsagesAction extends AnAction {
           if (psiElement == null) return UsageViewBundle.message("node.invalid");
           String scopeString = data.myOptions.searchScope == null ? null : data.myOptions.searchScope.getDisplayName();
           return FindBundle.message("recent.find.usages.action.description",
-                                    UsageViewUtil.capitalize(UsageViewUtil.getType(psiElement)),
+                                    StringUtil.capitalize(UsageViewUtil.getType(psiElement)),
                                     UsageViewUtil.getDescriptiveName(psiElement),
                                     scopeString == null ? psiElement.getProject().getAllScope().getDisplayName() : scopeString);
         }

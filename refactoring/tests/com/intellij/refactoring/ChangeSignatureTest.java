@@ -8,6 +8,7 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
@@ -202,12 +203,12 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
     doTest(newVisibility, newName, newReturnType, new SimpleParameterGen(parameterInfo), new SimpleExceptionsGen(exceptionInfo), generateDelegate);
   }
 
-  private void doTest(String newVisibility, String newName, String newReturnType, GenParams gen, final boolean generateDelegate) throws Exception {
+  private void doTest(String newVisibility, String newName, @NonNls String newReturnType, GenParams gen, final boolean generateDelegate) throws Exception {
     doTest(newVisibility, newName, newReturnType, gen, new SimpleExceptionsGen(), generateDelegate);
   }
 
   private void doTest(String newVisibility, String newName, String newReturnType, GenParams genParams, GenExceptions genExceptions, final boolean generateDelegate) throws Exception {
-    final String filePath = "/refactoring/changeSignature/" + getTestName(false) + ".java";
+    @NonNls final String filePath = "/refactoring/changeSignature/" + getTestName(false) + ".java";
     configureByFile(filePath);
     final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);

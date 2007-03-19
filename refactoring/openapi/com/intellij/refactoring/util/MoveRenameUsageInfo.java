@@ -25,9 +25,9 @@ import org.jetbrains.annotations.Nullable;
 
 public class MoveRenameUsageInfo extends UsageInfo{
   private SmartPsiElementPointer myReferencedElementPointer = null;
-  private final PsiElement myReferencedElement;
+  private PsiElement myReferencedElement;
 
-  private final PsiReference myReference;
+  private PsiReference myReference;
   private RangeMarker myReferenceRangeMarker = null;
 
   public MoveRenameUsageInfo(PsiReference reference, PsiElement referencedElement){
@@ -36,25 +36,16 @@ public class MoveRenameUsageInfo extends UsageInfo{
 
   public MoveRenameUsageInfo(PsiElement element, PsiReference reference, PsiElement referencedElement){
     super(element);
-    final Project project = element.getProject();
-    myReferencedElement = referencedElement;
-    if (referencedElement != null) {
-      myReferencedElementPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(referencedElement);
-    }
-    if (reference == null) reference = element.getReference();
-    if (reference == null) reference = element.getContainingFile().findReferenceAt(element.getTextRange().getStartOffset());
-    myReference = reference;
-    if (reference != null) {
-      Document document = PsiDocumentManager.getInstance(project).getDocument(element.getContainingFile());
-      int elementStart = element.getTextRange().getStartOffset();
-      myReferenceRangeMarker = document.createRangeMarker(elementStart + reference.getRangeInElement().getStartOffset(),
-                                                          elementStart + reference.getRangeInElement().getEndOffset());
-    }
+    init(element, reference, referencedElement);
 
   }
 
   public MoveRenameUsageInfo(PsiElement element, PsiReference reference, int startOffset, int endOffset, PsiElement referencedElement, boolean nonCodeUsage){
     super(element, startOffset, endOffset, nonCodeUsage);
+    init(element, reference, referencedElement);
+  }
+
+  private void init(final PsiElement element, PsiReference reference, final PsiElement referencedElement) {
     final Project project = element.getProject();
     myReferencedElement = referencedElement;
     if (referencedElement != null) {

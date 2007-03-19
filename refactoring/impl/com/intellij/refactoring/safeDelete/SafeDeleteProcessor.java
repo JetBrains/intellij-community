@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -230,8 +231,11 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    if (conflicts.size() > 0) {
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!conflicts.isEmpty()) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw new RuntimeException(StringUtil.join(conflicts, "\n"));
+      }
+      else {
         UnsafeUsagesDialog dialog = new UnsafeUsagesDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
         dialog.show();
         if (!dialog.isOK()) {

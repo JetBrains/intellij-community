@@ -46,11 +46,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     else if (ThrowSearchUtil.isSearchable(element)) {
       return HelpID.FIND_THROW_USAGES;
     }
-    else if (element instanceof PsiElement) {
-      return HelpID.FIND_OTHER_USAGES;
-    }
-
-    return null;
+    else return HelpID.FIND_OTHER_USAGES;
   }
 
   @NotNull

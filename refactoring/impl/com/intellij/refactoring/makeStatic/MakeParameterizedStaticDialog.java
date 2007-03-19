@@ -12,6 +12,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -48,7 +49,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
     myNameSuggestions = nameSuggestions;
 
     String type = UsageViewUtil.getType(myMember);
-    setTitle(RefactoringBundle.message("make.0.static", UsageViewUtil.capitalize(type)));
+    setTitle(RefactoringBundle.message("make.0.static", StringUtil.capitalize(type)));
     myAnyNonFieldMembersUsed = buildVariableData(internalUsages);
     init();
   }

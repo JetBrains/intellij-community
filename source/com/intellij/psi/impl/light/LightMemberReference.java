@@ -72,7 +72,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
   }
 
   public String getText() {
-    return myRefMember.getName() + myParameterList.getText();
+    return myRefMember.getName() + getParameterList().getText();
   }
 
   public PsiReference getReference() {
@@ -141,13 +141,15 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
   }
 
   public boolean isValid() {
-    if (myParameterList != null && !myParameterList.isValid()) return false;
+    PsiReferenceParameterList parameterList = getParameterList();
+    if (parameterList != null && !parameterList.isValid()) return false;
     return myRefMember == null || myRefMember.isValid();
   }
 
   @NotNull
   public PsiType[] getTypeParameters() {
-    return myParameterList == null ? PsiType.EMPTY_ARRAY : myParameterList.getTypeArguments();
+    PsiReferenceParameterList parameterList = getParameterList();
+    return parameterList == null ? PsiType.EMPTY_ARRAY : parameterList.getTypeArguments();
   }
 
   public PsiElement getQualifier() {

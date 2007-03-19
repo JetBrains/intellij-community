@@ -23,13 +23,12 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
+import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.LocalVariableOccurenceManager;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
-import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
-import com.intellij.refactoring.util.usageInfo.DefaultConstructorUsageCollector;
-import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -121,19 +120,26 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       result.add(new UsageInfo(overridingMethod));
     }
 
-    if(myMethodToSearchFor.isConstructor()) {
-      final PsiParameter[] parameters = myMethodToSearchFor.getParameterList().getParameters();
-      if(parameters.length == 0) {
-        addImplicitDefaultConstructorUsages(result, myMethodToSearchFor.getContainingClass());
-      }
-    }
+    //if(myMethodToSearchFor.isConstructor()) {
+    //  final PsiParameter[] parameters = myMethodToSearchFor.getParameterList().getParameters();
+    //  if(parameters.length == 0) {
+    //    addImplicitDefaultConstructorUsages(result, myMethodToSearchFor.getContainingClass());
+    //  }
+    //}
 
     PsiReference[] refs = helper.findReferencesIncludingOverriding(myMethodToSearchFor, GlobalSearchScope.projectScope(myProject), true);
 
     int i;
     for (i = 0; i < refs.length; i++) {
       PsiElement ref = refs[i].getElement();
-      if (!insideMethodToBeReplaced(ref)) {
+      if (ref instanceof PsiMethod && ((PsiMethod)ref).isConstructor()) {
+        DefaultConstructorImplicitUsageInfo implicitUsageInfo = new DefaultConstructorImplicitUsageInfo((PsiMethod)ref, myMethodToSearchFor);
+        result.add(implicitUsageInfo);
+      }
+      else if (ref instanceof PsiClass) {
+        result.add(new NoConstructorClassUsageInfo((PsiClass)ref));
+      }
+      else if (!insideMethodToBeReplaced(ref)) {
         result.add(new ExternalUsageInfo(ref));
       }
       else {
@@ -163,13 +169,6 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
     final UsageInfo[] usageInfos = result.toArray(new UsageInfo[0]);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
-  }
-
-  private static void addImplicitDefaultConstructorUsages(final ArrayList<UsageInfo> result, PsiClass aClass) {
-    final RefactoringUtil.ImplicitConstructorUsageVisitor implicitConstructorUsageVistor
-            = new DefaultConstructorUsageCollector(result);
-
-    RefactoringUtil.visitImplicitConstructorUsages(aClass, implicitConstructorUsageVistor);
   }
 
   private static class ReferencedElementsCollector extends PsiRecursiveElementVisitor {
@@ -328,13 +327,16 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
           else if (usage instanceof NoConstructorClassUsageInfo) {
             addDefaultConstructor(((NoConstructorClassUsageInfo)usage).getPsiClass());
           }
-          else if (usage.getElement() instanceof PsiMethod) {
-            if (!myManager.areElementsEquivalent(usage.getElement(), myMethodToReplaceIn)) {
-              changeMethodSignatureAndResolveFieldConflicts((PsiMethod)usage.getElement(), initializerType);
-            }
-          }
           else {
-            changeExternalUsage(usage);
+            PsiElement element = usage.getElement();
+            if (element instanceof PsiMethod) {
+              if (!myManager.areElementsEquivalent(element, myMethodToReplaceIn)) {
+                changeMethodSignatureAndResolveFieldConflicts((PsiMethod)element, initializerType);
+              }
+            }
+            else {
+              changeExternalUsage(usage);
+            }
           }
         }
       }

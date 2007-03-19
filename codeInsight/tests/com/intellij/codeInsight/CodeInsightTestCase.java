@@ -67,7 +67,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   public static final String SELECTION_START_MARKER = "<selection>";
   public static final String SELECTION_END_MARKER = "</selection>";
 
-  protected void configureByFile(String filePath) throws Exception {
+  protected void configureByFile(@NonNls String filePath) throws Exception {
     configureByFile(filePath, null);
   }
   protected void configureByFiles(String projectRoot,String... files) throws Exception {
@@ -82,7 +82,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
     File projectFile = projectRoot == null ? null : new File(getTestDataPath() + projectRoot);
 
-    configureByFiles(vFiles, projectFile);
+    configureByFiles(projectFile, vFiles);
   }
   protected void configureByFile(String filePath, String projectRoot) throws Exception {
     String fullPath = getTestDataPath() + filePath;
@@ -125,7 +125,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
-  protected VirtualFile configureByFiles(VirtualFile[] vFiles, final File projectRoot) throws IOException {
+  protected VirtualFile configureByFiles(final File projectRoot, VirtualFile[] vFiles) throws IOException {
     myFile = null;
     myEditor = null;
 
@@ -288,7 +288,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   protected VirtualFile configureByFile(final VirtualFile vFile, final File projectRoot) throws IOException {
-    return configureByFiles(new VirtualFile[] {vFile},projectRoot);
+    return configureByFiles(projectRoot, new VirtualFile[] {vFile});
   }
 
   protected boolean clearModelBeforeConfiguring() {
@@ -354,7 +354,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     myEditor.getSelectionModel().setSelection(selectionStart, selectionEnd);
   }
 
-  protected void checkResultByFile(String filePath) throws Exception {
+  protected void checkResultByFile(@NonNls String filePath) throws Exception {
     checkResultByFile(filePath, false);
   }
 

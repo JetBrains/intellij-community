@@ -1446,14 +1446,14 @@ public class HighlightUtil {
       return createMemberReferencedError(aClass.getName()+".this", range);
     }
     for (PsiMethod constructor : constructors) {
-      if (!isSuperCalled(constructor)) {
+      if (!isSuperCalledInConstructor(constructor)) {
         return createMemberReferencedError(aClass.getName()+".this", getMethodDeclarationTextRange(constructor));
       }
     }
     return null;
   }
 
-  private static boolean isSuperCalled(final PsiMethod constructor) {
+  private static boolean isSuperCalledInConstructor(final PsiMethod constructor) {
     final PsiCodeBlock body = constructor.getBody();
     if (body == null) return false;
     final PsiStatement[] statements = body.getStatements();

@@ -10,6 +10,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.openapi.util.text.StringUtil;
 
 class ChangeSignatureViewDescriptor implements UsageViewDescriptor {
 
@@ -18,7 +19,7 @@ class ChangeSignatureViewDescriptor implements UsageViewDescriptor {
 
   public ChangeSignatureViewDescriptor(PsiMethod method) {
     myMethod = method;
-    myProcessedElementsHeader = UsageViewUtil.capitalize(RefactoringBundle.message("0.to.change.signature", UsageViewUtil.getType(method)));
+    myProcessedElementsHeader = StringUtil.capitalize(RefactoringBundle.message("0.to.change.signature", UsageViewUtil.getType(method)));
   }
 
   public PsiElement[] getElements() {

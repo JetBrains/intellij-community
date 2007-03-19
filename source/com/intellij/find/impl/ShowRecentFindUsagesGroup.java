@@ -5,6 +5,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.impl.UsageViewImpl;
@@ -43,7 +44,7 @@ public class ShowRecentFindUsagesGroup extends ActionGroup {
       PsiElement psiElement = data.myElements[0].getElement();
       if (psiElement == null) continue;
       String scopeString = data.myOptions.searchScope == null ? null : data.myOptions.searchScope.getDisplayName();
-      String text = FindBundle.message("recent.find.usages.action.popup", UsageViewUtil.capitalize(UsageViewUtil.getType(psiElement)),
+      String text = FindBundle.message("recent.find.usages.action.popup", StringUtil.capitalize(UsageViewUtil.getType(psiElement)),
                                        UsageViewUtil.getDescriptiveName(psiElement),
                                        scopeString == null ? psiElement.getProject().getAllScope().getDisplayName() : scopeString);
       AnAction action = new AnAction(text, description, psiElement.getIcon(0)) {

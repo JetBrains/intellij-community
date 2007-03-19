@@ -11,6 +11,7 @@ package com.intellij.refactoring.makeStatic;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -92,7 +93,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   protected List<String> getConflictDescriptions(UsageInfo[] usages) {
     ArrayList<String> conflicts = new ArrayList<String>();
     HashSet<PsiElement> processed = new HashSet<PsiElement>();
-    String typeString = UsageViewUtil.capitalize(UsageViewUtil.getType(myMember));
+    String typeString = StringUtil.capitalize(UsageViewUtil.getType(myMember));
     for (UsageInfo usageInfo : usages) {
       if (usageInfo instanceof InternalUsageInfo && !(usageInfo instanceof SelfUsageInfo)) {
         PsiElement referencedElement = ((InternalUsageInfo)usageInfo).getReferencedElement();
