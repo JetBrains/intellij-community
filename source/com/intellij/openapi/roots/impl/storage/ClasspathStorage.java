@@ -7,12 +7,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectImport.eclipse.config.EclipseClasspathStorage;
 import com.intellij.projectImport.eclipse.util.PathUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
@@ -150,6 +152,13 @@ abstract public class ClasspathStorage implements StateStorage {
         module.setOption(CLASSPATH_DIR_OPTION, relPath);
       }
     }
+  }
+
+  public static boolean checkCompatibility(final ModifiableRootModel model, final String storageID) {
+    if (EclipseClasspathStorage.ID.equals(storageID) && !EclipseClasspathStorage.checkCompatibility(model)) {
+      return false;
+    }
+    return true;
   }
 
   protected static String getModuleDir(final Module module) {

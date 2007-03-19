@@ -109,10 +109,14 @@ public class ClasspathEditor extends ModuleElementsEditor {
 
     final Object[] items = formatIdToDescr.values().toArray();
     cbClasspathFormat = new JComboBox(items);
-    cbClasspathFormat.setSelectedItem(formatIdToDescr.get(getModuleClasspathFormat()));
+    updateClasspathFormat();
     formatPanel.add(cbClasspathFormat,
                     new GridBagConstraints(1,0,1,1,1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(6, 6, 6, 0), 0, 0));
     return formatPanel;
+  }
+
+  private void updateClasspathFormat() {
+    cbClasspathFormat.setSelectedItem(formatIdToDescr.get(getModuleClasspathFormat()));
   }
 
   private boolean isClasspathFormatModified() {
@@ -127,7 +131,6 @@ public class ClasspathEditor extends ModuleElementsEditor {
       }
     }
     throw new IllegalStateException(selected);
-
   }
 
   @NotNull
@@ -137,7 +140,13 @@ public class ClasspathEditor extends ModuleElementsEditor {
 
   private void setModuleClasspathFormat() {
     if (isClasspathFormatModified()) {
-      ClasspathStorage.setStorageType(myModel.getModule(), getSelectedClasspathFormat());
+      final String storageID = getSelectedClasspathFormat();
+      if (ClasspathStorage.checkCompatibility(myModel, storageID)) {
+        ClasspathStorage.setStorageType(myModel.getModule(), storageID);
+      }
+      else {
+        updateClasspathFormat();
+      }
     }
   }
 
