@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NonNls;
@@ -102,7 +103,11 @@ public class CommittedChangesViewManager implements ProjectComponent {
 
   private class MyVcsListener implements VcsListener {
     public void directoryMappingChanged() {
-      updateChangesContent();
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          updateChangesContent();
+        }
+      });
     }
   }
 }
