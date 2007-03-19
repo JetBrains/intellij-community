@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class ComparableImplementedButEqualsNotOverriddenInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "comparable.implemented.but.equals.not.overridden.display.name");
@@ -58,6 +59,9 @@ public class ComparableImplementedButEqualsNotOverriddenInspection
             final PsiClass comparableClass = manager.findClass(
                     "java.lang.Comparable", aClass.getResolveScope());
             if (comparableClass == null) {
+                return;
+            }
+            if (!aClass.isInheritor(comparableClass, true)) {
                 return;
             }
             final PsiMethod compareToMethod = comparableClass.getMethods()[0];
