@@ -101,10 +101,13 @@ public class ConstantMathCallInspection extends BaseInspection {
             final String methodName = reference.getReferenceName();
             final PsiExpression arg = args[0];
             final Double argValue =
-                    (Double) ConstantExpressionUtil
-                            .computeCastTo(arg, PsiType.DOUBLE);
+                    (Double) ConstantExpressionUtil.computeCastTo(arg,
+                            PsiType.DOUBLE);
             final String newExpression =
                     createValueString(methodName, argValue.doubleValue());
+            if (newExpression == null) {
+                return;
+            }
             replaceExpressionAndShorten(call, newExpression);
         }
     }

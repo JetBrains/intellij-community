@@ -37,7 +37,9 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
     private static final Logger LOG =
             Logger.getInstance("#com.siyeh.ig.InspectionGadgetsFix");
 
-    //to appear in "Apply Fix" statement when multiple Quick Fixes exist
+    /**
+     * To appear in "Apply Fix" statement when multiple Quick Fixes exist
+     */
     public String getFamilyName() {
         return "";
     }
@@ -69,8 +71,9 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         element.delete();
     }
 
-    protected static void replaceExpression(PsiExpression expression,
-                                            @NonNls String newExpressionText)
+    protected static void replaceExpression(
+            @NotNull PsiExpression expression,
+            @NotNull @NonNls String newExpressionText)
             throws IncorrectOperationException{
         final PsiManager psiManager = expression.getManager();
         final PsiElementFactory factory = psiManager.getElementFactory();
@@ -82,33 +85,36 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         styleManager.reformat(replacementExpression);
     }
 
-    protected static void replaceExpressionAndShorten(PsiExpression expression,
-                                                      String newExpression)
+    protected static void replaceExpressionAndShorten(
+            @NotNull PsiExpression expression,
+            @NotNull @NonNls String newExpressionText)
             throws IncorrectOperationException{
         final PsiManager psiManager = expression.getManager();
         final PsiElementFactory factory = psiManager.getElementFactory();
-        final PsiExpression newExp =
-                factory.createExpressionFromText(newExpression, expression);
-        final PsiElement replacementExp = expression.replace(newExp);
+        final PsiExpression newExpression =
+                factory.createExpressionFromText(newExpressionText, expression);
+        final PsiElement replacementExp = expression.replace(newExpression);
         final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
         styleManager.shortenClassReferences(replacementExp);
         styleManager.reformat(replacementExp);
     }
 
-    protected static void replaceStatement(PsiStatement statement,
-                                           String newStatement)
+    protected static void replaceStatement(
+            @NotNull PsiStatement statement,
+            @NotNull @NonNls String newStatementText)
             throws IncorrectOperationException{
         final PsiManager psiManager = statement.getManager();
         final PsiElementFactory factory = psiManager.getElementFactory();
-        final PsiStatement newExp =
-                factory.createStatementFromText(newStatement, statement);
-        final PsiElement replacementExp = statement.replace(newExp);
+        final PsiStatement newStatement =
+                factory.createStatementFromText(newStatementText, statement);
+        final PsiElement replacementExp = statement.replace(newStatement);
         final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
         styleManager.reformat(replacementExp);
     }
 
     protected static void replaceStatementAndShortenClassNames(
-            PsiStatement statement, String newStatementText)
+            @NotNull PsiStatement statement,
+            @NotNull @NonNls String newStatementText)
             throws IncorrectOperationException{
         final PsiManager psiManager = statement.getManager();
         PsiStatement newStatement;
@@ -151,7 +157,8 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
                 newTextRange.getEndOffset());
         } else {
             final PsiElementFactory factory = psiManager.getElementFactory();
-            newStatement = factory.createStatementFromText(newStatementText, statement);
+            newStatement = factory.createStatementFromText(newStatementText,
+                    statement);
             newStatement = (PsiStatement) statement.replace(newStatement);
             styleManager.shortenClassReferences(newStatement);
             styleManager.reformat(newStatement);

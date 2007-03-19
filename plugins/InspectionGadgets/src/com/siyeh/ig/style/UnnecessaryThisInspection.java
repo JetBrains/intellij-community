@@ -57,6 +57,9 @@ public class UnnecessaryThisInspection extends BaseInspection {
                     (PsiReferenceExpression)thisToken.getParent();
             assert thisExpression != null;
             final String newExpression = thisExpression.getReferenceName();
+            if (newExpression == null) {
+                return;
+            }
             replaceExpression(thisExpression, newExpression);
         }
     }

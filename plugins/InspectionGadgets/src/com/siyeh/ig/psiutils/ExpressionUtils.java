@@ -112,7 +112,7 @@ public class ExpressionUtils {
     }
 
     public static boolean isOffsetArrayAccess(PsiExpression expression,
-                                               PsiLocalVariable variable) {
+                                               PsiVariable variable) {
         final PsiExpression strippedExpression =
                 ParenthesesUtils.stripParentheses(expression);
         if (!(strippedExpression instanceof PsiArrayAccessExpression)) {
@@ -128,7 +128,7 @@ public class ExpressionUtils {
     }
 
     private static boolean expressionIsOffsetVariableLookup(
-            PsiExpression expression, PsiLocalVariable variable) {
+            PsiExpression expression, PsiVariable variable) {
         final PsiExpression strippedExpression =
                 ParenthesesUtils.stripParentheses(expression);
         if (VariableAccessUtils.evaluatesToVariable(strippedExpression,

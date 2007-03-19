@@ -143,6 +143,9 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
                     (PsiMethodCallExpression) descriptor.getPsiElement();
             final String newExpression =
                     calculateReplacementExpression(expression);
+            if (newExpression == null) {
+                return;
+            }
             replaceExpression(expression, newExpression);
         }
     }

@@ -193,9 +193,12 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
             if(element instanceof PsiBinaryExpression){
                 final PsiBinaryExpression expression =
                         (PsiBinaryExpression) element;
-                final String replacementString =
+                final String newExpression =
                         calculateSimplifiedBinaryExpression(expression);
-                replaceExpression(expression, replacementString);
+                if (newExpression == null) {
+                    return;
+                }
+                replaceExpression(expression, newExpression);
             } else{
                 final PsiPrefixExpression expression =
                         (PsiPrefixExpression) element;

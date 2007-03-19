@@ -29,7 +29,16 @@ public class ManualArrayToCollectionCopy {
     ArrayList<Integer> boom(int[] ints) {
         final ArrayList<Integer> list = new ArrayList<Integer>(ints.length);
         for (int i = 0; i < ints.length; ++i) {
+            // no inspection/ quick fix here because it is an array of primitives
             list.add(ints[i]);
+        }
+        return list;
+    }
+
+    List<String> shouldWorkForForeachToo(String[] strings) {
+        List<String> list = new ArrayList();
+        for (String string : strings) {
+            list.add(string);
         }
         return list;
     }

@@ -96,6 +96,9 @@ public class UnnecessarilyQualifiedStaticUsageInspection
                 final PsiReferenceExpression expression =
                         (PsiReferenceExpression) element;
                 final String newExpression = expression.getReferenceName();
+                if (newExpression == null) {
+                    return;
+                }
                 replaceExpression(expression, newExpression);
             } else {
                 final PsiManager manager = element.getManager();
