@@ -13,16 +13,18 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.changes.ui.ChangesListView;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ChangesViewManager;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 
-import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractMissingFilesAction extends AnAction {
@@ -39,11 +41,15 @@ public abstract class AbstractMissingFilesAction extends AnAction {
     final List<FilePath> files = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
     if (files == null) return;
 
+    final List<VcsException> allExceptions = new ArrayList<VcsException>();
     ChangesUtil.processFilePathsByVcs(project, files, new ChangesUtil.PerVcsProcessor<FilePath>() {
       public void process(final AbstractVcs vcs, final List<FilePath> items) {
         final CheckinEnvironment environment = vcs.getCheckinEnvironment();
         if (environment != null) {
-          processFiles(environment, files);
+          final List<VcsException> exceptions = processFiles(environment, files);
+          if (exceptions != null) {
+            allExceptions.addAll(exceptions);
+          }
         }
       }
     });
@@ -52,7 +58,10 @@ public abstract class AbstractMissingFilesAction extends AnAction {
       VcsDirtyScopeManager.getInstance(project).fileDirty(file);
     }
     ChangesViewManager.getInstance(project).scheduleRefresh();
+    if (allExceptions.size() > 0) {
+      AbstractVcsHelper.getInstance(project).showErrors(allExceptions, "VCS Errors");
+    }
   }
 
-  protected abstract void processFiles(final CheckinEnvironment environment, final List<FilePath> files);
+  protected abstract List<VcsException> processFiles(final CheckinEnvironment environment, final List<FilePath> files);
 }
