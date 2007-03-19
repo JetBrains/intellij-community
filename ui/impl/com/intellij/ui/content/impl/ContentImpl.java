@@ -204,4 +204,8 @@ public class ContentImpl implements Content {
   public String getPlace() {
     return myPlace;
   }
+
+  public String toString() {
+    return "Content name=" + myDisplayName;
+  }
 }

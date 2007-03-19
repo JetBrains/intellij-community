@@ -70,10 +70,6 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
     });
   }
 
-  public boolean isUpdateEnabled() {
-    return getRootPane() != null;
-  }
-
   protected ActionPopupMenu createPopupMenu() {
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(DebuggerActions.WATCH_PANEL_POPUP);
     ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(DebuggerActions.WATCH_PANEL_POPUP, group);

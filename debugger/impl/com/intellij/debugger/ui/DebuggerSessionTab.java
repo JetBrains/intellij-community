@@ -147,11 +147,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
 
     myWatchPanel = new MainWatchPanel(getProject(), getContextManager());
 
-    myFramePanel = new FramePanel(getProject(), getContextManager()) {
-      protected boolean isUpdateEnabled() {
-        return getRootPane() != null;
-      }
-    };
+    myFramePanel = new FramePanel(getProject(), getContextManager());
     myFramePanel.getFrameTree().setAutoVariablesMode(debuggerSettings.AUTO_VARIABLES_MODE);
 
     myWatchesContent = createContent(myWatchPanel, DebuggerBundle.message("debugger.session.tab.watches.title"), WATCHES_ICON, WATCHES_CONTENT);
@@ -191,14 +187,17 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
 
     myViewsContentManager.addContentManagerListener(new ContentManagerAdapter() {
       public void selectionChanged(ContentManagerEvent event) {
-        Content selectedContent = myViewsContentManager.getSelectedContent();
-        if (selectedContent != null) {
-          JComponent component = selectedContent.getComponent();
-          if (component instanceof DebuggerPanel) {
-            DebuggerPanel panel = (DebuggerPanel)component;
-            if (panel.isRefreshNeeded()) {
-              panel.rebuildIfVisible(DebuggerSession.EVENT_CONTEXT);
+        final Content content = event.getContent();
+        if (content.getComponent() instanceof DebuggerView) {
+          final DebuggerView view = (DebuggerView)content.getComponent();
+          final boolean selected = myViewsContentManager.isSelected(content);
+          if (selected) {
+            view.setUpdateEnabled(true);
+            if (view.isRefreshNeeded()) {
+              view.rebuildIfVisible(DebuggerSession.EVENT_CONTEXT);
             }
+          } else {
+            view.setUpdateEnabled(false);
           }
         }
       }

@@ -16,7 +16,8 @@ import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.HashMap;
+
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Anton Katilin
@@ -28,7 +29,7 @@ public class ContentManagerImpl implements ContentManager {
   private ContentUI myUI;
   private ArrayList<Content> myContents;
   private EventListenerList myListeners;
-  private Content mySelectedContent;
+  private List<Content> mySelection = new ArrayList<Content>();
   private boolean myCanCloseContents;
 
   private final Project myProject;
@@ -77,8 +78,12 @@ public class ContentManagerImpl implements ContentManager {
       ((ContentImpl)content).setManager(this);
       myContents.add(content);
       fireContentAdded(content, myContents.size() - 1);
-      if (mySelectedContent == null) {
-        setSelectedContent(content);
+      if (myUI.isToSelectAddedContent()) {
+        if (myUI.isSingleSelection()) {
+          setSelectedContent(content);
+        } else {
+          addSelectedContent(content);
+        }
       }
     } finally {
       addProjectManagerListener();
@@ -88,7 +93,7 @@ public class ContentManagerImpl implements ContentManager {
   // [Valentin] Q: throw exception when failed?
   public boolean removeContent(Content content) {
     try {
-      int selectedIndex = myContents.indexOf(mySelectedContent);
+      int selectedIndex = myContents.indexOf(mySelection);
       int indexToBeRemoved = myContents.indexOf(content);
       if (indexToBeRemoved < 0) {
         return false;
@@ -101,7 +106,11 @@ public class ContentManagerImpl implements ContentManager {
       }
 
 
-      boolean wasSelected = content == mySelectedContent;
+      boolean wasSelected = isSelected(content);
+      if (wasSelected) {
+        removeSelectedContent(content);
+      }
+
       int indexToSelect = -1;
       if (wasSelected) {
         int i = indexToBeRemoved - 1;
@@ -121,11 +130,18 @@ public class ContentManagerImpl implements ContentManager {
       int newSize = myContents.size();
       if (newSize > 0) {
         if (indexToSelect > -1) {
-          setSelectedContent(myContents.get(indexToSelect));
+          final Content toSelect = myContents.get(indexToSelect);
+          if (!isSelected(toSelect)) {
+            if (myUI.isSingleSelection()) {
+              setSelectedContent(toSelect);
+            } else {
+              addSelectedContent(toSelect);
+            }
+          }
         }
       }
       else {
-        setSelectedContent(null);
+        mySelection.clear();
       }
       fireContentRemoved(content, indexToBeRemoved);
       ((ContentImpl)content).setManager(null);
@@ -186,7 +202,11 @@ public class ContentManagerImpl implements ContentManager {
   }
 
   public Content getContent(int index) {
-    return myContents.get(index);
+    if (index >= 0 && index < myContents.size()) {
+      return myContents.get(index);
+    } else {
+      return null;
+    }
   }
 
   public Content getContent(JComponent component) {
@@ -228,11 +248,7 @@ public class ContentManagerImpl implements ContentManager {
     return false;
   }
 
-  public Content getSelectedContent() {
-    return mySelectedContent;
-  }
-
-  public void setSelectedContent(Content content) {
+  public void addSelectedContent(final Content content) {
     int index;
     if (content != null) {
       index = getIndexOfContent(content);
@@ -243,10 +259,39 @@ public class ContentManagerImpl implements ContentManager {
     else {
       index = -1;
     }
-    if (mySelectedContent != content) {
-      mySelectedContent = content;
-      fireSelectionChanged(content, index);
+    if (!isSelected(content)) {
+      mySelection.add(content);
+      fireSelectionChanged(content);
     }
+  }
+
+  public void removeSelectedContent(Content content) {
+    if (!isSelected(content)) return;
+    mySelection.remove(content);
+    fireSelectionChanged(content);
+  }
+
+  public boolean isSelected(Content content) {
+    return mySelection.contains(content);
+  }
+
+  public Content[] getSelectedContents() {
+    return myContents.toArray(new Content[myContents.size()]);
+  }
+
+  @Nullable
+  public Content getSelectedContent() {
+    return mySelection.size() > 0 ? mySelection.get(0) : null;
+  }
+
+  public void setSelectedContent(Content content) {
+    if (isSelected(content)) return;
+    final Content[] old = getSelectedContents();
+    for (Content each : old) {
+      removeSelectedContent(each);
+    }
+
+    addSelectedContent(content);
   }
 
   public void selectPreviousContent() {
@@ -292,8 +337,8 @@ public class ContentManagerImpl implements ContentManager {
     }
   }
 
-  protected void fireSelectionChanged(Content content, int index) {
-    ContentManagerEvent event = new ContentManagerEvent(this, content, index);
+  protected void fireSelectionChanged(Content content) {
+    ContentManagerEvent event = new ContentManagerEvent(this, content, myContents.indexOf(content));
     ContentManagerListener[] listeners = myListeners.getListeners(ContentManagerListener.class);
     for (ContentManagerListener listener : listeners) {
       listener.selectionChanged(event);

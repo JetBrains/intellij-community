@@ -164,6 +164,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
           myContentManager.addContent(allTodosContent);
           myContentManager.addContent(currentFileTodosContent);
           Content content=myContentManager.getContent(mySelectedIndex);
+          content = content == null ? allTodosContent : content;
           myContentManager.setSelectedContent(content);
           ToolWindowManager toolWindowManager=ToolWindowManager.getInstance(myProject);
           ToolWindow toolWindow=toolWindowManager.registerToolWindow(

@@ -10,6 +10,7 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
+import com.intellij.debugger.ui.DebuggerView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -23,12 +24,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
-public abstract class DebuggerPanel extends JPanel implements DataProvider{
+public abstract class DebuggerPanel extends JPanel implements DataProvider, DebuggerView {
   private final Project myProject;
   private final DebuggerTree myTree;
   private final DebuggerStateManager myStateManager;
   private volatile boolean myRefreshNeeded = true;
   private final java.util.List<Disposable> myDisposables = new ArrayList<Disposable>();
+  private boolean myUpdateEnabled;
 
   public DebuggerPanel(Project project, DebuggerStateManager stateManager) {
     super(new BorderLayout());
@@ -76,7 +78,11 @@ public abstract class DebuggerPanel extends JPanel implements DataProvider{
   }
 
   protected boolean isUpdateEnabled() {
-    return true;
+    return myUpdateEnabled;
+  }
+
+  public void setUpdateEnabled(final boolean enabled) {
+    myUpdateEnabled = enabled;
   }
 
   public boolean isRefreshNeeded() {

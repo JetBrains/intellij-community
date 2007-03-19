@@ -19,6 +19,7 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.debugger.ui.DebuggerView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -72,7 +73,7 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
 
     final FrameDebuggerTree frameTree = getFrameTree();
 
-    myVarsPanel = new JPanel(new BorderLayout());
+    myVarsPanel = new VarsPanel();
     myVarsPanel.add(new JScrollPane(frameTree), BorderLayout.CENTER);
     registerDisposable(DebuggerAction.installEditAction(frameTree, DebuggerActions.EDIT_NODE_SOURCE));
 
@@ -533,4 +534,27 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     }
   }
   */
+
+  protected boolean isUpdateEnabled() {
+    return true;
+  }
+
+  private class VarsPanel extends JPanel implements DebuggerView {
+    public VarsPanel() {
+      super(new BorderLayout());
+    }
+
+    public void setUpdateEnabled(final boolean enabled) {
+      FramePanel.this.setUpdateEnabled(enabled);
+    }
+
+    public boolean isRefreshNeeded() {
+      return FramePanel.this.isRefreshNeeded();
+    }
+
+    public void rebuildIfVisible(final int eventContext) {
+      FramePanel.this.rebuildIfVisible(eventContext);
+    }
+  }
+
 }

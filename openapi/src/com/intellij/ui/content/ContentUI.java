@@ -20,4 +20,8 @@ import javax.swing.*;
 public interface ContentUI {
   JComponent getComponent();
   void setManager(ContentManager manager);
+  
+  boolean isSingleSelection();
+  boolean isToSelectAddedContent();
+
 }

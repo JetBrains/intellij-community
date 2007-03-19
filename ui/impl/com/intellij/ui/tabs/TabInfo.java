@@ -23,7 +23,7 @@ public final class TabInfo {
   private String myPlace;
   private Object myObject;
 
-  TabInfo(final JComponent component) {
+  public TabInfo(final JComponent component) {
     myComponent = component;
   }
 
@@ -73,8 +73,9 @@ public final class TabInfo {
     return this;
   }
 
-  public void setObject(final Object object) {
+  public TabInfo setObject(final Object object) {
     myObject = object;
+    return this;
   }
 
   public Object getObject() {

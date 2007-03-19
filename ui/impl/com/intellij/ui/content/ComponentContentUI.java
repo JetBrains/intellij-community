@@ -49,5 +49,13 @@ public class ComponentContentUI implements ContentUI {
       return null;
     }
   }
+
+  public boolean isSingleSelection() {
+    return true;
+  }
+
+  public boolean isToSelectAddedContent() {
+    return true;
+  }
 }
 

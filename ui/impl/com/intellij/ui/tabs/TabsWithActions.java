@@ -41,10 +41,9 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     myActionManager = actionManager;
   }
 
-  public TabInfo addTab(JComponent component, int index) {
-    final TabInfo info = new TabInfo(component);
+  public TabInfo addTab(TabInfo info, int index) {
     info.getChangeSupport().addPropertyChangeListener(this);
-    add(component);
+    add(info.getComponent());
     final TabLabel label = new TabLabel(info);
     myInfo2Label.put(info, label);
 
@@ -62,14 +61,19 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
 
     return info;
   }
-  public TabInfo addTab(JComponent component) {
-    return addTab(component, -1);
+  public TabInfo addTab(TabInfo info) {
+    return addTab(info, -1);
   }
 
 
   private void updateAll() {
     update();
     updateListeners();
+    updateSelected();
+  }
+
+  private void updateSelected() {
+    setSelected(getSelectedInfo());
   }
 
   public void setSelected(final TabInfo info) {
@@ -410,13 +414,20 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     };
     frame.getContentPane().add(tabs);
 
-    tabs.addTab(new JTree()).setText("Tree").setActions(new DefaultActionGroup(), null).setIcon(IconLoader.getIcon("/debugger/frame.png"));
-    tabs.addTab(new JTree()).setText("Tree2");
-    tabs.addTab(new JTable()).setText("Table").setActions(new DefaultActionGroup(), null);
+    tabs.addListener(new TabsListener() {
+      public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
+        System.out.println("TabsWithActions.selectionChanged old=" + oldSelection + " new=" + newSelection);
+      }
+    });
+
+    tabs.addTab(new TabInfo(new JTree())).setText("Tree").setActions(new DefaultActionGroup(), null).setIcon(IconLoader.getIcon("/debugger/frame.png"));
+    tabs.addTab(new TabInfo(new JTree())).setText("Tree2");
+    tabs.addTab(new TabInfo(new JTable())).setText("Table").setActions(new DefaultActionGroup(), null);
 
     tabs.setBorder(new EmptyBorder(6, 6, 6, 6));
 
     frame.setBounds(200, 200, 300, 200);
     frame.show();
+
   }
 }

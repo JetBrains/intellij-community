@@ -419,4 +419,12 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
       }
     }
   }
+
+  public boolean isSingleSelection() {
+    return true;
+  }
+
+  public boolean isToSelectAddedContent() {
+    return true;
+  }
 }

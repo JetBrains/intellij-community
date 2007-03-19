@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import javax.swing.*;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 public interface ContentManager {
   boolean canCloseContents();
 
@@ -30,7 +32,11 @@ public interface ContentManager {
   boolean removeContent(Content content);
 
   void setSelectedContent(Content content);
+  void addSelectedContent(Content content);
+
+  @Nullable
   Content getSelectedContent();
+  Content[] getSelectedContents();
 
 
   void removeAllContents();
@@ -42,6 +48,7 @@ public interface ContentManager {
   //TODO[anton,vova] is this method needed?
   Content findContent(String displayName);
 
+  @Nullable
   Content getContent(int index);
 
   Content getContent(JComponent component);
@@ -69,4 +76,8 @@ public interface ContentManager {
   String getCloseAllButThisActionName();
 
   List<AnAction> getAdditionalPopupActions(final Content content);
+
+  void removeSelectedContent(Content content);
+
+  boolean isSelected(Content content);
 }
