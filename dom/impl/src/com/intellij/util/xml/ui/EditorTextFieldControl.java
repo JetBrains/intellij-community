@@ -12,7 +12,8 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NullableFactory;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
@@ -101,11 +102,11 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
     final EditorTextField editorTextField = getEditorTextField(boundedComponent);
     editorTextField.setSupplementary(true);
     final PsiCodeFragment file = getPsiFile(boundedComponent);
-    myHighlighter.addFile(file, new Factory<DomElement>() {
+    myHighlighter.addFile(file, new NullableFactory<DomElement>() {
       public DomElement create() {
         return isValid() ? getDomElement() : null;
       }
-    });
+    }, this);
 
     if (myCommitOnEveryChange) {
       editorTextField.getDocument().addDocumentListener(myListener);
@@ -113,27 +114,26 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
     return boundedComponent;
   }
 
+  @NotNull
   private PsiCodeFragment getPsiFile(@NotNull final T boundedComponent) {
-    return (PsiCodeFragment)myPsiDocumentManager.getPsiFile(getEditorTextField(boundedComponent).getDocument());
+    final PsiCodeFragment fragment = (PsiCodeFragment)myPsiDocumentManager.getPsiFile(getEditorTextField(boundedComponent).getDocument());
+    assert fragment != null;
+    return fragment;
   }
 
   protected abstract T createMainComponent(T boundedComponent, Project project);
 
+  @NotNull
   protected String getValue() {
     return getEditorTextField(getComponent()).getText();
   }
 
-  public void dispose() {
-    super.dispose();
-    myHighlighter.removeFile(getPsiFile(getComponent()));
-  }
-
   protected void setValue(final String value) {
-    com.intellij.openapi.command.CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
       public void run() {
         new WriteAction() {
           protected void run(Result result) throws Throwable {
-            final T component = EditorTextFieldControl.this.getComponent();
+            final T component = getComponent();
             getEditorTextField(component).getDocument().replaceString(0, getValue().length(), value == null ? "" : value);
           }
         }.execute();
@@ -158,7 +158,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
         final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(project);
         final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(domElement);
         final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(domElement);
-        final List<DomElementProblemDescriptor> warningProblems = new ArrayList<DomElementProblemDescriptor>(holder.getProblems(domElement, true, true, HighlightSeverity.WARNING));
+        final List<DomElementProblemDescriptor> warningProblems = new ArrayList<DomElementProblemDescriptor>(holder.getProblems(domElement, true, HighlightSeverity.WARNING));
         warningProblems.removeAll(errorProblems);
 
         Color background = getDefaultBackground();
@@ -179,10 +179,11 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
   }
 
   public void navigate(final DomElement element) {
+    final EditorTextField field = getEditorTextField(getComponent());
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        getEditorTextField(EditorTextFieldControl.this.getComponent()).requestFocus();
-        getEditorTextField(EditorTextFieldControl.this.getComponent()).selectAll();
+        field.requestFocus();
+        field.selectAll();
       }
     });
   }

@@ -21,6 +21,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author peter
  */
@@ -34,7 +36,7 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
     super(domWrapper, commitOnEveryChange);
   }
 
-  protected EditorTextField getEditorTextField(final TextPanel panel) {
+  protected EditorTextField getEditorTextField(@NotNull final TextPanel panel) {
     final Component component = panel.getComponent(0);
     if (component instanceof ReferenceEditorWithBrowseButton) {
       return ((ReferenceEditorWithBrowseButton)component).getEditorTextField();

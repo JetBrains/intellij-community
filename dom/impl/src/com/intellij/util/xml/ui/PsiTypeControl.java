@@ -25,6 +25,7 @@ public class PsiTypeControl extends EditorTextFieldControl<PsiTypePanel> {
     super(domWrapper, commitOnEveryChange);
   }
 
+  @NotNull
   protected String getValue() {
     final String rawValue = super.getValue();
     try {
@@ -60,7 +61,7 @@ public class PsiTypeControl extends EditorTextFieldControl<PsiTypePanel> {
     super.setValue(value);
   }
 
-  protected EditorTextField getEditorTextField(final PsiTypePanel component) {
+  protected EditorTextField getEditorTextField(@NotNull final PsiTypePanel component) {
     return ((ReferenceEditorWithBrowseButton)component.getComponent(0)).getEditorTextField();
   }
 

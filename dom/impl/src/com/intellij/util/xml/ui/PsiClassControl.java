@@ -21,6 +21,8 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author peter
  */
@@ -34,7 +36,7 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
     super(domWrapper, commitOnEveryChange);
   }
 
-  protected EditorTextField getEditorTextField(final PsiClassPanel component) {
+  protected EditorTextField getEditorTextField(@NotNull final PsiClassPanel component) {
     return ((ReferenceEditorWithBrowseButton)component.getComponent(0)).getEditorTextField();
   }
 
