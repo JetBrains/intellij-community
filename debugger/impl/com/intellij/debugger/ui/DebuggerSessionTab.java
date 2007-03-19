@@ -10,8 +10,7 @@ import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.impl.DebuggerPanel;
-import com.intellij.debugger.ui.impl.FramePanel;
+import com.intellij.debugger.ui.impl.VariablesPanel;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.*;
@@ -74,7 +73,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
   private ActionToolbar myFirstToolbar;
 
   private final JPanel myContentPanel;
-  private final FramePanel myFramePanel;
+  private final VariablesPanel myVariablesPanel;
   private final MainWatchPanel myWatchPanel;
 
   private ExecutionConsole  myConsole;
@@ -98,6 +97,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
   private Content myVarsContent;
   private Content myWatchesContent;
   private DebuggerContentUI myContentUI;
+  private FramesPanel myFramesPanel;
 
   public DebuggerSessionTab(Project project, String sessionName) {
     myProject = project;
@@ -147,8 +147,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
 
     myWatchPanel = new MainWatchPanel(getProject(), getContextManager());
 
-    myFramePanel = new FramePanel(getProject(), getContextManager());
-    myFramePanel.getFrameTree().setAutoVariablesMode(debuggerSettings.AUTO_VARIABLES_MODE);
+    myFramesPanel = new FramesPanel(getProject(), getContextManager());
 
     myWatchesContent = createContent(myWatchPanel, DebuggerBundle.message("debugger.session.tab.watches.title"), WATCHES_ICON, WATCHES_CONTENT);
     final DefaultActionGroup watchesGroup = new DefaultActionGroup();
@@ -159,7 +158,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
 
     myViewsContentManager.addContent(myWatchesContent);
 
-    myFramesContent = createContent(myFramePanel, DebuggerBundle.message("debugger.session.tab.frames.title"), IconLoader.getIcon("/debugger/frame.png"), FRAME_CONTENT);
+    myFramesContent = createContent(myFramesPanel, DebuggerBundle.message("debugger.session.tab.frames.title"), IconLoader.getIcon("/debugger/frame.png"), FRAME_CONTENT);
     final DefaultActionGroup framesGroup = new DefaultActionGroup();
 
     addAction(framesGroup, DebuggerActions.SHOW_EXECUTION_POINT);
@@ -177,7 +176,9 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
 
     myViewsContentManager.addContent(myFramesContent);
 
-    myVarsContent = createContent(myFramePanel.getVarsPanel(), DebuggerBundle.message("debugger.session.tab.variables.title"), IconLoader.getIcon("/debugger/value.png"), VARIABLES_CONTENT);
+    myVariablesPanel = new VariablesPanel(myProject, myStateManager);
+    myVariablesPanel.getFrameTree().setAutoVariablesMode(debuggerSettings.AUTO_VARIABLES_MODE);
+    myVarsContent = createContent(myVariablesPanel, DebuggerBundle.message("debugger.session.tab.variables.title"), IconLoader.getIcon("/debugger/value.png"), VARIABLES_CONTENT);
     final DefaultActionGroup varsGroup = new DefaultActionGroup();
     addAction(varsGroup, DebuggerActions.EVALUATE_EXPRESSION);
     varsGroup.add(new WatchLastMethodReturnValueAction());
@@ -377,7 +378,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
 
   public void dispose() {
     disposeSession();
-    myFramePanel.dispose();
+    myVariablesPanel.dispose();
     myWatchPanel.dispose();
     myViewsContentManager.removeAllContents();
     myManager.unregisterFileMatcher();
@@ -424,7 +425,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     if (myDebuggerSession.getState() != DebuggerSession.STATE_PAUSED) {
       return null;
     }
-    JTree tree = myFramePanel.getFrameTree();
+    JTree tree = myVariablesPanel.getFrameTree();
     if (tree == null || !tree.hasFocus()) {
       tree = myWatchPanel.getWatchTree();
       if (tree == null || !tree.hasFocus()) {
@@ -543,7 +544,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     public void setSelected(AnActionEvent e, boolean enabled) {
       myAutoModeEnabled = enabled;
       DebuggerSettings.getInstance().AUTO_VARIABLES_MODE = enabled;
-      myFramePanel.getFrameTree().setAutoVariablesMode(enabled);
+      myVariablesPanel.getFrameTree().setAutoVariablesMode(enabled);
     }
   }
 

@@ -8,7 +8,7 @@ package com.intellij.debugger.actions;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerStateManager;
-import com.intellij.debugger.ui.impl.DebuggerPanel;
+import com.intellij.debugger.ui.impl.DebuggerTreePanel;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.ide.DataManager;
@@ -33,8 +33,8 @@ public abstract class DebuggerAction extends AnAction {
   }
 
   @Nullable
-  public static DebuggerPanel getPanel(DataContext dataContext){
-    return (DebuggerPanel)dataContext.getData(DebuggerActions.DEBUGGER_PANEL);
+  public static DebuggerTreePanel getPanel(DataContext dataContext){
+    return (DebuggerTreePanel)dataContext.getData(DebuggerActions.DEBUGGER_PANEL);
   }
 
   @Nullable
@@ -75,7 +75,7 @@ public abstract class DebuggerAction extends AnAction {
   }
 
   public static DebuggerContextImpl getDebuggerContext(DataContext dataContext) {
-    DebuggerPanel panel = getPanel(dataContext);
+    DebuggerTreePanel panel = getPanel(dataContext);
     if(panel != null) {
       return panel.getContext();
     } else {
@@ -86,7 +86,7 @@ public abstract class DebuggerAction extends AnAction {
 
   @Nullable
   public static DebuggerStateManager getContextManager(DataContext dataContext) {
-    DebuggerPanel panel = getPanel(dataContext);
+    DebuggerTreePanel panel = getPanel(dataContext);
     return panel == null ? null : panel.getContextManager();
   }
 

@@ -12,7 +12,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
-import com.intellij.debugger.ui.impl.FramePanel;
+import com.intellij.debugger.ui.impl.VariablesPanel;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.*;
@@ -57,7 +57,7 @@ public class AddToWatchAction extends DebuggerAction {
     DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(e.getDataContext());
     boolean enabled = false;
     if (selectedNodes != null && selectedNodes.length > 0) {
-      if (getPanel(e.getDataContext()) instanceof FramePanel) {
+      if (getPanel(e.getDataContext()) instanceof VariablesPanel) {
         enabled = true;
         for (DebuggerTreeNodeImpl node : selectedNodes) {
           NodeDescriptorImpl descriptor = node.getDescriptor();

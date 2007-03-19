@@ -22,7 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Enumeration;
 
-public abstract class WatchPanel extends DebuggerPanel {
+public abstract class WatchPanel extends DebuggerTreePanel {
   @NonNls private static final String HELP_ID = "debugging.debugWatches";
 
   public WatchPanel(Project project, DebuggerStateManager stateManager) {

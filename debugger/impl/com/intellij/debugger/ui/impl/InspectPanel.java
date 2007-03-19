@@ -8,7 +8,6 @@ import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -20,7 +19,7 @@ import com.intellij.openapi.Disposable;
 import javax.swing.*;
 import java.awt.*;
 
-public class InspectPanel extends DebuggerPanel {
+public class InspectPanel extends DebuggerTreePanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.InspectPanel");
 
   public InspectPanel(Project project, DebuggerStateManager stateManager, NodeDescriptorImpl inspectDescriptor) {
