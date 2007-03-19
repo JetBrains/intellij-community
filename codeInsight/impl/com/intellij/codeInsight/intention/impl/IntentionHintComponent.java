@@ -87,7 +87,7 @@ public class IntentionHintComponent extends JPanel {
   };
   private final PsiFile myFile;
 
-  private class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching> {
+  private class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>, SpeedSearchFilter<IntentionActionWithTextCaching> {
     private final Set<IntentionActionWithTextCaching> myCachedIntentions = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
     private final Set<IntentionActionWithTextCaching> myCachedFixes = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
     private final IntentionManagerSettings mySettings;
@@ -237,9 +237,13 @@ public class IntentionHintComponent extends JPanel {
     public ListSeparator getSeparatorAbove(final IntentionActionWithTextCaching value) { return null; }
     public boolean isMnemonicsNavigationEnabled() { return false; }
     public MnemonicNavigationFilter<IntentionActionWithTextCaching> getMnemonicNavigationFilter() { return null; }
-    public boolean isSpeedSearchEnabled() { return false; }
+    public boolean isSpeedSearchEnabled() { return true; }
     public boolean isAutoSelectionEnabled() { return false; }
-    public SpeedSearchFilter<IntentionActionWithTextCaching> getSpeedSearchFilter() { return null; }
+    public SpeedSearchFilter<IntentionActionWithTextCaching> getSpeedSearchFilter() { return this; }
+
+    //speed search filter
+    public boolean canBeHidden(final IntentionActionWithTextCaching value) { return true;}
+    public String getIndexedString(final IntentionActionWithTextCaching value) { return getTextFor(value);}
   }
 
   private static class IntentionActionWithTextCaching implements Comparable {
