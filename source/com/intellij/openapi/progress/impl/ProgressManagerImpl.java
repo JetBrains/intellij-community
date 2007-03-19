@@ -161,7 +161,7 @@ public class ProgressManagerImpl extends ProgressManager {
       .runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project);
   }
 
-  public boolean runProcessWithProgressSynchronously(final Task.Modal task) {
+  public static boolean runProcessWithProgressSynchronously(final Task task) {
     return ((ApplicationEx)ApplicationManager.getApplication())
       .runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
@@ -203,9 +203,9 @@ public class ProgressManagerImpl extends ProgressManager {
         }
       }
     });
-
   }
-  public void runProcessWithProgressAsynchronously(final Task.Backgroundable task) {
+
+  public static void runProcessWithProgressAsynchronously(final Task.Backgroundable task) {
     final BackgroundableProcessIndicator progressIndicator = new BackgroundableProcessIndicator(task);
 
     final Runnable process = new Runnable() {
@@ -252,11 +252,17 @@ public class ProgressManagerImpl extends ProgressManager {
     }
   }
 
-  public void run(final Task task) {
+  public void run(@NotNull final Task task) {
     if (task.isModal()) {
       runProcessWithProgressSynchronously(task.asModal());
     } else {
-      runProcessWithProgressAsynchronously(task.asBackgroundable());
+      final Task.Backgroundable backgroundable = task.asBackgroundable();
+      if (backgroundable.isConditionalModal() && !backgroundable.shouldStartInBackground()) {
+        runProcessWithProgressSynchronously(task);
+      }
+      else {
+        runProcessWithProgressAsynchronously(backgroundable);
+      }
     }
   }
 }

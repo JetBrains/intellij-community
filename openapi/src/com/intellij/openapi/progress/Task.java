@@ -114,7 +114,7 @@ public abstract class Task implements TaskInfo {
 
   public abstract static class Backgroundable extends Task implements PerformInBackgroundOption {
 
-    private PerformInBackgroundOption myBackgroundOption;
+    protected PerformInBackgroundOption myBackgroundOption;
 
     public Backgroundable(@Nullable final Project project, @NotNull final String title, final boolean canBeCancelled, @Nullable final PerformInBackgroundOption backgroundOption) {
       super(project, title, canBeCancelled);
@@ -148,6 +148,10 @@ public abstract class Task implements TaskInfo {
     public final boolean isModal() {
       return false;
     }
+
+    public boolean isConditionalModal() {
+      return false;
+    }
   }
 
   public abstract static class Modal extends Task {
@@ -158,6 +162,17 @@ public abstract class Task implements TaskInfo {
 
 
     public final boolean isModal() {
+      return true;
+    }
+  }
+
+  public abstract static class ConditionalModal extends Backgroundable {
+    public ConditionalModal(@Nullable final Project project, @NotNull final String title, final boolean canBeCancelled,
+                            @NotNull final PerformInBackgroundOption backgroundOption) {
+      super(project, title, canBeCancelled, backgroundOption);
+    }
+
+    public final boolean isConditionalModal() {
       return true;
     }
   }
