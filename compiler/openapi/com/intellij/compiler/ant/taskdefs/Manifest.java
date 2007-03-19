@@ -5,6 +5,7 @@ import com.intellij.openapi.compiler.make.ManifestBuilder;
 import com.intellij.openapi.util.Pair;
 
 import java.util.jar.Attributes;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -18,7 +19,16 @@ public class Manifest extends Tag{
   public void applyAttributes(final java.util.jar.Manifest manifest) {
     ManifestBuilder.setGlobalAttributes(manifest.getMainAttributes());
     final Attributes mainAttributes = manifest.getMainAttributes();
-    for (final Object o : mainAttributes.keySet()) {
+
+    List<Object> keys = new ArrayList<Object>(mainAttributes.keySet());
+    Collections.sort(keys, new Comparator<Object>() {
+      public int compare(final Object o1, final Object o2) {
+        Attributes.Name name1 = (Attributes.Name)o1;
+        Attributes.Name name2 = (Attributes.Name)o2;
+        return name1.toString().compareTo(name2.toString());
+      }
+    });
+    for (final Object o : keys) {
       Attributes.Name name = (Attributes.Name)o;
       String value = (String)mainAttributes.get(name);
       add(new Attribute(name.toString(), value));
