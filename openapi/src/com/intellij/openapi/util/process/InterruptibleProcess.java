@@ -11,6 +11,7 @@ public abstract class InterruptibleProcess extends InterruptibleActivity {
   private final Process myProcess;
   private InputStream myInputStream;
   private InputStream myErrorStream;
+  private int myExitCode;
 
   protected InterruptibleProcess(final Process process, final long timeout, final TimeUnit timeUnit) {
     super(timeout, timeUnit);
@@ -28,6 +29,10 @@ public abstract class InterruptibleProcess extends InterruptibleActivity {
     return myInputStream;
   }
 
+  public int getExitCode() {
+    return myExitCode;
+  }
+
   protected void interrupt() {
     try {
       myInputStream.close();
@@ -41,7 +46,7 @@ public abstract class InterruptibleProcess extends InterruptibleActivity {
 
   protected void start() {
     try {
-      myProcess.waitFor();
+      myExitCode = myProcess.waitFor();
     }
     catch (InterruptedException e) {
       throw new RuntimeException(e);
