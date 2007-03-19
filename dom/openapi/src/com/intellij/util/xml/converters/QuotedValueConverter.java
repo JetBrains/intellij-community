@@ -73,7 +73,7 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
     final String unquotedValue = unquote(originalValue, getQuoteSigns());
     int startOffset = originalValue == unquotedValue? 0 : XmlTagTextUtil.escapeString(originalValue.substring(0, 1), false).length();
     int endOffset = originalValue == unquotedValue || quotationIsNotClosed(originalValue)? 0 : startOffset;
-    return new PsiReference[]{createPsiReference(element, startOffset+1, element.getTextLength() - 1 - endOffset, context, genericDomValue, startOffset != endOffset)};
+    return new PsiReference[]{createPsiReference(element, startOffset+1, element.getTextLength() - 1 - endOffset, true, context, genericDomValue, startOffset != endOffset)};
   }
 
   @Nullable
@@ -101,10 +101,12 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
   @NotNull
   protected PsiReference createPsiReference(final PsiElement element,
                                             int start, int end,
+                                            final boolean isSoft,
                                             final ConvertContext context,
-                                            final GenericDomValue<T> genericDomValue, final boolean badQuotation) {
+                                            final GenericDomValue<T> genericDomValue,
+                                            final boolean badQuotation) {
 
-    return new MyPsiReference(element, new TextRange(start, end), context, genericDomValue, badQuotation);
+    return new MyPsiReference(element, new TextRange(start, end), isSoft, context, genericDomValue, badQuotation);
   }
 
   protected class MyPsiReference extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
@@ -112,9 +114,9 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
     protected final GenericDomValue<T> myGenericDomValue;
     private final boolean myBadQuotation;
 
-    public MyPsiReference(final PsiElement element, final TextRange range, final ConvertContext context, final GenericDomValue<T> genericDomValue,
+    public MyPsiReference(final PsiElement element, final TextRange range, final boolean isSoft, final ConvertContext context, final GenericDomValue<T> genericDomValue,
                           final boolean badQuotation) {
-      super(element, range);
+      super(element, range, isSoft);
       myContext = context;
       myGenericDomValue = genericDomValue;
       myBadQuotation = badQuotation;
