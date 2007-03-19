@@ -6,6 +6,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithme
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrRelationalExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
@@ -67,7 +68,6 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     //expressions
     if (elem.equals(CONDITIONAL_EXPRESSION)) return new GrConditionalExprImpl(node);
     if (elem.equals(ASSIGNMENT_EXPRESSION)) return new GrAssignmentExprImpl(node);
-    if (elem.equals(ADDITIVE_EXXPRESSION)) return new GrAdditiveExpressionImpl(node);
     if (elem.equals(LOGICAL_OR_EXPRESSION)) return new GrLogicalOrExprImpl(node);
     if (elem.equals(LOGICAL_AND_EXPRESSION)) return new GrLogicalAndExprImpl(node);
     if (elem.equals(EXCLUSIVE_OR_EXPRESSION)) return new GrExclusiveOrExprImpl(node);
@@ -75,6 +75,11 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(AND_EXPRESSION)) return new GrAndExprImpl(node);
     if (elem.equals(REGEX_EXPRESSION)) return new GrRegexExprImpl(node);
     if (elem.equals(EQUALITY_EXPRESSION)) return new GrEqualityExprImpl(node);
+    if (elem.equals(RELATIONAL_EXPRESSION)) return new GrRelationalExprImpl(node);
+    if (elem.equals(SHIFT_EXPRESSION)) return new GrShiftExprImpl(node);
+    if (elem.equals(ADDITIVE_EXPRESSION)) return new GrAdditiveExprImpl(node);
+    if (elem.equals(POWER_EXPRESSION)) return new GrPowerExprImpl(node);
+    if (elem.equals(POWER_EXPRESSION_SIMPLE)) return new GrPowerExprImpl(node);
 
 
     if (elem.equals(BALANCED_BRACKETS)) return new GrBalancedBracketsImpl(node);

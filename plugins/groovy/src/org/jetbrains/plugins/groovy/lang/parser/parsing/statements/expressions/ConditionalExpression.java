@@ -17,6 +17,7 @@ public class ConditionalExpression implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
     GroovyElementType result = LogicalOrExpression.parse(builder);
     if (ParserUtils.getToken(builder, mQUESTION)) {
+      result = CONDITIONAL_EXPRESSION;
       ParserUtils.getToken(builder, mNLS);
       AssignmentExpression.parse(builder);
       if (ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"))){

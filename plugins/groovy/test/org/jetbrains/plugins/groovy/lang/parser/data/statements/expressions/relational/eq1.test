@@ -1,0 +1,12 @@
+27<=>
+a==5
+-----
+Groovy script
+  Equality expression
+    Equality expression
+      PsiElement(number)('27')
+      PsiElement(<=>)('<=>')
+      PsiElement(new line)('\n')
+      PsiElement(identifier)('a')
+    PsiElement(==)('==')
+    PsiElement(number)('5')

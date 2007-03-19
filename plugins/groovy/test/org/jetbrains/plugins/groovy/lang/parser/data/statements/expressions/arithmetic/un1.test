@@ -1,0 +1,13 @@
+++
+--
+3
+-----
+Groovy script
+  Unary expression
+    PsiElement(++)('++')
+    PsiElement(new line)('\n')
+    Unary expression
+      PsiElement(--)('--')
+      PsiElement(new line)('\n')
+      PsiElement(number)('3')
+

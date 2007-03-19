@@ -1,14 +1,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical;
 
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.logical.GrInclusiveOrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
 
 /**
  * @author Ilya.Sergey
  */
-public class GrInclusiveOrExprImpl extends GroovyPsiElementImpl implements GrInclusiveOrExpression {
+public class GrInclusiveOrExprImpl extends GroovyPsiElementImpl implements GrBinaryExpression {
 
   public GrInclusiveOrExprImpl(@NotNull ASTNode node) {
     super(node);

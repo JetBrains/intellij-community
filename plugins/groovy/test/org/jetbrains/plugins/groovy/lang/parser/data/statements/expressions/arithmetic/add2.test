@@ -1,10 +1,14 @@
-a -
-b
+a-
+b+
+c
 -----
 Groovy script
   Additive expression
-    PsiElement(identifier)('a')
-    PsiWhiteSpace(' ')
-    PsiElement(-)('-')
+    Additive expression
+      PsiElement(identifier)('a')
+      PsiElement(-)('-')
+      PsiElement(new line)('\n')
+      PsiElement(identifier)('b')
+    PsiElement(+)('+')
     PsiElement(new line)('\n')
-    PsiElement(identifier)('b')
+    PsiElement(identifier)('c')

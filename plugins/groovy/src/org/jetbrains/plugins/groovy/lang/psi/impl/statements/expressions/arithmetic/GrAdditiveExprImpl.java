@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -8,13 +8,13 @@ import com.intellij.lang.ASTNode;
 /**
  * @author Ilya.Sergey
  */
-public class GrLogicalOrExprImpl extends GroovyPsiElementImpl implements GrBinaryExpression {
+public class GrAdditiveExprImpl extends GroovyPsiElementImpl implements GrBinaryExpression {
 
-  public GrLogicalOrExprImpl(@NotNull ASTNode node) {
+  public GrAdditiveExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString(){
-    return "Logical OR expression";
+    return "Additive expression";
   }
 }

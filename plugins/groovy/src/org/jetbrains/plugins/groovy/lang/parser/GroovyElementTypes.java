@@ -48,11 +48,17 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType REGEX_EXPRESSION = new GroovyElementType("Regex expression");
   GroovyElementType EQUALITY_EXPRESSION = new GroovyElementType("Equality expression");
   GroovyElementType RELATIONAL_EXPRESSION = new GroovyElementType("Relational expression");
+  GroovyElementType SHIFT_EXPRESSION = new GroovyElementType("Shift expression");
+  GroovyElementType ADDITIVE_EXPRESSION = new GroovyElementType("Additive expression");
+  GroovyElementType MULTIPLICATIVE_EXPRESSION = new GroovyElementType("Multiplicative expression");
+  GroovyElementType POWER_EXPRESSION = new GroovyElementType("Power expression");
+  GroovyElementType POWER_EXPRESSION_SIMPLE = new GroovyElementType("Simple power expression");
+  GroovyElementType UNARY_EXPRESSION = new GroovyElementType("Unary expression");
 
   GroovyElementType POSTFIX_EXPRESSION = new GroovyElementType("Postfix expression");
 
 
-  GroovyElementType ADDITIVE_EXXPRESSION = new GroovyElementType("Additive expressions");
+
 
   GroovyElementType PRIMARY_EXXPRESSION = new GroovyElementType("Primary expressions");
 

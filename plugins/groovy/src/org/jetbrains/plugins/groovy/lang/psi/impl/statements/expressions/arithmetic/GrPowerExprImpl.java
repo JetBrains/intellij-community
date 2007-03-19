@@ -1,20 +1,21 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrAdditiveExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
 
 /**
  * @author Ilya.Sergey
  */
-public class GrAdditiveExpressionImpl extends GroovyPsiElementImpl implements GrAdditiveExpression {
+public class GrPowerExprImpl extends GroovyPsiElementImpl implements GrBinaryExpression {
 
-  public GrAdditiveExpressionImpl(@NotNull ASTNode node) {
+  public GrPowerExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString(){
-    return "Additive expression";
+    return "Power expression";
   }
 }
+

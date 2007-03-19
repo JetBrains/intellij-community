@@ -1,0 +1,9 @@
+27 < a
+-----
+Groovy script
+  Relational expression
+    PsiElement(number)('27')
+    PsiWhiteSpace(' ')
+    PsiElement(<)('<')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')

@@ -1,0 +1,33 @@
+a || b || c + d + v **d ** b
+-----
+Groovy script
+  Logical OR expression
+    Logical OR expression
+      PsiElement(identifier)('a')
+      PsiWhiteSpace(' ')
+      PsiElement(||)('||')
+      PsiWhiteSpace(' ')
+      PsiElement(identifier)('b')
+    PsiWhiteSpace(' ')
+    PsiElement(||)('||')
+    PsiWhiteSpace(' ')
+    Additive expression
+      Additive expression
+        PsiElement(identifier)('c')
+        PsiWhiteSpace(' ')
+        PsiElement(+)('+')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('d')
+      PsiWhiteSpace(' ')
+      PsiElement(+)('+')
+      PsiWhiteSpace(' ')
+      Power expression
+        Power expression
+          PsiElement(identifier)('v')
+          PsiWhiteSpace(' ')
+          PsiElement(**)('**')
+          PsiElement(identifier)('d')
+        PsiWhiteSpace(' ')
+        PsiElement(**)('**')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('b')
