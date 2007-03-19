@@ -25,7 +25,7 @@ public abstract class InterruptibleActivity {
     myTimeUnit = timeUnit;
   }
 
-  protected final void touch() {
+  public final void touch() {
     myIsTouched = true;
   }
 
@@ -43,7 +43,10 @@ public abstract class InterruptibleActivity {
 
   public final int execute() {
     final Application application = ApplicationManager.getApplication();
+
+    /* TODO: uncomment assertion when problems in Perforce plugin are fixed.
     LOG.assertTrue(!application.isDispatchThread(), "InterruptibleActivity is supposed to be lengthy thus must not block Swing UI thread");
+    */
 
     final Future<?> future = application.executeOnPooledThread(new Runnable() {
       public void run() {
