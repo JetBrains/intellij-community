@@ -218,23 +218,24 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return classes.toArray(new PsiClass[classes.size()]);
   }
 
-  public void processChildren(PsiElementProcessor<PsiFileSystemItem> processor) {
+  public boolean processChildren(PsiElementProcessor<PsiFileSystemItem> processor) {
     LOG.assertTrue(isValid());
 
     for (VirtualFile vFile : myFile.getChildren()) {
       if (vFile.isDirectory()) {
         PsiDirectory dir = myManager.findDirectory(vFile);
         if (dir != null) {
-          if(!processor.execute(dir)) return;
+          if(!processor.execute(dir)) return false;
         }
       }
       else {
         PsiFile file = myManager.findFile(vFile);
         if (file != null) {
-          if(!processor.execute(file)) return;
+          if(!processor.execute(file)) return false;
         }
       }
     }
+    return true;
   }
 
   @NotNull

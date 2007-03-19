@@ -17,6 +17,7 @@ import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +40,10 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   public VirtualFile getVirtualFile() {
     return getViewProvider().isEventSystemEnabled() ? getViewProvider().getVirtualFile() : null;
+  }
+
+  public boolean processChildren(final PsiElementProcessor<PsiFileSystemItem> processor) {
+    return true;
   }
 
   public boolean isValid() {

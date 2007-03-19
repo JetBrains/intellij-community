@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.scope.BaseScopeProcessor;
@@ -112,10 +113,15 @@ public class FileReference
       for (final FileReferenceHelper helper : getHelpers()) {
         allowedClasses.add(helper.getDirectoryClass());
       }
-      final PsiScopeProcessor proc =
-        myFileReferenceSet.createProcessor(ret, allowedClasses, Arrays.<PsiConflictResolver>asList(new DuplicateConflictResolver()));
+      final List<PsiConflictResolver> resolvers = Arrays.<PsiConflictResolver>asList(new DuplicateConflictResolver());
+      final PsiElementProcessor<PsiFileSystemItem> processor = createChildrenProcessor(myFileReferenceSet.createProcessor(ret, allowedClasses,
+                                                                                                                          resolvers));
       for (PsiFileSystemItem context : getContexts()) {
-        processVariants(context, proc);
+        for (final PsiElement child : context.getChildren()) {
+          if (child instanceof PsiFileSystemItem) {
+            processor.execute((PsiFileSystemItem)child);
+          }
+        }
       }
       return ret.toArray();
     }
@@ -126,19 +132,22 @@ public class FileReference
   }
 
   private void processVariants(final PsiFileSystemItem context, final PsiScopeProcessor processor) {
-    for (PsiElement element : context.getChildren()) {
-      if (element instanceof PsiFileSystemItem) {
-        PsiFileSystemItem item = (PsiFileSystemItem)element;
-        final VirtualFile file = item.getVirtualFile();
+    context.processChildren(createChildrenProcessor(processor));
+  }
+
+  private PsiElementProcessor<PsiFileSystemItem> createChildrenProcessor(final PsiScopeProcessor processor) {
+    return new PsiElementProcessor<PsiFileSystemItem>() {
+      public boolean execute(PsiFileSystemItem element) {
+        final VirtualFile file = element.getVirtualFile();
         if (file != null && !file.isDirectory()) {
           final PsiFile psiFile = getElement().getManager().findFile(file);
           if (psiFile != null) {
-            item = psiFile;
+            element = psiFile;
           }
         }
-        if (!processor.execute(item, PsiSubstitutor.EMPTY)) break;
+        return processor.execute(element, PsiSubstitutor.EMPTY);
       }
-    }
+    };
   }
 
   @Nullable

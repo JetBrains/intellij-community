@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -37,6 +38,10 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   @NotNull
   public VirtualFile getVirtualFile() {
     return myViewProvider.getVirtualFile();
+  }
+
+  public boolean processChildren(final PsiElementProcessor<PsiFileSystemItem> processor) {
+    return true;
   }
 
   public byte[] getStoredContents() {
