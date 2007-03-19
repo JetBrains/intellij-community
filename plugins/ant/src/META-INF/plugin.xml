@@ -10,6 +10,7 @@
 
   <extensions xmlns="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <renameHandler implementation="com.intellij.lang.ant.refactoring.AntRenameHandler"/>
   </extensions>
 
   <application-components>

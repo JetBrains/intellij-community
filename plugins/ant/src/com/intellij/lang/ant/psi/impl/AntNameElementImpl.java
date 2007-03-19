@@ -7,9 +7,12 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-class AntNameElementImpl extends AntElementImpl {
+public class AntNameElementImpl extends AntElementImpl {
 
+  private @Nullable AntElement myElementToRename;
+  
   public AntNameElementImpl(final AntElement parent, final XmlAttributeValue sourceElement) {
     super(parent, sourceElement);
   }
@@ -31,4 +34,15 @@ class AntNameElementImpl extends AntElementImpl {
     return this;
   }
 
+  public final void setElementToRename(@Nullable final AntElement renameElement) {
+    myElementToRename = renameElement;
+  }
+
+  @NotNull
+  public final AntElement getElementToRename() {
+    if (myElementToRename != null) {
+      return myElementToRename;
+    }
+    return this;
+  }
 }
