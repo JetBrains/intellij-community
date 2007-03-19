@@ -44,19 +44,19 @@ import java.util.Set;
 public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor");
 
-  private PsiMethod myMethodToReplaceIn;
-  private PsiMethod myMethodToSearchFor;
+  private final PsiMethod myMethodToReplaceIn;
+  private final PsiMethod myMethodToSearchFor;
   private PsiExpression myParameterInitializer;
   private final PsiExpression myExpressionToSearch;
   private final PsiLocalVariable myLocalVariable;
   private final boolean myRemoveLocalVariable;
-  private String myParameterName;
-  private boolean myReplaceAllOccurences;
+  private final String myParameterName;
+  private final boolean myReplaceAllOccurences;
 
   private int myReplaceFieldsWithGetters;
   private final boolean myDeclareFinal;
   private PsiType myForcedType;
-  private PsiManager myManager;
+  private final PsiManager myManager;
 
   /**
    * if expressionToSearch is null, search for localVariable
@@ -120,20 +120,14 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       result.add(new UsageInfo(overridingMethod));
     }
 
-    //if(myMethodToSearchFor.isConstructor()) {
-    //  final PsiParameter[] parameters = myMethodToSearchFor.getParameterList().getParameters();
-    //  if(parameters.length == 0) {
-    //    addImplicitDefaultConstructorUsages(result, myMethodToSearchFor.getContainingClass());
-    //  }
-    //}
-
     PsiReference[] refs = helper.findReferencesIncludingOverriding(myMethodToSearchFor, GlobalSearchScope.projectScope(myProject), true);
 
-    int i;
-    for (i = 0; i < refs.length; i++) {
-      PsiElement ref = refs[i].getElement();
+
+    for (PsiReference ref1 : refs) {
+      PsiElement ref = ref1.getElement();
       if (ref instanceof PsiMethod && ((PsiMethod)ref).isConstructor()) {
-        DefaultConstructorImplicitUsageInfo implicitUsageInfo = new DefaultConstructorImplicitUsageInfo((PsiMethod)ref, myMethodToSearchFor);
+        DefaultConstructorImplicitUsageInfo implicitUsageInfo =
+          new DefaultConstructorImplicitUsageInfo((PsiMethod)ref, myMethodToSearchFor);
         result.add(implicitUsageInfo);
       }
       else if (ref instanceof PsiClass) {
@@ -149,15 +143,14 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
     if (myReplaceAllOccurences) {
       final OccurenceManager occurenceManager;
-      if(myLocalVariable == null) {
+      if (myLocalVariable == null) {
         occurenceManager = new ExpressionOccurenceManager(myExpressionToSearch, myMethodToReplaceIn, null);
-      } else {
+      }
+      else {
         occurenceManager = new LocalVariableOccurenceManager(myLocalVariable, null);
       }
       PsiElement[] exprs = occurenceManager.getOccurences();
-      for (i = 0; i < exprs.length; i++) {
-        PsiElement expr = exprs[i];
-
+      for (PsiElement expr : exprs) {
         result.add(new InternalUsageInfo(expr));
       }
     }
@@ -306,7 +299,6 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       PsiElementFactory factory = myManager.getElementFactory();
 
       PsiType initializerType = getInitializerType(myForcedType, myParameterInitializer, myLocalVariable);
-
 
       // Converting myParameterInitializer
       if (myParameterInitializer == null) {
@@ -465,8 +457,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       return;
     }
 
-    PsiCallExpression callExpression =
-            RefactoringUtil.getCallExpressionByMethodReference((PsiJavaCodeReferenceElement) usage.getElement());
+    PsiCallExpression callExpression = RefactoringUtil.getCallExpressionByMethodReference((PsiJavaCodeReferenceElement) usage.getElement());
     PsiExpressionList argList = callExpression.getArgumentList();
     PsiExpression[] oldArgs = argList.getExpressions();
 
@@ -518,41 +509,41 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
 
   private class OldReferencesResolver {
-    private PsiCallExpression myContext;
-    private PsiExpression myExpr;
-    private HashMap<PsiExpression,String> myTempVars;
-    private PsiExpression myInstanceRef;
-    private PsiExpression[] myActualArgs;
+    private final PsiCallExpression myContext;
+    private final PsiExpression myExpr;
+    private final HashMap<PsiExpression,String> myTempVars;
+    private final PsiExpression myInstanceRef;
+    private final PsiExpression[] myActualArgs;
     private final int myReplaceFieldsWithGetters;
 
-    public OldReferencesResolver(PsiCallExpression context, PsiExpression expr, int replaceFieldsWithGetters) {
+    public OldReferencesResolver(PsiCallExpression context, PsiExpression expr, int replaceFieldsWithGetters) throws IncorrectOperationException {
       myContext = context;
       myExpr = expr;
       myTempVars = new HashMap<PsiExpression, String>();
       myActualArgs = myContext.getArgumentList().getExpressions();
+      if(myActualArgs.length < myMethodToReplaceIn.getParameterList().getParametersCount()) {
+        LOG.error(myContext.getText() + "\n-----\n" + myMethodToReplaceIn.getText());
+      }
       PsiElementFactory factory = myManager.getElementFactory();
+      PsiExpression instanceRef;
       if(myContext instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)myContext;
         final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
-        myInstanceRef = methodExpression.getQualifierExpression();
-        if (myInstanceRef == null) {
+        instanceRef = methodExpression.getQualifierExpression();
+        if (instanceRef == null) {
           final PsiClass thisResolveClass = RefactoringUtil.getThisResolveClass(methodExpression);
           if (thisResolveClass != null &&
               !(thisResolveClass instanceof PsiAnonymousClass) &&
               !thisResolveClass.equals(PsiTreeUtil.getParentOfType(methodExpression, PsiClass.class))) {
             //Qualified this needed
-            try {
-              myInstanceRef = factory.createExpressionFromText(thisResolveClass.getName() + ".this", null);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
+            instanceRef = factory.createExpressionFromText(thisResolveClass.getName() + ".this", null);
           }
         }
       }
       else {
-        myInstanceRef = null;
+        instanceRef = null;
       }
+      myInstanceRef = instanceRef;
       myReplaceFieldsWithGetters = replaceFieldsWithGetters;
     }
 
