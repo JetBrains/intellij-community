@@ -84,6 +84,9 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
   public Boolean INTRODUCE_LOCAL_CREATE_FINALS = null;
   public Boolean INTRODUCE_PARAMETER_CREATE_FINALS = null;
 
+  @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_INHERITORS = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_VARIABLES = true;
+
   public static RefactoringSettings getInstance() {
     return ApplicationManager.getApplication().getComponent(RefactoringSettings.class);
   }
@@ -242,5 +245,21 @@ public class RefactoringSettings implements JDOMExternalizable, ApplicationCompo
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
+  }
+
+  public boolean isToRenameInheritors(final PsiElement psiElement) {
+    return RENAME_INHERITORS;
+  }
+
+  public boolean isToRenameVariables(PsiElement element) {
+    return RENAME_VARIABLES;
+  }
+
+  public void setRenameInheritors(final boolean RENAME_INHERITORS) {
+    this.RENAME_INHERITORS = RENAME_INHERITORS;
+  }
+
+  public void setRenameVariables(final boolean RENAME_VARIABLES) {
+    this.RENAME_VARIABLES = RENAME_VARIABLES;
   }
 }

@@ -56,6 +56,7 @@ public class RenameDialog extends RefactoringDialog {
   private PsiElement myPsiElement;
   private final PsiElement myNameSuggestionContext;
   private static final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
+  private boolean myToRenameVariables;
 
   public RenameDialog(Project project,
                       PsiElement psiElement,
@@ -72,10 +73,10 @@ public class RenameDialog extends RefactoringDialog {
 
     myNameLabel.setText(RefactoringBundle.message("rename.0.and.its.usages.to", getFullName()));
     boolean toSearchInComments = isToSearchInCommentsForRename();
-    boolean toSearchForTextOccurences = isToSearchForTextOccurencesForRename();
     myCbSearchInComments.setSelected(toSearchInComments);
 
     if (myCbSearchTextOccurences.isEnabled()) {
+      boolean toSearchForTextOccurences = isToSearchForTextOccurencesForRename();
       myCbSearchTextOccurences.setSelected(toSearchForTextOccurences);
     }
 
@@ -201,7 +202,7 @@ public class RenameDialog extends RefactoringDialog {
       }
       final String[] words = PsiNameHelper.splitNameIntoWords(name);
       if (VariableKind.STATIC_FINAL_FIELD.equals(kind)) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         for (int i = 0; i < words.length; i++) {
           String word = words[i];
           if (i > 0) buffer.append('_');
@@ -210,7 +211,7 @@ public class RenameDialog extends RefactoringDialog {
         return buffer.toString();
       }
       else {
-        StringBuffer buffer = new StringBuffer(prefix);
+        StringBuilder buffer = new StringBuilder(prefix);
         for (int i = 0; i < words.length; i++) {
           String word = words[i];
           final boolean prefixRequiresCapitalization = prefix.length() > 0 && !StringUtil.endsWithChar(prefix, '_');
@@ -253,6 +254,13 @@ public class RenameDialog extends RefactoringDialog {
 
   public boolean isSearchInComments() {
     return myCbSearchInComments.isSelected();
+  }
+  public boolean isToRenameInheritors() {
+    return RefactoringSettings.getInstance().isToRenameInheritors(myPsiElement);
+  }
+
+  public boolean isToRenameVariables() {
+    return RefactoringSettings.getInstance().isToRenameVariables(myPsiElement);
   }
 
   public boolean isSearchInNonJavaFiles() {
@@ -342,7 +350,7 @@ public class RenameDialog extends RefactoringDialog {
       gbConstraints.fill = GridBagConstraints.BOTH;
       myCbRenameVariables = new NonFocusableCheckBox();
       myCbRenameVariables.setText(RefactoringBundle.message("rename.variables"));
-      myCbRenameVariables.setSelected(true);
+      myCbRenameVariables.setSelected(isToRenameVariables());
       panel.add(myCbRenameVariables, gbConstraints);
 
       gbConstraints.insets = new Insets(4, 4, 4, 8);
@@ -352,7 +360,7 @@ public class RenameDialog extends RefactoringDialog {
       gbConstraints.fill = GridBagConstraints.BOTH;
       myCbRenameInheritors = new NonFocusableCheckBox();
       myCbRenameInheritors.setText(RefactoringBundle.message("rename.inheritors"));
-      myCbRenameInheritors.setSelected(true);
+      myCbRenameInheritors.setSelected(isToRenameInheritors());
       panel.add(myCbRenameInheritors, gbConstraints);
 
       String qName = ((PsiClass)myPsiElement).getQualifiedName();
@@ -391,6 +399,9 @@ public class RenameDialog extends RefactoringDialog {
     if (mySuggestedNameInfo != null) {
       mySuggestedNameInfo.nameChoosen(getNewName());
     }
+    settings.setRenameInheritors(myCbRenameInheritors.isSelected());
+    settings.setRenameVariables(myCbRenameVariables.isSelected());
+
     final RenameProcessor processor = new RenameProcessor(getProject(), myPsiElement, getNewName(), isSearchInComments(),
                                                           isSearchInNonJavaFiles());
     processor.setShouldRenameInheritors(shouldRenameInheritors());
