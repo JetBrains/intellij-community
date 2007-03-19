@@ -90,7 +90,7 @@ public abstract class ChangeListManager {
   public abstract void addFilesToIgnore(final IgnoredFileBean... ignoredFiles);
   public abstract void setFilesToIgnore(final IgnoredFileBean... ignoredFiles);
   public abstract IgnoredFileBean[] getFilesToIgnore();
-  public abstract boolean isIgnoredFile(VirtualFile file);
+  public abstract boolean isIgnoredFile(@NotNull VirtualFile file);
 
   @Nullable
   public abstract String getSwitchedBranch(VirtualFile file); 

@@ -1034,7 +1034,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     }
   }
 
-  public boolean isIgnoredFile(VirtualFile file) {
+  public boolean isIgnoredFile(@NotNull VirtualFile file) {
     synchronized(myFilesToIgnore) {
       if (myFilesToIgnore.size() == 0) {
         return false;
