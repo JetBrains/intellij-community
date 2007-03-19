@@ -25,6 +25,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -68,40 +69,26 @@ public class HtmlUtil {
   private static final Set<String> EMPTY_ATTRS_MAP = new THashSet<String>();
 
   static {
-    for (String aEMPTY_TAGS : EMPTY_TAGS) {
-      EMPTY_TAGS_MAP.add(aEMPTY_TAGS);
-    }
-    
-    for (String aEMPTY_ATTRS : EMPTY_ATTRS) {
-      EMPTY_ATTRS_MAP.add(aEMPTY_ATTRS);
-    }
-    
-    for (String optionalEndTag : OPTIONAL_END_TAGS) {
-      OPTIONAL_END_TAGS_MAP.add(optionalEndTag);
-    }
-
-    for (String blockTag : BLOCK_TAGS) {
-      BLOCK_TAGS_MAP.add(blockTag);
-    }
-
-    for (String blockTag : INLINE_ELEMENTS_CONTAINER) {
-      INLINE_ELEMENTS_CONTAINER_MAP.add(blockTag);
-    }
+    EMPTY_TAGS_MAP.addAll(Arrays.asList(EMPTY_TAGS));
+    EMPTY_ATTRS_MAP.addAll(Arrays.asList(EMPTY_ATTRS));
+    OPTIONAL_END_TAGS_MAP.addAll(Arrays.asList(OPTIONAL_END_TAGS));
+    BLOCK_TAGS_MAP.addAll(Arrays.asList(BLOCK_TAGS));
+    INLINE_ELEMENTS_CONTAINER_MAP.addAll(Arrays.asList(INLINE_ELEMENTS_CONTAINER));
   }
 
-  public static final boolean isSingleHtmlTag(String tagName) {
+  public static boolean isSingleHtmlTag(String tagName) {
     return EMPTY_TAGS_MAP.contains(tagName.toLowerCase());
 
   }
-  public static final boolean isSingleHtmlTagL(String tagName) {
+  public static boolean isSingleHtmlTagL(String tagName) {
     return EMPTY_TAGS_MAP.contains(tagName);
   }
 
-  public static final boolean isOptionalEndForHtmlTag(String tagName) {
+  public static boolean isOptionalEndForHtmlTag(String tagName) {
     return OPTIONAL_END_TAGS_MAP.contains(tagName.toLowerCase());
   }
 
-  public static final boolean isOptionalEndForHtmlTagL(String tagName) {
+  public static boolean isOptionalEndForHtmlTagL(String tagName) {
     return OPTIONAL_END_TAGS_MAP.contains(tagName);
   }
 
@@ -143,10 +130,7 @@ public class HtmlUtil {
         final XmlElementDescriptor parentDescriptor = ((HtmlTag)parent).getDescriptor();
 
         if (parentDescriptor!=descriptor && parentDescriptor!=null) {
-          final XmlElementDescriptor[] elementsDescriptors = parentDescriptor.getElementsDescriptors((XmlTag)parent);
-          for (int i = 0; i < elementsDescriptors.length; i++) {
-            final XmlElementDescriptor elementsDescriptor = elementsDescriptors[i];
-
+          for (final XmlElementDescriptor elementsDescriptor : parentDescriptor.getElementsDescriptors((XmlTag)parent)) {
             if (isHtmlBlockTag(elementsDescriptor.getName())) {
               variants.add(elementsDescriptor);
             }
