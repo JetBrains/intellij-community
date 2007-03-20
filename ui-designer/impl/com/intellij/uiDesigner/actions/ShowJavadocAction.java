@@ -49,7 +49,7 @@ public final class ShowJavadocAction extends AnAction {
 
     final JBPopup hint =
       JBPopupFactory.getInstance().createComponentPopupBuilder(tabbedPane.getComponent(), inspector)
-        .setDimensionServiceKey(JavaDocManager.JAVADOC_LOCATION_AND_SIZE, false)
+        .setDimensionServiceKey(aClass.getProject(), JavaDocManager.JAVADOC_LOCATION_AND_SIZE, false)
         .setResizable(true)
         .setMovable(true)
         .setRequestFocus(true)

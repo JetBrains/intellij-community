@@ -175,6 +175,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
     private boolean myMinimized;
     private String mySelectedTab;
     private double mySplitProportion;
+    private boolean myDetached;
 
     public ContentState(final String type) {
       myType = type;
@@ -188,6 +189,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
       if (split != null) {
         mySplitProportion = Double.valueOf(split);
       }
+      myDetached = "true".equalsIgnoreCase(element.getAttributeValue("detached"));
     }
 
     public boolean write(final Element element) {
@@ -197,6 +199,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
         element.setAttribute("selected", mySelectedTab);
       }
       element.setAttribute("split", new Double(mySplitProportion).toString());
+      element.setAttribute("detached", Boolean.valueOf(myDetached).toString());
       return true;
     }
 
@@ -226,6 +229,14 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
 
     public double getSplitProportion(double defaultValue) {
       return (mySplitProportion <= 0 || mySplitProportion >= 1) ? defaultValue : mySplitProportion;
+    }
+
+    public void setDetached(final boolean detached) {
+      myDetached = detached;
+    }
+
+    public boolean isDetached() {
+      return myDetached;
     }
   }
 }

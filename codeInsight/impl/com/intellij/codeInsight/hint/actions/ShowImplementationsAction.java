@@ -179,7 +179,7 @@ public class ShowImplementationsAction extends AnAction {
                     return false;
                   }
                 }, project)
-                .setDimensionServiceKey("ShowImplementationPopup", false)
+                .setDimensionServiceKey(project, "ShowImplementationPopup", false)
                 .setResizable(true)
                 .setMovable(true)
                 .setTitle(CodeInsightBundle.message("implementation.view.title", text)).createPopup();

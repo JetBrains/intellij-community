@@ -158,7 +158,7 @@ public class PopupChooserBuilder {
 
     myPopup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(contentPane, myChooserComponent)
-      .setDimensionServiceKey(myDimensionServiceKey, false)
+      .setDimensionServiceKey(null, myDimensionServiceKey, false)
       .setRequestFocus(myRequestFocus)
       .setResizable(myForceResizable)
       .setMovable(myForceMovable)

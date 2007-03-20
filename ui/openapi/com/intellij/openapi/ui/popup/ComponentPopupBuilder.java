@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -47,7 +48,7 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setForceHeavyweight(boolean forceHeavyweight);
 
   @NotNull
-  ComponentPopupBuilder setDimensionServiceKey(@NonNls final String dimensionServiceKey, final boolean useForXYLocation);
+  ComponentPopupBuilder setDimensionServiceKey(@Nullable final Project project, @NonNls final String dimensionServiceKey, final boolean useForXYLocation);
 
   @NotNull
   ComponentPopupBuilder setCancelCallback(final Computable<Boolean> shouldProceed);

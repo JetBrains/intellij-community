@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.components.panels.Wrapper;
@@ -110,7 +109,7 @@ public class ProcessPopup  {
     builder.setMovable(true);
     builder.setResizable(true);
     builder.setTitle(IdeBundle.message("progress.window.title"));
-    builder.setDimensionServiceKey("ProcessPopupWindow", true);
+    builder.setDimensionServiceKey(null, "ProcessPopupWindow", true);
     builder.setCancelOnClickOutside(false);
     builder.setRequestFocus(true);
 

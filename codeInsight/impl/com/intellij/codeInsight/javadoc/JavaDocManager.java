@@ -131,7 +131,7 @@ public class JavaDocManager implements ProjectComponent {
         }
       }, getProject(element))
       .setForceHeavyweight(true)
-      .setDimensionServiceKey(JAVADOC_LOCATION_AND_SIZE, false)
+      .setDimensionServiceKey(myProject, JAVADOC_LOCATION_AND_SIZE, false)
       .setResizable(true)
       .setMovable(true)
       .setTitle(CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText()))
@@ -291,7 +291,7 @@ public class JavaDocManager implements ProjectComponent {
         }
       }, project)
       .setForceHeavyweight(false)
-      .setDimensionServiceKey(JAVADOC_LOCATION_AND_SIZE, false)
+      .setDimensionServiceKey(project, JAVADOC_LOCATION_AND_SIZE, false)
       .setResizable(true)
       .setMovable(true)
       .setTitle(CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText()))

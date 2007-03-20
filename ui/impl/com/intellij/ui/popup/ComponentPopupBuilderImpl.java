@@ -103,9 +103,10 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   }
 
   @NotNull
-  public ComponentPopupBuilder setDimensionServiceKey(final String dimensionServiceKey, final boolean useForXYLocation) {
+  public ComponentPopupBuilder setDimensionServiceKey(final Project project, final String dimensionServiceKey, final boolean useForXYLocation) {
     myDimensionServiceKey = dimensionServiceKey;
     myUseDimSevriceForXYLocation = useForXYLocation;
+    myProject = project;
     return this;
   }
 
@@ -136,7 +137,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @NotNull
   public JBPopup createPopup() {
-    final JBPopupImpl popup = new JBPopupImpl(myComponent, myPrefferedFocusedComponent, myRequestFocus, myForceHeavyweight,
+    final JBPopupImpl popup = new JBPopupImpl(myProject, myComponent, myPrefferedFocusedComponent, myRequestFocus, myForceHeavyweight,
                                               myDimensionServiceKey, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null,
                                               myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton,
                                               myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,

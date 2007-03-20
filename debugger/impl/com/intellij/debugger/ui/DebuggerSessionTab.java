@@ -142,7 +142,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
         }
       });
     }
-    myContentUI = new DebuggerContentUI(this, ActionManager.getInstance(), DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName);
+    myContentUI = new DebuggerContentUI(this, getProject(), ActionManager.getInstance(), DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName);
     myViewsContentManager = getContentFactory().
       createContentManager(myContentUI, false, getProject());
 

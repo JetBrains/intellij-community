@@ -240,7 +240,7 @@ public class ValueHint {
           .setTitle(title)
           .setResizable(true)
           .setMovable(true)
-          .setDimensionServiceKey(DIMENSION_SERVICE_KEY, false)
+          .setDimensionServiceKey(myProject, DIMENSION_SERVICE_KEY, false)
           .createPopup();
 
         //Editor may be disposed before later invokator process this action
