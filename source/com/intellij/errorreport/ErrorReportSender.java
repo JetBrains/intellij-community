@@ -47,9 +47,6 @@ public class ErrorReportSender {
     private Throwable throwable;
     private ExceptionBean exceptionBean;
 
-    private ITask [] prepareTasks = null;
-    private ITask [] doTasks = null;
-
     public SendTask(final Project project, Throwable throwable) {
       myProject = project;
       this.throwable = throwable;
@@ -59,103 +56,56 @@ public class ErrorReportSender {
       return exceptionBean.getItnThreadId();
     }
 
-    public ITask [] getPrepareSteps () {
-      if (prepareTasks == null)
-        prepareTasks =  new ITask [] {
-          new ITask () {
-            private boolean checked = false;
-
-            public boolean isSuccessful() {
-              return checked;
-            }
-
-            public String getDescription() {
-              return DiagnosticBundle.message("error.report.step.check.new.eap");
-            }
-
-            public void run() {
-              try {
-                UpdateChecker.NewVersion newVersion = UpdateChecker.checkForUpdates();
-                if (newVersion != null) {
-                  throw new NewBuildException(Integer.toString(newVersion.getLatestBuild()));
-                }
-                checked = true;
-                exceptionBean = new ExceptionBean(throwable);
-              }
-              catch (NewBuildException e) {
-                throw new SendException(e);
-              }
-              catch (ConnectionException e) {
-                throw new SendException(e);
-              }
-            }
-          }
-        };
-      return prepareTasks;
-    }
-
-    public ITask [] getDoSteps () {
-      if (doTasks == null)
-        doTasks = new ITask [] {
-          new ITask () {
-            private boolean authorized = false;
-
-            public String getDescription() {
-              return DiagnosticBundle.message("error.report.step.authorize");
-            }
-
-            public boolean isSuccessful() {
-              return authorized;
-            }
-
-            public void run() {
-              errorBean.setExceptionHashCode(exceptionBean.getHashCode());
-
-              final Ref<Exception> err = new Ref<Exception>();
-              Runnable runnable = new Runnable() {
-                public void run() {
-                  try {
-                    HttpConfigurable.getInstance().prepareURL(PREPARE_URL);
-
-                    if (notifierBean.getItnLogin() != null && notifierBean.getItnLogin().length() > 0) {
-                      int threadId = ITNProxy.postNewThread(
-                        notifierBean.getItnLogin(),
-                        notifierBean.getItnPassword(),
-                        errorBean, exceptionBean,
-                        IdeaLogger.getOurCompilationTimestamp());
-                      exceptionBean.setItnThreadId(threadId);
-
-                      authorized = true;
-                    }
-                  }
-                  catch (Exception ex) {
-                    err.set(ex);
-                  }
-                }
-              };
-              if (myProject == null) {
-                runnable.run();
-              }
-              else {
-                ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable,
-                                                                                  DiagnosticBundle.message("title.submitting.error.report"),
-                                                                                  false, myProject);
-              }
-              if (!err.isNull()) {
-                throw new SendException(err.get());
-              }
-            }
-          }
-        };
-      return doTasks;
-    }
-
     public void setErrorBean(ErrorBean error) {
       errorBean = error;
     }
 
     public void setNotifierBean(NotifierBean notifierBean) {
       this.notifierBean = notifierBean;
+    }
+
+    public void checkNewBuild() throws NewBuildException, ConnectionException {
+      UpdateChecker.NewVersion newVersion = UpdateChecker.checkForUpdates();
+      if (newVersion != null) {
+        throw new NewBuildException(Integer.toString(newVersion.getLatestBuild()));
+      }
+      exceptionBean = new ExceptionBean(throwable);
+    }
+
+    public void sendReport() throws Exception {
+      errorBean.setExceptionHashCode(exceptionBean.getHashCode());
+
+      final Ref<Exception> err = new Ref<Exception>();
+      Runnable runnable = new Runnable() {
+        public void run() {
+          try {
+            HttpConfigurable.getInstance().prepareURL(PREPARE_URL);
+
+            if (notifierBean.getItnLogin() != null && notifierBean.getItnLogin().length() > 0) {
+              int threadId = ITNProxy.postNewThread(
+                notifierBean.getItnLogin(),
+                notifierBean.getItnPassword(),
+                errorBean, exceptionBean,
+                IdeaLogger.getOurCompilationTimestamp());
+              exceptionBean.setItnThreadId(threadId);
+            }
+          }
+          catch (Exception ex) {
+            err.set(ex);
+          }
+        }
+      };
+      if (myProject == null) {
+        runnable.run();
+      }
+      else {
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable,
+                                                                          DiagnosticBundle.message("title.submitting.error.report"),
+                                                                          false, myProject);
+      }
+      if (!err.isNull()) {
+        throw err.get();
+      }
     }
   }
 
@@ -165,19 +115,14 @@ public class ErrorReportSender {
     throws IOException, XmlRpcException, NewBuildException, ThreadClosedException {
 
     sendTask = new SendTask (project, exception);
-    TaskRunner prepareRunner = new TaskRunner(sendTask.getPrepareSteps());
 
     try {
-      prepareRunner.doTasks();
-    } catch (IOException e) {
+      sendTask.checkNewBuild();
+    }
+    catch (NewBuildException e) {
       throw e;
-    } catch (XmlRpcException e) {
-      throw e;
-    } catch (NewBuildException e) {
-      throw e;
-    } catch (ThreadClosedException e) {
-      throw e;
-    } catch (Throwable e) {
+    }
+    catch (Throwable e) {
       e.printStackTrace();
       throw new RuntimeException(e);
     }
@@ -188,10 +133,9 @@ public class ErrorReportSender {
 
     sendTask.setErrorBean (error);
     sendTask.setNotifierBean (notifierBean);
-    TaskRunner taskRunner = new TaskRunner(sendTask.getDoSteps());
 
     try {
-      taskRunner.doTasks();
+      sendTask.sendReport();
       return sendTask.getThreadId();
     } catch (IOException e) {
       throw e;
