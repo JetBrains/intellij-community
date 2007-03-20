@@ -9,11 +9,11 @@ import com.intellij.cvsSupport2.ui.Options;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.util.ui.OptionsDialog;
+import com.intellij.CvsBundle;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * author: lesya
@@ -72,19 +72,19 @@ public class RemoveLocallyFileOrDirectoryAction extends ActionOnSelectedElement 
       if (dialog.getFilesToRemove().isEmpty()) return CvsHandler.NULL;
       filesToBeRemoved = dialog.getFilesToRemove();
     }
-    return CommandCvsHandler.createRemoveFilesHandler(filesToBeRemoved);
+    return CommandCvsHandler.createRemoveFilesHandler(project, filesToBeRemoved);
   }
 
   protected Collection<File> getFilesToRemove(CvsContext context) {
-    Collection deletedFileNames = context.getDeletedFileNames();
+    Collection<String> deletedFileNames = context.getDeletedFileNames();
     ArrayList<File> result = new ArrayList<File>();
-    for (Iterator each = deletedFileNames.iterator(); each.hasNext();) {
-      result.add(new File((String)each.next()));
+    for (final String deletedFileName : deletedFileNames) {
+      result.add(new File(deletedFileName));
     }
     return result;
   }
 
   protected String getTitle(VcsContext context) {
-    return com.intellij.CvsBundle.message("operation.name.mark.as.deleted");
+    return CvsBundle.message("operation.name.mark.as.deleted");
   }
 }

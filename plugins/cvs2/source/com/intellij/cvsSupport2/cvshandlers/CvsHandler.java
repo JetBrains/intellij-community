@@ -8,6 +8,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesListener;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NonNls;
@@ -175,4 +176,7 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
     return null;
   }
 
+  public PerformInBackgroundOption getBackgroundOption(Project project) {
+    return null;
+  }
 }

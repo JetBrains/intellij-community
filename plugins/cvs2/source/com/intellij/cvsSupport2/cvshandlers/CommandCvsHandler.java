@@ -35,10 +35,12 @@ import com.intellij.cvsSupport2.errorHandling.InvalidModuleDescriptionException;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,6 +67,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
 
   private final boolean myCanBeCanceled;
   protected boolean myIsCanceled = false;
+  private PerformInBackgroundOption myBackgroundOption;
 
   public boolean login(ModalityContext executor) throws CannotFindCvsRootException {
     return myCvsOperation.login(executor);
@@ -88,8 +91,20 @@ public class CommandCvsHandler extends AbstractCvsHandler {
     this(title, cvsOperation, FileSetToBeUpdated.EMPTY);
   }
 
+  public CommandCvsHandler(final String title,
+                           final CvsOperation operation,
+                           final FileSetToBeUpdated files,
+                           final PerformInBackgroundOption backgroundOption) {
+    this(title, operation, files);
+    myBackgroundOption = backgroundOption;
+  }
+
   public boolean canBeCanceled() {
     return myCanBeCanceled;
+  }
+
+  public PerformInBackgroundOption getBackgroundOption(final Project project) {
+    return myBackgroundOption;
   }
 
   @Override protected boolean runInReadThread() {
@@ -169,31 +184,35 @@ public class CommandCvsHandler extends AbstractCvsHandler {
     return result;
   }
 
-  public static CvsHandler createAddFilesHandler(Collection addedRoots) {
+  public static CvsHandler createAddFilesHandler(Collection<AddedFileInfo> addedRoots) {
     AddFilesOperation operation = new AddFilesOperation();
     ArrayList<AddedFileInfo> addedFileInfo = new ArrayList<AddedFileInfo>();
-    for (final Object addedRoot : addedRoots) {
-      AddedFileInfo info = (AddedFileInfo)addedRoot;
+    for (final AddedFileInfo info : addedRoots) {
       info.clearAllCvsAdminDirectoriesInIncludedDirectories();
       addedFileInfo.addAll(info.collectAllIncludedFiles());
     }
 
     ArrayList<VirtualFile> addedFiles = new ArrayList<VirtualFile>();
+    Project project = null;
 
     for (AddedFileInfo info : addedFileInfo) {
       addedFiles.add(info.getFile());
       operation.addFile(info.getFile(), info.getKeywordSubstitution());
+      project = info.getProject();
     }
     return new CommandCvsHandler(CvsBundle.message("action.name.add"), operation,
-                                 FileSetToBeUpdated.selectedFiles(addedFiles.toArray(new VirtualFile[addedFiles.size()])));
+                                 FileSetToBeUpdated.selectedFiles(addedFiles.toArray(new VirtualFile[addedFiles.size()])),
+                                 VcsConfiguration.getInstance(project).getAddRemoveOption());
   }
 
-  public static CvsHandler createRemoveFilesHandler(Collection<File> files) {
+  public static CvsHandler createRemoveFilesHandler(Project project, Collection<File> files) {
     RemoveFilesOperation operation = new RemoveFilesOperation();
     for (final File file : files) {
       operation.addFile(file.getPath());
     }
-    return new CommandCvsHandler(CvsBundle.message("action.name.remove"), operation, FileSetToBeUpdated.selectedFiles(getAdminDirectoriesFor(files)));
+    return new CommandCvsHandler(CvsBundle.message("action.name.remove"), operation,
+                                 FileSetToBeUpdated.selectedFiles(getAdminDirectoriesFor(files)),
+                                 VcsConfiguration.getInstance(project).getAddRemoveOption());
   }
 
   private static VirtualFile[] getAdminDirectoriesFor(Collection<File> files) {

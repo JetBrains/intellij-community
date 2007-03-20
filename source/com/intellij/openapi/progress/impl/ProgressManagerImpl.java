@@ -162,12 +162,19 @@ public class ProgressManagerImpl extends ProgressManager {
   }
 
   public static boolean runProcessWithProgressSynchronously(final Task task) {
-    return ((ApplicationEx)ApplicationManager.getApplication())
+    final boolean result = ((ApplicationEx)ApplicationManager.getApplication())
       .runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           task.run(ProgressManager.getInstance().getProgressIndicator());
         }
       }, task.getTitle(), task.isCancellable(), task.getProject());
+    if (result) {
+      task.onSuccess();
+    }
+    else {
+      task.onCancel();
+    }
+    return result;
   }
 
   public void runProcessWithProgressAsynchronously(@NotNull Project project,

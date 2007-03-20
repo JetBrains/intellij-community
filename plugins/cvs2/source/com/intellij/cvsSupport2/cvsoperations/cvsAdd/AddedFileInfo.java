@@ -86,6 +86,10 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
     return myIncluded;
   }
 
+  public Project getProject() {
+    return myProject;
+  }
+
   public void setIncluded(boolean aBoolean) {
 
     if (myIncluded == aBoolean) return;

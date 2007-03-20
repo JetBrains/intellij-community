@@ -20,9 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsException;
@@ -111,7 +109,7 @@ public class CvsOperationExecutor {
       }
     };
 
-    Runnable cvsAction = new Runnable() {
+    final Runnable cvsAction = new Runnable() {
       public void run() {
         try {
           if (handler == CvsHandler.NULL) return;
@@ -148,10 +146,25 @@ public class CvsOperationExecutor {
       myExecutor.runInDispatchThread(finish);
     }
     else {
-      if (ProgressManager.getInstance().runProcessWithProgressSynchronously(cvsAction, handler.getTitle(), handler.canBeCanceled(), myProject)) {
-        finish.run();
-      }
+      PerformInBackgroundOption backgroundOption = handler.getBackgroundOption(myProject);
+      if (backgroundOption != null) {
+        Task.ConditionalModal task = new Task.ConditionalModal(myProject, handler.getTitle(), handler.canBeCanceled(), backgroundOption) {
+          public void run(final ProgressIndicator indicator) {
+            cvsAction.run();
+          }
 
+          @Override
+          public void onSuccess() {
+            finish.run();
+          }
+        };
+        ProgressManager.getInstance().run(task);
+      }
+      else {
+        if (ProgressManager.getInstance().runProcessWithProgressSynchronously(cvsAction, handler.getTitle(), handler.canBeCanceled(), myProject)) {
+          finish.run();
+        }
+      }
     }
   }
 
