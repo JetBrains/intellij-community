@@ -337,7 +337,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     presentation.setDescription(loadDescriptionForElement(element, bundle, id, ACTION_ELEMENT_NAME));
 
     // icon
-    setIcon(element.getAttributeValue(ICON_ATTR_NAME), className, loader, presentation);
+    setIcon(element.getAttributeValue(ICON_ATTR_NAME), className, loader, presentation, pluginId);
 
     // process all links and key bindings if any
     for (final Object o : element.getChildren()) {
@@ -365,20 +365,31 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     return stub;
   }
 
-  private static void setIcon(final String iconPath, final String className, final ClassLoader loader, final Presentation presentation) {
+  private static void setIcon(final String iconPath, final String className, final ClassLoader loader, final Presentation presentation,
+                              final PluginId pluginId) {
     if (iconPath != null) {
       try {
         final Class actionClass = Class.forName(className, true, loader);
-        presentation.setIcon(IconLoader.getIcon(iconPath, actionClass));
+        setIconFromClass(actionClass, iconPath, className, presentation, pluginId);
       }
       catch (ClassNotFoundException ignored) {
-        //try to find icon in idea class path
-        presentation.setIcon(IconLoader.getIcon(iconPath));
+        setIconFromClass(null, iconPath, className, presentation, pluginId);
       }
       catch (NoClassDefFoundError ignored) {
-        //try to find icon in idea class path
-        presentation.setIcon(IconLoader.getIcon(iconPath));
+        setIconFromClass(null, iconPath, className, presentation, pluginId);
       }
+    }
+  }
+
+  private static void setIconFromClass(final Class actionClass, final String iconPath, final String className,
+                                       final Presentation presentation, final PluginId pluginId) {
+    //try to find icon in idea class path
+    final Icon icon = IconLoader.findIcon(iconPath, actionClass);
+    if (icon == null) {
+     reportActionError(pluginId, "Icon cannot be found in '" + iconPath + "', action class='" + className + "'");
+    }
+    else {
+      presentation.setIcon(icon);
     }
   }
 
@@ -453,7 +464,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       String description = loadDescriptionForElement(element, bundle, id, GROUP_ELEMENT_NAME);
       presentation.setDescription(description);
       // icon
-      setIcon(element.getAttributeValue(ICON_ATTR_NAME), className, loader, presentation);
+      setIcon(element.getAttributeValue(ICON_ATTR_NAME), className, loader, presentation, pluginId);
       // popup
       String popup = element.getAttributeValue(POPUP_ATTR_NAME);
       if (popup != null) {
