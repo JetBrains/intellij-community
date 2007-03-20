@@ -6,11 +6,8 @@ import com.intellij.codeInsight.intention.impl.AddAnnotationFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -19,12 +16,10 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author cdr
@@ -76,7 +71,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
     UndoManager.getInstance(project).markDocumentForUndo(method.getContainingFile());
   }
 
-  protected int annotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
+  public int annotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
     String implement = !method.hasModifierProperty(PsiModifier.ABSTRACT) && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)
                   ? InspectionsBundle.message("inspection.annotate.quickfix.implements")
                   : InspectionsBundle.message("inspection.annotate.quickfix.overrides");
