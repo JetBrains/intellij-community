@@ -63,9 +63,12 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType POSTFIX_EXPRESSION = new GroovyElementType("Postfix expression");
 
 
-
-
   GroovyElementType PRIMARY_EXXPRESSION = new GroovyElementType("Primary expressions");
+
+  // Lists & maps
+  GroovyElementType LIST = new GroovyElementType("List");
+  GroovyElementType MAP = new GroovyElementType("Map");
+
 
   // GStrings
   GroovyElementType GSTRING = new GroovyElementType("GString");

@@ -18,6 +18,11 @@ public class PrimaryExpression implements GroovyElementTypes {
     if (ParserUtils.getToken(builder, kTHIS)) return PRIMARY_EXXPRESSION;
     if (ParserUtils.getToken(builder, kSUPER)) return PRIMARY_EXXPRESSION;
 
+    if (mLBRACK.equals(builder.getTokenType())){
+      ListOrMapConstructorExpression.parse(builder);
+      return PRIMARY_EXXPRESSION;
+    }
+
     if (TokenSets.CONSTANTS.contains(builder.getTokenType())){
       ParserUtils.eatElement(builder, LITERAL);
       return PRIMARY_EXXPRESSION;
