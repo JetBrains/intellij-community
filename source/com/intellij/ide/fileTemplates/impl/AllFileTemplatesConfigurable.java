@@ -6,6 +6,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -13,11 +14,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,8 +28,6 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.text.MessageFormat;
 import java.util.*;
-
-import gnu.trove.THashSet;
 
 /*
  * @author: MYakovlev
@@ -328,7 +327,9 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
           fireListChanged();
         }
         catch (ConfigurationException e) {
-          LOG.error(e);
+          myCurrentTab.selectTemplate(prevTemplate);
+          Messages.showErrorDialog(myMainPanel, e.getMessage(), IdeBundle.message("title.cannot.save.current.template"));
+          return;
         }
       }
       if (selectedValue == null) {
