@@ -13,4 +13,8 @@ public class GrAnnotationDefinitionImpl extends GroovyPsiElementImpl implements 
   public GrAnnotationDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }
+
+  public String toString() {
+    return "annotation definition";
+  }
 }

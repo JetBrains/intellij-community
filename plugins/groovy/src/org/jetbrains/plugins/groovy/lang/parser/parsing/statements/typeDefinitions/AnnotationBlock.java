@@ -10,6 +10,7 @@ import com.intellij.lang.PsiBuilder;
  */
 public class AnnotationBlock implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
+    //see also InterfaceBlock, EnumBlock, AnnotationBlock
     return WRONGWAY;
   }
 }

@@ -7,7 +7,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import com.intellij.lang.PsiBuilder;
 
 /**
- * Main class for any general expression parsing
+ * Main classdef for any general expression parsing
  *
  * @author Ilya.Sergey
  */

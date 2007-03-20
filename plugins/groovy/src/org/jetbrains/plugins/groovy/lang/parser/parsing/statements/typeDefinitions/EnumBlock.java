@@ -10,6 +10,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
  */
 public class EnumBlock implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
+    //see also InterfaceBlock, EnumBlock, AnnotationBlock
     return WRONGWAY;
   }
 }

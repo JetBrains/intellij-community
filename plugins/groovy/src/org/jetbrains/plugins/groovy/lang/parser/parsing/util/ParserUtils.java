@@ -6,7 +6,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
 /**
- * Utility class, that contains various useful methods for
+ * Utility classdef, that contains various useful methods for
  * parser needs.
  *
  * @author Ilya Sergey

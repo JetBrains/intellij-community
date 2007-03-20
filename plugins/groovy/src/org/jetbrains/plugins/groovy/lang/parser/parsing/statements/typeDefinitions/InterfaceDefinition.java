@@ -12,15 +12,11 @@ import com.intellij.lang.PsiBuilder;
  */
 public class InterfaceDefinition implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
-   PsiBuilder.Marker interfaceDefMarker = builder.mark();
-
     if (!ParserUtils.getToken(builder, kINTERFACE)) {
-      interfaceDefMarker.rollbackTo();
       return WRONGWAY;
     }
 
     if (!ParserUtils.getToken(builder, mIDENT)) {
-      interfaceDefMarker.rollbackTo();
       return WRONGWAY;
     }
 
@@ -29,16 +25,13 @@ public class InterfaceDefinition implements GroovyElementTypes {
     TypeParameters.parse(builder);
 
     if (tWRONG_SET.contains(InterfaceExtends.parse(builder))) {
-      interfaceDefMarker.rollbackTo();
       return WRONGWAY;
     }
 
-    if (tWRONG_SET.contains(ClassBlock.parse(builder))) {
-      interfaceDefMarker.rollbackTo();
+    if (tWRONG_SET.contains(InterfaceBlock.parse(builder))) {
       return WRONGWAY;
     }
 
-    interfaceDefMarker.done(CLASS_DEFINITION);
-    return CLASS_DEFINITION;
+    return INTERFACE_DEFINITION;
   }
 }

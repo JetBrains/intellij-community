@@ -13,4 +13,8 @@ public class GrClassDefinitionImpl extends GroovyPsiElementImpl implements GrCla
   public GrClassDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }
+
+  public String toString() {
+    return "class definition";
+  }
 }

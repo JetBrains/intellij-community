@@ -11,29 +11,29 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class AnnotationDefinition implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
-    PsiBuilder.Marker adMarker = builder.mark();
+//    PsiBuilder.Marker adMarker = builder.mark();
 
     if (!ParserUtils.getToken(builder, mAT)) {
-      adMarker.rollbackTo();
+//      adMarker.rollbackTo();
       return WRONGWAY;
     }
 
     if (!ParserUtils.getToken(builder, kINTERFACE)) {
-      adMarker.rollbackTo();
+//      adMarker.rollbackTo();
       return WRONGWAY;
     }
 
     if (!ParserUtils.getToken(builder, mIDENT)) {
-      adMarker.rollbackTo();
+//      adMarker.rollbackTo();
       return WRONGWAY;
     }
 
     if (tWRONG_SET.contains(AnnotationBlock.parse(builder))) {
-      adMarker.rollbackTo();
+//      adMarker.rollbackTo();
       return WRONGWAY;
     }
 
-    adMarker.done(ANNOTATION_BLOCK);
+//    adMarker.done(ANNOTATION_BLOCK);
     return ANNOTATION_BLOCK;
   }
 }

@@ -1,0 +1,11 @@
+interface a {}
+-----
+Groovy script
+  interface definition
+    PsiElement(interface)('interface')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    interface block
+      PsiElement({)('{')
+      PsiElement(})('}')

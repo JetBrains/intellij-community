@@ -72,7 +72,7 @@ public class DeclarationStart implements GroovyElementTypes {
 
 
     if (!ParserUtils.getToken(builder, mLBRACK, GroovyBundle.message("lbrack.expected"))) {
-      btm.drop();
+      btm.rollbackTo();
       return WRONGWAY;
     }
 

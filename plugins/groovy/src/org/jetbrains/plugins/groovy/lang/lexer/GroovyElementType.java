@@ -4,7 +4,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
- * Main class for Groovy element types, such as lexems or AST nodes
+ * Main classdef for Groovy element types, such as lexems or AST nodes
  *
  * @author Ilya Sergey
  */

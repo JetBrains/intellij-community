@@ -1,21 +1,33 @@
 package org.jetbrains.plugins.groovy.lang.parser;
 
-import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging.GrPackageDefinitionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrIdentifierImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrRelationalExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.*;
+import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.auxilary.GrBalancedBracketsImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrIdentifierImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrAssignmentExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrConditionalExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrPowerExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrShiftExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrRelationalExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrAnnotationDefinitionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrClassDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.fields.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.blocks.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.auxilary.GrBalancedBracketsImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportEndImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportQualIdImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportSelectorImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportStatementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging.GrPackageDefinitionImpl;
 
 /**
  * Creates Groovy PSI element by given AST node
@@ -35,6 +47,9 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
 
     //Identifiers
     if (elem.equals(IDENTIFIER)) return new GrIdentifierImpl(node);
+
+    if (elem.equals(MODIFIER)) return new GrModifierImpl(node);
+    if (elem.equals(MODIFIERS)) return new GrModifiersImpl(node);
 
     // Imports
     if (elem.equals(IMPORT_STATEMENT)) return new GrImportStatementImpl(node);
@@ -60,10 +75,16 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(ANNOTATION_DEFINITION)) return new GrAnnotationDefinitionImpl(node);
 
     //blocks
-    if (elem.equals(CLASS_DEFINITION)) return new GrClassDefinitionImpl(node);
-    if (elem.equals(INTERFACE_DEFINITION)) return new GrInterfaceDefinitionImpl(node);
-    if (elem.equals(ENUM_DEFINITION)) return new GrEnumDefinitionImpl(node);
-    if (elem.equals(ANNOTATION_DEFINITION)) return new GrAnnotationDefinitionImpl(node);
+    if (elem.equals(CLASS_BLOCK)) return new GrClassBlockImpl(node);
+    if (elem.equals(INTERFACE_BLOCK)) return new GrInterfaceBlockImpl(node);
+    if (elem.equals(ENUM_BLOCK)) return new GrEnumBlockImpl(node);
+    if (elem.equals(ANNOTATION_BLOCK)) return new GrAnnotationBlockImpl(node);
+
+    //fields
+    if (elem.equals(CLASS_FIELD)) return new GrClassFieldImpl(node);
+    if (elem.equals(INTERFACE_FIELD)) return new GrInterfaceFieldImpl(node);
+    if (elem.equals(ENUM_FIELD)) return new GrEnumFieldImpl(node);
+    if (elem.equals(ANNOTATION_FIELD)) return new GrAnnotationFieldImpl(node);
 
     //expressions
     if (elem.equals(CONDITIONAL_EXPRESSION)) return new GrConditionalExprImpl(node);

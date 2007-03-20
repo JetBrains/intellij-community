@@ -1,11 +1,10 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers;
 
+import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.GroovyBundle;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.PsiBuilder;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -26,7 +25,7 @@ public class Modifiers implements GroovyElementTypes {
       ParserUtils.eatElement(builder, kDEF);
 
       ParserUtils.getToken(builder, mNLS);
-      modifiersMarker.done(MODIFIER);
+      modifiersMarker.drop();
       return MODIFIER;
     }
 
@@ -37,19 +36,26 @@ public class Modifiers implements GroovyElementTypes {
 
     if (!(ANNOTATION.equals(annotation) || MODIFIER.equals(modifier))) {
       modifiersMarker.rollbackTo();
-      builder.error(GroovyBundle.message("annotation.or.modifier.expected"));
+//      builder.error(GroovyBundle.message("annotation.or.modifier.expected"));
       return WRONGWAY;
     }
 
+    boolean moreThanOneModifier = false;
     while(ANNOTATION.equals(annotation) || MODIFIER.equals(modifier)) {
       annotation = Annotation.parse(builder);
       modifier = Modifier.parse(builder);
 
       ParserUtils.getToken(builder, mNLS);
+
+      moreThanOneModifier = true;
     }
 
-    modifiersMarker.done(MODIFIERS);
-
-    return MODIFIERS;
+    if (moreThanOneModifier) {
+      modifiersMarker.done(MODIFIERS);
+      return MODIFIERS;
+    } else {
+      modifiersMarker.drop();
+      return MODIFIER;
+    }
   }
 }

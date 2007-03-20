@@ -13,4 +13,8 @@ public class GrEnumDefinitionImpl extends GroovyPsiElementImpl implements GrEnum
   public GrEnumDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }
+
+  public String toString() {
+    return "enumeration definition";
+  }
 }

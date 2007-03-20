@@ -12,22 +12,22 @@ import com.intellij.lang.PsiBuilder;
  */
 
 /*
- * ClassDefinition ::= class IDENT nls [TypeParameters] superClassClause implementsClause classBlock
+ * ClassDefinition ::= classdef IDENT nls [TypeParameters] superClassClause implementsClause classBlock
  */
   
 public class ClassDefinition implements GroovyElementTypes {
   private static boolean showErrors = false;
 
   public static IElementType parse(PsiBuilder builder) {
-    PsiBuilder.Marker classDefMarker = builder.mark();
+//    PsiBuilder.Marker classDefMarker = builder.mark();
 
     if (!ParserUtils.getToken(builder, kCLASS)) {
-      classDefMarker.rollbackTo();
+//      classDefMarker.rollbackTo();
       return WRONGWAY;
     }
 
     if (!ParserUtils.getToken(builder, mIDENT)) {
-      classDefMarker.rollbackTo();
+//      classDefMarker.rollbackTo();
       return WRONGWAY;
     }
 
@@ -36,21 +36,21 @@ public class ClassDefinition implements GroovyElementTypes {
     TypeParameters.parse(builder);
 
     if (tWRONG_SET.contains(SuperClassClause.parse(builder))) {
-      classDefMarker.rollbackTo();
+//      classDefMarker.rollbackTo();
       return WRONGWAY;
     }
 
     if (tWRONG_SET.contains(ImplementsClause.parse(builder))) {
-      classDefMarker.rollbackTo();
+//      classDefMarker.rollbackTo();
       return WRONGWAY;
     }
 
     if (tWRONG_SET.contains(ClassBlock.parse(builder))) {
-      classDefMarker.rollbackTo();
+//      classDefMarker.rollbackTo();
       return WRONGWAY;
     }
 
-    classDefMarker.done(CLASS_DEFINITION);
+//    classDefMarker.done(CLASS_DEFINITION);
     return CLASS_DEFINITION;
   }
 }

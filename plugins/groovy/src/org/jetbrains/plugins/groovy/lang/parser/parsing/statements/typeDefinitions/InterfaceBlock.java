@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions;
 
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.PsiBuilder;
 
@@ -10,6 +12,30 @@ import com.intellij.lang.PsiBuilder;
  */
 public class InterfaceBlock implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
-   return WRONGWAY;
+    //see also InterfaceBlock, EnumBlock, AnnotationBlock
+   PsiBuilder.Marker ibMarker = builder.mark();
+
+    if (!ParserUtils.getToken(builder, mLCURLY)){
+      ibMarker.rollbackTo();
+      return WRONGWAY;
+    }
+
+    InterfaceField.parse(builder);
+
+    IElementType sep = Separators.parse(builder);
+
+    while(!tWRONG_SET.contains(sep)){
+      InterfaceField.parse(builder);
+
+      sep = Separators.parse(builder);
+    }
+
+    if (!ParserUtils.getToken(builder, mRCURLY)){
+      ibMarker.rollbackTo();
+      return WRONGWAY;
+    }
+
+    ibMarker.done(INTERFACE_BLOCK);
+    return INTERFACE_BLOCK;
   }
 }

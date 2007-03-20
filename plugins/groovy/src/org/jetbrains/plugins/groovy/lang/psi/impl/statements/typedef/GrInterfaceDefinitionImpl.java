@@ -13,4 +13,8 @@ public class GrInterfaceDefinitionImpl extends GroovyPsiElementImpl implements G
   public GrInterfaceDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }
+
+  public String toString() {
+    return "interface definition";
+  }
 }

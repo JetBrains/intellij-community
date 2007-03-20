@@ -13,4 +13,8 @@ public class GrModifiersImpl extends GroovyPsiElementImpl implements GrModifiers
   public GrModifiersImpl(@NotNull ASTNode node) {
     super(node);
   }
+
+  public String toString() {
+    return "modifiers";
+  }
 }

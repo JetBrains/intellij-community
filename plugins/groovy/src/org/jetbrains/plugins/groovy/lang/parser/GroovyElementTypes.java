@@ -72,6 +72,16 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType ENUM_DEFINITION = new GroovyElementType("enumeration definition"); //node
   GroovyElementType ANNOTATION_DEFINITION = new GroovyElementType("annotation definition"); //node
 
+  GroovyElementType CLASS_INTERFACE_TYPE = new GroovyElementType("class or interface type"); //node
+  GroovyElementType IMPLEMENTS_CLAUSE = new GroovyElementType("implements clause"); //node
+  GroovyElementType INTERFACE_EXTENDS_CLAUSE = new GroovyElementType("interface extends clause"); //node
+  GroovyElementType SUPER_CLASS_CLAUSE = new GroovyElementType("super class clause"); //node
+
+  GroovyElementType CLASS_FIELD = new GroovyElementType("class field"); //node
+  GroovyElementType INTERFACE_FIELD = new GroovyElementType("interface field"); //node
+  GroovyElementType ANNOTATION_FIELD = new GroovyElementType("annotation field"); //node
+  GroovyElementType ENUM_FIELD = new GroovyElementType("enumeration field"); //node
+
   //blocks
   GroovyElementType CLASS_BLOCK = new GroovyElementType("class block"); //node
   GroovyElementType INTERFACE_BLOCK = new GroovyElementType("interface block"); //node
