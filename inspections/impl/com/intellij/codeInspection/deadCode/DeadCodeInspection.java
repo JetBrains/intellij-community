@@ -344,6 +344,8 @@ public class DeadCodeInspection extends FilteringInspectionTool {
                 for (PsiMethod psiMethod : psiMethods) {
                   getEntryPointsManager().addEntryPoint(getRefManager().getReference(psiMethod), false);
                 }
+              } else if (psiClass.isEnum()) {
+                getEntryPointsManager().addEntryPoint(aClass, false);
               } else {
                 super.visitClass(aClass);
               }
