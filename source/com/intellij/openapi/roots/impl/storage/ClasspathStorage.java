@@ -5,6 +5,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -154,11 +155,10 @@ abstract public class ClasspathStorage implements StateStorage {
     }
   }
 
-  public static boolean checkCompatibility(final ModifiableRootModel model, final String storageID) {
-    if (EclipseClasspathStorage.ID.equals(storageID) && !EclipseClasspathStorage.checkCompatibility(model)) {
-      return false;
+  public static void assertCompatible(final ModifiableRootModel model, final String storageID) throws ConfigurationException {
+    if (EclipseClasspathStorage.ID.equals(storageID) ){
+        EclipseClasspathStorage.assertCompatible (model);
     }
-    return true;
   }
 
   protected static String getModuleDir(final Module module) {

@@ -312,14 +312,12 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
   }
 
   public void saveData() {
+  }
+
+  public void apply() throws ConfigurationException {
     final Module module = getModule();
     module.setSavePathsRelative(myRbRelativePaths.isSelected());
-    try {
-      myLanguageLevelConfigurable.apply();
-    }
-    catch (ConfigurationException e) {
-      //can't be
-    }
+    myLanguageLevelConfigurable.apply();
   }
 
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -74,6 +75,9 @@ public class ClasspathEditor extends ModuleElementsEditor {
     flushChangesToModel();
   }
 
+  public void apply () throws ConfigurationException {
+    setModuleClasspathFormat();
+  }
 
   public JComponent createComponentImpl() {
     myPanel = new ClasspathPanel(myProject, myModel, myModulesProvider);
@@ -138,20 +142,15 @@ public class ClasspathEditor extends ModuleElementsEditor {
     return ClasspathStorage.getStorageType(myModel.getModule());
   }
 
-  private void setModuleClasspathFormat() {
+  private void setModuleClasspathFormat() throws ConfigurationException {
+    final String storageID = getSelectedClasspathFormat();
+    ClasspathStorage.assertCompatible(myModel, storageID);
     if (isClasspathFormatModified()) {
-      final String storageID = getSelectedClasspathFormat();
-      if (ClasspathStorage.checkCompatibility(myModel, storageID)) {
-        ClasspathStorage.setStorageType(myModel.getModule(), storageID);
-      }
-      else {
-        updateClasspathFormat();
-      }
+      ClasspathStorage.setStorageType(myModel.getModule(), storageID);
     }
   }
 
   public void flushChangesToModel() {
-    setModuleClasspathFormat();
     List<OrderEntry> entries = myPanel.getEntries();
     myModel.rearrangeOrderEntries(entries.toArray(new OrderEntry[entries.size()]));
   }
