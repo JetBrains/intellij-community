@@ -278,7 +278,7 @@ public class FileTemplateConfigurable implements Configurable {
 
   // TODO: needs to be generalized someday for other profiles
   private static boolean isValidFilename(final String filename) {
-    if ( filename.contains("/") || filename.contains("\\")) {
+    if ( filename.contains("/") || filename.contains("\\") || filename.contains(":") ) {
       return false;
     }
     final File tempFile = new File (FileUtil.getTempDirectory() + File.separator + filename);
