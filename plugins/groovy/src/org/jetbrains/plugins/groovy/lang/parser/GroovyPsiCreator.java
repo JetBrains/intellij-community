@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrCondi
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrPowerExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrShiftExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrUnaryExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExprImpl;
@@ -101,6 +102,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(ADDITIVE_EXPRESSION)) return new GrAdditiveExprImpl(node);
     if (elem.equals(POWER_EXPRESSION)) return new GrPowerExprImpl(node);
     if (elem.equals(POWER_EXPRESSION_SIMPLE)) return new GrPowerExprImpl(node);
+    if (elem.equals(UNARY_EXPRESSION)) return new GrUnaryExprImpl(node);
 
 
     if (elem.equals(BALANCED_BRACKETS)) return new GrBalancedBracketsImpl(node);

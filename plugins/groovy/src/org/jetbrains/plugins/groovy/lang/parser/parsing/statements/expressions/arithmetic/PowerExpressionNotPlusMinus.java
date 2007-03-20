@@ -11,35 +11,6 @@ import com.intellij.lang.PsiBuilder;
  */
 public class PowerExpressionNotPlusMinus implements GroovyElementTypes {
 
-  /*
-    public static GroovyElementType parse(PsiBuilder builder) {
-
-      PsiBuilder.Marker marker = builder.mark();
-      GroovyElementType result = UnaryExpressionNotPlusMinus.parse(builder);
-      boolean flag = false;
-
-      if (!result.equals(WRONGWAY)) {
-        while (ParserUtils.getToken(builder, mSTAR_STAR) && !result.equals(WRONGWAY)) {
-          flag = true;
-          ParserUtils.getToken(builder, mNLS);
-          result = UnaryExpression.parse(builder);
-          if (result.equals(WRONGWAY)) {
-            builder.error(GroovyBundle.message("expression.expected"));
-          }
-        }
-      }
-
-      if (flag) {
-        marker.done(POWER_EXPRESSION_SIMPLE);
-        return POWER_EXPRESSION_SIMPLE;
-      } else {
-        marker.drop();
-      }
-
-      return result;
-
-    }
-  */
   public static GroovyElementType parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
