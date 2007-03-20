@@ -1235,6 +1235,14 @@
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
+    <group id="Debugger.ContentPopup">
+      <action id="Debugger.MaximizeContent" class="com.intellij.debugger.ui.content.MaximizeContentAction"/>
+      <action id="Debugger.HideContent" class="com.intellij.debugger.ui.content.HideContentAction"/>
+      <action id="Debugger.DetachContent" class="com.intellij.debugger.ui.content.DetachContentAction"/>
+      <separator/>
+      <action id="Debugger.RestoreContent" class="com.intellij.debugger.ui.content.RestoreContentAction"/>
+    </group>
+
 
     <group id="UsageView.Popup">
       <reference ref="EditSource"/>

@@ -2,6 +2,8 @@ package com.intellij.ui.tabs;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.GraphicsConfig;
 import com.intellij.util.ui.UIUtil;
@@ -37,6 +39,11 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
   private List<TabsListener> myTabListeners = new ArrayList<TabsListener>();
   private boolean myFocused;
 
+
+  private ActionGroup myPopupGroup;
+  private String myPopupPlace;
+  private TabInfo myPopupInfo;
+
   public TabsWithActions(ActionManager actionManager) {
     myActionManager = actionManager;
   }
@@ -65,6 +72,18 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     return addTab(info, -1);
   }
 
+  public ActionGroup getPopupGroup() {
+    return myPopupGroup;
+  }
+
+  public String getPopupPlace() {
+    return myPopupPlace;
+  }
+
+  public void setPopupGroup(final ActionGroup popupGroup, String place) {
+    myPopupGroup = popupGroup;
+    myPopupPlace = place;
+  }
 
   private void updateAll() {
     update();
@@ -398,8 +417,17 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
 
       addMouseListener(new MouseAdapter() {
         public void mousePressed(final MouseEvent e) {
-          if (e.getClickCount() == 1 && e.getButton() == MouseEvent.BUTTON1) {
+          if (e.getClickCount() == 1 && e.getButton() == MouseEvent.BUTTON1 && !e.isPopupTrigger()) {
             setSelected(info, true);
+          } else if (e.getClickCount() == 1 && e.isPopupTrigger()) {
+            final ActionGroup popup = getPopupGroup();
+            if (popup != null) {
+              String place = getPopupPlace();
+              place = place != null ? place : ActionPlaces.UNKNOWN;
+              myPopupInfo = myInfo;
+              myActionManager.createActionPopupMenu(place, getPopupGroup()).getComponent().show(e.getComponent(), e.getX(), e.getY());
+              onPopup(myPopupInfo);
+            }
           }
         }
       });
@@ -417,6 +445,9 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     public TabInfo getInfo() {
       return myInfo;
     }
+  }
+
+  protected void onPopup(final TabInfo popupInfo) {
   }
 
   public void setFocused(final boolean focused) {

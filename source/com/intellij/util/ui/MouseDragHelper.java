@@ -101,6 +101,8 @@ public abstract class MouseDragHelper implements MouseListener, MouseMotionListe
   }
 
   private boolean canStartDragging(MouseEvent me) {
+    if (me.getButton() != MouseEvent.BUTTON1) return false;
+
     Component component = me.getComponent();
     if (NullableComponent.Check.isNullOrHidden(component)) return false;
     while (component != null) {
