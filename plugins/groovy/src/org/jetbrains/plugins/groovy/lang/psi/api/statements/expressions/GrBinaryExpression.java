@@ -1,10 +1,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.psi.PsiElement;
+import com.intellij.navigation.NavigationItem;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
- * @autor: Dmitry.Krasilschikov
- * @date: 20.03.2007
+ * @author Ilya.Sergey
  */
-public interface GrBinaryExpression extends GroovyPsiElement {
+public interface GrBinaryExpression extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement {
+  public String toString();
 }
