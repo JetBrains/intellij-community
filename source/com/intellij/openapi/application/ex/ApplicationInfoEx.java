@@ -12,8 +12,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 
 public abstract class ApplicationInfoEx extends ApplicationInfo {
 
-  public static final boolean IS_EAP = true;
-
   public static ApplicationInfoEx getInstanceEx() {
     return (ApplicationInfoEx) getInstance();
   }
@@ -32,6 +30,8 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract String getWelcomeScreenCaptionUrl();
 
   public abstract String getWelcomeScreenDeveloperSloganUrl();
+
+  public abstract boolean isEAP();
 
 
   public abstract UpdateUrls getUpdateUrls();

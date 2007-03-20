@@ -1,7 +1,6 @@
 
 package com.intellij.openapi.application.impl;
 
-import com.intellij.ide.license.LicenseManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -35,6 +34,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myWelcomeScreenDeveloperSloganUrl;
   private UpdateUrls myUpdateUrls;
   private UpdateUrls myEapUpdateUrls;
+  private boolean myEAP;
 
   @NonNls private static final String IDEA_PATH = "/idea/";
   @NonNls private static final String ELEMENT_VERSION = "version";
@@ -57,6 +57,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String UPDATE_URLS_ELEMENT_NAME = "update-urls";
   @NonNls private static final String EAP_UPDATE_URLS_ELEMENT_NAME = "eap-update-urls";
   @NonNls private static final String XML_EXTENSION = ".xml";
+  @NonNls private static final String ATTRIBUTE_EAP = "eap";
 
   public void initComponent() { }
 
@@ -103,8 +104,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return myWelcomeScreenDeveloperSloganUrl;
   }
 
+  public boolean isEAP() {
+    return myEAP;
+  }
+
   public UpdateUrls getUpdateUrls() {
-    return LicenseManager.getInstance().isEap() ? myEapUpdateUrls :  myUpdateUrls;
+    return isEAP() ? myEapUpdateUrls :  myUpdateUrls;
   }
 
   public UpdateUrls getEapUpdateUrls() {
@@ -157,6 +162,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myMajorVersion = versionElement.getAttributeValue(ATTRIBUTE_MAJOR);
       myMinorVersion = versionElement.getAttributeValue(ATTRIBUTE_MINOR);
       myVersionName = versionElement.getAttributeValue(ATTRIBUTE_NAME);
+      myEAP = Boolean.parseBoolean(versionElement.getAttributeValue(ATTRIBUTE_EAP));
     }
 
     Element buildElement = parentNode.getChild(ELEMENT_BUILD);
