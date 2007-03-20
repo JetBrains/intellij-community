@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,7 +22,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.ApplicationInfoImpl");
 
   @NonNls private final static String BUILD_STUB = "__BUILD_NUMBER__";
-  private String myVersionName = null;
+  private String myCodeName = null;
   private String myMajorVersion = null;
   private String myMinorVersion = null;
   private String myBuildNumber = null;
@@ -40,7 +41,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ELEMENT_VERSION = "version";
   @NonNls private static final String ATTRIBUTE_MAJOR = "major";
   @NonNls private static final String ATTRIBUTE_MINOR = "minor";
-  @NonNls private static final String ATTRIBUTE_NAME = "name";
+  @NonNls private static final String ATTRIBUTE_CODENAME = "codename";
   @NonNls private static final String ELEMENT_BUILD = "build";
   @NonNls private static final String ATTRIBUTE_NUMBER = "number";
   @NonNls private static final String ATTRIBUTE_DATE = "date";
@@ -81,7 +82,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   }
 
   public String getVersionName() {
-    return myVersionName;
+    final String fullName = ApplicationNamesInfo.getInstance().getFullProductName();
+    if (myEAP) {
+      return fullName + " (" + myCodeName + ")";
+    }
+    return fullName;
   }
 
   public String getLogoUrl() {
@@ -120,8 +125,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append(getVersionName());
     buffer.append(" ");
-    if (getMajorVersion() != null){
+    if (getMajorVersion() != null && !isEAP()) {
       buffer.append(getMajorVersion());
+
+      if (getMinorVersion() != null && getMinorVersion().length() > 0){
+        buffer.append(".");
+        buffer.append(getMinorVersion());
+      }
     }
     else {
       String bn = getBuildNumber();
@@ -132,10 +142,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       else {
         buffer.append("DevVersion");
       }
-    }
-    if (getMinorVersion() != null && getMinorVersion().length() > 0){
-      buffer.append(".");
-      buffer.append(getMinorVersion());
     }
     return buffer.toString();
   }
@@ -161,7 +167,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     if (versionElement != null) {
       myMajorVersion = versionElement.getAttributeValue(ATTRIBUTE_MAJOR);
       myMinorVersion = versionElement.getAttributeValue(ATTRIBUTE_MINOR);
-      myVersionName = versionElement.getAttributeValue(ATTRIBUTE_NAME);
+      myCodeName = versionElement.getAttributeValue(ATTRIBUTE_CODENAME);
       myEAP = Boolean.parseBoolean(versionElement.getAttributeValue(ATTRIBUTE_EAP));
     }
 
