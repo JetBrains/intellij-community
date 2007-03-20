@@ -104,10 +104,19 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
             if (notArrayReported) {
                 return;
             }
-            final PsiType srcDeepComponentType = srcType.getDeepComponentType();
-            final PsiType destDeepComponentType =
-                    destType.getDeepComponentType();
-            if (!destDeepComponentType.isAssignableFrom(srcDeepComponentType)) {
+            final PsiArrayType srcArrayType = (PsiArrayType)srcType;
+            final PsiArrayType destArrayType = (PsiArrayType)destType;
+            final PsiType srcComponentType = srcArrayType.getComponentType();
+            final PsiType destComponentType = destArrayType.getComponentType();
+            if (!(srcComponentType instanceof PsiPrimitiveType)) {
+                if (!destComponentType.isAssignableFrom(srcComponentType)) {
+                    final String errorString = InspectionGadgetsBundle.message(
+                            "suspicious.system.arraycopy.problem.descriptor6",
+                            srcType.getCanonicalText(),
+                            destType.getCanonicalText());
+                    registerError(dest, errorString);
+                }
+            } else if (!destComponentType.equals(srcComponentType)) {
                 final String errorString = InspectionGadgetsBundle.message(
                         "suspicious.system.arraycopy.problem.descriptor6",
                         srcType.getCanonicalText(),

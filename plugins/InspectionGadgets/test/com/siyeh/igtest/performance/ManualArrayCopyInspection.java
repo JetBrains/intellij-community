@@ -51,4 +51,12 @@ public class ManualArrayCopyInspection
             b[i - x] = a[i];
         }
     }
+
+    public static void main(String[] args) {
+        byte image[] = new byte[10];
+        int data[] = new int[10];
+        for (int k = 0; k < 5; ++k) {
+            image[k] = (byte)data[k];
+        }
+    }
 }
