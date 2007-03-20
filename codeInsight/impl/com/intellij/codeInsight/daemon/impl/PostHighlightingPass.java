@@ -67,10 +67,9 @@ import java.util.Set;
 
 public class PostHighlightingPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PostHighlightingPass");
-  private final RefCountHolder myRefCountHolder;
+  private RefCountHolder myRefCountHolder;
   private final PsiFile myFile;
   @Nullable private final Editor myEditor;
-  private final Document myDocument;
   private final int myStartOffset;
   private final int myEndOffset;
 
@@ -82,20 +81,17 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private ImplicitUsageProvider[] myImplicitUsageProviders;
 
   private PostHighlightingPass(@NotNull Project project,
-                              @NotNull PsiFile file,
-                              @Nullable Editor editor,
-                              @NotNull Document document,
-                              int startOffset,
-                              int endOffset) {
+                               @NotNull PsiFile file,
+                               @Nullable Editor editor,
+                               @NotNull Document document,
+                               int startOffset,
+                               int endOffset) {
     super(project, document);
     myFile = file;
     myEditor = editor;
-    myDocument = document;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
 
-    DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    myRefCountHolder = daemonCodeAnalyzer.getFileStatusMap().getRefCountHolder(document, myFile);
     myStyleManager = (CodeStyleManagerEx)CodeStyleManager.getInstance(myProject);
     myCurentEntryIndex = -1;
 
@@ -111,6 +107,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
+    DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
+    myRefCountHolder = daemonCodeAnalyzer.getFileStatusMap().getRefCountHolder(myDocument, myFile);
     myRefCountHolder.assertIsTouched();
     try {
       myRefCountHolder.setLocked(true);
@@ -129,7 +127,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       List<PsiNamedElement> unusedDcls = myRefCountHolder.getUnusedDcls();
       for (PsiNamedElement unusedDcl : unusedDcls) {
         String dclType = StringUtil.capitalize(UsageViewUtil.getType(unusedDcl));
-        if (dclType == null || dclType.length() == 0) dclType = LangBundle.message("java.terms.symbol");
+        if (dclType.length() == 0) dclType = LangBundle.message("java.terms.symbol");
         String message = MessageFormat.format(JavaErrorMessages.message("symbol.is.never.used"), dclType, unusedDcl.getName());
 
         HighlightInfo highlightInfo = createUnusedSymbolInfo(unusedDcl.getNavigationElement(), message);
