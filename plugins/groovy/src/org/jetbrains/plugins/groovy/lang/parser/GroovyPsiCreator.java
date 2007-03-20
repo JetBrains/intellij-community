@@ -10,6 +10,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrAssignmentExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrConditionalExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrCommandArgsImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExprImpl;
@@ -85,6 +87,8 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(ANNOTATION_FIELD)) return new GrAnnotationFieldImpl(node);
 
     //expressions
+    if (elem.equals(EXPRESSION_STATEMENT)) return new GrExpressionImpl(node);
+    if (elem.equals(COMMAND_ARGUMENTS)) return new GrCommandArgsImpl(node);
     if (elem.equals(CONDITIONAL_EXPRESSION)) return new GrConditionalExprImpl(node);
     if (elem.equals(ASSIGNMENT_EXPRESSION)) return new GrAssignmentExprImpl(node);
     if (elem.equals(LOGICAL_OR_EXPRESSION)) return new GrLogicalOrExprImpl(node);

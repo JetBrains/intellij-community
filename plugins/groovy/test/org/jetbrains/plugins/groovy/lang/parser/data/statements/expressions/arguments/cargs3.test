@@ -1,0 +1,15 @@
+foo 1 , id 3
+-----
+Groovy script
+  Expression with arguments
+    PsiElement(identifier)('foo')
+    PsiWhiteSpace(' ')
+    Command arguments
+      PsiElement(number)('1')
+      PsiWhiteSpace(' ')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      PsiElement(identifier)('id')
+  PsiWhiteSpace(' ')
+  PsiErrorElement:';' or new line expected
+    PsiElement(number)('3')

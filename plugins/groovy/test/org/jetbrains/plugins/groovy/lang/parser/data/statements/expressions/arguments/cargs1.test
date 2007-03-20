@@ -1,0 +1,25 @@
+foo 1 +
+  1, 2 +
+    3
+-----
+Groovy script
+  Expression with arguments
+    PsiElement(identifier)('foo')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Additive expression
+        PsiElement(number)('1')
+        PsiWhiteSpace(' ')
+        PsiElement(+)('+')
+        PsiElement(new line)('\n')
+        PsiWhiteSpace('  ')
+        PsiElement(number)('1')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Additive expression
+        PsiElement(number)('2')
+        PsiWhiteSpace(' ')
+        PsiElement(+)('+')
+        PsiElement(new line)('\n')
+        PsiWhiteSpace('    ')
+        PsiElement(number)('3')

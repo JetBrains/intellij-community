@@ -14,6 +14,12 @@ public abstract class TokenSets implements GroovyTokenTypes {
           mML_COMMENT
   );
 
+  public static TokenSet SEPARATORS = TokenSet.create(
+          mNLS,
+          mSEMI
+  );
+
+
   public static TokenSet WHITE_SPACE_TOKEN_SET = TokenSet.create(
           mWS
   );

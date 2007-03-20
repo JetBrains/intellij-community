@@ -14,13 +14,35 @@ import com.intellij.lang.PsiBuilder;
 public class ExpressionStatement implements GroovyElementTypes {
 
   public static GroovyElementType parse(PsiBuilder builder) {
+
+    PsiBuilder.Marker marker = builder.mark();
+
+    GroovyElementType result = AssignmentExpression.parse(builder);
+    if (!WRONGWAY.equals(result) && !TokenSets.SEPARATORS.contains(builder.getTokenType())) {
+      GroovyElementType res = CommandArguments.parse(builder);
+      marker.done(EXPRESSION_STATEMENT);
+      return EXPRESSION_STATEMENT;
+    } else {
+      marker.drop();
+      return result;
+    }
+  }
+
+  /**
+   *
+   * Use for parse expressions in Argument position 
+   *
+   * @param builder - Given builder
+   * @return type of parsing result
+   */
+  public static GroovyElementType argParse(PsiBuilder builder) {
     GroovyElementType result = AssignmentExpression.parse(builder);
     if (!WRONGWAY.equals(result)) {
-      CommandArguments.parse(builder);
       return EXPRESSION_STATEMENT;
     }
-    return WRONGWAY;
+      return result;
   }
+
 
   /**
    * Checks whether first token of current statement is valid

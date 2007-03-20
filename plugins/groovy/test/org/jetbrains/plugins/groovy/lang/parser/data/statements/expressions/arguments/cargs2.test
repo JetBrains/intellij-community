@@ -1,0 +1,8 @@
+println "preved!"
+-----
+Groovy script
+  Expression with arguments
+    PsiElement(identifier)('println')
+    PsiWhiteSpace(' ')
+    Command arguments
+      PsiElement(Gstring)('"preved!"')
