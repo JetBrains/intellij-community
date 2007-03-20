@@ -1178,9 +1178,19 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
     @Nullable
     public Object getData(@NonNls String dataId) {
       if (DataConstants.MODULE_CONTEXT_ARRAY.equals(dataId)){
-        final Object o = getSelectedObject();
-        if (o instanceof Module){
-          return new Module[]{(Module)o};
+        final TreePath[] paths = myTree.getSelectionPaths();
+        if (paths != null) {
+          ArrayList<Module> modules = new ArrayList<Module>();
+          for (TreePath path : paths) {
+            MyNode node = (MyNode)path.getLastPathComponent();
+            final NamedConfigurable configurable = node.getConfigurable();
+            LOG.assertTrue(configurable != null, "already disposed");
+            final Object o = configurable.getEditableObject();
+            if (o instanceof Module) {
+              modules.add((Module)o);
+            }
+          }
+          return !modules.isEmpty() ? modules.toArray(new Module[modules.size()]) : null;
         }
       }
       if (DataConstants.MODULE_CONTEXT.equals(dataId)){
