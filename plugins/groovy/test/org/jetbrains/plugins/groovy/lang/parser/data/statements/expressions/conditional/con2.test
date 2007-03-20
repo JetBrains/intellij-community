@@ -11,7 +11,8 @@ Groovy script
     Assignment expression
       PsiElement(identifier)('b')
       PsiElement(=)('=')
-      PsiElement(number)('3')
+      Literal
+        PsiElement(number)('3')
     PsiElement(:)(':')
     PsiElement(new line)('\n')
     Conditional expression
@@ -19,4 +20,5 @@ Groovy script
       PsiElement(?)('?')
       PsiElement(identifier)('f')
       PsiElement(:)(':')
-      PsiElement(number)('2')
+      Literal
+        PsiElement(number)('2')

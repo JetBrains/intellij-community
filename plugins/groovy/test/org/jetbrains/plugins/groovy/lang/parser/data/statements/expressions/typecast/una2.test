@@ -15,4 +15,5 @@ Groovy script
       PsiWhiteSpace(' ')
       PsiElement())(')')
     PsiWhiteSpace(' ')
-    PsiElement(number)('3')
+    Literal
+      PsiElement(number)('3')

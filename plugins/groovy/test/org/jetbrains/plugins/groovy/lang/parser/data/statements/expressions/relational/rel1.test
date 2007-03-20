@@ -2,7 +2,8 @@
 -----
 Groovy script
   Relational expression
-    PsiElement(number)('27')
+    Literal
+      PsiElement(number)('27')
     PsiWhiteSpace(' ')
     PsiElement(<)('<')
     PsiWhiteSpace(' ')

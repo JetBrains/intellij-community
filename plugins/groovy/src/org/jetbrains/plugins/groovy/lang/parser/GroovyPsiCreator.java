@@ -7,6 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrIdentifierImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrTypeCastImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrArrayTypeImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
@@ -47,8 +48,9 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
   public static PsiElement createElement(ASTNode node) {
     IElementType elem = node.getElementType();
 
-    //Identifiers
+    //Identifiers & literal
     if (elem.equals(IDENTIFIER)) return new GrIdentifierImpl(node);
+    if (elem.equals(LITERAL)) return new GrLiteralImpl(node);
 
     if (elem.equals(MODIFIER)) return new GrModifierImpl(node);
     if (elem.equals(MODIFIERS)) return new GrModifiersImpl(node);

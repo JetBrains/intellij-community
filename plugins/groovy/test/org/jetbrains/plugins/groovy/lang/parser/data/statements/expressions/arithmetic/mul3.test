@@ -13,4 +13,5 @@ Groovy script
     PsiWhiteSpace(' ')
     Unary expression
       PsiElement(++)('++')
-      PsiElement(number)('5')
+      Literal
+        PsiElement(number)('5')

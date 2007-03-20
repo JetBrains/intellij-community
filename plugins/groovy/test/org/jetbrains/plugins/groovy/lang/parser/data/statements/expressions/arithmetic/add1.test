@@ -3,7 +3,8 @@
 Groovy script
   Additive expression
     Additive expression
-      PsiElement(number)('27')
+      Literal
+        PsiElement(number)('27')
       PsiElement(+)('+')
       PsiElement(identifier)('a')
     PsiElement(+)('+')

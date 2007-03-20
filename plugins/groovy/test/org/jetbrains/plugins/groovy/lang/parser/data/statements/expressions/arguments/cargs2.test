@@ -5,4 +5,5 @@ Groovy script
     PsiElement(identifier)('println')
     PsiWhiteSpace(' ')
     Command arguments
-      PsiElement(Gstring)('"preved!"')
+      Literal
+        PsiElement(Gstring)('"preved!"')

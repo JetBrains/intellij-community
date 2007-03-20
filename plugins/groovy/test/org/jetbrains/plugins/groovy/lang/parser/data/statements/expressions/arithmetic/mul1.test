@@ -9,10 +9,12 @@ Groovy script
     Power expression
       Unary expression
         PsiElement(--)('--')
-        PsiElement(number)('3')
+        Literal
+          PsiElement(number)('3')
       PsiWhiteSpace(' ')
       PsiElement(**)('**')
       PsiWhiteSpace(' ')
       Unary expression
         PsiElement(++)('++')
-        PsiElement(number)('4')
+        Literal
+          PsiElement(number)('4')

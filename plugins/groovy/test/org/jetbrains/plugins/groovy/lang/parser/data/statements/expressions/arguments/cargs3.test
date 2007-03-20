@@ -5,7 +5,8 @@ Groovy script
     PsiElement(identifier)('foo')
     PsiWhiteSpace(' ')
     Command arguments
-      PsiElement(number)('1')
+      Literal
+        PsiElement(number)('1')
       PsiWhiteSpace(' ')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')

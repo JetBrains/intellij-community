@@ -6,8 +6,10 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(?)('?')
     PsiWhiteSpace(' ')
-    PsiElement(number)('1')
+    Literal
+      PsiElement(number)('1')
     PsiWhiteSpace(' ')
     PsiElement(:)(':')
     PsiWhiteSpace(' ')
-    PsiElement(number)('2')
+    Literal
+      PsiElement(number)('2')

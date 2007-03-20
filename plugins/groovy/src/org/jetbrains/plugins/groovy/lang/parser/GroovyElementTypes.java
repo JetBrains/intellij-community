@@ -18,7 +18,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
 
   // Auxiliary elements
   GroovyElementType SEP = new GroovyElementType("Statement separator");
-  GroovyElementType IDENTIFIER = new GroovyElementType("Statement separator");
+  GroovyElementType IDENTIFIER = new GroovyElementType("Identifier");
+  GroovyElementType LITERAL = new GroovyElementType("Literal");
 
   // Top-level elements
   GroovyElementType FILE = new GroovyElementType("Groovy file");
