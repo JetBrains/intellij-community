@@ -209,7 +209,12 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       final int end = oldMapping.range.getEndOffset();
       doc.replaceString(start, end, tokenText);
 
-      oldMapping.range = doc.createRangeMarker(start, start + tokenText.length());
+      final int newEnd = start + tokenText.length();
+      if (oldMapping.range.getStartOffset() != start ||
+          oldMapping.range.getEndOffset() != newEnd
+         ) {
+        oldMapping.range = doc.createRangeMarker(start, newEnd);
+      }
     }
 
     public MappedRange insertMapping(int tokenIndex, IElementType outerToken) {
