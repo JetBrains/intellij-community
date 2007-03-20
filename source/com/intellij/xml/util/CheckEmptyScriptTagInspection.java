@@ -10,6 +10,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.FileType;
@@ -41,9 +42,9 @@ public class CheckEmptyScriptTagInspection extends LocalInspectionTool {
       public void visitReferenceExpression(PsiReferenceExpression expression) {}
 
       public void visitXmlTag(final XmlTag tag) {
-        if (SCRIPT_TAG_NAME.equals(tag.getName()) ||
-            (tag instanceof HtmlTag && SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getLocalName()))
-           ) {
+        if (( SCRIPT_TAG_NAME.equals(tag.getName()) ||
+              (tag instanceof HtmlTag && SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getLocalName()))
+            ) && tag.getLanguage() != StdLanguages.XML) {
           final ASTNode child = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(tag.getNode());
 
           if (child != null) {
