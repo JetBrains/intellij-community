@@ -94,7 +94,7 @@ public class FormLayoutSourceGenerator extends LayoutSourceGenerator {
       generator.push(constraints.getRowSpan());
     }
 
-    if (cc.hAlign != CellConstraints.DEFAULT || cc.vAlign != CellConstraints.DEFAULT) {
+    if (cc.hAlign != CellConstraints.DEFAULT || cc.vAlign != CellConstraints.DEFAULT || haveInsets) {
       @NonNls String hAlign = (cc.hAlign == CellConstraints.DEFAULT)
                               ? "DEFAULT"
                               : FormLayoutCodeGenerator.HORZ_ALIGN_FIELDS [Utils.alignFromConstraints(constraints, true)];
