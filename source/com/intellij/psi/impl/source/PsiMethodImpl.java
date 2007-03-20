@@ -4,7 +4,10 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.cache.MethodView;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.*;
@@ -144,7 +147,8 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
     String name = myCachedName;
     if (name == null){
       if (getTreeElement() != null){
-        name = getNameIdentifier().getText();
+        final PsiIdentifier nameIdentifier = getNameIdentifier();
+        name = nameIdentifier != null ? nameIdentifier.getText() : "<unnamed>";
       }
       else{
         name = getRepositoryManager().getMethodView().getName(getRepositoryId());
