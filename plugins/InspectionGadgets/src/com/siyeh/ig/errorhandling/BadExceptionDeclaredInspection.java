@@ -210,6 +210,10 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
                     final int count = table.getRowCount();
                     if (count <= row) {
                         table.setRowSelectionInterval(count - 1, count - 1);
+                    } else if (row < 0) {
+                        if (count > 0) {
+                            table.setRowSelectionInterval(0, 0);
+                        }
                     } else {
                         table.setRowSelectionInterval(row, row);
                     }
