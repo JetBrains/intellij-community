@@ -218,7 +218,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     }
     final FileElement treeHolder = new DummyHolder(myManager, null).getTreeElement();
     final CompositeElement treeElement =
-    getJavaParsingContext(treeHolder).getDeclarationParsing().parseParameterText((PsiKeyword.INT + " " + name));
+    getJavaParsingContext(treeHolder).getDeclarationParsing().parseParameterText(PsiKeyword.INT + " " + name);
     TreeUtil.addChildren(treeHolder, treeElement);
 
     TreeElement typeElement = ChangeUtil.copyToElement(createTypeElement(type));
@@ -572,8 +572,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   public XmlAttribute createXmlAttribute(@NotNull String name, String value) throws IncorrectOperationException {
-    XmlTag tag = ((XmlFile)createFileFromText("dummy.xml", "<tag " + name + "=\"" + value + "\"/>")).getDocument()
-      .getRootTag();
+    XmlTag tag = ((XmlFile)createFileFromText("dummy.xml", "<tag " + name + "=\"" + value + "\"/>")).getDocument().getRootTag();
     return tag.getAttributes()[0];
   }
 
