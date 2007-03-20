@@ -6,9 +6,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.RefCountHolder;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.quickFix.TagFileQuickFixProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -46,7 +43,6 @@ import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.jsp.JspDirectiveKind;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaDataBase;
@@ -493,19 +489,13 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     XmlTag tag = attribute.getParent();
 
     if (attribute.isNamespaceDeclaration()) {
-      checkNamespaceAttribute(attribute);
+      checkReferences(attribute.getValueElement(), QuickFixProvider.NULL);
       return;
     } else {
       final String namespace = attribute.getNamespace();
 
       if (XmlUtil.XML_SCHEMA_INSTANCE_URI.equals(namespace)) {
-        if (attribute.getName().endsWith(LOCATION_ATT_SUFFIX)) {
-          checkSchemaLocationAttribute(attribute);
-        } else {
-          if(attribute.getValueElement() != null) {
-            checkReferences(attribute.getValueElement(), QuickFixProvider.NULL);
-          }
-        }
+        checkReferences(attribute.getValueElement(), QuickFixProvider.NULL);
         return;
       }
     }
@@ -749,6 +739,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   private void checkReferences(PsiElement value, QuickFixProvider quickFixProvider) {
+    if (value == null) return;
     PsiReference[] references = value.getReferences();
 
     ProgressManager progressManager = ProgressManager.getInstance();
@@ -808,10 +799,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
   public void visitXmlDoctype(XmlDoctype xmlDoctype) {
     if (xmlDoctype.getUserData(DO_NOT_VALIDATE_KEY) != null) return;
-    final PsiReference[] references = xmlDoctype.getReferences();
-    if (references.length > 0 && references[0] instanceof URIReferenceProvider.URLReference) {
-      checkUriReferenceProblem(references[0]);
-    }
+    checkReferences(xmlDoctype, QuickFixProvider.NULL);
   }
 
   private void addToResults(final HighlightInfo info) {
@@ -821,82 +809,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
   public void visitReferenceExpression(PsiReferenceExpression expression) {
     visitExpression(expression);
-  }
-
-  private void checkNamespaceAttribute(XmlAttribute attribute) {
-    if (!attribute.isNamespaceDeclaration()) return;
-
-    XmlAttributeValue element = attribute.getValueElement();
-    if(element == null) return;
-    final PsiReference[] references = element.getReferences();
-
-    if (references.length > 0 && references[references.length - 1] instanceof URIReferenceProvider.URLReference) {
-      checkUriReferenceProblem(references[references.length - 1]);
-    }
-
-    checkReferences(element, QuickFixProvider.NULL);
-  }
-
-  private void checkUriReferenceProblem(final PsiReference reference) {
-    if (reference.resolve() == null) {
-      final TextRange textRange = reference.getElement().getTextRange();
-      final TextRange referenceRange = reference.getRangeInElement();
-      int start = textRange.getStartOffset() + referenceRange.getStartOffset();
-      int end = textRange.getStartOffset() + referenceRange.getEndOffset();
-
-      reportURIProblem(start,end);
-    }
-  }
-
-  private void checkSchemaLocationAttribute(XmlAttribute attribute) {
-    if(attribute.getValueElement() == null) return;
-    String location = attribute.getValue();
-
-    if (attribute.getLocalName().equals(XmlUtil.NO_NAMESPACE_SCHEMA_LOCATION_ATT)) {
-      if(ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(location)) return;
-
-      if(XmlUtil.findXmlFile(attribute.getContainingFile(),location) == null) {
-        int start = attribute.getValueElement().getTextOffset();
-        reportURIProblem(start,start + location.length());
-      }
-    } else if (attribute.getLocalName().equals(XmlUtil.SCHEMA_LOCATION_ATT)) {
-      StringTokenizer tokenizer = new StringTokenizer(location);
-      XmlFile file = null;
-      final ExternalResourceManagerEx externalResourceManager = ExternalResourceManagerEx.getInstanceEx();
-
-      while(tokenizer.hasMoreElements()) {
-        final String namespace = tokenizer.nextToken(); // skip namespace
-        if (!tokenizer.hasMoreElements()) return;
-        String url = tokenizer.nextToken();
-
-        if(externalResourceManager.isIgnoredResource(url)) continue;
-        if (file == null) {
-          file = (XmlFile)attribute.getContainingFile();
-        }
-
-        if(XmlUtil.findXmlFile(file,url) == null &&
-           externalResourceManager.getResourceLocation(namespace).equals(namespace)
-          ) {
-          int start = attribute.getValueElement().getTextOffset() + location.indexOf(url);
-          reportURIProblem(start,start+url.length());
-        }
-      }
-    }
-  }
-
-  private void reportURIProblem(int start, int end) { // report the problem
-    if (start > end) {
-      end = start;
-    }
-    HighlightInfo info = HighlightInfo.createHighlightInfo(
-      HighlightInfoType.WRONG_REF,
-      start,
-      end,
-      XmlErrorMessages.message("uri.is.not.registered"));
-    QuickFixAction.registerQuickFixAction(info, new FetchExtResourceAction());
-    QuickFixAction.registerQuickFixAction(info, new ManuallySetupExtResourceAction());
-    QuickFixAction.registerQuickFixAction(info, new IgnoreExtResourceAction());
-    addToResults(info);
   }
 
   public static void setDoJaxpTesting(boolean doJaxpTesting) {

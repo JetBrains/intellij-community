@@ -220,13 +220,13 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     );
 
     registerXmlAttributeValueReferenceProvider(
-      new String[] {"xsi:noNamespaceSchemaLocation"},
+      new String[] {"xsi:noNamespaceSchemaLocation","xsi:schemaLocation"},
       null,
       uriProvider
     );
 
     registerXmlAttributeValueReferenceProvider(
-      new String[] {"schemaLocation"},
+      new String[] {"schemaLocation","namespace"},
       new ScopeFilter(
         new ParentElementFilter(
           new AndFilter(

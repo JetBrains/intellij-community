@@ -18,6 +18,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
+import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -103,44 +105,14 @@ public class FetchExtResourceAction extends BaseIntentionAction {
 
   @Nullable
   public static String findUri(PsiFile file, int offset) {
-    PsiElement currentElement = file.findElementAt(offset);
-    PsiElement element = PsiTreeUtil.getParentOfType(currentElement, XmlDoctype.class);
-    if (element != null) {
-      return ((XmlDoctype)element).getDtdUri();
+    PsiReference currentRef = file.findReferenceAt(offset);
+    if (( currentRef instanceof URIReferenceProvider.URLReference ||
+          currentRef instanceof URIReferenceProvider.DependentNSReference
+        ) &&
+        currentRef.resolve() == null
+       ) {
+      return currentRef.getCanonicalText();
     }
-
-    XmlAttribute attribute = PsiTreeUtil.getParentOfType(currentElement, XmlAttribute.class);
-    if(attribute == null) return null;
-
-    if (attribute.isNamespaceDeclaration()) {
-      String uri = attribute.getValue();
-      PsiElement parent = attribute.getParent();
-
-      if (uri != null && parent instanceof XmlTag && ((XmlTag)parent).getNSDescriptor(uri, true) == null) {
-        return uri;
-      }
-    } else if (attribute.getNamespace().equals(XmlUtil.XML_SCHEMA_INSTANCE_URI)) {
-      String location = attribute.getValue();
-
-      if (attribute.getLocalName().equals(XmlUtil.NO_NAMESPACE_SCHEMA_LOCATION_ATT)) {
-        if (XmlUtil.findXmlFile(file,location) == null) return location;
-      } else if (attribute.getLocalName().equals(XmlUtil.SCHEMA_LOCATION_ATT)) {
-        StringTokenizer tokenizer = new StringTokenizer(location);
-        int offsetInAttr = offset - attribute.getValueElement().getTextOffset();
-
-        while(tokenizer.hasMoreElements()) {
-          tokenizer.nextToken(); // skip namespace
-          if (!tokenizer.hasMoreElements()) return null;
-          String url = tokenizer.nextToken();
-
-          int index = location.indexOf(url);
-          if (index <= offsetInAttr && index + url.length() >= offsetInAttr ) {
-            return url;
-          }
-        }                           
-      }
-    }
-
     return null;
   }
 

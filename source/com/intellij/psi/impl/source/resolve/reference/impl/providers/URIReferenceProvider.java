@@ -23,18 +23,24 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.StringTokenizer;
+import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Jul 4, 2005
- * Time: 6:56:19 PM
- * To change this template use File | Settings | File Templates.
+ * @by Maxim.Mossienko
  */
 public class URIReferenceProvider implements PsiReferenceProvider {
   public ElementFilter getNamespaceAttributeFilter() {
@@ -54,12 +60,20 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     };
   }
 
-  public static class URLReference implements PsiReference {
+  public static class URLReference implements PsiReference, QuickFixProvider, EmptyResolveMessageProvider {
     private PsiElement myElement;
+    private TextRange myRange;
+    private boolean mySoft;
     @NonNls private static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
 
     public URLReference(PsiElement element) {
       myElement = element;
+    }
+
+    public URLReference(PsiElement element, @Nullable TextRange range, boolean soft) {
+      myElement = element;
+      myRange = range;
+      mySoft = soft;
     }
 
     public PsiElement getElement() {
@@ -67,7 +81,7 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     }
 
     public TextRange getRangeInElement() {
-      return new TextRange(1,myElement.getTextLength()-1);
+      return myRange != null ? myRange : new TextRange(1,myElement.getTextLength()-1);
     }
 
     @Nullable
@@ -104,8 +118,13 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     }
 
     public String getCanonicalText() {
-      String text = myElement.getText();
-      if (text.length() > 1) return text.substring(1,text.length() - 1);
+      final String text = myElement.getText();
+      if (text.length() > 1) {
+        return myRange == null ?
+               text.substring(1,text.length() - 1):
+               text.substring(myRange.getStartOffset(),myRange.getEndOffset());
+      }
+
       return "";
     }
 
@@ -152,7 +171,17 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     }
 
     public boolean isSoft() {
-      return true;
+      return mySoft;
+    }
+
+    public void registerQuickfix(HighlightInfo info, PsiReference reference) {
+      QuickFixAction.registerQuickFixAction(info, new FetchExtResourceAction());
+      QuickFixAction.registerQuickFixAction(info, new ManuallySetupExtResourceAction());
+      QuickFixAction.registerQuickFixAction(info, new IgnoreExtResourceAction());
+    }
+
+    public String getUnresolvedMessagePattern() {
+      return XmlErrorMessages.message("uri.is.not.registered");
     }
   }
 
@@ -168,6 +197,35 @@ public class URIReferenceProvider implements PsiReferenceProvider {
       }
     }
   }
+
+  public static class DependentNSReference extends BasicAttributeValueReference implements QuickFixProvider {
+    private final PsiReference myReference;
+
+    public DependentNSReference(final PsiElement element, TextRange range, PsiReference ref) {
+      super(element, range);
+      myReference = ref;
+    }
+
+    @Nullable
+    public PsiElement resolve() {
+      return myReference.resolve();
+    }
+
+    public Object[] getVariants() {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+
+    public boolean isSoft() {
+      return false;
+    }
+
+    public void registerQuickfix(HighlightInfo info, PsiReference reference) {
+      QuickFixAction.registerQuickFixAction(info, new FetchExtResourceAction());
+      QuickFixAction.registerQuickFixAction(info, new ManuallySetupExtResourceAction());
+      QuickFixAction.registerQuickFixAction(info, new IgnoreExtResourceAction());
+    }
+  }
+
   @NotNull
   @SuppressWarnings({"HardCodedStringLiteral"})
   public PsiReference[] getReferencesByElement(PsiElement element) {
@@ -175,13 +233,41 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     String s = StringUtil.stripQuotesAroundValue(text);
     final PsiElement parent = element.getParent();
 
-    if (s.startsWith("http://") ||
-        s.startsWith("urn:") ||
+    if (parent instanceof XmlAttribute && "xsi:schemaLocation".equals(((XmlAttribute)parent).getName())) {
+      final List<PsiReference> refs = new ArrayList<PsiReference>(2);
+      final StringTokenizer tokenizer = new StringTokenizer(s);
+
+      while(tokenizer.hasMoreElements()) {
+        final String namespace = tokenizer.nextToken();
+        int offset = text.indexOf(namespace);
+        refs.add(new URLReference(element, new TextRange(offset,offset + namespace.length()), true));
+        if (!tokenizer.hasMoreElements()) break;
+        String url = tokenizer.nextToken();
+
+        offset = text.indexOf(url);
+        if (isUrlText(url)) refs.add(new DependentNSReference(element, new TextRange(offset,offset + url.length()), refs.get(refs.size() - 1)));
+        else {
+          for(PsiReference r : new FileReferenceSet(url, element, offset, this, false).getAllReferences()) {
+            refs.add(r);
+          }
+        }
+      }
+
+      return refs.toArray(new PsiReference[refs.size()]);
+    }
+
+    if (isUrlText(s) ||
         ( parent instanceof XmlAttribute &&
           ((XmlAttribute)parent).isNamespaceDeclaration()
         )
        ) {
-      if (!s.startsWith(JspManager.TAG_DIR_NS_PREFIX)) return getUrlReference(element);
+      if (!s.startsWith(JspManager.TAG_DIR_NS_PREFIX)) {
+        final boolean namespaceSoftRef = ( parent instanceof XmlAttribute &&
+          "namespace".equals(((XmlAttribute)parent).getName())) &&
+          ((XmlAttribute)parent).getParent().getAttributeValue("schemaLocation") != null;
+
+        return getUrlReference(element, namespaceSoftRef);
+      }
       else {
         final int offset = text.indexOf(s);
         s = s.substring(JspManager.TAG_DIR_NS_PREFIX.length());
@@ -200,8 +286,13 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     }
   }
 
-  public PsiReference[] getUrlReference(final PsiElement element) {
-    return new PsiReference[] { new URLReference(element)};
+  static boolean isUrlText(final String s) {
+    return s.startsWith("http://") ||
+        s.startsWith("urn:");
+  }
+
+  private static PsiReference[] getUrlReference(final PsiElement element, boolean soft) {
+    return new PsiReference[] { new URLReference(element, null, soft)};
   }
 
   @NotNull
