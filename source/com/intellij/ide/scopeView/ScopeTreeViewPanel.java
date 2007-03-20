@@ -141,7 +141,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
 
   public void selectScope(final NamedScope scope) {
     refreshScope(scope, true);
-    if (scope != myDependencyValidationManager.getProjectScope()) {
+    if (scope != myDependencyValidationManager.getProjectProductionScope()) {
       CURRENT_SCOPE_NAME = scope.getName();
     }
   }
@@ -187,7 +187,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     TreeModelBuilder.clearCaches(myProject);
     myTreeExpansionMonitor.freeze();
     if (scope == null || scope.getValue() == null) { //was deleted
-      scope = myDependencyValidationManager.getProjectScope();
+      scope = myDependencyValidationManager.getProjectProductionScope();
     }
     LOG.assertTrue(scope != null);
     final NamedScopesHolder holder = NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager);
@@ -222,7 +222,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   private NamedScope getCurrentScope() {
     NamedScope scope = NamedScopesHolder.getScope(myProject, CURRENT_SCOPE_NAME);
     if (scope == null) {
-      scope = myDependencyValidationManager.getProjectScope();
+      scope = myDependencyValidationManager.getProjectProductionScope();
     }
     LOG.assertTrue(scope != null);
     return scope;

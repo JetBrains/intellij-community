@@ -32,8 +32,6 @@ public abstract class DependencyValidationManager extends NamedScopesHolder impl
     return project.getComponent(DependencyValidationManager.class);
   }
 
-  public abstract NamedScope getProjectScope();
-
   public abstract NamedScope getProjectTestScope();
 
   public abstract NamedScope getProjectProductionScope();

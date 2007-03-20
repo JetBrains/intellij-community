@@ -506,7 +506,7 @@ public class ScopeEditorPanel {
 
   private void setToComponent(final JComponent cmp) {
     myMatchingCountPanel.removeAll();
-    myMatchingCountPanel.add(cmp, BorderLayout.EAST);
+    myMatchingCountPanel.add(cmp, BorderLayout.CENTER);
     myMatchingCountPanel.revalidate();
     myMatchingCountPanel.repaint();
     SwingUtilities.invokeLater(new Runnable(){

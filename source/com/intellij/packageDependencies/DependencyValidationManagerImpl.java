@@ -52,29 +52,6 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     myProject = project;
   }
 
-  public NamedScope getProjectScope() {
-    if (myProjectScope == null) {
-      myProjectScope = new NamedScope(IdeBundle.message("predefined.scope.project.name"), new PackageSet() {
-        public boolean contains(PsiFile file, NamedScopesHolder holder) {
-          return file.getProject() == myProject;
-        }
-
-        public PackageSet createCopy() {
-          return this;
-        }
-
-        public String getText() {
-          return PatternPackageSet.SCOPE_SOURCE+":*..*";
-        }
-
-        public int getNodePriority() {
-          return 0;
-        }
-      });
-    }
-    return myProjectScope;
-  }
-
   public NamedScope getProjectTestScope() {
     if (myProjectTestScope == null) {
       final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
@@ -157,7 +134,6 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   public List<NamedScope> getPredefinedScopes() {
     if (myPredifinedScopes == null){
       myPredifinedScopes = new ArrayList<NamedScope>();
-      myPredifinedScopes.add(getProjectScope());
       myPredifinedScopes.add(getProjectProductionScope());
       myPredifinedScopes.add(getProjectTestScope());
       myPredifinedScopes.add(getProblemsScope());
