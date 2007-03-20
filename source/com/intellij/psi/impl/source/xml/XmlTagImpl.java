@@ -515,6 +515,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       if(ns != null) return ns;
     }
     if(parent instanceof XmlTag) return ((XmlTag)parent).getNamespaceByPrefix(prefix);
+    //The prefix 'xml' is by definition bound to the namespace name http://www.w3.org/XML/1998/namespace. It MAY, but need not, be declared
+    if ("xml".equals(prefix)) return XmlUtil.XML_NAMESPACE_URI;
     return XmlUtil.EMPTY_URI;
   }
 

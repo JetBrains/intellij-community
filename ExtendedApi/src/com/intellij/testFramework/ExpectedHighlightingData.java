@@ -111,12 +111,20 @@ public class ExpectedHighlightingData {
     @NonNls String pat = ".*?(<(" + typesRegex + ")(?: descr=\\\"((?:[^\\\"\\\\]|\\\\\\\")*)\\\")?(?: type=\\\"([0-9A-Z_]+)\\\")?(?: foreground=\\\"([0-9xa-f]+)\\\")?(?: background=\\\"([0-9xa-f]+)\\\")?(?: effectcolor=\\\"([0-9xa-f]+)\\\")?(?: effecttype=\\\"([A-Z]+)\\\")?(?: fonttype=\\\"([0-9]+)\\\")?(/)?>)(.*)";
                  //"(.+?)</" + marker + ">).*";
     Pattern p = Pattern.compile(pat, Pattern.DOTALL);
+    Out:
     for (; ;) {
       Matcher m = p.matcher(text);
       if (!m.matches()) break;
       int startOffset = m.start(1);
       String marker = m.group(2);
-      final ExpectedHighlightingSet expectedHighlightingSet = highlightingTypes.get(marker);
+      ExpectedHighlightingSet expectedHighlightingSet = highlightingTypes.get(marker);
+
+      while (!expectedHighlightingSet.enabled) {
+        if (!m.find()) break Out;
+        marker = m.group(2);
+        startOffset = m.start(1);
+        expectedHighlightingSet = highlightingTypes.get(marker);
+      }
 
       @NonNls String descr = m.group(3);
       if (descr == null) {
@@ -179,7 +187,6 @@ public class ExpectedHighlightingData {
 
       highlightInfo.type = type;
       highlightInfo.isAfterEndOfLine = expectedHighlightingSet.endOfLine;
-      LOG.assertTrue(expectedHighlightingSet.enabled);
       expectedHighlightingSet.infos.add(highlightInfo);
       text = document.getText();
     }

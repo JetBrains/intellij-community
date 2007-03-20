@@ -148,10 +148,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
   static class TypeOrElementOrAttributeReference implements PsiReference {
     private PsiElement myElement;
     private TextRange myRange;
-    @NonNls private static final String XML_NS_PREFIX = "xml";
-    @NonNls private static final String LANG_XML_NS_ATTR_NAME = "lang";
     @NonNls private static final String BASE_XML_NS_ATTR_NAME = "base";
-    @NonNls private static final String SPACE_XML_NS_ATTR_NAME = "space";
     @NonNls private static final String GROUP_TAG_NAME = "group";
     @NonNls private static final String ATTRIBUTE_GROUP_TAG_NAME = "attributeGroup";
     @NonNls private static final String ATTRIBUTE_TAG_NAME = "attribute";
@@ -250,15 +247,6 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
             );
 
             if (descriptor != null) return descriptor.getDeclaration();
-
-            if (XML_NS_PREFIX.equals(prefixByQualifiedName) &&
-                ( LANG_XML_NS_ATTR_NAME.equals(localNameByQualifiedName) ||
-                  BASE_XML_NS_ATTR_NAME.equals(localNameByQualifiedName) ||
-                  SPACE_XML_NS_ATTR_NAME.equals(localNameByQualifiedName)
-                )
-               ) {
-              return myElement; // for compatibility
-            }
 
             return PsiUtil.NULL_PSI_ELEMENT;
           }

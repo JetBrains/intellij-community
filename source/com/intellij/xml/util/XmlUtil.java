@@ -106,6 +106,7 @@ public class XmlUtil {
   public static final @NonNls String JSTL_FN_FACELET_URI = "com.sun.facelets.tag.jstl.fn.JstlFnLibrary";
   public static final @NonNls String JSTL_CORE_FACELET_URI = "com.sun.facelets.tag.jstl.core.JstlCoreLibrary";
   @NonNls public static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
+  public static final @NonNls String XML_NAMESPACE_URI = "http://www.w3.org/XML/1998/namespace";
 
   private XmlUtil() {
   }

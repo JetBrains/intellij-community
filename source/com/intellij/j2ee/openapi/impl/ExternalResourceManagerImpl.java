@@ -53,7 +53,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     addInternalResource(XmlUtil.XML_SCHEMA_URI, "XMLSchema.xsd");
     addInternalResource(XmlUtil.XML_SCHEMA_INSTANCE_URI, "XMLSchema-instance.xsd");
     addInternalResource("http://www.w3.org/2001/xml.xsd","xml.xsd");
-    addInternalResource("http://www.w3.org/XML/1998/namespace","xml.xsd");
+    addInternalResource(XmlUtil.XML_NAMESPACE_URI,"xml.xsd");
     addInternalResource(XmlUtil.XHTML_URI,"xhtml1-transitional.xsd");
 
     addInternalResource("http://www.w3.org/TR/html4/strict.dtd","xhtml1-strict.dtd");
