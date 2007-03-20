@@ -32,7 +32,7 @@
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleGetInfoString</key>
-    <string>IntelliJ IDEA Selena, build @@@@. Copyright JetBrains s.r.o., (c) 2000-2007</string>
+    <string>IntelliJ IDEA @@major@@.@@minor@@, build @@@@. Copyright JetBrains s.r.o., (c) 2000-2007</string>
     <key>CFBundleShortVersionString</key>
     <string>Selena</string>
     <key>CFBundleVersion</key>
@@ -67,7 +67,7 @@
         <string>true</string>
       </dict>
       <key>VMOptions</key>
-      <string>-Xms16m -Xmx192m -XX:MaxPermSize=92m -Xbootclasspath/p:../lib/boot.jar -ea -agentlib:yjpagent</string>
+      <string>-Xms16m -Xmx192m -XX:MaxPermSize=92m -Xbootclasspath/p:../lib/boot.jar -ea</string>
       <key>WorkingDirectory</key>
       <string>$APP_PACKAGE/bin</string>
    </dict>
