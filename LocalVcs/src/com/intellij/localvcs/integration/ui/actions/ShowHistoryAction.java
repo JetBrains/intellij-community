@@ -2,6 +2,7 @@ package com.intellij.localvcs.integration.ui.actions;
 
 import com.intellij.localvcs.integration.FileFilter;
 import com.intellij.localvcs.integration.IdeaGateway;
+import com.intellij.localvcs.integration.LocalVcsComponent;
 import com.intellij.localvcs.integration.ui.views.DirectoryHistoryDialog;
 import com.intellij.localvcs.integration.ui.views.FileHistoryDialog;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -26,6 +27,11 @@ public class ShowHistoryAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
+    if (!LocalVcsComponent.getInstance(getProject(e)).isEnabled()) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+
     ProjectRootManager rm = ProjectRootManager.getInstance(getProject(e));
     FileTypeManager tm = FileTypeManager.getInstance();
 
@@ -33,7 +39,7 @@ public class ShowHistoryAction extends AnAction {
     updateEnablingStatus(e, ff);
   }
 
-  public void updateEnablingStatus(AnActionEvent e, FileFilter ff) {
+  protected void updateEnablingStatus(AnActionEvent e, FileFilter ff) {
     boolean result = isEnabled(e, ff);
     e.getPresentation().setEnabled(result);
   }

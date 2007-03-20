@@ -26,8 +26,6 @@ public class DirectoryHistoryDialogModelTest {
   @Test
   public void testNoDifference() {
     vcs.createDirectory("dir", null);
-    vcs.apply();
-
     initModelFor("dir");
 
     assertEquals(1, this.m.getLabels().size());
@@ -42,10 +40,7 @@ public class DirectoryHistoryDialogModelTest {
   @Test
   public void testDifference() {
     vcs.createDirectory("dir", null);
-    vcs.apply();
-
     vcs.createFile("dir/file", null, null);
-    vcs.apply();
 
     initModelFor("dir");
 

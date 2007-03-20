@@ -25,7 +25,7 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
   public void setUp() throws Exception {
     super.setUp();
     Clock.useRealClock();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    runWriteAction(new Runnable() {
       public void run() {
         root = addContentRoot();
       }
@@ -35,6 +35,10 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
+  }
+
+  protected void runWriteAction(Runnable r) {
+    ApplicationManager.getApplication().runWriteAction(r);
   }
 
   protected void addFileListenerDuring(VirtualFileListener l, Callable task) throws Exception {
@@ -110,24 +114,24 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
     d.setText(t);
   }
 
-  protected byte[] vcsContentOf(VirtualFile f) {
+  protected byte[] getVcsContentOf(VirtualFile f) {
     return getVcs().getEntry(f.getPath()).getContent().getBytes();
   }
 
-  protected boolean vcsHasEntryFor(VirtualFile f) {
-    return vcsHasEntry(f.getPath());
+  protected boolean hasVcsEntry(VirtualFile f) {
+    return hasVcsEntry(f.getPath());
   }
 
-  protected boolean vcsHasEntry(String path) {
+  protected boolean hasVcsEntry(String path) {
     return getVcs().hasEntry(path);
   }
 
   protected ILocalVcs getVcs() {
-    return LocalVcsComponent.getLocalVcsFor(getProject());
+    return LocalVcsComponent.getLocalVcsFor(myProject);
   }
 
   protected LocalVcsComponent getVcsComponent() {
-    return (LocalVcsComponent)LocalVcsComponent.getInstance(getProject());
+    return (LocalVcsComponent)LocalVcsComponent.getInstance(myProject);
   }
 
   protected VirtualFile addContentRoot() {
@@ -135,17 +139,16 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
   }
 
   protected VirtualFile addContentRoot(Module m) {
-    return addContentRootWithFile(null, m);
+    return addContentRootWithFiles(m);
   }
 
-  protected VirtualFile addContentRootWithFile(String fileName, Module module) {
+  protected VirtualFile addContentRootWithFiles(Module module, String... fileNames) {
     try {
       LocalFileSystem fs = LocalFileSystem.getInstance();
       File dir = createTempDirectory();
 
-      if (fileName != null) {
-        File f = new File(dir, fileName);
-        f.createNewFile();
+      for (String n : fileNames) {
+        new File(dir, n).createNewFile();
       }
 
       VirtualFile root = fs.findFileByIoFile(dir);

@@ -23,7 +23,7 @@ public class Label {
 
   public Entry getEntry() {
     RootEntry copy = myRoot.copy();
-    myChangeList.revertEntryUpToChangeSet(copy, myChangeSet);
+    myChangeList.revertUpToChangeSet(copy, myChangeSet);
     return copy.getEntry(myEntry.getId());
   }
 

@@ -6,15 +6,16 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class FileListenerFilteringTest extends FileListenerTestCase {
+  @Override
   @Before
   public void setUp() {
-    l = new FileListener(vcs, new TestIdeaGateway(), new MyFileFilter());
+    super.setUp();
+    gateway.setFileFilter(new MyFileFilter());
   }
 
   @Test
   public void testRenamingFileToFilteredOne() {
     vcs.createFile("allowed", null, null);
-    vcs.apply();
 
     VirtualFile renamed = new TestVirtualFile("filtered", null, null);
     fireRenamed(renamed, "allowed");

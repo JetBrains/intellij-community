@@ -1,5 +1,6 @@
 package com.intellij.localvcs;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class LocalVcsBasicsTest extends LocalVcsTestCase {
@@ -7,33 +8,35 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   private LocalVcs vcs = new TestLocalVcs();
 
   @Test
-  public void testClearingChangesOnApply() {
+  public void testClearingChangesOnEachChange() {
     vcs.createFile("file", b("content"), null);
-    vcs.changeFileContent("file", b("new content"), null);
-    vcs.rename("file", "new file");
-    vcs.delete("new file");
-
-    assertFalse(vcs.isClean());
-
-    vcs.apply();
     assertTrue(vcs.isClean());
   }
 
   @Test
-  public void testDoesNotMakeAnyChangesBeforeApply() {
+  public void testClearingChangesAfterChangeSetFinifhed() {
+    vcs.beginChangeSet();
+
     vcs.createFile("file", b("content"), null);
-    vcs.apply();
+    assertFalse(vcs.isClean());
+
+    vcs.endChangeSet(null);
+    assertTrue(vcs.isClean());
+  }
+
+  @Test
+  public void testApplyingChangesRightAfterChange() {
+    vcs.createFile("file", b("content"), null);
+    assertEquals(c("content"), vcs.getEntry("file").getContent());
 
     vcs.changeFileContent("file", b("new content"), null);
-
-    assertEquals(c("content"), vcs.getEntry("file").getContent());
+    assertEquals(c("new content"), vcs.getEntry("file").getContent());
   }
 
   @Test
   public void testIncrementingIdOnEntryCreation() {
     vcs.createDirectory("dir", null);
     vcs.createFile("file", null, null);
-    vcs.apply();
 
     Integer id1 = vcs.getEntry("dir").getId();
     Integer id2 = vcs.getEntry("file").getId();
@@ -42,43 +45,35 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testCreatingAndDeletingSameFileBeforeApply() {
-    vcs.createFile("file", null, null);
-    vcs.delete("file");
-    vcs.apply();
-
-    assertFalse(vcs.hasEntry("file"));
+  @Ignore("unignore when service states will be completed")
+  public void testStartingUpdateTwiceThrowsException() {
+    vcs.beginChangeSet();
+    try {
+      vcs.beginChangeSet();
+      fail();
+    }
+    catch (IllegalStateException e) {
+    }
   }
 
   @Test
-  public void testDeletingAndAddingSameFileBeforeApply() {
-    vcs.createFile("file", null, null);
-    vcs.apply();
-
-    vcs.delete("file");
-    vcs.createFile("file", null, null);
-    vcs.apply();
-
-    assertTrue(vcs.hasEntry("file"));
-  }
-
-  @Test
-  public void testAddingAndChangingSameFileBeforeApply() {
-    vcs.createFile("file", b("content"), null);
-    vcs.changeFileContent("file", b("new content"), null);
-    vcs.apply();
-
-    assertEquals(c("new content"), vcs.getEntry("file").getContent());
+  @Ignore("unignore when service states will be completed")
+  public void testFinishingUpdateWithoutStartingItThrowsException() {
+    try {
+      vcs.endChangeSet(null);
+      fail();
+    }
+    catch (IllegalStateException e) {
+    }
   }
 
   @Test
   public void testCreatingFile() {
     vcs.createFile("file", b("content"), 123L);
-    vcs.apply();
 
-    assertTrue(vcs.hasEntry("file"));
-    Entry e = vcs.getEntry("file");
+    Entry e = vcs.findEntry("file");
 
+    assertNotNull(e);
     assertEquals(c("content"), e.getContent());
     assertEquals(123L, e.getTimestamp());
   }
@@ -86,11 +81,10 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   @Test
   public void testCreatingLongFiles() {
     vcs.createFile("file", new byte[LongContent.MAX_LENGTH + 1], 777L);
-    vcs.apply();
 
-    assertTrue(vcs.hasEntry("file"));
-    Entry e = vcs.getEntry("file");
+    Entry e = vcs.findEntry("file");
 
+    assertNotNull(e);
     assertEquals(LongContent.class, e.getContent().getClass());
     assertEquals(777L, e.getTimestamp());
   }
@@ -98,42 +92,48 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   @Test
   public void testCreatingDirectory() {
     vcs.createDirectory("dir", 456L);
-    vcs.apply();
 
-    assertTrue(vcs.hasEntry("dir"));
-    assertEquals(456L, vcs.getEntry("dir").getTimestamp());
+    Entry e = vcs.findEntry("dir");
+
+    assertNotNull(e);
+    assertEquals(456L, e.getTimestamp());
   }
 
   @Test
   public void testCreatingFileUnderDirectory() {
     vcs.createDirectory("dir", null);
-    vcs.apply();
-
     vcs.createFile("dir/file", null, null);
-    vcs.apply();
+
     assertTrue(vcs.hasEntry("dir/file"));
+  }
+
+  @Test
+  public void testAskingForCreatedFileDuringChangeSet() {
+    vcs.beginChangeSet();
+    vcs.createFile("file", b("content"), null);
+
+    Entry e = vcs.findEntry("file");
+
+    assertNotNull(e);
+    assertEquals(c("content"), e.getContent());
   }
 
   @Test
   public void testChangingFileContent() {
     vcs.createFile("file", b("content"), null);
-    vcs.apply();
     assertEquals(c("content"), vcs.getEntry("file").getContent());
 
     vcs.changeFileContent("file", b("new content"), null);
-    vcs.apply();
-
     assertEquals(c("new content"), vcs.getEntry("file").getContent());
   }
 
   @Test
   public void testRenamingFile() {
     vcs.createFile("file", null, null);
-    vcs.apply();
     assertTrue(vcs.hasEntry("file"));
 
     vcs.rename("file", "new file");
-    vcs.apply();
+
     assertFalse(vcs.hasEntry("file"));
     assertTrue(vcs.hasEntry("new file"));
   }
@@ -143,10 +143,8 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
     vcs.createDirectory("dir1", null);
     vcs.createDirectory("dir1/dir2", null);
     vcs.createFile("dir1/dir2/file", null, null);
-    vcs.apply();
 
     vcs.rename("dir1/dir2", "new dir");
-    vcs.apply();
 
     assertTrue(vcs.hasEntry("dir1/new dir"));
     assertTrue(vcs.hasEntry("dir1/new dir/file"));
@@ -155,14 +153,24 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testTreatingRenamedAndCreatedFilesWithSameNameDifferently() {
+    vcs.createFile("file1", null, null);
+    vcs.rename("file1", "file2");
+    vcs.createFile("file1", null, null);
+
+    Entry one = vcs.getEntry("file1");
+    Entry two = vcs.getEntry("file2");
+
+    assertNotSame(one, two);
+  }
+
+  @Test
   public void testMovingFileFromOneDirectoryToAnother() {
     vcs.createDirectory("dir1", null);
     vcs.createDirectory("dir2", null);
     vcs.createFile("dir1/file", null, null);
-    vcs.apply();
 
     vcs.move("dir1/file", "dir2");
-    vcs.apply();
 
     assertTrue(vcs.hasEntry("dir2/file"));
     assertFalse(vcs.hasEntry("dir1/file"));
@@ -174,10 +182,8 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
     vcs.createDirectory("root2", null);
     vcs.createDirectory("root1/dir", null);
     vcs.createFile("root1/dir/file", null, null);
-    vcs.apply();
 
     vcs.move("root1/dir", "root2");
-    vcs.apply();
 
     assertTrue(vcs.hasEntry("root2/dir"));
     assertTrue(vcs.hasEntry("root2/dir/file"));
@@ -187,10 +193,9 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   @Test
   public void testDeletingFile() {
     vcs.createFile("file", b("content"), null);
-    vcs.apply();
+    assertTrue(vcs.hasEntry("file"));
 
     vcs.delete("file");
-    vcs.apply();
     assertFalse(vcs.hasEntry("file"));
   }
 
@@ -200,17 +205,39 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
     vcs.createDirectory("dir1/dir2", null);
     vcs.createFile("dir1/file1", b("content1"), null);
     vcs.createFile("dir1/dir2/file2", b("content2"), null);
-    vcs.apply();
 
     vcs.delete("dir1");
-    vcs.apply();
     assertFalse(vcs.hasEntry("dir1"));
+    assertFalse(vcs.hasEntry("dir1/dir2"));
+    assertFalse(vcs.hasEntry("dir1/file1"));
+    assertFalse(vcs.hasEntry("dir1/dir2/file2"));
+  }
+
+  public void testDeletingAndAddingSameFile() {
+    vcs.createFile("file", null, null);
+    vcs.delete("file");
+    vcs.createFile("file", null, null);
+
+    assertTrue(vcs.hasEntry("file"));
+  }
+
+  @Test
+  public void testTreatingDeletedAndCreatedFilesWithSameNameDifferently() {
+    vcs.createFile("file", null, null);
+
+    Entry one = vcs.getEntry("file");
+
+    vcs.delete("file");
+    vcs.createFile("file", null, null);
+
+    Entry two = vcs.getEntry("file");
+
+    assertNotSame(one, two);
   }
 
   @Test
   public void testCreatingRoots() {
     vcs.createDirectory("c:/dir/root", null);
-    vcs.apply();
 
     assertTrue(vcs.hasEntry("c:/dir/root"));
     assertFalse(vcs.hasEntry("c:/dir"));
@@ -222,7 +249,6 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   public void testCreatingFilesUnderRoots() {
     vcs.createDirectory("c:/dir/root", null);
     vcs.createFile("c:/dir/root/file", null, null);
-    vcs.apply();
 
     assertTrue(vcs.hasEntry("c:/dir/root/file"));
   }

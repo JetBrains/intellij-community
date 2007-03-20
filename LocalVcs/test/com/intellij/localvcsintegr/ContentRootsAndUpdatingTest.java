@@ -4,6 +4,7 @@ package com.intellij.localvcsintegr;
 import com.intellij.localvcs.Entry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
+import org.junit.Test;
 
 public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
   public void testUpdatingOnRootsChanges() {
@@ -15,19 +16,26 @@ public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
   }
 
   public void testUpdatingFilesOnRootsChanges() throws Exception {
-    VirtualFile root = addContentRootWithFile("file.java", myModule);
+    VirtualFile root = addContentRootWithFiles(myModule, "file1.java", "file2.java");
 
-    assertTrue(vcsHasEntry(root.getPath() + "/file.java"));
+    assertTrue(hasVcsEntry(root.getPath() + "/file1.java"));
+    assertTrue(hasVcsEntry(root.getPath() + "/file2.java"));
+  }
+
+  @Test
+  public void testTreatingAllChangesDuringUpdateAsOne() {
+    VirtualFile root = addContentRootWithFiles(myModule, "file1.java", "file2.java");
+    assertEquals(1, getVcs().getLabelsFor(root.getPath()).size());
   }
 
   public void testDeletingContentRoot() throws Exception {
-    VirtualFile newRoot = addContentRootWithFile("file.java", myModule);
+    VirtualFile newRoot = addContentRootWithFiles(myModule, "file.java");
     String path = newRoot.getPath();
 
     newRoot.delete(null);
 
-    assertTrue(vcsHasEntryFor(root));
-    assertFalse(vcsHasEntry(path));
+    assertTrue(hasVcsEntry(root));
+    assertFalse(hasVcsEntry(path));
   }
 
   public void testDeletingContentRootWithFileDoesNotCauseException() throws Exception {
@@ -35,11 +43,11 @@ public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
     VirtualFile f = newRoot.createChildData(null, "file.java");
 
     String p = f.getPath();
-    assertTrue(vcsHasEntry(p));
+    assertTrue(hasVcsEntry(p));
 
     newRoot.delete(null);
 
-    assertFalse(vcsHasEntry(p));
+    assertFalse(hasVcsEntry(p));
   }
 
   public void testDeletingSourceRootWithFileDoesNotCauseException() throws Exception {
@@ -49,11 +57,11 @@ public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
     PsiTestUtil.addSourceRoot(myModule, src);
 
     String p = f.getPath();
-    assertTrue(vcsHasEntry(p));
+    assertTrue(hasVcsEntry(p));
 
     src.delete(null);
 
-    assertFalse(vcsHasEntry(p));
+    assertFalse(hasVcsEntry(p));
   }
 
   public void testUpdatingOnStartup() throws Exception {

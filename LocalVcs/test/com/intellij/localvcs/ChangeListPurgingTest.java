@@ -5,7 +5,6 @@ import org.junit.Test;
 import java.util.List;
 
 public class ChangeListPurgingTest extends LocalVcsTestCase {
-  private RootEntry r = new RootEntry();
   private ChangeList cl = new ChangeList();
 
   @Test
@@ -14,10 +13,10 @@ public class ChangeListPurgingTest extends LocalVcsTestCase {
     ChangeSet cs2 = cs(2, new CreateFileChange(2, "f2", null, null));
     ChangeSet cs3 = cs(3, new CreateFileChange(3, "f3", null, null));
     ChangeSet cs4 = cs(4, new CreateFileChange(4, "f4", null, null));
-    cl.applyChangeSetTo(r, cs1);
-    cl.applyChangeSetTo(r, cs2);
-    cl.applyChangeSetTo(r, cs3);
-    cl.applyChangeSetTo(r, cs4);
+    cl.addChangeSet(cs1);
+    cl.addChangeSet(cs2);
+    cl.addChangeSet(cs3);
+    cl.addChangeSet(cs4);
 
     cl.purgeUpTo(3);
 
@@ -30,8 +29,8 @@ public class ChangeListPurgingTest extends LocalVcsTestCase {
   public void testPurgeUpToNearestUpperChangeSet() {
     ChangeSet cs1 = cs(1, new CreateFileChange(1, "f1", null, null));
     ChangeSet cs2 = cs(5, new CreateFileChange(2, "f2", null, null));
-    cl.applyChangeSetTo(r, cs1);
-    cl.applyChangeSetTo(r, cs2);
+    cl.addChangeSet(cs1);
+    cl.addChangeSet(cs2);
 
     cl.purgeUpTo(3);
 
@@ -40,8 +39,8 @@ public class ChangeListPurgingTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testPurgeingToEmpty() {
-    cl.applyChangeSetTo(r, cs(1, new CreateFileChange(1, "f", null, null)));
+  public void testPurgingToEmpty() {
+    cl.addChangeSet(cs(1, new CreateFileChange(1, "f", null, null)));
 
     cl.purgeUpTo(10);
     assertTrue(cl.getChangeSets().isEmpty());
@@ -49,14 +48,23 @@ public class ChangeListPurgingTest extends LocalVcsTestCase {
 
   @Test
   public void testReturningContentsToPurge() {
+    RootEntry r = new RootEntry();
     r.createFile(1, "f", c("one"), null);
 
-    cl.applyChangeSetTo(r, cs(1, new ChangeFileContentChange("f", c("two"), null)));
-    cl.applyChangeSetTo(r, cs(2, new ChangeFileContentChange("f", c("three"), null)));
+    ChangeSet cs1 = cs(1, new ChangeFileContentChange("f", c("two"), null));
+    ChangeSet cs2 = cs(2, new ChangeFileContentChange("f", c("three"), null));
 
     ChangeFileContentChange c1 = new ChangeFileContentChange("f", c("four"), null);
     ChangeFileContentChange c2 = new ChangeFileContentChange("f", c("five"), null);
-    cl.applyChangeSetTo(r, cs(3, c1, c2));
+    ChangeSet cs3 = cs(3, c1, c2);
+
+    cs1.applyTo(r);
+    cs2.applyTo(r);
+    cs3.applyTo(r);
+
+    cl.addChangeSet(cs1);
+    cl.addChangeSet(cs2);
+    cl.addChangeSet(cs3);
 
     List<Content> contents = cl.purgeUpTo(10);
 

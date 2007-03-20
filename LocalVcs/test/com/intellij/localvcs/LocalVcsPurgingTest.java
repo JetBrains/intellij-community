@@ -14,11 +14,9 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
   public void setUp() {
     setCurrentTimestamp(10);
     vcs.createFile("file", b("content"), null);
-    vcs.apply();
 
     setCurrentTimestamp(20);
     vcs.changeFileContent("file", b("new content"), null);
-    vcs.apply();
   }
 
   @Test
@@ -46,9 +44,7 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
     setCurrentTimestamp(20);
 
     vcs.createFile("file", new byte[LongContent.MAX_LENGTH + 1], null);
-    vcs.apply();
     vcs.changeFileContent("file", b("new content"), null);
-    vcs.apply();
 
     vcs.purgeUpTo(20);
 

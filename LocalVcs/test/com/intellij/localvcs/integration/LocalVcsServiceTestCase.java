@@ -9,6 +9,7 @@ import com.intellij.localvcs.integration.stubs.StubCommandProcessor;
 import com.intellij.localvcs.integration.stubs.StubProjectRootManagerEx;
 import com.intellij.localvcs.integration.stubs.StubStartupManagerEx;
 import com.intellij.localvcs.integration.stubs.StubVirtualFileManagerEx;
+import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.FileContentProvider;
@@ -24,13 +25,13 @@ public class LocalVcsServiceTestCase extends LocalVcsTestCase {
 
   protected LocalVcs vcs;
   protected LocalVcsService service;
+  protected TestIdeaGateway gateway;
   protected List<VirtualFile> roots = new ArrayList<VirtualFile>();
   protected MyStartupManager startupManager;
   protected MyProjectRootManagerEx rootManager;
   protected MyVirtualFileManagerEx fileManager;
   protected TestFileFilter fileFilter;
   protected MyCommandProcessor commandProcessor;
-  protected TestFileDocumentManager documentManager;
 
   @Before
   public void initAndStartup() {
@@ -48,15 +49,16 @@ public class LocalVcsServiceTestCase extends LocalVcsTestCase {
 
   protected void initWithoutStartup(LocalVcs v) {
     vcs = v;
+    gateway = new TestIdeaGateway();
+    fileFilter = new TestFileFilter();
+    gateway.setFileFilter(fileFilter);
+
     startupManager = new MyStartupManager();
     rootManager = new MyProjectRootManagerEx();
     fileManager = new MyVirtualFileManagerEx();
-    documentManager = new TestFileDocumentManager();
-    fileFilter = new TestFileFilter();
     commandProcessor = new MyCommandProcessor();
 
-    service = new LocalVcsService(vcs, new TestIdeaGateway(), startupManager, rootManager, fileManager, documentManager, fileFilter,
-                                  commandProcessor);
+    service = new LocalVcsService(vcs, gateway, startupManager, rootManager, fileManager, commandProcessor);
   }
 
   protected LocalVcs createLocalVcs() {
@@ -184,9 +186,11 @@ public class LocalVcsServiceTestCase extends LocalVcsTestCase {
 
     @Override
     public void executeCommand(Runnable runnable, String name, Object groupId) {
-      if (hasListener()) myListener.commandStarted(null);
+      CommandEvent e = new CommandEvent(this, null, name, null, null, null);
+
+      if (hasListener()) myListener.commandStarted(e);
       runnable.run();
-      if (hasListener()) myListener.commandFinished(null);
+      if (hasListener()) myListener.commandFinished(e);
     }
 
     @Override

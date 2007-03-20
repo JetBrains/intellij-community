@@ -24,11 +24,19 @@ public abstract class LocalVcsTestCase extends Assert {
   }
 
   protected static ChangeSet cs(Change... changes) {
-    return cs(0, changes);
+    return cs(null, changes);
+  }
+
+  protected static ChangeSet cs(String label, Change... changes) {
+    return cs(0, label, changes);
   }
 
   protected static ChangeSet cs(long timestamp, Change... changes) {
-    return new ChangeSet(timestamp, Arrays.asList(changes));
+    return cs(timestamp, null, changes);
+  }
+
+  protected static ChangeSet cs(long timestamp, String label, Change... changes) {
+    return new ChangeSet(timestamp, label, Arrays.asList(changes));
   }
 
   protected void setCurrentTimestamp(long t) {

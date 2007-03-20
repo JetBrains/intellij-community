@@ -43,7 +43,6 @@ public class UpdaterTest extends LocalVcsTestCase {
   @Test
   public void testDoesNotAddExistentRoots() {
     vcs.createDirectory("root", null);
-    vcs.apply();
 
     updateWith(new TestVirtualFile("root", null));
     assertEquals(1, vcs.getRoots().size());
@@ -84,7 +83,6 @@ public class UpdaterTest extends LocalVcsTestCase {
     vcs.createDirectory("outer", null);
     vcs.createDirectory("outer/dir", null);
     vcs.createDirectory("outer/dir/inner", null);
-    vcs.apply();
 
     TestVirtualFile outer = new TestVirtualFile("outer", null);
     TestVirtualFile dir = new TestVirtualFile("dir", null);
@@ -106,7 +104,6 @@ public class UpdaterTest extends LocalVcsTestCase {
   @Test
   public void testDeletingObsoleteRoots() {
     vcs.createDirectory("root", null);
-    vcs.apply();
 
     updateWith();
     assertFalse(vcs.hasEntry("root"));
@@ -116,7 +113,6 @@ public class UpdaterTest extends LocalVcsTestCase {
   public void testDeletingOuterObsoleteRootsButLeavingInnerWithContent() {
     vcs.createDirectory("outer", null);
     vcs.createDirectory("outer/inner", null);
-    vcs.apply();
 
     TestVirtualFile inner = new TestVirtualFile("outer/inner", null);
     inner.addChild(new TestVirtualFile("file", null, null));
@@ -130,7 +126,6 @@ public class UpdaterTest extends LocalVcsTestCase {
   @Test
   public void testUpdatingRootsCaseSensitively() {
     vcs.createDirectory("root", null);
-    vcs.apply();
 
     Paths.setCaseSensitive(true);
     updateWith(new TestVirtualFile("ROOT", null));
@@ -142,7 +137,6 @@ public class UpdaterTest extends LocalVcsTestCase {
   @Test
   public void testUpdatingRootsCaseInsensitively() {
     vcs.createDirectory("root", null);
-    vcs.apply();
 
     Paths.setCaseSensitive(false);
     updateWith(new TestVirtualFile("ROOT", null));
@@ -196,7 +190,6 @@ public class UpdaterTest extends LocalVcsTestCase {
     vcs.createDirectory("root", null);
     vcs.createDirectory("root/dir", null);
     vcs.createFile("root/dir/file1", null, -1L);
-    vcs.apply();
 
     updateWith(root);
 
@@ -271,7 +264,6 @@ public class UpdaterTest extends LocalVcsTestCase {
     vcs.createFile("root/dir/fileToLeave", null, -1L);
     vcs.createFile("root/dir/fileToDelete", null, -1L);
     vcs.createFile("root/dir/subdirToDelete", null, -1L);
-    vcs.apply();
 
     updateWith(root);
 
@@ -291,7 +283,6 @@ public class UpdaterTest extends LocalVcsTestCase {
     vcs.createDirectory("root", null);
     vcs.createFile("root/name1", null, null);
     vcs.createDirectory("root/name2", null);
-    vcs.apply();
 
     updateWith(root);
 
@@ -313,7 +304,6 @@ public class UpdaterTest extends LocalVcsTestCase {
 
     vcs.createDirectory("root", null);
     vcs.createDirectory("root/name", null);
-    vcs.apply();
 
     updateWith(root);
 
@@ -335,7 +325,6 @@ public class UpdaterTest extends LocalVcsTestCase {
     vcs.createFile("root/file", null, 111L);
     vcs.createDirectory("root/dir", null);
     vcs.createFile("root/dir/dirFile", null, 222L);
-    vcs.apply();
 
     filter.setFilesNotUnderContentRoot(file, dir);
     updateWith(root);
@@ -359,7 +348,6 @@ public class UpdaterTest extends LocalVcsTestCase {
 
     vcs.createDirectory("root", null);
     vcs.createDirectory("root/dir", null);
-    vcs.apply();
 
     filter.setFilesNotUnderContentRoot(dir);
 
@@ -376,7 +364,6 @@ public class UpdaterTest extends LocalVcsTestCase {
 
     vcs.createDirectory("root", null);
     vcs.createFile("root/file", null, 111L);
-    vcs.apply();
 
     configureToReturnPhysicalContent("physical content");
 
@@ -399,7 +386,6 @@ public class UpdaterTest extends LocalVcsTestCase {
     vcs.createDirectory("root", null);
     vcs.createDirectory("root/dir", null);
     vcs.createFile("root/dir/file", b("old content"), 111L);
-    vcs.apply();
 
     updateWith(root);
 
@@ -417,7 +403,6 @@ public class UpdaterTest extends LocalVcsTestCase {
 
     vcs.createDirectory("root", null);
     vcs.createFile("root/file", b("old content"), 111L);
-    vcs.apply();
 
     updateWith(root);
 
@@ -435,7 +420,6 @@ public class UpdaterTest extends LocalVcsTestCase {
 
     vcs.createDirectory("root", null);
     vcs.createFile("root/file", null, 1L);
-    vcs.apply();
 
     updateWith(root);
 
@@ -453,7 +437,6 @@ public class UpdaterTest extends LocalVcsTestCase {
 
     vcs.createDirectory("root", null);
     vcs.createFile("root/file", null, 1L);
-    vcs.apply();
 
     updateWith(root);
 
@@ -469,7 +452,6 @@ public class UpdaterTest extends LocalVcsTestCase {
 
     vcs.createDirectory("root", null);
     vcs.createFile("root/file", null, 1L);
-    vcs.apply();
 
     updateWith(root);
 
@@ -477,6 +459,21 @@ public class UpdaterTest extends LocalVcsTestCase {
 
     assertTrue(vcs.hasEntry("root/FILE"));
     assertEquals(2L, vcs.getEntry("root/FILE").getTimestamp());
+  }
+
+  @Test
+  public void testTreatingChangesDuringUpdateAsOne() {
+    TestVirtualFile root = new TestVirtualFile("root", null);
+    TestVirtualFile dir1 = new TestVirtualFile("dir1", null);
+    TestVirtualFile dir2 = new TestVirtualFile("dir2", null);
+
+    root.addChild(dir1);
+    root.addChild(dir2);
+    dir1.addChild(new TestVirtualFile("file1", null, null));
+    dir2.addChild(new TestVirtualFile("file2", null, null));
+
+    updateWith(root);
+    assertEquals(1, vcs.getLabelsFor("root").size());
   }
 
   private String myPhysicalContent;

@@ -1,8 +1,9 @@
 package com.intellij.localvcs;
 
-import org.junit.Before;
-import org.junit.Test;
 import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class LocalVcsStoringTest extends TempDirTestCase {
   private LocalVcs vcs;
@@ -16,14 +17,13 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   }
 
   @After
-  public void closeStorage(){
-    if(s != null) s.close();
+  public void closeStorage() {
+    if (s != null) s.close();
   }
 
   @Test
   public void testStoringEntries() {
     vcs.createFile("file", b("content"), 123L);
-    vcs.apply();
 
     vcs.save();
     initVcs();
@@ -37,9 +37,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   @Test
   public void testStoringChangeList() {
     vcs.createFile("file", b("content"), null);
-    vcs.apply();
     vcs.changeFileContent("file", b("new content"), null);
-    vcs.apply();
 
     vcs.save();
     initVcs();
@@ -51,13 +49,11 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   public void testStoringObjectsCounter() {
     vcs.createFile("file1", b("content1"), null);
     vcs.createFile("file2", b("content2"), null);
-    vcs.apply();
 
     vcs.save();
     initVcs();
 
     vcs.createFile("file3", b("content3"), null);
-    vcs.apply();
 
     Integer id2 = vcs.getEntry("file2").getId();
     Integer id3 = vcs.getEntry("file3").getId();
@@ -66,13 +62,51 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   }
 
   @Test
-  public void testDoesNotStoreUnappliedChanges() {
-    vcs.createFile("file", b("content"), null);
-    vcs.save();
+  @Ignore("unignore after moving save postponding to service level")
+  public void testSavingDuringChangeSetThrowsException() {
+    vcs.beginChangeSet();
+    try {
+      vcs.save();
+      fail();
+    }
+    catch (IllegalStateException e) {
+    }
+  }
+
+  @Test
+  public void testPospondingSaveUntilChangeSetFinished() {
+    vcs.beginChangeSet();
+    vcs.createFile("file", null, null);
 
     vcs.save();
+    assertFalse(hasSavedEntry("file"));
 
-    initVcs();
-    assertTrue(vcs.isClean());
+    vcs.endChangeSet(null);
+    assertTrue(hasSavedEntry("file"));
+  }
+
+  @Test
+  public void testDoesNotSaveAfterNextChangeSetIfSaveWasPospondedDuringPriorOne() {
+    vcs.beginChangeSet();
+    vcs.createFile("one", null, null);
+    vcs.save();
+    vcs.endChangeSet(null);
+
+    assertTrue(hasSavedEntry("one"));
+
+    vcs.beginChangeSet();
+    vcs.createFile("two", null, null);
+    vcs.endChangeSet(null);
+
+    assertTrue(hasSavedEntry("one"));
+    assertFalse(hasSavedEntry("two"));
+  }
+
+  private boolean hasSavedEntry(String path) {
+    Storage s = new Storage(tempDir);
+    LocalVcs vcs = new LocalVcs(s);
+    boolean result = vcs.hasEntry(path);
+    s.close();
+    return result;
   }
 }

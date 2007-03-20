@@ -2,7 +2,6 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.localvcs.ILocalVcs;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
 // todo add LocalVcs.startAction for bulk updates
@@ -10,42 +9,36 @@ public class LocalVcsAction implements ILocalVcsAction {
   public static LocalVcsAction NULL = new Null(); // todo try to get rid of this
 
   private ILocalVcs myVcs;
-  private FileDocumentManager myDocumentManager;
-  private FileFilter myFilter;
+  private IdeaGateway myGateway;
   private String myLabel;
 
-  public LocalVcsAction(ILocalVcs vcs, FileDocumentManager dm, FileFilter f, String label) {
+  public LocalVcsAction(ILocalVcs vcs, IdeaGateway gw, String label) {
     myVcs = vcs;
-    myDocumentManager = dm;
-    myFilter = f;
+    myGateway = gw;
     myLabel = label;
   }
 
   public void start() {
+    myVcs.beginChangeSet();
     applyUnsavedDocuments();
   }
 
   public void finish() {
     applyUnsavedDocuments();
-    myVcs.putLabel(myLabel);
+    myVcs.endChangeSet(myLabel);
   }
 
   private void applyUnsavedDocuments() {
-    for (Document d : myDocumentManager.getUnsavedDocuments()) {
-      VirtualFile f = myDocumentManager.getFile(d);
-      // todo charset
-      // todo move filtering to some kind of decorator or adaptor...
-      // or into LocalVcsService
-
-      if (!myFilter.isAllowedAndUnderContentRoot(f)) continue;
+    for (Document d : myGateway.getUnsavedDocuments()) {
+      VirtualFile f = myGateway.getDocumentFile(d);
+      if (!myGateway.getFileFilter().isAllowedAndUnderContentRoot(f)) continue;
       myVcs.changeFileContent(f.getPath(), d.getText().getBytes(), f.getTimeStamp());
     }
-    myVcs.apply();
   }
 
   private static class Null extends LocalVcsAction {
     public Null() {
-      super(null, null, null, null);
+      super(null, null, null);
     }
 
     @Override

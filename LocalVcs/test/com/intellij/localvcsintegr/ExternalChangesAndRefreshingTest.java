@@ -26,13 +26,13 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     String path1 = createFileExternally("f1.java");
     String path2 = createFileExternally("f2.java");
 
-    assertFalse(vcsHasEntry(path1));
-    assertFalse(vcsHasEntry(path2));
+    assertFalse(hasVcsEntry(path1));
+    assertFalse(hasVcsEntry(path2));
 
     forceRefreshVFS(async);
 
-    assertTrue(vcsHasEntry(path1));
-    assertTrue(vcsHasEntry(path2));
+    assertTrue(hasVcsEntry(path1));
+    assertTrue(hasVcsEntry(path2));
 
     assertEquals(2, getVcs().getLabelsFor(root.getPath()).size());
   }
@@ -113,31 +113,31 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     VirtualFile dir = root.createChildDirectory(null, "EXCLUDED");
     String p = dir.getPath();
 
-    assertTrue(vcsHasEntry(p));
+    assertTrue(hasVcsEntry(p));
 
     ModifiableRootModel m = ModuleRootManager.getInstance(myModule).getModifiableModel();
     m.getContentEntries()[0].addExcludeFolder(dir);
     m.commit();
 
-    assertFalse(vcsHasEntry(p));
+    assertFalse(hasVcsEntry(p));
 
     dir.delete(null);
 
     createDirectoryExternally("EXCLUDED");
     forceRefreshVFS(false);
 
-    assertFalse(vcsHasEntry(p));
+    assertFalse(hasVcsEntry(p));
   }
 
   public void testDeletionOfFilteredDirectoryExternallyDoesNotThrowExceptionDuringRefresh() throws Exception {
     VirtualFile f = root.createChildDirectory(null, EXCLUDED_DIR_NAME);
     String path = Paths.appended(root.getPath(), EXCLUDED_DIR_NAME);
 
-    assertFalse(vcsHasEntry(path));
+    assertFalse(hasVcsEntry(path));
 
     new File(path).delete();
     forceRefreshVFS(false);
 
-    assertFalse(vcsHasEntry(path));
+    assertFalse(hasVcsEntry(path));
   }
 }

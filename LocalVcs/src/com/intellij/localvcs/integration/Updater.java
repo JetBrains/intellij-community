@@ -48,6 +48,8 @@ public class Updater implements CacheUpdater {
   }
 
   public VirtualFile[] queryNeededFiles() {
+    myVcs.beginChangeSet();
+
     deleteObsoleteRoots();
     createAndUpdateRoots();
 
@@ -73,7 +75,7 @@ public class Updater implements CacheUpdater {
   }
 
   public void updatingDone() {
-    myVcs.apply();
+    myVcs.endChangeSet(null);
   }
 
   public void canceled() {
@@ -81,9 +83,11 @@ public class Updater implements CacheUpdater {
   }
 
   private void deleteObsoleteRoots() {
+    List<Entry> obsolete = new ArrayList<Entry>();
     for (Entry r : myVcs.getRoots()) {
-      if (!hasVfsRoot(r)) myVcs.delete(r.getPath());
+      if (!hasVfsRoot(r)) obsolete.add(r);
     }
+    for (Entry e : obsolete) myVcs.delete(e.getPath());
   }
 
   private boolean hasVfsRoot(Entry e) {
@@ -137,20 +141,22 @@ public class Updater implements CacheUpdater {
         }
       }
     }
-    deleteOutdatedFiles(entry, dir);
+    deleteObsoleteFiles(entry, dir);
   }
 
   private boolean notTheSameKind(Entry e, VirtualFile f) {
     return e.isDirectory() != f.isDirectory();
   }
 
-  private void deleteOutdatedFiles(Entry entry, VirtualFile dir) {
+  private void deleteObsoleteFiles(Entry entry, VirtualFile dir) {
+    List<Entry> obsolete = new ArrayList<Entry>();
     for (Entry e : entry.getChildren()) {
       VirtualFile f = dir.findChild(e.getName());
       if (f == null || notAllowed(f)) {
-        myVcs.delete(e.getPath());
+        obsolete.add(e);
       }
     }
+    for (Entry e : obsolete) myVcs.delete(e.getPath());
   }
 
   private void createRecursively(VirtualFile fileOrDir) {

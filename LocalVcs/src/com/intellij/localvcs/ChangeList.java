@@ -36,25 +36,17 @@ public class ChangeList {
     return result;
   }
 
-  public void applyChangeSetTo(RootEntry root, ChangeSet cs) {
-    cs.applyTo(root);
+
+  public void addChangeSet(ChangeSet cs) {
     myChangeSets.add(cs);
   }
 
-  public void revertEntryUpToChangeSet(RootEntry e, ChangeSet cs) {
+  public void revertUpToChangeSet(RootEntry e, ChangeSet cs) {
     for (int i = myChangeSets.size() - 1; i >= 0; i--) {
       ChangeSet changeSet = myChangeSets.get(i);
       if (changeSet == cs) return;
       changeSet.revertOn(e);
     }
-  }
-
-  public void labelLastChangeSet(String label) {
-    // todo try to remove this check 
-    assert !myChangeSets.isEmpty();
-
-    ChangeSet last = myChangeSets.get(myChangeSets.size() - 1);
-    last.setLabel(label);
   }
 
   public List<Content> purgeUpTo(long timestamp) {

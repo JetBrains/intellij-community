@@ -37,7 +37,6 @@ public class LocalVcsComponentTest extends TempDirTestCase {
     Storage s = new Storage(c.getStorageDir());
     LocalVcs vcs = new LocalVcs(s);
     vcs.createFile("file", null, null);
-    vcs.apply();
     vcs.save();
     s.close();
 
@@ -59,7 +58,6 @@ public class LocalVcsComponentTest extends TempDirTestCase {
     sm.runPreStartupActivity();
 
     c.getLocalVcs().createFile("file", null, null);
-    c.getLocalVcs().apply();
     c.save();
 
     Storage s = new Storage(c.getStorageDir());
@@ -91,7 +89,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
     expect(p.isDefault()).andStubReturn(true);
     replay(p);
 
-    LocalVcsComponent c = new LocalVcsComponent(p, sm, null, null, null, null, null) {
+    LocalVcsComponent c = new LocalVcsComponent(p, sm, null, null, null) {
       @Override
       public boolean isEnabled() {
         return true;
@@ -108,7 +106,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
   @Test
   public void testCleaningOnDisposeInUnitTestMode() {
     final boolean[] isUnitTestMode = new boolean[]{true};
-    LocalVcsComponent c = new LocalVcsComponent(null, null, null, null, null, null, null) {
+    LocalVcsComponent c = new LocalVcsComponent(null, null, null, null, null) {
       @Override
       public File getStorageDir() {
         return new File(tempDir, "vcs");
@@ -174,7 +172,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
     private boolean isVcsInitialized;
 
     public MyLocalVcsComponent(String systemPath, Project p, MyStartupManager sm) {
-      super(p, sm, null, null, null, null, null);
+      super(p, sm, null, null, null);
       mySystemPath = systemPath;
     }
 

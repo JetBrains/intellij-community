@@ -35,7 +35,6 @@ public class LocalVcsServiceRootsOnUpdateTest extends LocalVcsServiceTestCase {
   @Test
   public void testRemovingRoots() {
     vcs.createDirectory("root", null);
-    vcs.apply();
 
     roots.clear();
     fireUpdateRoots();
@@ -47,7 +46,6 @@ public class LocalVcsServiceRootsOnUpdateTest extends LocalVcsServiceTestCase {
   public void testRenamingContentRoot() {
     vcs.createDirectory("c:/dir/root", null);
     vcs.createFile("c:/dir/root/file", null, null);
-    vcs.apply();
 
     TestVirtualFile dir = new TestVirtualFile("c:/dir", null);
     root = new TestVirtualFile("newName", null);
@@ -63,7 +61,6 @@ public class LocalVcsServiceRootsOnUpdateTest extends LocalVcsServiceTestCase {
   @Test
   public void testDeletingContentRootExternally() {
     vcs.createDirectory("root", null);
-    vcs.apply();
 
     root = new TestVirtualFile("root", null);
 

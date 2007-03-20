@@ -30,7 +30,7 @@ public class ContentStorageTest extends PerformanceTest {
 
   @Test
   public void testStorageWriting() throws Exception {
-    assertExecutionTime(1, new Task() {
+    assertExecutionTime(1000, new Task() {
       public void execute() throws Exception {
         createContentsOfDifferentSize();
       }
@@ -40,7 +40,7 @@ public class ContentStorageTest extends PerformanceTest {
   @Test
   public void testStorageReading() throws Exception {
     final List<Integer> cc = createContentsOfDifferentSize();
-    assertExecutionTime(1, new Task() {
+    assertExecutionTime(60, new Task() {
       public void execute() throws Exception {
         readContentsRandomly(cc);
       }
@@ -50,7 +50,7 @@ public class ContentStorageTest extends PerformanceTest {
   @Test
   public void testStorageDeletion() throws Exception {
     final List<Integer> cc = createContentsOfDifferentSize();
-    assertExecutionTime(1, new Task() {
+    assertExecutionTime(10, new Task() {
       public void execute() throws Exception {
         deleteHalfOfContentsRandomly(cc);
       }
@@ -62,7 +62,7 @@ public class ContentStorageTest extends PerformanceTest {
     List<Integer> cc = createContentsOfDifferentSize();
     deleteHalfOfContentsRandomly(cc);
 
-    assertExecutionTime(1, new Task() {
+    assertExecutionTime(1500, new Task() {
       public void execute() throws Exception {
         createContentsOfDifferentSize();
       }
@@ -73,7 +73,7 @@ public class ContentStorageTest extends PerformanceTest {
   public void testStorageReadingAfterManyModifications() throws IOException {
     final List<Integer> cc = modifyStorageManyTimes();
 
-    assertExecutionTime(1, new Task() {
+    assertExecutionTime(30, new Task() {
       public void execute() throws Exception {
         readContentsRandomly(cc);
       }
@@ -83,7 +83,7 @@ public class ContentStorageTest extends PerformanceTest {
   @Test
   public void testStorageSizeOfterManyModifications() throws IOException {
     modifyStorageManyTimes();
-    assertEquals(0, sf.length() / (1024 * 1024));
+    assertEquals(15, sf.length() / (1024 * 1024));
   }
 
   private List<Integer> createContentsOfDifferentSize() throws IOException {

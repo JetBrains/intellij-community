@@ -38,24 +38,9 @@ public class UpdaterCacheUpdaterIntergrationTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testCreatingNewFilesOnlyOnProcessingFile() {
-    updater.queryNeededFiles();
-
-    vcs.apply();
-    assertFalse(vcs.hasEntry("root/file"));
-
-    updater.processFile(fileContentOf(file));
-    assertFalse(vcs.hasEntry("root/file"));
-
-    updater.updatingDone();
-    assertEquals(c("new content"), vcs.getEntry("root/file").getContent());
-  }
-
-  @Test
   public void testUpdaingOutdatedFiles() {
     vcs.createDirectory("root", null);
     vcs.createFile("root/file", b("old content"), file.getTimeStamp() - 1);
-    vcs.apply();
 
     VirtualFile[] files = updater.queryNeededFiles();
     assertEquals(1, files.length);
@@ -67,19 +52,24 @@ public class UpdaterCacheUpdaterIntergrationTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testCreatingNewFilesOnlyOnProcessingFile() {
+    updater.queryNeededFiles();
+    assertFalse(vcs.hasEntry("root/file"));
+
+    updater.processFile(fileContentOf(file));
+    assertTrue(vcs.hasEntry("root/file"));
+    assertEquals(c("new content"), vcs.getEntry("root/file").getContent());
+  }
+
+  @Test
   public void testUpdaingOutdatedFilesOnlyOnProcessingFile() {
     vcs.createDirectory("root", null);
     vcs.createFile("root/file", b("old content"), file.getTimeStamp() - 1);
-    vcs.apply();
 
     updater.queryNeededFiles();
-    vcs.apply();
     assertEquals(c("old content"), vcs.getEntry("root/file").getContent());
 
     updater.processFile(fileContentOf(file));
-    assertEquals(c("old content"), vcs.getEntry("root/file").getContent());
-
-    updater.updatingDone();
     assertEquals(c("new content"), vcs.getEntry("root/file").getContent());
   }
 

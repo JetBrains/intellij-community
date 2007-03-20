@@ -22,9 +22,9 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testIncludingUnsavedVersionInLabels() {
+    vcs.beginChangeSet();
     vcs.createFile("f", b("old"), null);
-    vcs.apply();
-    vcs.putLabel("1");
+    vcs.endChangeSet("1");
 
     initModelFor("f", "new");
 
@@ -39,7 +39,6 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   public void testUnsavedVersionTimestampMemorizedTheModelCreationTime() {
     setCurrentTimestamp(123);
     vcs.createFile("f", b("old"), null);
-    vcs.apply();
 
     setCurrentTimestamp(456);
     initModelFor("f", "new");
@@ -53,7 +52,6 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   @Test
   public void testDoesNotIncludeUnsavedVersionDifferentOnlyInLineSeparator() {
     vcs.createFile("f", b("one\r\ntwo\r\n"), null);
-    vcs.apply();
 
     initModelFor("f", "one\ntwo\n");
 
@@ -64,7 +62,6 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   public void testLabelsListAfterPurgeConteinsOnlyCurrentVersion() {
     setCurrentTimestamp(10);
     vcs.createFile("f", b(""), null);
-    vcs.apply();
     vcs.purgeUpTo(20);
 
     initModelFor("f");
@@ -78,24 +75,20 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   @Test
   public void testDifferenceModelTitles() {
     vcs.createFile("old", b(""), 123L);
-    vcs.apply();
     vcs.rename("old", "new");
-    vcs.apply();
 
     initModelFor("new");
     m.selectLabels(0, 1);
 
     FileDifferenceModel dm = m.getDifferenceModel();
-    assertTrue(dm.getLeftTitle().endsWith("old"));
-    assertTrue(dm.getRightTitle().endsWith("new"));
+    assertTrue(dm.getLeftTitle().endsWith(" - old"));
+    assertTrue(dm.getRightTitle().endsWith(" - new"));
   }
 
   @Test
   public void testDifferenceModelContents() {
     vcs.createFile("f", b("old"), null);
-    vcs.apply();
     vcs.changeFileContent("f", b("new"), null);
-    vcs.apply();
 
     initModelFor("f");
     m.selectLabels(0, 1);
@@ -106,9 +99,7 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   @Test
   public void testContentsWhenOnlyOneLabelSelected() {
     vcs.createFile("f", b("old"), null);
-    vcs.apply();
     vcs.changeFileContent("f", b("new"), null);
-    vcs.apply();
 
     initModelFor("f");
     m.selectLabels(1, 1);
@@ -119,7 +110,6 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   @Test
   public void testContentsForUnsavedVersion() {
     vcs.createFile("f", b("old"), null);
-    vcs.apply();
 
     initModelFor("f", "unsaved");
     m.selectLabels(0, 1);
@@ -131,7 +121,6 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   public void testTitlesForUnsavedEntry() {
     vcs.createDirectory("dir", null);
     vcs.createFile("dir/f", b("old"), null);
-    vcs.apply();
 
     setCurrentTimestamp(new Date(2003, 01, 01).getTime());
     initModelFor("dir/f", "unsaved");
@@ -155,9 +144,7 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   @Test
   public void testRevertion() throws Exception {
     vcs.createFile("file", b("old"), 1L);
-    vcs.apply();
     vcs.changeFileContent("file", b("new"), null);
-    vcs.apply();
 
     VirtualFile f = createMock(VirtualFile.class);
     expect(f.contentsToByteArray()).andReturn(b("new"));

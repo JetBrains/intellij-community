@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.Callable;
 
@@ -31,22 +30,22 @@ public class FileListeningTest extends IntegrationTestCase {
 
   public void testIgnoringFilteredFileTypes() throws Exception {
     VirtualFile f = root.createChildData(null, "file.class");
-    assertFalse(vcsHasEntryFor(f));
+    assertFalse(hasVcsEntry(f));
   }
 
   public void testIgnoringDirectories() throws Exception {
     VirtualFile f = root.createChildDirectory(null, EXCLUDED_DIR_NAME);
-    assertFalse(vcsHasEntryFor(f));
+    assertFalse(hasVcsEntry(f));
   }
 
   public void testChangingFileContent() throws Exception {
     VirtualFile f = root.createChildData(null, "file.java");
 
     f.setBinaryContent(new byte[]{1});
-    assertEquals(1, vcsContentOf(f)[0]);
+    assertEquals(1, getVcsContentOf(f)[0]);
 
     f.setBinaryContent(new byte[]{2});
-    assertEquals(2, vcsContentOf(f)[0]);
+    assertEquals(2, getVcsContentOf(f)[0]);
   }
 
   public void testChangingFileContentOnlyAfterContentChangedEvent() throws Exception {
@@ -69,8 +68,8 @@ public class FileListeningTest extends IntegrationTestCase {
     VirtualFile f = root.createChildData(null, "file.java");
     f.rename(null, "file2.java");
 
-    assertFalse(vcsHasEntry(Paths.renamed(f.getPath(), "file.java")));
-    assertTrue(vcsHasEntryFor(f));
+    assertFalse(hasVcsEntry(Paths.renamed(f.getPath(), "file.java")));
+    assertTrue(hasVcsEntry(f));
   }
 
   public void testRenamingFileOnlyAfterRenamedEvent() throws Exception {
@@ -81,13 +80,13 @@ public class FileListeningTest extends IntegrationTestCase {
 
     VirtualFileListener l = new VirtualFileAdapter() {
       public void beforePropertyChange(VirtualFilePropertyEvent e) {
-        log[0] = vcsHasEntry(oldPath);
-        log[1] = vcsHasEntry(newPath);
+        log[0] = hasVcsEntry(oldPath);
+        log[1] = hasVcsEntry(newPath);
       }
 
       public void propertyChanged(VirtualFilePropertyEvent e) {
-        log[2] = vcsHasEntry(oldPath);
-        log[3] = vcsHasEntry(newPath);
+        log[2] = hasVcsEntry(oldPath);
+        log[3] = hasVcsEntry(newPath);
       }
     };
 
@@ -106,9 +105,9 @@ public class FileListeningTest extends IntegrationTestCase {
 
   public void testRenamingFilteredFiles() throws Exception {
     VirtualFile f = root.createChildData(null, "file.class");
-    assertFalse(vcsHasEntryFor(f));
+    assertFalse(hasVcsEntry(f));
     f.rename(null, "file.java");
-    assertTrue(vcsHasEntryFor(f));
+    assertTrue(hasVcsEntry(f));
   }
 
   public void testRenamingFilteredDirectoriesToNonFiltered() throws Exception {
@@ -117,11 +116,11 @@ public class FileListeningTest extends IntegrationTestCase {
     String filtered = Paths.appended(root.getPath(), EXCLUDED_DIR_NAME);
     String notFiltered = Paths.appended(root.getPath(), "not_filtered");
 
-    assertFalse(vcsHasEntry(filtered));
+    assertFalse(hasVcsEntry(filtered));
     f.rename(null, "not_filtered");
 
-    assertFalse(vcsHasEntry(filtered));
-    assertTrue(vcsHasEntry(notFiltered));
+    assertFalse(hasVcsEntry(filtered));
+    assertTrue(hasVcsEntry(notFiltered));
   }
 
   public void testRenamingNonFilteredDirectoriesToFiltered() throws Exception {
@@ -130,11 +129,11 @@ public class FileListeningTest extends IntegrationTestCase {
     String filtered = Paths.appended(root.getPath(), EXCLUDED_DIR_NAME);
     String notFiltered = Paths.appended(root.getPath(), "not_filtered");
 
-    assertTrue(vcsHasEntry(notFiltered));
+    assertTrue(hasVcsEntry(notFiltered));
     f.rename(null, EXCLUDED_DIR_NAME);
 
-    assertFalse(vcsHasEntry(notFiltered));
-    assertFalse(vcsHasEntry(filtered));
+    assertFalse(hasVcsEntry(notFiltered));
+    assertFalse(hasVcsEntry(filtered));
   }
 
   public void testDeletionOfFilteredDirectoryDoesNotThrowsException() throws Exception {
@@ -142,10 +141,10 @@ public class FileListeningTest extends IntegrationTestCase {
 
     String filtered = Paths.appended(root.getPath(), EXCLUDED_DIR_NAME);
 
-    assertFalse(vcsHasEntry(filtered));
+    assertFalse(hasVcsEntry(filtered));
     f.delete(null);
 
-    assertFalse(vcsHasEntry(filtered));
+    assertFalse(hasVcsEntry(filtered));
   }
 
   public void testDeletingBigFiles() throws Exception {
@@ -158,47 +157,9 @@ public class FileListeningTest extends IntegrationTestCase {
     VirtualFile f = LocalFileSystem.getInstance().findFileByIoFile(tempFile);
 
     f.move(null, root);
-    assertTrue(vcsHasEntryFor(f));
+    assertTrue(hasVcsEntry(f));
 
     f.delete(null);
-    assertFalse(vcsHasEntryFor(f));
-  }
-
-  public void testFileContentBeforeFileDeletedEvent() throws Exception {
-    final VirtualFile f = root.createChildData(null, "file.java");
-    f.setBinaryContent("content".getBytes());
-
-    final String[] contents = new String[2];
-
-    VirtualFileListener l = new VirtualFileAdapter() {
-      @Override
-      public void beforeFileDeletion(VirtualFileEvent e) {
-        logContent(0);
-      }
-
-      @Override
-      public void fileDeleted(VirtualFileEvent e) {
-        logContent(1);
-      }
-
-      private void logContent(int index) {
-        try {
-          contents[index] = new String(f.contentsToByteArray());
-        }
-        catch (IOException ex) {
-          contents[index] = "exception";
-        }
-      }
-    };
-
-    addFileListenerDuring(l, new Callable() {
-      public Object call() throws Exception {
-        f.delete(null);
-        return null;
-      }
-    });
-
-    assertEquals("content", contents[0]);
-    assertEquals("exception", contents[1]);
+    assertFalse(hasVcsEntry(f));
   }
 }

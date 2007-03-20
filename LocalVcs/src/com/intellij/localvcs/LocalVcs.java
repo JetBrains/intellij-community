@@ -2,7 +2,6 @@ package com.intellij.localvcs;
 
 import java.util.*;
 
-// todo bulk update support - add startAction method
 public class LocalVcs implements ILocalVcs {
   private Storage myStorage;
 
@@ -10,11 +9,14 @@ public class LocalVcs implements ILocalVcs {
   private RootEntry myRoot;
   private Integer myEntryCounter;
 
+  private int myChangeSetCounter = 0;
+  private boolean wasSaveRequestedDuringChangeSet = false;
+
   // todo change type to something else (for example to LinkedList)
-  private List<Change> myPendingChanges = new ArrayList<Change>(3);
+  private List<Change> myPendingChanges = new ArrayList<Change>();
 
   public LocalVcs(Storage s) {
-    // todo try to get rid of need to give parameter 
+    // todo try to get rid of need to pass the parameter
     myStorage = s;
     load();
   }
@@ -26,12 +28,22 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void save() {
+    if (shouldPostpondSave()) return;
+
     purgeUpTo(getCurrentTimestamp() - getPurgingInterval());
 
     myStorage.storeChangeList(myChangeList);
     myStorage.storeRootEntry(myRoot);
     myStorage.storeCounter(myEntryCounter);
     myStorage.save();
+  }
+
+  private boolean shouldPostpondSave() {
+    // todo a bit of hack... move it to service states
+    if (!isInChangeSet()) return false;
+
+    wasSaveRequestedDuringChangeSet = true;
+    return true;
   }
 
   public boolean hasEntry(String path) {
@@ -50,9 +62,30 @@ public class LocalVcs implements ILocalVcs {
     return myRoot.getRoots();
   }
 
+  public void beginChangeSet() {
+    myChangeSetCounter++;
+  }
+
+  public void endChangeSet(String label) {
+    if (myChangeSetCounter == 1) registerChangeSet(label);
+    myChangeSetCounter--;
+    if (!isInChangeSet()) doPostpondedSave();
+  }
+
+  private void doPostpondedSave() {
+    // todo the easiest way to do that i need, but still a hack...
+    if (!wasSaveRequestedDuringChangeSet) return;
+    save();
+    wasSaveRequestedDuringChangeSet = false;
+  }
+
+  private boolean isInChangeSet() {
+    return myChangeSetCounter > 0;
+  }
+
   public void createFile(String path, byte[] content, Long timestamp) {
     Content c = contentFromString(content);
-    myPendingChanges.add(new CreateFileChange(getNextId(), path, c, timestamp));
+    applyChange(new CreateFileChange(getNextId(), path, c, timestamp));
   }
 
   private Content contentFromString(byte[] data) {
@@ -67,7 +100,7 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void createDirectory(String path, Long timestamp) {
-    myPendingChanges.add(new CreateDirectoryChange(getNextId(), path, timestamp));
+    applyChange(new CreateDirectoryChange(getNextId(), path, timestamp));
   }
 
   private Integer getNextId() {
@@ -76,43 +109,45 @@ public class LocalVcs implements ILocalVcs {
 
   public void changeFileContent(String path, byte[] content, Long timestamp) {
     Content c = contentFromString(content);
-    myPendingChanges.add(new ChangeFileContentChange(path, c, timestamp));
+    applyChange(new ChangeFileContentChange(path, c, timestamp));
   }
 
   public void rename(String path, String newName) {
-    myPendingChanges.add(new RenameChange(path, newName));
+    applyChange(new RenameChange(path, newName));
   }
 
   public void move(String path, String newParentPath) {
-    myPendingChanges.add(new MoveChange(path, newParentPath));
+    applyChange(new MoveChange(path, newParentPath));
   }
 
   public void delete(String path) {
-    myPendingChanges.add(new DeleteChange(path));
+    applyChange(new DeleteChange(path));
   }
 
-  protected Boolean isClean() {
-    return myPendingChanges.isEmpty();
+  private void applyChange(Change c) {
+    c.applyTo(myRoot);
+    myPendingChanges.add(c);
+
+    // todo forbid the ability of making changes outside of changeset
+    if (!isInChangeSet()) registerChangeSet(null);
+  }
+
+  private void registerChangeSet(String label) {
+    ChangeSet cs = new ChangeSet(getCurrentTimestamp(), label, myPendingChanges);
+    myChangeList.addChangeSet(cs);
+    clearPendingChanges();
   }
 
   private void clearPendingChanges() {
     myPendingChanges = new ArrayList<Change>();
   }
 
-  public void apply() {
-    ChangeSet cs = new ChangeSet(getCurrentTimestamp(), myPendingChanges);
-
-    myChangeList.applyChangeSetTo(myRoot, cs);
-    clearPendingChanges();
+  protected Boolean isClean() {
+    return myPendingChanges.isEmpty();
   }
 
   private long getCurrentTimestamp() {
     return Clock.getCurrentTimestamp();
-  }
-
-  public void putLabel(String label) {
-    // todo maybe join with apply method?
-    myChangeList.labelLastChangeSet(label);
   }
 
   public List<Label> getLabelsFor(String path) {

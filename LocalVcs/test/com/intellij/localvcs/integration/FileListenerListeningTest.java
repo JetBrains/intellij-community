@@ -7,14 +7,14 @@ import static org.easymock.classextension.EasyMock.*;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-
 public class FileListenerListeningTest extends FileListenerTestCase {
-  private TestFileFilter filter = new TestFileFilter();
+  TestFileFilter filter = new TestFileFilter();
 
+  @Override
   @Before
   public void setUp() {
-    l = new FileListener(vcs, new TestIdeaGateway(), filter);
+    super.setUp();
+    gateway.setFileFilter(filter);
   }
 
   @Test
@@ -85,7 +85,6 @@ public class FileListenerListeningTest extends FileListenerTestCase {
   @Test
   public void testChangingFileContent() {
     vcs.createFile("file", b("old content"), null);
-    vcs.apply();
 
     VirtualFile f = new TestVirtualFile("file", "new content", 505L);
     fireContentChanged(f);
@@ -100,7 +99,6 @@ public class FileListenerListeningTest extends FileListenerTestCase {
     configureToReturnPhysicalContent("physical");
 
     vcs.createFile("f", b("content"), null);
-    vcs.apply();
 
     VirtualFile f = new TestVirtualFile("f", "memory", null);
     fireContentChanged(f);
@@ -111,17 +109,15 @@ public class FileListenerListeningTest extends FileListenerTestCase {
   @Test
   public void testRenaming() {
     vcs.createFile("old name", b("old content"), null);
-    vcs.apply();
 
     VirtualFile f = new TestVirtualFile("new name", null, null);
     fireRenamed(f, "old name");
 
-    assertFalse(vcs.hasEntry("old name"));
-
     Entry e = vcs.findEntry("new name");
     assertNotNull(e);
-
     assertEquals(c("old content"), e.getContent());
+
+    assertFalse(vcs.hasEntry("old name"));
   }
 
   @Test
@@ -136,7 +132,6 @@ public class FileListenerListeningTest extends FileListenerTestCase {
     vcs.createDirectory("dir1", null);
     vcs.createDirectory("dir2", null);
     vcs.createFile("dir1/file", b("content"), null);
-    vcs.apply();
 
     TestVirtualFile oldParent = new TestVirtualFile("dir1", null);
     TestVirtualFile newParent = new TestVirtualFile("dir2", null);
@@ -156,7 +151,6 @@ public class FileListenerListeningTest extends FileListenerTestCase {
   public void testMovingFilteredFile() {
     vcs.createDirectory("dir1", null);
     vcs.createDirectory("dir2", null);
-    vcs.apply();
 
     TestVirtualFile oldParent = new TestVirtualFile("dir1", null);
     TestVirtualFile newParent = new TestVirtualFile("dir2", null);
@@ -172,7 +166,6 @@ public class FileListenerListeningTest extends FileListenerTestCase {
   @Test
   public void testMovingFromOutsideOfTheContentRoots() {
     vcs.createDirectory("myRoot", null);
-    vcs.apply();
 
     TestVirtualFile f = new TestVirtualFile("file", "content", null);
     TestVirtualFile oldParent = new TestVirtualFile("anotherRoot", null);
@@ -191,7 +184,6 @@ public class FileListenerListeningTest extends FileListenerTestCase {
   @Test
   public void testMovingFilteredFileFromOutsideOfTheContentRoots() {
     vcs.createDirectory("myRoot", null);
-    vcs.apply();
 
     TestVirtualFile f = new TestVirtualFile("file", "content", null);
     TestVirtualFile oldParent = new TestVirtualFile("anotherRoot", null);
@@ -210,7 +202,6 @@ public class FileListenerListeningTest extends FileListenerTestCase {
   public void testMovingToOutsideOfTheContentRoots() {
     vcs.createDirectory("myRoot", null);
     vcs.createFile("myRoot/file", null, null);
-    vcs.apply();
 
     TestVirtualFile f = new TestVirtualFile("file", "content", null);
     TestVirtualFile oldParent = new TestVirtualFile("myRoot", null);
@@ -228,7 +219,6 @@ public class FileListenerListeningTest extends FileListenerTestCase {
   @Test
   public void testMovingFilteredFileToOutsideOfTheContentRoots() {
     vcs.createDirectory("myRoot", null);
-    vcs.apply();
 
     TestVirtualFile f = new TestVirtualFile("file", "content", null);
     TestVirtualFile oldParent = new TestVirtualFile("myRoot", null);
@@ -261,7 +251,6 @@ public class FileListenerListeningTest extends FileListenerTestCase {
   public void testDeletionFromDirectory() {
     vcs.createDirectory("dir", null);
     vcs.createFile("file", null, null);
-    vcs.apply();
 
     VirtualFile dir = new TestVirtualFile("dir", null, null);
     VirtualFile f = new TestVirtualFile("file", null, null);
@@ -274,7 +263,6 @@ public class FileListenerListeningTest extends FileListenerTestCase {
   @Test
   public void testDeletionWithoutParent() {
     vcs.createFile("file", null, null);
-    vcs.apply();
 
     VirtualFile f = new TestVirtualFile("file", null, null);
     fireDeleted(f, null);
@@ -306,14 +294,6 @@ public class FileListenerListeningTest extends FileListenerTestCase {
   }
 
   private void configureToReturnPhysicalContent(String c) {
-    try {
-      IdeaGateway gw = createMock(IdeaGateway.class);
-      expect(gw.getPhysicalContent((VirtualFile)anyObject())).andReturn(c.getBytes());
-      replay(gw);
-      l = new FileListener(vcs, gw, filter);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    gateway.setPhysicalContane(c);
   }
 }

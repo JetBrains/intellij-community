@@ -36,19 +36,17 @@ public class BasicsTest extends PerformanceTest {
   }
 
   @Test
-  public void testApplyingChanges() {
-    buildChangesList();
-
-    assertExecutionTime(1000, new Task() {
+  public void testBuildingTree() {
+    assertExecutionTime(35000, new Task() {
       public void execute() {
-        vcs.apply();
+        buildVcsTree();
       }
     });
   }
 
   @Test
   public void testSaving() {
-    buildTree();
+    buildVcsTree();
 
     assertExecutionTime(1000, new Task() {
       public void execute() {
@@ -59,10 +57,10 @@ public class BasicsTest extends PerformanceTest {
 
   @Test
   public void testLoading() {
-    buildTree();
+    buildVcsTree();
     vcs.save();
 
-    assertExecutionTime(1000, new Task() {
+    assertExecutionTime(1200, new Task() {
       public void execute() {
         initVcs();
       }
@@ -71,9 +69,9 @@ public class BasicsTest extends PerformanceTest {
 
   @Test
   public void testCopying() {
-    buildTree();
+    buildVcsTree();
 
-    assertExecutionTime(200, new Task() {
+    assertExecutionTime(150, new Task() {
       public void execute() {
         vcs.getEntry("root").copy();
       }
@@ -82,7 +80,7 @@ public class BasicsTest extends PerformanceTest {
 
   @Test
   public void testSearchingEntries() {
-    buildTree();
+    buildVcsTree();
 
     assertExecutionTime(200, new Task() {
       public void execute() {
@@ -95,19 +93,19 @@ public class BasicsTest extends PerformanceTest {
 
   @Test
   public void testUpdatingWithCleanVcs() throws Exception {
-    measureUpdateTime(1, 1L);
+    measureUpdateTime(9000, 1L);
   }
 
   @Test
   public void testUpdatingWithAllFilesUpToDate() throws Exception {
-    buildTree();
-    measureUpdateTime(1, VCS_ENTRIES_TIMESTAMP);
+    buildVcsTree();
+    measureUpdateTime(1200, VCS_ENTRIES_TIMESTAMP);
   }
 
   @Test
   public void testUpdatingWithAllFilesOutdated() throws Exception {
-    buildTree();
-    measureUpdateTime(1000, VCS_ENTRIES_TIMESTAMP + 1);
+    buildVcsTree();
+    measureUpdateTime(5500, VCS_ENTRIES_TIMESTAMP + 1);
   }
 
   private void measureUpdateTime(int expected, long timestamp) throws IOException {
@@ -131,10 +129,10 @@ public class BasicsTest extends PerformanceTest {
 
   @Test
   public void testBuildingDifference() {
-    buildTree();
+    buildVcsTree();
     final List<Label> labels = vcs.getLabelsFor("root");
 
-    assertExecutionTime(1, new Task() {
+    assertExecutionTime(1200, new Task() {
       public void execute() {
         labels.get(0).getDifferenceWith(labels.get(0));
       }
@@ -144,7 +142,7 @@ public class BasicsTest extends PerformanceTest {
   @Test
   public void testPurging() {
     setCurrentTimestamp(10);
-    buildTree();
+    buildVcsTree();
     updateFromTreeWithTimestamp(VCS_ENTRIES_TIMESTAMP + 1);
 
     assertExecutionTime(1, new Task() {
@@ -154,14 +152,11 @@ public class BasicsTest extends PerformanceTest {
     });
   }
 
-  private void buildTree() {
-    buildChangesList();
-    vcs.apply();
-  }
-
-  private void buildChangesList() {
+  private void buildVcsTree() {
+    vcs.beginChangeSet();
     vcs.createDirectory("root", null);
     createChildren("root", 5);
+    vcs.endChangeSet(null);
   }
 
   private void createChildren(String parent, Integer countdown) {

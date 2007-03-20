@@ -3,10 +3,9 @@ package com.intellij.localvcs.integration;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.FileSystemSynchronizer;
-import com.intellij.localvcs.Entry;
+import com.intellij.localvcs.Content;
 import com.intellij.localvcs.ILocalVcs;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,12 +18,13 @@ import org.jetbrains.annotations.Nullable;
 public class LocalVcsService {
   private ILocalVcs myVcs;
   private IdeaGateway myGateway;
+  // todo get rid of all this managers...
   private StartupManager myStartupManager;
   private ProjectRootManagerEx myRootManager;
   private VirtualFileManagerEx myFileManager;
-  private FileDocumentManager myDocumentManager;
-  private FileFilter myFileFilter;
   private CommandProcessor myCommandProcessor;
+
+  private ServiceStateHolder myStateHolder;
 
   private FileListener myFileListener;
   private CacheUpdater myCacheUpdater;
@@ -35,17 +35,16 @@ public class LocalVcsService {
                          StartupManager sm,
                          ProjectRootManagerEx rm,
                          VirtualFileManagerEx fm,
-                         FileDocumentManager dm,
-                         FileFilter f,
                          CommandProcessor cp) {
     myVcs = vcs;
     myGateway = gw;
     myStartupManager = sm;
     myRootManager = rm;
     myFileManager = fm;
-    myDocumentManager = dm;
-    myFileFilter = f;
     myCommandProcessor = cp;
+
+    myStateHolder = new ServiceStateHolder();
+    myStateHolder.setState(new ListeningServiceState(myStateHolder, myVcs, myGateway));
 
     registerStartupActivity();
     subscribeForRootChanges();
@@ -73,7 +72,7 @@ public class LocalVcsService {
   }
 
   private void registerListenersAndContentProvider() {
-    myFileListener = new FileListener(myVcs, myGateway, myFileFilter);
+    myFileListener = new FileListener(myVcs, myGateway, myStateHolder);
     myFileContentProvider = new FileContentProvider() {
       public VirtualFile[] getCoveredDirectories() {
         return myRootManager.getContentRoots();
@@ -96,19 +95,20 @@ public class LocalVcsService {
   }
 
   private ProvidedContent getProvidedContentFor(VirtualFile f) {
-    Entry e = myVcs.findEntry(f.getPath());
+    if (!getFileFilter().isAllowedAndUnderContentRoot(f)) return null;
 
-    if (myFileListener.isFileContentChangedByRefresh(f)) return null;
-    if (e == null) return null;
-    if (e.getContent().isTooLong()) return null;
-
-    return new EntryProvidedContent(e);
+    Content c = myVcs.getEntry(f.getPath()).getContent();
+    return c.isTooLong() ? null : new EntryProvidedContent(c);
   }
 
   public LocalVcsAction startAction(String label) {
-    LocalVcsAction a = new LocalVcsAction(myVcs, myDocumentManager, myFileFilter, label);
+    LocalVcsAction a = new LocalVcsAction(myVcs, myGateway, label);
     a.start();
     return a;
+  }
+
+  private FileFilter getFileFilter() {
+    return myGateway.getFileFilter();
   }
 
   private class CacheUpdaterAdaptor implements CacheUpdater {
@@ -120,7 +120,7 @@ public class LocalVcsService {
     }
 
     public VirtualFile[] queryNeededFiles() {
-      myUpdater = new Updater(myVcs, myFileFilter, myRootManager.getContentRoots());
+      myUpdater = new Updater(myVcs, getFileFilter(), myRootManager.getContentRoots());
       return myUpdater.queryNeededFiles();
     }
 

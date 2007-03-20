@@ -1,8 +1,12 @@
 package com.intellij.localvcs.integration;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -20,6 +24,13 @@ public class IdeaGateway {
 
   public Project getProject() {
     return myProject;
+  }
+
+  public FileFilter getFileFilter() {
+    FileIndex fi = ProjectRootManager.getInstance(myProject).getFileIndex();
+    FileTypeManager tm = FileTypeManager.getInstance();
+
+    return new FileFilter(fi, tm);
   }
 
   public <T> T runWriteAction(final Callable<T> c) {
@@ -48,5 +59,13 @@ public class IdeaGateway {
     // todo review byte conversion
     FileDocumentManager dm = FileDocumentManager.getInstance();
     return dm.getDocument(f).getText().getBytes();
+  }
+
+  public Document[] getUnsavedDocuments() {
+    return FileDocumentManager.getInstance().getUnsavedDocuments();
+  }
+
+  public VirtualFile getDocumentFile(Document d) {
+    return FileDocumentManager.getInstance().getFile(d);
   }
 }

@@ -10,9 +10,10 @@ public class ChangeSet {
   private long myTimestamp;
   private List<Change> myChanges;
 
-  public ChangeSet(long timestamp, List<Change> changes) {
+  public ChangeSet(long timestamp, String label, List<Change> changes) {
     myTimestamp = timestamp;
     myChanges = changes;
+    myLabel = label;
   }
 
   public ChangeSet(Stream s) throws IOException {
@@ -50,12 +51,8 @@ public class ChangeSet {
     return myTimestamp;
   }
 
-  public void setLabel(String label) {
-    myLabel = label;
-  }
-
   public List<Change> getChanges() {
-    // todo this method is used only in tests 
+    // todo this method is used only in tests
     return myChanges;
   }
 

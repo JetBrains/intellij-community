@@ -315,10 +315,9 @@ public class StreamTest extends LocalVcsTestCase {
 
   @Test
   public void testChangeSet() throws IOException {
-    ChangeSet c = cs(123, new CreateFileChange(1, "file", null, null));
+    ChangeSet c = cs(123, "label", new CreateFileChange(1, "file", null, null));
 
     c.applyTo(new RootEntry());
-    c.setLabel("label");
 
     os.writeChangeSet(c);
     ChangeSet result = is.readChangeSet();
@@ -343,7 +342,8 @@ public class StreamTest extends LocalVcsTestCase {
   public void testChangeList() throws IOException {
     ChangeList c = new ChangeList();
     ChangeSet cs = cs(new CreateFileChange(1, "file", null, null));
-    c.applyChangeSetTo(new RootEntry(), cs);
+    cs.applyTo(new RootEntry());
+    c.addChangeSet(cs);
 
     os.writeChangeList(c);
     ChangeList result = is.readChangeList();

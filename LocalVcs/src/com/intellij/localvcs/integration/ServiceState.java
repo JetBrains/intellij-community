@@ -7,14 +7,16 @@ import java.io.IOException;
 
 // todo synchronization
 public abstract class ServiceState {
-  protected FileListener myOwner;
+  protected ServiceStateHolder myHolder;
   protected ILocalVcs myVcs;
   protected IdeaGateway myGateway;
 
-  public ServiceState(FileListener owner, ILocalVcs vcs, IdeaGateway gw) {
-    myOwner = owner;
+  public ServiceState(ServiceStateHolder h, ILocalVcs vcs, IdeaGateway gw) {
+    myHolder = h;
     myGateway = gw;
     myVcs = vcs;
+
+    afterEnteringState();
   }
 
   public void startRefreshing() {
@@ -25,7 +27,7 @@ public abstract class ServiceState {
     throw new IllegalStateException();
   }
 
-  public void startCommand() {
+  public void startCommand(String name) {
     throw new IllegalStateException();
   }
 
@@ -35,20 +37,14 @@ public abstract class ServiceState {
 
   protected void goToState(ServiceState s) {
     beforeExitingFromState();
-    myOwner.goToState(s);
+    myHolder.setState(s);
   }
 
   public void create(VirtualFile f) {
-    try {
-      createRecursively(f);
-      afterEachChange();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    createRecursively(f);
   }
 
-  private void createRecursively(VirtualFile f) throws IOException {
+  private void createRecursively(VirtualFile f) {
     if (f.isDirectory()) {
       myVcs.createDirectory(f.getPath(), f.getTimeStamp());
       for (VirtualFile child : f.getChildren()) createRecursively(child);
@@ -59,41 +55,33 @@ public abstract class ServiceState {
   }
 
   public void changeFileContent(VirtualFile f) {
+    myVcs.changeFileContent(f.getPath(), physicalContentOf(f), f.getTimeStamp());
+  }
+
+  private byte[] physicalContentOf(VirtualFile f) {
     try {
-      myVcs.changeFileContent(f.getPath(), physicalContentOf(f), f.getTimeStamp());
-      afterEachChange();
+      return myGateway.getPhysicalContent(f);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  private byte[] physicalContentOf(VirtualFile f) throws IOException {
-    return myGateway.getPhysicalContent(f);
-  }
-
   public void rename(VirtualFile f, String newName) {
     myVcs.rename(f.getPath(), newName);
-    afterEachChange();
   }
 
   public void move(VirtualFile file, VirtualFile newParent) {
     myVcs.move(file.getPath(), newParent.getPath());
-    afterEachChange();
   }
 
   public void delete(VirtualFile f) {
     myVcs.delete(f.getPath());
-    afterEachChange();
   }
 
-  public boolean isFileContentChangedByRefresh(VirtualFile f) {
-    return false;
+  protected void afterEnteringState() {
   }
 
   protected void beforeExitingFromState() {
-  }
-
-  protected void afterEachChange() {
   }
 }

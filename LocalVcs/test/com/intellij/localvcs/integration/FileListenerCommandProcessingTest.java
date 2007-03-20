@@ -1,27 +1,30 @@
 package com.intellij.localvcs.integration;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class FileListenerCommandProcessingTest extends FileListenerTestCase {
   @Test
-  @Ignore
   public void testTreatingAllEventsAsOne() {
-    vcs.createDirectory("root", null);
-    vcs.apply();
-
-    l.commandStarted(null);
-    fireCreated(new TestVirtualFile("root/one", null, null));
-    fireCreated(new TestVirtualFile("root/two", null, null));
+    l.commandStarted(createCommandEvent(null));
+    fireCreated(new TestVirtualFile("file", null, null));
+    fireContentChanged(new TestVirtualFile("file", null, null));
     l.commandFinished(null);
 
-    assertEquals(2, vcs.getLabelsFor("root").size());
+    assertEquals(1, vcs.getLabelsFor("file").size());
   }
 
   @Test
-  @Ignore
+  public void testLabeling() {
+    l.commandStarted(createCommandEvent("label"));
+    fireCreated(new TestVirtualFile("file", null, null));
+    l.commandFinished(null);
+
+    assertEquals("label", vcs.getLabelsFor("file").get(0).getName());
+  }
+
+  @Test
   public void testDeletionAndRecreationOfFile() {
-    l.commandStarted(null);
+    l.commandStarted(createCommandEvent(null));
     TestVirtualFile f = new TestVirtualFile("f", "a", null);
     fireCreated(f);
     fireDeleted(f, null);
@@ -35,9 +38,8 @@ public class FileListenerCommandProcessingTest extends FileListenerTestCase {
   @Test
   public void testTreatingAllEventsAfterCommandAsSeparate() {
     vcs.createDirectory("root", null);
-    vcs.apply();
 
-    l.commandStarted(null);
+    l.commandStarted(createCommandEvent(null));
     l.commandFinished(null);
     fireCreated(new TestVirtualFile("root/one", null, null));
     fireCreated(new TestVirtualFile("root/two", null, null));
@@ -46,12 +48,10 @@ public class FileListenerCommandProcessingTest extends FileListenerTestCase {
   }
 
   @Test
-  @Ignore
   public void testIgnoringRefreshesDuringCommandProcessing() {
     vcs.createDirectory("root", null);
-    vcs.apply();
 
-    l.commandStarted(null);
+    l.commandStarted(createCommandEvent(null));
     fireCreated(new TestVirtualFile("root/one", null, null));
     l.beforeRefreshStart(false);
     fireCreated(new TestVirtualFile("root/two", null, null));
@@ -64,11 +64,10 @@ public class FileListenerCommandProcessingTest extends FileListenerTestCase {
   }
 
   @Test
-  @Ignore
   public void testTryingToStartCommandProcessingTwiceThrowsException() {
-    l.commandStarted(null);
+    l.commandStarted(createCommandEvent(null));
     try {
-      l.commandStarted(null);
+      l.commandStarted(createCommandEvent(null));
       fail();
     }
     catch (IllegalStateException e) {
@@ -76,7 +75,6 @@ public class FileListenerCommandProcessingTest extends FileListenerTestCase {
   }
 
   @Test
-  @Ignore
   public void testFinishingCommandProcessingBeforeStartingItThrowsException() {
     try {
       l.commandFinished(null);
