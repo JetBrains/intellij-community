@@ -5,6 +5,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrIdentifierImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrTypeCastImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrArrayTypeImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
@@ -105,6 +107,9 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(POWER_EXPRESSION)) return new GrPowerExprImpl(node);
     if (elem.equals(POWER_EXPRESSION_SIMPLE)) return new GrPowerExprImpl(node);
     if (elem.equals(UNARY_EXPRESSION)) return new GrUnaryExprImpl(node);
+    if (elem.equals(UNARY_EXPRESSION_NOT_PM)) return new GrSimpleUnaryExprImpl(node);
+    if (elem.equals(TYPE_CAST)) return new GrTypeCastImpl(node);
+    if (elem.equals(ARRAY_TYPE)) return new GrArrayTypeImpl(node);
 
 
     if (elem.equals(BALANCED_BRACKETS)) return new GrBalancedBracketsImpl(node);

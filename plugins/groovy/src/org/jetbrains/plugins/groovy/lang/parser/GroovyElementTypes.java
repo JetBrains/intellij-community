@@ -55,6 +55,9 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType POWER_EXPRESSION = new GroovyElementType("Power expression");
   GroovyElementType POWER_EXPRESSION_SIMPLE = new GroovyElementType("Simple power expression");
   GroovyElementType UNARY_EXPRESSION = new GroovyElementType("Unary expression");
+  GroovyElementType UNARY_EXPRESSION_NOT_PM = new GroovyElementType("Simple unary expression");
+  GroovyElementType TYPE_CAST = new GroovyElementType("Explicit typecast");
+  GroovyElementType ARRAY_TYPE = new GroovyElementType("Array type");
 
   GroovyElementType POSTFIX_EXPRESSION = new GroovyElementType("Postfix expression");
 

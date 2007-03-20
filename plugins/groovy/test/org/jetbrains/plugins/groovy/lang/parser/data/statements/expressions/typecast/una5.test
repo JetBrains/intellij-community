@@ -1,0 +1,21 @@
+a+b
+(double)(int) 5L
+-----
+Groovy script
+  Additive expression
+    PsiElement(identifier)('a')
+    PsiElement(+)('+')
+    PsiElement(identifier)('b')
+  PsiElement(new line)('\n')
+  Simple unary expression
+    Explicit typecast
+      PsiElement(()('(')
+      PsiElement(double)('double')
+      PsiElement())(')')
+    Simple unary expression
+      Explicit typecast
+        PsiElement(()('(')
+        PsiElement(int)('int')
+        PsiElement())(')')
+      PsiWhiteSpace(' ')
+      PsiElement(number)('5L')

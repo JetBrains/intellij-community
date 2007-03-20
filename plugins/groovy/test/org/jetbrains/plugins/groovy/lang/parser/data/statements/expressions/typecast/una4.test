@@ -1,0 +1,18 @@
+(double [][] 3
+-----
+Groovy script
+  Simple unary expression
+    Explicit typecast
+      PsiElement(()('(')
+      Array type
+        Array type
+          PsiElement(double)('double')
+          PsiWhiteSpace(' ')
+          PsiElement([)('[')
+          PsiElement(])(']')
+        PsiElement([)('[')
+        PsiElement(])(']')
+      PsiErrorElement:')' expected
+        <empty list>
+    PsiWhiteSpace(' ')
+    PsiElement(number)('3')
