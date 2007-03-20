@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
@@ -302,10 +303,8 @@ public class ManualArrayCopyInspection extends BaseInspection {
                         (PsiBlockStatement)body;
                 final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
                 final PsiStatement[] statements = codeBlock.getStatements();
-                if (statements.length != 1) {
-                    return false;
-                }
-                return bodyIsArrayCopy(statements[0], variable);
+                return statements.length == 1 &&
+                        bodyIsArrayCopy(statements[0], variable);
             }
             return false;
         }
@@ -341,15 +340,42 @@ public class ManualArrayCopyInspection extends BaseInspection {
             if (SideEffectChecker.mayHaveSideEffects(rhs)) {
                 return false;
             }
+            if (!areExpressionsCopyable(lhs, rhs)) {
+                return false;
+            }
+            final PsiType type = lhs.getType();
+            if (type instanceof PsiPrimitiveType) {
+                final PsiExpression strippedLhs =
+                        ParenthesesUtils.stripParentheses(lhs);
+                final PsiExpression strippedRhs =
+                        ParenthesesUtils.stripParentheses(rhs);
+                if (!areExpressionsCopyable(strippedLhs, strippedRhs)) {
+                    return false;
+                }
+            }
+            return ExpressionUtils.isOffsetArrayAccess(rhs, variable);
+        }
+
+        private static boolean areExpressionsCopyable(PsiExpression lhs,
+                                                      PsiExpression rhs) {
             final PsiType lhsType = lhs.getType();
             if (lhsType == null) {
                 return false;
             }
             final PsiType rhsType = rhs.getType();
-            if (!lhsType.equals(rhsType)) {
+            if (rhsType == null) {
                 return false;
             }
-            return ExpressionUtils.isOffsetArrayAccess(rhs, variable);
+            if (lhsType instanceof PsiPrimitiveType) {
+                if (!lhsType.equals(rhsType)) {
+                    return false;
+                }
+            } else {
+                if (!lhsType.isAssignableFrom(rhsType)) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

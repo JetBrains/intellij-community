@@ -52,11 +52,19 @@ public class ManualArrayCopyInspection
         }
     }
 
-    public static void main(String[] args) {
+    void boom() {
         byte image[] = new byte[10];
         int data[] = new int[10];
-        for (int k = 0; k < 5; ++k) {
+        for (int k = 0; k < 5; ++k) { // breaks if converted to System.arraycopy()
             image[k] = (byte)data[k];
+        }
+    }
+
+    void boomboom() {
+        Object target[] = new Object[10];
+        String source[] = new String[10];
+        for (int k = 0; k < 5; k++) { // can be converted to System.arraycopy()
+            target[k] = source[k];
         }
     }
 }
