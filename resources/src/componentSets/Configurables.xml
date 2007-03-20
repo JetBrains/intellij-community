@@ -11,11 +11,6 @@
 
   <project-components>
     <component>
-      <implementation-class>com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootConfigurable</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.roots.ui.configuration.ModuleEditorState</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
@@ -27,11 +22,6 @@
     </component>
     -->
 
-    <component>
-      <implementation-class>com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
     <!--<component>-->
     <!--  <implementation-class>com.intellij.j2ee.web.WebConfigurable</implementation-class>-->
     <!--</component>-->

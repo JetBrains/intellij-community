@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
@@ -796,7 +797,7 @@ public class ProjectRootConfigurable extends MasterDetailsComponent implements S
   }
 
   public static ProjectRootConfigurable getInstance(final Project project) {
-    return project.getComponent(ProjectRootConfigurable.class);
+    return ShowSettingsUtil.getInstance().findProjectConfigurable(project, ProjectRootConfigurable.class);
   }
 
   public MyNode createLibraryNode(Library library, String presentableName, Module module) {

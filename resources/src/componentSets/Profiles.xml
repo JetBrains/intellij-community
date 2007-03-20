@@ -16,10 +16,5 @@
       <implementation-class>com.intellij.profile.codeStyle.CodeStyleProjectProfileManager</implementation-class>
       <skipForDummyProject/>
     </component>
-    <component>
-      <implementation-class>com.intellij.profile.ui.ErrorOptionsConfigurable</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
   </project-components>
 </components>
