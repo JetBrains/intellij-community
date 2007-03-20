@@ -1,0 +1,18 @@
+i / --3 ** ++4
+-----
+Groovy script
+  Multiplicative expression
+    PsiElement(identifier)('i')
+    PsiWhiteSpace(' ')
+    PsiElement(/)('/')
+    PsiWhiteSpace(' ')
+    Power expression
+      Unary expression
+        PsiElement(--)('--')
+        PsiElement(number)('3')
+      PsiWhiteSpace(' ')
+      PsiElement(**)('**')
+      PsiWhiteSpace(' ')
+      Unary expression
+        PsiElement(++)('++')
+        PsiElement(number)('4')

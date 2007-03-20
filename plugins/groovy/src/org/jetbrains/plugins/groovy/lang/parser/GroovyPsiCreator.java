@@ -10,10 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrAssignmentExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrConditionalExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrPowerExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrShiftExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrUnaryExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExprImpl;
@@ -100,6 +97,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(RELATIONAL_EXPRESSION)) return new GrRelationalExprImpl(node);
     if (elem.equals(SHIFT_EXPRESSION)) return new GrShiftExprImpl(node);
     if (elem.equals(ADDITIVE_EXPRESSION)) return new GrAdditiveExprImpl(node);
+    if (elem.equals(MULTIPLICATIVE_EXPRESSION)) return new GrMultiplicativeExprImpl(node);
     if (elem.equals(POWER_EXPRESSION)) return new GrPowerExprImpl(node);
     if (elem.equals(POWER_EXPRESSION_SIMPLE)) return new GrPowerExprImpl(node);
     if (elem.equals(UNARY_EXPRESSION)) return new GrUnaryExprImpl(node);

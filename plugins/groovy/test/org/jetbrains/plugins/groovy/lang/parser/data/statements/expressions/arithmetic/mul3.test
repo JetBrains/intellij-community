@@ -1,0 +1,16 @@
+e / r * ++5
+-----
+Groovy script
+  Multiplicative expression
+    Multiplicative expression
+      PsiElement(identifier)('e')
+      PsiWhiteSpace(' ')
+      PsiElement(/)('/')
+      PsiWhiteSpace(' ')
+      PsiElement(identifier)('r')
+    PsiWhiteSpace(' ')
+    PsiElement(*)('*')
+    PsiWhiteSpace(' ')
+    Unary expression
+      PsiElement(++)('++')
+      PsiElement(number)('5')
