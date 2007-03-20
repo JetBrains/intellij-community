@@ -6,8 +6,8 @@ package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
@@ -28,7 +28,7 @@ import java.util.Set;
 /**
  * @author Dmitry Avdeev
  */
-public abstract class DomElementsInspection<T extends DomElement> extends LocalInspectionTool {
+public abstract class DomElementsInspection<T extends DomElement> extends XmlSuppressableInspectionTool {
 
   private final Set<Class<? extends T>> myDomClasses;
 
