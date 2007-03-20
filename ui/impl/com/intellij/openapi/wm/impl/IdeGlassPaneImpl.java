@@ -11,21 +11,22 @@ import javax.swing.event.MenuDragMouseEvent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.lang.ref.WeakReference;
 
 public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
 
   private Set<EventListener> myMouseListeners = new LinkedHashSet<EventListener>();
   private JRootPane myRootPane;
 
-  private Component myCurrentOverComponent;
-  private Component myMousePressedComponent;
-  private Container myMousePressedContainer;
+  private WeakReference<Component> myCurrentOverComponent = new WeakReference<Component>(null);
+  private WeakReference<Component> myMousePressedComponent = new WeakReference<Component>(null);
 
   private Set<Painter> myPainters = new LinkedHashSet<Painter>();
   private Map<Painter, Component> myPainter2Component = new LinkedHashMap<Painter, Component>();
 
   public IdeGlassPaneImpl(JRootPane rootPane) {
     myRootPane = rootPane;
+
     setOpaque(false);
     setVisible(false);
     addMouseListener(new MouseAdapter() {
@@ -50,29 +51,19 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
     process(e, false);
   }
 
-  public void removeNotify() {
-    // clear references to prevent memory leaks
-    myCurrentOverComponent = null;
-    myMousePressedComponent = null;
-    myMousePressedContainer = null;
-    super.removeNotify();
-  }
-
   public boolean isOpaque() {
     return false;
   }
 
   private void process(final MouseEvent e, boolean motionEvent) {
-    final boolean processingDragEnd = myMousePressedComponent != null && e.getID() == MouseEvent.MOUSE_RELEASED;
+    final boolean processingDragEnd = getMousePressedComponent() != null && e.getID() == MouseEvent.MOUSE_RELEASED;
     boolean repaint = true;
     if (processingDragEnd) {
-      final Point releasePoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), myMousePressedComponent);
-      redispatch(convertEvent(e, myMousePressedComponent, releasePoint, MouseEvent.MOUSE_RELEASED), motionEvent, myMousePressedComponent);
-
-      myMousePressedComponent = null;
-      myMousePressedContainer = null;
+      final Point releasePoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), getMousePressedComponent());
+      redispatch(convertEvent(e, getMousePressedComponent(), releasePoint, MouseEvent.MOUSE_RELEASED), motionEvent,
+                 getMousePressedComponent());
     } else {
-      final boolean processingDrag = myMousePressedComponent != null && e.getID() == MouseEvent.MOUSE_DRAGGED;
+      final boolean processingDrag = getMousePressedComponent() != null && e.getID() == MouseEvent.MOUSE_DRAGGED;
       final JLayeredPane lp = myRootPane.getLayeredPane();
       final Point lpPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), lp);
       if (!processForContainer(e, motionEvent, lp, lpPoint)) {
@@ -113,13 +104,13 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
 
     boolean processed = target != null;
 
-    if (dragEvent && myMousePressedComponent != null) {
-      target = myMousePressedComponent;
+    if (dragEvent && getMousePressedComponent() != null) {
+      target = getMousePressedComponent();
     }
 
-    if (myCurrentOverComponent != target && !dragEvent) {
-      if (myCurrentOverComponent != null) {
-        redispatch(convertEventType(e, MouseEvent.MOUSE_EXITED), false, myCurrentOverComponent);
+    if (getCurrentOverComponent() != target && !dragEvent) {
+      if (getCurrentOverComponent() != null) {
+        redispatch(convertEventType(e, MouseEvent.MOUSE_EXITED), false, getCurrentOverComponent());
         if (target != null) {
           redispatch(convertEventType(e, MouseEvent.MOUSE_ENTERED), false, target);
         }
@@ -132,8 +123,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
       redispatch(e, motionEvent, target);
       setCursor(target.getCursor());
       if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-        myMousePressedComponent = target;
-        myMousePressedContainer = container;
+        setMousePressedComponent(target);
       }
     }
     else {
@@ -141,11 +131,10 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
     }
 
     if (e.getID() == MouseEvent.MOUSE_RELEASED) {
-      myMousePressedComponent = null;
-      myMousePressedContainer = null;
+      setMousePressedComponent(null);
     }
 
-    myCurrentOverComponent = target;
+    setCurrentOverComponent(target);
 
     return processed;
   }
@@ -415,4 +404,23 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPane {
   }
 
 
+  @Nullable
+  private Component getCurrentOverComponent() {
+    return myCurrentOverComponent.get();
+  }
+
+  private void setCurrentOverComponent(final Component c) {
+    if (getCurrentOverComponent() == c) return;
+    myCurrentOverComponent = new WeakReference<Component>(c);
+  }
+
+  @Nullable
+  private Component getMousePressedComponent() {
+    return myMousePressedComponent.get();
+  }
+
+  private void setMousePressedComponent(final Component c) {
+    if (getMousePressedComponent() == c) return;
+    myMousePressedComponent = new WeakReference<Component>(c);
+  }
 }
