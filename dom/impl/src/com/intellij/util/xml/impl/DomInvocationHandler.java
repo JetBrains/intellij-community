@@ -593,8 +593,8 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     if (!isValid()) {
       throw new RuntimeException("element " + myType.toString() + " is not valid", myInvalidated);
     }
-    checkParentInitialized();
     r.lock();
+    checkParentInitialized();
     try {
       if (myInitializedChildren.contains(qname)) {
         return;
@@ -611,7 +611,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     try {
       myGenericInfo.buildMethodMaps();
 
-      if (ATTRIBUTES.equals(qname)) {
+      if (ATTRIBUTES == qname) {
         for (Map.Entry<JavaMethodSignature, XmlName> entry : myGenericInfo.getAttributeChildrenEntries()) {
           getOrCreateAttributeChild(entry.getKey().findMethod(getRawType()), entry.getValue().createEvaluatedXmlName(this));
         }
@@ -638,7 +638,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   private void checkParentInitialized() {
-    if (myXmlTag == null && myParent != null && myInitializedChildren.isEmpty() && myParent.isValid()) {
+    if (myXmlTag == null && myParent != null && !isAnythingInitialized() && myParent.isValid()) {
       myParent.checkInitialized(myTagName);
     }
   }
@@ -819,13 +819,8 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   public void setFixedChildClass(final EvaluatedXmlName tagName, final Class<? extends DomElement> aClass) {
-    w.lock();
-    try {
-      assert !myInitializedChildren.contains(tagName);
-      myFixedChildrenClasses.put(tagName, aClass);
-    } finally{
-      w.unlock();
-    }
+    assert !isInitialized(tagName);
+    myFixedChildrenClasses.put(tagName, aClass);
   }
 }
 
