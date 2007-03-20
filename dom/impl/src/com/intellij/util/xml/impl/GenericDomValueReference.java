@@ -13,6 +13,7 @@ import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
@@ -41,7 +42,13 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
 
   protected TextRange createTextRange() {
     if (myGenericValue instanceof GenericAttributeValue) {
-      final int length = ((GenericAttributeValue)myGenericValue).getXmlAttributeValue().getTextLength();
+      final GenericAttributeValue genericAttributeValue = (GenericAttributeValue)myGenericValue;
+      final XmlAttributeValue attributeValue = genericAttributeValue.getXmlAttributeValue();
+      if (attributeValue == null) {
+        return TextRange.from(0, genericAttributeValue.getXmlAttribute().getTextLength());
+      }
+
+      final int length = attributeValue.getTextLength();
       return length < 2 ? TextRange.from(0, length) : new TextRange(1, length - 1);
     }
     final XmlTag tag = myGenericValue.getXmlTag();

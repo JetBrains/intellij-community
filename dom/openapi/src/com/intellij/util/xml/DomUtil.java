@@ -5,6 +5,7 @@ package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
@@ -129,7 +130,9 @@ public class DomUtil {
   @Nullable
   public static XmlElement getValueElement(GenericDomValue domValue) {
     if (domValue instanceof GenericAttributeValue) {
-      return ((GenericAttributeValue)domValue).getXmlAttributeValue();
+      final GenericAttributeValue value = (GenericAttributeValue)domValue;
+      final XmlAttributeValue attributeValue = value.getXmlAttributeValue();
+      return attributeValue == null ? value.getXmlAttribute() : attributeValue;
     } else {
       return domValue.getXmlTag();
     }
