@@ -399,8 +399,12 @@ public class RenameDialog extends RefactoringDialog {
     if (mySuggestedNameInfo != null) {
       mySuggestedNameInfo.nameChoosen(getNewName());
     }
-    settings.setRenameInheritors(myCbRenameInheritors.isSelected());
-    settings.setRenameVariables(myCbRenameVariables.isSelected());
+    if (myCbRenameInheritors != null) {
+      settings.setRenameInheritors(myCbRenameInheritors.isSelected());
+    }
+    if (myCbRenameVariables != null) {
+      settings.setRenameVariables(myCbRenameVariables.isSelected());
+    }
 
     final RenameProcessor processor = new RenameProcessor(getProject(), myPsiElement, getNewName(), isSearchInComments(),
                                                           isSearchInNonJavaFiles());
