@@ -424,6 +424,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
 
   public static final DataFlavor[] FLAVORS;
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.projectView.ProjectViewImpl");
+  final MyDragSourceListener myDragSourceListener = new MyDragSourceListener();
 
   static {
     DataFlavor[] flavors;
@@ -445,13 +446,19 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
 
   protected void enableDnD() {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_MOVE, new MyDragGestureListener());
+      DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
       new DropTarget(myTree, new MoveDropTargetListener(new MoveDropTargetListener.PsiRetriever() {
         @Nullable
         public PsiElement getPsiElement(@Nullable final TreeNode node) {
           return getPSIElement(getElement(node));
         }
-      }, myTree, myProject, FLAVORS[0]));
+      },
+      new MoveDropTargetListener.ModifierSource() {
+        public int getModifiers() {
+          return myDragSourceListener.getModifiers();
+        }
+      },
+      myTree, myProject, FLAVORS[0]));
     }
   }
 
@@ -481,9 +488,9 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     PsiElement[] getPsiElements ();
   }
 
-  private static class MyDragGestureListener implements DragGestureListener {
+  private class MyDragGestureListener implements DragGestureListener {
     public void dragGestureRecognized(DragGestureEvent dge) {
-      if ((dge.getDragAction() & DnDConstants.ACTION_MOVE) == 0) return;
+      if ((dge.getDragAction() & DnDConstants.ACTION_COPY_OR_MOVE) == 0) return;
       DataContext dataContext = DataManager.getInstance().getDataContext();
       ProjectView projectView = (ProjectView)dataContext.getData(ProjectViewImpl.PROJECT_VIEW_DATA_CONSTANT);
       if (projectView == null) return;
@@ -502,8 +509,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
           };
 
           //FavoritesManager.getInstance(myProject).getCurrentTreeViewPanel().setDraggableObject(draggableObject.getClass(), draggableObject.getValue());
-          final MyDragSourceListener dragSourceListener = new MyDragSourceListener();
-          dge.startDrag(DragSource.DefaultMoveNoDrop, new MyTransferable(transferableWrapper), dragSourceListener);
+          dge.startDrag(DragSource.DefaultMoveNoDrop, new MyTransferable(transferableWrapper), myDragSourceListener);
         }
         catch (InvalidDnDOperationException idoe) {
           // ignore
@@ -514,12 +520,18 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   }
 
   private static class MyDragSourceListener implements DragSourceListener {
-    public void dragEnter(DragSourceDragEvent dsde) {
-      dsde.getDragSourceContext().setCursor(null);
+    private int myModifiers;
+
+    public int getModifiers() {
+      return myModifiers;
     }
 
-    public void dragOver(DragSourceDragEvent dsde) {
+    public void dragEnter(DragSourceDragEvent dsde) {
+      dsde.getDragSourceContext().setCursor(null);
+      myModifiers = dsde.getGestureModifiersEx();
     }
+
+    public void dragOver(DragSourceDragEvent dsde) {}
 
     public void dropActionChanged(DragSourceDragEvent dsde) {
       dsde.getDragSourceContext().setCursor(null);

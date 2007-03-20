@@ -10,6 +10,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.actions.MoveAction;
+import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.*;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +34,7 @@ import java.util.List;
  */
 class MoveDropTargetListener implements DropTargetListener {
   final private DataFlavor dataFlavor;
+  private final ModifierSource myModifierSource;
   final private Project myProject;
   final private JTree myTree;
   final private PsiRetriever myPsiRetriever;
@@ -41,8 +44,13 @@ class MoveDropTargetListener implements DropTargetListener {
     PsiElement getPsiElement( @Nullable TreeNode node );
   }
 
-  public MoveDropTargetListener(final PsiRetriever psiRetriever, final JTree tree, final Project project, final DataFlavor flavor) {
+  public interface ModifierSource {
+    int getModifiers();
+  }
+
+  public MoveDropTargetListener(final PsiRetriever psiRetriever, final ModifierSource modifierSource, final JTree tree, final Project project, final DataFlavor flavor) {
     myPsiRetriever = psiRetriever;
+    myModifierSource = modifierSource;
     myProject = project;
     myTree = tree;
     dataFlavor = flavor;
@@ -78,7 +86,7 @@ class MoveDropTargetListener implements DropTargetListener {
   public void drop(DropTargetDropEvent dtde) {
     final TreeNode[] sourceNodes = getSourceNodes(dtde.getTransferable());
     final TreeNode targetNode = getTargetNode(dtde.getLocation());
-    if ((dtde.getDropAction() & DnDConstants.ACTION_MOVE) == 0 || sourceNodes == null || targetNode == null ||
+    if ((dtde.getDropAction() & DnDConstants.ACTION_COPY_OR_MOVE) == 0 || sourceNodes == null || targetNode == null ||
         !doDrop(sourceNodes, targetNode, dtde)) {
       dtde.rejectDrop();
     }
@@ -150,7 +158,7 @@ class MoveDropTargetListener implements DropTargetListener {
   }
 
   public DropHandler getDropHandler() {
-    return new MoveDropHandler();
+    return (myModifierSource.getModifiers() & KeyEvent.SHIFT_DOWN_MASK ) != 0 ? new CopyDropHandler() : new MoveDropHandler();
   }
 
   private interface DropHandler {
@@ -241,20 +249,28 @@ class MoveDropTargetListener implements DropTargetListener {
     }
   }
 
-  /* TODO: make it work on (SHIFT or ALT?)
   private class CopyDropHandler extends MoveCopyDropHandler {
 
     protected boolean canDrop(@NotNull final TreeNode[] sourceNodes, @Nullable final TreeNode targetNode) {
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
-      return sourceElements.length == 0 || CopyHandler.canCopy(sourceElements);
+      final PsiElement targetElement = getPsiElement(targetNode);
+      return ( targetElement instanceof PsiPackage || targetElement instanceof PsiDirectory ) && CopyHandler.canCopy(sourceElements);
     }
 
     public void doDrop(@NotNull final TreeNode[] sourceNodes, @NotNull final TreeNode targetNode) {
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
-      final PsiElement targetElement = resolvePackageToDirectory(getPsiElement(targetNode), sourceElements, false);
-      CopyHandler.doCopy(sourceElements, targetElement instanceof PsiPackage ? (PsiPackage)targetElement : null,
-                         targetElement instanceof PsiDirectory ? (PsiDirectory)targetElement : null);
+      final PsiElement targetElement = getPsiElement(targetNode);
+      final PsiPackage psiPackage;
+      final PsiDirectory psiDirectory;
+      if ( targetElement instanceof PsiPackage) {
+        psiPackage = (PsiPackage)targetElement;
+        final PsiDirectory[] psiDirectories = psiPackage.getDirectories();
+        psiDirectory = psiDirectories.length != 0 ? psiDirectories[0] : null;
+      } else {
+        psiDirectory = (PsiDirectory)targetElement;
+        psiPackage = psiDirectory.getPackage();
+      }
+      CopyHandler.doCopy(sourceElements, psiPackage, psiDirectory );
     }
   }
-  */
 }
