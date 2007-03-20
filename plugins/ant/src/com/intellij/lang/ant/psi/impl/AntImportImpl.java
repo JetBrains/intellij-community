@@ -24,7 +24,7 @@ public class AntImportImpl extends AntTaskImpl implements AntImport {
     @NonNls final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append("AntImport[");
-      builder.append(getFileName());
+      builder.append(getSourceElement().getAttributeValue(AntFileImpl.FILE_ATTR));
       builder.append("]");
       return builder.toString();
     }
