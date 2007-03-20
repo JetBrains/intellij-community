@@ -20,7 +20,11 @@ public class ExpressionStatement implements GroovyElementTypes {
     GroovyElementType result = AssignmentExpression.parse(builder);
     if (!WRONGWAY.equals(result) && !TokenSets.SEPARATORS.contains(builder.getTokenType())) {
       GroovyElementType res = CommandArguments.parse(builder);
-      marker.done(EXPRESSION_STATEMENT);
+      if (!res.equals(WRONGWAY)) {
+        marker.done(EXPRESSION_STATEMENT);
+      } else {
+        marker.drop();
+      }
       return EXPRESSION_STATEMENT;
     } else {
       marker.drop();
