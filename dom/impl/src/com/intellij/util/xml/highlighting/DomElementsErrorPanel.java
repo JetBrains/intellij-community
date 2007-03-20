@@ -8,10 +8,10 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.RefreshStatusRenderer;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
@@ -134,6 +134,17 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
     public DomElementsRefreshStatusRenderer(final PsiFile xmlFile) {
       super(xmlFile.getProject(), (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(xmlFile.getProject()),
             PsiDocumentManager.getInstance(xmlFile.getProject()).getDocument(xmlFile), xmlFile);
+    }
+
+    protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus() {
+      final DaemonCodeAnalyzerStatus status = super.getDaemonCodeAnalyzerStatus();
+      if (status != null && isInspectionCompleted()) {
+        status.errorAnalyzingFinished = true;
+        for (final DaemonCodeAnalyzerStatus.PassStatus passStatus : status.passStati) {
+          passStatus.inProgressIcon = null;
+        }
+      }
+      return status;
     }
 
     protected int getErrorsCount(final HighlightSeverity minSeverity) {

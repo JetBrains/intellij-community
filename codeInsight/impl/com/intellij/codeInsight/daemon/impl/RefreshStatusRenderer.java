@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,7 +44,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
       private final String name;
       private final double progress;
       private final boolean finished;
-      private final Icon inProgressIcon;
+      public Icon inProgressIcon;
 
       public PassStatus(final String name, final double progress, final boolean finished, Icon inProgressIcon) {
         this.name = name;
@@ -69,6 +70,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     }
   }
 
+  @Nullable
   protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus() {
     if (myFile == null || myProject.isDisposed() || !myDaemonCodeAnalyzer.isHighlightingAvailable(myFile)) return null;
 
@@ -107,14 +109,6 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     status.errorAnalyzingFinished = myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile);
 
     return status;
-  }
-
-  protected boolean isInspectionCompleted() {
-    return myDaemonCodeAnalyzer.isInspectionCompleted(myFile);
-  }
-
-  protected boolean isErrorAnalyzingFinished() {
-    return myDaemonCodeAnalyzer.isErrorAnalyzingFinished(myFile);
   }
 
   protected int getErrorsCount(final HighlightSeverity minSeverity) {
