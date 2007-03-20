@@ -8,10 +8,10 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.util.containers.HashMap;
 import com.intellij.openapi.util.Comparing;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -35,6 +35,7 @@ public class DfaRelationValue extends DfaValue {
     @Nullable
     public DfaRelationValue create(DfaValue dfaLeft, DfaValue dfaRight, @NonNls String relation, boolean negated) {
       if (dfaRight instanceof DfaTypeValue && !"instanceof".equals(relation)) return null;
+      if ("+".equals(relation)) return null;
 
       if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue
           || dfaRight instanceof DfaVariableValue || dfaRight instanceof DfaBoxedValue || dfaRight instanceof DfaUnboxedValue) {
