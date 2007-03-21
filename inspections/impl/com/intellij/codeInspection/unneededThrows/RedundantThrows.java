@@ -195,7 +195,8 @@ public class RedundantThrows extends GlobalInspectionTool {
             removeExcessiveThrows(refMethod, null, problems);
           }
         }
-      } else {
+      }
+      else {
         final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
         if (psiMethod != null) {
           removeExcessiveThrows(null, psiMethod, new ProblemDescriptor[]{descriptor});
@@ -208,10 +209,10 @@ public class RedundantThrows extends GlobalInspectionTool {
       return getName();
     }
 
-    private void removeExcessiveThrows(RefMethod refMethod, final PsiModifierListOwner element, final ProblemDescriptor[] problems) {
+    private void removeExcessiveThrows(@Nullable RefMethod refMethod, @Nullable final PsiModifierListOwner element, final ProblemDescriptor[] problems) {
       try {
-        final Project project = element.getProject();
-        final PsiMethod psiMethod = (PsiMethod)element;
+        final PsiMethod psiMethod = (PsiMethod)(element == null ? refMethod.getElement() : element);
+        final Project project = psiMethod.getProject();
         final PsiManager psiManager = PsiManager.getInstance(project);
         final List<PsiJavaCodeReferenceElement> refsToDelete = new ArrayList<PsiJavaCodeReferenceElement>();
         for (ProblemDescriptor problem : problems) {

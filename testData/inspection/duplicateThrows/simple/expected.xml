@@ -3,15 +3,6 @@
   <problem>
     <file>X.java</file>
     <line>5</line>
-    <method>
-      <name>void f()</name>
-      <display_name>f()</display_name>
-      <package>&lt;default&gt;</package>
-      <class>
-        <name>X</name>
-        <display_name>X</display_name>
-      </class>
-    </method>
     <problem_class>Duplicate throws</problem_class>
     <description>Duplicate throws</description>
   </problem>
@@ -19,17 +10,21 @@
   <problem>
     <file>X.java</file>
     <line>10</line>
-    <method>
-      <name>void f2()</name>
-      <display_name>f2()</display_name>
-      <package>&lt;default&gt;</package>
-      <class>
-        <name>X</name>
-        <display_name>X</display_name>
-      </class>
-    </method>
     <problem_class>Duplicate throws</problem_class>
     <description>There is a more general exception, 'java.lang.Exception' in the throws list already.</description>
   </problem>
 
+  <problem>
+    <file>X.java</file>
+    <line>18</line>
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Duplicate throws</problem_class>
+    <description>Duplicate throws</description>
+  </problem>
+
+  <problem>
+    <file>X.java</file>
+    <line>19</line>
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Duplicate throws</problem_class>
+    <description>Duplicate throws</description>
+  </problem>
 </problems>

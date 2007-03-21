@@ -13,4 +13,12 @@ public class X {
             FileNotFoundException,
             EOFException {
  }
+
+     public void TTT() throws
+     FileNotFoundException,
+     EOFException,
+     FileNotFoundException,
+     EOFException {
+     }
+
 }
