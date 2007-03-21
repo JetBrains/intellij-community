@@ -17,13 +17,15 @@ import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsFile;
 import com.intellij.openapi.localVcs.LvcsRevision;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.peer.PeerFactory;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -137,9 +139,19 @@ public class CvsChangeProvider implements ChangeProvider {
     checkSwitched(filePath, builder, dir, entry);
   }
 
-  private static void checkSwitched(final FilePath filePath, final ChangelistBuilder builder, final VirtualFile dir, final Entry entry) {
-    final Entry dirEntry = CvsEntriesManager.getInstance().getEntryFor(dir);
-    if (dirEntry != null && entry != null && !Comparing.equal(entry.getStickyInformation(), dirEntry.getStickyInformation())) {
+  private void checkSwitched(final FilePath filePath, final ChangelistBuilder builder, final VirtualFile dir, final Entry entry) {
+    final VirtualFile parentDir = dir.getParent();
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myVcs.getProject()).getFileIndex();
+    // if content root itself is switched, ignore
+    if (!fileIndex.isInContent(dir) || parentDir == null || !fileIndex.isInContent(parentDir)) {
+      return;
+    }
+    final String dirTag = CvsEntriesManager.getInstance().getCvsInfoFor(dir).getStickyTag();
+    final String parentDirTag = CvsEntriesManager.getInstance().getCvsInfoFor(parentDir).getStickyTag();
+    String dirStickyInfo = getStickyInfo(dirTag);
+    String parentDirStickyInfo = getStickyInfo(parentDirTag);
+    if (entry != null && ((!Comparing.equal(entry.getStickyInformation(), dirStickyInfo) ||
+                           !Comparing.equal(entry.getStickyInformation(), parentDirStickyInfo)))) {
       VirtualFile file = filePath.getVirtualFile();
       if (file != null) {
         if (entry.getStickyTag() != null) {
@@ -156,6 +168,10 @@ public class CvsChangeProvider implements ChangeProvider {
         }
       }
     }
+  }
+
+  private String getStickyInfo(final String dirTag) {
+    return (dirTag != null && dirTag.length() > 1) ? dirTag.substring(1) : null;
   }
 
   private void processStatus(final FilePath filePath,
