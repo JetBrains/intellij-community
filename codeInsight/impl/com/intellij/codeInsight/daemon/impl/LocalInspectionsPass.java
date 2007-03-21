@@ -246,9 +246,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, infos,
                                                    Pass.LOCAL_INSPECTIONS);
-    myDescriptors = Collections.emptyList();
-    myLevels = Collections.emptyList();
-    myTools = Collections.emptyList();
+    //myDescriptors = Collections.emptyList();
+    //myLevels = Collections.emptyList();
+    //myTools = Collections.emptyList();
 
     HighlightUtil.addErrorsToWolf(infos, myFile);
   }
