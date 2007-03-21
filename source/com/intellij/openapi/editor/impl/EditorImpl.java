@@ -3867,11 +3867,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int newEndLine = e.getNewLength() == 0 ? startLine:getVisualPositionLine(e.getOffset() + e.getNewLength());
       int oldEndLine = myOldEndLine;
 
-      if (myLineWidths.size() == 0) {
+      final int lineWidthSize = myLineWidths.size();
+      if (lineWidthSize == 0) {
         reset();
       }
       else {
-        int min = Math.min(oldEndLine, newEndLine);
+        final int min = Math.min(oldEndLine, newEndLine);
+        if (min >= lineWidthSize) {
+          final int[] delta = new int[min - lineWidthSize + 1];
+          myLineWidths.insert(min, delta);
+        }
+
         for (int i = startLine; i <= min; i++) myLineWidths.set(i, -1);
         if (newEndLine > oldEndLine) {
           int[] delta = new int[newEndLine - oldEndLine];
