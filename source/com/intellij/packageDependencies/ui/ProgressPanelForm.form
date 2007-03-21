@@ -31,9 +31,12 @@
             <children>
               <component id="595fd" class="javax.swing.JLabel" binding="myFractionLabel">
                 <constraints>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false">
+                    <minimum-size width="30" height="-1"/>
+                  </grid>
                 </constraints>
                 <properties>
+                  <horizontalAlignment value="4"/>
                   <text value="0%"/>
                 </properties>
               </component>
