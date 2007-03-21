@@ -11,13 +11,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -72,19 +72,37 @@ public class FileReference
   }
 
   protected ResolveResult[] innerResolve() {
-    final String text = getText();
+    final String referenceText = getText();
     final Collection<PsiFileSystemItem> contexts = getContexts();
     final Collection<ResolveResult> result = new ArrayList<ResolveResult>(contexts.size());
-
     for (final PsiFileSystemItem context : contexts) {
-      if (text.length() == 0 && !myFileReferenceSet.isEndingSlashNotAllowed() && isLast() || ".".equals(text) || "/".equals(text)) {
-        result.add(new PsiElementResolveResult(context));
-      } else if ("..".equals(text)) {
-        final PsiFileSystemItem resolved = context.getParent();
-        if (resolved != null) {
-          result.add(new PsiElementResolveResult(resolved));
+      innerResolveInContext(referenceText, context, result);
+    }
+    final int resultCount = result.size();
+    return resultCount > 0 ? result.toArray(new ResolveResult[resultCount]) : ResolveResult.EMPTY_ARRAY;
+  }
+
+  private void innerResolveInContext(final String text, final PsiFileSystemItem context, final Collection<ResolveResult> result) {
+    if (text.length() == 0 && !myFileReferenceSet.isEndingSlashNotAllowed() && isLast() || ".".equals(text) || "/".equals(text)) {
+      result.add(new PsiElementResolveResult(context));
+    } 
+    else if ("..".equals(text)) {
+      final PsiFileSystemItem resolved = context.getParent();
+      if (resolved != null) {
+        result.add(new PsiElementResolveResult(resolved));
+      }
+    } 
+    else {
+      final int separatorIndex = text.indexOf('/');
+      if (separatorIndex >= 0) {
+        final List<ResolveResult> resolvedContexts = new ArrayList<ResolveResult>();
+        innerResolveInContext(text.substring(0, separatorIndex), context, resolvedContexts);
+        final String restOfText = text.substring(separatorIndex + 1);
+        for (ResolveResult contextVariant : resolvedContexts) {
+          innerResolveInContext(restOfText, (PsiFileSystemItem)contextVariant.getElement(), result);
         }
-      } else {
+      }
+      else {
         processVariants(context, new BaseScopeProcessor() {
           public boolean execute(final PsiElement element, final PsiSubstitutor substitutor) {
             final String name = ((PsiFileSystemItem)element).getName();
@@ -97,8 +115,6 @@ public class FileReference
         });
       }
     }
-    final int resultCount = result.size();
-    return resultCount > 0 ? result.toArray(new ResolveResult[resultCount]) : ResolveResult.EMPTY_ARRAY;
   }
 
   public Object[] getVariants() {
