@@ -69,7 +69,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   private VcsException myUpdateException = null;
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-  private LocalChangeList myDefaultChangelist;
+  private LocalChangeListImpl myDefaultChangelist;
 
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
@@ -309,13 +309,13 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
                       if (isUnder(change, scope)) {
                         try {
                           synchronized (myChangeLists) {
-                            if (changeList instanceof LocalChangeList) {
-                              ((LocalChangeList) changeList).addChange(change);
+                            if (changeList instanceof LocalChangeListImpl) {
+                              ((LocalChangeListImpl) changeList).addChange(change);
                             }
                             else {
                               for (LocalChangeList list : myChangeLists) {
                                 if (list == myDefaultChangelist) continue;
-                                if (list.processChange(change)) return;
+                                if (((LocalChangeListImpl) list).processChange(change)) return;
                               }
 
                               myDefaultChangelist.processChange(change);
@@ -442,9 +442,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         synchronized (myChangeLists) {
-          for (LocalChangeList list : getChangeLists()) {
+          for (LocalChangeList list : myChangeLists) {
             if (myDisposed) throw new DisposedException();
-            list.startProcessingChanges(myProject, scope);
+            ((LocalChangeListImpl) list).startProcessingChanges(myProject, scope);
           }
         }
       }
@@ -455,7 +455,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     List<ChangeList> changedLists = new ArrayList<ChangeList>();
     synchronized (myChangeLists) {
       for (LocalChangeList list : myChangeLists) {
-        if (list.doneProcessingChanges()) {
+        if (((LocalChangeListImpl) list).doneProcessingChanges()) {
           changedLists.add(list);
         }
       }
@@ -484,7 +484,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   @NotNull
   public List<LocalChangeList> getChangeLists() {
     synchronized (myChangeLists) {
-      return myChangeLists;
+      return (List<LocalChangeList>) myChangeLists;
     }
   }
 
@@ -586,7 +586,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public LocalChangeList addChangeList(@NotNull String name, final String comment) {
     LOG.assertTrue(findChangeList(name) == null, "Attempt to create duplicate changelist " + name);
-    final LocalChangeList list = LocalChangeList.createEmptyChangeList(name);
+    final LocalChangeListImpl list = LocalChangeListImpl.createEmptyChangeListImpl(name);
     list.setComment(comment);
     synchronized (myChangeLists) {
       myChangeLists.add(list);
@@ -620,9 +620,9 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public void setDefaultChangeList(@NotNull LocalChangeList list) {
     synchronized (myChangeLists) {
       if (myDefaultChangelist != null) myDefaultChangelist.setDefault(false);
-      list = findRealByCopy(list);
-      list.setDefault(true);
-      myDefaultChangelist = list;
+      LocalChangeListImpl realList = findRealByCopy(list);
+      realList.setDefault(true);
+      myDefaultChangelist = realList;
     }
     myListeners.getMulticaster().defaultListChanged(list);
   }
@@ -631,13 +631,13 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     return myDefaultChangelist;
   }
 
-  private LocalChangeList findRealByCopy(LocalChangeList list) {
+  private LocalChangeListImpl findRealByCopy(LocalChangeList list) {
     for (LocalChangeList changeList : myChangeLists) {
       if (changeList.equals(list)) {
-        return changeList;
+        return (LocalChangeListImpl) changeList;
       }
     }
-    return list;
+    return (LocalChangeListImpl) list;
   }
 
   public LocalChangeList getChangeList(Change change) {
@@ -748,12 +748,12 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public void moveChangesTo(LocalChangeList list, final Change[] changes) {
     MultiMap<LocalChangeList, Change> map = new MultiMap<LocalChangeList, Change>();
     synchronized (myChangeLists) {
-      list = findRealByCopy(list);
+      LocalChangeListImpl realList = findRealByCopy(list);
 
-      for (LocalChangeList existingList : getChangeLists()) {
+      for (LocalChangeList existingList : myChangeLists) {
         for (Change change : changes) {
-          if (existingList.removeChange(change)) {
-            list.addChange(change);
+          if (((LocalChangeListImpl) existingList).removeChange(change)) {
+            realList.addChange(change);
             map.putValue(existingList, change);
           }
         }
@@ -872,7 +872,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
     final List<Element> changeNodes = (List<Element>)listNode.getChildren(NODE_CHANGE);
     for (Element changeNode : changeNodes) {
       try {
-        list.addChange(readChange(changeNode));
+        ((LocalChangeListImpl) list).addChange(readChange(changeNode));
       }
       catch (OutdatedFakeRevisionException e) {
         // Do nothing. Just skip adding outdated revisions to the list.

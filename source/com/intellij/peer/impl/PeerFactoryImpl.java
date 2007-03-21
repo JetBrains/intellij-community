@@ -34,6 +34,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatusFactory;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.actions.VcsContextWrapper;
@@ -293,6 +295,10 @@ public class PeerFactoryImpl extends PeerFactory {
             return new FilePathImpl(parent, name, false);
           }
         });
+      }
+
+      public LocalChangeList createLocalChangeList(final String description) {
+        return LocalChangeListImpl.createEmptyChangeListImpl(description);
       }
     };
   }
