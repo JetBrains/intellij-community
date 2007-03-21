@@ -55,6 +55,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   @NotNull private List<LocalInspectionTool> myTools = Collections.emptyList();
   @NotNull private List<InjectedPsiInspectionUtil.InjectedPsiInspectionResult> myInjectedPsiInspectionResults = Collections.emptyList();
   static final String PRESENTABLE_NAME = DaemonBundle.message("pass.inspection");
+  private List<HighlightInfo> myInfos = Collections.emptyList();
+  static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/inspectionInProgress.png");
 
   public LocalInspectionsPass(@NotNull PsiFile file, @Nullable Document document, int startOffset, int endOffset) {
     super(file.getProject(), document, IN_PROGRESS_ICON, PRESENTABLE_NAME);
@@ -160,6 +162,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
 
     inspectInjectedPsi(elements);
+
+    myInfos = new ArrayList<HighlightInfo>(myDescriptors.size());
+    addHighlightsFromDescriptors(myInfos);
+    addHighlightsFromInjectedPsiProblems(myInfos);
   }
 
   private void inspectInjectedPsi(final PsiElement[] elements) {
@@ -240,17 +246,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   protected void applyInformationWithProgress() {
-    List<HighlightInfo> infos = new ArrayList<HighlightInfo>(myDescriptors.size());
-    addHighlightsFromDescriptors(infos);
-    addHighlightsFromInjectedPsiProblems(infos);
-
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, infos,
-                                                   Pass.LOCAL_INSPECTIONS);
-    //myDescriptors = Collections.emptyList();
-    //myLevels = Collections.emptyList();
-    //myTools = Collections.emptyList();
-
-    HighlightUtil.addErrorsToWolf(infos, myFile);
+    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myInfos, Pass.LOCAL_INSPECTIONS);
+    HighlightUtil.addErrorsToWolf(myInfos, myFile);
   }
 
   private void addHighlightsFromDescriptors(final List<HighlightInfo> toInfos) {
@@ -387,6 +384,4 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
     return result.toArray(new PsiElement[result.size()]);
   }
-
-  static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/inspectionInProgress.png");
 }

@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author cdr
@@ -26,6 +27,10 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
 
   public void weHaveGotProblem(Problem problem) {
     if (myDelegate != null) myDelegate.weHaveGotProblem(problem);
+  }
+
+  public void weHaveGotProblems(final VirtualFile virtualFile, final List<Problem> problems) {
+    if (myDelegate != null) myDelegate.weHaveGotProblems(virtualFile, problems);
   }
 
   public boolean hasProblemFilesBeneath(ProjectViewNode scope) {

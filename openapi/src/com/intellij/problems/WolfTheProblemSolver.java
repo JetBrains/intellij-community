@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author cdr
@@ -25,6 +26,7 @@ public abstract class WolfTheProblemSolver implements ProjectComponent {
   public abstract boolean isProblemFile(VirtualFile virtualFile);
 
   public abstract void weHaveGotProblem(Problem problem);
+  public abstract void weHaveGotProblems(final VirtualFile virtualFile, List<Problem> problems);
   public abstract void clearProblems(@NotNull VirtualFile virtualFile);
 
   public abstract boolean hasProblemFilesBeneath(ProjectViewNode scope);

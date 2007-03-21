@@ -30,8 +30,8 @@ import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -98,8 +98,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private final PsiTreeChangeListener myChangeListener;
 
   private static class ProblemFileInfo {
-    Collection<Problem> problems = new SmartList<Problem>();
-    boolean hasSyntaxErrors;
+    private Collection<Problem> problems = new THashSet<Problem>();
+    private boolean hasSyntaxErrors;
 
     public boolean equals(final Object o) {
       if (this == o) return true;
@@ -389,6 +389,25 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         fireListener = true;
       }
       storedProblems.problems.add(problem);
+      myCheckingQueue.addIfAbsent(virtualFile);
+    }
+    if (fireListener) {
+      fireProblemListeners.problemsAppeared(virtualFile);
+    }
+  }
+
+  public void weHaveGotProblems(final VirtualFile virtualFile, final List<Problem> problems) {
+    if (!isToBeHighlighted(virtualFile)) return;
+    boolean fireListener = false;
+    synchronized (myProblems) {
+      ProblemFileInfo storedProblems = myProblems.get(virtualFile);
+      if (storedProblems == null) {
+        storedProblems = new ProblemFileInfo();
+
+        myProblems.put(virtualFile, storedProblems);
+        fireListener = true;
+      }
+      storedProblems.problems.addAll(problems);
       myCheckingQueue.addIfAbsent(virtualFile);
     }
     if (fireListener) {

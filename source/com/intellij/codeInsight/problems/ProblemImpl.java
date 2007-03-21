@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NonNls;
  */
 public class ProblemImpl implements Problem {
   private VirtualFile virtualFile;
-  public HighlightInfo highlightInfo;
+  private HighlightInfo highlightInfo;
   private boolean isSyntax;
 
   public ProblemImpl(final VirtualFile virtualFile, final HighlightInfo highlightInfo, final boolean isSyntax) {

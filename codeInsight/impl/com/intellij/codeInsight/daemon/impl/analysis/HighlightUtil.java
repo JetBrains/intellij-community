@@ -2054,8 +2054,6 @@ public class HighlightUtil {
 
     List<Problem> problems = convertToProblems(infos, file, false);
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
-    for (Problem problem : problems) {
-      wolf.weHaveGotProblem(problem);
-    }
+    wolf.weHaveGotProblems(file, problems);
   }
 }
