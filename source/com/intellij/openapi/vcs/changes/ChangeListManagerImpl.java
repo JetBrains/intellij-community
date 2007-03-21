@@ -128,7 +128,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   private void createDefaultChangelistIfNecessary() {
     if (myChangeLists.isEmpty()) {
-      final LocalChangeList list = LocalChangeList.createEmptyChangeList(VcsBundle.message("changes.default.changlist.name"));
+      final LocalChangeList list = LocalChangeList.createEmptyChangeList(myProject, VcsBundle.message("changes.default.changlist.name"));
       myChangeLists.add(list);
       setDefaultChangeList(list);
     }
@@ -484,7 +484,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   @NotNull
   public List<LocalChangeList> getChangeLists() {
     synchronized (myChangeLists) {
-      return (List<LocalChangeList>) myChangeLists;
+      return myChangeLists;
     }
   }
 
@@ -586,7 +586,7 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
 
   public LocalChangeList addChangeList(@NotNull String name, final String comment) {
     LOG.assertTrue(findChangeList(name) == null, "Attempt to create duplicate changelist " + name);
-    final LocalChangeListImpl list = LocalChangeListImpl.createEmptyChangeListImpl(name);
+    final LocalChangeListImpl list = LocalChangeListImpl.createEmptyChangeListImpl(myProject, name);
     list.setComment(comment);
     synchronized (myChangeLists) {
       myChangeLists.add(list);

@@ -297,8 +297,8 @@ public class PeerFactoryImpl extends PeerFactory {
         });
       }
 
-      public LocalChangeList createLocalChangeList(final String description) {
-        return LocalChangeListImpl.createEmptyChangeListImpl(description);
+      public LocalChangeList createLocalChangeList(Project project, final String description) {
+        return LocalChangeListImpl.createEmptyChangeListImpl(project, description);
       }
     };
   }

@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.peer.PeerFactory;
+import com.intellij.openapi.project.Project;
 
 import java.util.Collection;
 
@@ -8,8 +9,8 @@ import java.util.Collection;
  * @author max
  */
 public abstract class LocalChangeList implements Cloneable, ChangeList {
-  public static LocalChangeList createEmptyChangeList(String description) {
-    return PeerFactory.getInstance().getVcsContextFactory().createLocalChangeList(description);
+  public static LocalChangeList createEmptyChangeList(Project project, String description) {
+    return PeerFactory.getInstance().getVcsContextFactory().createLocalChangeList(project, description);
   }
 
   public abstract Collection<Change> getChanges();

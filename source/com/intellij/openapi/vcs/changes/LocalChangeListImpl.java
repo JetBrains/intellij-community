@@ -22,6 +22,7 @@ import java.util.*;
 public class LocalChangeListImpl extends LocalChangeList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeList");
 
+  private Project myProject;
   private Collection<Change> myChanges = new HashSet<Change>();
   private Collection<Change> myReadChangesCache = null;
   private String myName;
@@ -33,11 +34,12 @@ public class LocalChangeListImpl extends LocalChangeList {
   private boolean myIsInUpdate = false;
   private ChangeHashSet myChangesBeforeUpdate;
 
-  public static LocalChangeListImpl createEmptyChangeListImpl(String description) {
-    return new LocalChangeListImpl(description);
+  public static LocalChangeListImpl createEmptyChangeListImpl(Project project, String description) {
+    return new LocalChangeListImpl(project, description);
   }
 
-  private LocalChangeListImpl(final String description) {
+  private LocalChangeListImpl(Project project, final String description) {
+    myProject = project;
     myName = description;
   }
 
@@ -64,7 +66,11 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   public void setName(final String name) {
-    myName = name;
+    if (!myName.equals(name)) {
+      String oldName = myName;
+      myName = name;
+      ChangeListManagerImpl.getInstanceImpl(myProject).notifyChangeListRenamed(this, oldName);
+    }
   }
 
   public String getComment() {
@@ -219,7 +225,7 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   public synchronized LocalChangeList clone() {
-    final LocalChangeListImpl copy = new LocalChangeListImpl(myName);
+    final LocalChangeListImpl copy = new LocalChangeListImpl(myProject, myName);
     copy.myComment = myComment;
     copy.myIsDefault = myIsDefault;
     copy.myIsInUpdate = myIsInUpdate;

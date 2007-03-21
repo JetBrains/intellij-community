@@ -50,7 +50,6 @@ public class EditChangelistDialog extends DialogWrapper {
     if (!Comparing.equal(oldName, myPanel.getName()) || !Comparing.equal(oldComment, myPanel.getDescription())) {
       myList.setName(myPanel.getName());
       myList.setComment(myPanel.getDescription());
-      ChangeListManagerImpl.getInstanceImpl(myProject).notifyChangeListRenamed(myList, oldName);
     }
     super.doOKAction();
   }
