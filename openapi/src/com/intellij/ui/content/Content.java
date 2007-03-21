@@ -16,6 +16,7 @@
 package com.intellij.ui.content;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NonNls;
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 
-public interface Content extends UserDataHolder {
+public interface Content extends UserDataHolder, ComponentContainer {
   @NonNls
   String PROP_DISPLAY_NAME = "displayName";
   @NonNls
@@ -32,9 +33,9 @@ public interface Content extends UserDataHolder {
   @NonNls 
   String PROP_COMPONENT = "component";
 
-  JComponent getComponent();
-
   void setComponent(JComponent component);
+
+  void setPreferredFocusableComponent(JComponent component);
 
   void setIcon(Icon icon);
 
@@ -73,7 +74,6 @@ public interface Content extends UserDataHolder {
 
   void release();
 
-  //TODO[anton,vova] investigate
   boolean isValid();
   boolean isPinned();
 

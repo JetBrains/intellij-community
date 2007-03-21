@@ -231,13 +231,13 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     final Color to;
     final int alpha ;
     if (myFocused) {
-      alpha = 150;
-      from = toAlpha(UIUtil.getListBackground(), alpha);
+      alpha = 100;
+      from = toAlpha(UIUtil.getListSelectionBackground(), alpha);
       to = toAlpha(UIUtil.getListSelectionBackground(), alpha);
     } else {
       alpha = 150;
-      from = toAlpha(UIUtil.getListBackground(), alpha);
-      to = toAlpha(UIUtil.getPanelBackgound().darker(), alpha);
+      from = toAlpha(UIUtil.getPanelBackgound().brighter(), alpha);
+      to = toAlpha(UIUtil.getPanelBackgound(), alpha);
     }
 
     g2d.setPaint(new GradientPaint(mySelectedBounds.x, topY, from, mySelectedBounds.x, bottomY, to));

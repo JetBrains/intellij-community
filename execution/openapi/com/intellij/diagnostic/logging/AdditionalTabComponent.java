@@ -5,6 +5,7 @@
 package com.intellij.diagnostic.logging;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.ComponentContainer;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -14,7 +15,7 @@ import java.awt.*;
  * User: anna
  * Date: 22-Mar-2006
  */
-public abstract class AdditionalTabComponent extends JPanel implements Disposable {
+public abstract class AdditionalTabComponent extends JPanel implements ComponentContainer {
   protected AdditionalTabComponent(LayoutManager layout) {
     super(layout);
   }

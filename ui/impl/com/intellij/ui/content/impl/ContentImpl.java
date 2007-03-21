@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -34,6 +35,8 @@ public class ContentImpl implements Content {
   private ActionGroup myActions;
   private String myPlace;
 
+  private JComponent myPreferredFocusableComponent;
+
   public ContentImpl(JComponent component, String displayName, boolean isPinnable) {
     myComponent = component;
     myDisplayName = displayName;
@@ -48,6 +51,14 @@ public class ContentImpl implements Content {
     Component oldComponent = myComponent;
     myComponent = component;
     myChangeSupport.firePropertyChange(PROP_COMPONENT, oldComponent, myComponent);
+  }
+
+  public JComponent getPreferredFocusableComponent() {
+    return myPreferredFocusableComponent == null ? myComponent : myPreferredFocusableComponent;
+  }
+
+  public void setPreferredFocusableComponent(final JComponent c) {
+    myPreferredFocusableComponent = c;
   }
 
   public void setIcon(Icon icon) {
@@ -207,5 +218,11 @@ public class ContentImpl implements Content {
 
   public String toString() {
     return "Content name=" + myDisplayName;
+  }
+
+  public void dispose() {
+    if (myDisposer != null) {
+      Disposer.dispose(myDisposer);
+    }
   }
 }

@@ -80,4 +80,6 @@ public interface ContentManager {
   void removeSelectedContent(Content content);
 
   boolean isSelected(Content content);
+
+  void requestFocus(@Nullable Content content);
 }

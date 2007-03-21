@@ -15,15 +15,14 @@
  */
 package com.intellij.execution.ui;
 
+import com.intellij.openapi.ui.ComponentContainer;
+
 import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Apr 20, 2004
  */
-public interface ExecutionConsole {
-  JComponent getComponent();
-
-  void dispose();
+public interface ExecutionConsole extends ComponentContainer {
 
 }

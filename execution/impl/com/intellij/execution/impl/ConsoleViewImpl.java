@@ -795,4 +795,8 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
       if (myLastIndex != NO_INDEX && containsOffset(myLastIndex, highlighter)) myLastIndex = NO_INDEX;
     }
   }
+
+  public JComponent getPreferredFocusableComponent() {
+    return myEditor.getContentComponent();
+  }
 }

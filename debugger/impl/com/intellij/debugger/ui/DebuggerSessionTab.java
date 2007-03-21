@@ -150,7 +150,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
 
     myFramesPanel = new FramesPanel(getProject(), getContextManager());
 
-    myWatchesContent = createContent(myWatchPanel, DebuggerBundle.message("debugger.session.tab.watches.title"), WATCHES_ICON, WATCHES_CONTENT);
+    myWatchesContent = createContent(myWatchPanel, DebuggerBundle.message("debugger.session.tab.watches.title"), WATCHES_ICON, WATCHES_CONTENT, null);
     final DefaultActionGroup watchesGroup = new DefaultActionGroup();
     addAction(watchesGroup, DebuggerActions.NEW_WATCH);
     addAction(watchesGroup, DebuggerActions.ADD_TO_WATCH);
@@ -159,7 +159,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
 
     myViewsContentManager.addContent(myWatchesContent);
 
-    myFramesContent = createContent(myFramesPanel, DebuggerBundle.message("debugger.session.tab.frames.title"), IconLoader.getIcon("/debugger/frame.png"), FRAME_CONTENT);
+    myFramesContent = createContent(myFramesPanel, DebuggerBundle.message("debugger.session.tab.frames.title"), IconLoader.getIcon("/debugger/frame.png"), FRAME_CONTENT, null);
     final DefaultActionGroup framesGroup = new DefaultActionGroup();
 
     addAction(framesGroup, DebuggerActions.SHOW_EXECUTION_POINT);
@@ -179,7 +179,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
 
     myVariablesPanel = new VariablesPanel(myProject, myStateManager);
     myVariablesPanel.getFrameTree().setAutoVariablesMode(debuggerSettings.AUTO_VARIABLES_MODE);
-    myVarsContent = createContent(myVariablesPanel, DebuggerBundle.message("debugger.session.tab.variables.title"), IconLoader.getIcon("/debugger/value.png"), VARIABLES_CONTENT);
+    myVarsContent = createContent(myVariablesPanel, DebuggerBundle.message("debugger.session.tab.variables.title"), IconLoader.getIcon("/debugger/value.png"), VARIABLES_CONTENT, null);
     final DefaultActionGroup varsGroup = new DefaultActionGroup();
     addAction(varsGroup, DebuggerActions.EVALUATE_EXPRESSION);
     varsGroup.add(new WatchLastMethodReturnValueAction());
@@ -238,7 +238,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     }
 
     content = createContent(myConsole.getComponent(), DebuggerBundle.message(
-      "debugger.session.tab.console.content.name"), IconLoader.getIcon("/debugger/console.png"), CONSOLE_CONTENT);
+      "debugger.session.tab.console.content.name"), IconLoader.getIcon("/debugger/console.png"), CONSOLE_CONTENT, myConsole.getPreferredFocusableComponent());
 
     final DefaultActionGroup consoleActions = new DefaultActionGroup();
     addAction(consoleActions, DebuggerActions.EXPORT_THREADS);
@@ -486,7 +486,7 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
   }
 
   public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent) {
-    Content logContent = createContent(tabComponent.getComponent(), tabComponent.getTabTitle(), null, CONSOLE_CONTENT);
+    Content logContent = createContent(tabComponent.getComponent(), tabComponent.getTabTitle(), null, CONSOLE_CONTENT, tabComponent.getPreferredFocusableComponent());
     logContent.setDescription(tabComponent.getTooltip());
     myAdditionalContent.put(tabComponent, logContent);
     myViewsContentManager.addContent(logContent);
@@ -593,10 +593,13 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
     }
   }
 
-  private Content createContent(JComponent component, String displayName, Icon icon, Key kind) {
+  private Content createContent(JComponent component, String displayName, Icon icon, Key kind, JComponent focusable) {
     final Content content = getContentFactory().createContent(component, displayName, false);
     content.putUserData(CONTENT_KIND, kind);
     content.setIcon(icon);
+    if (focusable != null) {
+      content.setPreferredFocusableComponent(focusable);
+    }
     return content;
   }
 

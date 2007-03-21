@@ -356,4 +356,13 @@ public class ContentManagerImpl implements ContentManager {
     }
     return true;
   }
+
+  public void requestFocus(Content content) {
+    Content toSelect = content == null ? getSelectedContent() : content;
+    if (toSelect == null) return;
+    assert myContents.contains(toSelect);
+
+    final JComponent toFocus = toSelect.getPreferredFocusableComponent();
+    toFocus.requestFocus();
+  }
 }

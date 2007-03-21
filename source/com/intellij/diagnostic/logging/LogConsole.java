@@ -371,4 +371,9 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
       }
     }
   }
+
+
+  public JComponent getPreferredFocusableComponent() {
+    return myConsole.getPreferredFocusableComponent();
+  }
 }
