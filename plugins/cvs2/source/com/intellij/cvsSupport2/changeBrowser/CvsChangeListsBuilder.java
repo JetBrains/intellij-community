@@ -75,7 +75,9 @@ public class CvsChangeListsBuilder {
       final String file = log.getFile();
       if (CvsChangeList.isAncestor(myRootPath, file)) {
         for (Revision revision : log.getRevisions()) {
-          revisionWrappers.add(new RevisionWrapper(file, revision));
+          if (revision != null) {
+            revisionWrappers.add(new RevisionWrapper(file, revision));
+          }
         }
       }
     }

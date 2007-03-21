@@ -1,13 +1,14 @@
 package com.intellij.cvsSupport2.changeBrowser;
 
 import org.netbeans.lib.cvsclient.command.log.Revision;
+import org.jetbrains.annotations.NotNull;
 
 class RevisionWrapper implements Comparable<RevisionWrapper> {
   private final String myFile;
   private final Revision myRevision;
   private final long myTime;
 
-  public RevisionWrapper(final String file, final Revision revision) {
+  public RevisionWrapper(final String file, @NotNull final Revision revision) {
     myFile = file;
     myRevision = revision;
     myTime = revision.getDate().getTime();
