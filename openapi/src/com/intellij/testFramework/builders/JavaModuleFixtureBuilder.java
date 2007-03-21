@@ -26,6 +26,11 @@ import org.jetbrains.annotations.NonNls;
  */
 public interface JavaModuleFixtureBuilder<T extends ModuleFixture> extends ModuleFixtureBuilder<T> {
 
+  enum MockJdkLevel {
+    jdk14,
+    jdk15
+  }
+
   JavaModuleFixtureBuilder setLanguageLevel(LanguageLevel languageLevel);
 
   JavaModuleFixtureBuilder addLibrary(@NonNls String libraryName, @NonNls String... classPath);
@@ -34,4 +39,5 @@ public interface JavaModuleFixtureBuilder<T extends ModuleFixture> extends Modul
 
   JavaModuleFixtureBuilder addJdk(@NonNls String jdkPath);
 
+  void setMockJdkLevel(MockJdkLevel level);
 }

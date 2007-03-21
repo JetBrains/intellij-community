@@ -31,6 +31,7 @@ import java.util.List;
 abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends ModuleFixtureBuilderImpl<T> implements JavaModuleFixtureBuilder<T> {
   private List<Pair<String, String[]>> myLibraries = new ArrayList<Pair<String, String[]>>();
   private String myJdk;
+  private MockJdkLevel myMockJdkLevel = MockJdkLevel.jdk14;
 
   public JavaModuleFixtureBuilderImpl(final TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
     super(ModuleType.JAVA, fixtureBuilder);
@@ -62,6 +63,10 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
     return this;
   }
 
+  public void setMockJdkLevel(final MockJdkLevel level) {
+    myMockJdkLevel = level;
+  }
+
   void initModule(final Module module) {
     super.initModule(module);
 
@@ -87,7 +92,15 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
     if (myJdk != null) {
       model.setJdk(JavaSdkImpl.getInstance().createJdk(module.getName() + "_jdk", myJdk, false));
     } else {
-      final ProjectJdk projectJdk = JavaSdkImpl.getMockJdk("java 1.4");
+      final ProjectJdk projectJdk;
+      switch (myMockJdkLevel) {
+        default:
+          projectJdk = JavaSdkImpl.getMockJdk("java 1.4");
+          break;
+        case jdk15:
+          projectJdk = JavaSdkImpl.getMockJdk15("java 1.5");
+          break;
+      }
       model.setJdk(projectJdk);
     }
     model.commit();
