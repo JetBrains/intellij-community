@@ -13,11 +13,13 @@ import com.intellij.refactoring.util.classMembers.MemberInfoChange;
 import com.intellij.refactoring.util.classMembers.MemberInfoModel;
 import com.intellij.refactoring.util.classMembers.MemberInfoTooltipManager;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * @author dsl
@@ -82,6 +84,9 @@ public class GenerateEqualsWizard extends AbstractWizard {
     myNonNullPanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.non.null.fields.chooser.title"),
                                               new MemberInfo[0], null);
     myFieldsToNonNull = createFieldToMemberInfoMap(false);
+    for (final Map.Entry<PsiElement, MemberInfo> entry : myFieldsToNonNull.entrySet()) {
+      entry.getValue().setChecked(((PsiField)entry.getKey()).getModifierList().findAnnotation(NotNull.class.getName()) != null);
+    }
 
     final MyTableModelListener listener = new MyTableModelListener();
     if (myEqualsPanel != null) {
