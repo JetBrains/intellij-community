@@ -34,6 +34,10 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
         return (String)infos[0];
     }
 
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new SuspiciousSystemArraycopyVisitor();
     }
