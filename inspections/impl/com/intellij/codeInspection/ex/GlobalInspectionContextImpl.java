@@ -98,7 +98,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   @NonNls public static final String SUPPRESS_INSPECTIONS_TAG_NAME = "noinspection";
   public static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "java.lang.SuppressWarnings";
   @NonNls public static final Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN =
-    Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(,\\w+)*)");
+    Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(s*,\\w+)*)");
 
   private Map<String, Set<Pair<InspectionTool, InspectionProfile>>> myTools = new THashMap<String, Set<Pair<InspectionTool, InspectionProfile>>>();
 
@@ -592,10 +592,13 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     PsiDocComment docComment = owner.getDocComment();
     if (docComment != null) {
       PsiDocTag inspectionTag = docComment.findTagByName(SUPPRESS_INSPECTIONS_TAG_NAME);
-      if (inspectionTag != null && inspectionTag.getValueElement() != null) {
-        String valueText = inspectionTag.getValueElement().getText();
-        if (isInspectionToolIdMentioned(valueText, inspectionToolID)) {
-          return docComment;
+      if (inspectionTag != null) {
+        final PsiElement[] dataElements = inspectionTag.getDataElements();
+        for (PsiElement dataElement : dataElements) {
+          String valueText = dataElement.getText();
+          if (isInspectionToolIdMentioned(valueText, inspectionToolID)) {
+            return docComment;
+          }
         }
       }
     }
