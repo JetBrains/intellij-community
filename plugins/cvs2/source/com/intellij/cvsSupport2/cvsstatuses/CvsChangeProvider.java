@@ -170,7 +170,8 @@ public class CvsChangeProvider implements ChangeProvider {
     }
   }
 
-  private String getStickyInfo(final String dirTag) {
+  @Nullable
+  private static String getStickyInfo(final String dirTag) {
     return (dirTag != null && dirTag.length() > 1) ? dirTag.substring(1) : null;
   }
 
