@@ -1,0 +1,8 @@
+"$Preved, medved!"
+-----
+Groovy script
+  Compound Gstring
+    PsiElement(Gstring begin)('"$')
+    Reference expression
+      PsiElement(identifier)('Preved')
+    PsiElement(Gstring end)(', medved!"')

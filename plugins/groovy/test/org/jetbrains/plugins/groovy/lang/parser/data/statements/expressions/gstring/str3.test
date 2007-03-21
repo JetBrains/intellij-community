@@ -1,0 +1,11 @@
+"My $str. ing"
+-----
+Groovy script
+  Compound Gstring
+    PsiElement(Gstring begin)('"My $')
+    Reference expression
+      PsiElement(identifier)('str')
+    PsiElement(.)('.')
+    PsiErrorElement:Path selector expected
+      <empty list>
+    PsiElement(Gstring end)(' ing"')

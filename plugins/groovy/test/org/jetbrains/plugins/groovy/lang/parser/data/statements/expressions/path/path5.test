@@ -1,0 +1,29 @@
+a.b.
+c*."My $import.bugaga aga 
+-----
+Groovy script
+  Path expression
+    Path expression
+      Path expression
+        Reference expression
+          PsiElement(identifier)('a')
+        PsiElement(.)('.')
+        Path selector
+          PsiElement(identifier)('b')
+      PsiElement(.)('.')
+      PsiElement(new line)('\n')
+      Path selector
+        PsiElement(identifier)('c')
+    PsiElement(*.)('*.')
+    Compound Gstring
+      PsiElement(Gstring begin)('"My $')
+      Path expression
+        Reference expression
+          PsiElement(identifier)('import')
+        PsiElement(.)('.')
+        Path selector
+          PsiElement(identifier)('bugaga')
+      PsiErrorElement:GString ending expected
+        <empty list>
+  PsiErrorElement:';' or new line expected
+    PsiElement(wrong gstring)(' aga ')

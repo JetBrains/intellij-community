@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
+package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
 
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.Iconable;
@@ -9,5 +9,5 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrBinaryExpression extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement {
+public interface GrPathExpression extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement {
 }

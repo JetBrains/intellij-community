@@ -208,7 +208,7 @@ mGSTRING_LITERAL = \"\"
 }
 
 <IN_SINGLE_GSTRING> {
-  {mGSTRING_SINGLE_CONTENT}"$"            {  yybegin(IN_SINGLE_GSTRING_DOLLAR);
+  {mGSTRING_SINGLE_CONTENT}"$"            {  yybegin(GSTRING_STAR_SINGLE);
                                              return mGSTRING_SINGLE_CONTENT; }
   {mGSTRING_SINGLE_CONTENT}"\""           {  gStringStack.pop();
                                              if (blockStack.isEmpty()){
@@ -255,7 +255,7 @@ mGSTRING_LITERAL = \"\"
 }
 <IN_TRIPLE_NLS>{
   {mNLS}{mWS}*                            {  yybegin(IN_TRIPLE_IDENT);
-                                             return mDOT;  }
+                                             return mNLS;  }
   [^]                                     {  yypushback(yytext().length());
                                              yybegin(IN_TRIPLE_IDENT);  }
 
@@ -272,7 +272,7 @@ mGSTRING_LITERAL = \"\"
 }
 
 <IN_TRIPLE_GSTRING> {
-  {mGSTRING_TRIPLE_CONTENT}"$"            {  yybegin(IN_TRIPLE_GSTRING_DOLLAR);
+  {mGSTRING_TRIPLE_CONTENT}"$"            {  yybegin(GSTRING_STAR_TRIPLE);
                                              return mGSTRING_SINGLE_CONTENT; }
   {mGSTRING_TRIPLE_CONTENT}\"\"\"         {  gStringStack.pop();
                                              if (blockStack.isEmpty()){

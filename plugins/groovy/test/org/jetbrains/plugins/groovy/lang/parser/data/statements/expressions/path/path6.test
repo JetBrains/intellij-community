@@ -1,0 +1,12 @@
+a.b.
+-----
+Groovy script
+  Path expression
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiElement(.)('.')
+    Path selector
+      PsiElement(identifier)('b')
+  PsiElement(.)('.')
+  PsiErrorElement:Path selector expected
+    <empty list>

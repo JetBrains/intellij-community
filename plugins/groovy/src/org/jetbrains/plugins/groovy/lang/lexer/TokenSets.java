@@ -32,6 +32,7 @@ public abstract class TokenSets implements GroovyTokenTypes {
           mLCURLY
   );
 
+
   public static final TokenSet CONSTANTS = TokenSet.create(
           mNUM_INT,
           kTRUE,
@@ -54,6 +55,20 @@ public abstract class TokenSets implements GroovyTokenTypes {
           kANY
   );
 
-  
+  public static TokenSet KEYWORD_PROPERTY_NAMES = TokenSet.orSet(TokenSet.create(
+          kCLASS,
+          kIN,
+          kAS,
+          kDEF,
+          kIF,
+          kELSE,
+          kFOR,
+          kWHILE,
+          kSWITCH,
+          kTRY,
+          kCATCH,
+          kFINALLY
+  ), BUILT_IN_TYPE);
+
 
 }

@@ -1,0 +1,28 @@
+a.b.c +
+d.e.f
+-----
+Groovy script
+  Additive expression
+    Path expression
+      Path expression
+        Reference expression
+          PsiElement(identifier)('a')
+        PsiElement(.)('.')
+        Path selector
+          PsiElement(identifier)('b')
+      PsiElement(.)('.')
+      Path selector
+        PsiElement(identifier)('c')
+    PsiWhiteSpace(' ')
+    PsiElement(+)('+')
+    PsiElement(new line)('\n')
+    Path expression
+      Path expression
+        Reference expression
+          PsiElement(identifier)('d')
+        PsiElement(.)('.')
+        Path selector
+          PsiElement(identifier)('e')
+      PsiElement(.)('.')
+      Path selector
+        PsiElement(identifier)('f')

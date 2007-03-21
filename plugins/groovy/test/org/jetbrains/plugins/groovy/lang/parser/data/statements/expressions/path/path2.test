@@ -1,0 +1,13 @@
+3.toString*.'preved'
+-----
+Groovy script
+  Path expression
+    Path expression
+      Literal
+        PsiElement(number)('3')
+      PsiElement(.)('.')
+      Path selector
+        PsiElement(identifier)('toString')
+    PsiElement(*.)('*.')
+    Path selector
+      PsiElement(string)(''preved'')

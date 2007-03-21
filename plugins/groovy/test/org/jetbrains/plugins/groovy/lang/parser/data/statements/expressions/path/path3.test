@@ -1,0 +1,18 @@
+expr.
+@while.
+parse
+-----
+Groovy script
+  Path expression
+    Path expression
+      Reference expression
+        PsiElement(identifier)('expr')
+      PsiElement(.)('.')
+      PsiElement(new line)('\n')
+      PsiElement(@)('@')
+      Path selector
+        PsiElement(while)('while')
+    PsiElement(.)('.')
+    PsiElement(new line)('\n')
+    Path selector
+      PsiElement(identifier)('parse')

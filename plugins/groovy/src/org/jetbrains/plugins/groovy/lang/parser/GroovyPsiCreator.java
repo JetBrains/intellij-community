@@ -9,6 +9,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPathSelectorImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPathExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
@@ -116,6 +118,10 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(BUILT_IN_TYPE)) return new GrBuiltInTypeImpl(node);
     if (elem.equals(GSTRING)) return new GrStringImpl(node);
     if (elem.equals(REFERENCE_EXPRESSION)) return new GrReferenceExprImpl(node);
+
+    //Paths
+    if (elem.equals(PATH_NAME_PART)) return new GrPathSelectorImpl(node);
+    if (elem.equals(PATH_EXPRESSION)) return new GrPathExprImpl(node);
 
 
     if (elem.equals(BALANCED_BRACKETS)) return new GrBalancedBracketsImpl(node);

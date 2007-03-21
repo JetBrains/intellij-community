@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Identifier;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -43,8 +44,9 @@ public class StringConstructorExpression implements GroovyElementTypes {
    * @return nothing
    */
   private static GroovyElementType stringConstructorValuePart(PsiBuilder builder) {
+    ParserUtils.getToken(builder, mSTAR);
     if (mIDENT.equals(builder.getTokenType())) {
-      Identifier.parse(builder);
+      PathExpression.parse(builder);
       return IDENTIFIER;
     }
     return WRONGWAY;
