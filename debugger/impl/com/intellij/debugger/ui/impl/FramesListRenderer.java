@@ -31,8 +31,9 @@ class FramesListRenderer extends ColoredListCellRenderer {
     else {
       final StackFrameDescriptorImpl descriptor = (StackFrameDescriptorImpl)item;
       setIcon(descriptor.getIcon());
-      final StackFrameDescriptorImpl selectedDescriptor = (StackFrameDescriptorImpl)((FramesList)list).getSelectedValue();
-      final boolean shouldHighlightAsRecursive = isOccurrenceOfSelectedFrame(selectedDescriptor, descriptor);
+      final Object selectedValue = list.getSelectedValue();
+      final boolean shouldHighlightAsRecursive = (selectedValue instanceof StackFrameDescriptorImpl) && 
+                                                 isOccurrenceOfSelectedFrame((StackFrameDescriptorImpl)selectedValue, descriptor);
 
       final ValueMarkup markup = descriptor.getValueMarkup();
       if (markup != null) {
