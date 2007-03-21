@@ -2,7 +2,8 @@ i / --3 ** ++4
 -----
 Groovy script
   Multiplicative expression
-    PsiElement(identifier)('i')
+    Reference expression
+      PsiElement(identifier)('i')
     PsiWhiteSpace(' ')
     PsiElement(/)('/')
     PsiWhiteSpace(' ')

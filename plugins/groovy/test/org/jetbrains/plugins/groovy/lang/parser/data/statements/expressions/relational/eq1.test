@@ -8,7 +8,8 @@ Groovy script
         PsiElement(number)('27')
       PsiElement(<=>)('<=>')
       PsiElement(new line)('\n')
-      PsiElement(identifier)('a')
+      Reference expression
+        PsiElement(identifier)('a')
     PsiElement(==)('==')
     Literal
       PsiElement(number)('5')

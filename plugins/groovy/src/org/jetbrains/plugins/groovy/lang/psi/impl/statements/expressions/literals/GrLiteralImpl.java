@@ -1,8 +1,7 @@
-package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrIdentifier;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
 

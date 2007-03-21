@@ -1,11 +1,9 @@
-import static a
+import a
 import b as c
 -----
 Groovy script
   Import expression
     PsiElement(import)('import')
-    PsiWhiteSpace(' ')
-    PsiElement(static)('static')
     PsiWhiteSpace(' ')
     Import referenece
       PsiElement(identifier)('a')

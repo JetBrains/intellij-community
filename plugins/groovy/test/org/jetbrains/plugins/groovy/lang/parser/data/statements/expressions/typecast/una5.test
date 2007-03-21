@@ -3,20 +3,22 @@ a+b
 -----
 Groovy script
   Additive expression
-    PsiElement(identifier)('a')
+    Reference expression
+      PsiElement(identifier)('a')
     PsiElement(+)('+')
-    PsiElement(identifier)('b')
+    Reference expression
+      PsiElement(identifier)('b')
   PsiElement(new line)('\n')
-  Simple unary expression
-    Explicit typecast
-      PsiElement(()('(')
+  Typecast expression
+    PsiElement(()('(')
+    Built in type
       PsiElement(double)('double')
-      PsiElement())(')')
-    Simple unary expression
-      Explicit typecast
-        PsiElement(()('(')
+    PsiElement())(')')
+    Typecast expression
+      PsiElement(()('(')
+      Built in type
         PsiElement(int)('int')
-        PsiElement())(')')
+      PsiElement())(')')
       PsiWhiteSpace(' ')
       Literal
         PsiElement(number)('5L')

@@ -154,6 +154,11 @@ mGSTRING_LITERAL = \"\"
 %xstate IN_TRIPLE_GSTRING_DOLLAR
 %xstate IN_SINGLE_GSTRING
 %xstate IN_TRIPLE_GSTRING
+%xstate IN_SINGLE_IDENT
+%xstate IN_SINGLE_DOT
+%xstate IN_TRIPLE_IDENT
+%xstate IN_TRIPLE_DOT
+%xstate IN_TRIPLE_NLS
 %xstate GSTRING_STAR_SINGLE
 %xstate GSTRING_STAR_TRIPLE
 %xstate WRONG_STRING
@@ -173,9 +178,22 @@ mGSTRING_LITERAL = \"\"
 }
 
 // Single double-quoted GString
+<IN_SINGLE_IDENT>{
+  {mIDENT}                                {  yybegin(IN_SINGLE_DOT);
+                                             return mIDENT;  }
+  [^]                                     {  yypushback(yytext().length());
+                                             yybegin(IN_SINGLE_GSTRING);  }
+}
+<IN_SINGLE_DOT>{
+  "."                                     {  yybegin(IN_SINGLE_IDENT);
+                                             return mDOT;  }
+  [^"."]                                  {  yypushback(yytext().length());
+                                             yybegin(IN_SINGLE_GSTRING);  }
+}
+
 <IN_SINGLE_GSTRING_DOLLAR> {
 
-  {mIDENT}("."{mIDENT})*                  {  yybegin(IN_SINGLE_GSTRING);
+  {mIDENT}                                {  yybegin(IN_SINGLE_DOT);
                                              return mIDENT; }
   "{"                                     {  blockStack.push(mLPAREN);
 
@@ -222,10 +240,29 @@ mGSTRING_LITERAL = \"\"
                                              return mRCURLY; }
 }
 
-// Single double-quoted GString
-<IN_TRIPLE_GSTRING_DOLLAR> {
+// Triple double-quoted GString
+<IN_TRIPLE_IDENT>{
+  {mIDENT}                                {  yybegin(IN_TRIPLE_DOT);
+                                             return mIDENT;  }
+  [^]                                     {  yypushback(yytext().length());
+                                             yybegin(IN_TRIPLE_GSTRING);  }
+}
+<IN_TRIPLE_DOT>{
+  "."                                     {  yybegin(IN_TRIPLE_NLS);
+                                             return mDOT;  }
+  [^"."]                                  {  yypushback(yytext().length());
+                                             yybegin(IN_TRIPLE_GSTRING);  }
+}
+<IN_TRIPLE_NLS>{
+  {mNLS}{mWS}*                            {  yybegin(IN_TRIPLE_IDENT);
+                                             return mDOT;  }
+  [^]                                     {  yypushback(yytext().length());
+                                             yybegin(IN_TRIPLE_IDENT);  }
 
-  {mIDENT}("."{mIDENT})*                  {  yybegin(IN_TRIPLE_GSTRING);
+}
+
+<IN_TRIPLE_GSTRING_DOLLAR> {
+  {mIDENT}                                {  yybegin(IN_TRIPLE_DOT);
                                              return mIDENT; }
   "{"                                     {  blockStack.push(mLBRACK);
                                              yybegin(IN_INNER_BLOCK);

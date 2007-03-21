@@ -13,7 +13,7 @@ import com.intellij.lang.PsiBuilder.Marker;
  *
  * @author Ilya Sergey
  */
-public class IdentifierStar implements GroovyElementTypes {
+public class IdentifierReference implements GroovyElementTypes {
 
   public static GroovyElementType parse(PsiBuilder builder) {
 
@@ -22,7 +22,7 @@ public class IdentifierStar implements GroovyElementTypes {
     if (ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"))) {
       if (ParserUtils.lookAhead(builder, mDOT)) {
         Marker newMarker = idMarker.precede();
-        idMarker.done(IDENITFIER_STAR);
+        idMarker.done(IMPORT_REFERENCE);
         subParse(builder, newMarker);
       } else if (ParserUtils.lookAhead(builder, kAS)) {
         builder.advanceLexer();
@@ -32,12 +32,12 @@ public class IdentifierStar implements GroovyElementTypes {
         ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"));
         idMarker.done(IMPORT_SELECTOR);
       } else {
-        idMarker.done(IMPORT_END);
+        idMarker.done(IMPORT_REFERENCE);
       }
     } else {
       idMarker.drop();
     }
-    return IDENITFIER_STAR;
+    return IMPORT_REFERENCE;
   }
 
   private static void subParse(PsiBuilder builder, Marker marker) {
@@ -47,13 +47,13 @@ public class IdentifierStar implements GroovyElementTypes {
       ParserUtils.getToken(builder, mNLS);
       builder.advanceLexer();
       Marker newMarker = marker.precede();
-      marker.done(IDENITFIER_STAR);
+      marker.done(IMPORT_REFERENCE);
       subParse(builder, newMarker);
     } else if (ParserUtils.lookAhead(builder, mSTAR) ||
             ParserUtils.lookAhead(builder, mNLS, mSTAR)) {
       ParserUtils.getToken(builder, mNLS);
       builder.advanceLexer();
-      marker.done(IDENITFIER_STAR);
+      marker.done(IMPORT_REFERENCE);
     } else if (ParserUtils.lookAhead(builder, mIDENT, kAS) ||
             ParserUtils.lookAhead(builder, mNLS, mIDENT, kAS)) {
       marker.drop();
@@ -69,12 +69,12 @@ public class IdentifierStar implements GroovyElementTypes {
       selMarker.done(IMPORT_SELECTOR);
     } else if (ParserUtils.lookAhead(builder, mIDENT) ||
             ParserUtils.lookAhead(builder, mNLS, mIDENT)) {
-      marker.drop();
       ParserUtils.getToken(builder, mNLS);
-      ParserUtils.eatElement(builder, IMPORT_END);
+      ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"));
+      marker.done(IMPORT_REFERENCE);
     } else {
       builder.error(GroovyBundle.message("identifier.expected"));
-      marker.done(IDENITFIER_STAR);
+      marker.done(IMPORT_REFERENCE);
     }
   }
 

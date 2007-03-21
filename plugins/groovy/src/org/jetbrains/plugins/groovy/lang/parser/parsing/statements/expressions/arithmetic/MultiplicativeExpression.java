@@ -22,7 +22,9 @@ public class MultiplicativeExpression implements GroovyElementTypes {
           mPLUS,
           mMINUS,
           mINC,
-          mDEC
+          mDEC,
+          mLNOT,
+          mBNOT
   );
 
   public static GroovyElementType parse(PsiBuilder builder) {

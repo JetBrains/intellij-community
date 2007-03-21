@@ -3,13 +3,16 @@ c
 -----
 Groovy script
   Assignment expression
-    PsiElement(identifier)('a')
+    Reference expression
+      PsiElement(identifier)('a')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
     Assignment expression
-      PsiElement(identifier)('b')
+      Reference expression
+        PsiElement(identifier)('b')
       PsiWhiteSpace(' ')
       PsiElement(=)('=')
       PsiElement(new line)('\n')
-      PsiElement(identifier)('c')
+      Reference expression
+        PsiElement(identifier)('c')

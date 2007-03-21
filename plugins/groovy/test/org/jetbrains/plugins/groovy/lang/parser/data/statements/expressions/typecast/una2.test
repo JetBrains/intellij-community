@@ -1,19 +1,18 @@
 (double [][] ) 3
 -----
 Groovy script
-  Simple unary expression
-    Explicit typecast
-      PsiElement(()('(')
+  Typecast expression
+    PsiElement(()('(')
+    Array type
       Array type
-        Array type
-          PsiElement(double)('double')
-          PsiWhiteSpace(' ')
-          PsiElement([)('[')
-          PsiElement(])(']')
+        PsiElement(double)('double')
+        PsiWhiteSpace(' ')
         PsiElement([)('[')
         PsiElement(])(']')
-      PsiWhiteSpace(' ')
-      PsiElement())(')')
+      PsiElement([)('[')
+      PsiElement(])(']')
+    PsiWhiteSpace(' ')
+    PsiElement())(')')
     PsiWhiteSpace(' ')
     Literal
       PsiElement(number)('3')

@@ -8,10 +8,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrAssignmentExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrConditionalExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrCommandArgsImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExprImpl;
@@ -23,11 +22,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.fields.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.blocks.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.auxilary.GrBalancedBracketsImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportEndImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportQualIdImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportReferenceImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportSelectorImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportStatementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging.GrPackageDefinitionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrArrayTypeElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrBuiltInTypeImpl;
 
 /**
  * Creates Groovy PSI element by given AST node
@@ -59,8 +59,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     // Imports
     if (elem.equals(IMPORT_STATEMENT)) return new GrImportStatementImpl(node);
     if (elem.equals(IMPORT_SELECTOR)) return new GrImportSelectorImpl(node);
-    if (elem.equals(IMPORT_END)) return new GrImportEndImpl(node);
-    if (elem.equals(IDENITFIER_STAR)) return new GrImportQualIdImpl(node);
+    if (elem.equals(IMPORT_REFERENCE)) return new GrImportReferenceImpl(node);
 
     // Packaging
     if (elem.equals(PACKAGE_DEFINITION)) return new GrPackageDefinitionImpl(node);
@@ -92,7 +91,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(ANNOTATION_FIELD)) return new GrAnnotationMemberImpl(node);
 
     //expressions
-    if (elem.equals(EXPRESSION_STATEMENT)) return new GrExpressionImpl(node);
+    if (elem.equals(EXPRESSION_STATEMENT)) return new GrCallExpressionImpl(node);
     if (elem.equals(COMMAND_ARGUMENTS)) return new GrCommandArgsImpl(node);
     if (elem.equals(CONDITIONAL_EXPRESSION)) return new GrConditionalExprImpl(node);
     if (elem.equals(ASSIGNMENT_EXPRESSION)) return new GrAssignmentExprImpl(node);
@@ -110,9 +109,13 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(POWER_EXPRESSION)) return new GrPowerExprImpl(node);
     if (elem.equals(POWER_EXPRESSION_SIMPLE)) return new GrPowerExprImpl(node);
     if (elem.equals(UNARY_EXPRESSION)) return new GrUnaryExprImpl(node);
-    if (elem.equals(UNARY_EXPRESSION_NOT_PM)) return new GrSimpleUnaryExprImpl(node);
+    if (elem.equals(POSTFIX_EXPRESSION)) return new GrPostfixExprImpl(node);
+    if (elem.equals(CAST_EXPRESSION)) return new GrTypeCastExprImpl(node);
     if (elem.equals(TYPE_CAST)) return new GrTypeCastImpl(node);
-    if (elem.equals(ARRAY_TYPE)) return new GrArrayTypeImpl(node);
+    if (elem.equals(ARRAY_TYPE)) return new GrArrayTypeElementImpl(node);
+    if (elem.equals(BUILT_IN_TYPE)) return new GrBuiltInTypeImpl(node);
+    if (elem.equals(GSTRING)) return new GrStringImpl(node);
+    if (elem.equals(REFERENCE_EXPRESSION)) return new GrReferenceExprImpl(node);
 
 
     if (elem.equals(BALANCED_BRACKETS)) return new GrBalancedBracketsImpl(node);

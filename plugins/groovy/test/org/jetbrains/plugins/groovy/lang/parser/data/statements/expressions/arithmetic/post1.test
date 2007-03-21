@@ -1,0 +1,12 @@
+!3++ --
+-----
+Groovy script
+  Unary expression
+    PsiElement(!)('!')
+    Postfix expression
+      Postfix expression
+        Literal
+          PsiElement(number)('3')
+        PsiElement(++)('++')
+      PsiWhiteSpace(' ')
+      PsiElement(--)('--')

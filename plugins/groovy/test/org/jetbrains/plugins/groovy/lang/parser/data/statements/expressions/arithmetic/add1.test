@@ -6,6 +6,8 @@ Groovy script
       Literal
         PsiElement(number)('27')
       PsiElement(+)('+')
-      PsiElement(identifier)('a')
+      Reference expression
+        PsiElement(identifier)('a')
     PsiElement(+)('+')
-    PsiElement(identifier)('c')
+    Reference expression
+      PsiElement(identifier)('c')

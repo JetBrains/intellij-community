@@ -1,11 +1,11 @@
 (int) 3
 -----
 Groovy script
-  Simple unary expression
-    Explicit typecast
-      PsiElement(()('(')
+  Typecast expression
+    PsiElement(()('(')
+    Built in type
       PsiElement(int)('int')
-      PsiElement())(')')
+    PsiElement())(')')
     PsiWhiteSpace(' ')
     Literal
       PsiElement(number)('3')

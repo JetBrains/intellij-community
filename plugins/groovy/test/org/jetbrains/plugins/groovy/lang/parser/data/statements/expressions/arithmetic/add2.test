@@ -5,10 +5,13 @@ c
 Groovy script
   Additive expression
     Additive expression
-      PsiElement(identifier)('a')
+      Reference expression
+        PsiElement(identifier)('a')
       PsiElement(-)('-')
       PsiElement(new line)('\n')
-      PsiElement(identifier)('b')
+      Reference expression
+        PsiElement(identifier)('b')
     PsiElement(+)('+')
     PsiElement(new line)('\n')
-    PsiElement(identifier)('c')
+    Reference expression
+      PsiElement(identifier)('c')

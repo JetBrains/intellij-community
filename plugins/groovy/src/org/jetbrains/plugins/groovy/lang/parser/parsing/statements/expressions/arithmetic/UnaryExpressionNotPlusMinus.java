@@ -6,31 +6,20 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.TokenSet;
 
 /**
  * @author Ilya.Sergey
  */
 public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
 
-  private static TokenSet NOTS = TokenSet.create(
-          mBNOT,
-          mLNOT
-  );
-
   public static GroovyElementType parse(PsiBuilder builder) {
 
     GroovyElementType result;
     PsiBuilder.Marker marker = builder.mark();
-    if (ParserUtils.getToken(builder, NOTS)) {
-      ParserUtils.getToken(builder, mNLS);
-      UnaryExpression.parse(builder);
-      marker.done(UNARY_EXPRESSION_NOT_PM);
-      result = UNARY_EXPRESSION_NOT_PM;
-    } else if (ParserUtils.lookAhead(builder, mLPAREN)) {
+    if (ParserUtils.lookAhead(builder, mLPAREN)) {
       if (!parseTypeCast(builder).equals(WRONGWAY)) {
         result = UnaryExpression.parse(builder);
-        marker.done(UNARY_EXPRESSION_NOT_PM);
+        marker.done(CAST_EXPRESSION);
       } else {
         marker.drop();
         result = PostfixExpression.parse(builder);
@@ -51,10 +40,10 @@ public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
       if (mLBRACK.equals(builder.getTokenType())) {
         declarationBracketsParse(builder, arrMarker);
       } else {
-        arrMarker.drop();
+        arrMarker.done(BUILT_IN_TYPE);
       }
       ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"));
-      marker.done(TYPE_CAST);
+      marker.drop();
       return TYPE_CAST;
     } else {
       marker.rollbackTo();

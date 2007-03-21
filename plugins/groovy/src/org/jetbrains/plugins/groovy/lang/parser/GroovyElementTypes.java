@@ -33,8 +33,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
 
   // Import elements
   GroovyElementType IMPORT_STATEMENT = new GroovyElementType("Import statement");
-  GroovyElementType IDENITFIER_STAR = new GroovyElementType("Import identifier");
-  GroovyElementType IMPORT_END = new GroovyElementType("Import end");
+  GroovyElementType IMPORT_REFERENCE = new GroovyElementType("Import identifier");
   GroovyElementType IMPORT_SELECTOR = new GroovyElementType("Import selector");
 
   // Expression statements
@@ -56,18 +55,21 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType POWER_EXPRESSION = new GroovyElementType("Power expression");
   GroovyElementType POWER_EXPRESSION_SIMPLE = new GroovyElementType("Simple power expression");
   GroovyElementType UNARY_EXPRESSION = new GroovyElementType("Unary expression");
-  GroovyElementType UNARY_EXPRESSION_NOT_PM = new GroovyElementType("Simple unary expression");
+  GroovyElementType CAST_EXPRESSION = new GroovyElementType("Simple unary expression");
   GroovyElementType TYPE_CAST = new GroovyElementType("Explicit typecast");
-  GroovyElementType ARRAY_TYPE = new GroovyElementType("Array type");
 
   GroovyElementType POSTFIX_EXPRESSION = new GroovyElementType("Postfix expression");
 
-
-  GroovyElementType PRIMARY_EXXPRESSION = new GroovyElementType("Primary expressions");
+  GroovyElementType REFERENCE_EXPRESSION = new GroovyElementType("Reference expressions");
+  GroovyElementType PRIMARY_EXPRESSION = new GroovyElementType("Primary expressions");
 
   // Lists & maps
   GroovyElementType LIST = new GroovyElementType("List");
   GroovyElementType MAP = new GroovyElementType("Map");
+
+  // Type Elements
+  GroovyElementType ARRAY_TYPE = new GroovyElementType("Array type");
+  GroovyElementType BUILT_IN_TYPE = new GroovyElementType("Built in type");
 
 
   // GStrings

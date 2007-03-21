@@ -1,8 +1,9 @@
 foo 1 , id 3
 -----
 Groovy script
-  Expression with arguments
-    PsiElement(identifier)('foo')
+  Call expression
+    Reference expression
+      PsiElement(identifier)('foo')
     PsiWhiteSpace(' ')
     Command arguments
       Literal
@@ -10,7 +11,8 @@ Groovy script
       PsiWhiteSpace(' ')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
-      PsiElement(identifier)('id')
+      Reference expression
+        PsiElement(identifier)('id')
   PsiWhiteSpace(' ')
   PsiErrorElement:';' or new line expected
     PsiElement(number)('3')

@@ -7,4 +7,5 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(<)('<')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('a')
+    Reference expression
+      PsiElement(identifier)('a')

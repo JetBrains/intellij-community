@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary;
+package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals;
 
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.Iconable;
@@ -9,5 +9,5 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author Ilya.Sergey
  */
-public interface GrArrayType extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement {
+public interface GrLiteral extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement {
 }

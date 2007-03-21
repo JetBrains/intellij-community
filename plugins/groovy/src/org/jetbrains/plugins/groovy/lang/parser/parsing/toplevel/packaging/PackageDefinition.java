@@ -20,17 +20,37 @@ public class PackageDefinition implements GroovyElementTypes {
 
     Marker pMarker = builder.mark();
 
-    if (!ParserUtils.getToken(builder, kPACKAGE, GroovyBundle.message("package.keyword.expected"))){
+    if (!ParserUtils.getToken(builder, kPACKAGE, GroovyBundle.message("package.keyword.expected"))) {
       pMarker.drop();
       return WRONGWAY;
     }
-    if (ParserUtils.lookAhead(builder, mIDENT)){
-      Identifier.parse(builder);
+    if (ParserUtils.lookAhead(builder, mIDENT)) {
+      identifierParse(builder);
     } else {
       builder.error(GroovyBundle.message("identifier.expected"));
     }
 
     pMarker.done(PACKAGE_DEFINITION);
     return PACKAGE_DEFINITION;
+  }
+
+  private static GroovyElementType identifierParse(PsiBuilder builder) {
+
+    Marker marker = builder.mark();
+    if (!ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"))) {
+      marker.rollbackTo();
+      return WRONGWAY;
+    }
+
+    boolean flag = true;
+    while (flag && ParserUtils.getToken(builder, mDOT)) {
+      if (ParserUtils.lookAhead(builder, mNLS, mIDENT)) {
+        ParserUtils.getToken(builder, mNLS);
+      }
+      flag = ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"));
+    }
+    marker.done(IDENTIFIER);
+
+    return IDENTIFIER;
   }
 }
