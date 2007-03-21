@@ -34,14 +34,18 @@ public class ArrayEqualsInspection extends BaseInspection {
                 "equals.called.on.array.display.name");
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location){
-        return new ArrayEqualsFix();
-    }
-
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "equals.called.on.array.problem.descriptor");
+    }
+
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
+    public InspectionGadgetsFix buildFix(PsiElement location){
+        return new ArrayEqualsFix();
     }
 
     private static class ArrayEqualsFix extends InspectionGadgetsFix{
