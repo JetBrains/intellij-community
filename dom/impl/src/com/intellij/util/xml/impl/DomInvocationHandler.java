@@ -593,8 +593,8 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     if (!isValid()) {
       throw new RuntimeException("element " + myType.toString() + " is not valid", myInvalidated);
     }
-    r.lock();
     checkParentInitialized();
+    r.lock();
     try {
       if (myInitializedChildren.contains(qname)) {
         return;
@@ -604,11 +604,10 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
       r.unlock();
     }
     w.lock();
-    if (myInitializedChildren.contains(qname)) {
-      w.unlock();
-      return;
-    }
     try {
+      if (myInitializedChildren.contains(qname)) {
+        return;
+      }
       myGenericInfo.buildMethodMaps();
 
       if (ATTRIBUTES == qname) {
@@ -629,10 +628,9 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
           new CollectionElementInvocationHandler(myGenericInfo.getCollectionChildrenType(qname.getXmlName()), qname, subTag, this);
         }
       }
-
+      myInitializedChildren.add(qname);
     }
     finally {
-      myInitializedChildren.add(qname);
       w.unlock();
     }
   }
