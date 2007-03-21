@@ -13,7 +13,7 @@ import java.awt.event.ActionEvent;
 /**
  * @author peter
  */
-public class BooleanEnumControl extends BaseControl<JCheckBox, String> {
+public class BooleanEnumControl extends BaseModifiableControl<JCheckBox, String> {
   private boolean myUndefined;
   private final String mySelectedValue;
   private final String myUnselectedValue;
@@ -35,6 +35,7 @@ public class BooleanEnumControl extends BaseControl<JCheckBox, String> {
     checkBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myUndefined = false;
+        setModified();
         commit();
         reset();
       }

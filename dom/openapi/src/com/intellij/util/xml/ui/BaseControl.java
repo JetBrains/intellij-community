@@ -163,13 +163,17 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
   }
 
   protected void doReset() {
-    if (!isCommitted()) {
+    if (valuesDiffer()) {
       setValue(getValueFromXml());
     }
   }
 
   protected boolean isCommitted() {
-    return valuesAreEqual(getValueFromXml(), getValue());
+    return !valuesDiffer();
+  }
+
+  private boolean valuesDiffer() {
+    return !valuesAreEqual(getValueFromXml(), getValue());
   }
 
   private void setValueToXml(final T value) {
@@ -180,7 +184,7 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
       multicaster.beforeCommit(this);
       new WriteCommandAction(getProject(), getDomWrapper().getFile()) {
         protected void run(Result result) throws Throwable {
-          myDomWrapper.setValue("".equals(value) ? null : value);
+          doCommit(value);
         }
       }.execute();
       multicaster.afterCommit(this);
@@ -188,6 +192,10 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
     finally {
       myCommitting = false;
     }
+  }
+
+  protected void doCommit(final T value) throws IllegalAccessException, InvocationTargetException {
+    myDomWrapper.setValue("".equals(value) ? null : value);
   }
 
   protected final Project getProject() {

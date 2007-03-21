@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class EditorTextFieldControl<T extends JComponent> extends BaseControl<T, String> {
+public abstract class EditorTextFieldControl<T extends JComponent> extends BaseModifiableControl<T, String> {
   private static final JTextField J_TEXT_FIELD = new JTextField() {
     public void addNotify() {
       throw new UnsupportedOperationException("Shouldn't be shown");
@@ -45,7 +45,10 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
   private final boolean myCommitOnEveryChange;
   private final DocumentListener myListener = new DocumentAdapter() {
     public void documentChanged(DocumentEvent e) {
-      commit();
+      setModified();
+      if (myCommitOnEveryChange) {
+        commit();
+      }
     }
   };
   private final EditorTextFieldControlHighlighter myHighlighter;
@@ -77,14 +80,10 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
   }
 
   protected void doReset() {
-    if (myCommitOnEveryChange) {
-      final EditorTextField textField = getEditorTextField(getComponent());
-      textField.getDocument().removeDocumentListener(myListener);
-      super.doReset();
-      textField.getDocument().addDocumentListener(myListener);
-    } else {
-      super.doReset();
-    }
+    final EditorTextField textField = getEditorTextField(getComponent());
+    textField.getDocument().removeDocumentListener(myListener);
+    super.doReset();
+    textField.getDocument().addDocumentListener(myListener);
   }
 
   protected JComponent getComponentToListenFocusLost(final T component) {
@@ -108,9 +107,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseC
       }
     }, this);
 
-    if (myCommitOnEveryChange) {
-      editorTextField.getDocument().addDocumentListener(myListener);
-    }
+    editorTextField.getDocument().addDocumentListener(myListener);
     return boundedComponent;
   }
 

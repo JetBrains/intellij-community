@@ -10,7 +10,7 @@ import java.awt.event.ActionListener;
 /**
  * @author peter
  */
-public class BooleanControl extends BaseControl<JCheckBox, Boolean> {
+public class BooleanControl extends BaseModifiableControl<JCheckBox, Boolean> {
   private boolean myUndefined;
 
   public BooleanControl(final DomWrapper<Boolean> domWrapper) {
@@ -23,6 +23,7 @@ public class BooleanControl extends BaseControl<JCheckBox, Boolean> {
     checkBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myUndefined = false;
+        setModified();
         commit();
         reset();
       }

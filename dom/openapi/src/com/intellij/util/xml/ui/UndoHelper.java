@@ -75,6 +75,10 @@ public class UndoHelper {
     myShowing = showing;
   }
 
+  public boolean isShowing() {
+    return myShowing;
+  }
+
   public final void commitAllDocuments() {
     final PsiDocumentManager manager = getDocumentManager();
     for (final Document document : myCurrentDocuments) {

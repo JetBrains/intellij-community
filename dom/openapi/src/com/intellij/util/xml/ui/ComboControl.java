@@ -42,13 +42,14 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class ComboControl extends BaseControl<JComboBox, String> {
+public class ComboControl extends BaseModifiableControl<JComboBox, String> {
   private static final Pair<String, Icon> EMPTY = new ComboBoxItem(" ", null);
   private final Factory<List<Pair<String, Icon>>> myDataFactory;
   private boolean myNullable;
   private final Map<String, Icon> myIcons = new HashMap<String, Icon>();
   private final ItemListener myCommitListener = new ItemListener() {
     public void itemStateChanged(ItemEvent e) {
+      setModified();
       commit();
     }
   };

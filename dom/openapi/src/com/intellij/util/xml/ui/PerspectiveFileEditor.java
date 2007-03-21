@@ -54,46 +54,33 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
 
     FileEditorManager.getInstance(myProject).addFileEditorManagerListener(new FileEditorManagerAdapter() {
       public void selectionChanged(FileEditorManagerEvent event) {
-        if (PerspectiveFileEditor.this.equals(event.getOldEditor())) {
+        if (myUndoHelper.isShowing() && !getComponent().isShowing()) {
           deselectNotify();
-          if (event.getNewEditor() instanceof TextEditor) {
-            setSelectionInTextEditor((TextEditor)event.getNewEditor(), getSelectedDomElement());
+        } else if (!myUndoHelper.isShowing() && getComponent().isShowing()) {
+          selectNotify();
+        }
+
+        final FileEditor oldEditor = event.getOldEditor();
+        final FileEditor newEditor = event.getNewEditor();
+        if (oldEditor == null || newEditor == null) return;
+        if (oldEditor.getComponent().isShowing() && newEditor.getComponent().isShowing()) return;
+
+        if (PerspectiveFileEditor.this.equals(oldEditor)) {
+          if (newEditor instanceof TextEditor) {
+            setSelectionInTextEditor((TextEditor)newEditor, getSelectedDomElement());
           }
         }
-        else if (PerspectiveFileEditor.this.equals(event.getNewEditor())) {
-          selectNotify();
-          if (event.getOldEditor() instanceof TextEditor) {
-            final DomElement element = getSelectedDomElementFromTextEditor((TextEditor)event.getOldEditor());
+        else if (PerspectiveFileEditor.this.equals(newEditor)) {
+          if (oldEditor instanceof TextEditor) {
+            final DomElement element = getSelectedDomElementFromTextEditor((TextEditor)oldEditor);
             if (element != null) {
               setSelectedDomElement(element);
             }
           }
-          else if (event.getOldEditor() instanceof PerspectiveFileEditor) {
-            setSelectedDomElement(((PerspectiveFileEditor)event.getOldEditor()).getSelectedDomElement());
+          else if (oldEditor instanceof PerspectiveFileEditor) {
+            setSelectedDomElement(((PerspectiveFileEditor)oldEditor).getSelectedDomElement());
           }
         }
-      }
-    }, this);
-    //todo[peter] move this listener to DOM
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
-      public void propertyChanged(VirtualFilePropertyEvent event) {
-        checkIsValid();
-      }
-
-      public void contentsChanged(VirtualFileEvent event) {
-        checkIsValid();
-      }
-
-      public void fileCreated(VirtualFileEvent event) {
-        checkIsValid();
-      }
-
-      public void fileDeleted(VirtualFileEvent event) {
-        checkIsValid();
-      }
-
-      public void fileMoved(VirtualFileMoveEvent event) {
-        checkIsValid();
       }
     }, this);
 
@@ -194,12 +181,16 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   public void selectNotify() {
+    ensureInitialized();
+    myUndoHelper.setShowing(true);
+    reset();
+  }
+
+  protected final void ensureInitialized() {
     if (!isInitialised()) {
       myWrapprer.setContent(createCustomComponent());
       myInitialised = true;
     }
-    myUndoHelper.setShowing(true);
-    reset();
   }
 
   public void deselectNotify() {
