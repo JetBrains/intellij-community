@@ -251,7 +251,10 @@ public class ExportHTMLAction extends AnAction {
 
     final Set<RefModule> modules = new HashSet<RefModule>();
     for (InspectionTool tool : tools) {
-      modules.addAll(tool.getModuleProblems());
+      final Set<RefModule> problems = tool.getModuleProblems();
+      if (problems != null) {
+        modules.addAll(problems);
+      }
     }
 
     final List<RefModule> sortedModules = new ArrayList<RefModule>(modules);
