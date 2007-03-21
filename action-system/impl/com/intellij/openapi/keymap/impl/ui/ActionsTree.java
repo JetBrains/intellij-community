@@ -19,6 +19,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.TreeTableModel;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionListener;
@@ -346,14 +347,18 @@ public class ActionsTree {
     return result;
   }
 
+  @Nullable
   private String getPath(DefaultMutableTreeNode node) {
-    Object userObject = node.getUserObject();
+    final Object userObject = node.getUserObject();
     if (userObject instanceof String) {
       String actionId = (String)userObject;
       return myMainGroup.getActionQualifiedPath(actionId);
     }
     if (userObject instanceof Group) {
       return ((Group)userObject).getQualifiedPath();
+    }
+    if (userObject instanceof QuickList) {
+      return ((QuickList)userObject).getDisplayName();
     }
     return null;
   }

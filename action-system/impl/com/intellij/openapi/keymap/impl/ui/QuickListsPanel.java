@@ -154,7 +154,7 @@ public class QuickListsPanel extends JPanel {
     final DocumentAdapter documentAdapter = new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
         updateList(index);
-        myKeymapPanel.processCurrentKeymapChanged();
+        myKeymapPanel.quickListRenamed();
       }
     };
     myQuickListPanel.addNameListener(documentAdapter);

@@ -65,10 +65,12 @@ public class KeymapPanel extends JPanel {
   private JBPopup myPopup = null;
   private TreeExpansionMonitor myTreeExpansionMonitor;
 
+  private boolean myQuickListsModified = false;
+
   public KeymapPanel() {
     setLayout(new BorderLayout());
     myQuickListsPanel = new QuickListsPanel(this);
-    TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper();
+    final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper();
     add(tabbedPane.getComponent(), BorderLayout.CENTER);
     JPanel keymapPanel = new JPanel(new BorderLayout());
     keymapPanel.setBorder(BorderFactory.createEmptyBorder(5, 2, 2, 2));
@@ -77,8 +79,19 @@ public class KeymapPanel extends JPanel {
     tabbedPane.addTab(KeyMapBundle.message("keymap.display.name"), keymapPanel);
 
     tabbedPane.addTab(KeyMapBundle.message("quick.lists.ide.border.factory.title"), myQuickListsPanel);
+    tabbedPane.addChangeListener(new ChangeListener() {
+      public void stateChanged(final ChangeEvent e) {
+        if (tabbedPane.getSelectedIndex() == 0 && myQuickListsModified) {
+          processCurrentKeymapChanged();
+          myQuickListsModified = false;
+        }
+      }
+    });
   }
 
+  public void quickListRenamed(){
+    myQuickListsModified = true;
+  }
 
   private JPanel createKeymapListPanel() {
     JPanel panel = new JPanel();
