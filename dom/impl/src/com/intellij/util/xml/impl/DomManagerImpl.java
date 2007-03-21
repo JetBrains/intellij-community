@@ -209,10 +209,14 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
 
   private void processFileChange(final PsiFile file) {
     if (file != null && StdFileTypes.XML.equals(file.getFileType()) && file instanceof XmlFile) {
-      for (final DomEvent event : getOrCreateCachedValueProvider((XmlFile)file).computeFileElement(true)) {
+      for (final DomEvent event : recomputeFileElement(file)) {
         fireEvent(event);
       }
     }
+  }
+
+  final List<DomEvent> recomputeFileElement(final PsiFile file) {
+    return getOrCreateCachedValueProvider((XmlFile)file).computeFileElement(true);
   }
 
   private void processDirectoryChange(final VirtualFile directory) {

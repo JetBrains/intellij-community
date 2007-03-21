@@ -135,7 +135,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
       }
 
       final Module module = ModuleUtil.findModuleForPsiElement(myXmlFile);
-      if (myLastResult != null && myFileDescription.getRootTagName().equals(rootTagName) && myFileDescription.isMyFile(myXmlFile, module)) {
+      if (lastResultSuits(rootTagName, module)) {
         List<DomEvent> list = new SmartList<DomEvent>();
         if (fireEvents) {
           list.add(new ElementChangedEvent(myLastResult));
@@ -147,10 +147,27 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
       myModCount++;
 
       final DomFileDescription<T> description = findFileDescription(module, rootTagName);
+      if (myCachedValue.hasUpToDateValue()) {
+        return Collections.emptyList();
+      }
+
       return saveResult(description, fireEvents);
     }
     finally {
       myComputing = false;
+    }
+  }
+
+  private boolean lastResultSuits(final String rootTagName, final Module module) {
+    if (myLastResult == null) return false;
+    final DomFileDescription<T> description = myFileDescription;
+    if (!description.getRootTagName().equals(rootTagName) && !description.acceptsOtherRootTagNames()) return false;
+    w.unlock();
+    try {
+      return description.isMyFile(myXmlFile, module);
+    }
+    finally {
+      w.lock();
     }
   }
 
@@ -167,13 +184,19 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
 
     myCondition.module = module;
 
-    //noinspection unchecked
-    final DomFileDescription<T> description = ContainerUtil.find(myDomManager.getFileDescriptions(rootTagName), myCondition);
-    if (description != null) {
-      return description;
+    w.unlock();
+    try {
+      //noinspection unchecked
+      final DomFileDescription<T> description = ContainerUtil.find(myDomManager.getFileDescriptions(rootTagName), myCondition);
+      if (description != null) {
+        return description;
+      }
+      //noinspection unchecked
+      return ContainerUtil.find(myDomManager.getAcceptingOtherRootTagNameDescriptions(), myCondition);
     }
-    //noinspection unchecked
-    return ContainerUtil.find(myDomManager.getAcceptingOtherRootTagNameDescriptions(), myCondition);
+    finally {
+      w.lock();
+    }
   }
 
   @Nullable
