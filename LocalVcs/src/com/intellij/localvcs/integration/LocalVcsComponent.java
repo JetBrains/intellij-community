@@ -3,7 +3,7 @@ package com.intellij.localvcs.integration;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.Storage;
+import com.intellij.localvcs.LocalVcsStorage;
 import com.intellij.localvcs.ThreadSafeLocalVcs;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -26,11 +26,11 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   private ProjectRootManagerEx myRootManager;
   private VirtualFileManagerEx myFileManager;
   private CommandProcessor myCommandProcessor;
-  private Storage myStorage;
+  private LocalVcsStorage myStorage;
   private ILocalVcs myVcs;
   private LocalVcsService myService;
 
-  // todo bad method - extend interface insteat
+  // todo bad method - extend interface instead
   public static ILocalVcs getLocalVcsFor(Project p) {
     return ((LocalVcsComponent)getInstance(p)).getLocalVcs();
   }
@@ -63,7 +63,7 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   }
 
   protected void initVcs() {
-    myStorage = new Storage(getStorageDir());
+    myStorage = new LocalVcsStorage(getStorageDir());
     myVcs = new ThreadSafeLocalVcs(new LocalVcs(myStorage));
   }
 
@@ -115,9 +115,7 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   }
 
   public boolean isEnabled() {
-    if (System.getProperty("newlocalvcs.disabled") != null) return false;
-    if (isUnitTestMode()) return true;
-    return ApplicationManagerEx.getApplicationEx().isInternal();
+    return System.getProperty("newlocalvcs.disabled") == null;
   }
 
   protected boolean isUnitTestMode() {

@@ -5,46 +5,70 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.io.*;
 import java.util.List;
 
-// todo catch exceptions...
-public class Storage {
-  private static final int VERSION = 6;
+public class LocalVcsStorage {
+  private static final int VERSION = 7;
 
   private File myDir;
   private IContentStorage myContentStorage;
 
-  public Storage(File dir) {
+  public LocalVcsStorage(File dir) {
     myDir = dir;
     init();
   }
 
   protected void init() {
     checkVersionAndCreateDir();
+    initContentStorage();
+  }
 
+  private void checkVersionAndCreateDir() {
+    int version = load("version", -1, new Loader<Integer>() {
+      public Integer load(Stream s) throws IOException {
+        return s.readInteger();
+      }
+    });
+
+    if (version != getVersion()) recreateStorage();
+
+    store("version", new Storer() {
+      public void store(Stream s) throws IOException {
+        s.writeInteger(getVersion());
+      }
+    });
+  }
+
+  private void recreateStorage() {
+    FileUtil.delete(myDir);
+    myDir.mkdirs();
+  }
+
+  private void initContentStorage() {
     try {
-      // todo move to factory method
-      myContentStorage = new ContentStorage(new File(myDir, "contents"));
-      myContentStorage = new CachingContentStorage(myContentStorage);
-      myContentStorage = new CompressingContentStorage(myContentStorage);
-      myContentStorage = new ThreadSafeContentStorage(myContentStorage);
+      myContentStorage = ContentStorage.createContentStorage(new File(myDir, "contents"));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  private void checkVersionAndCreateDir() {
-    int version = load("version", getVersion() - 1, new Loader<Integer>() {
-      public Integer load(Stream s) throws IOException {
-        return s.readInteger();
+  public LocalVcs.Memento load() {
+    return load("storage", new LocalVcs.Memento(), new Loader<LocalVcs.Memento>() {
+      public LocalVcs.Memento load(Stream s) throws IOException {
+        LocalVcs.Memento m = new LocalVcs.Memento();
+        m.myRoot = (RootEntry)s.readEntry();
+        m.myEntryCounter = s.readInteger();
+        m.myChangeList = s.readChangeList();
+        return m;
       }
     });
+  }
 
-    if (version != getVersion()) FileUtil.delete(myDir);
-    myDir.mkdirs();
-
-    store("version", new Storer() {
+  public void store(final LocalVcs.Memento m) {
+    store("storage", new Storer() {
       public void store(Stream s) throws IOException {
-        s.writeInteger(getVersion());
+        s.writeEntry(m.myRoot);
+        s.writeInteger(m.myEntryCounter);
+        s.writeChangeList(m.myChangeList);
       }
     });
   }
@@ -59,54 +83,6 @@ public class Storage {
 
   public void save() {
     myContentStorage.save();
-  }
-
-  public ChangeList loadChangeList() {
-    return load("changes", new ChangeList(), new Loader<ChangeList>() {
-      public ChangeList load(Stream s) throws IOException {
-        return s.readChangeList();
-      }
-    });
-  }
-
-  public void storeChangeList(final ChangeList c) {
-    store("changes", new Storer() {
-      public void store(Stream s) throws IOException {
-        s.writeChangeList(c);
-      }
-    });
-  }
-
-  public RootEntry loadRootEntry() {
-    return load("entries", new RootEntry(), new Loader<RootEntry>() {
-      public RootEntry load(Stream s) throws IOException {
-        return (RootEntry)s.readEntry(); // todo cast!!!
-      }
-    });
-  }
-
-  public void storeRootEntry(final RootEntry e) {
-    store("entries", new Storer() {
-      public void store(Stream s) throws IOException {
-        s.writeEntry(e);
-      }
-    });
-  }
-
-  public Integer loadCounter() {
-    return load("counter", 0, new Loader<Integer>() {
-      public Integer load(Stream s) throws IOException {
-        return s.readInteger();
-      }
-    });
-  }
-
-  public void storeCounter(final Integer i) {
-    store("counter", new Storer() {
-      public void store(Stream s) throws IOException {
-        s.writeInteger(i);
-      }
-    });
   }
 
   private <T> T load(String fileName, T def, Loader<T> loader) {

@@ -6,9 +6,9 @@ import java.io.*;
 public class Stream {
   private DataInputStream myIs;
   private DataOutputStream myOs;
-  private Storage myStorage;
+  private LocalVcsStorage myStorage;
 
-  public Stream(InputStream is, Storage s) {
+  public Stream(InputStream is, LocalVcsStorage s) {
     myStorage = s;
     myIs = new DataInputStream(is);
   }
@@ -17,7 +17,7 @@ public class Stream {
     myOs = new DataOutputStream(os);
   }
 
-  public Storage getStorage() {
+  public LocalVcsStorage getStorage() {
     return myStorage;
   }
 

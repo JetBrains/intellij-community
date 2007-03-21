@@ -77,7 +77,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   private void performAllPendingJobs() {
-    //forceRefreshVFS(false);
+    forceRefreshVFS(false);
   }
 
   public void testFileCreationDuringRefresh() throws Exception {

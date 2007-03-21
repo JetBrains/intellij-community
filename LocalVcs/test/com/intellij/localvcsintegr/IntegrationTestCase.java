@@ -102,10 +102,11 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
   }
 
   protected void changeContentExternally(String path, String content) throws IOException {
-    File iof = new File(path);
-    FileWriter w = new FileWriter(iof);
+    File f = new File(path);
+    FileWriter w = new FileWriter(f);
     w.write(content);
     w.close();
+    f.setLastModified(f.lastModified() + 100);
   }
 
   protected void setDocumentTextFor(VirtualFile f, byte[] bytes) {

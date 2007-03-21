@@ -3,7 +3,7 @@ package com.intellij.localvcsintegr;
 
 import com.intellij.localvcs.Label;
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.Storage;
+import com.intellij.localvcs.LocalVcsStorage;
 import com.intellij.localvcs.integration.LocalVcsAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,7 +20,7 @@ public class BasicsTest extends IntegrationTestCase {
     VirtualFile f = root.createChildData(null, "file.java");
     myProject.save();
 
-    Storage s = new Storage(getVcsComponent().getStorageDir());
+    LocalVcsStorage s = new LocalVcsStorage(getVcsComponent().getStorageDir());
     LocalVcs vcs = new LocalVcs(s);
     s.close();
     assertTrue(vcs.hasEntry(f.getPath()));

@@ -3,10 +3,10 @@ package com.intellij.localvcs;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestStorage extends Storage {
+public class TestLocalVcsStorage extends LocalVcsStorage {
   private Map<Integer, byte[]> myContents = new HashMap<Integer, byte[]>();
 
-  public TestStorage() {
+  public TestLocalVcsStorage() {
     super(null);
   }
 
@@ -19,18 +19,12 @@ public class TestStorage extends Storage {
   }
 
   @Override
-  public ChangeList loadChangeList() {
-    return new ChangeList();
+  public LocalVcs.Memento load() {
+    return new LocalVcs.Memento();
   }
 
   @Override
-  public RootEntry loadRootEntry() {
-    return new RootEntry();
-  }
-
-  @Override
-  public Integer loadCounter() {
-    return 0;
+  public void store(LocalVcs.Memento m) {
   }
 
   @Override

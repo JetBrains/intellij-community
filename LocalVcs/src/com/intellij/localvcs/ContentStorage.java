@@ -15,6 +15,14 @@ public class ContentStorage implements IContentStorage {
     myStore = new PagedMemoryMappedFile(f);
   }
 
+  public static IContentStorage createContentStorage(File f) throws IOException {
+    IContentStorage s = new ContentStorage(f);
+    s = new CachingContentStorage(s);
+    s = new CompressingContentStorage(s);
+    s = new ThreadSafeContentStorage(s);
+    return s;
+  }
+
   public void close() {
     myStore.dispose();
   }

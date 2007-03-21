@@ -16,10 +16,18 @@ import java.io.IOException;
 import java.util.concurrent.Callable;
 
 public class IdeaGateway {
-  private Project myProject;
+  protected Project myProject;
+  protected FileFilter myFileFilter;
 
   public IdeaGateway(Project p) {
     myProject = p;
+    myFileFilter = createFileFilter();
+  }
+
+  protected FileFilter createFileFilter() {
+    FileIndex fi = ProjectRootManager.getInstance(myProject).getFileIndex();
+    FileTypeManager tm = FileTypeManager.getInstance();
+    return new FileFilter(fi, tm);
   }
 
   public Project getProject() {
@@ -27,10 +35,7 @@ public class IdeaGateway {
   }
 
   public FileFilter getFileFilter() {
-    FileIndex fi = ProjectRootManager.getInstance(myProject).getFileIndex();
-    FileTypeManager tm = FileTypeManager.getInstance();
-
-    return new FileFilter(fi, tm);
+    return myFileFilter;
   }
 
   public <T> T runWriteAction(final Callable<T> c) {
@@ -56,7 +61,7 @@ public class IdeaGateway {
   }
 
   public byte[] getDocumentByteContent(VirtualFile f) {
-    // todo review byte conversion
+    // todo review charset conversion
     FileDocumentManager dm = FileDocumentManager.getInstance();
     return dm.getDocument(f).getText().getBytes();
   }

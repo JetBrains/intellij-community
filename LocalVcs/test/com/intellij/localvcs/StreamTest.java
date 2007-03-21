@@ -11,14 +11,14 @@ import java.util.List;
 public class StreamTest extends LocalVcsTestCase {
   private Stream is;
   private Stream os;
-  private Storage s;
+  private LocalVcsStorage s;
 
   @Before
   public void setUpStreams() throws IOException {
     PipedOutputStream pos = new PipedOutputStream();
     PipedInputStream pis = new PipedInputStream(pos);
 
-    s = new TestStorage();
+    s = new TestLocalVcsStorage();
     os = new Stream(pos);
     is = new Stream(pis, s);
   }

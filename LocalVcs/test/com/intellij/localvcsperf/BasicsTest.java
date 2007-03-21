@@ -2,7 +2,7 @@ package com.intellij.localvcsperf;
 
 import com.intellij.localvcs.Label;
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.Storage;
+import com.intellij.localvcs.LocalVcsStorage;
 import com.intellij.localvcs.integration.CacheUpdaterHelper;
 import com.intellij.localvcs.integration.TestFileFilter;
 import com.intellij.localvcs.integration.TestVirtualFile;
@@ -20,13 +20,13 @@ import java.util.List;
 // todo it's time to refactor 8)))
 public class BasicsTest extends PerformanceTest {
   private LocalVcs vcs;
-  private Storage s;
+  private LocalVcsStorage s;
   private static final long VCS_ENTRIES_TIMESTAMP = 1L;
 
   @Before
   public void initVcs() {
     closeStorage();
-    s = new Storage(tempDir);
+    s = new LocalVcsStorage(tempDir);
     vcs = new LocalVcs(s);
   }
 

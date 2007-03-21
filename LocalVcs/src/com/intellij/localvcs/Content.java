@@ -5,10 +5,10 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class Content {
-  private Storage myStorage;
+  private LocalVcsStorage myStorage;
   private int myId;
 
-  public Content(Storage s, int id) {
+  public Content(LocalVcsStorage s, int id) {
     myStorage = s;
     myId = id;
   }

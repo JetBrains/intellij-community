@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 public class TestIdeaGateway extends IdeaGateway {
-  private FileFilter myFileFilter = new TestFileFilter();
-
   private String myPhysicalContent;
   private List<MyDocument> myUnsavedDocuments = new ArrayList<MyDocument>();
 
@@ -20,8 +18,8 @@ public class TestIdeaGateway extends IdeaGateway {
   }
 
   @Override
-  public FileFilter getFileFilter() {
-    return myFileFilter;
+  protected FileFilter createFileFilter() {
+    return new TestFileFilter();
   }
 
   public void setFileFilter(FileFilter f) {

@@ -3,28 +3,30 @@ package com.intellij.localvcs;
 import java.util.*;
 
 public class LocalVcs implements ILocalVcs {
-  private Storage myStorage;
+  private LocalVcsStorage myStorage;
 
   private ChangeList myChangeList;
   private RootEntry myRoot;
   private Integer myEntryCounter;
 
-  private int myChangeSetCounter = 0;
+  private int myInnerChangeSetCounter = 0;
   private boolean wasSaveRequestedDuringChangeSet = false;
 
   // todo change type to something else (for example to LinkedList)
   private List<Change> myPendingChanges = new ArrayList<Change>();
 
-  public LocalVcs(Storage s) {
+  public LocalVcs(LocalVcsStorage s) {
     // todo try to get rid of need to pass the parameter
     myStorage = s;
     load();
   }
 
   private void load() {
-    myChangeList = myStorage.loadChangeList();
-    myRoot = myStorage.loadRootEntry();
-    myEntryCounter = myStorage.loadCounter();
+    Memento m = myStorage.load();
+
+    myRoot = m.myRoot;
+    myEntryCounter = m.myEntryCounter;
+    myChangeList = m.myChangeList;
   }
 
   public void save() {
@@ -32,9 +34,12 @@ public class LocalVcs implements ILocalVcs {
 
     purgeUpTo(getCurrentTimestamp() - getPurgingInterval());
 
-    myStorage.storeChangeList(myChangeList);
-    myStorage.storeRootEntry(myRoot);
-    myStorage.storeCounter(myEntryCounter);
+    Memento m = new Memento();
+    m.myRoot = myRoot;
+    m.myEntryCounter = myEntryCounter;
+    m.myChangeList = myChangeList;
+
+    myStorage.store(m);
     myStorage.save();
   }
 
@@ -63,12 +68,12 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void beginChangeSet() {
-    myChangeSetCounter++;
+    myInnerChangeSetCounter++;
   }
 
   public void endChangeSet(String label) {
-    if (myChangeSetCounter == 1) registerChangeSet(label);
-    myChangeSetCounter--;
+    if (myInnerChangeSetCounter == 1) registerChangeSet(label);
+    myInnerChangeSetCounter--;
     if (!isInChangeSet()) doPostpondedSave();
   }
 
@@ -80,7 +85,7 @@ public class LocalVcs implements ILocalVcs {
   }
 
   private boolean isInChangeSet() {
-    return myChangeSetCounter > 0;
+    return myInnerChangeSetCounter > 0;
   }
 
   public void createFile(String path, byte[] content, Long timestamp) {
@@ -177,5 +182,11 @@ public class LocalVcs implements ILocalVcs {
     c.setTimeInMillis(0);
     c.add(Calendar.DAY_OF_YEAR, 5);
     return c.getTimeInMillis();
+  }
+
+  public static class Memento {
+    public RootEntry myRoot = new RootEntry();
+    public Integer myEntryCounter = 0;
+    public ChangeList myChangeList = new ChangeList();
   }
 }

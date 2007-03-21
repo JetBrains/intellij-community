@@ -2,7 +2,7 @@ package com.intellij.localvcs.integration;
 
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.Storage;
+import com.intellij.localvcs.LocalVcsStorage;
 import com.intellij.localvcs.TempDirTestCase;
 import com.intellij.localvcs.integration.stubs.StubStartupManagerEx;
 import com.intellij.openapi.project.Project;
@@ -34,7 +34,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
   public void testLoadingOnPreStartupActivity() {
     initComponent();
 
-    Storage s = new Storage(c.getStorageDir());
+    LocalVcsStorage s = new LocalVcsStorage(c.getStorageDir());
     LocalVcs vcs = new LocalVcs(s);
     vcs.createFile("file", null, null);
     vcs.save();
@@ -60,7 +60,7 @@ public class LocalVcsComponentTest extends TempDirTestCase {
     c.getLocalVcs().createFile("file", null, null);
     c.save();
 
-    Storage s = new Storage(c.getStorageDir());
+    LocalVcsStorage s = new LocalVcsStorage(c.getStorageDir());
     LocalVcs vcs = new LocalVcs(s);
     s.close();
     assertTrue(vcs.hasEntry("file"));

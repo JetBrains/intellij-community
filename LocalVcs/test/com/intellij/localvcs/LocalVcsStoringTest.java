@@ -7,12 +7,12 @@ import org.junit.Test;
 
 public class LocalVcsStoringTest extends TempDirTestCase {
   private LocalVcs vcs;
-  private Storage s;
+  private LocalVcsStorage s;
 
   @Before
   public void initVcs() {
     closeStorage();
-    s = new Storage(tempDir);
+    s = new LocalVcsStorage(tempDir);
     vcs = new LocalVcs(s);
   }
 
@@ -103,7 +103,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   }
 
   private boolean hasSavedEntry(String path) {
-    Storage s = new Storage(tempDir);
+    LocalVcsStorage s = new LocalVcsStorage(tempDir);
     LocalVcs vcs = new LocalVcs(s);
     boolean result = vcs.hasEntry(path);
     s.close();
