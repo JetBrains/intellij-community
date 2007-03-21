@@ -9,6 +9,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,7 @@ public class MockFileManager implements FileManager {
 
   @Nullable
   public PsiFile findFile(@NotNull VirtualFile vFile) {
-    throw new UnsupportedOperationException("Method findFile is not yet implemented in " + getClass().getName());
+    return getCachedPsiFile(vFile);
   }
 
   @Nullable
@@ -73,7 +74,7 @@ public class MockFileManager implements FileManager {
 
   @Nullable
   public PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
-    throw new UnsupportedOperationException("Method getCachedPsiFile is not yet implemented in " + getClass().getName());
+    return findCachedViewProvider(vFile).getPsi(Language.ANY);
   }
 
   @NotNull

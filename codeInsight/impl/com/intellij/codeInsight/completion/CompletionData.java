@@ -207,8 +207,8 @@ public class CompletionData {
     return null;
   }
 
-  public String findPrefix(PsiElement insertedElement, int offset){
-    return findPrefixStatic(insertedElement, offset);
+  public String findPrefix(PsiElement insertedElement, int offsetInFile){
+    return findPrefixStatic(insertedElement, offsetInFile);
   }
 
   protected CompletionVariant[] findVariants(final PsiElement position, final CompletionContext context){
@@ -238,27 +238,27 @@ public class CompletionData {
     return variants.toArray(new CompletionVariant[variants.size()]);
   }
 
-  protected static final CompletionVariant ourGenericVariant = new CompletionVariant(){
-    public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, CompletionContext prefix){
+  protected static final CompletionVariant ourGenericVariant = new CompletionVariant() {
+    public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, CompletionContext prefix) {
       addReferenceCompletions(reference, position, set, prefix, new CompletionVariantItem(TrueFilter.INSTANCE, TailType.NONE));
     }
   };
 
   @Nullable
-  public static String getReferencePrefix(@NotNull PsiElement insertedElement, int offset) {
-    int offsetInElement = offset - insertedElement.getTextRange().getStartOffset();
+  public static String getReferencePrefix(@NotNull PsiElement insertedElement, int offsetInFile) {
+    int offsetInElement = offsetInFile - insertedElement.getTextRange().getStartOffset();
     //final PsiReference ref = insertedElement.findReferenceAt(offsetInElement);
     final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(insertedElement.getTextRange().getStartOffset() + offsetInElement);
     if(ref instanceof PsiJavaCodeReferenceElement) {
       final PsiElement name = ((PsiJavaCodeReferenceElement)ref).getReferenceNameElement();
       if(name != null){
-        offsetInElement = offset - name.getTextRange().getStartOffset();
+        offsetInElement = offsetInFile - name.getTextRange().getStartOffset();
         return name.getText().substring(0, offsetInElement);
       }
       return "";
     }
     else if(ref != null) {
-      offsetInElement = offset - ref.getElement().getTextRange().getStartOffset();
+      offsetInElement = offsetInFile - ref.getElement().getTextRange().getStartOffset();
 
       String result = ref.getElement().getText().substring(ref.getRangeInElement().getStartOffset(), offsetInElement);
       if(result.indexOf('(') > 0){
@@ -274,29 +274,23 @@ public class CompletionData {
     return null;
   }
 
-  public static String findPrefixStatic(PsiElement insertedElement, int offset) {
+  public static String findPrefixStatic(PsiElement insertedElement, int offsetInFile) {
     if(insertedElement == null) return "";
 
-    final String prefix = getReferencePrefix(insertedElement, offset);
+    final String prefix = getReferencePrefix(insertedElement, offsetInFile);
     if (prefix != null) return prefix;
 
     if (insertedElement instanceof PsiPlainText) return "";
 
-    return findPrefixDefault(insertedElement, offset, not(character().javaIdentifierPart()));
+    return findPrefixDefault(insertedElement, offsetInFile, not(character().javaIdentifierPart()));
   }
 
   protected static String findPrefixDefault(final PsiElement insertedElement, final int offset, @NotNull final Pattern<Character, ?> trimStart) {
     final String substr = insertedElement.getText().substring(0, offset - insertedElement.getTextRange().getStartOffset()).trim();
-    if (substr.length() > 0) {
-      if (trimStart.accepts(substr.charAt(0))) {
-        return substr.substring(1);
-      }
+    if (substr.length() > 0 && trimStart.accepts(substr.charAt(0))) {
+      return substr.substring(1);
     }
     return substr;
   }
 
-  @NonNls
-  public String getDummyIdentifier(final PsiFile file, final int offset) {
-    return CompletionUtil.DUMMY_IDENTIFIER;
-  }
 }

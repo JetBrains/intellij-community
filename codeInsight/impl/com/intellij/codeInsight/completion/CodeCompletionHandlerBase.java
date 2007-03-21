@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -336,12 +335,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   private Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context) {
-    final FileType fileType = context.file.getFileType();
-    final CompletionData completionData = CompletionUtil.getCompletionDataByFileType(fileType);
     final PsiFile fileCopy = createFileCopy(context.file);
     Document oldDoc = fileCopy.getViewProvider().getDocument();
-    oldDoc.insertString(context.startOffset, completionData == null ? CompletionUtil.DUMMY_IDENTIFIER : completionData.getDummyIdentifier(
-      fileCopy, context.startOffset));
+    oldDoc.insertString(context.startOffset, CompletionUtil.DUMMY_IDENTIFIER);
     PsiDocumentManager.getInstance(fileCopy.getProject()).commitDocument(oldDoc);
     context.offset = context.startOffset;
 

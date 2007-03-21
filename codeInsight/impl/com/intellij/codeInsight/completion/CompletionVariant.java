@@ -391,7 +391,7 @@ public class CompletionVariant {
     public Object myCompletion;
     public int myTailType;
 
-    CompletionVariantItem(Object completion, int tailtype){
+    public CompletionVariantItem(Object completion, int tailtype){
       myCompletion = completion;
       myTailType = tailtype;
     }

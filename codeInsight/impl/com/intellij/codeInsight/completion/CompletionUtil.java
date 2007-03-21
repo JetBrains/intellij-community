@@ -177,15 +177,14 @@ public class CompletionUtil {
         textContainer = textContainer.getTreeParent();
       }
     }
-    final CompletionData completionDataByElementInner = getCompletionDataByElementInner(element, context);
+    final CompletionData completionDataByElementInner = getCompletionDataByElementInner(element, context, context.file);
     if (wordCompletionData != null) return new CompositeCompletionData(completionDataByElementInner, wordCompletionData);
     return completionDataByElementInner;
   }
 
-  public static CompletionData getCompletionDataByElementInner(PsiElement element, CompletionContext context) {
-    final PsiFile file = context.file;
-    if (context.file.getUserData(ENFORCE_COMPLETION_DATA_KEY) != null) {
-      return context.file.getUserData(ENFORCE_COMPLETION_DATA_KEY);
+  public static CompletionData getCompletionDataByElementInner(PsiElement element, CompletionContext context, final PsiFile file) {
+    if (file.getUserData(ENFORCE_COMPLETION_DATA_KEY) != null) {
+      return file.getUserData(ENFORCE_COMPLETION_DATA_KEY);
     }
     final CompletionData completionDataByFileType = getCompletionDataByFileType(file.getFileType());
     if (completionDataByFileType != null) return completionDataByFileType;

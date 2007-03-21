@@ -42,6 +42,21 @@ public class PsiElementResolveResult implements ResolveResult{
     return true;
   }
 
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final PsiElementResolveResult that = (PsiElementResolveResult)o;
+
+    if (!myElement.equals(that.myElement)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return myElement.hashCode();
+  }
+
   @NonNls
   public String toString() {
     return "PsiElementResolveResult: " + myElement.getText();
