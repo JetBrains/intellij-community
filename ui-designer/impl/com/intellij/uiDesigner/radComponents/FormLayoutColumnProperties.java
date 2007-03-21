@@ -17,8 +17,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author yole
@@ -49,7 +49,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   private FormLayout myLayout;
   private int myIndex;
   private boolean myIsRow;
-  private List<ChangeListener> myListeners = new ArrayList<ChangeListener>();
+  private List<ChangeListener> myListeners = new CopyOnWriteArrayList<ChangeListener>();
   private boolean myShowing = false;
   private boolean mySaving = false;
 
