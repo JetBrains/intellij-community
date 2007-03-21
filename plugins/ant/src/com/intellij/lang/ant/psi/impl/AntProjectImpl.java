@@ -187,12 +187,14 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
             }
             else if (AntFileImpl.IMPORT_TAG.equals(tag.getName())) {
               final String fileName = tag.getAttributeValue(AntFileImpl.FILE_ATTR);
-              final AntFile imported = AntImportImpl.getImportedFile(fileName, this);
-              if (imported != null) {
-                addImportedFile(imported);
-              }
-              else {
-                registerImportsDependentProperties(fileName);
+              if (fileName != null) {
+                final AntFile imported = AntImportImpl.getImportedFile(fileName, this);
+                if (imported != null) {
+                  addImportedFile(imported);
+                }
+                else {
+                  registerImportsDependentProperties(fileName);
+                }
               }
             }
           }
