@@ -20,12 +20,12 @@ public class ClassBlock implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    ClassField.parse(builder);
+    ClassMember.parse(builder);
 
     while(ParserUtils.lookAhead(builder, Separators.parse(builder))){
       ParserUtils.getToken(builder, Separators.parse(builder));
 
-      ClassField.parse(builder);
+      ClassMember.parse(builder);
     }
 
     if (!ParserUtils.getToken(builder, mRCURLY)){

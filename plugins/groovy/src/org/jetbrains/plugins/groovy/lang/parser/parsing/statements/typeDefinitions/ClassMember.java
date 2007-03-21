@@ -9,7 +9,7 @@ import com.intellij.lang.PsiBuilder;
  * @author: Dmitry.Krasilschikov
  * @date: 20.03.2007
  */
-public class ClassField implements GroovyElementTypes {
+public class ClassMember implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
     IElementType decl = Declaration.parse(builder); 
     if (!tWRONG_SET.contains(decl)) return decl;

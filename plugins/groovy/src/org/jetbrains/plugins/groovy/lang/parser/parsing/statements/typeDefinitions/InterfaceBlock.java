@@ -20,12 +20,12 @@ public class InterfaceBlock implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    InterfaceField.parse(builder);
+    InterfaceMember.parse(builder);
 
     IElementType sep = Separators.parse(builder);
 
     while(!tWRONG_SET.contains(sep)){
-      InterfaceField.parse(builder);
+      InterfaceMember.parse(builder);
 
       sep = Separators.parse(builder);
     }

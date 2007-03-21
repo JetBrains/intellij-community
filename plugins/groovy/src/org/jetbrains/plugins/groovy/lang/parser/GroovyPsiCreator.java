@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrRelationalExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrAnnotationDefinitionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrAnnotationTypeDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrClassDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.fields.*;
@@ -76,20 +76,20 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     //type definitions
     if (elem.equals(CLASS_DEFINITION)) return new GrClassDefinitionImpl(node);
     if (elem.equals(INTERFACE_DEFINITION)) return new GrInterfaceDefinitionImpl(node);
-    if (elem.equals(ENUM_DEFINITION)) return new GrEnumDefinitionImpl(node);
-    if (elem.equals(ANNOTATION_DEFINITION)) return new GrAnnotationDefinitionImpl(node);
+    if (elem.equals(ENUM_DEFINITION)) return new GrEnumTypeDefinitionImpl(node);
+    if (elem.equals(ANNOTATION_DEFINITION)) return new GrAnnotationTypeDefinitionImpl(node);
 
     //blocks
     if (elem.equals(CLASS_BLOCK)) return new GrClassBlockImpl(node);
-    if (elem.equals(INTERFACE_BLOCK)) return new GrInterfaceBlockImpl(node);
-    if (elem.equals(ENUM_BLOCK)) return new GrEnumBlockImpl(node);
-    if (elem.equals(ANNOTATION_BLOCK)) return new GrAnnotationBlockImpl(node);
+    if (elem.equals(INTERFACE_BLOCK)) return new GrInterfaceBodyImplType(node);
+    if (elem.equals(ENUM_BLOCK)) return new GrEnumBodyImplType(node);
+    if (elem.equals(ANNOTATION_BLOCK)) return new GrAnnotationBodyImplType(node);
 
     //fields
-    if (elem.equals(CLASS_FIELD)) return new GrClassFieldImpl(node);
-    if (elem.equals(INTERFACE_FIELD)) return new GrInterfaceFieldImpl(node);
-    if (elem.equals(ENUM_FIELD)) return new GrEnumFieldImpl(node);
-    if (elem.equals(ANNOTATION_FIELD)) return new GrAnnotationFieldImpl(node);
+    if (elem.equals(CLASS_FIELD)) return new GrClassMemberImpl(node);
+    if (elem.equals(INTERFACE_FIELD)) return new GrInterfaceMemberImpl(node);
+    if (elem.equals(ENUM_FIELD)) return new GrEnumMemberImpl(node);
+    if (elem.equals(ANNOTATION_FIELD)) return new GrAnnotationMemberImpl(node);
 
     //expressions
     if (elem.equals(EXPRESSION_STATEMENT)) return new GrExpressionImpl(node);
@@ -116,7 +116,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
 
 
     if (elem.equals(BALANCED_BRACKETS)) return new GrBalancedBracketsImpl(node);
-    if (elem.equals(DECLARATION)) return new GrDeclarationImpl(node);
+    if (elem.equals(DECLARATION)) return new GrDeclarationStatementImpl(node);
 
     return new ASTWrapperPsiElement(node);
   }

@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.D
  * @author: Dmitry.Krasilschikov
  * @date: 20.03.2007
  */
-public class InterfaceField implements GroovyElementTypes {
+public class InterfaceMember implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
     IElementType interfaceFieldType = Declaration.parse(builder);
 

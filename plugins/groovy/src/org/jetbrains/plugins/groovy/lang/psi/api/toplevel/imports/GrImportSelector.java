@@ -10,5 +10,4 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  * @author Ilya.Sergey
  */
 public interface GrImportSelector extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement {
-  String toString();
 }
