@@ -181,8 +181,6 @@ public class InspectionApplication {
                   logError(InspectionsBundle.message("offline.inspections.library.was.not.resolved",
                                                      libraryOrderEntry.getLibraryName(),
                                                      module.getName()));
-                  if (myErrorCodeRequired) System.exit(1);
-                  return;
                 }
               }
             }
