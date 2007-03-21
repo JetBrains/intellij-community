@@ -57,8 +57,9 @@ public abstract class PassExecutorService {
 
     // (editor, passId) -> created pass
     Map<Pair<Document, Integer>, ScheduledPass> toBeSubmitted = new THashMap<Pair<Document, Integer>, ScheduledPass>(passesMap.size());
-    Map<Document, List<FileEditor>> documentToEditor = new THashMap<Document, List<FileEditor>>();
-    Map<Document, List<TextEditorHighlightingPass>> textPasses = new THashMap<Document, List<TextEditorHighlightingPass>>(passesMap.size());
+    // null keys are ok
+    Map<Document, List<FileEditor>> documentToEditor = new HashMap<Document, List<FileEditor>>();
+    Map<Document, List<TextEditorHighlightingPass>> textPasses = new HashMap<Document, List<TextEditorHighlightingPass>>(passesMap.size());
     for (FileEditor fileEditor : passesMap.keySet()) {
       Document document = null;
       if (fileEditor instanceof TextEditor) {
@@ -90,7 +91,6 @@ public abstract class PassExecutorService {
           }
         }
         document = textEditorHighlightingPass.getDocument();
-
 
         List<TextEditorHighlightingPass> textPassesForDocument = textPasses.get(document);
         if (textPassesForDocument == null) {
