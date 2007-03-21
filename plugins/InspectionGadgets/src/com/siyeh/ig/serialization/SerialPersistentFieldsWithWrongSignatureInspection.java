@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class SerialPersistentFieldsWithWrongSignatureInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "serialpersistentfields.with.wrong.signature.display.name");

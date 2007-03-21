@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.actions.NewActionDialog;
 import org.jetbrains.idea.devkit.util.ActionType;
+import org.jetbrains.annotations.NotNull;
 
 public class RegisterActionFix extends AbstractRegisterFix {
   private NewActionDialog myDialog;
@@ -35,7 +36,7 @@ public class RegisterActionFix extends AbstractRegisterFix {
     return DevKitBundle.message("new.menu.action.text");
   }
 
-  public void applyFix(Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     try {
       myDialog = new NewActionDialog(myClass);
       myDialog.show();

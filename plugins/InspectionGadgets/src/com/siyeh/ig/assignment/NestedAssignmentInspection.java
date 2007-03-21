@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class NestedAssignmentInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "nested.assignment.display.name");

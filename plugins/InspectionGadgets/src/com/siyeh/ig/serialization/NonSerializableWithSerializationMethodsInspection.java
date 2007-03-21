@@ -28,10 +28,12 @@ import org.jetbrains.annotations.NotNull;
 public class NonSerializableWithSerializationMethodsInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "NonSerializableClassWithSerializationMethods";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "non.serializable.class.with.readwriteobject.display.name");

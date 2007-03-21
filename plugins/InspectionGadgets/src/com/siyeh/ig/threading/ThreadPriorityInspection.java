@@ -24,10 +24,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThreadPriorityInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "CallToThreadSetPriority";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("thread.priority.display.name");
     }

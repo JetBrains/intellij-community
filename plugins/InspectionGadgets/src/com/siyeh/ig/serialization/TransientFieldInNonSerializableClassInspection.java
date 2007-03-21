@@ -54,6 +54,7 @@ public class TransientFieldInNonSerializableClassInspection
     private static class TransientFieldInNonSerializableClassFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "transient.field.in.non.serializable.class.remove.quickfix");

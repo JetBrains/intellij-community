@@ -25,6 +25,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
 import com.siyeh.ig.BaseGlobalInspection;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -32,6 +33,7 @@ import java.util.Set;
 
 public class StaticFieldCanBeMovedToUseInspection extends BaseGlobalInspection {
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }

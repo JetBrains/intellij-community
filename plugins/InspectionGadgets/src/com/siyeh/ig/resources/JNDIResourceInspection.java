@@ -27,10 +27,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class JNDIResourceInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "JNDIResourceOpenedButNotSafelyClosed";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "jndi.resource.opened.not.closed.display.name");

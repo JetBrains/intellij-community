@@ -29,10 +29,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class NoExplicitFinalizeCallsInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "FinalizeCalledExplicitly";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "finalize.called.explicitly.display.name");

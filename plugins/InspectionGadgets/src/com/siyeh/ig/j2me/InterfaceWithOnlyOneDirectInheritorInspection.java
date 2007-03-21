@@ -31,6 +31,7 @@ import java.util.Collection;
 public class InterfaceWithOnlyOneDirectInheritorInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "interface.one.inheritor.display.name");

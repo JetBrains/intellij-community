@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public class SimpleDateFormatWithoutLocaleInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "instantiating.simpledateformat.without.locale.display.name");

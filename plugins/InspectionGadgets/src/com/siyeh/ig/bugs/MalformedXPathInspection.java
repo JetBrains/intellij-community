@@ -42,6 +42,7 @@ public class MalformedXPathInspection extends BaseInspection {
       xpathMethodNames.add("evaluate");
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "malformed.xpath.expression.display.name");

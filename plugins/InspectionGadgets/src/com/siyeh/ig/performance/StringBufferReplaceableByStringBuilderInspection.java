@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public class StringBufferReplaceableByStringBuilderInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "StringBufferMayBeStringBuilder";
     }
@@ -57,6 +58,7 @@ public class StringBufferReplaceableByStringBuilderInspection
     private static class StringBufferMayBeStringBuilderFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "string.buffer.replaceable.by.string.builder.replace.quickfix");

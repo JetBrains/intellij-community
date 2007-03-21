@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class StringBufferReplaceableByStringInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "string.buffer.replaceable.by.string.display.name");

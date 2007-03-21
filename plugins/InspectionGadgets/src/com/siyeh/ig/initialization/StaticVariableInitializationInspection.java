@@ -33,10 +33,12 @@ public class StaticVariableInitializationInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean m_ignorePrimitives = false;
 
+    @NotNull
     public String getID(){
         return "StaticVariableMayNotBeInitialized";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "static.variable.may.not.be.initialized.display.name");

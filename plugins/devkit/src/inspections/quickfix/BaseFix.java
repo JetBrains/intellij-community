@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author swr
@@ -40,7 +41,7 @@ abstract class BaseFix implements LocalQuickFix {
     myOnTheFly = onTheFly;
   }
 
-  public void applyFix(Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     // can happen during batch-inspection if resoution has already been applied
     // to plugin.xml or java class
     if (!myElement.isValid()) return;

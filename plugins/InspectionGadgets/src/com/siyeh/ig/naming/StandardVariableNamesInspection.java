@@ -64,6 +64,7 @@ public class StandardVariableNamesInspection extends BaseInspection {
         s_boxingClasses.put("char", "java.lang.Character");
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "standard.variable.names.display.name");

@@ -35,6 +35,7 @@ public class OverlyLargePrimitiveArrayInitializerInspection
      */
     public int m_limit = 64;
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "large.initializer.primitive.type.array.display.name");

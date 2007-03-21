@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class SystemPropertiesInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "AccessOfSystemProperties";
     }

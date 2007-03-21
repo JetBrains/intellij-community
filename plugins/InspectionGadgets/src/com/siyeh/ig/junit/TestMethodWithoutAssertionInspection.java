@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class TestMethodWithoutAssertionInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "JUnitTestMethodWithNoAssertions";
     }

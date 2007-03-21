@@ -52,6 +52,7 @@ public class InstantiatingObjectToGetClassObjectInspection
     private static class InstantiatingObjectToGetClassObjectFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "instantiating.object.to.get.class.object.replace.quickfix");

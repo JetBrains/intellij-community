@@ -29,10 +29,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "CloneDoesntDeclareCloneNotSupportedException";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "clone.doesnt.declare.clonenotsupportedexception.display.name");
@@ -55,6 +57,7 @@ public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
     private static class CloneDeclaresCloneNotSupportedInspectionFix
             extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "clone.doesnt.declare.clonenotsupportedexception.declare.quickfix");

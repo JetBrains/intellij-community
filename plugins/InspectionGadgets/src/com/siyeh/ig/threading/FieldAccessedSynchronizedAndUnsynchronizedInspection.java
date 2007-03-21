@@ -34,6 +34,7 @@ public class FieldAccessedSynchronizedAndUnsynchronizedInspection
     /** @noinspection PublicField*/
     public boolean countGettersAndSetters = false;
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "field.accessed.synchronized.and.unsynchronized.display.name");

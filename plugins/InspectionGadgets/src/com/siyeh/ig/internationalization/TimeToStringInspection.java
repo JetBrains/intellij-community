@@ -24,10 +24,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class TimeToStringInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "CallToTimeToString";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "time.tostring.call.display.name");

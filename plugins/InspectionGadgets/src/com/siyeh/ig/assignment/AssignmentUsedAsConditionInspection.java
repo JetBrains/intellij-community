@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class AssignmentUsedAsConditionInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "assignment.used.as.condition.display.name");
@@ -46,6 +47,7 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
     private static class AssignmentUsedAsConditionFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "assignment.used.as.condition.replace.quickfix");

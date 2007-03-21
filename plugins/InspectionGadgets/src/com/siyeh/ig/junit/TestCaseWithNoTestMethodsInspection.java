@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "JUnitTestCaseWithNoTests";
     }

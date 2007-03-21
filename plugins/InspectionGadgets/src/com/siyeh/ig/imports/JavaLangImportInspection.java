@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class JavaLangImportInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "java.lang.import.display.name");

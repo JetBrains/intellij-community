@@ -23,6 +23,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author swr
@@ -60,6 +61,7 @@ public class ImplementOrExtendFix extends BaseFix {
     return fix != null ? new LocalQuickFix[]{fix} : NO_FIX;
   }
 
+  @NotNull
   public String getName() {
     return (myCompClass.isInterface()
             ? StringUtil.capitalize(DevKitBundle.message("keyword.implement"))
@@ -67,6 +69,7 @@ public class ImplementOrExtendFix extends BaseFix {
             + " '" + myCompClass.getQualifiedName() + "'";
   }
 
+  @NotNull
   public String getFamilyName() {
     return getName();
   }

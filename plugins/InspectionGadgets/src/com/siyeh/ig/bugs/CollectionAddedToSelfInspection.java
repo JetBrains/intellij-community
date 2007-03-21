@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CollectionAddedToSelfInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "collection.added.to.self.display.name");

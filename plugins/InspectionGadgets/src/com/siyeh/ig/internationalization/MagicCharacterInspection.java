@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MagicCharacterInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("magic.character.display.name");
     }

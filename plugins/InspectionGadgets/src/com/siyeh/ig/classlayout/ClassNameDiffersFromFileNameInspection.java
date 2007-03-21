@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ClassNameDiffersFromFileNameInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "class.name.differs.from.file.name.display.name");

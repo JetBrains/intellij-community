@@ -35,6 +35,7 @@ public class PublicInnerClassInspection extends BaseInspection {
     @SuppressWarnings({"PublicField"})
     public boolean ignoreEnums = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "public.inner.class.display.name");

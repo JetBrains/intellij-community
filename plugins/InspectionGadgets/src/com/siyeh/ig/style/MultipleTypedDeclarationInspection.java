@@ -35,6 +35,7 @@ public class MultipleTypedDeclarationInspection extends BaseInspection {
                 "multiple.typed.declaration.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "VariablesOfDifferentTypesInDeclaration";
     }

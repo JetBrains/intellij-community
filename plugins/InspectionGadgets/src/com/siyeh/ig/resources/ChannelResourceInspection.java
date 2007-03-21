@@ -26,10 +26,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class ChannelResourceInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "ChannelOpenedButNotSafelyClosed";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "channel.opened.not.closed.display.name");

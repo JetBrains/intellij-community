@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThreadDeathRethrownInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "ThreadDeathNotRethrown";
     }

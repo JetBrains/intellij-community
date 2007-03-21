@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToNullInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("assignment.to.null.display.name");
     }

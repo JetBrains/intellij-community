@@ -40,12 +40,13 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
     /**
      * To appear in "Apply Fix" statement when multiple Quick Fixes exist
      */
+    @NotNull
     public String getFamilyName() {
         return "";
     }
 
-    public void applyFix(Project project,
-                         ProblemDescriptor descriptor){
+    public void applyFix(@NotNull Project project,
+                         @NotNull ProblemDescriptor descriptor){
         final PsiElement problemElement = descriptor.getPsiElement();
         if(problemElement == null || !problemElement.isValid()){
             return;

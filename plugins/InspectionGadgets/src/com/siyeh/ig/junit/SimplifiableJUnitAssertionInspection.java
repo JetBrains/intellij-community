@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class SimplifiableJUnitAssertionInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "simplifiable.junit.assertion.display.name");
@@ -52,6 +53,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
 
     private static class SimplifyJUnitAssertFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "simplify.j.unit.assertion.simplify.quickfix");

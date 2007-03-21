@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 public class IfStatementWithIdenticalBranchesInspection
         extends BaseInspection{
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "if.statement.with.identical.branches.display.name");

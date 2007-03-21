@@ -27,6 +27,7 @@ import java.util.Map;
 
 public class CastThatLosesPrecisionInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "NumericCastThatLosesPrecision";
     }

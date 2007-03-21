@@ -28,10 +28,12 @@ import java.util.Set;
 
 public class MethodOverridesPrivateMethodInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "MethodOverridesPrivateMethodOfSuperclass";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "method.overrides.private.display.name");

@@ -24,10 +24,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class EqualsUsesNonFinalVariableInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "NonFinalFieldReferenceInEquals";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "non.final.field.in.equals.display.name");

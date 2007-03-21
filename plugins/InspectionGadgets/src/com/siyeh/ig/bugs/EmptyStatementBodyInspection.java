@@ -30,10 +30,12 @@ public class EmptyStatementBodyInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean m_reportEmptyBlocks = false;
 
+    @NotNull
     public String getID(){
         return "StatementWithEmptyBody";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "statement.with.empty.body.display.name");

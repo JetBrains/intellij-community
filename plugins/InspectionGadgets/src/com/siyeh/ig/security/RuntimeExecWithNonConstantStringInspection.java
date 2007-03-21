@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class RuntimeExecWithNonConstantStringInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "CallToRuntimeExecWithNonConstantString";
     }

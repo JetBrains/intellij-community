@@ -51,6 +51,7 @@ public class LocalVariableNamingConventionInspection
     private static final int DEFAULT_MIN_LENGTH = 1;
     private static final int DEFAULT_MAX_LENGTH = 20;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "local.variable.naming.convention.display.name");

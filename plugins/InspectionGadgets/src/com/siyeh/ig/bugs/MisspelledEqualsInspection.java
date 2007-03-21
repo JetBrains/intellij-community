@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MisspelledEqualsInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "misspelled.equals.display.name");

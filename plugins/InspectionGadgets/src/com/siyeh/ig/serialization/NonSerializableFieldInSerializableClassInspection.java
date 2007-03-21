@@ -34,6 +34,7 @@ public class NonSerializableFieldInSerializableClassInspection
     /** @noinspection PublicField*/
     public boolean ignoreSerializableDueToInheritance = true;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "non.serializable.field.in.serializable.class.display.name");

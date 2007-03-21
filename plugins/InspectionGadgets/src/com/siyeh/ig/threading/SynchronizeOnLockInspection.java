@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class SynchronizeOnLockInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "SynchroniziationOnLockObject";
     }

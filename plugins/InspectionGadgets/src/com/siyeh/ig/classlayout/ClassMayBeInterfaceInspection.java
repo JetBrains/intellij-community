@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ClassMayBeInterfaceInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "class.may.be.interface.display.name");
@@ -48,6 +49,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
 
     private static class ClassMayBeInterfaceFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "class.may.be.interface.convert.quickfix");

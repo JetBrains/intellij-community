@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class EqualsBetweenInconvertibleTypesInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "equals.between.inconvertible.types.display.name");

@@ -25,10 +25,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class NumericToStringInspection extends BaseInspection {
     
+    @NotNull
     public String getID(){
         return "CallToNumericToString";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "call.to.numeric.tostring.display.name");

@@ -32,10 +32,12 @@ public class FieldRepeatedlyAccessedInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean m_ignoreFinalFields = false;
 
+    @NotNull
     public String getID(){
         return "FieldRepeatedlyAccessedInMethod";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("field.repeatedly.accessed.in.method.display.name");
     }

@@ -33,6 +33,7 @@ public class UpperCaseFieldNameNotConstantInspection extends BaseInspection {
                 "upper.case.field.name.not.constant.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "NonConstantFieldWithUpperCaseName";
     }

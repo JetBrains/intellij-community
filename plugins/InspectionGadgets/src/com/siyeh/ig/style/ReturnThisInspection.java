@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReturnThisInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "ReturnOfThis";
     }

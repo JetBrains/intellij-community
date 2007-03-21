@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class AnnotationInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("annotation.display.name");
     }

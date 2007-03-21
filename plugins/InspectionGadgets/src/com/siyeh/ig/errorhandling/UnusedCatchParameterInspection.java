@@ -35,6 +35,7 @@ public class UnusedCatchParameterInspection extends BaseInspection {
     /** @noinspecion PublicField */
     public boolean m_ignoreIgnoreParameter = true;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unused.catch.parameter.display.name");

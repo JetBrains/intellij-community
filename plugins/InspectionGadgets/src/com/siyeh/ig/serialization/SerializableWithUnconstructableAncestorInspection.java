@@ -32,6 +32,7 @@ import java.util.Set;
 public class SerializableWithUnconstructableAncestorInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "SerializableClassWithUnconstructableAncestor";
     }

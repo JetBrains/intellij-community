@@ -25,10 +25,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class FinalizeInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "FinalizeDeclaration";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "finalize.declaration.display.name");

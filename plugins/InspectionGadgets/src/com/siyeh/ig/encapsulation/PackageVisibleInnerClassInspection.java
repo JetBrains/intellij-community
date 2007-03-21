@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PackageVisibleInnerClassInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "package.visible.inner.class.display.name");

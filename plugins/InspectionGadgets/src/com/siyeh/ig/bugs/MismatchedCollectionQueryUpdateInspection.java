@@ -28,10 +28,12 @@ import org.jetbrains.annotations.NotNull;
 public class MismatchedCollectionQueryUpdateInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "MismatchedQueryAndUpdateOfCollection";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "mismatched.update.collection.display.name");

@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CyclomaticComplexityInspection extends MethodMetricInspection {
 
+    @NotNull
     public String getID() {
         return "OverlyComplexMethod";
     }

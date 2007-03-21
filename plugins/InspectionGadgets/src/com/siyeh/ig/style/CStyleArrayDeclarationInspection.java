@@ -49,6 +49,7 @@ public class CStyleArrayDeclarationInspection extends BaseInspection {
     private static class CStyleArrayDeclarationFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "c.style.array.declaration.replace.quickfix");

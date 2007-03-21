@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CovariantCompareToInspection extends BaseInspection {
 
+  @NotNull
   public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "covariant.compareto.display.name");

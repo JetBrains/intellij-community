@@ -33,6 +33,7 @@ import java.util.List;
 public class PublicConstructorInNonPublicClassInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "public.constructor.in.non.public.class.display.name");

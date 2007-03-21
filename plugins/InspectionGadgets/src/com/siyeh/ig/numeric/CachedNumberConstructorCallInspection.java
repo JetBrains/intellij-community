@@ -42,6 +42,7 @@ public class CachedNumberConstructorCallInspection
         cachedNumberTypes.add("java.lang.Short");
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "cached.number.constructor.call.display.name");
@@ -75,6 +76,7 @@ public class CachedNumberConstructorCallInspection
             this.className = className;
         }
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "cached.number.constructor.call.quickfix", className);

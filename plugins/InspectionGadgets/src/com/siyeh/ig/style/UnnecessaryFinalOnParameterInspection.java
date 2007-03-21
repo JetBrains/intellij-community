@@ -40,6 +40,7 @@ public class UnnecessaryFinalOnParameterInspection extends BaseInspection {
                 "unnecessary.final.on.parameter.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "UnnecessaryFinalForMethodParameter";
     }

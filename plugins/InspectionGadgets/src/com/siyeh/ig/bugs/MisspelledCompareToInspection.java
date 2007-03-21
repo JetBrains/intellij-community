@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MisspelledCompareToInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "misspelled.compareto.display.name");

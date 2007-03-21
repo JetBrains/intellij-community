@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ForeachStatementInspection extends BaseInspection{
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "extended.for.statement.display.name");
@@ -45,6 +46,7 @@ public class ForeachStatementInspection extends BaseInspection{
 
     private static class ForEachFix extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "extended.for.statement.replace.quickfix");

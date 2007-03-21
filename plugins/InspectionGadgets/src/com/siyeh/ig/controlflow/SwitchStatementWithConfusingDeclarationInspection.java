@@ -27,6 +27,7 @@ import java.util.Set;
 public class SwitchStatementWithConfusingDeclarationInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "LocalVariableUsedAndDeclaredInDifferentSwitchBranches";
     }

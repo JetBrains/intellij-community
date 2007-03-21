@@ -75,6 +75,7 @@ public class NonReproducibleMathCallInspection extends BaseInspection {
 
     private static class MakeStrictFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "non.reproducible.math.call.replace.quickfix");

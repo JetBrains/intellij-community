@@ -34,6 +34,7 @@ import java.util.Set;
 public class UnnecessaryTemporaryOnConversionToStringInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.temporary.on.conversion.to.string.display.name");
@@ -100,6 +101,7 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
             m_name = name;
         }
 
+        @NotNull
         public String getName() {
             return m_name;
         }

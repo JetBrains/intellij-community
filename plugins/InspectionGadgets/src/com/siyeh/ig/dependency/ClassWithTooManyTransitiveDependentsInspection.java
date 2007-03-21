@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Set;
@@ -38,6 +39,7 @@ public class ClassWithTooManyTransitiveDependentsInspection
     @SuppressWarnings({"PublicField"})
     public int limit = 35;
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.DEPENDENCY_GROUP_NAME;
     }

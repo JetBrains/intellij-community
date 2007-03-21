@@ -21,6 +21,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.annotations.NotNull;
 
 public class MakePublicFix extends BaseFix {
 
@@ -28,6 +29,7 @@ public class MakePublicFix extends BaseFix {
     super(checkedElement, onTheFly);
   }
 
+  @NotNull
   public String getName() {
     return DevKitBundle.message("inspections.registration.problems.quickfix.make.public",
             myElement.getLanguage().getFindUsagesProvider().getType(myElement));
@@ -37,6 +39,7 @@ public class MakePublicFix extends BaseFix {
     ((PsiModifierListOwner)myElement).getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
   }
 
+  @NotNull
   public String getFamilyName() {
     return getName();
   }

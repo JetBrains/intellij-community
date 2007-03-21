@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class RedundantImplementsInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "RedundantInterfaceDeclaration";
     }
@@ -52,6 +53,7 @@ public class RedundantImplementsInspection extends BaseInspection {
 
     private static class RedundantImplementsFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "redundant.implements.remove.quickfix");

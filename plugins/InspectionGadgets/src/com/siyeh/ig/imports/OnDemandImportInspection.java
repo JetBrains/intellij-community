@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class OnDemandImportInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("import.display.name");
     }

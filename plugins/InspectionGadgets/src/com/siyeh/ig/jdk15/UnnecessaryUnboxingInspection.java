@@ -52,6 +52,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
         s_unboxingMethods.put("java.lang.Character", "charValue");
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.unboxing.display.name");
@@ -77,6 +78,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
 
     private static class UnnecessaryUnboxingFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "unnecessary.unboxing.remove.quickfix");

@@ -64,6 +64,7 @@ public class ConstantMathCallInspection extends BaseInspection {
         constantMathCall.add("toRadians");
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "constant.math.call.display.name");
@@ -81,6 +82,7 @@ public class ConstantMathCallInspection extends BaseInspection {
 
     private static class MakeStrictFix extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "constant.conditional.expression.simplify.quickfix");

@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class PublicMethodNotExposedInInterfaceInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "public.method.not.in.interface.display.name");

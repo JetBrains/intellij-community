@@ -33,6 +33,7 @@ import java.util.Set;
 
 public class ConstantIfStatementInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "constant.if.statement.display.name");

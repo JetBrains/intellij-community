@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 public class LongLiteralsEndingWithLowercaseLInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "LongLiteralEndingWithLowercaseL";
     }
@@ -57,6 +58,7 @@ public class LongLiteralsEndingWithLowercaseLInspection
 
     private static class LongLiteralFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "long.literals.ending.with.lowercase.l.replace.quickfix");

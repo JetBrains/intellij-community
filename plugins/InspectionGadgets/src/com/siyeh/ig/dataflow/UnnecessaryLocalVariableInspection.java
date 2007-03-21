@@ -38,6 +38,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean m_ignoreAnnotatedVariables = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "redundant.local.variable.display.name");

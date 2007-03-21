@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class PrimitiveArrayArgumentToVariableArgMethodInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "primitive.array.argument.to.var.arg.method.display.name");

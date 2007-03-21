@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public class ForLoopThatDoesntUseLoopVariableInspection
         extends BaseInspection{
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "for.loop.not.use.loop.variable.display.name");

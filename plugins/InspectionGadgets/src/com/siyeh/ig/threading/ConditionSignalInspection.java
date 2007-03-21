@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConditionSignalInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "CallToSignalInsteadOfSignalAll";
     }
@@ -54,6 +55,7 @@ public class ConditionSignalInspection extends BaseInspection {
 
     private static class ConditionSignalFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "condition.signal.replace.quickfix");

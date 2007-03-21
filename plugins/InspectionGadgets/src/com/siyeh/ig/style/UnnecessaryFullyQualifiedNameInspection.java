@@ -49,6 +49,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
     @SuppressWarnings("PublicField")
     public boolean m_ignoreJavadoc = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.fully.qualified.name.display.name");

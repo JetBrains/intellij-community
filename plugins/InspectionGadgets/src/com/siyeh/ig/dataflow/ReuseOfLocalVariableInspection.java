@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 public class ReuseOfLocalVariableInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "reuse.of.local.variable.display.name");
@@ -60,6 +61,7 @@ public class ReuseOfLocalVariableInspection
     private static class ReuseOfLocalVariableFix
             extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "reuse.of.local.variable.split.quickfix");

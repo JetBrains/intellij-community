@@ -25,11 +25,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class MultipleDeclarationInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "multiple.declaration.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "MultipleVariablesInDeclaration";
     }

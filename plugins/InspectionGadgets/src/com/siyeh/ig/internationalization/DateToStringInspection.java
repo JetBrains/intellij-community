@@ -28,10 +28,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class DateToStringInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "CallToDateToString";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "call.to.date.tostring.display.name");

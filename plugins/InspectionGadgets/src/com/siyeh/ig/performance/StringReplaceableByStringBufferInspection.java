@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class StringReplaceableByStringBufferInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "NonConstantStringShouldBeStringBuffer";
     }

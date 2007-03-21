@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class ResultOfObjectAllocationIgnoredInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "result.of.object.allocation.ignored.display.name");

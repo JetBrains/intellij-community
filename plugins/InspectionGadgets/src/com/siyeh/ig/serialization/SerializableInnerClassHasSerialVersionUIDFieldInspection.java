@@ -37,10 +37,12 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspection
     /** @noinspection PublicField */
     public boolean m_ignoreSerializableDueToInheritance = true;
 
+    @NotNull
     public String getID() {
         return "SerializableNonStaticInnerClassWithoutSerialVersionUID";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "serializable.inner.class.has.serial.version.uid.field.display.name");

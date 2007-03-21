@@ -27,10 +27,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class ChainedEqualityInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "ChainedEqualityComparisons";
     }
     
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "chained.equality.comparisons.display.name");

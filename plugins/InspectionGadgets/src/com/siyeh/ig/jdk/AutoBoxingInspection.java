@@ -52,6 +52,7 @@ public class AutoBoxingInspection extends BaseInspection {
         s_boxingClasses.put("char", "java.lang.Character");
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("auto.boxing.display.name");
     }

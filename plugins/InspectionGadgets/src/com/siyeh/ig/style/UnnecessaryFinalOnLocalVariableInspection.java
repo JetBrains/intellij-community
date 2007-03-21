@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public class UnnecessaryFinalOnLocalVariableInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.final.on.local.variable.display.name");

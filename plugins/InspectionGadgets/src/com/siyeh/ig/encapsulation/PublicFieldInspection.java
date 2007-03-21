@@ -33,6 +33,7 @@ public class PublicFieldInspection extends BaseInspection {
     @SuppressWarnings({"PublicField"})
     public boolean ignoreEnums = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("public.field.display.name");
     }

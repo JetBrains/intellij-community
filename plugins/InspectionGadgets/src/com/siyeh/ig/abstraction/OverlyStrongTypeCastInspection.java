@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class OverlyStrongTypeCastInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "overly.strong.type.cast.display.name");

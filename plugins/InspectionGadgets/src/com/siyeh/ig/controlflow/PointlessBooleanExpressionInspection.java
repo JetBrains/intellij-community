@@ -182,6 +182,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
 
     private  class BooleanLiteralComparisonFix
             extends InspectionGadgetsFix{
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "constant.conditional.expression.simplify.quickfix");

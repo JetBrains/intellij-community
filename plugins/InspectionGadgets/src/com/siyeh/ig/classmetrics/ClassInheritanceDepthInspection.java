@@ -28,12 +28,14 @@ import java.util.Set;
 public class ClassInheritanceDepthInspection
         extends ClassMetricInspection{
 
+    @NotNull
     public String getID(){
         return "ClassTooDeepInInheritanceTree";
     }
 
     private static final int CLASS_INHERITANCE_LIMIT = 2;
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message("class.too.deep.display.name");
     }

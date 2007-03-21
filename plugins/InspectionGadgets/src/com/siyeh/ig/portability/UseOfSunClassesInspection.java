@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class UseOfSunClassesInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("use.sun.classes.display.name");
     }

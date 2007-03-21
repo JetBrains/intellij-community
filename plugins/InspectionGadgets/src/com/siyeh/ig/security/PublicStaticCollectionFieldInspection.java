@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PublicStaticCollectionFieldInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "public.static.collection.field.display.name");

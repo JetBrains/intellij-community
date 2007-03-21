@@ -30,10 +30,12 @@ import java.util.List;
 
 public class StringEqualsInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "CallToStringEquals";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "string.equals.call.display.name");

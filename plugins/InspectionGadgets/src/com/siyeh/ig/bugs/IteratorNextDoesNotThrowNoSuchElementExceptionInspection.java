@@ -29,10 +29,12 @@ import java.util.Set;
 public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "IteratorNextCanNotThrowNoSuchElementException";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "iterator.next.does.not.throw.nosuchelementexception.display.name");

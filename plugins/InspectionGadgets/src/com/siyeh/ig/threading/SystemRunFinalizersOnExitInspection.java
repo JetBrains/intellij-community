@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class SystemRunFinalizersOnExitInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "CallToSystemRunFinalizersOnExit";
     }

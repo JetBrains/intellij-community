@@ -27,10 +27,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class SocketResourceInspection extends BaseInspection {
 
+  @NotNull
   public String getID(){
       return "SocketOpenedButNotSafelyClosed";
   }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "socket.opened.not.closed.display.name");

@@ -27,10 +27,12 @@ public class ClassNestingDepthInspection
 
     private static final int CLASS_NESTING_LIMIT = 1;
 
+    @NotNull
     public String getID() {
         return "InnerClassTooDeeplyNested";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "inner.class.too.deeply.nested.display.name");

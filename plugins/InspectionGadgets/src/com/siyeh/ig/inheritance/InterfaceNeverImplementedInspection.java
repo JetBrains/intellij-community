@@ -31,6 +31,7 @@ public class InterfaceNeverImplementedInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean ignoreInterfacesThatOnlyDeclareConstants = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "interface.never.implemented.display.name");

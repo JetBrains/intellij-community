@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class AnonymousInnerClassMayBeStaticInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "anonymous.inner.may.be.named.static.inner.class.display.name");

@@ -70,6 +70,7 @@ public class ChainedMethodCallInspection extends BaseInspection {
 
     private static class ChainedMethodCallFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "introduce.variable.quickfix");

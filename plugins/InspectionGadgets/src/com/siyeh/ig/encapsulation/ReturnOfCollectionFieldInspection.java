@@ -32,10 +32,12 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection{
     /** @noinspection PublicField*/
     public boolean ignorePrivateMethods = true;
 
+    @NotNull
     public String getID(){
         return "ReturnOfCollectionOrArrayField";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "return.of.collection.array.field.display.name");

@@ -32,11 +32,13 @@ import org.jetbrains.annotations.NotNull;
 public class LengthOneStringInIndexOfInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "length.one.string.in.indexof.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "SingleCharacterStringConcatenation";
     }
@@ -61,6 +63,7 @@ public class LengthOneStringInIndexOfInspection
     private static class ReplaceStringsWithCharsFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "length.one.strings.in.concatenation.replace.quickfix");

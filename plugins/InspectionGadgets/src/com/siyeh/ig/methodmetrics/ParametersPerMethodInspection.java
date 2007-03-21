@@ -25,10 +25,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class ParametersPerMethodInspection extends MethodMetricInspection {
 
+    @NotNull
     public String getID() {
         return "MethodWithTooManyParameters";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "parameters.per.method.display.name");

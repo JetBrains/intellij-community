@@ -32,6 +32,7 @@ import java.util.Collection;
 
 public class InnerClassMayBeStaticInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "inner.class.may.be.static.display.name");

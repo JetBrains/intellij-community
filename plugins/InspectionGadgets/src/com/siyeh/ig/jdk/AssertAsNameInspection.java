@@ -25,9 +25,11 @@ import org.jetbrains.annotations.NotNull;
 
 public class AssertAsNameInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "AssertAsIdentifier";
     }
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "use.assert.as.identifier.display.name");

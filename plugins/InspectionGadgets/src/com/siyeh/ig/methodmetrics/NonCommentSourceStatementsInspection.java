@@ -25,6 +25,7 @@ public class NonCommentSourceStatementsInspection
 
     private static final int DEFAULT_LIMIT = 30;
 
+    @NotNull
     public String getID() {
         return "OverlyLongMethod";
     }

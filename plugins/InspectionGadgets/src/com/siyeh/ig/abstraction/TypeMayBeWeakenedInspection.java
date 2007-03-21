@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class TypeMayBeWeakenedInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return "Type may be weakened";
     }

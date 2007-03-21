@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public class CallToNativeMethodWhileLockedInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "call.to.native.method.while.locked.display.name");

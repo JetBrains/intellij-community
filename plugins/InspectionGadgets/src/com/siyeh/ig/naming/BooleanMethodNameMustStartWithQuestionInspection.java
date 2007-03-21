@@ -94,6 +94,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection
         nameCheckString = buffer.toString();
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "boolean.method.name.must.start.with.question.display.name");

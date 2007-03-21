@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CovariantEqualsInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "covariant.equals.display.name");

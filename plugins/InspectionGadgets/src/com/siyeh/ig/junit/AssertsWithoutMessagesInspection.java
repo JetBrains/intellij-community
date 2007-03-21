@@ -30,11 +30,13 @@ import java.util.Set;
 
 public class AssertsWithoutMessagesInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "asserts.without.messages.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "MessageMissingOnJUnitAssertion";
     }

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CloneInNonCloneableClassInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "clone.method.in.non.cloneable.class.display.name");

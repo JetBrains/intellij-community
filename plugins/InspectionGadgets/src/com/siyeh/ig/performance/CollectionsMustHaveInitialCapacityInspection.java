@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public class CollectionsMustHaveInitialCapacityInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "CollectionWithoutInitialCapacity";
     }

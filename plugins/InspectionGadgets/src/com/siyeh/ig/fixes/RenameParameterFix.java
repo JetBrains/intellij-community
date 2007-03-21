@@ -22,6 +22,7 @@ import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NotNull;
 
 public class RenameParameterFix extends InspectionGadgetsFix {
     private final String m_targetName;
@@ -32,6 +33,7 @@ public class RenameParameterFix extends InspectionGadgetsFix {
         m_targetName = targetName;
     }
 
+    @NotNull
     public String getName() {
         return InspectionGadgetsBundle.message("renameto.quickfix", m_targetName);
     }

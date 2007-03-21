@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class SubtractionInCompareToInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "subtraction.in.compareto.display.name");

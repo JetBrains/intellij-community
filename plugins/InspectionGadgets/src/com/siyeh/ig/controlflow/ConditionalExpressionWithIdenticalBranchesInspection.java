@@ -49,6 +49,7 @@ public class ConditionalExpressionWithIdenticalBranchesInspection
 
     private static class CollapseConditional extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "conditional.expression.with.identical.branches.collapse.quickfix");

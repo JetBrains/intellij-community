@@ -38,10 +38,12 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean ignoreGetterCallsOnOtherObjects = false;
 
+    @NotNull
     public String getID(){
         return "CallToSimpleGetterFromWithinClass";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "call.to.simple.getter.in.class.display.name");
@@ -66,6 +68,7 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
 
     private static class InlineCallFix extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "call.to.simple.getter.in.class.inline.quickfix");

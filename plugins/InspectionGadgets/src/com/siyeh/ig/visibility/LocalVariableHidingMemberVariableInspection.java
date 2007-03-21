@@ -36,10 +36,12 @@ public class LocalVariableHidingMemberVariableInspection
     /** @noinspection PublicField*/
     public boolean m_ignoreStaticMethods = true;
 
+    @NotNull
     public String getID(){
         return "LocalVariableHidesMemberVariable";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "local.variable.hides.member.variable.display.name");

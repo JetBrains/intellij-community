@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class BeforeOrAfterIsPublicVoidNoArgInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "BeforeOrAfterWithIncorrectSignature";
     }

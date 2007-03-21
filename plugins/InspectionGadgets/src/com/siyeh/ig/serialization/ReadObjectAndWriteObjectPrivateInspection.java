@@ -30,9 +30,11 @@ import org.jetbrains.annotations.NotNull;
 public class ReadObjectAndWriteObjectPrivateInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "NonPrivateSerializationMethod";
     }
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "readwriteobject.private.display.name");

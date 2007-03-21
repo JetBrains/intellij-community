@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class InfiniteRecursionInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "infinite.recursion.display.name");

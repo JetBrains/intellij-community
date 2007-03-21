@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public class FinallyBlockCannotCompleteNormallyInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "finally";
     }

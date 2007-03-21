@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryContinueInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.continue.display.name");

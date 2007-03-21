@@ -34,6 +34,7 @@ public class InnerClassOnInterfaceInspection extends BaseInspection {
     /** @noinspection PublicField */
     public boolean m_ignoreInnerInterfaces = false;
 
+    @NotNull
     public String getID() {
         return "InnerClassOfInterface";
     }

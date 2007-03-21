@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class UseOfAWTPeerClassInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "use.of.awt.peer.class.display.name");

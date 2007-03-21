@@ -33,10 +33,12 @@ public class FinalizeCallsSuperFinalizeInspection extends BaseInspection {
     @SuppressWarnings("PublicField")
     public boolean m_ignoreForObjectSubclasses = false;
 
+    @NotNull
     public String getID(){
         return "FinalizeDoesntCallSuperFinalize";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "finalize.doesnt.call.super.display.name");

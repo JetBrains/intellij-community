@@ -25,11 +25,13 @@ import org.jetbrains.annotations.NotNull;
 public class PublicFieldAccessedInSynchronizedContextInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "public.field.accessed.in.synchronized.context.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "NonPrivateFieldAccessedInSynchronizedContext";
     }

@@ -28,10 +28,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class StaticCallOnSubclassInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "StaticMethodReferencedViaSubclass";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "static.method.via.subclass.display.name");
@@ -52,6 +54,7 @@ public class StaticCallOnSubclassInspection extends BaseInspection {
 
     private static class StaticCallOnSubclassFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "static.method.via.subclass.rationalize.quickfix");

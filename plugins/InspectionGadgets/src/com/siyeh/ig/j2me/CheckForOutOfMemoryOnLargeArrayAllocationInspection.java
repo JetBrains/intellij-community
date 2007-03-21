@@ -32,6 +32,7 @@ public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
     /** @noinspection PublicField */
     public int m_limit = 64;
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "large.array.allocation.no.outofmemoryerror.display.name");

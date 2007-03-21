@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class WhileCanBeForeachInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "WhileLoopReplaceableByForEach";
     }
@@ -69,6 +70,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
 
     private static class WhileCanBeForeachFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message("foreach.replace.quickfix");
         }

@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class EnumClassInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("enumerated.class.display.name");
     }

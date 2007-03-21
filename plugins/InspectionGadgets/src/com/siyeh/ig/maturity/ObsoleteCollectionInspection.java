@@ -36,10 +36,12 @@ public class ObsoleteCollectionInspection extends BaseInspection {
     @SuppressWarnings({"PublicField"})
     public boolean ignoreLibraryArguments = false;
 
+    @NotNull
     public String getID(){
         return "UseOfObsoleteCollectionType";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "use.obsolete.collection.type.display.name");

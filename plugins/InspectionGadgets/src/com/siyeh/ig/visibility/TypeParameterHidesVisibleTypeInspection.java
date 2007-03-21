@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class TypeParameterHidesVisibleTypeInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "type.parameter.hides.visible.type.display.name");

@@ -37,10 +37,12 @@ public class NegatedIfElseInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean m_ignoreNegatedNullComparison = true;
 
+    @NotNull
     public String getID() {
         return "IfStatementWithNegatedCondition";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("negated.if.else.display.name");
     }
@@ -66,6 +68,7 @@ public class NegatedIfElseInspection extends BaseInspection {
 
     private static class NegatedIfElseFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "negated.if.else.invert.quickfix");

@@ -26,10 +26,12 @@ import org.jetbrains.annotations.NotNull;
 public class ExternalizableWithSerializationMethodsInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "ExternalizableClassWithSerializationMethods";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "externalizable.with.serialization.methods.display.name");

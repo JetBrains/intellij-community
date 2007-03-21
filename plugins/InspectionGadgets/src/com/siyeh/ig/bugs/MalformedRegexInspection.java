@@ -33,6 +33,7 @@ import java.util.regex.PatternSyntaxException;
 
 public class MalformedRegexInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "malformed.regular.expression.display.name");

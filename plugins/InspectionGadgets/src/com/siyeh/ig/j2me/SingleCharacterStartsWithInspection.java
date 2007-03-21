@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class SingleCharacterStartsWithInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "single.character.startswith.display.name");
@@ -50,6 +51,7 @@ public class SingleCharacterStartsWithInspection extends BaseInspection {
     private static class SingleCharacterStartsWithFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "single.character.startswith.quickfix");

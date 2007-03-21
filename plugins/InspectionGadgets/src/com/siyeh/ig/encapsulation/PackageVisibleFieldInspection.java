@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PackageVisibleFieldInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "package.visible.field.display.name");

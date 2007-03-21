@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class InstanceofThisInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "instanceof.check.for.this.display.name");

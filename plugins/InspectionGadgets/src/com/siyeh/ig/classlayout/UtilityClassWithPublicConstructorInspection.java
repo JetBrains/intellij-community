@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class UtilityClassWithPublicConstructorInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "utility.class.with.public.constructor.display.name");
@@ -63,6 +64,7 @@ public class UtilityClassWithPublicConstructorInspection
             m_multipleConstructors = multipleConstructors;
         }
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "utility.class.with.public.constructor.make.quickfix",

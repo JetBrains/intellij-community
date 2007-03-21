@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 public class NonFinalStaticVariableUsedInClassInitializationInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "non.final.static.variable.initialization.display.name");

@@ -34,6 +34,7 @@ import java.util.List;
 public class AbstractMethodWithMissingImplementationsInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "abstract.method.with.missing.implementations.display.name");

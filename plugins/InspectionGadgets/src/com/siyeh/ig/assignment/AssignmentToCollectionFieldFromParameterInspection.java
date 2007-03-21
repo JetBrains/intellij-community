@@ -34,10 +34,12 @@ public class AssignmentToCollectionFieldFromParameterInspection
     /** @noinspection PublicField*/
     public boolean ignorePrivateMethods = true;
 
+    @NotNull
     public String getID(){
         return "AssignmentToCollectionOrArrayFieldFromParameter";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "assignment.collection.array.field.from.parameter.display.name");

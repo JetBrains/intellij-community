@@ -27,10 +27,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class ResultSetIndexZeroInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "UseOfIndexZeroInJDBCResultSet";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "use.0index.in.jdbc.resultset.display.name");

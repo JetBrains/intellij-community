@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class TodoCommentInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("todo.comment.display.name");
     }

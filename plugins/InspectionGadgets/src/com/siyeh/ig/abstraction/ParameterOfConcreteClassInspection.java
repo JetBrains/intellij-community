@@ -25,10 +25,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class ParameterOfConcreteClassInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "MethodParameterOfConcreteClass";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "concrete.class.method.parameter.display.name");

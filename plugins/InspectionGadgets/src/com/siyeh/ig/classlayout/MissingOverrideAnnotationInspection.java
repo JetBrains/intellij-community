@@ -36,10 +36,12 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean useJdk6Rules = false;
 
+    @NotNull
     public String getID() {
         return "override";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "missing.override.annotation.display.name");
@@ -65,6 +67,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
     private static class MissingOverrideAnnotationFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "missing.override.annotation.add.quickfix");

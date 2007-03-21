@@ -49,6 +49,7 @@ public class MisorderedAssertEqualsParametersInspection
 
     private static class FlipParametersFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "misordered.assert.equals.parameters.flip.quickfix");

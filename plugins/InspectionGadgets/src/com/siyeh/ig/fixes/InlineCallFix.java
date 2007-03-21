@@ -24,9 +24,11 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NotNull;
 
 public class InlineCallFix extends InspectionGadgetsFix {
 
+    @NotNull
     public String getName() {
         return InspectionGadgetsBundle.message("inline.call.quickfix");
     }

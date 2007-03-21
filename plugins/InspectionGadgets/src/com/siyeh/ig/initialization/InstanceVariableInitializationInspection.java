@@ -36,10 +36,12 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
     /** @noinspection PublicField */
     public boolean m_ignorePrimitives = false;
 
+    @NotNull
     public String getID(){
         return "InstanceVariableMayNotBeInitialized";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "instance.variable.may.not.be.initialized.display.name");

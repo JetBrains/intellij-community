@@ -47,6 +47,7 @@ public class ClassWithoutConstructorInspection extends BaseInspection {
     private static class ClassWithoutConstructorFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "class.without.constructor.create.quickfix");

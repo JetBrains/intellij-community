@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class NotifyNotInSynchronizedContextInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "notify.not.in.synchronized.context.display.name");

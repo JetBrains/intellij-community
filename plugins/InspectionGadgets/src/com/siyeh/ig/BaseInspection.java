@@ -151,6 +151,7 @@ public abstract class BaseInspection extends LocalInspectionTool {
 
     public abstract BaseInspectionVisitor buildVisitor();
 
+    @NotNull
     public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                           boolean isOnTheFly) {
         final BaseInspectionVisitor visitor = buildVisitor();

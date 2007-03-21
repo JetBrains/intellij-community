@@ -26,10 +26,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class MismatchedArrayReadWriteInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "MismatchedReadAndWriteOfArray";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "mismatched.read.write.array.display.name");

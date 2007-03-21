@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "ConstantOnRightSideOfComparison";
     }
@@ -58,6 +59,7 @@ public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
 
     private static class SwapComparisonFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message("flip.comparision.quickfix");
         }

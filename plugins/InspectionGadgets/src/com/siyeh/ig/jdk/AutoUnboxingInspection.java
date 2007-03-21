@@ -58,6 +58,7 @@ public class AutoUnboxingInspection extends BaseInspection {
         s_unboxingMethods.put("char", "charValue");
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message("auto.unboxing.display.name");
     }

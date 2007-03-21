@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ClassReferencesSubclassInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "class.references.subclass.display.name");

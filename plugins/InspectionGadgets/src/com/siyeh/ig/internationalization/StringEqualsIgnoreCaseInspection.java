@@ -30,10 +30,12 @@ import java.util.List;
 
 public class StringEqualsIgnoreCaseInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "CallToStringEqualsIgnoreCase";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "string.equalsignorecase.call.display.name");

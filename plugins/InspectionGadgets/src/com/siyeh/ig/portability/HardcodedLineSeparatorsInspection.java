@@ -25,11 +25,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class HardcodedLineSeparatorsInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "hardcoded.line.separator.display.name");
     }
 
+    @NotNull
     public String getID(){
         return "HardcodedLineSeparator";
     }

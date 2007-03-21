@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class IteratorHasNextCallsIteratorNextInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "iterator.hasnext.which.calls.next.display.name");

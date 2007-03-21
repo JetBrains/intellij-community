@@ -88,10 +88,12 @@ public class BadExceptionCaughtInspection extends BaseInspection {
         exceptionCheckString = buffer.toString();
     }
 
+    @NotNull
     public String getID() {
         return "ProhibitedExceptionCaught";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "bad.exception.caught.display.name");

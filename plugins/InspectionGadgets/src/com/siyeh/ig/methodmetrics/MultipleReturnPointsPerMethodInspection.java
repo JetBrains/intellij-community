@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class MultipleReturnPointsPerMethodInspection
         extends MethodMetricInspection {
 
+    @NotNull
     public String getID() {
         return "MethodWithMultipleReturnPoints";
     }

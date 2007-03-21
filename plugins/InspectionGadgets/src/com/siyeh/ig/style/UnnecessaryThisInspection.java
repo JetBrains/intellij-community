@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryThisInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("unnecessary.this.display.name");
     }
@@ -45,6 +46,7 @@ public class UnnecessaryThisInspection extends BaseInspection {
 
     private static class UnnecessaryThisFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "unnecessary.this.remove.quickfix");

@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class CompareToUsesNonFinalVariableInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "non.final.field.compareto.display.name");

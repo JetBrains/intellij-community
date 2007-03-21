@@ -27,10 +27,12 @@ public class ClassComplexityInspection
 
     private static final int DEFAULT_COMPLEXITY_LIMIT = 80;
 
+    @NotNull
     public String getID() {
         return "OverlyComplexClass";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "overly.complex.class.display.name");

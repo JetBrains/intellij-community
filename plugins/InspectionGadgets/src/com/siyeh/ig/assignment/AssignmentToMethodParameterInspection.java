@@ -42,6 +42,7 @@ public class AssignmentToMethodParameterInspection
     @SuppressWarnings({"PublicField"})
     public boolean ignoreTransformationOfOriginalParameter = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "assignment.to.method.parameter.display.name");

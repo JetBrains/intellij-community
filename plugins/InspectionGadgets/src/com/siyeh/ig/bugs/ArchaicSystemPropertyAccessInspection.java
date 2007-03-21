@@ -31,10 +31,12 @@ import org.jetbrains.annotations.Nullable;
 
 public class ArchaicSystemPropertyAccessInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "UseOfArchaicSystemPropertyAccessors";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "archaic.system.property.accessors.display.name");
@@ -64,6 +66,7 @@ public class ArchaicSystemPropertyAccessInspection extends BaseInspection {
 
     private static class ReplaceWithParseMethodFix extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "archaic.system.property.accessors.replace.parse.quickfix");
@@ -97,6 +100,7 @@ public class ArchaicSystemPropertyAccessInspection extends BaseInspection {
     private static class ReplaceWithStandardPropertyAccessFix
             extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "archaic.system.property.accessors.replace.standard.quickfix");

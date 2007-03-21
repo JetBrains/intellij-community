@@ -26,10 +26,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConnectionResourceInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "ConnectionOpenedButNotSafelyClosed";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "connection.opened.not.safely.closed.display.name");

@@ -26,10 +26,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class StringTokenizerInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "UseOfStringTokenizer";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "use.stringtokenizer.display.name");

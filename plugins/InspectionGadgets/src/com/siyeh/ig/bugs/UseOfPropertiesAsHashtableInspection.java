@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "properties.object.as.hashtable.display.name");

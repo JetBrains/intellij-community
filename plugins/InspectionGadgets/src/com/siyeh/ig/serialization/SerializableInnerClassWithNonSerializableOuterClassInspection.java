@@ -32,6 +32,7 @@ public class SerializableInnerClassWithNonSerializableOuterClassInspection
     /** @noinspection PublicField */
     public boolean m_ignoreSerializableDueToInheritance = true;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "serializable.inner.class.with.non.serializable.outer.class.display.name");

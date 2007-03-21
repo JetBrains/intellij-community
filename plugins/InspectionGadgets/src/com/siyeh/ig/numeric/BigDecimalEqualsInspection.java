@@ -46,6 +46,7 @@ public class BigDecimalEqualsInspection extends BaseInspection {
     }
 
     private static class BigDecimalEqualsFix extends InspectionGadgetsFix {
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "big.decimal.equals.replace.quickfix");

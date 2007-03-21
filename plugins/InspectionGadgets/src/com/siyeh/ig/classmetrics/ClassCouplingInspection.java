@@ -35,9 +35,11 @@ public class ClassCouplingInspection
     /** @noinspection PublicField*/
     public boolean m_includeLibraryClasses = false;
 
+    @NotNull
     public String getID(){
         return "OverlyCoupledClass";
     }
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "overly.coupled.class.display.name");

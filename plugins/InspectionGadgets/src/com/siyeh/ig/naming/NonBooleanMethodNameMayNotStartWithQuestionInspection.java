@@ -94,6 +94,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection
         nameCheckString = buffer.toString();
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "non.boolean.method.name.must.not.start.with.question.display.name");

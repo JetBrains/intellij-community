@@ -24,10 +24,12 @@ import org.jetbrains.annotations.NotNull;
 public class UseOfAnotherObjectsPrivateFieldInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "AccessingNonPublicFieldOfAnotherObject";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "accessing.non.public.field.of.another.object.display.name");

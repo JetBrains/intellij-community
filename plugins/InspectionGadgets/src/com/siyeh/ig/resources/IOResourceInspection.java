@@ -30,10 +30,12 @@ import java.util.Set;
 
 public class IOResourceInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "IOResourceOpenedButNotSafelyClosed";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "i.o.resource.opened.not.closed.display.name");

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class StaticImportInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message("static.import.display.name");
     }
@@ -49,6 +50,7 @@ public class StaticImportInspection extends BaseInspection {
 
     private static class StaticImportFix extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "static.import.replace.quickfix");

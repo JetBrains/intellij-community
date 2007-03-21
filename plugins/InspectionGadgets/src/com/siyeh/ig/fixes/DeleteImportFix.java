@@ -21,8 +21,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NotNull;
 
 public  class DeleteImportFix extends InspectionGadgetsFix {
+    @NotNull
     public String getName() {
         return InspectionGadgetsBundle.message("delete.import.quickfix");
     }

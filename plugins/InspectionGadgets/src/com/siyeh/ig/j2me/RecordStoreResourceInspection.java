@@ -25,10 +25,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class RecordStoreResourceInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "RecordStoreOpenedButNotSafelyClosed";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "recordstore.opened.not.safely.closed.display.name");

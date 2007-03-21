@@ -41,6 +41,7 @@ public class StringConcatenationInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean ignoreSystemErrs = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "string.concatenation.display.name");

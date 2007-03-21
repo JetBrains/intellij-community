@@ -94,6 +94,7 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
         exceptionCheckString = buffer.toString();
     }
 
+    @NotNull
     public String getID(){
         return "ProhibitedExceptionDeclared";
     }

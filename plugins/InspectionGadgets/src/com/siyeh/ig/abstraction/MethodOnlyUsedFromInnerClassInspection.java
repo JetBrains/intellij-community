@@ -35,6 +35,7 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean ignoreMethodsAccessedFromAnonymousClass = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "method.only.used.from.inner.class.display.name");

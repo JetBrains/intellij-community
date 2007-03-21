@@ -35,6 +35,7 @@ public class MissortedModifiersInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean m_requireAnnotationsFirst = true;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "missorted.modifiers.display.name");
@@ -63,6 +64,7 @@ public class MissortedModifiersInspection extends BaseInspection {
 
     private static class SortModifiersFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "missorted.modifiers.sort.quickfix");

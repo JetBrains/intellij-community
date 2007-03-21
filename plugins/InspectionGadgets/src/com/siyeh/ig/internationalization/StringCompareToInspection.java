@@ -31,10 +31,12 @@ import java.util.ArrayList;
 
 public class StringCompareToInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "CallToStringCompareTo";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "string.compareto.call.display.name");

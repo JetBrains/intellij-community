@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class StringBufferFieldInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "stringbuffer.field.display.name");

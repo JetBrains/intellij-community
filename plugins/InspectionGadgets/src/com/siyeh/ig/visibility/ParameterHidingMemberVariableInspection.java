@@ -42,10 +42,12 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean m_ignoreForAbstractMethods = false;
 
+    @NotNull
     public String getID(){
         return "ParameterHidesMemberVariable";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "parameter.hides.member.variable.display.name");

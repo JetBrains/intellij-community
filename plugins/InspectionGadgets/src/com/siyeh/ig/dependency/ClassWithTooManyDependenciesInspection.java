@@ -33,12 +33,15 @@ import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import javax.swing.*;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 public class ClassWithTooManyDependenciesInspection
         extends BaseGlobalInspection {
 
     @SuppressWarnings({"PublicField"})
     public int limit = 10;
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.DEPENDENCY_GROUP_NAME;
     }

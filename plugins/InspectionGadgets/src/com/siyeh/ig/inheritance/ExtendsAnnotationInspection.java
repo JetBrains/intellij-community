@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExtendsAnnotationInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "ClassExplicitlyAnnotation";
     }

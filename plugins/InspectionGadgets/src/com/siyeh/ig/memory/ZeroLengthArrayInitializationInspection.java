@@ -26,10 +26,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class ZeroLengthArrayInitializationInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "ZeroLengthArrayAllocation";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "array.allocation.zero.length.display.name");

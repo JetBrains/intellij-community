@@ -25,12 +25,14 @@ import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class CyclicClassInitializationInspection extends BaseGlobalInspection {
 
+    @NotNull
     public String getGroupDisplayName() {
         return "Dependency Issues";
     }

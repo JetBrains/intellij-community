@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ComparatorNotSerializableInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "comparator.not.serializable.display.name");

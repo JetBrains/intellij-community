@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class ReflectionForUnavailableAnnotationInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "reflection.for.unavailable.annotation.display.name");

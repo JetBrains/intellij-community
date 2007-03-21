@@ -15,11 +15,13 @@ import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.dependency.DependencyUtils;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 public class ClassUnconnectedToPackageInspection extends BaseGlobalInspection {
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.PACKAGING_GROUP_NAME;
     }

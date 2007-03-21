@@ -27,10 +27,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class SystemOutErrInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "UseOfSystemOutOrSystemErr";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "use.system.out.err.display.name");

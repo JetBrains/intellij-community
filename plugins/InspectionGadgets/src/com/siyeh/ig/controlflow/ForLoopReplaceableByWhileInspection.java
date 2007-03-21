@@ -40,6 +40,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
                 "for.loop.replaceable.by.while.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "ForLoopReplaceableByWhile";
     }
@@ -62,6 +63,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
 
     private static class ReplaceForByWhileFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "for.loop.replaceable.by.while.replace.quickfix");

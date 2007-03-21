@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public class AssignmentToCatchBlockParameterInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "assignment.to.catch.block.parameter.display.name");
@@ -52,6 +53,7 @@ public class AssignmentToCatchBlockParameterInspection
     private static class AssignmentToCatchBlockParameterFix
             extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "assignment.to.catch.block.parameter.extract.quickfix");

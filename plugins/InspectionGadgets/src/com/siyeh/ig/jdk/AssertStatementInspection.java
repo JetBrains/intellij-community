@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class AssertStatementInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "assert.statement.display.name");

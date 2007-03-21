@@ -35,6 +35,7 @@ public class DuplicateConditionInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean ignoreMethodCalls = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "duplicate.condition.display.name");

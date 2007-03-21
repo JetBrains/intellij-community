@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MissingDeprecatedAnnotationInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "missing.deprecated.annotation.display.name");
@@ -49,6 +50,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
     private static class MissingDeprecatedAnnotationFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "missing.deprecated.annotation.add.quickfix");

@@ -27,10 +27,12 @@ import org.jetbrains.annotations.Nullable;
 
 public class ThisEscapedInConstructorInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "ThisEscapedInObjectConstruction";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "this.reference.escaped.in.construction.display.name");

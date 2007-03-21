@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class FinalizeNotProtectedInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "finalize.not.declared.protected.display.name");
@@ -49,6 +50,7 @@ public class FinalizeNotProtectedInspection extends BaseInspection {
 
     private static class ProtectedFinalizeFix extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message("make.protected.quickfix");
         }

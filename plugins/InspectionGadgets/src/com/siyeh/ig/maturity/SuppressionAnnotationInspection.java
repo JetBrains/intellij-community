@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class SuppressionAnnotationInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "inspection.suppression.annotation.display.name");

@@ -33,6 +33,7 @@ public class JUnitTestClassNamingConventionInspection
     private static final int DEFAULT_MIN_LENGTH = 8;
     private static final int DEFAULT_MAX_LENGTH = 64;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "j.unit.test.class.naming.convention.display.name");

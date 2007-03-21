@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class AbstractClassExtendsConcreteClassInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "abstract.class.extends.concrete.class.display.name");

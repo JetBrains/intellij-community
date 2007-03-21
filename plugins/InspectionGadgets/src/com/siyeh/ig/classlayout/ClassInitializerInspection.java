@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ClassInitializerInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "NonStaticInitializer";
     }

@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class CastConflictsWithInstanceofInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "cast.conflicts.with.instanceof.display.name");

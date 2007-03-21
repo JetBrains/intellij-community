@@ -24,10 +24,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class TestCaseWithConstructorInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "JUnitTestCaseWithNonTrivialConstructors";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "test.case.with.constructor.display.name");

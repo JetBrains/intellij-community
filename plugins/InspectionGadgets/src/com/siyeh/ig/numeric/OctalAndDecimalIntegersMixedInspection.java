@@ -28,10 +28,12 @@ import org.jetbrains.annotations.NotNull;
 public class OctalAndDecimalIntegersMixedInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "OctalAndDecimalIntegersInSameArray";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "octal.and.decimal.integers.in.same.array.display.name");

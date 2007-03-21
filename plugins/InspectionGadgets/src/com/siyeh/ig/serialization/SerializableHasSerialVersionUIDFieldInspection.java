@@ -34,10 +34,12 @@ public class SerializableHasSerialVersionUIDFieldInspection
     /** @noinspection PublicField*/
     public boolean m_ignoreSerializableDueToInheritance = true;
 
+    @NotNull
     public String getID(){
         return "serial";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "serializable.class.without.serialversionuid.display.name");

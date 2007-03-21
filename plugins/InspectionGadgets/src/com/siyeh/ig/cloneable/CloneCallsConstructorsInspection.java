@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CloneCallsConstructorsInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "clone.instantiates.objects.with.constructor.display.name");

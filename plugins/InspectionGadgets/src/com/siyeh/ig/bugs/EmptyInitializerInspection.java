@@ -27,10 +27,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class EmptyInitializerInspection extends BaseInspection{
     
+    @NotNull
     public String getID(){
         return "EmptyClassInitializer";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "empty.class.initializer.display.name");
@@ -48,6 +50,7 @@ public class EmptyInitializerInspection extends BaseInspection{
 
     private static class EmptyInitializerFix extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "empty.class.initializer.delete.quickfix");

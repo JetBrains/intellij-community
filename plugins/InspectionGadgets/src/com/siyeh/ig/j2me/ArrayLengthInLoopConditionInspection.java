@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ArrayLengthInLoopConditionInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "array.length.in.loop.condition.display.name");

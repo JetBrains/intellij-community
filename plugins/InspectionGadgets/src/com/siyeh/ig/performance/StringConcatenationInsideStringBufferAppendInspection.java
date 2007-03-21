@@ -34,6 +34,7 @@ import java.util.List;
 public class StringConcatenationInsideStringBufferAppendInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "string.concatenation.inside.string.buffer.append.display.name");
@@ -63,6 +64,7 @@ public class StringConcatenationInsideStringBufferAppendInspection
     private static class ReplaceWithChainedAppendFix
             extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "string.concatenation.inside.string.buffer.append.replace.quickfix");

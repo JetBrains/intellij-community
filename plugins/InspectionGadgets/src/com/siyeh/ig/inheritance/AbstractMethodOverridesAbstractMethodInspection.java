@@ -51,6 +51,7 @@ public class AbstractMethodOverridesAbstractMethodInspection
     private static class AbstractMethodOverridesAbstractMethodFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "abstract.method.overrides.abstract.method.remove.quickfix");

@@ -28,10 +28,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryReturnInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "UnnecessaryReturnStatement";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.return.display.name");

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public class OverriddenMethodCallInConstructorInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "overridden.method.call.in.constructor.display.name");

@@ -37,10 +37,12 @@ public class FieldHidesSuperclassFieldInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean m_ignoreInvisibleFields = true;
 
+    @NotNull
     public String getID(){
         return "FieldNameHidesFieldInSuperclass";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "field.name.hides.in.superclass.display.name");

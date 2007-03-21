@@ -37,11 +37,13 @@ public class NonProtectedConstructorInAbstractClassInspection
      */
     public boolean m_ignoreNonPublicClasses = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "non.protected.constructor.in.abstract.class.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "ConstructorNotProtectedInAbstractClass";
     }

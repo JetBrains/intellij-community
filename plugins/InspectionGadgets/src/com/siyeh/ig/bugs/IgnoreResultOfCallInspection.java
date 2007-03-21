@@ -113,10 +113,12 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
         callCheckString = buffer.toString();
     }
 
+    @NotNull
     public String getID(){
         return "ResultOfMethodCallIgnored";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "result.of.method.call.ignored.display.name");

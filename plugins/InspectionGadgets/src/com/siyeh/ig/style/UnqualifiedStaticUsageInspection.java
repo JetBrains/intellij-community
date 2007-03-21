@@ -39,6 +39,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean m_ignoreStaticAccessFromStaticContext = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unqualified.static.usage.display.name");
@@ -92,6 +93,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection {
             m_fixField = fixField;
         }
 
+        @NotNull
         public String getName() {
             if (m_fixField) {
                 return InspectionGadgetsBundle.message(

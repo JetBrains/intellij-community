@@ -34,10 +34,12 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean ignorePrivateMethodsAndFields = false;
 
+    @NotNull
     public String getID(){
         return "CollectionDeclaredAsConcreteClass";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "collection.declared.by.class.display.name");

@@ -30,6 +30,7 @@ public class ThreeNegationsPerMethodInspection extends BaseInspection {
     /** @noinspection PublicField */
     public boolean m_ignoreInEquals = true;
 
+    @NotNull
     public String getID() {
         return "MethodWithMoreThanThreeNegations";
     }

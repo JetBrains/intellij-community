@@ -34,6 +34,7 @@ public class AssignmentToForLoopParameterInspection
     /** @noinspection PublicField for externalization purposes*/
     public boolean m_checkForeachParameters = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "assignment.to.for.loop.parameter.display.name");

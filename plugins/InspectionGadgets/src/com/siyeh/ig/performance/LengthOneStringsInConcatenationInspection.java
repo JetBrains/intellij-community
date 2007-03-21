@@ -31,11 +31,13 @@ import org.jetbrains.annotations.NotNull;
 public class LengthOneStringsInConcatenationInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "length.one.strings.in.concatenation.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "SingleCharacterStringConcatenation";
     }
@@ -60,6 +62,7 @@ public class LengthOneStringsInConcatenationInspection
     private static class ReplaceStringsWithCharsFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "length.one.strings.in.concatenation.replace.quickfix");

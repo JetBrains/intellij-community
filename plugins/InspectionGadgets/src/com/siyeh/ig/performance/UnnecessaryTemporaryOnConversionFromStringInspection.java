@@ -50,6 +50,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
         s_conversionMap.put("java.lang.Short", "parseShort");
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.temporary.on.conversion.from.string.display.name");
@@ -133,6 +134,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
             m_name = name;
         }
 
+        @NotNull
         public String getName() {
             return m_name;
         }

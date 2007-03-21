@@ -27,10 +27,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class CharacterComparisonInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "CharacterComparison";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "character.comparison.display.name");

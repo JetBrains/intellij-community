@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class FloatingPointEqualityInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "floating.point.equality.display.name");

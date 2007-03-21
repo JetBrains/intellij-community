@@ -32,6 +32,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection
     /** @noinspection PublicField*/
     public boolean ignoreGetMessage = false;
 
+    @NotNull
     public String getID() {
         return "ThrowInsideCatchBlockWhichIgnoresCaughtException";
     }

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public class UnnecessarySuperConstructorInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "UnnecessaryCallToSuper";
     }
@@ -51,6 +52,7 @@ public class UnnecessarySuperConstructorInspection
     private static class UnnecessarySuperConstructorFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "unnecessary.super.constructor.remove.quickfix");

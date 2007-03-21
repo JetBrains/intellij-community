@@ -36,6 +36,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
                 "fallthru.in.switch.statement.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "fallthrough";
     }

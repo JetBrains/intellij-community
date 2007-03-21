@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class ExceptionNameDoesntEndWithExceptionInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "ExceptionClassNameDoesntEndWithException";
     }

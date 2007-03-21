@@ -70,6 +70,7 @@ public class RedundantFieldInitializationInspection extends BaseInspection {
     private static class RedundantFieldInitializationFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "redundant.field.initialization.remove.quickfix");

@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 public class OverridableMethodCallDuringObjectConstructionInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "overridable.method.call.in.constructor.display.name");

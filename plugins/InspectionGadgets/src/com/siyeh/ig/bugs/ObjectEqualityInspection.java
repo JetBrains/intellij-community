@@ -52,6 +52,7 @@ public class ObjectEqualityInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean m_ignorePrivateConstructors = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "object.comparison.display.name");
@@ -87,6 +88,7 @@ public class ObjectEqualityInspection extends BaseInspection {
 
     private static class EqualityToEqualsFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "object.comparison.replace.quickfix");

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ProtectedMemberInFinalClassInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "protected.member.in.final.class.display.name");

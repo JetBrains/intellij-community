@@ -73,6 +73,7 @@ public class TailRecursionInspection extends BaseInspection {
 
     private static class RemoveTailRecursionFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "tail.recursion.replace.quickfix");

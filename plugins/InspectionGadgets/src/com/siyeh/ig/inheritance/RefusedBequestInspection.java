@@ -31,6 +31,7 @@ public class RefusedBequestInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean ignoreEmptySuperMethods = false;
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message("refused.bequest.display.name");
     }

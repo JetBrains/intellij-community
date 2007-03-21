@@ -24,10 +24,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class NativeMethodsInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "NativeMethod";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message("native.method.display.name");
     }

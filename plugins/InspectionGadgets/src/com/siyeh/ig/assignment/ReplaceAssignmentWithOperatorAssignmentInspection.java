@@ -41,10 +41,12 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
     /** @noinspection PublicField*/
     public boolean ignoreObscureOperators = false;
 
+    @NotNull
     public String getID(){
         return "AssignmentReplaceableWithOperatorAssignment";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "assignment.replaceable.with.operator.assignment.display.name");

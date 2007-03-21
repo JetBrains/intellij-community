@@ -25,9 +25,11 @@ import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.ide.DataManager;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NotNull;
 
 public class ExtractMethodFix extends InspectionGadgetsFix {
 
+    @NotNull
     public String getName() {
         return InspectionGadgetsBundle.message("extract.method.quickfix");
     }

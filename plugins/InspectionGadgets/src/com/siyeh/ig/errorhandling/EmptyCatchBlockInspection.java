@@ -36,6 +36,7 @@ public class EmptyCatchBlockInspection extends BaseInspection {
     /** @noinspection PublicField */
     public boolean m_ignoreIgnoreParameter = true;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "empty.catch.block.display.name");

@@ -33,10 +33,12 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     /** @noinspection PublicField */
     public boolean m_ignoreUnlessAssigned = false;
 
+    @NotNull
     public String getID() {
         return "StringContatenationInLoop";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "string.concatenation.in.loops.display.name");

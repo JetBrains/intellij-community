@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 public class IndexOfReplaceableByContainsInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "indexof.replaceable.by.contains.display.name");
@@ -93,6 +94,7 @@ public class IndexOfReplaceableByContainsInspection
             replaceExpression(expression, newExpressionText);
         }
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "replace.indexof.with.contains.quickfix");

@@ -30,10 +30,12 @@ public class AnonymousClassMethodCountInspection
 
     private static final int DEFAULT_METHOD_COUNT_LIMIT = 1;
 
+    @NotNull
     public String getID(){
         return "AnonymousInnerClassWithTooManyMethods";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "anonymous.inner.class.with.too.many.methods.display.name");

@@ -28,10 +28,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class IncompatibleMaskInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "IncompatibleBitwiseMaskOperation";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "incompatible.mask.operation.display.name");

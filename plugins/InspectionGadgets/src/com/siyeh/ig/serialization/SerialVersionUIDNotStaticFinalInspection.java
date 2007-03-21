@@ -28,10 +28,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class SerialVersionUIDNotStaticFinalInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "SerialVersionUIDWithWrongSignature";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "serialversionuid.private.static.final.long.display.name");

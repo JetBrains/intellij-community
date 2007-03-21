@@ -43,6 +43,7 @@ import java.util.Set;
  */
 public abstract class DevKitInspectionBase extends LocalInspectionTool {
 
+  @NotNull
   public String getGroupDisplayName() {
     return DevKitBundle.message("inspections.group.name");
   }

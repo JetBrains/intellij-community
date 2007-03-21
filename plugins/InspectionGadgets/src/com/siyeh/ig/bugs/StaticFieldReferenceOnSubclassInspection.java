@@ -29,10 +29,12 @@ import org.jetbrains.annotations.NotNull;
 public class StaticFieldReferenceOnSubclassInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "StaticFieldReferencedViaSubclass";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "static.field.via.subclass.display.name");
@@ -53,6 +55,7 @@ public class StaticFieldReferenceOnSubclassInspection
 
     private static class StaticCallOnSubclassFix extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "static.field.via.subclass.rationalize.quickfix");

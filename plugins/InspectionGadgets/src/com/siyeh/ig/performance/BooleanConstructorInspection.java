@@ -32,10 +32,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class BooleanConstructorInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "BooleanConstructorCall";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "boolean.constructor.display.name");
@@ -64,6 +66,7 @@ public class BooleanConstructorInspection extends BaseInspection {
         private static final String TRUE = '\"' + PsiKeyword.TRUE + '\"';
         private static final String FALSE = '\"' + PsiKeyword.FALSE + '\"';
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "boolean.aonstructor.simplify.quickfix");

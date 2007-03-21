@@ -26,10 +26,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThrowablePrintStackTraceInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "CallToPrintStackTrace";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "printstacktrace.call.display.name");

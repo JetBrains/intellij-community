@@ -28,6 +28,7 @@ import javax.swing.JComponent;
 public class EnumSwitchStatementWhichMissesCasesInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "enum.switch.statement.which.misses.cases.display.name");

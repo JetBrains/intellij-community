@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class NumberEqualityInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "number.comparison.display.name");
@@ -57,6 +58,7 @@ public class NumberEqualityInspection extends BaseInspection {
 
     private static class EqualityToEqualsFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "string.comparison.replace.quickfix");

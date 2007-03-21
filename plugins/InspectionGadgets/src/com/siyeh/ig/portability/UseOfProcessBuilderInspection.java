@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class UseOfProcessBuilderInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "use.processbuilder.class.display.name");

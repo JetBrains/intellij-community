@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class TextLabelInSwitchStatementInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "text.label.in.switch.statement.display.name");

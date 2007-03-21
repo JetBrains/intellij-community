@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ObjectNotifyInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "CallToNotifyInsteadOfNotifyAll";
     }
@@ -53,6 +54,7 @@ public class ObjectNotifyInspection extends BaseInspection {
 
     private static class ObjectNotifyFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "object.notify.replace.quickfix");

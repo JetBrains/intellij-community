@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class StaticSuiteInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "SuiteNotDeclaredStatic";
     }

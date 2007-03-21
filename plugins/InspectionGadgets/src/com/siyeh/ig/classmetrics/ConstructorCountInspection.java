@@ -25,10 +25,12 @@ public class ConstructorCountInspection extends ClassMetricInspection {
 
     private static final int CONSTRUCTOR_COUNT_LIMIT = 5;
 
+    @NotNull
     public String getID() {
         return "ClassWithTooManyConstructors";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "too.many.constructors.display.name");

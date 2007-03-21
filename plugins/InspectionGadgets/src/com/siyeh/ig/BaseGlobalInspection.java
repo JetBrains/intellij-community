@@ -19,12 +19,14 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.GlobalInspectionTool;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseGlobalInspection extends GlobalInspectionTool {
 
     private String shortName = null;
     @NonNls private static final String INSPECTION = "Inspection";
 
+    @NotNull
     public String getShortName() {
         if (shortName == null) {
             final Class<? extends BaseGlobalInspection> aClass = getClass();
@@ -54,6 +56,7 @@ public abstract class BaseGlobalInspection extends GlobalInspectionTool {
         return builder.toString();
     }
 
+    @NotNull
     public String getDisplayName() {
         @NonNls final String displayNameSuffix = ".display.name";
         return InspectionGadgetsBundle.message(getPropertyPrefixForInspection() +
@@ -64,6 +67,7 @@ public abstract class BaseGlobalInspection extends GlobalInspectionTool {
         return true;
     }
 
+    @NotNull
     public HighlightDisplayLevel getDefaultLevel() {
         return HighlightDisplayLevel.WARNING;
     }

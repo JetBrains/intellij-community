@@ -22,9 +22,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class MakeInitializerExplicitFix extends InspectionGadgetsFix{
     
+    @NotNull
     public String getName(){
         return InspectionGadgetsBundle.message(
                 "make.initialization.explicit.quickfix");

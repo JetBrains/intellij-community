@@ -36,11 +36,13 @@ public class StringConstructorInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean ignoreSubstringArguments = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "string.constructor.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "RedundantStringConstructorCall";
     }
@@ -88,6 +90,7 @@ public class StringConstructorInspection extends BaseInspection {
             }
         }
 
+        @NotNull
         public String getName() {
             return m_name;
         }

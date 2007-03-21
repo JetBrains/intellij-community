@@ -25,11 +25,13 @@ import org.jetbrains.annotations.NotNull;
 public class ThrownExceptionsPerMethodInspection
         extends MethodMetricInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "thrown.exceptions.per.method.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "MethodWithTooExceptionsDeclared";
     }

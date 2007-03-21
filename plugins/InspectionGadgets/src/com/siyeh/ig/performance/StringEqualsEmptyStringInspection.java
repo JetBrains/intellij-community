@@ -51,6 +51,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
     private static class StringEqualsEmptyStringFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "string.equals.empty.string.replace.quickfix");

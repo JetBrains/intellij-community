@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class NullArgumentToVariableArgMethodInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "null.argument.to.var.arg.method.display.name");

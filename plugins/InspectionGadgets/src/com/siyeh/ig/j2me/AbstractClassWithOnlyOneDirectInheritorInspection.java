@@ -33,6 +33,7 @@ import java.util.Collection;
 public class AbstractClassWithOnlyOneDirectInheritorInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "abstract.class.with.only.one.direct.inheritor.display.name");

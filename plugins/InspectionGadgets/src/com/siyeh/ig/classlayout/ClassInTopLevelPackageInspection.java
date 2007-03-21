@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ClassInTopLevelPackageInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "ClassWithoutPackageStatement";
     }

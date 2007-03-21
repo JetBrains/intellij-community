@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ShiftOutOfRangeInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "shift.operation.by.inappropriate.constant.display.name");

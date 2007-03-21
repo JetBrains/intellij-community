@@ -31,6 +31,7 @@ public class ThrowCaughtLocallyInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean ignoreRethrownExceptions = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "throw.caught.locally.display.name");

@@ -24,10 +24,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class SystemExitInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "CallToSystemExit";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("system.exit.call.display.name");
     }

@@ -60,6 +60,7 @@ public class ComparisonToNaNInspection extends BaseInspection {
 
     private static class ComparisonToNaNFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "comparison.to.nan.replace.quickfix");

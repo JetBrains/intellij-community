@@ -23,9 +23,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NotNull;
 
 public class MakeSerializableFix extends InspectionGadgetsFix{
 
+    @NotNull
     public String getName(){
         return InspectionGadgetsBundle.message(
                 "make.class.serializable.quickfix");

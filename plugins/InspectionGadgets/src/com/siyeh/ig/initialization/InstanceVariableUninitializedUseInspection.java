@@ -33,10 +33,12 @@ public class InstanceVariableUninitializedUseInspection
     /** @noinspection PublicField*/
     public boolean m_ignorePrimitives = false;
 
+    @NotNull
     public String getID() {
         return "InstanceVariableUsedBeforeInitialized";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "instance.variable.used.before.initialized.display.name");

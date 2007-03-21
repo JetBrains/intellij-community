@@ -35,10 +35,12 @@ public class NonStaticFinalLoggerInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public String loggerClassName = "java.util.logging.Logger";
 
+    @NotNull
     public String getID(){
         return "NonConstantLogger";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "non.constant.logger.display.name");

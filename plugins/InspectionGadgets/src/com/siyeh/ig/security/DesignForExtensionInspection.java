@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class DesignForExtensionInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "design.for.extension.display.name");

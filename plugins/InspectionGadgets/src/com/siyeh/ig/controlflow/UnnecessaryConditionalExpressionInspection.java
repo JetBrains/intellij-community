@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 public class UnnecessaryConditionalExpressionInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "RedundantConditionalExpression";
     }
@@ -80,6 +81,7 @@ public class UnnecessaryConditionalExpressionInspection
     private static class UnnecessaryConditionalFix 
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "constant.conditional.expression.simplify.quickfix");

@@ -72,6 +72,7 @@ public class SynchronizedMethodInspection extends BaseInspection {
 
     private static class SynchronizedMethodFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "synchronized.method.move.quickfix");

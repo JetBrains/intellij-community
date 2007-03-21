@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PointlessIndexOfComparisonInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "pointless.indexof.comparison.display.name");

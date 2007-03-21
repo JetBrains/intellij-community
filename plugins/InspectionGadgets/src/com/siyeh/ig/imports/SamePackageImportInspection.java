@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class SamePackageImportInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "import.from.same.package.display.name");

@@ -28,10 +28,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class NonShortCircuitBooleanInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "NonShortCircuitBooleanExpression";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "non.short.circuit.boolean.expression.display.name");
@@ -50,6 +52,7 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
     private static class NonShortCircuitBooleanFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "non.short.circuit.boolean.expression.replace.quickfix");

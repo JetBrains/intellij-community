@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class TeardownCallsSuperTeardownInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "TearDownDoesntCallSuperTearDown";
     }
@@ -48,6 +49,7 @@ public class TeardownCallsSuperTeardownInspection extends BaseInspection {
 
     private static class AddSuperTearDownCall extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "teardown.calls.super.teardown.add.quickfix");

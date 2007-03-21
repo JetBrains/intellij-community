@@ -26,10 +26,12 @@ import org.jetbrains.annotations.Nullable;
 
 public class StringToUpperWithoutLocaleInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "StringToUpperCaseOrToLowerCaseWithoutLocale";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "string.touppercase.tolowercase.without.locale.display.name");

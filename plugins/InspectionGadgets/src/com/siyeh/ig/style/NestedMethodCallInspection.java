@@ -70,6 +70,7 @@ public class NestedMethodCallInspection extends BaseInspection {
 
     private static class NestedMethodCallFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "introduce.variable.quickfix");

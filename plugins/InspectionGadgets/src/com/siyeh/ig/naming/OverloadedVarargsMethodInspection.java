@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class OverloadedVarargsMethodInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "overloaded.vararg.method.display.name");

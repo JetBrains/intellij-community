@@ -31,10 +31,12 @@ public class StaticVariableUninitializedUseInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean m_ignorePrimitives = false;
 
+    @NotNull
     public String getID() {
         return "StaticVariableUsedBeforeInitialization";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "static.variable.used.before.initialization.display.name");

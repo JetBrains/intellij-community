@@ -56,6 +56,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection {
 
     private static class UnnecessarySemicolonFix extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "unnecessary.semicolon.remove.quickfix");

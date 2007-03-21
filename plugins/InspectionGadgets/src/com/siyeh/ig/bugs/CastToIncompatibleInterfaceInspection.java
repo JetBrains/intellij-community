@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CastToIncompatibleInterfaceInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "casting.to.incompatible.interface.display.name");

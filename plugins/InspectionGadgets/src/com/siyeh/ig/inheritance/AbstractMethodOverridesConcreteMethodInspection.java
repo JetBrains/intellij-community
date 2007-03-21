@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class AbstractMethodOverridesConcreteMethodInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "abstract.method.overrides.concrete.method.display.name");

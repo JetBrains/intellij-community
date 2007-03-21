@@ -25,10 +25,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class EnumAsNameInspection extends BaseInspection{
 
+    @NotNull
     public String getID(){
         return "EnumAsIdentifier";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "use.enum.as.identifier.display.name");

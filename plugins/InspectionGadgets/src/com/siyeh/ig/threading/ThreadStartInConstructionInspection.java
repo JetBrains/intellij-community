@@ -26,10 +26,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThreadStartInConstructionInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "CallToThreadStartDuringObjectConstruction";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "thread.start.in.construction.display.name");

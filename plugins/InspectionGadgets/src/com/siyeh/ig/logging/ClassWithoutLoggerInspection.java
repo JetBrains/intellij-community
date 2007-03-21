@@ -41,6 +41,7 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean ignoreSuperLoggers = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("no.logger.display.name");
     }

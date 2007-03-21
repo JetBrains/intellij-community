@@ -38,6 +38,7 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public String loggerClassName = "java.util.logging.Logger";
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("multiple.loggers.display.name");
     }

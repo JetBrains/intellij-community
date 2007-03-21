@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ClassWithoutToStringInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "class.without.tostring.display.name");

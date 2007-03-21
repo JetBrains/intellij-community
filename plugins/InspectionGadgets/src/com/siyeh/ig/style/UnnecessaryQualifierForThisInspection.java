@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class UnnecessaryQualifierForThisInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.qualifier.for.this.display.name");
@@ -51,6 +52,7 @@ public class UnnecessaryQualifierForThisInspection
     private static class UnnecessaryQualifierForThisFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "unnecessary.qualifier.for.this.remove.quickfix");

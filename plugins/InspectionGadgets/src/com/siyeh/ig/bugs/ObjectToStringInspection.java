@@ -30,6 +30,7 @@ import java.util.Set;
 
 public class ObjectToStringInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
       return InspectionGadgetsBundle.message(
               "default.tostring.call.display.name");

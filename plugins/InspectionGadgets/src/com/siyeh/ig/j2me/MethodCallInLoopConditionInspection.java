@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MethodCallInLoopConditionInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "method.call.in.loop.condition.display.name");

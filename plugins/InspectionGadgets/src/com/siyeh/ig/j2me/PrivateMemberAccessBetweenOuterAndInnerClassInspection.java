@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "private.member.access.between.outer.and.inner.classes.display.name");
@@ -65,6 +66,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
             elementName = containingClassName + '.' + memberName;
         }
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "private.member.access.between.outer.and.inner.classes.make.local.quickfix",

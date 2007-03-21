@@ -56,6 +56,7 @@ public class LiteralAsArgToStringEqualsInspection
 
     private static class SwapEqualsFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "literal.as.arg.to.string.equals.flip.quickfix");

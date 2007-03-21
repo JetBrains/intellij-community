@@ -26,10 +26,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class HibernateResourceInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "HibernateResourceOpenedButNotSafelyClosed";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "hibernate.resource.opened.not.closed.display.name");

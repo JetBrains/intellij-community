@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class ControlFlowStatementWithoutBracesInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "control.flow.statement.without.braces.display.name");
@@ -46,6 +47,7 @@ public class ControlFlowStatementWithoutBracesInspection
 
     private static class ControlFlowStatementFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "control.flow.statement.without.braces.add.quickfix");

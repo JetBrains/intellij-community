@@ -36,6 +36,7 @@ public class SwitchStatementsWithoutDefaultInspection
                 "switch.statements.without.default.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "SwitchStatementWithoutDefaultBranch";
     }

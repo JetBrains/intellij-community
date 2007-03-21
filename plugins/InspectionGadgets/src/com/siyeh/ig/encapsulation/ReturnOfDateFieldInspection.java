@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReturnOfDateFieldInspection extends BaseInspection{
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "return.date.calendar.field.display.name");

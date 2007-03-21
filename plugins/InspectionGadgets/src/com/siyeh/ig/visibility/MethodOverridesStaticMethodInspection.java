@@ -28,10 +28,12 @@ import java.util.Set;
 
 public class MethodOverridesStaticMethodInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "MethodOverridesStaticMethodOfSuperclass";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "method.overrides.static.display.name");

@@ -27,6 +27,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
@@ -36,6 +37,7 @@ public class PackageWithTooFewClassesInspection extends BaseGlobalInspection {
     @SuppressWarnings({"PublicField"})
     public int limit = 3;
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.PACKAGING_GROUP_NAME;
     }

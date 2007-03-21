@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class AssignmentToStaticFieldFromInstanceMethodInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "assignment.to.static.field.from.instance.method.display.name");

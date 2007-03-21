@@ -129,6 +129,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection
 
     private static class MultiplyByPowerOfTwoFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "multiply.or.divide.by.power.of.two.replace.quickfix");

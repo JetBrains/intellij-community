@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
 
 public class SetupCallsSuperSetupInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "SetUpDoesntCallSuperSetUp";
     }
@@ -49,6 +50,7 @@ public class SetupCallsSuperSetupInspection extends BaseInspection {
 
     private static class AddSuperSetUpCall extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "setup.calls.super.setup.add.quickfix");

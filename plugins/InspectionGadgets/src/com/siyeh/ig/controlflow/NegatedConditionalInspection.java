@@ -37,11 +37,13 @@ public class NegatedConditionalInspection extends BaseInspection {
     /** @noinspection PublicField */
     public boolean m_ignoreNegatedNullComparison = true;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "negated.conditional.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "ConditionalExpressionWithNegatedCondition";
     }
@@ -68,6 +70,7 @@ public class NegatedConditionalInspection extends BaseInspection {
 
     private static class NegatedConditionalFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "negated.conditional.invert.quickfix");

@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 public class RandomDoubleForRandomIntegerInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "UsingRandomNextDoubleForRandomInteger";
     }
@@ -55,6 +56,7 @@ public class RandomDoubleForRandomIntegerInspection
     private static class RandomDoubleForRandomIntegerFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "random.double.for.random.integer.replace.quickfix");

@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class SimplifiableIfStatementInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "simplifiable.if.statement.display.name");

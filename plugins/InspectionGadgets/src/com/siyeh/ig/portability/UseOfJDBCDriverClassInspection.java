@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class UseOfJDBCDriverClassInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "use.of.concrete.jdbc.driver.class.display.name");

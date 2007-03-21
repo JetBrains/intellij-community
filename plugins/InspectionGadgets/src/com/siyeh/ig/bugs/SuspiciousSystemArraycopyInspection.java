@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class SuspiciousSystemArraycopyInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "suspicious.system.arraycopy.display.name");

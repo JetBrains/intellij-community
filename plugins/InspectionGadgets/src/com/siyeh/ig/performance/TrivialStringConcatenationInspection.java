@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class TrivialStringConcatenationInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "ConcatenationWithEmptyString";
     }
@@ -93,6 +94,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
                             calculateReplacementExpression(expression));
         }
 
+        @NotNull
         public String getName() {
             return m_name;
         }

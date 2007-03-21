@@ -38,6 +38,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
     @SuppressWarnings({"PublicField"})
     public boolean ignoreNegations = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "size.replaceable.by.isempty.display.name");
@@ -64,6 +65,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
     private static class SizeReplaceableByIsEmptyFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "size.replaceable.by.isempty.quickfix");

@@ -30,10 +30,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThreadRunInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("thread.run.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "CallToThreadRun";
     }

@@ -24,10 +24,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class SystemGCInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "CallToSystemGC";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("gc.call.display.name");
     }

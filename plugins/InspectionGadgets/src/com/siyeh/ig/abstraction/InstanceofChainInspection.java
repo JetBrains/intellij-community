@@ -23,10 +23,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class InstanceofChainInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "ChainOfInstanceofChecks";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "chain.of.instanceof.checks.display.name");

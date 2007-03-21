@@ -32,6 +32,7 @@ public class TestMethodIsPublicVoidNoArgInspection extends BaseInspection {
                 "test.method.is.public.void.no.arg.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "TestMethodWithIncorrectSignature";
     }

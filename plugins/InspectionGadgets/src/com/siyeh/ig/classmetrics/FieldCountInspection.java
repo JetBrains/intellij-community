@@ -39,10 +39,12 @@ public class FieldCountInspection extends ClassMetricInspection {
     /** @noinspection PublicField*/
     public boolean m_considerStaticFinalFieldsConstant = false;
 
+    @NotNull
     public String getID(){
         return "ClassWithTooManyFields";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("too.many.fields.display.name");
     }

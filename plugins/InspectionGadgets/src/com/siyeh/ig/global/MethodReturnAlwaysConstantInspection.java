@@ -31,9 +31,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
     private static final Key<Boolean> ALWAYS_CONSTANT = Key.create("ALWAYS_CONSTANT");
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }

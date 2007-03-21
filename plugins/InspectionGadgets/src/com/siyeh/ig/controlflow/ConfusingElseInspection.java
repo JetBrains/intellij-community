@@ -31,10 +31,12 @@ import org.jetbrains.annotations.Nullable;
 
 public class ConfusingElseInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "ConfusingElseBranch";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("confusing.else.display.name");
     }

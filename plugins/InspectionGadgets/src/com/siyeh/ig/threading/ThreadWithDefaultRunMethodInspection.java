@@ -25,11 +25,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThreadWithDefaultRunMethodInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "thread.with.default.run.method.display.name");
     }
 
+    @NotNull
     public String getID() {
         return "InstantiatingAThreadWithDefaultRunMethod";
     }

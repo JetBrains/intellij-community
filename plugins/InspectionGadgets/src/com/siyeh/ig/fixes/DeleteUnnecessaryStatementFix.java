@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class DeleteUnnecessaryStatementFix extends InspectionGadgetsFix {
 
@@ -32,6 +33,7 @@ public class DeleteUnnecessaryStatementFix extends InspectionGadgetsFix {
         this.name = name;
     }
 
+    @NotNull
     public String getName() {
         return InspectionGadgetsBundle.message(
                 "smth.unnecessary.remove.quickfix", name);

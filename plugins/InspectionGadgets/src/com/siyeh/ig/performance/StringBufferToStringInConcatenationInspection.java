@@ -52,6 +52,7 @@ public class StringBufferToStringInConcatenationInspection
 
     private static class StringBufferToStringFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "string.buffer.to.string.in.concatenation.remove.quickfix");

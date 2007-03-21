@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public class EqualsWhichDoesntCheckParameterClassInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "equals.doesnt.check.class.parameter.display.name");

@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class OverloadedMethodsWithSameNumberOfParametersInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "overloaded.methods.with.same.number.parameters.display.name");

@@ -52,6 +52,7 @@ public class FieldMayBeStaticInspection extends BaseInspection {
 
     private static class MakeStaticFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message("make.static.quickfix");
         }

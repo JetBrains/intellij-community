@@ -32,6 +32,7 @@ public class StaticCollectionInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean m_ignoreWeakCollections = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "static.collection.display.name");

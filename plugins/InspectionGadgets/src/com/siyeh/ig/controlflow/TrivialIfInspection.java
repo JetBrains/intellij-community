@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class TrivialIfInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "RedundantIfStatement";
     }
@@ -60,6 +61,7 @@ public class TrivialIfInspection extends BaseInspection {
     }
 
     private static class TrivialIfFix extends InspectionGadgetsFix {
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "constant.conditional.expression.simplify.quickfix");

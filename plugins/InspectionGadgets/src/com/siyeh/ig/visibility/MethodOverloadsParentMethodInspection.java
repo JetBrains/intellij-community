@@ -31,10 +31,12 @@ import java.util.Set;
 
 public class MethodOverloadsParentMethodInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "MethodOverloadsMethodOfSuperclass";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message("method.overloads.display.name");
     }

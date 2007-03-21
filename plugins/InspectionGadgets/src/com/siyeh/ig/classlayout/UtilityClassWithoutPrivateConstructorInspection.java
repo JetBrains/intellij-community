@@ -42,6 +42,7 @@ public class UtilityClassWithoutPrivateConstructorInspection
     /** @noinspection PublicField for externalization*/
     public boolean ignoreClassesWithOnlyMain = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "utility.class.without.private.constructor.display.name");

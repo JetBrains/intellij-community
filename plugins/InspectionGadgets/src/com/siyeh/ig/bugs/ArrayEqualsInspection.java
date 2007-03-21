@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ArrayEqualsInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "equals.called.on.array.display.name");
@@ -50,6 +51,7 @@ public class ArrayEqualsInspection extends BaseInspection {
 
     private static class ArrayEqualsFix extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
           return InspectionGadgetsBundle.message(
                   "equals.called.on.array.replace.quickfix");

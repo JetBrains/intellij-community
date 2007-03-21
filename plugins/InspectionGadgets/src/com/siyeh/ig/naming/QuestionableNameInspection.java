@@ -91,6 +91,7 @@ public class QuestionableNameInspection extends BaseInspection {
         nameCheckString = buffer.toString();
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "questionable.name.display.name");

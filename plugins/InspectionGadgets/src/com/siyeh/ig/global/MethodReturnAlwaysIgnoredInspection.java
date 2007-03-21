@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.MethodInheritanceUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -36,6 +37,7 @@ public class MethodReturnAlwaysIgnoredInspection extends BaseGlobalInspection {
 
     private static final Key<Boolean> ALWAYS_IGNORED = Key.create("ALWAYS_IGNORED_METHOD");
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }

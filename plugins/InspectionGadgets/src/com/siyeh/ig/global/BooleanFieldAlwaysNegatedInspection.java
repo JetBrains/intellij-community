@@ -26,15 +26,18 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class BooleanFieldAlwaysNegatedInspection extends BaseGlobalInspection {
 
     private static final Key<Boolean> ALWAYS_INVERTED = Key.create("ALWAYS_INVERTED_FIELD");
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("boolean.field.always.negated.display.name");
     }
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }

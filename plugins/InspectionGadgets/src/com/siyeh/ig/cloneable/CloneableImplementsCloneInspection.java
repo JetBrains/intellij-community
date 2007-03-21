@@ -32,10 +32,12 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean m_ignoreCloneableDueToInheritance = false;
 
+    @NotNull
     public String getID() {
         return "CloneableClassWithoutClone";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "cloneable.class.without.clone.display.name");

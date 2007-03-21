@@ -21,9 +21,11 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NotNull;
 
 public class AddSerialVersionUIDFix extends InspectionGadgetsFix{
 
+    @NotNull
     public String getName(){
       return InspectionGadgetsBundle.message("add.serialversionuidfield.quickfix");
     }

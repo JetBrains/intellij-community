@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class StringToStringInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "RedundantStringToString";
     }
@@ -57,6 +58,7 @@ public class StringToStringInspection extends BaseInspection {
 
     private static class StringToStringFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "constant.conditional.expression.simplify.quickfix");

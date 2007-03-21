@@ -33,10 +33,12 @@ import org.jetbrains.annotations.NotNull;
 public class NonSerializableWithSerialVersionUIDFieldInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "NonSerializableClassWithSerialVersionUID";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "non.serializable.with.serialversionuid.display.name");
@@ -55,6 +57,7 @@ public class NonSerializableWithSerialVersionUIDFieldInspection
 
     private static class RemoveSerialVersionUIDFix extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "non.serializable.with.serialversionuid.remove.quickfix");

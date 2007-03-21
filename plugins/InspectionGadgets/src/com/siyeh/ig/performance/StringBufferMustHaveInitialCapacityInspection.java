@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public class StringBufferMustHaveInitialCapacityInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "StringBufferWithoutInitialCapacity";
     }

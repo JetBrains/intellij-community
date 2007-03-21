@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExtendsThreadInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "ClassExplicitlyExtendsThread";
     }

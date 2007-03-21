@@ -27,10 +27,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class RuntimeExecInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "CallToRuntimeExec";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "runtime.exec.call.display.name");

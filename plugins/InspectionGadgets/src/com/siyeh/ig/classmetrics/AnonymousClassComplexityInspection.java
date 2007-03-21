@@ -27,10 +27,12 @@ public class AnonymousClassComplexityInspection
 
     private static final int DEFAULT_COMPLEXITY_LIMIT = 3;
 
+    @NotNull
     public String getID() {
         return "OverlyComplexAnonymousInnerClass";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "overly.complex.anonymous.inner.class.display.name");

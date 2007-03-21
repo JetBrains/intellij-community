@@ -23,10 +23,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class ClassEscapesItsScopeInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "ClassEscapesDefinedScope";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "class.escapes.defined.scope.display.name");

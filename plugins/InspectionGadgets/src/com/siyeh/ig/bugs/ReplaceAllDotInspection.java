@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceAllDotInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "replace.all.dot.display.name");

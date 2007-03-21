@@ -25,10 +25,12 @@ import org.jetbrains.annotations.NotNull;
 public class IncrementDecrementUsedAsExpressionInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "ValueOfIncrementOrDecrementUsed";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "increment.decrement.display.name");

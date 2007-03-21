@@ -30,10 +30,12 @@ import java.util.Set;
 
 public class UnnecessaryBlockStatementInspection extends BaseInspection{
 
+    @NotNull
     public String getID(){
         return "UnnecessaryCodeBlock";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "unnecessary.code.block.display.name");

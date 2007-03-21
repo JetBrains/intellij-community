@@ -22,6 +22,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author swr
@@ -32,10 +33,12 @@ public class CreateConstructorFix extends BaseFix {
     super(checkedClass, onTheFly);
   }
 
+  @NotNull
   public String getName() {
     return DevKitBundle.message("inspections.registration.problems.quickfix.create.constructor");
   }
 
+  @NotNull
   public String getFamilyName() {
     return getName();
   }

@@ -61,6 +61,7 @@ public class OverlyComplexBooleanExpressionInspection
     /** @noinspection PublicField*/
     public boolean m_ignorePureConjunctionsDisjunctions = true;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "overly.complex.boolean.expression.display.name");

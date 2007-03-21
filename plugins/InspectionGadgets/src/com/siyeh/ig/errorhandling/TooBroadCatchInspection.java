@@ -27,6 +27,7 @@ import java.util.*;
 
 public class TooBroadCatchInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "OverlyBroadCatchBlock";
     }

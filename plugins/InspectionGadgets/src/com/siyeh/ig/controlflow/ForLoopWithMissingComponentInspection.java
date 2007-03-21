@@ -32,6 +32,7 @@ public class ForLoopWithMissingComponentInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean ignoreCollectionLoops = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "for.loop.with.missing.component.display.name");

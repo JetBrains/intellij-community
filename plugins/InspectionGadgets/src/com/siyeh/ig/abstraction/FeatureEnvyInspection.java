@@ -35,6 +35,7 @@ public class FeatureEnvyInspection extends BaseInspection {
     @SuppressWarnings({"PublicField"})
     public boolean ignoreTestCases = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("feature.envy.display.name");
     }

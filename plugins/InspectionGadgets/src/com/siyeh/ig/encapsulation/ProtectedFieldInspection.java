@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ProtectedFieldInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("protected.field.display.name");
     }

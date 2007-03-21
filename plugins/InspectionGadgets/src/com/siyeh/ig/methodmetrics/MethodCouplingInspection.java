@@ -37,6 +37,7 @@ public class MethodCouplingInspection extends MethodMetricInspection {
      */
     public boolean m_includeLibraryClasses = false;
 
+    @NotNull
     public String getID() {
         return "OverlyCoupledMethod";
     }

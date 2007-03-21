@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class AbstractClassNeverImplementedInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "abstract.class.never.implemented.display.name");

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CastToConcreteClassInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "cast.to.concrete.class.display.name");

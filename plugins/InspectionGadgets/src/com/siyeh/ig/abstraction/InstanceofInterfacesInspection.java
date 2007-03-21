@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class InstanceofInterfacesInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "instanceof.concrete.class.display.name");

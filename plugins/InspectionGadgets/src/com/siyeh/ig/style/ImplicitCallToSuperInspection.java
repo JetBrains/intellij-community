@@ -58,6 +58,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
 
     private static class AddExplicitSuperCall extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "implicit.call.to.super.make.explicit.quickfix");

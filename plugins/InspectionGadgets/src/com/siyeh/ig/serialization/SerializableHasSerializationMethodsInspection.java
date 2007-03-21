@@ -33,6 +33,7 @@ public class SerializableHasSerializationMethodsInspection
     /** @noinspection PublicField */
     public boolean m_ignoreSerializableDueToInheritance = true;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "serializable.has.serialization.methods.display.name");

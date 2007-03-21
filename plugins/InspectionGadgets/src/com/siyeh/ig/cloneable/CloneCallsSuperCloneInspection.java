@@ -26,10 +26,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class CloneCallsSuperCloneInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "CloneDoesntCallSuperClone";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "clone.doesnt.call.super.clone.display.name");

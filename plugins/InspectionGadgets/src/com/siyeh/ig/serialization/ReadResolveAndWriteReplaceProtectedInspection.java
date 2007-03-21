@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public class ReadResolveAndWriteReplaceProtectedInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "readresolve.writereplace.protected.display.name");

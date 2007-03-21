@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryConstructorInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "RedundantNoArgConstructor";
     }
@@ -53,6 +54,7 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
 
     private static class UnnecessaryConstructorFix
             extends InspectionGadgetsFix {
+        @NotNull
         public String getName() {
 
             return InspectionGadgetsBundle.message(

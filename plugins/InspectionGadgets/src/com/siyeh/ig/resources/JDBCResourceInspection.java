@@ -63,10 +63,12 @@ public class JDBCResourceInspection extends BaseInspection {
         }
     }
 
+    @NotNull
     public String getID(){
         return "JDBCResourceOpenedButNotSafelyClosed";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "jdbc.resource.opened.not.closed.display.name");

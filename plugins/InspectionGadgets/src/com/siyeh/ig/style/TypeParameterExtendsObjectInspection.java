@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class TypeParameterExtendsObjectInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "type.parameter.extends.object.display.name");

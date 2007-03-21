@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MisspelledHashcodeInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "misspelled.hashcode.display.name");

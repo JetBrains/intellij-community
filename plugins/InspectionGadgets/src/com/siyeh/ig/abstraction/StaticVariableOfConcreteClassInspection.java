@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class StaticVariableOfConcreteClassInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "static.variable.of.concrete.class.display.name");

@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class RedundantMethodOverrideInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "redundant.method.override.display.name");
@@ -51,6 +52,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
     private static class  RedundantMethodOverrideFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "redundant.method.override.quickfix");

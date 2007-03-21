@@ -34,10 +34,12 @@ import java.util.Collection;
 
 public class VarargParameterInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "VariableArgumentMethod";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "variable.argument.method.display.name");
@@ -56,6 +58,7 @@ public class VarargParameterInspection extends BaseInspection {
 
     private static class VarargParameterFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "variable.argument.method.quickfix");

@@ -92,10 +92,12 @@ public class BadExceptionThrownInspection extends BaseInspection {
         exceptionCheckString = buffer.toString();
     }
 
+    @NotNull
     public String getID(){
         return "ProhibitedExceptionThrown";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message("bad.exception.thrown.display.name");
     }

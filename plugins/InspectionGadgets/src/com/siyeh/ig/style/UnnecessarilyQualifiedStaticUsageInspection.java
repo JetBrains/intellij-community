@@ -41,6 +41,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
     /** @noinspection PublicField*/
     public boolean m_ignoreStaticAccessFromStaticContext = false;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessarily.qualified.static.usage.display.name");
@@ -84,6 +85,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
     private static class UnnecessarilyQualifiedStaticUsageFix
             extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "unnecessary.qualifier.for.this.remove.quickfix");

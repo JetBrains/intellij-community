@@ -34,6 +34,7 @@ public class MagicNumberInspection extends BaseInspection {
 	/** @noinspection PublicField*/
     public boolean m_ignoreInHashCode = true;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("magic.number.display.name");
     }

@@ -38,6 +38,7 @@ public class PublicMethodWithoutLoggingInspection extends BaseInspection {
      */
     public String loggerClassName = "java.util.logging.Logger";
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "public.method.without.logging.display.name");

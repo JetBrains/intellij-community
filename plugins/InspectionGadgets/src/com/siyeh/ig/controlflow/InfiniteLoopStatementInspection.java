@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class InfiniteLoopStatementInspection extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "infinite.loop.statement.display.name");

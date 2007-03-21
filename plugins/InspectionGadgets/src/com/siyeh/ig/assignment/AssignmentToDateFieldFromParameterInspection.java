@@ -34,6 +34,7 @@ public class AssignmentToDateFieldFromParameterInspection
     /** @noinspection PublicField*/
     public boolean ignorePrivateMethods = true;
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "assignment.to.date.calendar.field.from.parameter.display.name");

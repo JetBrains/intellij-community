@@ -30,10 +30,12 @@ import java.util.Set;
 public class MethodOverridesPackageLocalMethodInspection
         extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "MethodOverridesPrivateMethodOfSuperclass";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "method.overrides.package.local.method.display.name");

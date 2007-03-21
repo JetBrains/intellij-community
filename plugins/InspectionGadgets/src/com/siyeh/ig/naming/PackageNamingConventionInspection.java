@@ -16,6 +16,7 @@ import com.siyeh.ig.RegExInputVerifier;
 import com.siyeh.ig.ui.FormattedTextFieldMacFix;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -50,6 +51,7 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
     private Pattern m_regexPattern = Pattern.compile(m_regex);
 
 
+    @NotNull
     public String getGroupDisplayName() {
         return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }

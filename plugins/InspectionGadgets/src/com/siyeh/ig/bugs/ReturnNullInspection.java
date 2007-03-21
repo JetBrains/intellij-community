@@ -42,10 +42,12 @@ public class ReturnNullInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean m_reportCollectionMethods = true;
 
+    @NotNull
     public String getID() {
         return "ReturnOfNull";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("return.of.null.display.name");
     }
@@ -67,6 +69,7 @@ public class ReturnNullInspection extends BaseInspection {
 
     private static class MakeNullableFix extends InspectionGadgetsFix {
 
+        @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message("return.of.null.quickfix");
         }

@@ -27,10 +27,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class DriverManagerGetConnectionInspection extends BaseInspection {
 
+    @NotNull
     public String getID(){
         return "CallToDriverManagerGetConnection";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "drivermanager.call.display.name");

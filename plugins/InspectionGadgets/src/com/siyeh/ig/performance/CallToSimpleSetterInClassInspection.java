@@ -39,10 +39,12 @@ public class CallToSimpleSetterInClassInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean ignoreSetterCallsOnOtherObjects = false;
 
+    @NotNull
     public String getID(){
         return "CallToSimpleSetterFromWithinClass";
     }
 
+    @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "call.to.simple.setter.in.class.display.name");
@@ -67,6 +69,7 @@ public class CallToSimpleSetterInClassInspection extends BaseInspection {
 
     private static class InlineCallFix extends InspectionGadgetsFix{
 
+        @NotNull
         public String getName(){
             return InspectionGadgetsBundle.message(
                     "call.to.simple.setter.in.class.inline.quickfix");

@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.ChooseModulesDialog;
@@ -43,10 +44,12 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
     myClass = klass;
   }
 
+  @NotNull
   public String getFamilyName() {
     return DevKitBundle.message("inspections.component.not.registered.quickfix.family");
   }
 
+  @NotNull
   public String getName() {
     return DevKitBundle.message("inspections.component.not.registered.quickfix.name", getType());
   }
@@ -63,7 +66,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
     return message;
   }
 
-  public void applyFix(final Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiFile psiFile = myClass.getContainingFile();
     LOG.assertTrue(psiFile != null);
     final Module module = VfsUtil.getModuleForFile(project, psiFile.getVirtualFile());

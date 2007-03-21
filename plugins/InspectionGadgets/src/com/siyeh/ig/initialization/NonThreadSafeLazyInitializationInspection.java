@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class NonThreadSafeLazyInitializationInspection
         extends BaseInspection {
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "non.thread.safe.lazy.initialization.display.name");

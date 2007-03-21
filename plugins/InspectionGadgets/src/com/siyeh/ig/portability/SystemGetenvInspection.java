@@ -25,10 +25,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class SystemGetenvInspection extends BaseInspection {
 
+    @NotNull
     public String getID() {
         return "CallToSystemGetenv";
     }
 
+    @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "system.getenv.call.display.name");

@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class NestingDepthInspection extends MethodMetricInspection {
 
+    @NotNull
     public String getID() {
         return "OverlyNestedMethod";
     }
