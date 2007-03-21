@@ -29,6 +29,11 @@ public abstract class VcsHistorySession {
     myCachedRevisionNumber = calcCurrentRevisionNumber();
   }
 
+  protected VcsHistorySession(List<VcsFileRevision> revisions, VcsRevisionNumber currentRevisionNumber) {
+    myRevisions = revisions;
+    myCachedRevisionNumber = currentRevisionNumber;
+  }
+
   public List<VcsFileRevision> getRevisionList() {
     return myRevisions;
   }
