@@ -64,8 +64,8 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
   public JavaResolveResult[] getResult(){
     if(myCachedResult == null){
       final List<CandidateInfo> conflicts = new SmartList<CandidateInfo>(super.getResults());
-      for (PsiConflictResolver myResolver : myResolvers) {
-        CandidateInfo candidate = myResolver.resolveConflict(conflicts);
+      for (PsiConflictResolver resolver : myResolvers) {
+        CandidateInfo candidate = resolver.resolveConflict(conflicts);
         if (candidate != null) {
           conflicts.clear();
           conflicts.add(candidate);

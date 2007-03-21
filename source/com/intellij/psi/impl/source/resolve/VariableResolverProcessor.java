@@ -5,18 +5,17 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.JavaVariableConflictResolver;
 import com.intellij.psi.scope.processor.ConflictFilterProcessor;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.SmartList;
 
 /**
  * @author ik, dsl
  */
-public class VariableResolverProcessor extends ConflictFilterProcessor implements NameHint, ElementClassHint {
+public class VariableResolverProcessor extends ConflictFilterProcessor implements ElementClassHint {
   private static final ClassFilter ourFilter = new ClassFilter(PsiVariable.class);
 
   private final PsiElement myFromElement;
@@ -81,7 +80,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
     if (!(element instanceof PsiField) && (myName == null || PsiUtil.checkName(element, myName))) {
       super.execute(element, substitutor);
-      return myResults.size() == 0;
+      return myResults.isEmpty();
     }
 
     return super.execute(element, substitutor);

@@ -27,7 +27,7 @@ public class JavaVariableConflictResolver implements PsiConflictResolver{
       final CandidateInfo[] uncheckedResult = conflicts.toArray(new CandidateInfo[size]);
       CandidateInfo currentResult = uncheckedResult[0];
 
-      final PsiElement currentElement = currentResult.getElement();
+      PsiElement currentElement = currentResult.getElement();
       if(currentElement instanceof PsiField){
         for (int i = 1; i < uncheckedResult.length; i++) {
           final CandidateInfo candidate = uncheckedResult[i];
@@ -57,6 +57,7 @@ public class JavaVariableConflictResolver implements PsiConflictResolver{
               // candidate is better
               conflicts.remove(currentResult);
               currentResult = candidate;
+              currentElement = currentResult.getElement();
               continue;
             }
           }
@@ -78,6 +79,7 @@ public class JavaVariableConflictResolver implements PsiConflictResolver{
           if (!currentResult.isAccessible()) {
             conflicts.remove(currentResult);
             currentResult = candidate;
+            currentElement = currentResult.getElement();
             continue;
           }
 

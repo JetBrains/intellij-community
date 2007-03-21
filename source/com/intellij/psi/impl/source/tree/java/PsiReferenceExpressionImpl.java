@@ -166,7 +166,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
         JavaResolveResult[] result = processor.getResult();
 
         if (result.length > 0) {
-          return processor.getResult();
+          return result;
         }
       }
       {
