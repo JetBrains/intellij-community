@@ -36,6 +36,7 @@ import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -59,21 +60,24 @@ public class SSBasedInspection extends LocalInspectionTool {
     ConfigurationManager.readConfigurations(node, myConfigurations, new ArrayList<Configuration>());
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.GENERAL_GROUP_NAME;
   }
 
+  @NotNull
   public String getDisplayName() {
     return SSRBundle.message("SSRInspection.display.name");
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return "SSBasedInspection";
   }
 
   @Nullable
-  public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     Project project = file.getProject();
 
     Collection<Pair<MatchResult,Configuration>> matches = new Matcher(project).findMatchesInFile(compiledConfigurations, file);
@@ -98,14 +102,16 @@ public class SSBasedInspection extends LocalInspectionTool {
     final ReplacementInfo replacementInfo = replacer.buildReplacement(matchResult);
 
     return new LocalQuickFix() {
+      @NotNull
       public String getName() {
         return SSRBundle.message("SSRInspection.replace.with", replacementInfo.getReplacement());
       }
 
-      public void applyFix(Project project, ProblemDescriptor descriptor) {
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         replacer.replace(replacementInfo);
       }
 
+      @NotNull
       public String getFamilyName() {
         return SSRBundle.message("SSRInspection.family.name");
       }
