@@ -53,7 +53,8 @@ public class CheckValidXmlInScriptBodyInspection extends LocalInspectionTool {
     return true;
   }
 
-  public PsiElementVisitor buildVisitor(final ProblemsHolder holder, boolean isOnTheFly) {
+  @NotNull
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {}
 
@@ -121,14 +122,17 @@ public class CheckValidXmlInScriptBodyInspection extends LocalInspectionTool {
     };
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.HTML_INSPECTIONS;
   }
 
+  @NotNull
   public String getDisplayName() {
     return XmlBundle.message("html.inspections.check.valid.script.tag");
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return "CheckValidXmlInScriptTagBody";
@@ -162,7 +166,7 @@ public class CheckValidXmlInScriptBodyInspection extends LocalInspectionTool {
       return getName();
     }
 
-    public void applyFix(Project project, ProblemDescriptor problemDescriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor problemDescriptor) {
       if ( !CodeInsightUtil.prepareFileForWrite(psiFile)) return;
       final TextRange range = psiElement.getTextRange();
       OpenFileDescriptor descriptor = new OpenFileDescriptor(
@@ -190,6 +194,7 @@ public class CheckValidXmlInScriptBodyInspection extends LocalInspectionTool {
     }
   }
 
+  @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }

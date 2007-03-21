@@ -218,7 +218,7 @@ public class UnusedParametersInspection extends GlobalInspectionTool {
       return getName();
     }
 
-    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
       if (psiMethod != null) {
         ArrayList<PsiElement> psiParameters = new ArrayList<PsiElement>();

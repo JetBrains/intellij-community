@@ -853,7 +853,6 @@ public class HighlightUtil {
     if (!(declarationScope instanceof PsiCatchSection)) return null;
     PsiTryStatement statement = ((PsiCatchSection)declarationScope).getTryStatement();
     PsiClassType[] classes = ExceptionUtil.collectUnhandledExceptions(statement.getTryBlock(), statement.getTryBlock());
-    if (classes == null) classes = PsiClassType.EMPTY_ARRAY;
 
     PsiType caughtType = parameter.getType();
     if (!(caughtType instanceof PsiClassType)) return null;

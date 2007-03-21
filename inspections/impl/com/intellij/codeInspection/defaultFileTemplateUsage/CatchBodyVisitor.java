@@ -16,6 +16,8 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Properties;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author cdr
  */
@@ -94,7 +96,7 @@ class CatchBodyVisitor extends PsiRecursiveElementVisitor {
   private static LocalQuickFix[] createQuickFix(final PsiCatchSection section) {
     FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(FileTemplateManager.TEMPLATE_CATCH_BODY);
     ReplaceWithFileTemplateFix replaceWithFileTemplateFix = new ReplaceWithFileTemplateFix() {
-      public void applyFix(Project project, ProblemDescriptor descriptor) {
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final PsiParameter parameter = section.getParameter();
         if (parameter == null) return;
         PsiCodeBlock catchBlock = section.getCatchBlock();

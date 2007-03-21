@@ -12,6 +12,7 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -23,21 +24,24 @@ import java.util.HashSet;
  * Date: 07-Sep-2005
  */
 public class UnusedMessageFormatParameterInspection extends BaseLocalInspectionTool {
+  @NotNull
   public String getGroupDisplayName() {
     return PropertiesBundle.message("properties.files.inspection.group.display.name");
   }
 
+  @NotNull
   public String getDisplayName() {
     return PropertiesBundle.message("unused.message.format.parameter.display.name");
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return "UnusedMessageFormatParameter";
   }
 
   @Nullable
-  public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (!(file instanceof PropertiesFile)) return null;
     PropertiesFile propertiesFile = (PropertiesFile)file;
     final List<Property> properties = propertiesFile.getProperties();

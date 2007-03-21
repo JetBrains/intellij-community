@@ -25,6 +25,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim Mossienko
@@ -37,7 +38,8 @@ public class CheckEmptyScriptTagInspection extends LocalInspectionTool {
     return true;
   }
 
-  public PsiElementVisitor buildVisitor(final ProblemsHolder holder, boolean isOnTheFly) {
+  @NotNull
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {}
 
@@ -50,11 +52,12 @@ public class CheckEmptyScriptTagInspection extends LocalInspectionTool {
           if (child != null) {
 
             final LocalQuickFix fix = new LocalQuickFix() {
+              @NotNull
               public String getName() {
                 return XmlBundle.message("html.inspections.check.empty.script.tag.fix.message");
               }
 
-              public void applyFix(Project project, ProblemDescriptor descriptor) {
+              public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
                 final StringBuilder builder = new StringBuilder(tag.getText());
                 builder.replace(builder.length() - 2, builder.length(), "></" + SCRIPT_TAG_NAME + ">");
 
@@ -73,6 +76,7 @@ public class CheckEmptyScriptTagInspection extends LocalInspectionTool {
               }
 
               //to appear in "Apply Fix" statement when multiple Quick Fixes exist
+              @NotNull
               public String getFamilyName() {
                 return getName();
               }
@@ -87,14 +91,17 @@ public class CheckEmptyScriptTagInspection extends LocalInspectionTool {
     };
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.HTML_INSPECTIONS;
   }
 
+  @NotNull
   public String getDisplayName() {
     return XmlBundle.message("html.inspections.check.empty.script.tag");
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return "CheckEmptyScriptTag";

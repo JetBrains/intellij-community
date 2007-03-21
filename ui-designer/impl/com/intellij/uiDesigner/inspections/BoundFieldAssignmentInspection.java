@@ -20,14 +20,17 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class BoundFieldAssignmentInspection extends LocalInspectionTool {
+  @NotNull
   public String getGroupDisplayName() {
     return UIDesignerBundle.message("form.inspections.group");
   }
 
+  @NotNull
   public String getDisplayName() {
     return UIDesignerBundle.message("inspection.bound.field.title");
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return "BoundFieldAssignment";
@@ -39,7 +42,7 @@ public class BoundFieldAssignmentInspection extends LocalInspectionTool {
   }
 
   @NotNull
-  public PsiElementVisitor buildVisitor(final ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
       }

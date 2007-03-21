@@ -115,7 +115,7 @@ public class UnusedReturnValue extends GlobalInspectionTool {
       return InspectionsBundle.message("inspection.unused.return.value.make.void.quickfix");
     }
 
-    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiMethod psiMethod = null;
       if (myProcessor != null) {
         RefElement refElement = (RefElement)myProcessor.getElement(descriptor);

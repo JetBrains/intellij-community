@@ -41,7 +41,7 @@ public class AccessStaticViaInstanceFix implements LocalQuickFix {
     return QuickFixBundle.message("access.static.via.class.reference.family");
   }
 
-  public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (!myExpression.isValid() || !myMember.isValid()) return;
     if (!CodeInsightUtil.prepareFileForWrite(myExpression.getContainingFile())) return;
     PsiClass containingClass = myMember.getContainingClass();

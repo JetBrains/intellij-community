@@ -45,5 +45,5 @@ public interface QuickFix<D extends CommonProblemDescriptor> {
    * @param project    {@link com.intellij.openapi.project.Project}
    * @param descriptor problem reported by the tool which provided this quick fix action
    */
-  void applyFix(@NotNull Project project, D descriptor);
+  void applyFix(@NotNull Project project, @NotNull D descriptor);
 }

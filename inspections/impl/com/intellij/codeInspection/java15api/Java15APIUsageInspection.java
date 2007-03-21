@@ -56,19 +56,23 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
     }
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.JDK15_SPECIFIC_GROUP_NAME;
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.1.5.display.name", "@since 1.5");
   }
 
+  @NotNull
   public String getShortName() {
     return "Since15";
   }
 
 
+  @NotNull
   @Override
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
@@ -80,7 +84,7 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
   }
 
   @NotNull
-  public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new MyVisitor(holder);
   }
 
@@ -89,7 +93,7 @@ public class Java15APIUsageInspection extends LocalInspectionTool {
   }
 
   @Override @Nullable
-  public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final Object[] fileCheckingInspections = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.JAVA15_INSPECTION_TOOL).getExtensions();
     for(Object obj: fileCheckingInspections) {
       FileCheckingInspection inspection = (FileCheckingInspection) obj;

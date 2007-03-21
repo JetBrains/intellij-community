@@ -24,6 +24,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -42,14 +43,17 @@ public class RequiredAttributesInspection extends UnfairLocalInspectionTool impl
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection");
   @NonNls public static final String SHORT_NAME = "RequiredAttributes";
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.HTML_INSPECTIONS;
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.required.attributes.display.name");
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return SHORT_NAME;

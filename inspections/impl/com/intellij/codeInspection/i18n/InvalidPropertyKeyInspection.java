@@ -132,7 +132,7 @@ public class InvalidPropertyKeyInspection extends LocalInspectionTool {
       return CreatePropertyFix.NAME;
     }
 
-    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiLiteralExpression literalExpression = (PsiLiteralExpression)descriptor.getPsiElement();
       try {
         new CreatePropertyFix(literalExpression, myKey, myPropertiesFiles).invoke(project, null, literalExpression.getContainingFile());

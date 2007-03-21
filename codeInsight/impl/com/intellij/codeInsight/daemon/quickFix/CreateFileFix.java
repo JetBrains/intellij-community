@@ -71,7 +71,7 @@ class CreateFileFix implements IntentionAction, LocalQuickFix {
     return QuickFixBundle.message("create.file.family");
   }
 
-  public void applyFix(@NotNull final Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
     if (isAvailable(project, null, null)) {
       new WriteCommandAction(project) {
         protected void run(Result result) throws Throwable {

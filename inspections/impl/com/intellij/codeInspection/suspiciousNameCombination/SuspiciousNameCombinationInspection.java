@@ -60,21 +60,24 @@ public class SuspiciousNameCombinationInspection extends BaseLocalInspectionTool
     }
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.BUGS_GROUP_NAME;
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("suspicious.name.combination.display.name");
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return "SuspiciousNameCombination";
   }
 
   @NotNull
-  public PsiElementVisitor buildVisitor(ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new MyVisitor(holder);
   }
 

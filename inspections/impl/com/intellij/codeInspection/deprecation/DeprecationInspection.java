@@ -23,22 +23,26 @@ public class DeprecationInspection extends LocalInspectionTool {
 
 
   @NotNull
-  public PsiElementVisitor buildVisitor(final ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new DeprecationElementVisitor(holder);
   }
 
+  @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }
 
+  @NotNull
   @NonNls
   public String getID() {
     return "deprecation";

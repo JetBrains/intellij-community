@@ -45,7 +45,7 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
     return QuickFixBundle.message("rename.file.fix");
   }
 
-  public void applyFix(@NotNull final Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiFile file = descriptor.getPsiElement().getContainingFile();
     if (isAvailable(project, null, file)) {
       new WriteCommandAction(project) {

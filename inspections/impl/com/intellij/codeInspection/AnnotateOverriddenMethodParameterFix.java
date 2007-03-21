@@ -35,7 +35,7 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
     return InspectionsBundle.message("annotate.overridden.methods.parameters", ClassUtil.extractClassName(myAnnotation));
   }
 
-  public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement psiElement = descriptor.getPsiElement();
 
     PsiParameter parameter = PsiTreeUtil.getParentOfType(psiElement, PsiParameter.class, false);

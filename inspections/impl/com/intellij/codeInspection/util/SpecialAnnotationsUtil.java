@@ -140,7 +140,7 @@ public class SpecialAnnotationsUtil {
         return family;
       }
 
-      public void applyFix(@NotNull final Project project, final ProblemDescriptor descriptor) {
+      public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
         doQuickFixInternal(project, targetList, qualifiedName, context);
       }
     };

@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -208,24 +209,28 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
     return problems;
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.local.can.be.final.display.name");
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.STYLE_GROUP_NAME;
   }
 
+  @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }
 
   private static class AcceptSuggested implements LocalQuickFix {
+    @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.can.be.final.accept.quickfix");
     }
 
-    public void applyFix(Project project, ProblemDescriptor problem) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor problem) {
       PsiElement nameIdentifier = problem.getPsiElement();
       if (nameIdentifier == null) return;
       PsiVariable psiVariable = (PsiVariable)nameIdentifier.getParent();
@@ -239,6 +244,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
       }
     }
 
+    @NotNull
     public String getFamilyName() {
       return getName();
     }

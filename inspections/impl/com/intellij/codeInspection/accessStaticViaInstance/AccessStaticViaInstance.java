@@ -32,14 +32,17 @@ import org.jetbrains.annotations.NotNull;
  * Date: 15-Nov-2005
  */
 public class AccessStaticViaInstance extends LocalInspectionTool {
+  @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("access.static.via.instance");
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return "AccessStaticViaInstance";
@@ -50,7 +53,7 @@ public class AccessStaticViaInstance extends LocalInspectionTool {
   }
 
   @NotNull
-  public PsiElementVisitor buildVisitor(final ProblemsHolder holder, boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         checkAccessStaticMemberViaInstanceReference(expression, expression.advancedResolve(false), holder);

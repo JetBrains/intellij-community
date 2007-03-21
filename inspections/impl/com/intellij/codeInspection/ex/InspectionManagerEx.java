@@ -101,7 +101,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   @NotNull
-  public ProblemDescriptor createProblemDescriptor(PsiElement psiElement,
+  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull String descriptionTemplate,
                                                    LocalQuickFix fix,
                                                    ProblemHighlightType highlightType) {
@@ -110,7 +110,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   @NotNull
-  public ProblemDescriptor createProblemDescriptor(PsiElement psiElement,
+  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull String descriptionTemplate,
                                                    LocalQuickFix[] fixes,
                                                    ProblemHighlightType highlightType) {
@@ -118,7 +118,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   @NotNull
-  public ProblemDescriptor createProblemDescriptor(PsiElement psiElement,
+  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull String descriptionTemplate,
                                                    LocalQuickFix[] fixes,
                                                    ProblemHighlightType highlightType,
@@ -127,15 +127,15 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   @NotNull
-  public ProblemDescriptor createProblemDescriptor(PsiElement startElement,
-                                                   PsiElement endElement,
+  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
+                                                   @NotNull PsiElement endElement,
                                                    @NotNull String descriptionTemplate,
                                                    ProblemHighlightType highlightType,
                                                    LocalQuickFix... fixes) {
     return new ProblemDescriptorImpl(startElement, endElement, descriptionTemplate, fixes, highlightType, false, null);
   }
 
-  public ProblemDescriptor createProblemDescriptor(final PsiElement psiElement,
+  public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                    final TextRange rangeInElement,
                                                    @NotNull final String descriptionTemplate,
                                                    final ProblemHighlightType highlightType,

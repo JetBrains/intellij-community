@@ -53,7 +53,7 @@ public class AddCutomTagOrAttributeIntentionAction implements LocalQuickFix {
     return QuickFixBundle.message("fix.html.family");
   }
 
-  public void applyFix(@NotNull final Project project, final ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     final PsiFile file = element.getContainingFile();
 

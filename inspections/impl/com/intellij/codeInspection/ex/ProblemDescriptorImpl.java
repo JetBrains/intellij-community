@@ -29,7 +29,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   private final boolean myAfterEndOfLine;
   private final TextRange myTextRangeInElement;
 
-  public ProblemDescriptorImpl(PsiElement startElement, PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
+  public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
                                ProblemHighlightType highlightType, boolean isAfterEndOfLine, final TextRange rangeInElement) {
     super(fixes, descriptionTemplate);
     LOG.assertTrue(startElement.isValid(), "Invalid PsiElement");

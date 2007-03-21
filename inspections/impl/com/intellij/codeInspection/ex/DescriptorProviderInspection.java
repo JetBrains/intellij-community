@@ -247,9 +247,10 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       if (refEntity instanceof RefElement){
         final RefElement refElement = (RefElement)refEntity;
         final HighlightSeverity severity = getCurrentSeverity(refElement);
-        final String attributeKey = getTextAttributeKey(severity, description instanceof ProblemDescriptor
-                                                                              ? ((ProblemDescriptor)description).getHighlightType()
-                                                                              : ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        ProblemHighlightType problemHighlightType = description instanceof ProblemDescriptor
+                                                    ? ((ProblemDescriptor)description).getHighlightType()
+                                                    : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+        final String attributeKey = getTextAttributeKey(severity, problemHighlightType);
         problemClassElement.setAttribute("severity", severity.myName);
         problemClassElement.setAttribute("attribute_key", attributeKey);
       }

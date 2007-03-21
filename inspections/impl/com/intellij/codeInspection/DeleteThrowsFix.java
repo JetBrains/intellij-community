@@ -29,7 +29,7 @@ public class DeleteThrowsFix implements LocalQuickFix {
     return QuickFixBundle.message("fix.throws.list.family");
   }
 
-  public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     if (element == null) return;
     final PsiFile psiFile = element.getContainingFile();

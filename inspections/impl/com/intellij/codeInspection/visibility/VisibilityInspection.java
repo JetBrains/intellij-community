@@ -456,7 +456,7 @@ public class VisibilityInspection extends GlobalInspectionTool {
       return getName();
     }
 
-    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiModifierListOwner element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiModifierListOwner.class);
       if (element != null) {
         RefElement refElement = null;

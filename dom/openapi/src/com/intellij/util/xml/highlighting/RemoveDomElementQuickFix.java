@@ -33,7 +33,7 @@ public class RemoveDomElementQuickFix implements LocalQuickFix {
     return DomBundle.message("quick.fixes.family");
   }
 
-  public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     myElement.undefine();
   }
 }

@@ -185,7 +185,7 @@ public class RedundantThrows extends GlobalInspectionTool {
       return InspectionsBundle.message("inspection.redundant.throws.remove.quickfix");
     }
 
-    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (myProcessor != null) {
         RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
         if (refElement.isValid() && refElement instanceof RefMethod) {

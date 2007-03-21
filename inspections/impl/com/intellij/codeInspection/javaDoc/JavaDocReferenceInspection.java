@@ -147,14 +147,17 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
   }
 
 
+  @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }

@@ -54,7 +54,7 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
     return getText();
   }
 
-  public void applyFix(@NotNull final Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiFile file = myClass.getContainingFile();
     final Editor editor = CodeInsightUtil.positionCursor(project, myClass.getContainingFile(), myClass.getLBrace());
     if (isAvailable(project, editor, file)) {

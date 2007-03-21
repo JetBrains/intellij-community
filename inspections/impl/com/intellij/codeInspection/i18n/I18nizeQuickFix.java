@@ -35,7 +35,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFix");
   private TextRange mySelectionRange;
 
-  public void applyFix(@NotNull final Project project, final ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     // do it later because the fix was called inside writeAction
     ApplicationManager.getApplication().invokeLater(new Runnable(){
       public void run() {

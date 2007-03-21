@@ -81,7 +81,7 @@ public class RedundantCastInspection extends BaseLocalInspectionTool {
       return InspectionsBundle.message("inspection.redundant.cast.remove.quickfix");
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement castTypeElement = descriptor.getPsiElement();
       PsiTypeCastExpression cast = castTypeElement == null ? null : (PsiTypeCastExpression)castTypeElement.getParent();
       if (cast != null) {
@@ -95,14 +95,17 @@ public class RedundantCastInspection extends BaseLocalInspectionTool {
     }
   }
 
+  @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.VERBOSE_GROUP_NAME;
   }
 
+  @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }

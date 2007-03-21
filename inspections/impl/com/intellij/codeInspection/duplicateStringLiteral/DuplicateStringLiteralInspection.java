@@ -27,6 +27,7 @@ import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
@@ -71,14 +72,17 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     return allProblems.size() == 0 ? null : allProblems.toArray(new ProblemDescriptor[allProblems.size()]);
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.duplicates.display.name");
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
   }
 
+  @NotNull
   public String getShortName() {
     return "DuplicateStringLiteralInspection";
   }
@@ -206,13 +210,14 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         continue;
       }
       final LocalQuickFix replaceQuickFix = new LocalQuickFix() {
+        @NotNull
         public String getName() {
           return InspectionsBundle.message("inspection.duplicates.replace.quickfix", PsiFormatUtil
             .formatVariable(constant, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_FQ_NAME | PsiFormatUtil.SHOW_NAME,
                             PsiSubstitutor.EMPTY));
         }
 
-        public void applyFix(final Project project, ProblemDescriptor descriptor) {
+        public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
           if (!CodeInsightUtil.prepareFileForWrite(originalExpression.getContainingFile())) return;
           try {
             final PsiReferenceExpression reference = createReferenceTo(constant, originalExpression);
@@ -225,6 +230,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
           }
         }
 
+        @NotNull
         public String getFamilyName() {
           return InspectionsBundle.message("inspection.duplicates.replace.family.quickfix");
         }
@@ -238,11 +244,12 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     expressions[foundExpr.size()] = originalExpression;
 
     final LocalQuickFix introduceConstFix = new LocalQuickFix() {
+      @NotNull
       public String getName() {
         return IntroduceConstantHandler.REFACTORING_NAME;
       }
 
-      public void applyFix(final Project project, ProblemDescriptor descriptor) {
+      public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             final IntroduceConstantHandler handler = new IntroduceConstantHandler() {
@@ -268,6 +275,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         });
       }
 
+      @NotNull
       public String getFamilyName() {
         return getName();
       }

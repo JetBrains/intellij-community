@@ -116,7 +116,7 @@ public class DefaultFileTemplateUsageInspection extends LocalInspectionTool {
         return getName();
       }
 
-      public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final FileTemplateConfigurable configurable = new FileTemplateConfigurable();
         SwingUtilities.invokeLater(new Runnable(){
           public void run() {

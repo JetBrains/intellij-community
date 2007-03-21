@@ -28,13 +28,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -46,7 +46,7 @@ import java.util.List;
  */
 public class WrongPackageStatementInspection extends LocalInspectionTool {
   @Nullable
-  public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     // does not work in tests since CodeInsightTestCase copies file into temporary location
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     if (file instanceof PsiJavaFile) {
@@ -93,14 +93,17 @@ public class WrongPackageStatementInspection extends LocalInspectionTool {
     return null;
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("wrong.package.statement");
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return "WrongPackageStatement";
@@ -121,15 +124,17 @@ public class WrongPackageStatementInspection extends LocalInspectionTool {
       myTargetPackage = targetPackage;
     }
 
+    @NotNull
     public String getName() {
       return QuickFixBundle.message("adjust.package.text", myTargetPackage.getQualifiedName());
     }
 
+    @NotNull
     public String getFamilyName() {
       return QuickFixBundle.message("adjust.package.family");
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (!CodeInsightUtil.prepareFileForWrite(myFile)) return;
 
       //hack. Need a way to check applicability of the fix
@@ -170,16 +175,18 @@ public class WrongPackageStatementInspection extends LocalInspectionTool {
       myTargetPackage = targetPackage;
     }
 
+    @NotNull
     public String getName() {
       return QuickFixBundle.message("move.class.to.package.text",
                                     myTargetPackage.getQualifiedName());
     }
 
+    @NotNull
     public String getFamilyName() {
       return QuickFixBundle.message("move.class.to.package.family");
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (!CodeInsightUtil.prepareFileForWrite(myFile)) return;
 
       try {

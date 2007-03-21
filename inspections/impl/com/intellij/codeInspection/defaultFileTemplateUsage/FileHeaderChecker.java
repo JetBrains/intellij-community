@@ -72,7 +72,7 @@ public class FileHeaderChecker {
                                               final TIntObjectHashMap<String> offsetToProperty) {
     final FileTemplate template = FileTemplateManager.getInstance().getPattern(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
     final ReplaceWithFileTemplateFix replaceTemplateFix = new ReplaceWithFileTemplateFix() {
-      public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         if (!element.isValid()) return;
         String newText;
         try {

@@ -22,7 +22,7 @@ public class RemovePropertyLocalFix implements LocalQuickFix {
     return PropertiesBundle.message("remove.property.quick.fix.name");
   }
 
-  public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     Property property = PsiTreeUtil.getParentOfType(element, Property.class, false);
     if (property == null) return;

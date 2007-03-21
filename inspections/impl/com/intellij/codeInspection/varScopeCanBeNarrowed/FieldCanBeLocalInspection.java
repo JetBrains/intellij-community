@@ -32,14 +32,17 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
   @NonNls public static final String SHORT_NAME = "FieldCanBeLocal";
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.CLASSLAYOUT_GROUP_NAME;
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.field.can.be.local.display.name");
   }
 
+  @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }
@@ -151,11 +154,12 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       myField = field;
     }
 
+    @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.field.can.be.local.quickfix");
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (!myField.isValid()) return; //weird. should not get here when field becomes invalid
 
       PsiManager manager = PsiManager.getInstance(project);
@@ -251,6 +255,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       return newDeclaration;
     }
 
+    @NotNull
     public String getFamilyName() {
       return getName();
     }

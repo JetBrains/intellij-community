@@ -142,7 +142,7 @@ public class MethodBodyChecker {
       return null;
     }
     final ReplaceWithFileTemplateFix replaceWithFileTemplateFix = new ReplaceWithFileTemplateFix() {
-      public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         PsiType returnType = method.getReturnType();
         if (method.isConstructor() || returnType == null) return;
         PsiCodeBlock body = method.getBody();

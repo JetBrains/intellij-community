@@ -37,7 +37,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
     return InspectionsBundle.message("inspection.annotate.quickfix.name", ClassUtil.extractClassName(myAnnotation));
   }
 
-  public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement psiElement = descriptor.getPsiElement();
 
     PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);

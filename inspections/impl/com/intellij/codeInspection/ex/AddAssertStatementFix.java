@@ -29,7 +29,7 @@ public class AddAssertStatementFix implements LocalQuickFix {
     LOG.assertTrue(PsiType.BOOLEAN.equals(myExpressionToAssert.getType()));
   }
 
-  public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     PsiElement anchorElement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
     LOG.assertTrue(anchorElement != null);

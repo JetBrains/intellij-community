@@ -37,7 +37,7 @@ public class RemoveAttributeIntentionAction implements LocalQuickFix {
     return XmlErrorMessages.message("remove.attribute.quickfix.family");
   }
 
-  public void applyFix(@NotNull final Project project, final ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     if (!CodeInsightUtil.prepareFileForWrite(myAttribute.getContainingFile())) {
       return;
     }

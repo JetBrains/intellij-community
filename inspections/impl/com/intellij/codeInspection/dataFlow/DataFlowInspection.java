@@ -42,6 +42,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     return new OptionsPanel();
   }
 
+  @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {}
@@ -284,7 +285,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         return fix.getText();
       }
 
-      public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final PsiElement psiElement = descriptor.getPsiElement();
         try {
           LOG.assertTrue(psiElement.isValid());
@@ -308,7 +309,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       return InspectionsBundle.message("inspection.data.flow.redundant.instanceof.quickfix");
     }
 
-    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement instanceof PsiInstanceOfExpression) {
         try {

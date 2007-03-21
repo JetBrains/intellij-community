@@ -53,7 +53,7 @@ public class RenameTagBeginOrEndIntentionAction implements LocalQuickFix {
            : XmlErrorMessages.message("rename.end.tag.name.intention", mySourceName, myTargetName);
   }
 
-  public void applyFix(@NotNull final Project project, final ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     if (!CodeInsightUtil.prepareFileForWrite(myTarget.getContainingFile())) {
       return;
     }

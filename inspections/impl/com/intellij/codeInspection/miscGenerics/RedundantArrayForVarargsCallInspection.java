@@ -23,7 +23,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
   private LocalQuickFix myQuickFixAction = new MyQuickFix();
 
   private static class MyQuickFix implements LocalQuickFix {
-    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiNewExpression arrayCreation = (PsiNewExpression) descriptor.getPsiElement();
       if (!CodeInsightUtil.prepareFileForWrite(arrayCreation.getContainingFile())) return;
 

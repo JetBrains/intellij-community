@@ -32,7 +32,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
     return QuickFixBundle.message("remove.suppression.action.family");
   }
 
-  public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     try {
       if (!CodeInsightUtil.prepareFileForWrite(element.getContainingFile())) return;

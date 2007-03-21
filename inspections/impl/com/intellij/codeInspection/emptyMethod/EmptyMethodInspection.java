@@ -261,7 +261,7 @@ public class EmptyMethodInspection extends GlobalInspectionTool {
       return QUICK_FIX_NAME;
     }
 
-    public void applyFix(@NotNull final Project project, final ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class, false);
       if (psiMethod != null) {
         final List<PsiElement> psiElements = new ArrayList<PsiElement>();
@@ -302,7 +302,7 @@ public class EmptyMethodInspection extends GlobalInspectionTool {
       return QUICK_FIX_NAME;
     }
 
-    public void applyFix(final @NotNull Project project, ProblemDescriptor descriptor) {
+    public void applyFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
       if (refElement.isValid() && refElement instanceof RefMethod) {
         List<RefElement> refElements = new ArrayList<RefElement>(1);

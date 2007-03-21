@@ -45,7 +45,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
     return null;
   }
 
-  public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     PsiStatement anchorStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
     LOG.assertTrue(anchorStatement != null);

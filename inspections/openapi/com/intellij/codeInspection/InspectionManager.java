@@ -36,14 +36,14 @@ public abstract class InspectionManager {
    * @param descriptionTemplate problem message. Use <code>#ref</code> for a link to problem piece of code and <code>#loc</code> for location in source code.
    * @param fix should be null if no fix is provided.
    */
-  @NotNull public abstract ProblemDescriptor createProblemDescriptor(PsiElement psiElement, @NotNull String descriptionTemplate, LocalQuickFix fix, ProblemHighlightType highlightType);
+  @NotNull public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement, @NotNull String descriptionTemplate, LocalQuickFix fix, ProblemHighlightType highlightType);
 
-  @NotNull public abstract ProblemDescriptor createProblemDescriptor(PsiElement psiElement, @NotNull String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType);
+  @NotNull public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement, @NotNull String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType);
 
-  @NotNull public abstract ProblemDescriptor createProblemDescriptor(PsiElement psiElement, @NotNull String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType, boolean isAfterEndOfLine);
+  @NotNull public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement, @NotNull String descriptionTemplate, LocalQuickFix[] fixes, ProblemHighlightType highlightType, boolean isAfterEndOfLine);
 
-  @NotNull public abstract ProblemDescriptor createProblemDescriptor(PsiElement startElement,
-                                                                     PsiElement endElement,
+  @NotNull public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
+                                                                     @NotNull PsiElement endElement,
                                                                      @NotNull String descriptionTemplate,
                                                                      ProblemHighlightType highlightType,
                                                                      LocalQuickFix... fixes
@@ -52,7 +52,7 @@ public abstract class InspectionManager {
   
   @NotNull public abstract Project getProject();
 
-  public abstract ProblemDescriptor createProblemDescriptor(final PsiElement psiElement, 
+  public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                             final TextRange rangeInElement,
                                                             @NotNull final String descriptionTemplate,
                                                             final ProblemHighlightType highlightType,

@@ -292,7 +292,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       return InspectionsBundle.message("inspection.javadoc.problem.add.tag", myTag, myValue);
     }
 
-    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
       try {
         PsiDocCommentOwner owner = PsiTreeUtil.getParentOfType(descriptor.getEndElement(), PsiDocCommentOwner.class);
@@ -938,7 +938,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
      return QuickFixBundle.message("fix.javadoc.family");
    }
 
-    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (myTag == null || !myTag.isValid()) return;
       if (myAdditionalJavadocTags.length() > 0) {
         myAdditionalJavadocTags += "," + myTag.getName();

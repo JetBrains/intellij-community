@@ -7,6 +7,7 @@ package com.intellij.codeInspection.uncheckedWarnings;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
@@ -17,19 +18,23 @@ public class UncheckedWarningLocalInspection extends UnfairLocalInspectionTool {
   public static final String DISPLAY_NAME = InspectionsBundle.message("unchecked.warning");
   @NonNls public static final String ID = "unchecked";
 
+  @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @NotNull
   @NonNls
   public String getShortName() {
     return SHORT_NAME;
   }
 
+  @NotNull
   @NonNls
   public String getID() {
     return ID;

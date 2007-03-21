@@ -8,6 +8,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -26,14 +27,17 @@ public class ComparingReferencesInspection extends LocalInspectionTool {
 
   @NonNls public String CHECKED_CLASSES = "java.lang.String;java.util.Date";
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.comparing.references.display.name");
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.BUGS_GROUP_NAME;
   }
 
+  @NotNull
   public String getShortName() {
     return "ComparingReferences";
   }
@@ -113,11 +117,12 @@ public class ComparingReferencesInspection extends LocalInspectionTool {
   }
 
   private static class MyQuickFix implements LocalQuickFix {
+    @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.comparing.references.use.quickfix");
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       try {
         PsiBinaryExpression binaryExpression = (PsiBinaryExpression)descriptor.getPsiElement();
         IElementType opSign = binaryExpression.getOperationSign().getTokenType();
@@ -145,6 +150,7 @@ public class ComparingReferencesInspection extends LocalInspectionTool {
       }
     }
 
+    @NotNull
     public String getFamilyName() {
       return getName();
     }

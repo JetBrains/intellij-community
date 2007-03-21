@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -39,7 +40,8 @@ public class DefUseInspection extends BaseLocalInspectionTool {
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.unused.assignment.display.name");
   @NonNls public static final String SHORT_NAME = "UnusedAssignment";
 
-  public PsiElementVisitor buildVisitor(final ProblemsHolder holder, final boolean isOnTheFly) {
+  @NotNull
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new PsiElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {}
 
@@ -205,11 +207,12 @@ public class DefUseInspection extends BaseLocalInspectionTool {
 
   private static class RemoveInitializerFix implements LocalQuickFix {
 
+    @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.unused.assignment.remove.quickfix");
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement psiInitializer = descriptor.getPsiElement();
       if (!(psiInitializer instanceof PsiExpression)) return;
       if (!(psiInitializer.getParent() instanceof PsiVariable)) return;
@@ -239,19 +242,23 @@ public class DefUseInspection extends BaseLocalInspectionTool {
       }
     }
 
+    @NotNull
     public String getFamilyName() {
       return getName();
     }
   }
 
+  @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.BUGS_GROUP_NAME;
   }
 
+  @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }

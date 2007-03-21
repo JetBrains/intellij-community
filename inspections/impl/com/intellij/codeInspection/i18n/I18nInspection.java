@@ -74,14 +74,17 @@ public class I18nInspection extends BaseLocalInspectionTool {
     cacheNonNlsCommentPattern();
   }
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
   }
 
+  @NotNull
   public String getDisplayName() {
     return CodeInsightBundle.message("inspection.i18n.display.name");
   }
 
+  @NotNull
   public String getShortName() {
     return "HardCodedStringLiteral";
   }
@@ -315,7 +318,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
   @Override
   @Nullable
-  public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final Object[] fileCheckingInspections = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.I18N_INSPECTION_TOOL).getExtensions();
     for(Object obj: fileCheckingInspections) {
       FileCheckingInspection inspection = (FileCheckingInspection) obj;
@@ -347,7 +350,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
         return IntroduceConstantHandler.REFACTORING_NAME;
       }
 
-      public void applyFix(@NotNull final Project project, ProblemDescriptor descriptor) {
+      public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             List<PsiExpression> exprList = new ArrayList<PsiExpression>();

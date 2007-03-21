@@ -23,14 +23,17 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
 
   private LocalQuickFix myQuickFixAction;
 
+  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.VERBOSE_GROUP_NAME;
   }
 
+  @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.redundant.type.display.name");
   }
 
+  @NotNull
   public String getShortName() {
     return "RedundantTypeArguments";
   }
@@ -120,7 +123,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
       return InspectionsBundle.message("inspection.redundant.type.remove.quickfix");
     }
 
-    public void applyFix(@NotNull Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiReferenceParameterList typeArgumentList = (PsiReferenceParameterList)descriptor.getPsiElement();
       try {
         final PsiMethodCallExpression expr =

@@ -44,7 +44,7 @@ class RenameFileReferenceIntentionAction implements IntentionAction, LocalQuickF
     return QuickFixBundle.message("rename.file.reference.family");
   }
 
-  public void applyFix(@NotNull final Project project, final ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     if (isAvailable(project, null, null)) {
       new WriteCommandAction(project) {
         protected void run(Result result) throws Throwable {

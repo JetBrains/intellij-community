@@ -34,6 +34,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,14 +53,17 @@ public class DependencyInspection extends BaseLocalInspectionTool {
   public static final String DISPLAY_NAME = InspectionsBundle.message("illegal.package.dependencies");
   @NonNls public static final String SHORT_NAME = "Dependency";
 
+  @NotNull
   public String getGroupDisplayName() {
     return DependencyInspection.GROUP_DISPLAY_NAME;
   }
 
+  @NotNull
   public String getDisplayName() {
     return DependencyInspection.DISPLAY_NAME;
   }
 
+  @NotNull
   public String getShortName() {
     return DependencyInspection.SHORT_NAME;
   }
@@ -80,7 +84,7 @@ public class DependencyInspection extends BaseLocalInspectionTool {
   }
 
   @Nullable
-  public ProblemDescriptor[] checkFile(final PsiFile file, final InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, boolean isOnTheFly) {
     if (file == null) return null;
     if (file.getViewProvider().getPsi(StdLanguages.JAVA) == null) return null;
     final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(file.getProject());
@@ -104,6 +108,7 @@ public class DependencyInspection extends BaseLocalInspectionTool {
     return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 
+  @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
@@ -118,15 +123,17 @@ public class DependencyInspection extends BaseLocalInspectionTool {
       myRule = rule;
     }
 
+    @NotNull
     public String getName() {
       return InspectionsBundle.message("edit.dependency.rules.text", myRule.getDisplayText());
     }
 
+    @NotNull
     public String getFamilyName() {
       return InspectionsBundle.message("edit.dependency.rules.family");
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       ShowSettingsUtil.getInstance().editConfigurable(project, new DependencyConfigurable(project));
     }
 
