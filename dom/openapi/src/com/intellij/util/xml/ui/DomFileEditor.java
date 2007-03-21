@@ -62,6 +62,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
 
   @Nullable
   public JComponent getPreferredFocusedComponent() {
+    ensureInitialized();
     return myComponent.getComponent();
   }
 
@@ -94,7 +95,6 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
   }
 
   protected void setSelectedDomElement(DomElement domElement) {
-    ensureInitialized();
     final DomUIControl domControl = DomUINavigationProvider.findDomControl(myComponent, domElement);
     if (domControl != null) {
       domControl.navigate(domElement);

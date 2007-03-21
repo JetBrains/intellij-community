@@ -107,7 +107,7 @@ public abstract class SimpleNode extends NodeDescriptor implements ComparableObj
   }
 
   public final String getName() {
-    StringBuffer result = new StringBuffer("");
+    StringBuilder result = new StringBuilder("");
     for (ColoredFragment each : myColoredText) {
       result.append(each.getText());
     }

@@ -35,7 +35,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
   protected final DefaultTreeModel myTreeModel;
   protected AbstractTreeStructure myTreeStructure;
 
-  protected AbstractTreeUpdater myUpdater;
+  protected final AbstractTreeUpdater myUpdater;
 
   private Comparator<NodeDescriptor> myNodeDescriptorComparator;
   private final Comparator<TreeNode> myNodeComparator = new Comparator<TreeNode>() {
