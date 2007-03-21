@@ -181,11 +181,13 @@ public class ModuleEditor {
   }
 
   public void updateOrderEntriesInEditors() {
-    getPanel();  //init editor if needed
-    for (final ModuleConfigurationEditor myEditor : myEditors) {
-      myEditor.moduleStateChanged();
+    if (getModule() != null) { //module with attached module libraries was deleted
+      getPanel();  //init editor if needed
+      for (final ModuleConfigurationEditor myEditor : myEditors) {
+        myEditor.moduleStateChanged();
+      }
+      myEventDispatcher.getMulticaster().moduleStateChanged(getModifiableRootModelProxy());
     }
-    myEventDispatcher.getMulticaster().moduleStateChanged(getModifiableRootModelProxy());
   }
 
   public void updateCompilerOutputPathChanged(String baseUrl, String moduleName){
