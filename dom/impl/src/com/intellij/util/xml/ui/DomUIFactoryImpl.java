@@ -128,6 +128,8 @@ public class DomUIFactoryImpl extends DomUIFactory {
     return new BackgroundEditorHighlighter() {
       @NotNull
       public HighlightingPass[] createPassesForEditor() {
+        if (!element.isValid()) return HighlightingPass.EMPTY_ARRAY;
+        
         final XmlFile psiFile = element.getRoot().getFile();
 
         final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
