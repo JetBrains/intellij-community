@@ -68,7 +68,7 @@ public abstract class AnAction {
   private static final ShortcutSet ourEmptyShortcutSet = new CustomShortcutSet(new Shortcut[0]);
   private boolean myIsDefaultIcon = true;
   private boolean myWorksInInjected;
-
+                                       
   /**
    * Creates a new action with its text, description and icon set to <code>null</code>.
    */
