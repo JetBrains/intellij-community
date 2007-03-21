@@ -98,7 +98,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private final PsiTreeChangeListener myChangeListener;
 
   private static class ProblemFileInfo {
-    private Collection<Problem> problems = new THashSet<Problem>();
+    private final Collection<Problem> problems = new THashSet<Problem>();
     private boolean hasSyntaxErrors;
 
     public boolean equals(final Object o) {
@@ -396,7 +396,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
-  public void weHaveGotProblems(final VirtualFile virtualFile, final List<Problem> problems) {
+  public void weHaveGotProblems(@NotNull final VirtualFile virtualFile, @NotNull List<Problem> problems) {
+    if (problems.isEmpty()) return;
     if (!isToBeHighlighted(virtualFile)) return;
     boolean fireListener = false;
     synchronized (myProblems) {

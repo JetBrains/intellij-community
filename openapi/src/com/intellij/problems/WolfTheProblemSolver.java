@@ -26,7 +26,7 @@ public abstract class WolfTheProblemSolver implements ProjectComponent {
   public abstract boolean isProblemFile(VirtualFile virtualFile);
 
   public abstract void weHaveGotProblem(Problem problem);
-  public abstract void weHaveGotProblems(final VirtualFile virtualFile, List<Problem> problems);
+  public abstract void weHaveGotProblems(@NotNull VirtualFile virtualFile, @NotNull List<Problem> problems);
   public abstract void clearProblems(@NotNull VirtualFile virtualFile);
 
   public abstract boolean hasProblemFilesBeneath(ProjectViewNode scope);

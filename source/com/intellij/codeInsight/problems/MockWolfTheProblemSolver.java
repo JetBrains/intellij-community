@@ -29,7 +29,7 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
     if (myDelegate != null) myDelegate.weHaveGotProblem(problem);
   }
 
-  public void weHaveGotProblems(final VirtualFile virtualFile, final List<Problem> problems) {
+  public void weHaveGotProblems(@NotNull final VirtualFile virtualFile, @NotNull final List<Problem> problems) {
     if (myDelegate != null) myDelegate.weHaveGotProblems(virtualFile, problems);
   }
 

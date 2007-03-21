@@ -12,8 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 
 public class RefactoringListeners {
-  public static RefactoringElementListener getListener(final PsiPackage psiPackage,
-                                                       final Accessor<PsiPackage> accessor) {
+  public static RefactoringElementListener getListener(final PsiPackage psiPackage, final Accessor<PsiPackage> accessor) {
     final StringBuilder path = new StringBuilder();
     for (PsiPackage parent = accessor.getPsiElement(); parent != null; parent = parent.getParentPackage()) {
       if (parent.equals(psiPackage)) return new RefactorPackage(accessor, path.toString());
