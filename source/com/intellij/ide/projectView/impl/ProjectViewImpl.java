@@ -48,7 +48,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.GuiUtils;
@@ -1451,7 +1450,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
           myAlarm.cancelAllRequests();
           myAlarm.addRequest(new Runnable() {
             public void run() {
-              if (myProject.isDisposed()) return;
+              if (myProject.isDisposed() || !myViewContentPanel.isShowing()) return;
               if (isAutoscrollFromSource(getCurrentViewId())) {
                 FileEditor newEditor = event.getNewEditor();
                 if (newEditor instanceof TextEditor) {
@@ -1460,7 +1459,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
                 }
               }
             }
-          }, 400, ModalityState.NON_MODAL);
+          }, 300, ModalityState.NON_MODAL);
         }
       };
       myFileEditorManager.addFileEditorManagerListener(myEditorManagerListener);
