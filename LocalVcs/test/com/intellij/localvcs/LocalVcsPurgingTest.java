@@ -43,7 +43,7 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
     vcs = new TestLocalVcs(new PurgeLoggingStorage());
     setCurrentTimestamp(20);
 
-    vcs.createFile("file", new byte[LongContent.MAX_LENGTH + 1], null);
+    vcs.createFile("file", new byte[IContentStorage.MAX_CONTENT_LENGTH + 1], null);
     vcs.changeFileContent("file", b("new content"), null);
 
     vcs.purgeUpTo(20);

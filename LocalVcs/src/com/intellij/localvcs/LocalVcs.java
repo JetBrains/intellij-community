@@ -97,7 +97,7 @@ public class LocalVcs implements ILocalVcs {
     try {
       // todo review: this is only for tests
       if (data == null) return null;
-      return myStorage.createContent(data);
+      return myStorage.storeContent(data);
     }
     catch (Exception e) {
       throw new RuntimeException(e);

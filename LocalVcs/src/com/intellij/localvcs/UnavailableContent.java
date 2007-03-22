@@ -2,14 +2,12 @@ package com.intellij.localvcs;
 
 import java.io.IOException;
 
-public class LongContent extends Content {
-  public static final int MAX_LENGTH = 100 * 1024;
-
-  public LongContent() {
+public class UnavailableContent extends Content {
+  public UnavailableContent() {
     super(null, -1);
   }
 
-  public LongContent(Stream s) throws IOException {
+  public UnavailableContent(Stream s) throws IOException {
     this();
   }
 
@@ -19,7 +17,7 @@ public class LongContent extends Content {
 
   @Override
   public byte[] getBytes() {
-    return "content is too long".getBytes();
+    return "content is not available".getBytes();
   }
 
   @Override
@@ -28,8 +26,8 @@ public class LongContent extends Content {
   }
 
   @Override
-  public boolean isTooLong() {
-    return true;
+  public boolean isAvailable() {
+    return false;
   }
 
   @Override

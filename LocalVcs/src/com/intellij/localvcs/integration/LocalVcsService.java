@@ -98,7 +98,7 @@ public class LocalVcsService {
     if (!getFileFilter().isAllowedAndUnderContentRoot(f)) return null;
 
     Content c = myVcs.getEntry(f.getPath()).getContent();
-    return c.isTooLong() ? null : new EntryProvidedContent(c);
+    return c.isAvailable() ? new EntryProvidedContent(c) : null;
   }
 
   public LocalVcsAction startAction(String label) {

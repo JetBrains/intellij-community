@@ -5,6 +5,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class ContentStorageTest extends TempDirTestCase {
   private ContentStorage s;
@@ -15,7 +17,11 @@ public class ContentStorageTest extends TempDirTestCase {
   }
 
   private ContentStorage createStorage() throws Exception {
-    return new ContentStorage(new File(tempDir, "storage"));
+    return new ContentStorage(getStorageFile());
+  }
+
+  private File getStorageFile() {
+    return new File(tempDir, "storage");
   }
 
   @After
@@ -67,5 +73,46 @@ public class ContentStorageTest extends TempDirTestCase {
     int id = s.store(new byte[]{1});
     s.remove(id);
     assertEquals(id, s.store(new byte[]{1}));
+  }
+
+  @Test
+  public void testThrowingIOExceptionWhenAskingForInvalidContent() {
+    try {
+      s.load(123);
+      fail();
+    }
+    catch (IOException e) {
+    }
+  }
+
+  @Test
+  public void testThrowingIOExceptionWhenStorageIsCorrupted() throws IOException {
+    int id = s.store("abc".getBytes());
+    s.close();
+
+    corruptStorageFile();
+
+    try {
+      s.load(id);
+      fail();
+    }
+    catch (IOException e) {
+    }
+
+    try {
+      s.store("abc".getBytes());
+      fail();
+    }
+    catch (IOException e) {
+    }
+  }
+
+  private void corruptStorageFile() throws IOException {
+    File f = getStorageFile();
+    f.delete();
+    f.createNewFile();
+    FileWriter w = new FileWriter(f);
+    w.write("bla-bla-bla");
+    w.close();
   }
 }

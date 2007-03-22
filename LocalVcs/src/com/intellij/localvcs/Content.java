@@ -23,6 +23,15 @@ public class Content {
   }
 
   public byte[] getBytes() {
+    try {
+      return getBytesUnsafe();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private byte[] getBytesUnsafe() throws IOException {
     return myStorage.loadContentData(myId);
   }
 
@@ -36,8 +45,14 @@ public class Content {
     return new ByteArrayInputStream(getBytes());
   }
 
-  public boolean isTooLong() {
-    return false;
+  public boolean isAvailable() {
+    try {
+      getBytesUnsafe();
+      return true;
+    }
+    catch (IOException e) {
+      return false;
+    }
   }
 
   public int getId() {

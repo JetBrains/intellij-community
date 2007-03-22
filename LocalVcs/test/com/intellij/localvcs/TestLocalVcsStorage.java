@@ -1,5 +1,6 @@
 package com.intellij.localvcs;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,7 +12,7 @@ public class TestLocalVcsStorage extends LocalVcsStorage {
   }
 
   @Override
-  protected void init() {
+  protected void initStorage() {
   }
 
   @Override
@@ -28,14 +29,14 @@ public class TestLocalVcsStorage extends LocalVcsStorage {
   }
 
   @Override
-  protected Content doCreateContent(byte[] bytes) {
+  protected Content doStoreContent(byte[] bytes) {
     int id = myContents.size();
     myContents.put(id, bytes);
     return new Content(this, id);
   }
 
   @Override
-  protected byte[] loadContentData(int id) {
+  protected byte[] loadContentData(int id) throws IOException {
     return myContents.get(id);
   }
 }

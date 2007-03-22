@@ -2,7 +2,7 @@ package com.intellij.localvcsintegr;
 
 
 import com.intellij.localvcs.Entry;
-import com.intellij.localvcs.LongContent;
+import com.intellij.localvcs.IContentStorage;
 import com.intellij.localvcs.Paths;
 import com.intellij.openapi.vfs.*;
 
@@ -151,7 +151,7 @@ public class FileListeningTest extends IntegrationTestCase {
     File tempDir = createTempDirectory();
     File tempFile = new File(tempDir, "bigFile.java");
     OutputStream s = new FileOutputStream(tempFile);
-    s.write(new byte[LongContent.MAX_LENGTH + 1]);
+    s.write(new byte[IContentStorage.MAX_CONTENT_LENGTH + 1]);
     s.close();
 
     VirtualFile f = LocalFileSystem.getInstance().findFileByIoFile(tempFile);

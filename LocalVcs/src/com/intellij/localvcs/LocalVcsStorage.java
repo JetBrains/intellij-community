@@ -6,45 +6,64 @@ import java.io.*;
 import java.util.List;
 
 public class LocalVcsStorage {
-  private static final int VERSION = 7;
+  private static final int VERSION = 8;
+  private static final String BROKEN_MARK_FILE = ".broken";
+  private static final String VERSION_FILE = "version";
+  private static final String STORAGE_FILE = "storage";
+  private static final String CONTENTS_FILE = "contents";
 
   private File myDir;
   private IContentStorage myContentStorage;
 
+  private boolean isBroken = false;
+
   public LocalVcsStorage(File dir) {
     myDir = dir;
-    init();
+    initStorage();
   }
 
-  protected void init() {
-    checkVersionAndCreateDir();
+  protected void initStorage() {
+    validate();
     initContentStorage();
   }
 
-  private void checkVersionAndCreateDir() {
-    int version = load("version", -1, new Loader<Integer>() {
+  private void validate() {
+    if (wasMarkedAsBroken() || isValidVersion()) {
+      deleteStorage();
+      myDir.mkdirs();
+      storeVersion();
+    }
+  }
+
+  private void deleteStorage() {
+    FileUtil.delete(myDir);
+  }
+
+  private boolean wasMarkedAsBroken() {
+    return new File(myDir, BROKEN_MARK_FILE).exists();
+  }
+
+  private boolean isValidVersion() {
+    int version = load(VERSION_FILE, -1, new Loader<Integer>() {
       public Integer load(Stream s) throws IOException {
         return s.readInteger();
       }
     });
 
-    if (version != getVersion()) recreateStorage();
+    return version != getVersion();
+  }
 
-    store("version", new Storer() {
+  private void storeVersion() {
+    store(VERSION_FILE, new Storer() {
       public void store(Stream s) throws IOException {
         s.writeInteger(getVersion());
       }
     });
   }
 
-  private void recreateStorage() {
-    FileUtil.delete(myDir);
-    myDir.mkdirs();
-  }
-
   private void initContentStorage() {
     try {
-      myContentStorage = ContentStorage.createContentStorage(new File(myDir, "contents"));
+      myContentStorage = ContentStorage.createContentStorage(new File(myDir, CONTENTS_FILE));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -52,7 +71,7 @@ public class LocalVcsStorage {
   }
 
   public LocalVcs.Memento load() {
-    return load("storage", new LocalVcs.Memento(), new Loader<LocalVcs.Memento>() {
+    return load(STORAGE_FILE, new LocalVcs.Memento(), new Loader<LocalVcs.Memento>() {
       public LocalVcs.Memento load(Stream s) throws IOException {
         LocalVcs.Memento m = new LocalVcs.Memento();
         m.myRoot = (RootEntry)s.readEntry();
@@ -64,7 +83,7 @@ public class LocalVcsStorage {
   }
 
   public void store(final LocalVcs.Memento m) {
-    store("storage", new Storer() {
+    store(STORAGE_FILE, new Storer() {
       public void store(Stream s) throws IOException {
         s.writeEntry(m.myRoot);
         s.writeInteger(m.myEntryCounter);
@@ -99,7 +118,9 @@ public class LocalVcsStorage {
       }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      deleteStorage();
+      initStorage();
+      return def;
     }
   }
 
@@ -120,24 +141,41 @@ public class LocalVcsStorage {
     }
   }
 
-  public Content createContent(byte[] bytes) {
-    if (bytes.length > LongContent.MAX_LENGTH) return new LongContent();
-    return doCreateContent(bytes);
+  public Content storeContent(byte[] bytes) {
+    if (isBroken || isTooLong(bytes)) return new UnavailableContent();
+    return doStoreContent(bytes);
   }
 
-  protected Content doCreateContent(byte[] bytes) {
+  private boolean isTooLong(byte[] bytes) {
+    return bytes.length > IContentStorage.MAX_CONTENT_LENGTH;
+  }
+
+  protected Content doStoreContent(byte[] bytes) {
     try {
       int id = myContentStorage.store(bytes);
       return new Content(this, id);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      markAsBroken();
+      return new UnavailableContent();
     }
   }
 
-  protected byte[] loadContentData(int id) {
+  protected byte[] loadContentData(int id) throws IOException {
+    if (isBroken) throw new IOException();
     try {
       return myContentStorage.load(id);
+    }
+    catch (IOException e) {
+      markAsBroken();
+      throw e;
+    }
+  }
+
+  private void markAsBroken() {
+    isBroken = true;
+    try {
+      new File(myDir, BROKEN_MARK_FILE).createNewFile();
     }
     catch (IOException e) {
       throw new RuntimeException(e);

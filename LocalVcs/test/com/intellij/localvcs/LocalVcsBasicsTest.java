@@ -80,12 +80,12 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
 
   @Test
   public void testCreatingLongFiles() {
-    vcs.createFile("file", new byte[LongContent.MAX_LENGTH + 1], 777L);
+    vcs.createFile("file", new byte[IContentStorage.MAX_CONTENT_LENGTH + 1], 777L);
 
     Entry e = vcs.findEntry("file");
 
     assertNotNull(e);
-    assertEquals(LongContent.class, e.getContent().getClass());
+    assertEquals(UnavailableContent.class, e.getContent().getClass());
     assertEquals(777L, e.getTimestamp());
   }
 

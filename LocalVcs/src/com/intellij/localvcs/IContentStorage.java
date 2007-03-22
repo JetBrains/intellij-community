@@ -3,8 +3,9 @@ package com.intellij.localvcs;
 import java.io.IOException;
 
 // todo get rid of isRemoved()
-
 public interface IContentStorage {
+  int MAX_CONTENT_LENGTH = 100 * 1024;
+
   void close();
 
   void save();

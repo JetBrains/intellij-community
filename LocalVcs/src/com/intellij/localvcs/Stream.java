@@ -35,7 +35,7 @@ public class Stream {
       case 0:
         return new Content(this);
       case 1:
-        return new LongContent(this);
+        return new UnavailableContent(this);
     }
     return null;
   }
@@ -48,7 +48,7 @@ public class Stream {
 
     Class c = content.getClass();
     if (c.equals(Content.class)) id = 0;
-    if (c.equals(LongContent.class)) id = 1;
+    if (c.equals(UnavailableContent.class)) id = 1;
 
     myOs.writeInt(id);
     content.write(this);

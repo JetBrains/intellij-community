@@ -32,19 +32,31 @@ public class ContentStorage implements IContentStorage {
   }
 
   public int store(byte[] content) throws IOException {
-    RecordDataOutput r = myStore.createRecord();
-    r.writeInt(content.length);
-    r.write(content);
-    r.close();
-    return r.getRecordId();
+    try {
+      RecordDataOutput r = myStore.createRecord();
+      r.writeInt(content.length);
+      r.write(content);
+      r.close();
+      return r.getRecordId();
+    }
+    catch (Exception e) {
+      // todo AFTER JDK 1.6 throw new IOException(e);
+      throw new IOException(e.getMessage());
+    }
   }
 
   public byte[] load(int id) throws IOException {
-    RandomAccessPagedDataInput r = myStore.getReader(id);
-    byte[] buffer = new byte[r.readInt()];
-    r.readFully(buffer);
-    r.close();
-    return buffer;
+    try {
+      RandomAccessPagedDataInput r = myStore.getReader(id);
+      byte[] buffer = new byte[r.readInt()];
+      r.readFully(buffer);
+      r.close();
+      return buffer;
+    }
+    catch (Exception e) {
+      // todo AFTER JDK 1.6 throw new IOException(e);
+      throw new IOException(e.getMessage());
+    }
   }
 
   public void remove(int id) {

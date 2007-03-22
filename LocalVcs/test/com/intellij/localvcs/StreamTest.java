@@ -52,7 +52,7 @@ public class StreamTest extends LocalVcsTestCase {
 
   @Test
   public void testContent() throws Exception {
-    Content c = s.createContent(new byte[]{1, 2, 3});
+    Content c = s.storeContent(new byte[]{1, 2, 3});
     os.writeContent(c);
 
     assertEquals(new byte[]{1, 2, 3}, is.readContent().getBytes());
@@ -65,14 +65,14 @@ public class StreamTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testLongContent() throws Exception {
-    os.writeContent(new LongContent());
-    assertEquals(LongContent.class, is.readContent().getClass());
+  public void testUnavailableContent() throws Exception {
+    os.writeContent(new UnavailableContent());
+    assertEquals(UnavailableContent.class, is.readContent().getClass());
   }
 
   @Test
-  public void testDataAfterLongContent() throws IOException {
-    os.writeContent(new LongContent());
+  public void testDataAfterUnavailableContent() throws IOException {
+    os.writeContent(new UnavailableContent());
     os.writeInteger(777);
 
     is.readContent();
@@ -88,7 +88,7 @@ public class StreamTest extends LocalVcsTestCase {
 
   @Test
   public void testFileEntry() throws Exception {
-    Content c = s.createContent(b("content"));
+    Content c = s.storeContent(b("content"));
     Entry e = new FileEntry(42, "file", c, 123L);
 
     os.writeEntry(e);
@@ -188,7 +188,7 @@ public class StreamTest extends LocalVcsTestCase {
 
   @Test
   public void testCreateFileChange() throws IOException {
-    Change c = new CreateFileChange(1, "file", s.createContent(b("content")), 777L);
+    Change c = new CreateFileChange(1, "file", s.storeContent(b("content")), 777L);
     c.applyTo(new RootEntry());
 
     os.writeChange(c);
@@ -224,9 +224,9 @@ public class StreamTest extends LocalVcsTestCase {
   @Test
   public void testChangeFileContentChange() throws IOException {
     RootEntry root = new RootEntry();
-    root.createFile(1, "file", s.createContent(b("old content")), 1L);
+    root.createFile(1, "file", s.storeContent(b("old content")), 1L);
 
-    Change c = new ChangeFileContentChange("file", s.createContent(b("new content")), 2L);
+    Change c = new ChangeFileContentChange("file", s.storeContent(b("new content")), 2L);
     c.applyTo(root);
 
     os.writeChange(c);

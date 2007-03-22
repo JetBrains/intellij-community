@@ -17,7 +17,7 @@ public class ByteContent extends Content {
 
   @Override
   public boolean equals(Object o) {
-    if (o.getClass().equals(LongContent.class)) return false;
+    if (o.getClass().equals(UnavailableContent.class)) return false;
     return Arrays.equals(myData, ((Content)o).getBytes());
   }
 
