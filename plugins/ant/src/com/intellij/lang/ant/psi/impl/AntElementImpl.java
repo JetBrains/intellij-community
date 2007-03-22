@@ -224,7 +224,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
         return elementAt;
       }
     }
-    return getTextRange().contains(offsetInFile) ? this : null;
+    return getTextRange().contains(offsetInFile) && isValid()? this : null;
   }
 
   public ASTNode getNode() {
