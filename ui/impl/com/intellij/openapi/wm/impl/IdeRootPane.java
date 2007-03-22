@@ -3,7 +3,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.RecentProjectsManager;
-import com.intellij.ide.navigationToolbar.NavigationToolbarPanel;
+import com.intellij.ide.navigationToolbar.NavBarPanel;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
@@ -32,7 +32,7 @@ public class IdeRootPane extends JRootPane{
   private StatusBarImpl myStatusBar;
 
   private JPanel myNorthPanel = new JPanel(new BorderLayout());
-  private NavigationToolbarPanel myNavigationBar;
+  private NavBarPanel myNavigationBar;
 
   /**
    * Current <code>ToolWindowsPane</code>. If there is no such pane then this field is null.
@@ -168,7 +168,7 @@ public class IdeRootPane extends JRootPane{
     return myStatusBar;
   }
 
-  public NavigationToolbarPanel getNavigationBar(){
+  public NavBarPanel getNavigationBar(){
     return myNavigationBar;
   }
 
@@ -193,7 +193,7 @@ public class IdeRootPane extends JRootPane{
   }
 
   public void installNavigationBar(final Project project) {
-    myNavigationBar = new NavigationToolbarPanel(project);
+    myNavigationBar = new NavBarPanel(project);
     myNorthPanel.add(myNavigationBar, BorderLayout.SOUTH);
     updateNavigationBarVisibility();
   }
