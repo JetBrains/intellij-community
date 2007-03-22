@@ -74,7 +74,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return Collections.unmodifiableSet(myAllRenames.keySet());
   }
 
-
   public void setShouldRenameVariables(boolean shouldRenameVariables) {
     myShouldRenameVariables = shouldRenameVariables;
   }
@@ -92,35 +91,26 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   public void doRun() {
-    String message = null;
     prepareRenaming();
-    try {
-      for (Map.Entry<PsiElement, String> entry : myAllRenames.entrySet()) {
-        RenameUtil.checkRename(entry.getKey(), entry.getValue());
-      }
-    } catch (IncorrectOperationException e) {
-      message = e.getMessage();
-    }
-
-    if (message != null) {
-      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), message, getHelpID(), myProject);
-      return;
-    }
 
     super.doRun();
   }
 
   public void prepareRenaming() {
     if (myPrimaryElement instanceof PsiClass) {
-      prepareClassRenaming((PsiClass) myPrimaryElement, myNewName);
-    } else if (myPrimaryElement instanceof PsiField) {
-      prepareFieldRenaming((PsiField) myPrimaryElement, myNewName);
-    } else if (myPrimaryElement instanceof PsiPackage) {
-      preparePackageRenaming((PsiPackage) myPrimaryElement, myNewName);
-    } else if (myPrimaryElement instanceof PsiDirectory) {
-      prepareDirectoryRenaming((PsiDirectory) myPrimaryElement, myNewName);
-    } else if (myPrimaryElement instanceof Property) {
-      preparePropertyRenaming((Property) myPrimaryElement, myNewName);
+      prepareClassRenaming((PsiClass)myPrimaryElement, myNewName);
+    }
+    else if (myPrimaryElement instanceof PsiField) {
+      prepareFieldRenaming((PsiField)myPrimaryElement, myNewName);
+    }
+    else if (myPrimaryElement instanceof PsiPackage) {
+      preparePackageRenaming((PsiPackage)myPrimaryElement, myNewName);
+    }
+    else if (myPrimaryElement instanceof PsiDirectory) {
+      prepareDirectoryRenaming((PsiDirectory)myPrimaryElement, myNewName);
+    }
+    else if (myPrimaryElement instanceof Property) {
+      preparePropertyRenaming((Property)myPrimaryElement, myNewName);
     }
   }
 
@@ -438,10 +428,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   protected boolean isPreviewUsages(UsageInfo[] usages) {
     if (super.isPreviewUsages(usages)) return true;
     if (UsageViewUtil.hasNonCodeUsages(usages)) {
-      WindowManager.getInstance().getStatusBar(myProject).setInfo(
-        RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
+      WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
       return true;
-    } else if (UsageViewUtil.hasReadOnlyUsages(usages)) {
+    }
+    else if (UsageViewUtil.hasReadOnlyUsages(usages)) {
       WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("readonly.occurences.found"));
       return true;
     }
@@ -453,6 +443,22 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   public void performRefactoring(UsageInfo[] usages) {
+    String message = null;
+    try {
+      for (Map.Entry<PsiElement, String> entry : myAllRenames.entrySet()) {
+        RenameUtil.checkRename(entry.getKey(), entry.getValue());
+      }
+      if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(myProject, getElements(), true)) return;
+    }
+    catch (IncorrectOperationException e) {
+      message = e.getMessage();
+    }
+
+    if (message != null) {
+      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), message, getHelpID(), myProject);
+      return;
+    }
+
     if (markCommandAsComplex()) {
       CommandProcessor.getInstance().markCurrentCommandAsComplex(myProject);
     }

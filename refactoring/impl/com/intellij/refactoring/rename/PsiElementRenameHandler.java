@@ -115,7 +115,7 @@ public class PsiElementRenameHandler implements RenameHandler {
       return false;
     }
 
-    return CommonRefactoringUtil.checkReadOnlyStatus(project, element);
+    return true;//CommonRefactoringUtil.checkReadOnlyStatus(project, element);
   }
 
 
@@ -144,8 +144,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     if (elementToRename instanceof PsiMethod) {
       elementToRename = SuperMethodWarningUtil.checkSuperMethod((PsiMethod)elementToRename, RefactoringBundle.message("to.rename"));
       if (elementToRename == null) return;
-
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, elementToRename)) return;
+      //if (!CommonRefactoringUtil.checkReadOnlyStatus(project, elementToRename)) return;
     }
 
     if (editor != null) {

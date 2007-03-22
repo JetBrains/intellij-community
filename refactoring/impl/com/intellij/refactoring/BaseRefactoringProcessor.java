@@ -1,5 +1,6 @@
 package com.intellij.refactoring;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -11,8 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -28,6 +27,7 @@ import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -143,10 +143,10 @@ public abstract class BaseRefactoringProcessor {
     LOG.assertTrue(!refUsages.isNull());
     if (!preprocessUsages(refUsages)) return;
     final UsageInfo[] usages = refUsages.get();
-    if (!myIsPreviewUsages) ensureFilesWritable(usages);
-    if (isPreviewUsages(usages)) {
-      UsageViewDescriptor descriptor = createUsageViewDescriptor(usages);
+    UsageViewDescriptor descriptor = createUsageViewDescriptor(usages);
+    if (!myIsPreviewUsages && !ensureFilesWritable(usages, descriptor)) return;
 
+    if (isPreviewUsages(usages)) {
       final PsiElement[] elements = descriptor.getElements();
       final PsiElement2UsageTargetAdapter[] targets = PsiElement2UsageTargetAdapter.convert(elements);
       Factory<UsageSearcher> factory = new Factory<UsageSearcher>() {
@@ -170,21 +170,20 @@ public abstract class BaseRefactoringProcessor {
       };
 
       showUsageView(descriptor, factory, usages);
-    } else {
+    }
+    else {
       execute(usages);
     }
   }
 
-  private void ensureFilesWritable(UsageInfo[] usages) {
-    Set<VirtualFile> files = new HashSet<VirtualFile>();
+  private static boolean ensureFilesWritable(UsageInfo[] usages, final UsageViewDescriptor descriptor) {
+    Set<PsiElement> elements = new THashSet<PsiElement>();
     for (UsageInfo usage : usages) {
-      final PsiFile file = usage.getElement().getContainingFile();
-      final VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile != null) {
-        files.add(virtualFile);
-      }
+      PsiElement element = usage.getElement();
+      if (element != null) elements.add(element);
     }
-    ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(files.toArray(new VirtualFile[files.size()]));
+    elements.addAll(Arrays.asList(descriptor.getElements()));
+    return CodeInsightUtil.preparePsiElementsForWrite(elements);
   }
 
   void execute(final UsageInfo[] usages) {
@@ -422,4 +421,5 @@ public abstract class BaseRefactoringProcessor {
     prepareSuccessful();
     return true;
   }
+
 }
