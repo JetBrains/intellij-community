@@ -20,19 +20,19 @@ public abstract class ServiceState {
   }
 
   public void startRefreshing() {
-    throw new IllegalStateException();
+    illegalState();
   }
 
   public void finishRefreshing() {
-    throw new IllegalStateException();
+    illegalState();
   }
 
   public void startCommand(String name) {
-    throw new IllegalStateException();
+    illegalState();
   }
 
   public void finishCommand() {
-    throw new IllegalStateException();
+    illegalState();
   }
 
   protected void goToState(ServiceState s) {
@@ -83,5 +83,10 @@ public abstract class ServiceState {
   }
 
   protected void beforeExitingFromState() {
+  }
+
+  private void illegalState() {
+    // todo move to logging proxy...
+    throw new IllegalStateException(getClass().getSimpleName());
   }
 }
