@@ -233,6 +233,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     copy.myComment = myComment;
     copy.myIsDefault = myIsDefault;
     copy.myIsInUpdate = myIsInUpdate;
+    copy.myIsReadOnly = myIsReadOnly;
 
     if (myChanges != null) {
       copy.myChanges = new HashSet<Change>(myChanges);
