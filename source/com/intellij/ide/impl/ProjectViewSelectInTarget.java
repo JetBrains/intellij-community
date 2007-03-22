@@ -2,7 +2,6 @@ package com.intellij.ide.impl;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -11,6 +10,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,9 +70,10 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
         element = classes[0];
       }
     }
-    final PsiElement originalElement = element.getOriginalElement();
+    PsiElement originalElement = element.getOriginalElement();
+    JspFile jspFile = PsiUtil.getJspFile(originalElement);
     final VirtualFile virtualFile = PsiUtil.getVirtualFile(originalElement);
-    select(originalElement, virtualFile,requestFocus);
+    select(jspFile == null ? originalElement : jspFile, virtualFile, requestFocus);
   }
 
   private static boolean isTopLevelClass(final PsiElement element) {
