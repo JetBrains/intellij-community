@@ -76,9 +76,9 @@ public abstract class MappedBufferWrapper {
   protected abstract MappedByteBuffer map();
 
   public final void unmap() {
-    ByteBuffer buf = myBuffer.getAndSet(null);
-    if (buf != null) {
-      synchronized (LOCK) {
+    synchronized (LOCK) {
+      ByteBuffer buf = myBuffer.getAndSet(null);
+      if (buf != null) {
         ourMappedWrappers.remove(this);
         if (buf instanceof MappedByteBuffer) {
           ((MappedByteBuffer)buf).force();
