@@ -6,6 +6,8 @@ import com.intellij.localvcs.LocalVcs;
 import com.intellij.localvcs.LocalVcsStorage;
 import com.intellij.localvcs.integration.LocalVcsAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -66,5 +68,20 @@ public class BasicsTest extends IntegrationTestCase {
     List<Label> l = getVcs().getLabelsFor(f.getPath());
     assertEquals("label", l.get(0).getName());
     assertNull(l.get(1).getName());
+  }
+
+  public void testUpdatingOnFileTypesChange() throws Exception {
+    VirtualFile f = root.createChildData(null, "file.xxx");
+
+    assertFalse(hasVcsEntry(f));
+
+    FileTypeManager tm = FileTypeManager.getInstance();
+    tm.registerFileType(StdFileTypes.PLAIN_TEXT, "xxx");
+
+    assertTrue(hasVcsEntry(f));
+
+    tm.removeAssociatedExtension(StdFileTypes.PLAIN_TEXT, "xxx");
+
+    assertFalse(hasVcsEntry(f));
   }
 }
