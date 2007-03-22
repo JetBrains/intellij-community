@@ -35,6 +35,9 @@ public class ChangeListAdapter implements ChangeListListener {
   public void changeListRenamed(ChangeList list, String oldName) {
   }
 
+  public void changeListCommentChanged(final ChangeList list, final String oldComment) {
+  }
+
   public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
   }
 

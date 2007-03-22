@@ -1083,4 +1083,8 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
   public void notifyChangeListRenamed(final LocalChangeList list, final String oldName) {
     myListeners.getMulticaster().changeListRenamed(list, oldName);
   }
+
+  public void notifyChangeListCommentChanged(final LocalChangeList list, final String oldComment) {
+    myListeners.getMulticaster().changeListCommentChanged(list, oldComment);
+  }
 }
