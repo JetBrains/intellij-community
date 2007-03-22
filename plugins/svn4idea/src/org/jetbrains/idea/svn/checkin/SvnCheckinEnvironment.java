@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -57,7 +58,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     mySvnVcs = svnVcs;
   }
 
-  public RefreshableOnComponent createAdditionalOptionsPanelForCheckinProject(Refreshable panel) {
+  public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel) {
     return new KeepLocksComponent(panel);
   }
 
