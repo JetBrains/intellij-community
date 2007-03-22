@@ -72,7 +72,10 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   public HighlighterIterator createIterator(int startOffset) {
     final Document document = getDocument();
-    assert !(document instanceof DocumentEx) || !((DocumentEx)document).isInBulkUpdate();
+    if(document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) {
+      ((DocumentEx)document).setInBulkUpdate(false); // bulk mode failed
+    }
+
     if (mySegments.getSegmentCount() == 0 && document != null && document.getTextLength() > 0) {
       // bulk mode was reset
       doSetText(document.getCharsSequence());
