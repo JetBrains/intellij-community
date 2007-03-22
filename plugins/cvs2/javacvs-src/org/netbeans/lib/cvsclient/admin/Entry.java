@@ -52,7 +52,7 @@ public final class Entry implements Cloneable {
   // Static =================================================================
 
   @NonNls private static final String DATE_FORMAT_STR = "yyyy.MM.dd.hh.mm.ss";
-  private static final SyncDateFormat STICKY_DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat(DATE_FORMAT_STR));
+  public static final SyncDateFormat STICKY_DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat(DATE_FORMAT_STR));
 
   private static SyncDateFormat lastModifiedDateFormatter;
   private boolean isAddedFile = false;

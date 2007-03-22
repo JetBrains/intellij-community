@@ -52,10 +52,10 @@ public class CvsUtil {
   @NonNls public static final String CVS = "CVS";
   @NonNls public static final String ENTRIES = "Entries";
   @NonNls private static final String CONFLICTS = "Conflicts";
-  @NonNls private static final String STICKY_DATE_PREFIX = "D";
+  @NonNls public static final String STICKY_DATE_PREFIX = "D";
   @NonNls private static final String TEMPLATE = "Template";
-  @NonNls private static final String STICKY_BRANCH_TAG_PREFIX = "T";
-  @NonNls private static final String STICKY_NON_BRANCH_TAG_PREFIX = "N";
+  @NonNls public static final String STICKY_BRANCH_TAG_PREFIX = "T";
+  @NonNls public static final String STICKY_NON_BRANCH_TAG_PREFIX = "N";
   @NonNls public static final String HEAD = "HEAD";
   @NonNls public static final String BASE = "Base";
 

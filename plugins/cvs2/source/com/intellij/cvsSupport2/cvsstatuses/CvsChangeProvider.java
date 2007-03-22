@@ -34,6 +34,7 @@ import org.netbeans.lib.cvsclient.admin.Entry;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
+import java.text.ParseException;
 
 /**
  * @author max
@@ -110,6 +111,8 @@ public class CvsChangeProvider implements ChangeProvider {
       processFile(dir, fileEntry.getVirtualFile(), fileEntry.getEntry(), builder);
     }
 
+    checkSwitchedDir(dir, builder);
+
     if (recursively) {
       for (VirtualFile file : dir.getChildren()) {
         if (file.isDirectory()) {
@@ -128,7 +131,7 @@ public class CvsChangeProvider implements ChangeProvider {
     final FileStatus status = CvsStatusProvider.getStatus(filePath.getVirtualFile(), entry);
     VcsRevisionNumber number = entry != null ? new CvsRevisionNumber(entry.getRevision()) : VcsRevisionNumber.NULL;
     processStatus(filePath, dir.findChild(filePath.getName()), status, number, entry != null && entry.isBinary(), builder);
-    checkSwitched(filePath, builder, dir, entry);
+    checkSwitchedFile(filePath, builder, dir, entry);
   }
 
   private void processFile(final VirtualFile dir, @Nullable VirtualFile file, Entry entry, final ChangelistBuilder builder) {
@@ -136,35 +139,67 @@ public class CvsChangeProvider implements ChangeProvider {
     final FileStatus status = CvsStatusProvider.getStatus(file, entry);
     final VcsRevisionNumber number = new CvsRevisionNumber(entry.getRevision());
     processStatus(filePath, file, status, number, entry.isBinary(), builder);
-    checkSwitched(filePath, builder, dir, entry);
+    checkSwitchedFile(filePath, builder, dir, entry);
   }
 
-  private void checkSwitched(final FilePath filePath, final ChangelistBuilder builder, final VirtualFile dir, final Entry entry) {
-    final VirtualFile parentDir = dir.getParent();
+  private void checkSwitchedDir(final VirtualFile dir, final ChangelistBuilder builder) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myVcs.getProject()).getFileIndex();
-    // if content root itself is switched, ignore
-    if (!fileIndex.isInContent(dir) || parentDir == null || !fileIndex.isInContent(parentDir)) {
+    VirtualFile parentDir = dir.getParent();
+    if (parentDir == null || !fileIndex.isInContent(parentDir)) {
       return;
     }
     final String dirTag = CvsEntriesManager.getInstance().getCvsInfoFor(dir).getStickyTag();
     final String parentDirTag = CvsEntriesManager.getInstance().getCvsInfoFor(parentDir).getStickyTag();
+    if (!Comparing.equal(dirTag, parentDirTag)) {
+      if (dirTag == null) {
+        builder.processSwitchedFile(dir, CvsUtil.HEAD, true);
+      }
+      else if (dirTag.startsWith(CvsUtil.STICKY_BRANCH_TAG_PREFIX) || dirTag.startsWith(CvsUtil.STICKY_NON_BRANCH_TAG_PREFIX)) {
+        final String tag = dirTag.substring(1);
+        // a switch between a branch tag and a non-branch tag is not a switch
+        if (parentDirTag != null &&
+            (parentDirTag.startsWith(CvsUtil.STICKY_BRANCH_TAG_PREFIX) || parentDirTag.startsWith(CvsUtil.STICKY_NON_BRANCH_TAG_PREFIX))) {
+          String parentTag = parentDirTag.substring(1);
+          if (tag.equals(parentTag)) {
+            return;
+          }
+        }
+        builder.processSwitchedFile(dir, CvsBundle.message("switched.tag.format", tag), true);
+      }
+      else if (dirTag.startsWith(CvsUtil.STICKY_DATE_PREFIX)) {
+        try {
+          Date date = Entry.STICKY_DATE_FORMAT.parse(dirTag.substring(1));
+          builder.processSwitchedFile(dir, CvsBundle.message("switched.date.format", date), true);
+        }
+        catch (ParseException e) {
+          builder.processSwitchedFile(dir, CvsBundle.message("switched.date.format", dirTag.substring(1)), true);
+        }
+      }
+    }
+  }
+
+  private void checkSwitchedFile(final FilePath filePath, final ChangelistBuilder builder, final VirtualFile dir, final Entry entry) {
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myVcs.getProject()).getFileIndex();
+    // if content root itself is switched, ignore
+    if (!fileIndex.isInContent(dir)) {
+      return;
+    }
+    final String dirTag = CvsEntriesManager.getInstance().getCvsInfoFor(dir).getStickyTag();
     String dirStickyInfo = getStickyInfo(dirTag);
-    String parentDirStickyInfo = getStickyInfo(parentDirTag);
-    if (entry != null && ((!Comparing.equal(entry.getStickyInformation(), dirStickyInfo) ||
-                           !Comparing.equal(entry.getStickyInformation(), parentDirStickyInfo)))) {
+    if (entry != null && !Comparing.equal(entry.getStickyInformation(), dirStickyInfo)) {
       VirtualFile file = filePath.getVirtualFile();
       if (file != null) {
         if (entry.getStickyTag() != null) {
-          builder.processSwitchedFile(file, "tag " + entry.getStickyTag(), true);
+          builder.processSwitchedFile(file, CvsBundle.message("switched.tag.format", entry.getStickyTag()), false);
         }
         else if (entry.getStickyDate() != null) {
-          builder.processSwitchedFile(file, "date " + entry.getStickyDate(), true);
+          builder.processSwitchedFile(file, CvsBundle.message("switched.date.format", entry.getStickyDate()), false);
         }
         else if (entry.getStickyRevision() != null) {
-          builder.processSwitchedFile(file, "revision " + entry.getStickyRevision(), true);
+          builder.processSwitchedFile(file, CvsBundle.message("switched.revision.format", entry.getStickyRevision()), false);
         }
         else {
-          builder.processSwitchedFile(file, "HEAD", true);
+          builder.processSwitchedFile(file, CvsUtil.HEAD, false);
         }
       }
     }
