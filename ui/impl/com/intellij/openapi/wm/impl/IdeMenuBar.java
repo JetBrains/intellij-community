@@ -13,7 +13,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.keymap.ex.KeymapManagerListener;
+import com.intellij.openapi.keymap.KeymapManagerListener;
 
 import javax.swing.*;
 import java.awt.*;

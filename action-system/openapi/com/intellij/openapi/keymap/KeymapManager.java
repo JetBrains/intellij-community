@@ -31,4 +31,8 @@ public abstract class KeymapManager {
   public static KeymapManager getInstance(){
     return ApplicationManager.getApplication().getComponent(KeymapManager.class);
   }
+
+  public abstract void addKeymapManagerListener(KeymapManagerListener listener);
+
+  public abstract void removeKeymapManagerListener(KeymapManagerListener listener);
 }

@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.keymap.ex.KeymapManagerListener;
+import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.UniqueFileNamesProvider;

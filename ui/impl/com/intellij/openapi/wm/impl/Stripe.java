@@ -3,8 +3,8 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.keymap.ex.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 
@@ -287,7 +287,7 @@ final class Stripe extends JPanel{
     return each.isVisible();
   }
 
-  private final class MyKeymapManagerListener implements KeymapManagerListener{
+  private final class MyKeymapManagerListener implements KeymapManagerListener {
     public void activeKeymapChanged(final Keymap keymap){
       updateText();
     }

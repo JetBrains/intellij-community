@@ -1,6 +1,7 @@
 package com.intellij.openapi.keymap.ex;
 
 import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManagerListener;
 
 import java.lang.ref.WeakReference;
 

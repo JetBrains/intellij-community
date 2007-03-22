@@ -1,6 +1,4 @@
-package com.intellij.openapi.keymap.ex;
-
-import com.intellij.openapi.keymap.Keymap;
+package com.intellij.openapi.keymap;
 
 public interface KeymapManagerListener {
   void activeKeymapChanged(Keymap keymap);

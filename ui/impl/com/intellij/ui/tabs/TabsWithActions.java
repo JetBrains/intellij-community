@@ -1,10 +1,8 @@
 package com.intellij.ui.tabs;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.util.ui.GraphicsConfig;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.ui.CaptionPanel;
@@ -43,9 +41,14 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
   private ActionGroup myPopupGroup;
   private String myPopupPlace;
   private TabInfo myPopupInfo;
+  private DefaultActionGroup myOwnGroup;
 
   public TabsWithActions(ActionManager actionManager) {
     myActionManager = actionManager;
+
+    myOwnGroup = new DefaultActionGroup();
+    myOwnGroup.add(new SelectNextAction());
+    myOwnGroup.add(new SelectPreviousAction());
   }
 
   public TabInfo addTab(TabInfo info, int index) {
@@ -420,14 +423,19 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
           if (e.getClickCount() == 1 && e.getButton() == MouseEvent.BUTTON1 && !e.isPopupTrigger()) {
             setSelected(info, true);
           } else if (e.getClickCount() == 1 && e.isPopupTrigger()) {
-            final ActionGroup popup = getPopupGroup();
-            if (popup != null) {
-              String place = getPopupPlace();
-              place = place != null ? place : ActionPlaces.UNKNOWN;
-              myPopupInfo = myInfo;
-              myActionManager.createActionPopupMenu(place, getPopupGroup()).getComponent().show(e.getComponent(), e.getX(), e.getY());
-              onPopup(myPopupInfo);
+            String place = getPopupPlace();
+            place = place != null ? place : ActionPlaces.UNKNOWN;
+            myPopupInfo = myInfo;
+
+            final DefaultActionGroup toShow = new DefaultActionGroup();
+            if (getPopupGroup() != null) {
+              toShow.addAll(getPopupGroup());
+              toShow.addSeparator();
             }
+            toShow.addAll(myOwnGroup);
+
+            myActionManager.createActionPopupMenu(place, toShow).getComponent().show(e.getComponent(), e.getX(), e.getY());
+            onPopup(myPopupInfo);
           }
         }
       });
@@ -453,6 +461,65 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
   public void setFocused(final boolean focused) {
     myFocused = focused;
     repaint();
+  }
+
+  private abstract class BaseAction extends AnAction {
+
+    private ShadowAction myShadow;
+
+    protected BaseAction(final String copyFromID) {
+      myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), TabsWithActions.this);
+    }
+
+    public final void update(final AnActionEvent e) {
+      final boolean visible = myInfos.size() > 0;
+      e.getPresentation().setVisible(visible);
+      if (!visible) return;
+
+      final int selectedIndex = myInfos.indexOf(getSelectedInfo());
+      final boolean enabled = myInfos.size() > 0 && selectedIndex >= 0;
+      e.getPresentation().setEnabled(enabled);
+      if (enabled) {
+        _update(e, selectedIndex);
+      }
+    }
+
+    protected abstract void _update(AnActionEvent e, int selectedIndex);
+
+    public final void actionPerformed(final AnActionEvent e) {
+      _actionPerformed(e, myInfos.indexOf(getSelectedInfo()));
+    }
+
+    protected abstract void _actionPerformed(final AnActionEvent e, final int selectedIndex);
+  }
+
+  private class SelectNextAction extends BaseAction {
+
+    public SelectNextAction() {
+      super(IdeActions.ACTION_NEXT_TAB);
+    }
+
+    protected void _update(final AnActionEvent e, int selectedIndex) {
+      e.getPresentation().setEnabled(myInfos.size() > 0 && selectedIndex < myInfos.size() - 1);
+    }
+
+    protected void _actionPerformed(final AnActionEvent e, final int selectedIndex) {
+      setSelected(myInfos.get(selectedIndex + 1), true);
+    }
+  }
+
+  private class SelectPreviousAction extends BaseAction {
+    public SelectPreviousAction() {
+      super(IdeActions.ACTION_PREVIOUS_TAB);
+    }
+
+    protected void _update(final AnActionEvent e, int selectedIndex) {
+      e.getPresentation().setEnabled(myInfos.size() > 0 && selectedIndex > 0);
+    }
+
+    protected void _actionPerformed(final AnActionEvent e, final int selectedIndex) {
+      setSelected(myInfos.get(selectedIndex - 1), true);
+    }
   }
 
   public static void main(String[] args) {
