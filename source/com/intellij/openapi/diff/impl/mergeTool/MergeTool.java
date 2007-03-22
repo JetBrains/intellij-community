@@ -34,7 +34,6 @@ public class MergeTool implements DiffTool {
     MergePanel2 mergePanel = createMergeComponent(data, builder);
     builder.setCenterPanel(mergePanel.getComponent());
     builder.setPreferedFocusComponent(mergePanel.getPreferredFocusedComponent());
-    data.setActions(builder, mergePanel, true);
     builder.setHelpId(data.getHelpId());
     int result = builder.show();
     MergeRequestImpl lastData = mergePanel.getMergeRequest();
