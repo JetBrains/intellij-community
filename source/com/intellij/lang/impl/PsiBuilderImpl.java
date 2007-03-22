@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.lang.reflect.Field;
 
 /**
  * Created by IntelliJ IDEA.
@@ -1026,8 +1027,48 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
    * just to make removeRange method available.
    */
   private static class MyList extends ArrayList<ProductionMarker> {
+    private static final Field ourElementDataField;
+    static {
+      Field f;
+      try {
+        f = ArrayList.class.getDeclaredField("elementData");
+        f.setAccessible(true);
+      } catch(NoSuchFieldException e) {
+        LOG.error(e);
+        f = null;
+      }
+      ourElementDataField = f;
+    }
+
+    private Object[] cachedElementData;
+
     public void removeRange(final int fromIndex, final int toIndex) {
       super.removeRange(fromIndex, toIndex);
+    }
+
+    MyList() {
+      super(256);
+    }
+    
+    public int lastIndexOf(final Object o) {
+      for (int i = size()-1; i >= 0; i--)
+        if (cachedElementData[i]==o) return i;
+      return -1;
+    }
+
+    public void ensureCapacity(final int minCapacity) {
+      if (cachedElementData == null || minCapacity >= cachedElementData.length) {
+        super.ensureCapacity(minCapacity);
+        initCachedField();
+      }
+    }
+
+    private void initCachedField() {
+      try {
+        cachedElementData = (Object[])ourElementDataField.get(this);
+      } catch(Exception e) {
+        LOG.error(e);
+      }
     }
   }
 }
