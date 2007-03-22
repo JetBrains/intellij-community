@@ -77,9 +77,7 @@
     <projectService serviceInterface="org.jetbrains.idea.svn.SvnBranchConfigurationManager"
                     serviceImplementation="org.jetbrains.idea.svn.SvnBranchConfigurationManager"/>
 
-    <vcs>
-      <name>svn</name>
-      <vcsClass>org.jetbrains.idea.svn.SvnVcs</vcsClass>
-    </vcs>
+    <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs"/>
+
   </extensions>
 </idea-plugin>
