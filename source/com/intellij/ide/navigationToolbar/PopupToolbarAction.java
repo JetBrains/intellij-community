@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.hint.HintManager;
 
 import java.awt.*;
 
@@ -25,16 +26,12 @@ public class PopupToolbarAction extends AnAction {
       return;
     }
     final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    if (editor != null) {
-      final NavigationToolbarPanel toolbarPanel = new NavigationToolbarPanel(project) {
-
-        public Dimension getPreferredSize() {
-          final Dimension dimension = super.getPreferredSize();
-          return new Dimension(getPreferredWidth(), dimension.height);
-        }
-
-      };
-      toolbarPanel.showHint(editor);
-    }
+    final NavigationToolbarPanel toolbarPanel = new NavigationToolbarPanel(project) {
+      public Dimension getPreferredSize() {
+        final Dimension dimension = super.getPreferredSize();
+        return new Dimension(getPreferredWidth(), dimension.height);
+      }
+    };
+    toolbarPanel.showHint(editor, dataContext);
   }
 }

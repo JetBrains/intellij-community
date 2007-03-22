@@ -68,8 +68,7 @@ public class HorizontalList extends JPanel {
           paintBorder();
           myList.get(mySelectedIndex).requestFocusInWindow();
         }
-        scrollToVisible(1);
-        shiftFocusToVisible(1);
+        shiftFocus(-1);
       }
     });
     myLeftButton.setBorder(null);
@@ -81,8 +80,7 @@ public class HorizontalList extends JPanel {
           paintBorder();
           myList.get(mySelectedIndex).requestFocusInWindow();
         }
-        scrollToVisible(-1);
-        shiftFocusToVisible(-1);
+        shiftFocus(1);
       }
     });
     myRightButton.setBorder(null);
@@ -161,17 +159,6 @@ public class HorizontalList extends JPanel {
     }
   }
 
-  private void shiftFocusToVisible(int direction){
-    if (mySelectedIndex != -1 && !myList.get(mySelectedIndex).isShowing()) {
-      shiftFocus(direction);
-    }
-  }
-
-  private void scrollToVisible(int direction){
-    myFirstIndex = getIndexByMode(myFirstIndex + direction);
-    paintComponent();
-  }
-
   protected void shiftFocus(int direction){
     clearBorder();
     mySelectedIndex = getIndexByMode(mySelectedIndex + direction);
@@ -182,7 +169,8 @@ public class HorizontalList extends JPanel {
   private void scrollSelectionToVisible(final int direction) {
     final int firstIndex = myFirstIndex;
     while (!myList.get(mySelectedIndex).isShowing()){
-      scrollToVisible(direction);
+      myFirstIndex = getIndexByMode(myFirstIndex + direction);
+      paintComponent();
       if (firstIndex == myFirstIndex) break; //to be sure not to hang
     }
     setSize(getPreferredSize());  //not to miss right button && font corrections
@@ -413,7 +401,7 @@ public class HorizontalList extends JPanel {
     clearBorder(toBeContLabel.getColoredComponent());
     final int additionalWidth = toBeContLabel.getPreferredSize().width;
     final Window window = SwingUtilities.getWindowAncestor(this);
-    final int availableWidth = window != null ? window.getWidth() - 2 * LEFT_ICON.getIconWidth() : 0;
+    final int availableWidth = window != null ? window.getWidth() - 2 * LEFT_ICON.getIconWidth() - 2 * additionalWidth: 0;
     int lastIndx = -1;
     if (mySelectedIndex != -1) {
       myScrollablePanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
@@ -454,8 +442,7 @@ public class HorizontalList extends JPanel {
         final MyCompositeLabel linkLabel = myList.get(i);
         final int labelWidth = linkLabel.getPreferredSize().width;
         if (availableWidth == 0
-            || myPreferredWidth + labelWidth < availableWidth
-            || (i == 0 && myPreferredWidth < availableWidth)){
+            || myPreferredWidth + labelWidth < availableWidth){
           myScrollablePanel.add(linkLabel, gc);
           myPreferredWidth += labelWidth;
         } else {
@@ -468,12 +455,9 @@ public class HorizontalList extends JPanel {
     }
 
     myPreferredWidth += 2 * LEFT_ICON.getIconWidth();
-    final boolean leftButtonEnabled = lastIndx > 0;
-    final boolean rightButtonEnabled = myFirstIndex > 0;
-    myLeftButton.setVisible(rightButtonEnabled || leftButtonEnabled);
-    myLeftButton.setEnabled(leftButtonEnabled);
-    myRightButton.setVisible(rightButtonEnabled || leftButtonEnabled);
-    myRightButton.setEnabled(rightButtonEnabled);
+    final boolean hasNavigationButtons = lastIndx > 0 || myFirstIndex > 0;
+    myLeftButton.setVisible(hasNavigationButtons);
+    myRightButton.setVisible(hasNavigationButtons);
     repaint();
   }
 
