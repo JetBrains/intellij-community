@@ -4,6 +4,7 @@
  */
 package com.intellij.lang.ant.refactoring;
 
+import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.lang.ant.psi.impl.AntNameElementImpl;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -12,21 +13,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
-import com.intellij.refactoring.rename.RenameHandler;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Mar 19, 2007
  */
-public final class AntRenameHandler implements RenameHandler {
-  final PsiElementRenameHandler myDelegateHandler = new PsiElementRenameHandler();
+public final class AntRenameHandler extends PsiElementRenameHandler {
   
   public boolean isAvailableOnDataContext(final DataContext dataContext) {
-    return myDelegateHandler.isAvailableOnDataContext(dataContext);
-  }
-
-  public boolean isRenaming(final DataContext dataContext) {
-    return myDelegateHandler.isRenaming(dataContext);
+    final PsiElement element = getElement(dataContext);
+    return element instanceof PsiAntElement && ((PsiAntElement)element).canRename();
   }
 
   public void invoke(final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
@@ -40,6 +36,6 @@ public final class AntRenameHandler implements RenameHandler {
         elements[idx] = ((AntNameElementImpl)element).getElementToRename();
       }
     }
-    myDelegateHandler.invoke(project, elements, dataContext);
+    super.invoke(project, elements, dataContext);
   }
 }

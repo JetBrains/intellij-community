@@ -5,6 +5,7 @@ import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -161,7 +162,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   public boolean isAvailableOnDataContext(DataContext dataContext) {
-    PsiElement element = getElement(dataContext);
+    final PsiElement element = getElement(dataContext);
 
     if (element == null || (element instanceof PsiAntElement && !((PsiAntElement)element).canRename())) return false;
 
@@ -170,11 +171,11 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   @Nullable
-  private static PsiElement getElement(final DataContext dataContext) {
+  protected static PsiElement getElement(final DataContext dataContext) {
     PsiElement[] elementArray = BaseRefactoringAction.getPsiElementArray(dataContext);
     if (elementArray == null) {
-      final VirtualFile vFile = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
-      final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+      final VirtualFile vFile = DataKeys.VIRTUAL_FILE.getData(dataContext);
+      final Project project = DataKeys.PROJECT.getData(dataContext);
       if (vFile != null && project != null) {
         return PsiManager.getInstance(project).findFile(vFile);
       }
