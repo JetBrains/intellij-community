@@ -498,7 +498,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   private static void installDottedBorder(SimpleColoredComponent label) {
-    label.setBorder(new DottedBorder(new Insets(2, 2, 2, 4), UIUtil.getListForeground()));
+    label.setBorder(new DottedBorder(new Insets(0, 2, 0, 4), UIUtil.getListForeground()));
   }
 
   private void clearBorder() {
@@ -516,7 +516,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   private static void clearBorder(SimpleColoredComponent label) {
-    label.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 4));
+    label.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 4));
   }
 
   private Window getWindow() {
@@ -760,9 +760,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   }
 
   public Dimension getPreferredSize() {
-    final Dimension size = new JButton("1").getPreferredSize();
-    size.height += 5;
-    return size;
+    return new JButton("1").getPreferredSize();
   }
 
   protected int getPreferredWidth() {
