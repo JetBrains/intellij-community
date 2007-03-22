@@ -141,8 +141,7 @@
     <action id="UpdateFiles" class="com.intellij.openapi.vcs.update.CommonUpdateFileOrDirectoryAction"/>
     <action id="CheckStatusForFiles" class="com.intellij.openapi.vcs.update.CommonStatusFileOrDirectoryAction"/>
     <action id="IntegrateFiles" class="com.intellij.openapi.vcs.update.CommonIntegrateFileOrDirectoryAction"/>
-    <action id="Annotate" class="com.intellij.openapi.vcs.actions.AnnotateToggleAction"
-      icon="/actions/annotate.png"/>
+    <action id="Annotate" class="com.intellij.openapi.vcs.actions.AnnotateToggleAction"/>
     <action id="Compare.SameVersion" class="com.intellij.openapi.vcs.actions.CompareWithTheSameVersionAction"/>
     <action id="Compare.LastVersion" class="com.intellij.openapi.vcs.actions.CompareWithLastVersion"/>
     <action id="Compare.Selected" class="com.intellij.openapi.vcs.actions.CompareWithSelectedRevisionAction" popup="true"/>
