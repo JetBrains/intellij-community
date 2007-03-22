@@ -10,7 +10,7 @@ import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 /**
@@ -22,9 +22,9 @@ public class VcsEP implements PluginAware {
   public static final ExtensionPointName<VcsEP> EP_NAME = ExtensionPointName.create("com.intellij.vcs");
 
   // these must be public for scrambling compatibility
-  @Tag("name")
+  @Attribute("name")
   public String name;
-  @Tag("vcsClass")
+  @Attribute("vcsClass")
   public String vcsClass;
   
   private AbstractVcs myVcs;

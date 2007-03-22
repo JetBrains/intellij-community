@@ -3,16 +3,15 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.*;
@@ -189,7 +188,6 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       }
     });
 
-    StdLanguages.XML.injectAnnotator(new DefaultDomAnnotator(this, annotationsManager), project);
     myFileIndex = projectRootManager.getFileIndex();
 
     for (final DomFileDescription description : Extensions.getExtensions(DomFileDescription.EP_NAME)) {

@@ -30,10 +30,8 @@
 
     <checkinHandlerFactory implementation="com.intellij.cvsSupport2.CvsCheckinHandlerFactory"/>
 
-    <vcs>
-      <name>CVS</name>
-      <vcsClass>com.intellij.cvsSupport2.CvsVcs2</vcsClass>
-    </vcs>
+    <vcs name="CVS" vcsClass="com.intellij.cvsSupport2.CvsVcs2"/>
+      
   </extensions>
 
   <actions>

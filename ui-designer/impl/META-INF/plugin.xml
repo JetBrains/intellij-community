@@ -83,15 +83,9 @@
 
     <projectService serviceInterface="com.intellij.uiDesigner.GuiDesignerConfiguration"
                serviceImplementation="com.intellij.uiDesigner.GuiDesignerConfiguration"/>
-    <annotator>
-      <language>JAVA</language>
-      <annotatorClass>com.intellij.uiDesigner.binding.FormClassAnnotator</annotatorClass>
-    </annotator>
+    <annotator language="JAVA" annotatorClass="com.intellij.uiDesigner.binding.FormClassAnnotator"/>
 
-    <cacheBuilder>
-      <fileType>GUI_DESIGNER_FORM</fileType>
-      <wordsScannerClass>com.intellij.uiDesigner.binding.FormWordsScanner</wordsScannerClass>
-    </cacheBuilder>
+    <cacheBuilder fileType="GUI_DESIGNER_FORM" wordsScannerClass="com.intellij.uiDesigner.binding.FormWordsScanner"/>
 
     <referencesSearch implementation="com.intellij.uiDesigner.binding.FormReferencesSearcher"/>
     <inspectionToolProvider implementation="com.intellij.uiDesigner.inspections.FormInspectionProvider"/>

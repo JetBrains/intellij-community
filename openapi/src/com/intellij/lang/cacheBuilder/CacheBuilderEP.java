@@ -21,7 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Attribute;
 
 /**
  * @author yole
@@ -32,9 +32,9 @@ public class CacheBuilderEP implements PluginAware {
   public static final ExtensionPointName<CacheBuilderEP> EP_NAME = new ExtensionPointName<CacheBuilderEP>("com.intellij.cacheBuilder");
 
 
-  @Tag("fileType")
+  @Attribute("fileType")
   public String fileType;
-  @Tag("wordsScannerClass")
+  @Attribute("wordsScannerClass")
   public String wordsScannerClass;
   private WordsScanner myWordsScanner;
   private PluginDescriptor myPluginDescriptor;
