@@ -13,10 +13,10 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
@@ -44,7 +44,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     myProject = project;
   }
 
-  public RefreshableOnComponent createAdditionalOptionsPanelForCheckinProject(final Refreshable panel) {
+  public RefreshableOnComponent createAdditionalOptionsPanel(final CheckinProjectPanel panel) {
     return null;
     // TODO: shall these options be available elsewhere?
     /*return new CvsProjectAdditionalPanel(panel, myProject);*/

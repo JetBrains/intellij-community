@@ -176,7 +176,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     for (AbstractVcs vcs : vcses) {
       final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
       if (checkinEnvironment != null) {
-        final RefreshableOnComponent options = checkinEnvironment.createAdditionalOptionsPanelForCheckinProject(this);
+        final RefreshableOnComponent options = checkinEnvironment.createAdditionalOptionsPanel(this);
         if (options != null) {
           JPanel vcsOptions = new JPanel(new BorderLayout());
           vcsOptions.add(options.getComponent(), BorderLayout.CENTER);

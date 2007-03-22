@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -34,7 +35,7 @@ import java.util.List;
  */
 public interface CheckinEnvironment {
   @Nullable
-  RefreshableOnComponent createAdditionalOptionsPanelForCheckinProject(Refreshable panel);
+  RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel);
 
   @Nullable
   String getDefaultMessageFor(FilePath[] filesToCheckin);
