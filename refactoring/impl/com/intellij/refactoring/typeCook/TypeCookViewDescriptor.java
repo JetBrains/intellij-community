@@ -14,7 +14,6 @@ class TypeCookViewDescriptor implements UsageViewDescriptor {
   }
 
   @NotNull
-  @NotNull
   public PsiElement[] getElements() {
     return myElements;
   }
