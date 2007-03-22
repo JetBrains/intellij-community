@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.ui.awt.RelativePoint;
 
 import javax.swing.*;
@@ -26,6 +27,17 @@ public final class NavigationUtil {
   }
 
   public static JBPopup getPsiElementPopup(final PsiElement[] elements, final PsiElementListCellRenderer renderer, final String title) {
+    return getPsiElementPopup(elements, renderer, title, new PsiElementProcessor<PsiElement>() {
+      public boolean execute(final PsiElement element) {
+        Navigatable descriptor = EditSourceUtil.getDescriptor((PsiElement)element);
+        if (descriptor != null && descriptor.canNavigate()) {
+          descriptor.navigate(true);
+        }
+        return true;
+      }
+    });
+  }
+  public static JBPopup getPsiElementPopup(final PsiElement[] elements, final PsiElementListCellRenderer renderer, final String title, final PsiElementProcessor<PsiElement> processor) {
     final JList list = new JList(elements);
     list.setCellRenderer(renderer);
     renderer.installSpeedSearch(list);
@@ -36,10 +48,7 @@ public final class NavigationUtil {
         if (ids == null || ids.length == 0) return;
         Object [] selectedElements = list.getSelectedValues();
         for (Object element : selectedElements) {
-          Navigatable descriptor = EditSourceUtil.getDescriptor((PsiElement)element);
-          if (descriptor != null && descriptor.canNavigate()) {
-            descriptor.navigate(true);
-          }
+          processor.execute((PsiElement)element);
         }
       }
     };

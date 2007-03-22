@@ -7,6 +7,7 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.ide.util.gotoByName.GotoSymbolCellRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -15,11 +16,13 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.text.MessageFormat;
 
 public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.actions.GotoDeclarationAction");
@@ -75,21 +78,37 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   private static void chooseAmbiguousTarget(final Project project, final Editor editor, int offset) {
+    PsiElementProcessor<PsiElement> naviagteProcessor = new PsiElementProcessor<PsiElement>() {
+      public boolean execute(final PsiElement element) {
+        Navigatable navigatable = EditSourceUtil.getDescriptor(element);
+        if (navigatable != null && navigatable.canNavigate()) {
+          navigatable.navigate(true);
+        }
+        return true;
+      }
+    };
+    chooseAmbiguousTarget(project, editor, offset,naviagteProcessor, CodeInsightBundle.message("declaration.navigation.title"));
+  }
+
+  // returns true if processor is run or is going to be run after showing popup
+  public static boolean chooseAmbiguousTarget(final Project project, final Editor editor, int offset, PsiElementProcessor<PsiElement> processor,
+                                              String titlePattern) {
     final PsiReference reference = TargetElementUtil.findReference(editor, offset);
     final Collection<PsiElement> candidates = suggestCandidates(project, reference);
     if (candidates.size() == 1) {
-      Navigatable navigatable = EditSourceUtil.getDescriptor(candidates.iterator().next());
-      if (navigatable != null && navigatable.canNavigate()) {
-        navigatable.navigate(true);
-      }
+      PsiElement element = candidates.iterator().next();
+      processor.execute(element);
+      return true;
     }
     else if (candidates.size() > 1) {
       PsiElement[] elements = candidates.toArray(new PsiElement[candidates.size()]);
       final TextRange range = reference.getRangeInElement();
       final String refText = reference.getElement().getText().substring(range.getStartOffset(), range.getEndOffset());
-      String title = CodeInsightBundle.message("declaration.navigation.title", refText);
-      NavigationUtil.getPsiElementPopup(elements, title).showInBestPositionFor(editor);
+      String title = MessageFormat.format(titlePattern, refText);
+      NavigationUtil.getPsiElementPopup(elements, new GotoSymbolCellRenderer(), title, processor).showInBestPositionFor(editor);
+      return true;
     }
+    return false;
   }
 
   private static Collection<PsiElement> suggestCandidates(Project project, final PsiReference reference) {
