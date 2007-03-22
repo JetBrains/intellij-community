@@ -20,7 +20,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class MultiValuesMap<Key, Value>{
-  private final Map<Key, Collection<Value>> myBaseMap = new HashMap<Key, Collection<Value>>();
+  private final Map<Key, Collection<Value>> myBaseMap;
+
+  public MultiValuesMap() {
+    this(false);
+  }
+
+  public MultiValuesMap(boolean ordered) {
+    myBaseMap = ordered ? new LinkedHashMap<Key, Collection<Value>>() : new HashMap<Key, Collection<Value>>();
+  }
 
   public void putAll(Key key, List<Value> values) {
     for (Value value : values) {

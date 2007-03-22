@@ -3,11 +3,26 @@ package com.intellij.openapi.util;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 
 public class MutualMap<Key, Value> {
 
-  private Map<Key, Value> myKey2Value = new HashMap<Key, Value>();
-  private Map<Value, Key> myValue2Key = new HashMap<Value, Key>();
+  private final Map<Key, Value> myKey2Value;
+  private final Map<Value, Key> myValue2Key;
+
+  public MutualMap(boolean ordered) {
+    if (ordered) {
+      myKey2Value = new LinkedHashMap<Key, Value>();
+      myValue2Key = new LinkedHashMap<Value, Key>();
+    } else {
+      myKey2Value = new HashMap<Key, Value>();
+      myValue2Key = new HashMap<Value, Key>();
+    }
+  }
+
+  public MutualMap() {
+    this(false);
+  }
 
   public void put(Key key, Value value) {
     myKey2Value.put(key, value);

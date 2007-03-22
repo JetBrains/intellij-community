@@ -205,6 +205,8 @@ public class DebuggerSessionTab implements LogConsoleManager, DebuggerContentInf
       }
     });
 
+
+    myViewsContentManager.setSelectedContent(myFramesContent);
     myContentPanel.add(myViewsContentManager.getComponent(), BorderLayout.CENTER);
   }
 
