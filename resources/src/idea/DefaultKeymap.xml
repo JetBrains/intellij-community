@@ -848,6 +848,12 @@
     <action id="RemoveFromFavorites">
       <keyboard-shortcut first-keystroke="control DELETE"/>
     </action>
+    <action id="Debugger.PreviousContent">
+      <keyboard-shortcut first-keystroke="control alt shift LEFT" />
+    </action>
+    <action id="Debugger.NextContent">
+      <keyboard-shortcut first-keystroke="control alt shift RIGHT" />
+    </action>
   </keymap>
 
   <!-- ############################################################################## -->
@@ -1146,7 +1152,12 @@
     <action id="DebugClass">
       <keyboard-shortcut first-keystroke="control shift F9"/>
     </action>
-
+    <action id="Debugger.PreviousContent">
+      <keyboard-shortcut first-keystroke="control alt shift LEFT" />
+    </action>
+    <action id="Debugger.NextContent">
+      <keyboard-shortcut first-keystroke="control alt shift RIGHT" />
+    </action>
   </keymap>
 
   <!-- ############################################################################## -->

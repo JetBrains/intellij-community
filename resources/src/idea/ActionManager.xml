@@ -1241,6 +1241,9 @@
       <action id="Debugger.DetachContent" class="com.intellij.debugger.ui.content.DetachContentAction"/>
       <separator/>
       <action id="Debugger.RestoreContent" class="com.intellij.debugger.ui.content.RestoreContentAction"/>
+      <separator/>
+      <action id="Debugger.NextContent" class="com.intellij.debugger.ui.content.SelectNextContentAction"/>
+      <action id="Debugger.PreviousContent" class="com.intellij.debugger.ui.content.SelectPreviousContentAction"/>
     </group>
 
 

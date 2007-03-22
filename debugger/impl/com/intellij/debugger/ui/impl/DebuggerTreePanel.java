@@ -88,4 +88,8 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
     }
     return null;
   }
+
+  public void requestFocus() {
+    getTree().requestFocus();
+  }
 }
