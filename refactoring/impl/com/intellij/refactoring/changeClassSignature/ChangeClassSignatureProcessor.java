@@ -12,12 +12,9 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import org.jetbrains.annotations.NotNull;
+
+import java.util.*;
 
 /**
  * @author dsl
@@ -185,4 +182,5 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
       return Arrays.asList(psiTypeParameterList.getTypeParameters());
     }
   }
+
 }

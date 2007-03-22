@@ -6,6 +6,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -17,6 +18,7 @@ public class InvertBooleanUsageViewDescriptor implements UsageViewDescriptor {
     myElement = element;
   }
 
+  @NotNull
   public PsiElement[] getElements() {
     return new PsiElement[] {myElement};
   }

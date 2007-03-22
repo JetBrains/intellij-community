@@ -14,6 +14,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
   private PsiElement[] myPsiElements;
@@ -52,6 +53,7 @@ class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
     myHelpID = HelpID.getMoveHelpID(psiElements[0]);
   }
 
+  @NotNull
   public PsiElement[] getElements() {
     return myPsiElements;
   }

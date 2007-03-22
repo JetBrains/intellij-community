@@ -101,7 +101,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     final UsageInfo[] usageInfos = allUsages.toArray(new UsageInfo[allUsages.size()]);
     detectPackageLocalsMoved(usageInfos, conflicts);
     detectPackageLocalsUsed(conflicts);
-    if (conflicts.size() > 0) {
+    if (!conflicts.isEmpty()) {
       allUsages.add(new ConflictsUsageInfo(myElementsToMove[0], conflicts));
     }
 

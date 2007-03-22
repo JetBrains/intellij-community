@@ -372,4 +372,5 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   public PsiParameter getTargetParameter() {
     return myTargetParameter;
   }
+
 }

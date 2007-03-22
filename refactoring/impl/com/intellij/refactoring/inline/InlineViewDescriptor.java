@@ -6,6 +6,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 class InlineViewDescriptor implements UsageViewDescriptor{
 
@@ -15,6 +16,7 @@ class InlineViewDescriptor implements UsageViewDescriptor{
     myElement = element;
   }
 
+  @NotNull
   public PsiElement[] getElements() {
     return new PsiElement[] {myElement};
   }

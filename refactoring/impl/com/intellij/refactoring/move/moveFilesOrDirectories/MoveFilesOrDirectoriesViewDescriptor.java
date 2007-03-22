@@ -9,6 +9,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
   private PsiElement[] myElementsToMove;
@@ -47,6 +48,7 @@ class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
     myHelpID = HelpID.getMoveHelpID(elementsToMove[0]);
   }
 
+  @NotNull
   public PsiElement[] getElements() {
     return myElementsToMove;
   }

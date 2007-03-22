@@ -11,6 +11,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
 import java.util.Set;
@@ -51,6 +52,7 @@ class RenameViewDescriptor implements UsageViewDescriptor{
     myCodeReferencesText =  RefactoringBundle.message("references.in.code.to.0", StringUtil.join(codeReferences.toArray(ArrayUtil.EMPTY_STRING_ARRAY), ", "));
   }
 
+  @NotNull
   public PsiElement[] getElements() {
     return myElements;
   }

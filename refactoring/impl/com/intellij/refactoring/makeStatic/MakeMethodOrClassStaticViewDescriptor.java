@@ -15,6 +15,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescriptor {
 
@@ -28,6 +29,7 @@ public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescripto
     myProcessedElementsHeader = RefactoringBundle.message("make.static.elements.header", who);
   }
 
+  @NotNull
   public PsiElement[] getElements() {
     return new PsiElement[]{myMember};
   }

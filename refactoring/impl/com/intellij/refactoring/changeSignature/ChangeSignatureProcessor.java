@@ -23,7 +23,6 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.introduceParameter.ExternalUsageInfo;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -344,7 +343,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    if (myPrepareSuccessfulSwingThreadCallback != null && conflictDescriptions.size() > 0) {
+    if (myPrepareSuccessfulSwingThreadCallback != null && !conflictDescriptions.isEmpty()) {
       ConflictsDialog dialog = new ConflictsDialog(myProject, conflictDescriptions);
       dialog.show();
       if (!dialog.isOK()) return false;
@@ -414,7 +413,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      if (covariantOverriderInfos.size() > 0) {
+      if (!covariantOverriderInfos.isEmpty()) {
         if (ApplicationManager.getApplication().isUnitTestMode() || !isProcessCovariantOverriders()) {
           for (UsageInfo usageInfo : covariantOverriderInfos) {
             usages.remove(usageInfo);
@@ -506,7 +505,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         PsiElement element = usageInfo.getElement();
         if (element == null) continue;
         PsiReference reference = usageInfo instanceof MoveRenameUsageInfo ?
-                                 ((MoveRenameUsageInfo)usageInfo).getReference() : 
+                                 usageInfo.getReference() :
                                  element.getReference();
         if (reference != null) {
           PsiElement target = null;
@@ -533,18 +532,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-  }
-
-  private PsiMethod getDefaultConstructorInSuperClass(final PsiMethod psiMethod) {
-    PsiClass aClass = psiMethod.getContainingClass();
-    if (aClass == null) return null;
-    PsiClass superClass = aClass.getSuperClass();
-    if (superClass == null) return null;
-    PsiMethod[] constructors = superClass.getConstructors();
-    for (PsiMethod constructor : constructors) {
-      if (constructor.getParameterList().getParametersCount() == 0) return constructor;
-    }
-    return null;
   }
 
   private void generateDelegate() throws IncorrectOperationException {
@@ -584,9 +571,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   private PsiCallExpression addDelegatingCallTemplate(final PsiMethod delegate) throws IncorrectOperationException {
-    final PsiCallExpression callExpression;
     PsiCodeBlock body = delegate.getBody();
     assert body != null;
+    final PsiCallExpression callExpression;
     if (delegate.isConstructor()) {
       PsiElement callStatement = myFactory.createStatementFromText("this();", null);
       callStatement = CodeStyleManager.getInstance(myProject).reformat(callStatement);
@@ -1137,4 +1124,5 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       return Arrays.asList(throwsList.getReferenceElements());
     }
   }
+
 }

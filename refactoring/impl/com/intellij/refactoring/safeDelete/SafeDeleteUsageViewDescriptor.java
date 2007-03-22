@@ -4,6 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageViewBundle;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -18,6 +19,7 @@ public class SafeDeleteUsageViewDescriptor extends UsageViewDescriptorAdapter {
     myElementsToDelete = elementsToDelete;
   }
 
+  @NotNull
   public PsiElement[] getElements() {
     return myElementsToDelete;
   }

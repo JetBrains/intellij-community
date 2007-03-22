@@ -11,6 +11,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 class ChangeSignatureViewDescriptor implements UsageViewDescriptor {
 
@@ -22,6 +23,7 @@ class ChangeSignatureViewDescriptor implements UsageViewDescriptor {
     myProcessedElementsHeader = StringUtil.capitalize(RefactoringBundle.message("0.to.change.signature", UsageViewUtil.getType(method)));
   }
 
+  @NotNull
   public PsiElement[] getElements() {
     return new PsiElement[] {myMethod};
   }

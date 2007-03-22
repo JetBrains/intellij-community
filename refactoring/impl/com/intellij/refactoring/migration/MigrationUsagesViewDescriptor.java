@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewBundle;
+import org.jetbrains.annotations.NotNull;
 
 class MigrationUsagesViewDescriptor implements UsageViewDescriptor {
   private boolean isSearchInComments;
@@ -22,6 +23,7 @@ class MigrationUsagesViewDescriptor implements UsageViewDescriptor {
     return myMigrationMap;
   }
 
+  @NotNull
   public PsiElement[] getElements() {
     return PsiElement.EMPTY_ARRAY;
   }

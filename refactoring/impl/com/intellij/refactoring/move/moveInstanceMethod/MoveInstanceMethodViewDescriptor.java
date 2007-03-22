@@ -6,6 +6,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -25,6 +26,7 @@ public class MoveInstanceMethodViewDescriptor extends UsageViewDescriptorAdapter
     myTargetClass = targetClass;
   }
 
+  @NotNull
   public PsiElement[] getElements() {
     return new PsiElement[] {myMethod, myTargetVariable, myTargetClass};
   }

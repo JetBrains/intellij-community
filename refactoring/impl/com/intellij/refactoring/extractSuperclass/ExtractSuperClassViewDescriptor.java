@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -29,6 +29,7 @@ public class ExtractSuperClassViewDescriptor extends UsageViewDescriptorAdapter 
     }
   }
 
+  @NotNull
   public PsiElement[] getElements() {
     return myElements;
   }

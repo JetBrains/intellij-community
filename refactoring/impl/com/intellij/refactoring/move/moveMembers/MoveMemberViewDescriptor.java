@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.refactoring.RefactoringBundle;
+import org.jetbrains.annotations.NotNull;
 
 class MoveMemberViewDescriptor implements UsageViewDescriptor {
   private PsiElement[] myElementsToMove;
@@ -16,6 +17,7 @@ class MoveMemberViewDescriptor implements UsageViewDescriptor {
     myElementsToMove = elementsToMove;
   }
 
+  @NotNull
   public PsiElement[] getElements() {
     return myElementsToMove;
   }

@@ -57,15 +57,13 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
     }
 
     public void elementMoved(final PsiElement newElement) {
-      myRunnables.add(
-              new Runnable() {
-                public void run() {
-                  for (RefactoringElementListener refactoringElementListener : myListenerList) {
-                    refactoringElementListener.elementMoved(newElement);
-                  }
-                }
-              }
-      );
+      myRunnables.add(new Runnable() {
+        public void run() {
+          for (RefactoringElementListener refactoringElementListener : myListenerList) {
+            refactoringElementListener.elementMoved(newElement);
+          }
+        }
+      });
     }
 
     public void elementRenamed(final PsiElement newElement) {

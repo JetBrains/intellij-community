@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 class PushDownUsageViewDescriptor implements UsageViewDescriptor {
   private PsiClass myClass;
@@ -18,6 +19,7 @@ class PushDownUsageViewDescriptor implements UsageViewDescriptor {
     return myProcessedElementsHeader;
   }
 
+  @NotNull
   public PsiElement[] getElements() {
     return new PsiElement[]{myClass};
   }
