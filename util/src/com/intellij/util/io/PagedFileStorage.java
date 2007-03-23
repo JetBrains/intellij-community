@@ -54,13 +54,13 @@ public final class PagedFileStorage {
   }
 
   public void get(int index, byte[] dst, int offset, int length) {
-    final ByteBuffer buffer = getBuffer();
+    final ByteBuffer buffer = getBuffer().duplicate();
     buffer.position(index);
     buffer.get(dst, offset, length);
   }
 
   public void put(int index, byte[] src, int offset, int length) {
-    final ByteBuffer buffer = getBuffer();
+    final ByteBuffer buffer = getBuffer().duplicate();
     buffer.position(index);
     buffer.put(src, offset, length);
   }
