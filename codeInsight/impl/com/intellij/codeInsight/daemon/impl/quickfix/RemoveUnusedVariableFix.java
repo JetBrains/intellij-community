@@ -24,8 +24,8 @@ import java.util.*;
 public class RemoveUnusedVariableFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix");
   private final PsiVariable myVariable;
-  private static final @NonNls String JAVA_LANG_PCKG = "java.lang";
-  private static final @NonNls String JAVA_IO_PCKG = "java.io";
+  @NonNls private static final String JAVA_LANG_PCKG = "java.lang";
+  @NonNls private static final String JAVA_IO_PCKG = "java.io";
 
   public RemoveUnusedVariableFix(PsiVariable variable) {
     myVariable = variable;
@@ -61,7 +61,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     }
   }
 
-  private static void collectReferences(PsiElement context, final PsiVariable variable, final List<PsiElement> references) {
+  private static void collectReferences(@NotNull PsiElement context, final PsiVariable variable, final List<PsiElement> references) {
     context.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         if (expression.resolve() == variable) references.add(expression);
@@ -76,7 +76,9 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     final boolean[] canCopeWithSideEffects = {true};
     try {
       PsiElement context = myVariable instanceof PsiField ? ((PsiField)myVariable).getContainingClass() : PsiUtil.getVariableCodeBlock(myVariable, null);
-      collectReferences(context, myVariable, references);
+      if (context != null) {
+        collectReferences(context, myVariable, references);
+      }
       // do not forget to delete variable declaration
       references.add(myVariable);
       // check for side effects
