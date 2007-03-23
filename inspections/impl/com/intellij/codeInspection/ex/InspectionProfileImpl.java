@@ -252,6 +252,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
     }
 
+    myBaseProfile = getDefaultProfile();
+
     for (final Object o : element.getChildren(INSPECTION_TOOL_TAG)) {
       Element toolElement = (Element)o;
 
@@ -274,8 +276,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       final String enabled = toolElement.getAttributeValue(ENABLED_TAG);
       myDisplayLevelMap.put(key, new ToolState(level, enabled != null && Boolean.parseBoolean(enabled)));
     }
-
-    myBaseProfile = getDefaultProfile();
   }
 
 
