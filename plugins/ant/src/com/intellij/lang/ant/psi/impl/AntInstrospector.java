@@ -40,7 +40,12 @@ public final class AntInstrospector {
     }
     
     // for ant 1.7, there is a dedicated method for cache clearing
-    invokeMethod("clearCache");
+    try {
+      final Method method = helperClass.getDeclaredMethod("clearCache");
+      method.invoke(null);
+    }
+    catch (Throwable e) {
+    }
   }
   
   public static AntInstrospector getInstance(Class c) {
