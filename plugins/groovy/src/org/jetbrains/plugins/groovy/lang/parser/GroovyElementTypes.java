@@ -30,6 +30,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
 
   // Statements
   GroovyElementType STATEMENT = new GroovyElementType("Any statement");
+  GroovyElementType CLOSABLE_BLOCK = new GroovyElementType("Closable block");
+  GroovyElementType BLOCK_BODY = new GroovyElementType("Closable block");
 
   // Import elements
   GroovyElementType IMPORT_STATEMENT = new GroovyElementType("Import statement");

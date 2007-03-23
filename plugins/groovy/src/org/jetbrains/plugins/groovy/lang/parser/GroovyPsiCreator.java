@@ -8,6 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPathSelectorImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPathExprImpl;
@@ -85,6 +86,8 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(INTERFACE_BLOCK)) return new GrInterfaceBodyImplType(node);
     if (elem.equals(ENUM_BLOCK)) return new GrEnumBodyImplType(node);
     if (elem.equals(ANNOTATION_BLOCK)) return new GrAnnotationBodyImplType(node);
+    if (elem.equals(CLOSABLE_BLOCK)) return new GrClosableBlockImpl(node);
+
 
     //fields
     if (elem.equals(CLASS_FIELD)) return new GrClassMemberImpl(node);

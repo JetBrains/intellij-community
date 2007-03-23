@@ -1,0 +1,34 @@
+"""Pre ${ a = b
+println "bugaga
+ 3}
+ ved"""
+-----
+Groovy script
+  Compound Gstring
+    PsiElement(Gstring begin)('"""Pre $')
+    Closable block
+      PsiElement({)('{')
+      PsiWhiteSpace(' ')
+      Assignment expression
+        Reference expression
+          PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(=)('=')
+        PsiWhiteSpace(' ')
+        Reference expression
+          PsiElement(identifier)('b')
+      PsiElement(new line)('\n')
+      Reference expression
+        PsiElement(identifier)('println')
+      PsiErrorElement:'}' expected
+        <empty list>
+  PsiWhiteSpace(' ')
+  PsiErrorElement:';' or new line expected
+    PsiElement(wrong gstring)('"bugaga')
+  PsiElement(new line)('\n')
+  PsiWhiteSpace(' ')
+  Literal
+    PsiElement(number)('3')
+  PsiErrorElement:';' or new line expected
+    PsiElement(})('}')
+    PsiElement(Gstring end)('\n ved"""')

@@ -4,13 +4,14 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
 public class ForStatement implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+  public static GroovyElementType parse(PsiBuilder builder) {
     PsiBuilder.Marker forStmtMarker = builder.mark();
 
     if (!ParserUtils.getToken(builder, kFOR)) {

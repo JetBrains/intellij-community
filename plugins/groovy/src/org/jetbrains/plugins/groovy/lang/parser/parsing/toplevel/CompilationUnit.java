@@ -24,7 +24,7 @@ public class CompilationUnit implements GroovyElementTypes {
     if (ParserUtils.lookAhead(builder, kPACKAGE)) {
       PackageDefinition.parse(builder);
     } else {
-      Statement.parse(builder);
+      Statement.parseWithImports(builder);
     }
     cleanAfterError(builder);
 
