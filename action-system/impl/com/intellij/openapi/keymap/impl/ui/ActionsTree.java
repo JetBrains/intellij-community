@@ -316,9 +316,7 @@ public class ActionsTree {
     Alarm alarm = new Alarm();
     alarm.addRequest(new Runnable() {
       public void run() {
-        JTree tree = myTree;
-        Rectangle pathBounds = tree.getPathBounds(new TreePath(node.getPath()));
-        myTree.scrollRectToVisible(pathBounds);
+        TreeUtil.selectPath(myTree, new TreePath(node.getPath()));
       }
     }, 100);
   }
