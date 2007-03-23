@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import com.intellij.lang.PsiBuilder.*;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.TokenSet;
@@ -34,7 +35,10 @@ public class AssignmentExpression implements GroovyElementTypes {
     GroovyElementType result = ConditionalExpression.parse(builder);
     if (ParserUtils.getToken(builder, ASSIGNMENTS)) {
       ParserUtils.getToken(builder, mNLS);
-      parse(builder);
+      result = parse(builder);
+      if (result.equals(WRONGWAY)){
+        builder.error(GroovyBundle.message("expression.expected"));
+      }
       marker.done(ASSIGNMENT_EXPRESSION);
       return ASSIGNMENT_EXPRESSION;
     } else {

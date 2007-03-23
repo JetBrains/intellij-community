@@ -28,11 +28,11 @@ public class TypeSpec implements GroovyElementTypes {
    */
   private static GroovyElementType parseBuiltInType(PsiBuilder builder) {
     PsiBuilder.Marker arrMarker = builder.mark();
-    ParserUtils.getToken(builder, TokenSets.BUILT_IN_TYPE);
+    ParserUtils.eatElement(builder, BUILT_IN_TYPE);
     if (mLBRACK.equals(builder.getTokenType())) {
       declarationBracketsParse(builder, arrMarker);
     } else {
-      arrMarker.done(BUILT_IN_TYPE);
+      arrMarker.drop();
     }
     return TYPE_SPECIFICATION;
   }

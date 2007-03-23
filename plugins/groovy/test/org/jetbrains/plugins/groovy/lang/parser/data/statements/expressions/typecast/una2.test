@@ -5,7 +5,8 @@ Groovy script
     PsiElement(()('(')
     Array type
       Array type
-        PsiElement(double)('double')
+        Built in type
+          PsiElement(double)('double')
         PsiWhiteSpace(' ')
         PsiElement([)('[')
         PsiElement(])(']')
