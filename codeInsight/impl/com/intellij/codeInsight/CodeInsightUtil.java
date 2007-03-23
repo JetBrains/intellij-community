@@ -374,16 +374,19 @@ public class CodeInsightUtil {
     Set<VirtualFile> files = new THashSet<VirtualFile>();
     Project project = null;
     for (PsiElement element : elements) {
+      project = element.getProject();
       PsiFile file = element.getContainingFile();
       if (file == null) continue;
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile == null) continue;
       files.add(virtualFile);
-      project = element.getProject();
     }
-    VirtualFile[] virtualFiles = files.toArray(new VirtualFile[files.size()]);
-    ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(virtualFiles);
-    return !status.hasReadonlyFiles();
+    if (!files.isEmpty()) {
+      VirtualFile[] virtualFiles = files.toArray(new VirtualFile[files.size()]);
+      ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(virtualFiles);
+      return !status.hasReadonlyFiles();
+    }
+    return true;
   }
 
   public static boolean prepareFileForWrite(final PsiFile file) {

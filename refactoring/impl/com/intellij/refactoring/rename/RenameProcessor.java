@@ -451,7 +451,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       for (Map.Entry<PsiElement, String> entry : myAllRenames.entrySet()) {
         RenameUtil.checkRename(entry.getKey(), entry.getValue());
       }
-      if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(myProject, getElements(), true)) return;
     }
     catch (IncorrectOperationException e) {
       message = e.getMessage();
