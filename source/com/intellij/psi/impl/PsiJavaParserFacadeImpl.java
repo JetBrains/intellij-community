@@ -8,6 +8,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -73,6 +74,9 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
       if (parserDefinition != null){
         final PsiFile psiFile = viewProvider.getPsi(language);
         if (psiFile != null) {
+          if (language instanceof LanguageDialect) {
+            psiFile.putUserData(PsiManagerImpl.LANGUAGE_DIALECT, (LanguageDialect)language);
+          }
           if(markAsCopy) {
             final TreeElement node = (TreeElement)psiFile.getNode();
             assert node != null;
