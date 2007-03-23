@@ -17,7 +17,9 @@ package com.intellij.vcsUtil;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -28,13 +30,14 @@ import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LocalVcsBundle;
 import com.intellij.openapi.localVcs.LvcsObject;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContext;
@@ -44,7 +47,6 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlTag;
@@ -92,6 +94,16 @@ public class VcsUtil
     markAsUpToDate(project, true, canonicalPath);
   }
 
+  public static void refreshVirtualFileSynchronously( final VirtualFile file )
+  {
+    final Application app = ApplicationManager.getApplication();
+    final Runnable action = new Runnable() { public void run() { file.refresh( false, file.isDirectory() ); } };
+      
+    if( app.isDispatchThread() )
+      app.runWriteAction( action );
+    else
+      app.invokeAndWait( new Runnable() { public void run() { app.runWriteAction( action ); } } , ModalityState.defaultModalityState() );
+  }
   /**
    * Call "fileDirty" in the read action.
    */
@@ -301,6 +313,12 @@ public class VcsUtil
       @Nullable public VirtualFile compute() {
         return LocalFileSystem.getInstance().findFileByIoFile( file );
       }
+    });
+  }
+
+  public static File getIOFile( final VirtualFile parent ) {
+    return ApplicationManager.getApplication().runReadAction( new Computable<File>() {
+      public File compute() {  return VfsUtil.virtualToIoFile( parent );  }
     });
   }
 
@@ -520,5 +538,22 @@ public class VcsUtil
       throw ex.get();
     }
     return result;
+  }
+
+  public static VirtualFile waitForTheFile( final String path )
+  {
+    final VirtualFile[] file = new VirtualFile[ 1 ];
+    final Application app = ApplicationManager.getApplication();
+    Runnable action = new Runnable() {
+      public void run() { app.runWriteAction( new Runnable() { public void run() {
+        file[ 0 ] = LocalFileSystem.getInstance().refreshAndFindFileByPath( path );  } } ); }
+    };
+
+    if( app.isDispatchThread() )
+      action.run();
+    else
+      app.invokeAndWait( action, ModalityState.defaultModalityState() );
+
+    return file[ 0 ];
   }
 }
