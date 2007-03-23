@@ -47,7 +47,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
     final Icon providersIcon = IconUtil.getProvidersIcon(element, flags);
     if(providersIcon != null) {
-      return providersIcon instanceof RowIcon ? addVisibilityIcon(element, flags, (RowIcon)providersIcon) : providersIcon;
+      return addVisibilityIcon(element, flags, providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, flags));
     }
 
     RowIcon baseIcon;
