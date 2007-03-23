@@ -1,8 +1,7 @@
 class Test1 {
-    void test() {
+    public void test() {
         System.out.println("test");
     }
 }
-
 class Test2 {
 }

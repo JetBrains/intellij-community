@@ -446,7 +446,10 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
   private PsiMethod getPatternMethod() throws IncorrectOperationException {
     final PsiMethod methodCopy = (PsiMethod)myMethod.copy();
-    methodCopy.getModifierList().setModifierProperty(myTargetClass.isInterface() ? PsiModifier.PUBLIC : myNewVisibility, true);
+    String name = myTargetClass.isInterface() ? PsiModifier.PUBLIC : myNewVisibility;
+    if (name != null) {
+      methodCopy.getModifierList().setModifierProperty(name, true);
+    }
     if (myTargetVariable instanceof PsiParameter) {
       final int index = myMethod.getParameterList().getParameterIndex((PsiParameter)myTargetVariable);
       methodCopy.getParameterList().getParameters()[index].delete();
