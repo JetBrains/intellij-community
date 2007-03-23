@@ -1,9 +1,9 @@
 package com.intellij.ide.util;
 
 import com.intellij.codeInsight.generation.ClassMember;
-import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.generation.MemberChooserObject;
 import com.intellij.codeInsight.generation.MemberChooserObjectBase;
+import com.intellij.codeInsight.generation.PsiElementMemberChooserObject;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,7 +14,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.psi.PsiClass;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
@@ -57,7 +56,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper {
   protected T[] myElements;
   private HashMap<MemberNode,ParentNode> myNodeToParentMap = new HashMap<MemberNode, ParentNode>();
   private HashMap<ClassMember, MemberNode> myElementToNodeMap = new HashMap<ClassMember, MemberNode>();
-  private ArrayList<ClassNode> myClassNodes = new ArrayList<ClassNode>();
+  private ArrayList<ContainerNode> myContainerNodes = new ArrayList<ContainerNode>();
   private LinkedHashSet<T> mySelectedElements;
 
   @NonNls private final static String PROP_SORTED = "MemberChooser.sorted";
@@ -91,7 +90,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper {
     mySelectedNodes.clear();
     myNodeToParentMap.clear();
     myElementToNodeMap.clear();
-    myClassNodes.clear();
+    myContainerNodes.clear();
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -99,6 +98,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper {
       }
     });
     myTree.setModel(myTreeModel);
+    myTree.setRootVisible(false);
+
     TreeUtil.expandAll(myTree);
     myCopyJavadocCheckbox = new JCheckBox(IdeBundle.message("checkbox.copy.javadoc"));
     if (myIsInsertOverrideVisible) {
@@ -115,12 +116,10 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper {
     final FactoryMap<MemberChooserObject,ParentNode> map = new FactoryMap<MemberChooserObject,ParentNode>() {
       protected ParentNode create(final MemberChooserObject key) {
         ParentNode node = null;
-        if (key instanceof PsiElementClassMember) {
-          if (((PsiElementClassMember)key).getElement() instanceof PsiClass) {
-            final ClassNode classNode = new ClassNode(rootNode, key, count);
-            node = classNode;
-            myClassNodes.add(classNode);
-          }
+        if (key instanceof PsiElementMemberChooserObject) {
+            final ContainerNode containerNode = new ContainerNode(rootNode, key, count);
+            node = containerNode;
+            myContainerNodes.add(containerNode);
         }
         if (node == null) {
           node = new ParentNode(rootNode, key, count);
@@ -214,11 +213,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper {
     setSorted(PropertiesComponent.getInstance().isTrueValue(PROP_SORTED));
     group.add(sortAction);
 
-    ShowClassesAction showClassesAction = new ShowClassesAction();
-    showClassesAction.registerCustomShortcutSet(
+    ShowContainersAction showContainersAction = getShowContainersAction();
+    showContainersAction.registerCustomShortcutSet(
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.ALT_MASK)), myTree);
     setShowClasses(PropertiesComponent.getInstance().isTrueValue(PROP_SHOWCLASSES));
-    group.add(showClassesAction);
+    group.add(showContainersAction);
 
     ExpandAllAction expandAllAction = new ExpandAllAction();
     expandAllAction.registerCustomShortcutSet(
@@ -377,17 +376,21 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper {
     Pair<ElementNode,List<ElementNode>> selection = storeSelection();
 
     DefaultMutableTreeNode root = getRootNode();
-    if (!myShowClasses || myClassNodes.size() == 0) {
+    if (!myShowClasses || myContainerNodes.size() == 0) {
       List<ParentNode> otherObjects = new ArrayList<ParentNode>();
       Enumeration<ParentNode<T>> children = getRootNodeChildren();
-      ParentNode<T> newRoot = new ParentNode<T>(null, new MemberChooserObjectBase(IdeBundle.message("node.memberchooser.all.classes")), new Ref<Integer>(0));
+      ParentNode<T> newRoot = new ParentNode<T>(null, new MemberChooserObjectBase(getAllContainersNodeName()), new Ref<Integer>(0));
       while (children.hasMoreElements()) {
         final ParentNode nextElement = children.nextElement();
-        if (nextElement instanceof ClassNode) {
-          final ClassNode<T> classNode = (ClassNode<T>)nextElement;
-          Enumeration<MemberNode<T>> memberNodes = classNode.children();
+        if (nextElement instanceof ContainerNode) {
+          final ContainerNode<T> containerNode = (ContainerNode<T>)nextElement;
+          Enumeration<MemberNode<T>> memberNodes = containerNode.children();
+          List<MemberNode<T>> memberNodesList = new ArrayList<MemberNode<T>>();
           while (memberNodes.hasMoreElements()) {
-            newRoot.add(memberNodes.nextElement());
+            memberNodesList.add(memberNodes.nextElement());
+          }
+          for (MemberNode<T> memberNode : memberNodesList) {
+            newRoot.add(memberNode);
           }
         } else {
           otherObjects.add(nextElement);
@@ -410,13 +413,17 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper {
           myNodeToParentMap.get(memberNode).add(memberNode);
         }
       }
-      replaceChildren(root, myClassNodes);
+      replaceChildren(root, myContainerNodes);
     }
     myTreeModel.nodeStructureChanged(root);
 
     TreeUtil.expandAll(myTree);
 
     restoreSelection(selection);
+  }
+
+  protected String getAllContainersNodeName() {
+    return IdeBundle.message("node.memberchooser.all.classes");
   }
 
   private Enumeration<ParentNode<T>> getRootNodeChildren() {
@@ -545,8 +552,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper {
     }
   }
 
-  private static class ClassNode<T extends ClassMember> extends ParentNode<T> {
-    public ClassNode(DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
+  private static class ContainerNode<T extends ClassMember> extends ParentNode<T> {
+    public ContainerNode(DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
       super(parent, delegate, order);
     }
   }
@@ -608,9 +615,13 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper {
     }
   }
 
-  private class ShowClassesAction extends ToggleAction {
-    public ShowClassesAction() {
-      super(IdeBundle.message("action.show.classes"), IdeBundle.message("action.show.classes"), Icons.CLASS_ICON);
+  protected ShowContainersAction getShowContainersAction() {
+    return new ShowContainersAction(IdeBundle.message("action.show.classes"),  Icons.CLASS_ICON);
+  }
+
+  protected class ShowContainersAction extends ToggleAction {
+    public ShowContainersAction(final String text, final Icon icon) {
+      super(text, text, icon);
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -624,7 +635,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper {
     public void update(AnActionEvent e) {
       super.update(e);
       Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myClassNodes.size() > 1);
+      presentation.setEnabled(myContainerNodes.size() > 1);
     }
   }
 

@@ -12,36 +12,18 @@ import javax.swing.*;
 /**
  * @author peter
 */
-public class PsiDocCommentOwnerMemberChooserObject extends MemberChooserObjectBase {
-  private final PsiDocCommentOwner myOwner;
-
+public class PsiDocCommentOwnerMemberChooserObject extends PsiElementMemberChooserObject {
   public PsiDocCommentOwnerMemberChooserObject(final PsiDocCommentOwner owner, final String text, Icon icon) {
-    super(text, icon);
-    myOwner = owner;
+    super(owner, text, icon);
   }
 
-  public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    final PsiDocCommentOwnerMemberChooserObject that = (PsiDocCommentOwnerMemberChooserObject)o;
-
-    if (!myOwner.equals(that.myOwner)) return false;
-
-    return true;
-  }
-
-  public int hashCode() {
-    return myOwner.hashCode();
-  }
-
-  public PsiDocCommentOwner getPsiElement() {
-    return myOwner;
+  public PsiDocCommentOwner getPsiDocCommentOwner() {
+    return (PsiDocCommentOwner)getPsiElement();
   }
 
   protected SimpleTextAttributes getTextAttributes(final JTree tree) {
     return new SimpleTextAttributes(
-        myOwner.isDeprecated() ? SimpleTextAttributes.STYLE_STRIKEOUT : SimpleTextAttributes.STYLE_PLAIN,
+        getPsiDocCommentOwner().isDeprecated() ? SimpleTextAttributes.STYLE_STRIKEOUT : SimpleTextAttributes.STYLE_PLAIN,
         tree.getForeground());
   }
 }
