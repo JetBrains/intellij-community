@@ -1,9 +1,10 @@
-package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions;
+package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks.AnnotationBlock;
 
 /**
  * @autor: Dmitry.Krasilschikov

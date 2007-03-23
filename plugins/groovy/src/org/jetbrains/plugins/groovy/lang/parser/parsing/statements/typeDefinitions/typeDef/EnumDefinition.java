@@ -1,7 +1,9 @@
-package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions;
+package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef;
 
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks.EnumBlock;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ImplementsClause;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.PsiBuilder;
 

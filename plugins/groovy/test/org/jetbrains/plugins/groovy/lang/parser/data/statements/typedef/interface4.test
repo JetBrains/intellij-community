@@ -1,0 +1,27 @@
+interface a {
+  static interface d {}
+}
+-----
+Groovy script
+  interface definition
+    PsiElement(interface)('interface')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    interface block
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      interface definition
+        modifiers
+          PsiElement(static)('static')
+        PsiWhiteSpace(' ')
+        PsiElement(interface)('interface')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('d')
+        PsiWhiteSpace(' ')
+        interface block
+          PsiElement({)('{')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

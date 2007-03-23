@@ -1,7 +1,10 @@
-package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions;
+package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.typeDef;
 
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeParameters;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks.ClassBlock;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.SuperClassClause;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ImplementsClause;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.PsiBuilder;

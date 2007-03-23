@@ -3,13 +3,14 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifier;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.identifier.UpperCaseIdent;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifier;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.auxilary.BalancedTokens;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.BuiltInType;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.QualifiedTypeName;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -24,22 +25,21 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
  */
 
 public class DeclarationStart implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
     IElementType elementType;
 
     //def
-    if (ParserUtils.getToken(builder, kDEF)) return kDEF;
+    if (ParserUtils.getToken(builder, kDEF)) return parseNextTokenInDeclaration(builder);
 
     //Modifier
     elementType = Modifier.parse(builder);
-    if (!tWRONG_SET.contains(elementType)) return elementType;
+    if (!tWRONG_SET.contains(elementType)) {
+      return parseNextTokenInDeclaration(builder);
+    }
 
     //@IDENT
     if (ParserUtils.getToken(builder, mAT)) {
-      if (!ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"))) {
-        return WRONGWAY;
-      }
-      return DECLARATION_START;
+      return ParserUtils.getToken(builder, mIDENT);
     }
 
     // (upperCaseIdent | builtInType | QulifiedTypeName)  {LBRACK balacedTokens RBRACK} IDENT
@@ -50,26 +50,26 @@ public class DeclarationStart implements GroovyElementTypes {
       do {
         balancedTokens = parseBalancedTokensInBrackets(builder);
         if (!BALANCED_TOKENS.equals(balancedTokens)) {
-          return WRONGWAY;
+          return false;
         }
       } while (!tWRONG_SET.contains(balancedTokens));
 
       //IDENT
-      if (!ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"))) {
-        return WRONGWAY;
-      } else {
-        return DECLARATION_START;
-      }
+      return ParserUtils.getToken(builder, mIDENT);
 
     } else {
-      builder.error(GroovyBundle.message("upper.case.ident.or.builtIn.type.or.qualified.type.name.expected"));
-      return WRONGWAY;
+//      builder.error(GroovyBundle.message("upper.case.ident.or.builtIn.type.or.qualified.type.name.expected"));
+      return false;
     }
+  }
+  private static boolean parseNextTokenInDeclaration(PsiBuilder builder) {
+    return ParserUtils.getToken(builder, mIDENT) ||
+          ParserUtils.validateToken(builder, TokenSets.BUILT_IN_TYPE) ||
+          ParserUtils.getToken(builder, mSTRING_LITERAL);
   }
 
   private static IElementType parseBalancedTokensInBrackets(PsiBuilder builder) {
     PsiBuilder.Marker btm = builder.mark();
-
 
     if (!ParserUtils.getToken(builder, mLBRACK, GroovyBundle.message("lbrack.expected"))) {
       btm.rollbackTo();

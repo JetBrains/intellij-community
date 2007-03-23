@@ -101,6 +101,12 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType ANNOTATION_FIELD = new GroovyElementType("annotation field"); //node
   GroovyElementType ENUM_FIELD = new GroovyElementType("enumeration field"); //node
 
+  GroovyElementType TYPE_DEFINITION_FIELD = new GroovyElementType("type definition field"); //node
+
+  GroovyElementType CONSTRUCTOR_DEFINITION = new GroovyElementType("constructor definition"); //node
+
+
+
   //blocks
   GroovyElementType CLASS_BLOCK = new GroovyElementType("class block"); //node
   GroovyElementType INTERFACE_BLOCK = new GroovyElementType("interface block"); //node
@@ -117,10 +123,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType STAR_STATEMENT = new GroovyElementType("star statement"); //node
   GroovyElementType TRY_BLOCK_STATEMENT = new GroovyElementType("try block statement"); //node
   GroovyElementType SYNCHRONIZED_BLOCK_STATEMENT = new GroovyElementType("synchronized block statement"); //node
-
-  //declaration
-  GroovyElementType DECLARATION_START = new GroovyElementType("Declaration start"); //not a node
-  GroovyElementType DECLARATION_END = new GroovyElementType("Declaration end"); //not a node
+  GroovyElementType COMPOUND_STATEMENT = new GroovyElementType("compound statement"); //node
 
   //modifiers
   GroovyElementType MODIFIER = new GroovyElementType("modifier"); //node

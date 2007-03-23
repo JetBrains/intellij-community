@@ -1,10 +1,11 @@
-package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions;
+package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.ClassMember;
 
 /**
  * @autor: Dmitry.Krasilschikov

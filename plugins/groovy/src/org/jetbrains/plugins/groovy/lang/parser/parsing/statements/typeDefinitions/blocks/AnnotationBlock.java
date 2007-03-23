@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions;
+package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks;
 
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import com.intellij.psi.tree.IElementType;

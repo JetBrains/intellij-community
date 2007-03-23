@@ -22,7 +22,7 @@ public class Modifiers implements GroovyElementTypes {
     PsiBuilder.Marker modifiersMarker = builder.mark();
 
     if (ParserUtils.lookAhead(builder, kDEF)) {
-      ParserUtils.eatElement(builder, kDEF);
+      ParserUtils.eatElement(builder, MODIFIER);
 
       ParserUtils.getToken(builder, mNLS);
       modifiersMarker.drop();
@@ -54,7 +54,7 @@ public class Modifiers implements GroovyElementTypes {
       modifiersMarker.done(MODIFIERS);
       return MODIFIERS;
     } else {
-      modifiersMarker.drop();
+      modifiersMarker.done(MODIFIER);
       return MODIFIER;
     }
   }

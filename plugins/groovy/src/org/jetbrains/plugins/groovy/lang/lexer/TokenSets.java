@@ -70,5 +70,18 @@ public abstract class TokenSets implements GroovyTokenTypes {
           kFINALLY
   ), BUILT_IN_TYPE);
 
-
+  public static TokenSet MODIFIERS = TokenSet.create(
+      kPRIVATE,
+      kPUBLIC,
+      kPROTECTED,
+      kSTATIC,
+      kTRANSIENT,
+      kFINAL,
+      kABSTRACT,
+      kNATIVE,
+      kTHREADSAFE,
+      kSYNCHRONIZED,
+      kVOLATILE,
+      kSTRICTFP
+  );
 }
