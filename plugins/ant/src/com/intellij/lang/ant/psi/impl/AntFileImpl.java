@@ -341,7 +341,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
           }
           finally {
             if (projectHelper != null) {
-              projectHelper.clear();
+              projectHelper.clearCache();
             }
           }
         }
