@@ -47,7 +47,7 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
     return myParent;
   }
 
-  public boolean hasModifierProperty(String name) {
+  public boolean hasModifierProperty(@NotNull String name) {
     int flag = ourModifierNameToFlagMap.get(name);
     if (flag == 0) {
       if (PsiModifier.PACKAGE_LOCAL.equals(name)) {
@@ -58,15 +58,15 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
     return (myFlags & flag) != 0;
   }
 
-  public boolean hasExplicitModifier(String name) {
+  public boolean hasExplicitModifier(@NotNull String name) {
     return hasModifierProperty(name);
   }
 
-  public void setModifierProperty(String name, boolean value) throws IncorrectOperationException {
+  public void setModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
-  public void checkSetModifierProperty(String name, boolean value) throws IncorrectOperationException {
+  public void checkSetModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
@@ -78,7 +78,7 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
     return myAnnotations;
   }
 
-  public PsiAnnotation findAnnotation(String qualifiedName) {
+  public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
     return PsiImplUtil.findAnnotation(this, qualifiedName);
   }
 

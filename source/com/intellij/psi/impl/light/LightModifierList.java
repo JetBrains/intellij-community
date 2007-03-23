@@ -9,19 +9,19 @@ public class LightModifierList extends LightElement implements PsiModifierList{
     super(manager);
   }
 
-  public boolean hasModifierProperty(String name){
+  public boolean hasModifierProperty(@NotNull String name){
     return false;
   }
 
-  public boolean hasExplicitModifier(String name) {
+  public boolean hasExplicitModifier(@NotNull String name) {
     return false;
   }
 
-  public void setModifierProperty(String name, boolean value) throws IncorrectOperationException{
+  public void setModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException{
     throw new IncorrectOperationException();
   }
 
-  public void checkSetModifierProperty(String name, boolean value) throws IncorrectOperationException{
+  public void checkSetModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException{
     throw new IncorrectOperationException();
   }
 
@@ -30,7 +30,7 @@ public class LightModifierList extends LightElement implements PsiModifierList{
     return PsiAnnotation.EMPTY_ARRAY;
   }
 
-  public PsiAnnotation findAnnotation(String qualifiedName) {
+  public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
     return null;
   }
 

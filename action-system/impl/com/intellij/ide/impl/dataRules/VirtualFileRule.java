@@ -2,7 +2,6 @@ package com.intellij.ide.impl.dataRules;
 
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -11,7 +10,7 @@ import com.intellij.psi.util.PsiUtil;
 public class VirtualFileRule implements GetDataRule {
   public Object getData(final DataProvider dataProvider) {
     // Try to detect multiselection.
-    PsiElement[] psiElements = (PsiElement[])dataProvider.getData(DataConstantsEx.PSI_ELEMENT_ARRAY);
+    PsiElement[] psiElements = (PsiElement[])dataProvider.getData(DataConstants.PSI_ELEMENT_ARRAY);
     if (psiElements != null) {
       for (PsiElement elem : psiElements) {
         VirtualFile virtualFile = PsiUtil.getVirtualFile(elem);

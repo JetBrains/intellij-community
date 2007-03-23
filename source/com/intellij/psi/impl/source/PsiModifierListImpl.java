@@ -71,7 +71,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
     myRepositoryAnnotations = null;
   }
 
-  public boolean hasModifierProperty(String name){
+  public boolean hasModifierProperty(@NotNull String name){
     if (getTreeElement() == null) {
       long repositoryId = getRepositoryId();
       if (myCachedModifiers < 0){
@@ -176,13 +176,13 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
     }
   }
 
-  public boolean hasExplicitModifier(String name) {
+  public boolean hasExplicitModifier(@NotNull String name) {
     final CompositeElement tree = calcTreeElement();
     IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
     return TreeUtil.findChild(tree, type) != null;
   }
 
-  public void setModifierProperty(String name, boolean value) throws IncorrectOperationException{
+  public void setModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException{
     checkSetModifierProperty(name, value);
 
     IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
@@ -236,7 +236,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
     }
   }
 
-  public void checkSetModifierProperty(String name, boolean value) throws IncorrectOperationException{
+  public void checkSetModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException{
     CheckUtil.checkWritable(this);
   }
 
