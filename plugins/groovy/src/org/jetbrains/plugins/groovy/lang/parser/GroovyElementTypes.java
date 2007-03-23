@@ -61,9 +61,14 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType TYPE_CAST = new GroovyElementType("Explicit typecast");
   GroovyElementType POSTFIX_EXPRESSION = new GroovyElementType("Postfix expression");
   GroovyElementType PATH_EXPRESSION = new GroovyElementType("Path expression");
+  GroovyElementType PATH_PROPERTY_REFERENCE = new GroovyElementType("Property reference");
+  GroovyElementType PATH_METHOD_CALL= new GroovyElementType("Method call");
+
+  // Arguments
+  GroovyElementType ARGUMENTS= new GroovyElementType("Arguments");
 
   // Simple expression
-  GroovyElementType PATH_NAME_PART = new GroovyElementType("Path name selector");
+  GroovyElementType PATH_PROPERTY = new GroovyElementType("Path name selector");
   GroovyElementType REFERENCE_EXPRESSION = new GroovyElementType("Reference expressions");
   GroovyElementType PRIMARY_EXPRESSION = new GroovyElementType("Primary expressions");
 

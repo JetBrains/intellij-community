@@ -33,8 +33,7 @@ public class ExpressionStatement implements GroovyElementTypes {
   }
 
   /**
-   *
-   * Use for parse expressions in Argument position 
+   * Use for parse expressions in Argument position
    *
    * @param builder - Given builder
    * @return type of parsing result
@@ -44,7 +43,7 @@ public class ExpressionStatement implements GroovyElementTypes {
     if (!WRONGWAY.equals(result)) {
       return EXPRESSION_STATEMENT;
     }
-      return result;
+    return result;
   }
 
 

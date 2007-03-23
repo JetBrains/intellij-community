@@ -3,25 +3,25 @@
 Groovy script
   Compound Gstring
     PsiElement(Gstring begin)('"aaa $')
-    Path expression
-      Path expression
+    Property selection
+      Property selection
         Reference expression
           PsiElement(identifier)('a')
         PsiElement(.)('.')
-        Path selector
+        Property selector
           PsiElement(identifier)('b')
       PsiElement(.)('.')
-      Path selector
+      Property selector
         PsiElement(identifier)('c')
     PsiElement(Gstring content)(' bbb $')
-    Path expression
-      Path expression
+    Property selection
+      Property selection
         Reference expression
           PsiElement(identifier)('c')
         PsiElement(.)('.')
-        Path selector
+        Property selector
           PsiElement(identifier)('d')
       PsiElement(.)('.')
-      Path selector
+      Property selector
         PsiElement(identifier)('e')
     PsiElement(Gstring end)(' fff"')

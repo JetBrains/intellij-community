@@ -6,6 +6,6 @@ Groovy script
     Reference expression
       PsiElement(identifier)('str')
     PsiElement(.)('.')
-    PsiErrorElement:Path selector expected
+    PsiErrorElement:Property selector expected
       <empty list>
     PsiElement(Gstring end)(' ing"')

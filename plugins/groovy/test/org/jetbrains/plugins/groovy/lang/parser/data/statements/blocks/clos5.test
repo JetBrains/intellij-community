@@ -14,11 +14,11 @@ Groovy script
         Closable block
           PsiElement({)('{')
           PsiWhiteSpace(' ')
-          Path expression
+          Property selection
             Reference expression
               PsiElement(identifier)('list')
             PsiElement(.)('.')
-            Path selector
+            Property selector
               PsiElement(identifier)('each')
           PsiElement(;)(';')
           PsiElement(new line)('\n')

@@ -2,26 +2,26 @@ a.b.
 c*."My $import.bugaga aga 
 -----
 Groovy script
-  Path expression
-    Path expression
-      Path expression
+  Property selection
+    Property selection
+      Property selection
         Reference expression
           PsiElement(identifier)('a')
         PsiElement(.)('.')
-        Path selector
+        Property selector
           PsiElement(identifier)('b')
       PsiElement(.)('.')
       PsiElement(new line)('\n')
-      Path selector
+      Property selector
         PsiElement(identifier)('c')
     PsiElement(*.)('*.')
     Compound Gstring
       PsiElement(Gstring begin)('"My $')
-      Path expression
+      Property selection
         Reference expression
           PsiElement(identifier)('import')
         PsiElement(.)('.')
-        Path selector
+        Property selector
           PsiElement(identifier)('bugaga')
       PsiErrorElement:GString ending expected
         <empty list>

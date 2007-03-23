@@ -1,12 +1,12 @@
 a.b.
 -----
 Groovy script
-  Path expression
+  Property selection
     Reference expression
       PsiElement(identifier)('a')
     PsiElement(.)('.')
-    Path selector
+    Property selector
       PsiElement(identifier)('b')
   PsiElement(.)('.')
-  PsiErrorElement:Path selector expected
+  PsiErrorElement:Property selector expected
     <empty list>

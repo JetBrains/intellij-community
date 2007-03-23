@@ -8,10 +8,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifiersImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentsImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPathSelectorImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPathExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPropertySelectorImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPropertySelectionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrMethodCallImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
@@ -74,7 +76,6 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(WITH_STATEMENT)) return new GrWithStatementImpl(node);
     if (elem.equals(STAR_STATEMENT)) return new GrStarStatementImpl(node);
 
-
     //type definitions
     if (elem.equals(CLASS_DEFINITION)) return new GrClassDefinitionImpl(node);
     if (elem.equals(INTERFACE_DEFINITION)) return new GrInterfaceDefinitionImpl(node);
@@ -87,7 +88,6 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(ENUM_BLOCK)) return new GrEnumBodyImplType(node);
     if (elem.equals(ANNOTATION_BLOCK)) return new GrAnnotationBodyImplType(node);
     if (elem.equals(CLOSABLE_BLOCK)) return new GrClosableBlockImpl(node);
-
 
     //fields
     if (elem.equals(CLASS_FIELD)) return new GrClassMemberImpl(node);
@@ -123,8 +123,12 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(REFERENCE_EXPRESSION)) return new GrReferenceExprImpl(node);
 
     //Paths
-    if (elem.equals(PATH_NAME_PART)) return new GrPathSelectorImpl(node);
-    if (elem.equals(PATH_EXPRESSION)) return new GrPathExprImpl(node);
+    if (elem.equals(PATH_PROPERTY)) return new GrPropertySelectorImpl(node);
+    if (elem.equals(PATH_PROPERTY_REFERENCE)) return new GrPropertySelectionImpl(node);
+    if (elem.equals(PATH_METHOD_CALL)) return new GrMethodCallImpl(node);
+
+    // Arguments
+    if (elem.equals(ARGUMENTS)) return new GrArgumentsImpl(node);
 
 
     if (elem.equals(BALANCED_BRACKETS)) return new GrBalancedBracketsImpl(node);

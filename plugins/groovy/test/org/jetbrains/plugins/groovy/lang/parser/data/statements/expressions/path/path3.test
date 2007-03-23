@@ -3,16 +3,16 @@ expr.
 parse
 -----
 Groovy script
-  Path expression
-    Path expression
+  Property selection
+    Property selection
       Reference expression
         PsiElement(identifier)('expr')
       PsiElement(.)('.')
       PsiElement(new line)('\n')
       PsiElement(@)('@')
-      Path selector
+      Property selector
         PsiElement(while)('while')
     PsiElement(.)('.')
     PsiElement(new line)('\n')
-    Path selector
+    Property selector
       PsiElement(identifier)('parse')
