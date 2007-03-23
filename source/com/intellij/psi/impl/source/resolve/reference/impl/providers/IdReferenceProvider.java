@@ -34,6 +34,7 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
     ourNamespacesWithoutIdRefs.add( com.intellij.xml.util.XmlUtil.STRUTS_BEAN_URI );
     ourNamespacesWithoutIdRefs.add( com.intellij.xml.util.XmlUtil.STRUTS_BEAN_URI2 );
     ourNamespacesWithoutIdRefs.add( com.intellij.xml.util.XmlUtil.STRUTS_LOGIC_URI );
+    ourNamespacesWithoutIdRefs.add( "http://struts.apache.org/tags-tiles" );
     for(String s: MetaRegistry.SCHEMA_URIS) ourNamespacesWithoutIdRefs.add( s );
   }
 
