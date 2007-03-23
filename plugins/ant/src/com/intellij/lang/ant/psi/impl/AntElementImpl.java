@@ -215,6 +215,9 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   }
 
   public PsiElement findElementAt(int offset) {
+    if (!isValid()) {
+      return null;
+    }
     final int offsetInFile = offset + getTextRange().getStartOffset();
     for (final AntElement element : getChildren()) {
       final TextRange textRange = element.getTextRange();
@@ -224,7 +227,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
         return elementAt;
       }
     }
-    return getTextRange().contains(offsetInFile) && isValid()? this : null;
+    return getTextRange().contains(offsetInFile)? this : null;
   }
 
   public ASTNode getNode() {
