@@ -196,7 +196,6 @@ mGSTRING_LITERAL = \"\"
   {mIDENT}                                {  yybegin(IN_SINGLE_DOT);
                                              return mIDENT; }
   "{"                                     {  blockStack.push(mLPAREN);
-
                                              yybegin(IN_INNER_BLOCK);
                                              return mLCURLY; }
   [^{[:jletter:]\n\r] [^\n\r]*            {  gStringStack.clear();
@@ -231,6 +230,8 @@ mGSTRING_LITERAL = \"\"
 }
 
 <IN_INNER_BLOCK>{
+  "{"                                     {  blockStack.push(mLCURLY);
+                                             return(mLCURLY);  }
 
   "}"                                     {  if (!blockStack.isEmpty()) {
                                                IElementType br = blockStack.pop();
