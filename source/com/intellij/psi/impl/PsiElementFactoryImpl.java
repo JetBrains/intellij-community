@@ -543,7 +543,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     if (initializer != null) {
       variable.getInitializer().replace(initializer);
     }
-    ((TreeElement)statement.getNode()).acceptTree(new GeneratedMarkerVisitor());
+    markGenerated(statement);
     return statement;
 
   }
@@ -634,49 +634,49 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   public PsiAnnotation createAnnotationFromText(@NotNull final String annotationText, final PsiElement context) throws IncorrectOperationException {
     final PsiAnnotation psiAnnotation = super.createAnnotationFromText(annotationText, context);
-    ((TreeElement)psiAnnotation.getNode()).acceptTree(new GeneratedMarkerVisitor());
+    markGenerated(psiAnnotation);
     return psiAnnotation;
   }
 
   @NotNull
   public PsiCodeBlock createCodeBlockFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
     final PsiCodeBlock psiCodeBlock = super.createCodeBlockFromText(text, context);
-    ((TreeElement)psiCodeBlock.getNode()).acceptTree(new GeneratedMarkerVisitor());
+    markGenerated(psiCodeBlock);
     return psiCodeBlock;
   }
 
   @NotNull
   public PsiEnumConstant createEnumConstantFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
     final PsiEnumConstant enumConstant = super.createEnumConstantFromText(text, context);
-    ((TreeElement)enumConstant.getNode()).acceptTree(new GeneratedMarkerVisitor());
+    markGenerated(enumConstant);
     return enumConstant;
   }
 
   @NotNull
   public PsiExpression createExpressionFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
     final PsiExpression expression = super.createExpressionFromText(text, context);
-    ((TreeElement)expression.getNode()).acceptTree(new GeneratedMarkerVisitor());
+    markGenerated(expression);
     return expression;
   }
 
   @NotNull
   public PsiField createFieldFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
     final PsiField psiField = super.createFieldFromText(text, context);
-    ((TreeElement)psiField.getNode()).acceptTree(new GeneratedMarkerVisitor());
+    markGenerated(psiField);
     return psiField;
   }
 
   @NotNull
   public PsiParameter createParameterFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
     final PsiParameter parameter = super.createParameterFromText(text, context);
-    ((TreeElement)parameter.getNode()).acceptTree(new GeneratedMarkerVisitor());
+    markGenerated(parameter);
     return parameter;
   }
 
   @NotNull
   public PsiStatement createStatementFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
     final PsiStatement statement = super.createStatementFromText(text, context);
-    ((TreeElement)statement.getNode()).acceptTree(new GeneratedMarkerVisitor());
+    markGenerated(statement);
     return statement;
   }
 
@@ -690,14 +690,14 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   public PsiTypeParameter createTypeParameterFromText(@NotNull final String text, final PsiElement context) throws
                                                                                                             IncorrectOperationException {
     final PsiTypeParameter typeParameter = super.createTypeParameterFromText(text, context);
-    ((TreeElement)typeParameter.getNode()).acceptTree(new GeneratedMarkerVisitor());
+    markGenerated(typeParameter);
     return typeParameter;
   }
 
   @NotNull
   public PsiElement createWhiteSpaceFromText(@NotNull @NonNls final String text) throws IncorrectOperationException {
     final PsiElement whitespace = super.createWhiteSpaceFromText(text);
-    ((TreeElement)whitespace.getNode()).acceptTree(new GeneratedMarkerVisitor());
+    markGenerated(whitespace);
     return whitespace;
   }
 
@@ -705,7 +705,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   public PsiMethod createMethodFromText(@NotNull final String text, final PsiElement context, final LanguageLevel level) throws
                                                                                                                          IncorrectOperationException {
     final PsiMethod method = super.createMethodFromText(text, context, level);
-    ((TreeElement)method.getNode()).acceptTree(new GeneratedMarkerVisitor());
+    markGenerated(method);
     return method;
   }
 
@@ -715,7 +715,11 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
                                             @NotNull final String exceptionName, final PsiElement context) throws
                                                                                                            IncorrectOperationException {
     final PsiCatchSection psiCatchSection = super.createCatchSection(exceptionType, exceptionName, context);
-    ((TreeElement)psiCatchSection.getNode()).acceptTree(new GeneratedMarkerVisitor());
+    markGenerated(psiCatchSection);
     return psiCatchSection;
+  }
+
+  private static void markGenerated(final PsiElement element) {
+    ((TreeElement)element.getNode()).acceptTree(new GeneratedMarkerVisitor());
   }
 }
