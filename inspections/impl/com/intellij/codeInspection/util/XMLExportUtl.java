@@ -84,9 +84,6 @@ public class XMLExportUtl {
     } else if (refEntity instanceof RefFile) {
       appendFakePackage(problem);
     }
-    else {
-      LOG.info("Unknown refElement: " + refEntity);
-    }
     parentNode.addContent(problem);
 
     return problem;
