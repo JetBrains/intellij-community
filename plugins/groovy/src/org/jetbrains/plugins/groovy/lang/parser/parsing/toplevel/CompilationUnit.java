@@ -30,7 +30,7 @@ public class CompilationUnit implements GroovyElementTypes {
 
     GroovyElementType sepResult = Separators.parse(builder);
     while (!WRONGWAY.equals(sepResult)) {
-      Statement.parse(builder);
+      Statement.parseWithImports(builder);
       cleanAfterError(builder);
       sepResult = Separators.parse(builder);
     }

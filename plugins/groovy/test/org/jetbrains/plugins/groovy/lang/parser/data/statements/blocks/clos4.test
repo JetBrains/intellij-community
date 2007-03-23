@@ -1,35 +1,30 @@
 "Pre ${ a = b; println "bugaga" 3} ved"
 -----
 Groovy script
-  Call expression
-    Compound Gstring
-      PsiElement(Gstring begin)('"Pre $')
-      Closable block
-        PsiElement({)('{')
+  Compound Gstring
+    PsiElement(Gstring begin)('"Pre $')
+    Closable block
+      PsiElement({)('{')
+      PsiWhiteSpace(' ')
+      Assignment expression
+        Reference expression
+          PsiElement(identifier)('a')
         PsiWhiteSpace(' ')
-        Assignment expression
-          Reference expression
-            PsiElement(identifier)('a')
-          PsiWhiteSpace(' ')
-          PsiElement(=)('=')
-          PsiWhiteSpace(' ')
-          Reference expression
-            PsiElement(identifier)('b')
-        PsiElement(;)(';')
+        PsiElement(=)('=')
         PsiWhiteSpace(' ')
-        Call expression
-          Reference expression
-            PsiElement(identifier)('println')
-          PsiWhiteSpace(' ')
-          Command arguments
-            Literal
-              PsiElement(Gstring)('"bugaga"')
-        PsiErrorElement:'}' expected
-          <empty list>
-    PsiWhiteSpace(' ')
-    Command arguments
-      Literal
+        Reference expression
+          PsiElement(identifier)('b')
+      PsiElement(;)(';')
+      PsiWhiteSpace(' ')
+      Call expression
+        Reference expression
+          PsiElement(identifier)('println')
+        PsiWhiteSpace(' ')
+        Command arguments
+          Literal
+            PsiElement(Gstring)('"bugaga"')
+      PsiWhiteSpace(' ')
+      PsiErrorElement:'}', ';' or new line expected
         PsiElement(number)('3')
-  PsiErrorElement:';' or new line expected
-    PsiElement(})('}')
+      PsiElement(})('}')
     PsiElement(Gstring end)(' ved"')

@@ -20,15 +20,12 @@ Groovy script
       PsiElement(new line)('\n')
       Reference expression
         PsiElement(identifier)('println')
-      PsiErrorElement:'}' expected
-        <empty list>
-  PsiWhiteSpace(' ')
-  PsiErrorElement:';' or new line expected
-    PsiElement(wrong gstring)('"bugaga')
-  PsiElement(new line)('\n')
-  PsiWhiteSpace(' ')
-  Literal
-    PsiElement(number)('3')
-  PsiErrorElement:';' or new line expected
-    PsiElement(})('}')
+      PsiWhiteSpace(' ')
+      PsiErrorElement:'}', ';' or new line expected
+        PsiElement(wrong gstring)('"bugaga')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(number)('3')
+      PsiElement(})('}')
     PsiElement(Gstring end)('\n ved"""')

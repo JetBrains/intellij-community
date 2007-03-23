@@ -47,9 +47,28 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
             (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType()))) {
       Separators.parse(builder);
       result = Statement.parse(builder);
+      cleanAfterError(builder);
     }
     Separators.parse(builder);
     return BLOCK_BODY;
+  }
+
+  private static void cleanAfterError(PsiBuilder builder) {
+    int i = 0;
+    PsiBuilder.Marker em = builder.mark();
+    while (!builder.eof() &&
+            !(mNLS.equals(builder.getTokenType()) ||
+                    mRCURLY.equals(builder.getTokenType()) ||
+                    mSEMI.equals(builder.getTokenType()))
+            ) {
+      builder.advanceLexer();
+      i++;
+    }
+    if (i > 0) {
+      em.error(GroovyBundle.message("separator.or.rcurly.expected"));
+    } else {
+      em.drop();
+    }
   }
 
 }
