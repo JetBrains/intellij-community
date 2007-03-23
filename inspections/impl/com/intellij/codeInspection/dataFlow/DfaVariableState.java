@@ -13,8 +13,8 @@ import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiVariable;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -39,8 +39,8 @@ public class DfaVariableState implements Cloneable {
     myVar = toClone.myVar;
     myInstanceofValues = new THashSet<DfaTypeValue>(toClone.myInstanceofValues);
     myNotInstanceofValues = new THashSet<DfaTypeValue>(toClone.myNotInstanceofValues);
-    myNullable = myVar != null && AnnotationUtil.isNullable(myVar);
-    myVariableIsDeclaredNotNull = myVar != null && AnnotationUtil.isNotNull(myVar);
+    myNullable = toClone.myNullable;
+    myVariableIsDeclaredNotNull = toClone.myVariableIsDeclaredNotNull;
   }
 
   public boolean isNullable() {

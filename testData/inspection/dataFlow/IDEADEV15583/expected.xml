@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Npe.java</file>
+    <line>14</line>
+    <description>'length' may produce 'NullPointerException'</description>
+  </problem>
+  <problem>
+    <file>Npe.java</file>
+    <line>18</line>
+    <description>'length' may produce 'NullPointerException'</description>
+  </problem>
+  <problem>
+    <file>Npe.java</file>
+    <line>27</line>
+    <description>'length' may produce 'NullPointerException'</description>
+  </problem>
+</problems>
