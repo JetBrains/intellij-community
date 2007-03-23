@@ -21,6 +21,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.theoryinpractice.testng.inspection.JUnitConvertTool;
+import com.theoryinpractice.testng.inspection.DependsOnMethodInspection;
+import com.theoryinpractice.testng.inspection.DependsOnGroupsInspection;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
@@ -44,7 +46,11 @@ public class TestNGConfigurationType implements LocatableConfigurationType, Insp
     }
 
     public Class[] getInspectionClasses() {
-        return new Class[] {JUnitConvertTool.class};
+        return new Class[] {
+                JUnitConvertTool.class,
+                DependsOnMethodInspection.class,
+                DependsOnGroupsInspection.class
+        };
     }
 
     public static TestNGConfigurationType getInstance() {

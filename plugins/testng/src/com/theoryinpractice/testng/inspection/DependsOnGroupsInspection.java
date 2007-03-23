@@ -1,0 +1,134 @@
+package com.theoryinpractice.testng.inspection;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import com.intellij.codeInspection.*;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiNameValuePair;
+import com.theoryinpractice.testng.TestNGDefaultConfigurationComponent;
+import com.theoryinpractice.testng.util.TestNGUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * @author Hani Suleiman Date: Aug 3, 2005 Time: 3:34:56 AM
+ */
+public class DependsOnGroupsInspection extends LocalInspectionTool
+{
+    private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
+
+    @NotNull
+    @Override
+    public String getGroupDisplayName() {
+        return "TestNG";
+    }
+
+    @NotNull
+    @Override
+    public String getDisplayName() {
+        return "dependsOnGroups problem";
+    }
+
+    @NotNull
+    @Override
+    public String getShortName() {
+        return "dependsOnGroupsTestNG";
+    }
+
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
+    @Override
+    @Nullable
+    public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+
+        LOGGER.info("Looking for dependsOnGroups problems in " + psiClass.getName());
+
+        if (!psiClass.getContainingFile().isWritable()) return null;
+
+        List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
+
+        for (PsiAnnotation annotation : TestNGUtil.getTestNGAnnotations(psiClass)) {
+
+            PsiNameValuePair dep = null;
+            PsiNameValuePair[] params = annotation.getParameterList().getAttributes();
+            for (PsiNameValuePair param : params) {
+                if ("dependsOnGroups".equals(param.getName())) {
+                    dep = param;
+                    break;
+                }
+            }
+
+            if (dep != null) {
+                LOGGER.info("Found dependsOnGroups with: " + dep.getValue().getText());
+                Matcher matcher = Pattern.compile("\"([a-zA-Z1-9_\\(\\)]*)\"").matcher(dep.getValue().getText());
+                while (matcher.find()) {
+                    String methodName = matcher.group(1);
+                    checkMethodNameDependency(manager, psiClass, methodName, dep, problemDescriptors);
+                }
+            }
+        }
+
+        return problemDescriptors.toArray(new ProblemDescriptor[] {} );
+    }
+
+    private void checkMethodNameDependency(InspectionManager manager, PsiClass psiClass, String groupName, PsiNameValuePair dep, List<ProblemDescriptor> problemDescriptors) {
+        
+
+        TestNGDefaultConfigurationComponent defaultConfig = manager.getProject().getComponent(TestNGDefaultConfigurationComponent.class);
+        Set<String> groups = defaultConfig.getDefaultSettings().getGroups();
+
+
+        if (!groups.contains(groupName)) {
+            LOGGER.info("dependsOnGroups group doesn't exist:" + groupName);
+            ProblemDescriptor descriptor = manager.createProblemDescriptor(dep,
+                                                                           "Group '" + groupName + "' is undefined.",
+                                                                           new GroupNameQuickFix(manager.getProject(), groupName),
+                                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            problemDescriptors.add(descriptor);
+
+        }
+
+    }
+
+    private class GroupNameQuickFix implements LocalQuickFix {
+
+        Project project;
+        String groupName;
+
+        public GroupNameQuickFix(@NotNull Project project, @NotNull String groupName) {
+            this.project = project;
+            this.groupName = groupName;
+        }
+
+        @NotNull
+        public String getName() {
+            return "Add '" + groupName + "' as a defined test group.";
+        }
+
+        @NotNull
+        public String getFamilyName() {
+            return "TestNG";
+        }
+
+        public void applyFix(@NotNull Project project, ProblemDescriptor problemDescriptor) {
+            TestNGDefaultConfigurationComponent defaultConfig = project.getComponent(TestNGDefaultConfigurationComponent.class);
+            Set<String> groups = defaultConfig.getDefaultSettings().getGroups();
+            groups.add(groupName);
+            try {
+                defaultConfig.apply();
+            } catch (ConfigurationException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
+    }
+}
