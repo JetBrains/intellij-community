@@ -9,8 +9,8 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author yole
@@ -42,6 +42,10 @@ public abstract class AbstractTextFieldEditor<V> extends PropertyEditor<V> {
     }
 
     return myTf;
+  }
+
+  public void processEditorKeyChar(final char c) {
+    myTf.setText(Character.toString(c));
   }
 
   protected final class MyActionListener implements ActionListener {

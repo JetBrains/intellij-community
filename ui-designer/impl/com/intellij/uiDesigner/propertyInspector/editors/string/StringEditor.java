@@ -62,6 +62,10 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
     cancelEditingAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, myTfWithButton);
   }
 
+  public void processEditorKeyChar(final char c) {
+    myTfWithButton.setText(Character.toString(c));
+  }
+
   /**
    * @return current preferred size of the editor component
    */

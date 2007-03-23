@@ -1,8 +1,8 @@
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -62,6 +62,9 @@ public abstract class PropertyEditor<V> {
    */
   public JComponent getPreferredFocusedComponent(@NotNull final JComponent component){
     return null;
+  }
+
+  public void processEditorKeyChar(char c) {
   }
 
   /**

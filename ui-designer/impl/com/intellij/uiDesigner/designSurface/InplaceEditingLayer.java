@@ -2,11 +2,11 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
@@ -294,6 +294,12 @@ public final class InplaceEditingLayer extends JComponent{
     }
     finally {
       LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(null);
+    }
+  }
+
+  public void forwardKeyEvent(final char c) {
+    if (myInplaceEditor != null) {
+      myInplaceEditor.processEditorKeyChar(c);
     }
   }
 

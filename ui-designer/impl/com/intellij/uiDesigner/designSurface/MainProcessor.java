@@ -61,12 +61,7 @@ public final class MainProcessor extends EventProcessor{
         final InplaceEditingLayer inplaceLayer = myEditor.getInplaceEditingLayer();
         inplaceLayer.startInplaceEditing(component, component.getDefaultInplaceProperty(),
                                          component.getDefaultInplaceEditorBounds(), false);
-        try {
-          new Robot().keyPress(e.getKeyCode());
-        }
-        catch (AWTException e1) {
-          LOG.error(e1);
-        }
+        inplaceLayer.forwardKeyEvent(e.getKeyChar());
       }
     }
   }
