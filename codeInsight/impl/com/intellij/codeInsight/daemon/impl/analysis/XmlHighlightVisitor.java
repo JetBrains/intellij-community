@@ -43,6 +43,7 @@ import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.IdReferenceProvider;
 import com.intellij.psi.jsp.JspDirectiveKind;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaDataBase;
@@ -654,47 +655,62 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       return;
     }
 
+    PsiReference[] refs = null;
     final RefCountHolder refCountHolder = myRefCountHolder;  // To make sure it doesn't get null in multi-threaded envir.
-    if (refCountHolder != null &&
-        attributeDescriptor.hasIdType()
-      ) {
-      final String unquotedValue = getUnquotedValue(value, tag);
 
-      if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue)) {
-        final XmlAttribute attributeById = refCountHolder.getAttributeById(unquotedValue);
-
-        if (attributeById == null ||
-            !attributeById.isValid() ||
-            attributeById == attribute 
-           ) {
-          refCountHolder.registerAttributeWithId(unquotedValue,attribute);
-        } else {
-          final XmlAttributeValue valueElement = attributeById.getValueElement();
-
-          if (valueElement != null && getUnquotedValue(valueElement, tag).equals(unquotedValue)) {
-            if (tag.getParent().getUserData(DO_NOT_VALIDATE_KEY) == null) {
-              addToResults(HighlightInfo.createHighlightInfo(
-                HighlightInfoType.WRONG_REF,
-                value,
-                XmlErrorMessages.message("duplicate.id.reference")));
-              addToResults(HighlightInfo.createHighlightInfo(
-                HighlightInfoType.WRONG_REF,
-                valueElement,
-                XmlErrorMessages.message("duplicate.id.reference")));
-            }
-            return;
-          } else {
-            // attributeById previously has that id so reregister new one
-            refCountHolder.registerAttributeWithId(unquotedValue,attribute);
+    if (refCountHolder != null) {
+      if (attributeDescriptor.hasIdType()) {
+        if (doAddValueWithIdType(value, attribute, tag, refCountHolder)) return;
+      } else {
+        refs = value.getReferences();
+        for(PsiReference r:refs) {
+          if (r instanceof IdReferenceProvider.GlobalAttributeValueSelfReference) {
+            if (doAddValueWithIdType(value, attribute, tag, refCountHolder)) return;
           }
         }
       }
     }
 
+    if (refs == null) refs = value.getReferences();
     QuickFixProvider quickFixProvider = attributeDescriptor instanceof QuickFixProvider ?
                                         (QuickFixProvider)attributeDescriptor : QuickFixProvider.NULL;
 
-    checkReferences(value, quickFixProvider);
+    doCheckRefs(value, quickFixProvider, refs);
+  }
+
+  private boolean doAddValueWithIdType(final XmlAttributeValue value, final XmlAttribute attribute, final XmlTag tag, final RefCountHolder refCountHolder) {
+    final String unquotedValue = getUnquotedValue(value, tag);
+
+    if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue)) {
+      final XmlAttribute attributeById = refCountHolder.getAttributeById(unquotedValue);
+
+      if (attributeById == null ||
+          !attributeById.isValid() ||
+          attributeById == attribute
+         ) {
+        refCountHolder.registerAttributeWithId(unquotedValue,attribute);
+      } else {
+        final XmlAttributeValue valueElement = attributeById.getValueElement();
+
+        if (valueElement != null && getUnquotedValue(valueElement, tag).equals(unquotedValue)) {
+          if (tag.getParent().getUserData(DO_NOT_VALIDATE_KEY) == null) {
+            addToResults(HighlightInfo.createHighlightInfo(
+              HighlightInfoType.WRONG_REF,
+              value,
+              XmlErrorMessages.message("duplicate.id.reference")));
+            addToResults(HighlightInfo.createHighlightInfo(
+              HighlightInfoType.WRONG_REF,
+              valueElement,
+              XmlErrorMessages.message("duplicate.id.reference")));
+          }
+          return true;
+        } else {
+          // attributeById previously has that id so reregister new one
+          refCountHolder.registerAttributeWithId(unquotedValue,attribute);
+        }
+      }
+    }
+    return false;
   }
 
   public static HighlightInfo checkIdRefAttrValue(XmlAttributeValue value, RefCountHolder holder) {
@@ -714,6 +730,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       String unquotedValue = getUnquotedValue(value, tag);
       if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue)) {
         XmlAttribute xmlAttribute = holder.getAttributeById(unquotedValue);
+        if (xmlAttribute == null && tag instanceof HtmlTag) {
+          xmlAttribute = holder.getAttributeById(StringUtil.stripQuotesAroundValue(value.getText()));
+        }
 
         if (xmlAttribute == null || !xmlAttribute.isValid()) {
           return HighlightInfo.createHighlightInfo(
@@ -740,8 +759,11 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
   private void checkReferences(PsiElement value, QuickFixProvider quickFixProvider) {
     if (value == null) return;
-    PsiReference[] references = value.getReferences();
 
+    doCheckRefs(value, quickFixProvider, value.getReferences());
+  }
+
+  private void doCheckRefs(final PsiElement value, final QuickFixProvider quickFixProvider, final PsiReference[] references) {
     ProgressManager progressManager = ProgressManager.getInstance();
     for (final PsiReference reference : references) {
       progressManager.checkCanceled();
