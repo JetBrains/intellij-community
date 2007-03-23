@@ -10,7 +10,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
 
 /**
  * [vova] This class should be inner but due to bugs in "beta" generics compiler
@@ -21,13 +20,13 @@ import java.awt.image.BufferedImage;
  */
 final class LightBulbComponentImpl extends JComponent{
   private final QuickFixManager myManager;
-  private final BufferedImage myBackgroundImage;
+  private final Icon myIcon;
 
-  public LightBulbComponentImpl(@NotNull final QuickFixManager manager, @NotNull final BufferedImage backgroundImage) {
+  public LightBulbComponentImpl(@NotNull final QuickFixManager manager, @NotNull final Icon icon) {
     myManager = manager;
-    myBackgroundImage = backgroundImage;
+    myIcon = icon;
 
-    setPreferredSize(new Dimension(backgroundImage.getWidth(), backgroundImage.getHeight()));
+    setPreferredSize(new Dimension(icon.getIconWidth(), icon.getIconHeight()));
     final String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
       ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
     if (acceleratorsText.length() > 0) {
@@ -44,13 +43,6 @@ final class LightBulbComponentImpl extends JComponent{
   }
 
   protected void paintComponent(final Graphics g) {
-    // 1. Paint background
-    g.drawImage(myBackgroundImage, 0, 0, myBackgroundImage.getWidth(), myBackgroundImage.getHeight(), this);
-
-    // 2. Paint rollover border
-    // TODO[vova] implement
-
-    // 3. Paint dropdown arrow
-    // TODO[vova] implement
+    myIcon.paintIcon(this, g, 0, 0);
   }
 }

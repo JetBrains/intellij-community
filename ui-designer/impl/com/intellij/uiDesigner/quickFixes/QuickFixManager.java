@@ -23,7 +23,6 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 /**
@@ -145,35 +144,7 @@ public abstract class QuickFixManager <T extends JComponent>{
     }
 
     // 4. Show light bulb to fix this error
-    final LightBulbComponentImpl lightBulbComponent;
-    final int width;
-    try {
-      final Robot robot = new Robot();
-      final Point locationOnScreen = myComponent.getLocationOnScreen();
-      width = myIcon.getIconWidth() + 4;
-      final int height = myIcon.getIconHeight() + 4;
-      final BufferedImage image = robot.createScreenCapture(
-        new Rectangle(
-          locationOnScreen.x + bounds.x - width,
-          locationOnScreen.y + bounds.y,
-          width,
-          height
-        )
-      );
-      final Graphics2D g = image.createGraphics();
-      try{
-        myIcon.paintIcon(myComponent, g, (width - myIcon.getIconWidth())/2, (height - myIcon.getIconHeight())/2);
-      }
-      finally{
-        g.dispose();
-      }
-
-      lightBulbComponent = new LightBulbComponentImpl(this, image);
-    }
-    catch (AWTException ignored) {
-      return;
-    }
-
+    final LightBulbComponentImpl lightBulbComponent = new LightBulbComponentImpl(this, myIcon);
     myHint = new LightweightHint(lightBulbComponent);
     myLastHintBounds = bounds;
     myHint.show(myComponent, bounds.x - myIcon.getIconWidth() - 4, bounds.y, myComponent);
