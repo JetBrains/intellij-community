@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class NavBarModel {
   private ArrayList<Object> myModel = new ArrayList<Object>();
@@ -113,8 +114,8 @@ public class NavBarModel {
   }
 
   protected boolean updateModel(final PsiElement psiElement) {
-    int oldModelSize = size();
-    java.util.List<Object> oldModel = new ArrayList<Object>();
+    final int oldModelSize = size();
+    final List<Object> oldModel = new ArrayList<Object>();
     for (int i = 0; i < oldModelSize; i++) {
       oldModel.add(getElement(i));
     }
@@ -151,7 +152,29 @@ public class NavBarModel {
     }
   }
 
-  void traverseToRoot(@NotNull PsiElement psiElement, Set<VirtualFile> roots) {
+  public void updateModel(final Object object) {
+    if (object instanceof PsiElement) {
+      final Object rootElement = size() > 1 ? getElement(1) : null;
+      if (rootElement instanceof Module) {
+        final Module module = (Module)rootElement;
+        removeAllElements();
+        addElement(module.getProject());
+        ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+        addElement(module);
+        traverseToRoot((PsiElement)object, new HashSet<VirtualFile>(Arrays.asList(moduleRootManager.getContentRoots())));
+      }
+      else {
+        updateModel((PsiElement)object);
+      }
+    }
+    else if (object instanceof Module) {
+      removeAllElements();
+      addElement(((Module)object).getProject());
+      addElement(object);
+    }
+  }
+
+  private void traverseToRoot(@NotNull PsiElement psiElement, Set<VirtualFile> roots) {
     if (!psiElement.isValid()) return;
     final PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile != null && containingFile.getVirtualFile() == null) return; //non phisycal elements
@@ -202,7 +225,7 @@ public class NavBarModel {
       return false;
     }
     if (object instanceof PsiDirectory) {
-      final java.util.List<Object> result = new ArrayList<Object>();
+      final List<Object> result = new ArrayList<Object>();
       final Object rootElement = size() > 1 ? getElement(1) : null;
       if (rootElement instanceof Module && ((Module)rootElement).isDisposed()) return false;
       getDirectoryChildren((PsiDirectory)object, rootElement, result);
@@ -327,7 +350,7 @@ public class NavBarModel {
     return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
-  private static void getDirectoryChildren(final PsiDirectory psiDirectory, final Object rootElement, final java.util.List<Object> result) {
+  private static void getDirectoryChildren(final PsiDirectory psiDirectory, final Object rootElement, final List<Object> result) {
     final ModuleFileIndex moduleFileIndex =
       rootElement instanceof Module ? ModuleRootManager.getInstance((Module)rootElement).getFileIndex() : null;
     final PsiElement[] children = psiDirectory.getChildren();
@@ -342,8 +365,8 @@ public class NavBarModel {
     }
   }
 
-  java.util.List<Object> calcElementChildren(final Object object) {
-    final java.util.List<Object> result = new ArrayList<Object>();
+  List<Object> calcElementChildren(final Object object) {
+    final List<Object> result = new ArrayList<Object>();
     Object rootElement = size() > 1 ? getElement(1) : null;
     if (!(object instanceof Project) && rootElement instanceof Module && ((Module)rootElement).isDisposed()) return result;
     final PsiManager psiManager = PsiManager.getInstance(myProject);
