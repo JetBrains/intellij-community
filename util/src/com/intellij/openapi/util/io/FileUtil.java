@@ -17,11 +17,11 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.CommonBundle;
 import com.intellij.Patches;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -587,5 +587,26 @@ public class FileUtil {
     finally {
       StringBuilderSpinAllocator.dispose(buf);
     }
+  }
+
+  public static boolean moveDirWithContent( File fromDir, File toDir )
+  {
+    if( !toDir.exists() )
+        return fromDir.renameTo( toDir );
+
+    File[] files = fromDir.listFiles();
+    if( files == null )
+        return false;
+
+    boolean success = true;
+
+    for( File fromFile : files )
+    {
+      File toFile = new File( toDir, fromFile.getName() );
+      success = success && fromFile.renameTo( toFile );
+    }
+    fromDir.delete();
+
+    return success;
   }
 }
