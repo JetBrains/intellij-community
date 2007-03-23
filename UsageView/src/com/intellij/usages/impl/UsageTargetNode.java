@@ -16,6 +16,7 @@
 package com.intellij.usages.impl;
 
 import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultTreeModel;
@@ -46,6 +47,10 @@ public class UsageTargetNode extends Node {
 
   protected boolean isDataExcluded() {
     return false;
+  }
+
+  protected String getText(final UsageView view) {
+    return myTarget.getPresentation().getPresentableText();
   }
 
   public UsageTarget getTarget() {

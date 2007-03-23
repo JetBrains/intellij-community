@@ -15,6 +15,9 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.openapi.util.Comparing;
+import com.intellij.usages.UsageView;
+
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
@@ -26,6 +29,7 @@ abstract class Node extends DefaultMutableTreeNode {
   protected final DefaultTreeModel myTreeModel;
   private Boolean myIsReadOnly = null;
   private boolean myExcluded = false;
+  private String myText = null;
 
   protected Node(DefaultTreeModel model) {
     myTreeModel = model;
@@ -39,6 +43,7 @@ abstract class Node extends DefaultMutableTreeNode {
   protected abstract boolean isDataValid();
   protected abstract boolean isDataReadOnly();
   protected abstract boolean isDataExcluded();
+  protected abstract String getText(UsageView view);
 
   public final boolean isValid() {
     return myIsValid;
@@ -53,14 +58,17 @@ abstract class Node extends DefaultMutableTreeNode {
     return myExcluded;
   }
 
-  public final void update() {
+  public final void update(UsageView view) {
     boolean isDataValid = isDataValid();
     boolean isReadOnly = isDataReadOnly();
     boolean isExcluded = isDataExcluded();
-    if (isDataValid != myIsValid || myIsReadOnly == null || isReadOnly != myIsReadOnly.booleanValue() || isExcluded != myExcluded) {
+    String text = getText(view);
+    if (isDataValid != myIsValid || myIsReadOnly == null || isReadOnly != myIsReadOnly.booleanValue() || isExcluded != myExcluded ||
+      !Comparing.equal(myText, text)) {
       myIsValid = isDataValid;
       myExcluded = isExcluded;
       myIsReadOnly = Boolean.valueOf(isReadOnly);
+      myText = text;
       updateNotify();
       myTreeModel.nodeChanged(this);
     }

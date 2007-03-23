@@ -16,9 +16,7 @@
 package com.intellij.usages.impl;
 
 import com.intellij.pom.Navigatable;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageGroup;
-import com.intellij.usages.UsageViewSettings;
+import com.intellij.usages.*;
 import com.intellij.usages.rules.MergeableUsage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -291,5 +289,9 @@ class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
       if (!node.isExcluded()) return false;
     }
     return true;
+  }
+
+  protected String getText(UsageView view) {
+    return myGroup.getText(view);
   }
 }

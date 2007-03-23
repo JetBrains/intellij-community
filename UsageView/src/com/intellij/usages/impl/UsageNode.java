@@ -18,8 +18,11 @@ package com.intellij.usages.impl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.usages.Usage;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.TextChunk;
 
 import javax.swing.tree.DefaultTreeModel;
+import java.util.Arrays;
 
 /**
  * @author max
@@ -75,6 +78,10 @@ class UsageNode extends Node implements Comparable<UsageNode>, Navigatable {
 
   protected boolean isDataExcluded() {
     return myUsageExcluded;
+  }
+
+  protected String getText(final UsageView view) {
+    return Arrays.asList(myUsage.getPresentation().getText()).toString();
   }
 
   public void setUsageExcluded(boolean usageExcluded) {

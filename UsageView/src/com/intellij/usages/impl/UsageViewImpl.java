@@ -689,7 +689,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     while (enumeration.hasMoreElements()) {
       checkNodeValidity((DefaultMutableTreeNode)enumeration.nextElement());
     }
-    if (node instanceof Node && node != getModelRoot()) ((Node)node).update();
+    if (node instanceof Node && node != getModelRoot()) ((Node)node).update(this);
   }
 
   private void updateLater() {
