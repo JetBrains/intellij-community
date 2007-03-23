@@ -88,11 +88,20 @@ public class GeneralCommandLine {
 
   public String getCommandLineString() {
     final StringBuffer buffer = new StringBuffer(myExePath);
-    for (final String s : myProgramParams.getList()) {
-      buffer.append(" ");
-      buffer.append(s);
-    }
+    appendParams( buffer );
     return buffer.toString();
+  }
+
+  public String getCommandLineParams() {
+    final StringBuffer buffer = new StringBuffer();
+    appendParams( buffer );
+    return buffer.toString();
+  }
+
+  private void appendParams( StringBuffer buffer )
+  {
+    for( final String s : myProgramParams.getList() )
+      buffer.append(" ").append(s);
   }
 
   public Charset getCharset() {
