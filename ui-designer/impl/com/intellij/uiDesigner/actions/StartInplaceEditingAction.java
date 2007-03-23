@@ -33,7 +33,7 @@ public final class StartInplaceEditingAction extends AnAction{
     final RadComponent component = selection.get(0);
     final Property defaultInplaceProperty = component.getDefaultInplaceProperty();
     myEditor.getInplaceEditingLayer().startInplaceEditing(component, defaultInplaceProperty,
-                                                          component.getDefaultInplaceEditorBounds(), true, new InplaceContext());
+                                                          component.getDefaultInplaceEditorBounds(), new InplaceContext(true));
   }
 
   public void update(final AnActionEvent e) {

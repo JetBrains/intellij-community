@@ -61,8 +61,7 @@ public final class MainProcessor extends EventProcessor{
         final RadComponent component = selection.get(0);
         final InplaceEditingLayer inplaceLayer = myEditor.getInplaceEditingLayer();
         inplaceLayer.startInplaceEditing(component, component.getDefaultInplaceProperty(),
-                                         component.getDefaultInplaceEditorBounds(), false,
-                                         new InplaceContext(e.getKeyChar()));
+                                         component.getDefaultInplaceEditorBounds(), new InplaceContext(false, e.getKeyChar()));
       }
     }
   }

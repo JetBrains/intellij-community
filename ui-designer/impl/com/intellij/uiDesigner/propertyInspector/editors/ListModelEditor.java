@@ -30,14 +30,14 @@ public class ListModelEditor extends PropertyEditor<String[]> {
     myTextField.getTextField().setEditable(false);
     myTextField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        openListEditorDialog();
+        openListEditorDialog(myLastValue);
       }
     });
   }
 
-  private void openListEditorDialog() {
+  private void openListEditorDialog(String[] value) {
     ListEditorDialog dlg = new ListEditorDialog(myLastComponent.getProject(), myPropertyName);
-    dlg.setValue(myLastValue);
+    dlg.setValue(value);
     dlg.show();
     if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       myLastValue = dlg.getValue();
@@ -52,10 +52,17 @@ public class ListModelEditor extends PropertyEditor<String[]> {
 
   public JComponent getComponent(final RadComponent component, final String[] value, final InplaceContext inplaceContext) {
     myLastComponent = component;
-    myLastValue = value;
-    myTextField.setText(listValueToString(value));
     if (inplaceContext != null) {
-      openListEditorDialog();
+      if (inplaceContext.isStartedByTyping()) {
+        openListEditorDialog(new String[] { Character.toString(inplaceContext.getStartChar()) });
+      }
+      else {
+        openListEditorDialog(value);
+      }
+    }
+    else {
+      myLastValue = value;
+      myTextField.setText(listValueToString(value));
     }
     return myTextField;
   }

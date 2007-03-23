@@ -123,14 +123,13 @@ public final class InplaceEditingLayer extends JComponent{
     final Property inplaceProperty = inplaceComponent.getInplaceProperty(p.x, p.y);
     if (inplaceProperty != null) {
       final Rectangle bounds = inplaceComponent.getInplaceEditorBounds(inplaceProperty, p.x, p.y);
-      startInplaceEditing(inplaceComponent, inplaceProperty, bounds, true, new InplaceContext());
+      startInplaceEditing(inplaceComponent, inplaceProperty, bounds, new InplaceContext(true));
     }
   }
 
   public void startInplaceEditing(@NotNull final RadComponent inplaceComponent,
                                   @Nullable final Property property,
                                   @Nullable final Rectangle bounds,
-                                  final boolean keepInitialValue,
                                   final InplaceContext context) {
     myInplaceProperty = property;
     if(myInplaceProperty == null){
@@ -152,7 +151,7 @@ public final class InplaceEditingLayer extends JComponent{
     // 1. Get editor component
     myInplaceEditorComponent = myInplaceEditor.getComponent(
       myInplaceComponent,
-      keepInitialValue ? myInplaceProperty.getValue(myInplaceComponent) : null,
+      context.isKeepInitialValue() ? myInplaceProperty.getValue(myInplaceComponent) : null,
       context
     );
     LOG.assertTrue(myInplaceEditorComponent != null);
