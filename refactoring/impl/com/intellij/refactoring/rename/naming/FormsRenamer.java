@@ -15,7 +15,7 @@ public class FormsRenamer extends AutomaticRenamer {
   }
 
   public String canonicalNameToName(String canonicalName, PsiNamedElement psiFile) {
-    return canonicalName.indexOf(".") < 0 ? canonicalName + ".form" : canonicalName;
+    return canonicalName.contains(".") ? canonicalName : canonicalName + ".form";
   }
 
   public FormsRenamer(PsiClass aClass, String newClassName) {

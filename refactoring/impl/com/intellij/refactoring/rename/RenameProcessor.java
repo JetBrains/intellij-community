@@ -38,7 +38,7 @@ import java.util.*;
 public class RenameProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameProcessor");
 
-  private LinkedHashMap<PsiElement, String> myAllRenames = new LinkedHashMap<PsiElement, String>();
+  private final LinkedHashMap<PsiElement, String> myAllRenames = new LinkedHashMap<PsiElement, String>();
 
   private PsiElement myPrimaryElement;
   private String myNewName = null;
@@ -51,7 +51,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   private boolean myShouldRenameForms;
   private NonCodeUsageInfo[] myNonCodeUsages;
-  private List<AutomaticRenamer> myRenamers = new ArrayList<AutomaticRenamer>();
+  private final List<AutomaticRenamer> myRenamers = new ArrayList<AutomaticRenamer>();
 
   public RenameProcessor(Project project,
                          PsiElement element,
@@ -380,9 +380,11 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     myRenamers.clear();
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
 
-    for (Map.Entry<PsiElement, String> entry : myAllRenames.entrySet()) {
-      PsiElement element = entry.getKey();
-      final String newName = entry.getValue();
+    List<PsiElement> elements = new ArrayList<PsiElement>(myAllRenames.keySet());
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < elements.size(); i++) {
+      PsiElement element = elements.get(i);
+      final String newName = myAllRenames.get(element);
       final UsageInfo[] usages = RenameUtil.findUsages(element, newName, mySearchInComments, mySearchTextOccurrences, myAllRenames);
       result.addAll(Arrays.asList(usages));
       if (element instanceof PsiClass && myShouldRenameVariables) {
@@ -399,7 +401,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
 
       if (element instanceof PsiMethod) {
-        addOverriders((PsiMethod)element, newName);
+        addOverriders((PsiMethod)element, newName, elements);
       }
 
       if (element instanceof PsiField) {
@@ -422,7 +424,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     for (PsiElement resolved : elements) {
       newAllRenames.put(resolved, newNames.next());
     }
-    myAllRenames = newAllRenames;
+    myAllRenames.clear();
+    myAllRenames.putAll(newAllRenames);
   }
 
   protected boolean isPreviewUsages(UsageInfo[] usages) {
@@ -515,7 +518,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return extractedUsages.toArray(new UsageInfo[extractedUsages.size()]);
   }
 
-  private void addOverriders(final PsiMethod method, final String newName) {
+  private void addOverriders(final PsiMethod method, final String newName, final List<PsiElement> methods) {
     OverridingMethodsSearch.search(method, true).forEach(new Processor<PsiMethod>() {
       public boolean process(PsiMethod overrider) {
         final String overriderName = overrider.getName();
@@ -523,6 +526,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         final String newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newName);
         if (newOverriderName != null) {
           myAllRenames.put(overrider, newOverriderName);
+          methods.add(overrider);
         }
         return true;
       }

@@ -10,9 +10,8 @@ import org.jetbrains.annotations.NonNls;
  * @author ven
  */
 public class ConstructorParameterOnFieldRenameRenamer extends AutomaticRenamer {
-  protected
   @NonNls
-  String canonicalNameToName(@NonNls final String canonicalName, final PsiNamedElement element) {
+  protected String canonicalNameToName(@NonNls final String canonicalName, final PsiNamedElement element) {
     return element.getManager().getCodeStyleManager().propertyNameToVariableName(canonicalName, VariableKind.PARAMETER);
   }
 

@@ -14,7 +14,7 @@ import java.util.*;
  */
 public abstract class AutomaticRenamer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.naming.AutomaticRenamer");
-  protected final LinkedHashMap<PsiNamedElement, String> myRenames = new LinkedHashMap<PsiNamedElement, String>();
+  private final LinkedHashMap<PsiNamedElement, String> myRenames = new LinkedHashMap<PsiNamedElement, String>();
   protected final List<PsiNamedElement> myElements;
 
   protected AutomaticRenamer() {
@@ -23,8 +23,7 @@ public abstract class AutomaticRenamer {
 
   public boolean hasAnythingToRename() {
     final Collection<String> strings = myRenames.values();
-    for (Iterator<String> iterator = strings.iterator(); iterator.hasNext();) {
-      final String s = iterator.next();
+    for (final String s : strings) {
       if (s != null) return true;
     }
     return false;
@@ -47,8 +46,7 @@ public abstract class AutomaticRenamer {
     final String newName = getNewName(element);
     if (newName != null) {
       final UsageInfo[] usages = RenameUtil.findUsages(element, newName, searchInStringsAndComments, searchInNonJavaFiles, myRenames);
-      for (int i = 0; i < usages.length; i++) {
-        final UsageInfo usage = usages[i];
+      for (final UsageInfo usage : usages) {
         if (usage instanceof UnresolvableCollisionUsageInfo) return false;
       }
       result.addAll(Arrays.asList(usages));
@@ -107,7 +105,8 @@ public abstract class AutomaticRenamer {
     }
   }
 
-  protected @NonNls String canonicalNameToName(@NonNls String canonicalName, PsiNamedElement element) {
+  @NonNls
+  protected String canonicalNameToName(@NonNls String canonicalName, PsiNamedElement element) {
     return canonicalName;
   }
 

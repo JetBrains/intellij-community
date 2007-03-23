@@ -15,7 +15,8 @@ import java.util.Set;
  * @author dsl
  */
 public class AutomaticVariableRenamer extends AutomaticRenamer {
-  private Set<PsiNamedElement>myToUnpluralize = new HashSet<PsiNamedElement>();
+  private final Set<PsiNamedElement> myToUnpluralize = new HashSet<PsiNamedElement>();
+
   public AutomaticVariableRenamer(PsiClass aClass, String newClassName, List<UsageInfo> usages) {
     for (final UsageInfo info : usages) {
       final PsiElement element = info.getElement();
@@ -27,7 +28,7 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
       final PsiJavaCodeReferenceElement ref = typeElement.getInnermostComponentReferenceElement();
       if (ref == null) continue;
       if (ref.equals(element)) {
-        myElements.add((variable));
+        myElements.add(variable);
         if (variable.getType() instanceof PsiArrayType) {
           myToUnpluralize.add(variable);
         }
@@ -40,7 +41,7 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
         for (PsiTypeElement typeParameterElement : typeParameterElements) {
           final PsiJavaCodeReferenceElement parameterRef = typeParameterElement.getInnermostComponentReferenceElement();
           if (parameterRef != null && parameterRef.equals(element)) {
-            myElements.add((variable));
+            myElements.add(variable);
             myToUnpluralize.add(variable);
             break;
           }
@@ -79,5 +80,4 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
     if (myToUnpluralize.contains(psiVariable)) return StringUtil.pluralize(variableName);
     return variableName;
   }
-
 }
