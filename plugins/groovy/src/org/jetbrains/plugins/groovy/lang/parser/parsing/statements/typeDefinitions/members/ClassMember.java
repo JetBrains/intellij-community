@@ -64,8 +64,8 @@ public class ClassMember implements GroovyElementTypes {
         return WRONGWAY;
       }
 
-      cmMarker.done(TYPE_DEFINITION_FIELD);
-      return TYPE_DEFINITION_FIELD;
+      cmMarker.done(typeDef);
+      return typeDef;
     }
     typeDeclStartMarker.rollbackTo();
 

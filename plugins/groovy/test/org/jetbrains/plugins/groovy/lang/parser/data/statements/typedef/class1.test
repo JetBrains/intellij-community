@@ -2,3 +2,26 @@ class a {
   static interface a {}
 }
 -----
+Groovy script
+  class definition
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    class block
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      interface definition
+        modifiers
+          PsiElement(static)('static')
+        PsiWhiteSpace(' ')
+        PsiElement(interface)('interface')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        interface block
+          PsiElement({)('{')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
