@@ -3,6 +3,7 @@ package com.intellij.ui.tabs;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.ui.ShadowAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.ui.GraphicsConfig;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.ui.CaptionPanel;
@@ -43,13 +44,40 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
   private TabInfo myPopupInfo;
   private DefaultActionGroup myOwnGroup;
 
-  public TabsWithActions(ActionManager actionManager) {
+  public TabsWithActions(ActionManager actionManager, Disposable parent) {
     myActionManager = actionManager;
 
     myOwnGroup = new DefaultActionGroup();
     myOwnGroup.add(new SelectNextAction());
     myOwnGroup.add(new SelectPreviousAction());
+
+    UIUtil.addAwtListener(new AWTEventListener() {
+      public void eventDispatched(final AWTEvent event) {
+        final FocusEvent fe = (FocusEvent)event;
+        final TabsWithActions tabs = findTabs(fe.getComponent());
+        if (tabs == null) return;
+        if (fe.getID() == FocusEvent.FOCUS_LOST) {
+          tabs.setFocused(false);
+        } else if (fe.getID() == FocusEvent.FOCUS_GAINED) {
+          tabs.setFocused(true);
+        }
+      }
+    }, FocusEvent.FOCUS_EVENT_MASK, parent);
+
   }
+
+  private TabsWithActions findTabs(Component c) {
+    Component eachParent = c;
+    while(eachParent != null) {
+      if (eachParent instanceof TabsWithActions) {
+        return (TabsWithActions)eachParent;
+      }
+      eachParent = eachParent.getParent();
+    }
+
+    return null;
+  }
+
 
   public TabInfo addTab(TabInfo info, int index) {
     info.getChangeSupport().addPropertyChangeListener(this);
@@ -526,7 +554,10 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     final JFrame frame = new JFrame();
     frame.getContentPane().setLayout(new BorderLayout());
     final int[] count = new int[1];
-    final TabsWithActions tabs = new TabsWithActions(null) {
+    final TabsWithActions tabs = new TabsWithActions(null, new Disposable() {
+      public void dispose() {
+      }
+    }) {
       protected JComponent createToolbarComponent(final TabInfo tabInfo) {
         final JLabel jLabel = new JLabel("X" + (++count[0]));
         jLabel.setBorder(new LineBorder(Color.red));

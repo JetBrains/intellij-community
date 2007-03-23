@@ -854,6 +854,12 @@
     <action id="Debugger.NextContent">
       <keyboard-shortcut first-keystroke="control alt shift RIGHT" />
     </action>
+    <action id="Debugger.MaximizeContent">
+      <keyboard-shortcut first-keystroke="control alt shift UP" />
+    </action>
+    <action id="Debugger.RestoreContent">
+      <keyboard-shortcut first-keystroke="control alt shift DOWN" />
+    </action>
   </keymap>
 
   <!-- ############################################################################## -->
@@ -1151,12 +1157,6 @@
     </action>
     <action id="DebugClass">
       <keyboard-shortcut first-keystroke="control shift F9"/>
-    </action>
-    <action id="Debugger.PreviousContent">
-      <keyboard-shortcut first-keystroke="control alt shift LEFT" />
-    </action>
-    <action id="Debugger.NextContent">
-      <keyboard-shortcut first-keystroke="control alt shift RIGHT" />
     </action>
   </keymap>
 
