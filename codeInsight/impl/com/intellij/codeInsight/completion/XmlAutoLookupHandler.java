@@ -2,9 +2,11 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 
 /**
  *
@@ -46,7 +48,7 @@ public class XmlAutoLookupHandler extends CodeCompletionHandler {
     else if (text.endsWith("@{") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue()) {
       return super.getLookupData(context);
     }
-    else if (text.endsWith("</") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue()) {
+    else if (text.endsWith("</") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt)) {
       return super.getLookupData(context);
     }
     //if (lastElement instanceof PsiWhiteSpace && lastElement.getPrevSibling() instanceof XmlTag) {
@@ -67,7 +69,9 @@ public class XmlAutoLookupHandler extends CodeCompletionHandler {
     }
     Boolean result = isRelevantLanguage.get();
     if (result == null) {
-      result = element.getLanguage() instanceof XMLLanguage || isAntFile.booleanValue();
+      Language language = element.getLanguage();
+      if (element instanceof PsiWhiteSpace) language = element.getParent().getLanguage();
+      result = language instanceof XMLLanguage || isAntFile.booleanValue();
       isRelevantLanguage.set(result);
     }
     return result.booleanValue();

@@ -18,6 +18,9 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -28,7 +31,7 @@ public class DefaultCharFilter implements CharFilter {
   private boolean myWithinLiteral;
   private CharFilter myDelegate = null;
 
-  public DefaultCharFilter(PsiFile file, int offset) {
+  public DefaultCharFilter(Editor editor,PsiFile file, int offset) {
     myFile = file;
 
     PsiElement psiElement = file.findElementAt(offset);
@@ -51,8 +54,10 @@ public class DefaultCharFilter implements CharFilter {
       }
       
       if (!inJavaContext) {
-        final boolean withinTag = psiElement != null && psiElement.getParent() instanceof XmlTag;
-        myDelegate = PsiUtil.isInJspFile(myFile) ? new JspCharFilter(withinTag) : new XmlCharFilter(withinTag);
+        final PsiElement parentElement = psiElement.getParent() != null ? psiElement.getParent():null;
+        final boolean withinTag = parentElement instanceof XmlTag ||
+         ((parentElement instanceof XmlDocument || parentElement instanceof XmlText) && psiElement.getText().equals("<"));
+        myDelegate = PsiUtil.isInJspFile(myFile) ? new JspCharFilter(withinTag, editor) : new XmlCharFilter(withinTag, editor);
       }
     } else {
 

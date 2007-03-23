@@ -378,7 +378,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                               final LookupData data,
                               PsiFile file) {
     return LookupManager.getInstance(project)
-      .showLookup(editor, items, prefix, data.itemPreferencePolicy, new DefaultCharFilter(file, editor.getCaretModel().getOffset()));
+      .showLookup(editor, items, prefix, data.itemPreferencePolicy, new DefaultCharFilter(editor, file, editor.getCaretModel().getOffset()));
   }
 
   protected abstract boolean isAutocompleteOnInvocation();

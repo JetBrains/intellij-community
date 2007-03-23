@@ -9,12 +9,16 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.CharFilter;
+import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.openapi.editor.Editor;
 
 public class XmlCharFilter implements CharFilter {
-  private boolean myWithinTag;
+  private final boolean myWithinTag;
+  private final Editor myEditor;
 
-  public XmlCharFilter(boolean withinTag) {
+  public XmlCharFilter(boolean withinTag, Editor editor) {
     myWithinTag = withinTag;
+    myEditor = editor;
   }
 
   public int accept(char c, final String prefix) {
@@ -30,7 +34,15 @@ public class XmlCharFilter implements CharFilter {
       case '(':
 
       case '/':
-        return myWithinTag && prefix != null && prefix.length() > 0 ? CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP:CharFilter.ADD_TO_PREFIX;
+        if (myWithinTag) {
+          if (prefix != null && prefix.length() > 0) {
+            return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
+          } else {
+            AutoPopupController.getInstance(myEditor.getProject()).autoPopupXmlLookup(myEditor);
+            return CharFilter.HIDE_LOOKUP;
+          }
+        }
+        return CharFilter.ADD_TO_PREFIX;
         
       case '>': if (prefix != null && prefix.length() > 0) {
         return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
