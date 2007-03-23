@@ -34,9 +34,11 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.containers.HashMap;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
+import com.intellij.xml.impl.schema.TypeDescriptor;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -323,6 +325,34 @@ public class XmlUtil {
     if (targetNamespace == null) targetNamespace = xmlTag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME, XML_SCHEMA_URI2);
     if (targetNamespace == null) targetNamespace = xmlTag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME, XML_SCHEMA_URI3);
     return targetNamespace;
+  }
+
+  @Nullable
+  public static XmlTag getSchemaSimpleContent(@NotNull XmlTag tag) {
+    XmlElementDescriptor descriptor = tag.getDescriptor();
+
+    if (descriptor instanceof XmlElementDescriptorImpl) {
+      final TypeDescriptor type = ((XmlElementDescriptorImpl)descriptor).getType();
+
+      if (type instanceof ComplexTypeDescriptor) {
+        final XmlTag[] simpleContent = new XmlTag[1];
+
+        processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(), new PsiElementProcessor() {
+          public boolean execute(final PsiElement element) {
+            if (element instanceof XmlTag && ((XmlTag)element).getLocalName().equals(XSD_SIMPLE_CONTENT_TAG) &&
+                ((XmlTag)element).getNamespace().equals(XML_SCHEMA_URI)) {
+              simpleContent[0] = (XmlTag)element;
+              return false;
+            }
+
+            return true;
+          }
+        }, true);
+
+        return simpleContent[0];
+      }
+    }
+    return null;
   }
 
   private static class XmlElementProcessor {

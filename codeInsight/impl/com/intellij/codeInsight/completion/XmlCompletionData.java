@@ -12,6 +12,7 @@ import com.intellij.codeInsight.template.macro.MacroFactory;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
+import com.intellij.jsp.impl.TldAttributeDescriptor;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -36,12 +37,8 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
-import com.intellij.xml.impl.schema.TypeDescriptor;
-import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.jsp.impl.TldAttributeDescriptor;
 
 import java.util.*;
 
@@ -378,31 +375,12 @@ public class XmlCompletionData extends CompletionData {
   private static class SimpleTagContentEnumerationValuesGetter implements ContextGetter {
     public Object[] get(final PsiElement context, CompletionContext completionContext) {
       XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class, false);
-      XmlElementDescriptor descriptor = tag != null ? tag.getDescriptor() : null;
-
-      if (descriptor instanceof XmlElementDescriptorImpl) {
-        final TypeDescriptor type = ((XmlElementDescriptorImpl)descriptor).getType();
-
-        if (type instanceof ComplexTypeDescriptor) {
-          final XmlTag[] simpleContent = new XmlTag[1];
-
-          XmlUtil.processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(), new PsiElementProcessor() {
-            public boolean execute(final PsiElement element) {
-              if (element instanceof XmlTag && ((XmlTag)element).getLocalName().equals(XmlUtil.XSD_SIMPLE_CONTENT_TAG) &&
-                  ((XmlTag)element).getNamespace().equals(XmlUtil.XML_SCHEMA_URI)) {
-                simpleContent[0] = (XmlTag)element;
-                return false;
-              }
-
-              return true;
-            }
-          }, true);
-
-          if (simpleContent[0] != null) {
-            final HashSet<String> variants = new HashSet<String>();
-            XmlUtil.collectEnumerationValues(simpleContent[0], variants);
-            if (variants.size() > 0) return variants.toArray(new Object[variants.size()]);
-          }
+      if (tag != null) {
+        final XmlTag simpleContent = XmlUtil.getSchemaSimpleContent(tag);
+        if (simpleContent != null) {
+          final HashSet<String> variants = new HashSet<String>();
+          XmlUtil.collectEnumerationValues(simpleContent, variants);
+          if (variants.size() > 0) return variants.toArray(new Object[variants.size()]);
         }
       }
 

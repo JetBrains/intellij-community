@@ -3,11 +3,16 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Collections;
 
 /**
  * @author peter
@@ -43,6 +48,13 @@ public class EnumConverter<T extends Enum> extends ResolvingConverter<T>{
 
   @NotNull
   public Collection<? extends T> getVariants(final ConvertContext context) {
+    final XmlElement element = context.getXmlElement();
+    if (element instanceof XmlTag) {
+      final XmlTag simpleContent = XmlUtil.getSchemaSimpleContent((XmlTag)element);
+      if (simpleContent != null && XmlUtil.collectEnumerationValues(simpleContent, new HashSet<String>())) {
+        return Collections.emptyList();
+      }
+    }
     return Arrays.asList(myType.getEnumConstants());
   }
 }
