@@ -4,6 +4,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.propertyInspector.renderers.ComponentRenderer;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 
@@ -24,7 +25,7 @@ public class ComponentEditor extends ComboBoxPropertyEditor<String> {
     myCbx.setRenderer(new ComponentRenderer());
   }
 
-  public JComponent getComponent(RadComponent component, String value, boolean inplace) {
+  public JComponent getComponent(RadComponent component, String value, InplaceContext inplaceContext) {
     RadComponent[] components = collectFilteredComponents(component);
     // components [0] = null (<none>)
     myCbx.setModel(new DefaultComboBoxModel(components));

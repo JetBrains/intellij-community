@@ -23,6 +23,7 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.renderers.ClassToBindRenderer;
 import org.jetbrains.annotations.NotNull;
 
@@ -105,7 +106,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
       return value.replace('$', '.'); // PSI works only with dots
     }
 
-    public JComponent getComponent(final RadComponent component, final String value, final boolean inplace) {
+    public JComponent getComponent(final RadComponent component, final String value, final InplaceContext inplaceContext) {
       myInitialValue = value;
       setEditorText(value != null ? value : "");
       myActionListener.setModule(component.getModule());

@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.shared.BorderType;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,7 +17,7 @@ public final class BorderTypeEditor extends ComboBoxPropertyEditor<BorderType> {
     myCbx.setRenderer(new MyListCellRenderer());
   }
 
-  public JComponent getComponent(final RadComponent ignored, final BorderType value, final boolean inplace){
+  public JComponent getComponent(final RadComponent ignored, final BorderType value, final InplaceContext inplaceContext){
     myCbx.setSelectedItem(value);
     return myCbx;
   }

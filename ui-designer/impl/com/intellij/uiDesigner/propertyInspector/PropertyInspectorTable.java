@@ -1109,7 +1109,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       final Property property=(Property)value;
       try {
         //noinspection unchecked
-        return myEditor.getComponent(mySelection.get(0), getSelectionValue(property), false);
+        return myEditor.getComponent(mySelection.get(0), getSelectionValue(property), null);
       }
       catch(Exception ex) {
         LOG.debug(ex);

@@ -2,6 +2,7 @@ package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -29,7 +30,7 @@ public class BooleanEditor extends PropertyEditor<Boolean> {
     return myCheckBox.isSelected();
   }
 
-  public JComponent getComponent(final RadComponent ignored, final Boolean value, final boolean inplace){
+  public JComponent getComponent(final RadComponent ignored, final Boolean value, final InplaceContext inplaceContext){
     myInsideChange=true;
     try{
       myCheckBox.setBackground(UIUtil.getTableBackground());

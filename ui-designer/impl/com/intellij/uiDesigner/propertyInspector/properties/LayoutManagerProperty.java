@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.editors.ComboBoxPropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -36,7 +37,7 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
       });
     }
 
-    public JComponent getComponent(RadComponent component, String value, boolean inplace) {
+    public JComponent getComponent(RadComponent component, String value, InplaceContext inplaceContext) {
       if (UIFormXmlConstants.LAYOUT_XY.equals(value)) {
         myCbx.setModel(new DefaultComboBoxModel(LayoutManagerRegistry.getLayoutManagerNames()));
       }

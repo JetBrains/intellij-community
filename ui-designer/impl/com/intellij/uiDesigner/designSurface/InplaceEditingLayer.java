@@ -13,6 +13,7 @@ import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditorAdapter;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,14 +123,15 @@ public final class InplaceEditingLayer extends JComponent{
     final Property inplaceProperty = inplaceComponent.getInplaceProperty(p.x, p.y);
     if (inplaceProperty != null) {
       final Rectangle bounds = inplaceComponent.getInplaceEditorBounds(inplaceProperty, p.x, p.y);
-      startInplaceEditing(inplaceComponent, inplaceProperty, bounds, true);
+      startInplaceEditing(inplaceComponent, inplaceProperty, bounds, true, new InplaceContext());
     }
   }
 
   public void startInplaceEditing(@NotNull final RadComponent inplaceComponent,
                                   @Nullable final Property property,
                                   @Nullable final Rectangle bounds,
-                                  final boolean keepInitialValue) {
+                                  final boolean keepInitialValue,
+                                  final InplaceContext context) {
     myInplaceProperty = property;
     if(myInplaceProperty == null){
       return;
@@ -151,7 +153,7 @@ public final class InplaceEditingLayer extends JComponent{
     myInplaceEditorComponent = myInplaceEditor.getComponent(
       myInplaceComponent,
       keepInitialValue ? myInplaceProperty.getValue(myInplaceComponent) : null,
-      true
+      context
     );
     LOG.assertTrue(myInplaceEditorComponent != null);
     myInplaceEditor.addPropertyEditorListener(myPropertyEditorListener);
@@ -294,12 +296,6 @@ public final class InplaceEditingLayer extends JComponent{
     }
     finally {
       LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(null);
-    }
-  }
-
-  public void forwardKeyEvent(final char c) {
-    if (myInplaceEditor != null) {
-      myInplaceEditor.processEditorKeyChar(c);
     }
   }
 

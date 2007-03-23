@@ -7,6 +7,7 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.Property;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public final class StartInplaceEditingAction extends AnAction{
     final RadComponent component = selection.get(0);
     final Property defaultInplaceProperty = component.getDefaultInplaceProperty();
     myEditor.getInplaceEditingLayer().startInplaceEditing(component, defaultInplaceProperty,
-                                                          component.getDefaultInplaceEditorBounds(), true);
+                                                          component.getDefaultInplaceEditorBounds(), true, new InplaceContext());
   }
 
   public void update(final AnActionEvent e) {

@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroFontProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.lw.FontDescriptor;
@@ -46,7 +47,7 @@ public class FontEditor extends PropertyEditor<FontDescriptor> {
     return myValue;
   }
 
-  public JComponent getComponent(RadComponent component, FontDescriptor value, boolean inplace) {
+  public JComponent getComponent(RadComponent component, FontDescriptor value, InplaceContext inplaceContext) {
     myProject = component.getModule().getProject();
     myValue = value != null ? value : new FontDescriptor(null, -1, -1);
     myTextField.setText(IntroFontProperty.descriptorToString(myValue));

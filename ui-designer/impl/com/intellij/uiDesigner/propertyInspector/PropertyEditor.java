@@ -37,7 +37,7 @@ public abstract class PropertyEditor<V> {
    * internal data and return the edited value by <code>getValue</code>
    * method.
    *
-   * @param inplace this is hint for the editor. This parameter is <code>true</code>
+   * @param inplaceContext this is hint for the editor. This parameter is not <code>null</code>
    * in case if the editor is used for inplace editing. This hint is very useful.
    * For example string editor doesn't have a border when it is used
    * inside property inspector and has border when it is used for inspace editing.
@@ -48,12 +48,11 @@ public abstract class PropertyEditor<V> {
   public abstract JComponent getComponent(
     RadComponent component,
     V value,
-    boolean inplace
-  );
+    InplaceContext inplaceContext);
 
   /**
    * Property editor can return preferred focused component (if any) inside the component
-   * which is returned by the {@link #getComponent(RadComponent, Object, boolean) } method.
+   * which is returned by the {@link #getComponent(com.intellij.uiDesigner.radComponents.RadComponent,V,InplaceContext) } method.
    * This method is used as a hint to implement better focus handling.
    * <code>null</code> values means that editor relies on the UI editor in
    * determing preferred focused component.
@@ -64,13 +63,10 @@ public abstract class PropertyEditor<V> {
     return null;
   }
 
-  public void processEditorKeyChar(char c) {
-  }
-
   /**
    * Editor should update UI of all its internal components to fit current
    * IDEA Look And Feel. We cannot directly update UI of the component
-   * that is returned by {@link #getComponent(RadComponent, Object, boolean) } method
+   * that is returned by {@link #getComponent(com.intellij.uiDesigner.radComponents.RadComponent,V,InplaceContext) } method
    * because hidden components that are not in the Swing tree can exist.
    */
   public abstract void updateUI();

@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +32,7 @@ public final class IntEnumEditor extends PropertyEditor<Integer> {
     return pair.myValue;
   }
 
-  public JComponent getComponent(final RadComponent ignored, final Integer value, final boolean inplace) {
+  public JComponent getComponent(final RadComponent ignored, final Integer value, final InplaceContext inplaceContext) {
     // Find pair
     if (value == null) {
       getCbx().setSelectedItem(null);

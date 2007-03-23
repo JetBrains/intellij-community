@@ -7,6 +7,7 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.editors.ComboBoxPropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadButtonGroup;
@@ -100,7 +101,7 @@ public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> 
     }
 
 
-    public JComponent getComponent(RadComponent component, RadButtonGroup value, boolean inplace) {
+    public JComponent getComponent(RadComponent component, RadButtonGroup value, InplaceContext inplaceContext) {
       myComponent = component;
       myRootContainer = (RadRootContainer) FormEditingUtil.getRoot(myComponent);
       updateModel();

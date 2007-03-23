@@ -25,6 +25,7 @@ import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.editors.BooleanEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.BooleanRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -48,8 +49,8 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
 
   private BooleanEditor myEditor = new BooleanEditor() {
     @Override
-    public JComponent getComponent(final RadComponent component, final Boolean value, final boolean inplace) {
-      JComponent result = super.getComponent(component, value, inplace);
+    public JComponent getComponent(final RadComponent component, final Boolean value, final InplaceContext inplaceContext) {
+      JComponent result = super.getComponent(component, value, inplaceContext);
       result.setEnabled(!component.isCustomCreateRequired());
       return result;
     }

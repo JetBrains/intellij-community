@@ -4,6 +4,7 @@ import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
@@ -60,8 +61,8 @@ public final class MainProcessor extends EventProcessor{
         final RadComponent component = selection.get(0);
         final InplaceEditingLayer inplaceLayer = myEditor.getInplaceEditingLayer();
         inplaceLayer.startInplaceEditing(component, component.getDefaultInplaceProperty(),
-                                         component.getDefaultInplaceEditorBounds(), false);
-        inplaceLayer.forwardKeyEvent(e.getKeyChar());
+                                         component.getDefaultInplaceEditorBounds(), false,
+                                         new InplaceContext(e.getKeyChar()));
       }
     }
   }

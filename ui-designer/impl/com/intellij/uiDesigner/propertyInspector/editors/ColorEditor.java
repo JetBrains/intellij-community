@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.ColorDescriptor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.renderers.ColorRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,7 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
     return myValue;
   }
 
-  public JComponent getComponent(RadComponent component, ColorDescriptor value, boolean inplace) {
+  public JComponent getComponent(RadComponent component, ColorDescriptor value, InplaceContext inplaceContext) {
     myValue = value != null ? value : new ColorDescriptor(new Color(0));
     myProject = component.getModule().getProject();
     updateTextField();

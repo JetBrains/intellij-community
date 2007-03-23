@@ -5,6 +5,7 @@
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 
 import javax.swing.*;
@@ -24,7 +25,7 @@ public class EnumEditor extends PropertyEditor<Enum> {
     return (Enum) myCbx.getSelectedItem();
   }
 
-  public JComponent getComponent(final RadComponent component, final Enum value, final boolean inplace) {
+  public JComponent getComponent(final RadComponent component, final Enum value, final InplaceContext inplaceContext) {
     if (value == null) {
       return myCbx;
     }

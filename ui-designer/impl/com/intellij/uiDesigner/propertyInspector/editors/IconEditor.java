@@ -14,6 +14,7 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.lw.IconDescriptor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroIconProperty;
 
 import javax.swing.*;
@@ -67,7 +68,7 @@ public class IconEditor extends PropertyEditor<IconDescriptor> {
     return descriptor;
   }
 
-  public JComponent getComponent(RadComponent component, IconDescriptor value, boolean inplace) {
+  public JComponent getComponent(RadComponent component, IconDescriptor value, InplaceContext inplaceContext) {
     myValue = value;
     myModule = component.getModule();
     if (myValue != null) {

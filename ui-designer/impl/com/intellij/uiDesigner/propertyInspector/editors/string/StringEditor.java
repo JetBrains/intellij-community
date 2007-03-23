@@ -13,6 +13,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -62,10 +63,6 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
     cancelEditingAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, myTfWithButton);
   }
 
-  public void processEditorKeyChar(final char c) {
-    myTfWithButton.setText(Character.toString(c));
-  }
-
   /**
    * @return current preferred size of the editor component
    */
@@ -107,10 +104,13 @@ public final class StringEditor extends PropertyEditor<StringDescriptor> {
     return ((TextFieldWithBrowseButton)component).getTextField();
   }
 
-  public JComponent getComponent(final RadComponent component, final StringDescriptor value, final boolean inplace){
+  public JComponent getComponent(final RadComponent component, final StringDescriptor value, final InplaceContext inplaceContext) {
     setValue(value);
 
     myTfWithButton.getTextField().setBorder(null);
+    if (inplaceContext != null && inplaceContext.isStartedByTyping()) {
+      myTfWithButton.setText(Character.toString(inplaceContext.getStartChar()));
+    }
 
     return myTfWithButton;
   }

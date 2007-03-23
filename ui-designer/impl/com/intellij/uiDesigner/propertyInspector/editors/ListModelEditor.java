@@ -5,6 +5,7 @@
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -49,11 +50,11 @@ public class ListModelEditor extends PropertyEditor<String[]> {
     return myLastValue;
   }
 
-  public JComponent getComponent(final RadComponent component, final String[] value, final boolean inplace) {
+  public JComponent getComponent(final RadComponent component, final String[] value, final InplaceContext inplaceContext) {
     myLastComponent = component;
     myLastValue = value;
     myTextField.setText(listValueToString(value));
-    if (inplace) {
+    if (inplaceContext != null) {
       openListEditorDialog();
     }
     return myTextField;

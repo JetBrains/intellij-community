@@ -5,6 +5,7 @@
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.ui.UIUtil;
 
@@ -31,21 +32,20 @@ public abstract class AbstractTextFieldEditor<V> extends PropertyEditor<V> {
     myTf.setText(value == null ? "" : value.toString());
   }
 
-  public JComponent getComponent(final RadComponent ignored, final V value, final boolean inplace) {
+  public JComponent getComponent(final RadComponent ignored, final V value, final InplaceContext inplaceContext) {
     setValueFromComponent(ignored, value);
 
-    if(inplace){
+    if(inplaceContext != null) {
       myTf.setBorder(UIUtil.getTextFieldBorder());
+      if (inplaceContext.isStartedByTyping()) {
+        myTf.setText(Character.toString(inplaceContext.getStartChar()));
+      }
     }
     else{
       myTf.setBorder(null);
     }
 
     return myTf;
-  }
-
-  public void processEditorKeyChar(final char c) {
-    myTf.setText(Character.toString(c));
   }
 
   protected final class MyActionListener implements ActionListener {

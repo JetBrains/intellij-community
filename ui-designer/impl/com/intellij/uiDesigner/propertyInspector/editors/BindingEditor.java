@@ -15,6 +15,7 @@ import com.intellij.uiDesigner.radComponents.RadVSpacer;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.util.IncorrectOperationException;
 
@@ -139,7 +140,7 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
     return value != null ? value.replace('$', '.') : null; // PSI works only with dots
   }
 
-  public JComponent getComponent(final RadComponent component, final String value, final boolean inplace){
+  public JComponent getComponent(final RadComponent component, final String value, final InplaceContext inplaceContext){
     final String[] fieldNames = getFieldNames(component, value);
     myCbx.setModel(new DefaultComboBoxModel(fieldNames));
     myCbx.setSelectedItem(value);

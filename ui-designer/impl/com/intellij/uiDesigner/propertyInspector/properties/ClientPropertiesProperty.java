@@ -11,10 +11,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.uiDesigner.clientProperties.ClientPropertiesManager;
 import com.intellij.uiDesigner.clientProperties.ConfigureClientPropertiesDialog;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.propertyInspector.Property;
-import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
-import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
-import com.intellij.uiDesigner.propertyInspector.ReadOnlyProperty;
+import com.intellij.uiDesigner.propertyInspector.*;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +88,7 @@ public class ClientPropertiesProperty extends ReadOnlyProperty {
       return null;
     }
 
-    public JComponent getComponent(final RadComponent component, final Object value, final boolean inplace) {
+    public JComponent getComponent(final RadComponent component, final Object value, final InplaceContext inplaceContext) {
       return myTf;
     }
 
