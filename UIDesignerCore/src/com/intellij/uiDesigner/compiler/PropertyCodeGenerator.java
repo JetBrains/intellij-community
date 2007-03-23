@@ -14,7 +14,7 @@ public abstract class PropertyCodeGenerator {
   public boolean generateCustomSetValue(final LwComponent lwComponent,
                                         final Class componentClass, final LwIntrospectedProperty property,
                                         final GeneratorAdapter generator,
-                                        final int componentLocal) {
+                                        final int componentLocal, final String formClassName) {
     return false;
   }
 

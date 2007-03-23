@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.core;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.compiler.NestedFormLoader;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -16,22 +17,40 @@ import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author yole
  */
 public class AsmCodeGeneratorTest extends TestCase {
+  private MyNestedFormLoader myNestedFormLoader;
+  private MyClassLoader myClassLoader;
+
+  protected void setUp() throws Exception {
+    super.setUp();
+    myNestedFormLoader = new MyNestedFormLoader();
+    myClassLoader = new MyClassLoader(getClass().getClassLoader());
+  }
+
+  protected void tearDown() throws Exception {
+    myClassLoader = null;
+    myNestedFormLoader = null;
+    super.tearDown();
+  }
+
   private AsmCodeGenerator initCodeGenerator(final String formFileName, final String className) throws Exception {
     final String testDataPath = PathManagerEx.getTestDataPath() + File.separatorChar + "uiDesigner" + File.separatorChar;
+    return initCodeGenerator(formFileName, className, testDataPath);
+  }
+
+  private AsmCodeGenerator initCodeGenerator(final String formFileName, final String className, final String testDataPath) throws Exception {
     String formPath = testDataPath + formFileName;
     String javaPath = testDataPath + className + ".java";
     com.sun.tools.javac.Main.compile(new String[] { javaPath } );
     String classPath = testDataPath + className + ".class";
-    String formData = new String(FileUtil.loadFileText(new File(formPath)));
-    final ClassLoader classLoader = getClass().getClassLoader();
-    final CompiledClassPropertiesProvider provider = new CompiledClassPropertiesProvider(classLoader);
-    final LwRootContainer rootContainer = Utils.getRootContainer(formData, provider);
-    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, classLoader, null, false);
+    final LwRootContainer rootContainer = loadFormData(formPath);
+    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, myClassLoader, myNestedFormLoader, false);
     final FileInputStream classStream = new FileInputStream(classPath);
     try {
       codeGenerator.patchClass(classStream);
@@ -42,9 +61,27 @@ public class AsmCodeGeneratorTest extends TestCase {
     return codeGenerator;
   }
 
+  private LwRootContainer loadFormData(final String formPath) throws Exception {
+    String formData = new String(FileUtil.loadFileText(new File(formPath)));
+    final CompiledClassPropertiesProvider provider = new CompiledClassPropertiesProvider(getClass().getClassLoader());
+    return Utils.getRootContainer(formData, provider);
+  }
+
   private Class loadAndPatchClass(final String formFileName, final String className) throws Exception {
     final AsmCodeGenerator codeGenerator = initCodeGenerator(formFileName, className);
 
+    byte[] patchedData = getVerifiedPatchedData(codeGenerator);
+
+    /*
+    FileOutputStream fos = new FileOutputStream("C:\\yole\\FormPreview27447\\MainPatched.class");
+    fos.write(patchedData);
+    fos.close();
+    */
+
+    return myClassLoader.doDefineClass(className, patchedData);
+  }
+
+  private byte[] getVerifiedPatchedData(final AsmCodeGenerator codeGenerator) {
     byte[] patchedData = codeGenerator.getPatchedData();
     FormErrorInfo[] errors = codeGenerator.getErrors();
     FormErrorInfo[] warnings = codeGenerator.getWarnings();
@@ -57,14 +94,7 @@ public class AsmCodeGeneratorTest extends TestCase {
     else {
       assertTrue(warnings[0].getErrorMessage(), false);
     }
-
-    /*
-    FileOutputStream fos = new FileOutputStream(testDataPath + "BindingTestPatched.class");
-    fos.write(patchedData);
-    fos.close();
-    */
-
-    return new MyClassLoader(AsmCodeGeneratorTest.class.getClassLoader()).doDefineClass(className, patchedData);
+    return patchedData;
   }
 
   private JComponent getInstrumentedRootComponent(final String formFileName, final String className) throws Exception {
@@ -247,6 +277,28 @@ public class AsmCodeGeneratorTest extends TestCase {
     assertEquals(1, instance.getContentPane().getComponentCount());
   }
 
+  public void testIdeadev14081() throws Exception {
+    // NOTE: That doesn't really reproduce the bug as it's dependent on a particular instrumentation sequence used during form preview
+    // (the nested form is instrumented with a new AsmCodeGenerator instance directly in the middle of instrumentation of the current form)
+    final String testDataPath = PathManagerEx.getTestDataPath() + File.separatorChar + "uiDesigner" + File.separatorChar +
+      File.separatorChar + "formEmbedding" + File.separatorChar + "Ideadev14081" + File.separatorChar;
+    AsmCodeGenerator embeddedClassGenerator = initCodeGenerator("Embedded.form", "Embedded", testDataPath);
+    byte[] embeddedPatchedData = getVerifiedPatchedData(embeddedClassGenerator);
+    myClassLoader.doDefineClass("Embedded", embeddedPatchedData);
+    myNestedFormLoader.registerNestedForm("Embedded.form", testDataPath + "Embedded.form");
+    AsmCodeGenerator mainClassGenerator = initCodeGenerator("Main.form", "Main", testDataPath);
+    byte[] mainPatchedData = getVerifiedPatchedData(mainClassGenerator);
+
+    /*
+    FileOutputStream fos = new FileOutputStream("C:\\yole\\FormPreview27447\\MainPatched.class");
+    fos.write(mainPatchedData);
+    fos.close();
+    */
+
+    final Class mainClass = myClassLoader.doDefineClass("Main", mainPatchedData);
+    Object instance = mainClass.newInstance();
+  }
+
   private static class MyClassLoader extends ClassLoader {
     private byte[] myTestProperties = Charset.defaultCharset().encode(TEST_PROPERTY_CONTENT).array();
     private static final String TEST_PROPERTY_CONTENT = "test=Test Value\nmnemonic=Mne&monic";
@@ -268,6 +320,26 @@ public class AsmCodeGeneratorTest extends TestCase {
         return new ByteArrayInputStream(myTestProperties, 0, TEST_PROPERTY_CONTENT.length());
       }
       return super.getResourceAsStream(name);
+    }
+  }
+
+  private class MyNestedFormLoader implements NestedFormLoader {
+    private Map<String, String> myFormMap = new HashMap<String, String>();
+
+    public void registerNestedForm(String formName, String fileName) {
+      myFormMap.put(formName, fileName);
+    }
+
+    public LwRootContainer loadForm(String formFileName) throws Exception {
+      final String fileName = myFormMap.get(formFileName);
+      if (fileName != null) {
+        return loadFormData(fileName);
+      }
+      throw new UnsupportedOperationException("No nested form found for name " + formFileName);
+    }
+
+    public String getClassToBindName(LwRootContainer container) {
+      return container.getClassToBind();
     }
   }
 }

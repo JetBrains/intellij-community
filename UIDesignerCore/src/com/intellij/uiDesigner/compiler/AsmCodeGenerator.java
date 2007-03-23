@@ -346,6 +346,9 @@ public class AsmCodeGenerator {
       if (lwComponent instanceof LwNestedForm) {
         LwRootContainer nestedFormContainer;
         LwNestedForm nestedForm = (LwNestedForm) lwComponent;
+        if (myFormLoader == null) {
+          throw new CodeGenerationException(null, "Attempt to compile nested form with no nested form loader specified");
+        }
         try {
           nestedFormContainer = myFormLoader.loadForm(nestedForm.getFormFileName());
         }
@@ -521,7 +524,7 @@ public class AsmCodeGenerator {
         final PropertyCodeGenerator propGen = (PropertyCodeGenerator) myPropertyCodeGenerators.get(propertyClass);
 
         if (propGen != null && propGen.generateCustomSetValue(lwComponent, componentClass, property,
-                                                              generator, componentLocal)) {
+                                                              generator, componentLocal, myClassName)) {
           continue;
         }
 

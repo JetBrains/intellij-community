@@ -44,7 +44,7 @@ public class FontPropertyCodeGenerator extends PropertyCodeGenerator {
                                         final Class componentClass,
                                         final LwIntrospectedProperty property,
                                         final GeneratorAdapter generator,
-                                        final int componentLocal) {
+                                        final int componentLocal, final String formClassName) {
     FontDescriptor descriptor = (FontDescriptor) property.getPropertyValue(lwComponent);
     if (descriptor.isFixedFont() && !descriptor.isFullyDefinedFont()) {
       generator.loadLocal(componentLocal);

@@ -25,11 +25,9 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
 
   private boolean myNeedLoadLabelText;
   private boolean myNeedLoadButtonText;
-  private String myClassName;
   private boolean myHaveSetDisplayedMnemonicIndex = false;
 
   public void generateClassStart(ClassVisitor visitor, final String name, final ClassLoader loader) {
-    myClassName = name;
     myNeedLoadLabelText = false;
     myNeedLoadButtonText = false;
     try {
@@ -47,7 +45,8 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
                                         final Class componentClass,
                                         final LwIntrospectedProperty property,
                                         final GeneratorAdapter generator,
-                                        final int componentLocal) {
+                                        final int componentLocal,
+                                        final String formClassName) {
     if ("text".equals(property.getName()) &&
         (AbstractButton.class.isAssignableFrom(componentClass) || JLabel.class.isAssignableFrom(componentClass))) {
       final StringDescriptor propertyValue = (StringDescriptor)lwComponent.getPropertyValue(property);
@@ -101,7 +100,7 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
         generator.invokeStatic(myResourceBundleType, myGetBundleMethod);
         generator.push(propertyValue.getKey());
         generator.invokeVirtual(myResourceBundleType, myGetStringMethod);
-        generator.invokeVirtual(Type.getType("L" + myClassName + ";"), method);
+        generator.invokeVirtual(Type.getType("L" + formClassName + ";"), method);
         return true;
       }
     }
