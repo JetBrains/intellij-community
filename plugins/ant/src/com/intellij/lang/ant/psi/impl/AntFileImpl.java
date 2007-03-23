@@ -31,8 +31,6 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Alarm;
-import org.apache.tools.ant.BuildEvent;
-import org.apache.tools.ant.IntrospectionHelper;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Target;
 import org.jetbrains.annotations.NonNls;
@@ -175,6 +173,16 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return (result == null) ? null : result.getParent();
   }
 
+  public void clearCachesWithTypeDefinitions() {
+    synchronized (PsiLock.LOCK) {
+      myTypeDefinitions = null;
+      myTypeDefinitionArray = null;
+      myTargetDefinition = null;
+      myProjectElements = null;
+      clearCaches();
+    }
+  }
+  
   public void clearCaches() {
     synchronized (PsiLock.LOCK) {
       if (myChildren != null) {
@@ -323,7 +331,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         myProjectElements = new HashMap<AntTypeId, String>();
         final ReflectedProject reflectedProject = ReflectedProject.geProject(getClassLoader());
         if (reflectedProject.myProject != null) {
-          final IntrospectionHelper projectHelper = getHelperExceptionSafe(reflectedProject.myProject.getClass());
+          final AntInstrospector projectHelper = getHelperExceptionSafe(reflectedProject.myProject.getClass());
           try {
             // first, create task definitons
             updateTypeDefinitions(reflectedProject.myTaskDefinitions, true);
@@ -333,22 +341,12 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
           }
           finally {
             if (projectHelper != null) {
-              clearHelper(projectHelper);
+              projectHelper.clear();
             }
           }
         }
       }
       return myTypeDefinitions.get(className);
-    }
-  }
-
-  private static void clearHelper(final IntrospectionHelper projectHelper) {
-    try {
-      final Method method = projectHelper.getClass().getDeclaredMethod("buildFinished", BuildEvent.class);
-      method.invoke(projectHelper, new Object[] {null});
-    }
-    catch (Throwable e) {
-      // ignore. Method is not there since Ant 1.7
     }
   }
 
@@ -433,7 +431,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
          * these elements can exist only in context of another element and are defined as subclasses of its class
          * so we should manually update our type definitions map with such elements
          */
-        final IntrospectionHelper helper = getHelperExceptionSafe(typeClass);
+        final AntInstrospector helper = getHelperExceptionSafe(typeClass);
         if (helper != null) {
           final Enumeration nestedEnum = helper.getNestedElements();
           while (nestedEnum.hasMoreElements()) {
@@ -464,7 +462,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   @Nullable
   static AntTypeDefinition createTypeDefinition(final AntTypeId id, final Class typeClass, final boolean isTask) {
-    final IntrospectionHelper helper = getHelperExceptionSafe(typeClass);
+    final AntInstrospector helper = getHelperExceptionSafe(typeClass);
     if (helper == null) return null;
     final HashMap<String, AntAttributeType> attributes = new HashMap<String, AntAttributeType>();
     final Enumeration attrEnum = helper.getAttributes();
@@ -492,9 +490,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   @Nullable
-  private static IntrospectionHelper getHelperExceptionSafe(Class c) {
+  private static AntInstrospector getHelperExceptionSafe(Class c) {
     try {
-      return IntrospectionHelper.getHelper(c);
+      return AntInstrospector.getInstance(c);
     }
     catch (Throwable e) {
       // can't be

@@ -323,7 +323,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     registerPropertiesInPsi();
     bindAnt();
     myClassloaderHolder.updateClasspath();
-    myFile.clearCaches();
+    myFile.clearCachesWithTypeDefinitions();
   }
 
   private void registerPropertiesInPsi() {

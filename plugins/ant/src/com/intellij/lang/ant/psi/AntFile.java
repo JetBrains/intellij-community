@@ -37,4 +37,6 @@ public interface AntFile extends PsiFile, AntElement, ModificationTracker {
 
   @Nullable
   VirtualFile getContainingPath();
+
+  void clearCachesWithTypeDefinitions();
 }
