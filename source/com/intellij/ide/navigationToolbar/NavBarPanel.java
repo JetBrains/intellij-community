@@ -30,8 +30,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.actionSystem.ex.TimerListener;
 import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
-import com.intellij.openapi.application.ApplicationAdapter;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -115,15 +113,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     };
   private LightweightHint myHint = null;
   private ListPopupImpl myNodePopup = null;
-  private ApplicationAdapter myApplicationListener = new ApplicationAdapter() {
-    public void writeActionFinished(final Object action) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          hideHint();
-        }
-      });
-    }
-  };
   private Alarm myUpdateAlarm = new Alarm();
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.navigationToolbar.NavigationToolbarPanel");
   private MessageBusConnection myConnection;
@@ -234,10 +223,19 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       public void focusGained(final FocusEvent e) {}
 
       public void focusLost(final FocusEvent e) {
-        final Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
-        if (focusedComponent != NavBarPanel.this) {
-          hideHint();
-        }
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            if (myProject.isDisposed()) {
+              hideHint();
+              return;
+            }
+            final Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
+            if (focusedComponent != NavBarPanel.this && !isAncestorOf(focusedComponent)) {
+              hideHint();
+            }
+          }
+        });
+
       }
     });
 
@@ -882,14 +880,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   public void showHint(@Nullable final Editor editor, final DataContext dataContext) {
     updateList();
     if (myModel.size() == 0) return;
-    myHint = new LightweightHint(this) {
-      public void hide() {
-        super.hide();
-        ApplicationManager.getApplication().removeApplicationListener(myApplicationListener);
-      }
-    };
+    myHint = new LightweightHint(this);
     myHint.setForceLightweightPopup(true);
-    ApplicationManager.getApplication().addApplicationListener(myApplicationListener);
     registerKeyboardAction(new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         hideHint();

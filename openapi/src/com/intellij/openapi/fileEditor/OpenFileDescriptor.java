@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,6 +94,13 @@ public class OpenFileDescriptor implements Navigatable {
       throw new IllegalStateException("Navigation is not possible with null project");
     }
 
+    if (myFile != null && myFile.isDirectory()) {
+      final PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(myFile);
+      if (directory != null) {
+        directory.navigate(requestFocus);
+        return;
+      }
+    }
     FileEditor fileEditor = openFileAskingType(myProject, requestFocus);
     if (fileEditor == null) {
       final SelectInTarget projectSelector = SelectInManager.getInstance(myProject).getTarget(SelectInManager.PROJECT);
