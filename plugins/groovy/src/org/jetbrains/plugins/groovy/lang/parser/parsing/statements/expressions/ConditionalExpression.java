@@ -12,24 +12,31 @@ import com.intellij.lang.PsiBuilder;
  */
 public class ConditionalExpression implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder){
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
     GroovyElementType result = LogicalOrExpression.parse(builder);
-    if (ParserUtils.getToken(builder, mQUESTION)) {
-      result = CONDITIONAL_EXPRESSION;
-      ParserUtils.getToken(builder, mNLS);
-      AssignmentExpression.parse(builder);
-      if (ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"))){
+    if (!result.equals(WRONGWAY)) {
+      if (ParserUtils.getToken(builder, mQUESTION)) {
+        result = CONDITIONAL_EXPRESSION;
         ParserUtils.getToken(builder, mNLS);
-        parse(builder);
+        GroovyElementType res = AssignmentExpression.parse(builder);
+        if (res.equals(WRONGWAY)){
+          builder.error(GroovyBundle.message("expression.expected"));
+        }
+        if (ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"))) {
+          ParserUtils.getToken(builder, mNLS);
+          parse(builder);
+        }
+        marker.done(CONDITIONAL_EXPRESSION);
+      } else {
+        marker.drop();
       }
-      marker.done(CONDITIONAL_EXPRESSION);
     } else {
       marker.drop();
     }
     return result;
-    
+
 
   }
 

@@ -20,19 +20,23 @@ public class RelationalExpression implements GroovyElementTypes {
           kIN
   );
 
-  public static GroovyElementType parse(PsiBuilder builder){
+  public static GroovyElementType parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
 
     GroovyElementType result = ShiftExpression.parse(builder);
-    if (ParserUtils.getToken(builder, RELATIONS)){
-      result = RELATIONAL_EXPRESSION;
-      ParserUtils.getToken(builder, mNLS);
-      ShiftExpression.parse(builder);
-      marker.done(RELATIONAL_EXPRESSION);
+    if (!result.equals(WRONGWAY)) {
+      if (ParserUtils.getToken(builder, RELATIONS)) {
+        result = RELATIONAL_EXPRESSION;
+        ParserUtils.getToken(builder, mNLS);
+        ShiftExpression.parse(builder);
+        marker.done(RELATIONAL_EXPRESSION);
 
-      // TODO add "instanceof" and "as" parsing
+        // TODO add "instanceof" and "as" parsing
 
+      } else {
+        marker.drop();
+      }
     } else {
       marker.drop();
     }
