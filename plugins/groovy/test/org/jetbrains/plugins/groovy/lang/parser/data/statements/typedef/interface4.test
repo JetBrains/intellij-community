@@ -13,7 +13,7 @@ Groovy script
       PsiElement(new line)('\n')
       PsiWhiteSpace('  ')
       interface definition
-        modifiers
+        modifier
           PsiElement(static)('static')
         PsiWhiteSpace(' ')
         PsiElement(interface)('interface')

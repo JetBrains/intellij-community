@@ -36,9 +36,11 @@ public class Modifiers implements GroovyElementTypes {
 
     if (!(ANNOTATION.equals(annotation) || MODIFIER.equals(modifier))) {
       modifiersMarker.rollbackTo();
-//      builder.error(GroovyBundle.message("annotation.or.modifier.expected"));
       return WRONGWAY;
     }
+
+    annotation = Annotation.parse(builder);
+    modifier = Modifier.parse(builder);
 
     boolean moreThanOneModifier = false;
     while(ANNOTATION.equals(annotation) || MODIFIER.equals(modifier)) {
