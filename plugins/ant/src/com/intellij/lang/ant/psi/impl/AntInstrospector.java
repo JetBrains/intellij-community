@@ -31,21 +31,21 @@ public final class AntInstrospector {
 
   public void clearCache() {
     final Class helperClass = myHelper.getClass();
-    try {
-      final Method method = helperClass.getDeclaredMethod("buildFinished", helperClass.getClassLoader().loadClass(BuildEvent.class.getName()));
-      method.invoke(myHelper, new Object[] {null});
-    }
-    catch (Throwable e) {
-      // ignore. Method is not there since Ant 1.7
-    }
-    
     // for ant 1.7, there is a dedicated method for cache clearing
     try {
       final Method method = helperClass.getDeclaredMethod("clearCache");
       method.invoke(null);
     }
     catch (Throwable e) {
+      try {
+        final Method method = helperClass.getDeclaredMethod("buildFinished", helperClass.getClassLoader().loadClass(BuildEvent.class.getName()));
+        method.invoke(myHelper, new Object[] {null});
+      }
+      catch (Throwable _e) {
+        // ignore. Method is not there since Ant 1.7
+      }
     }
+    
   }
   
   public static AntInstrospector getInstance(Class c) {
