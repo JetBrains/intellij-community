@@ -15,11 +15,13 @@
  */
 package com.siyeh.ig.ui;
 
+import com.intellij.util.ui.Table;
+
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.TableModel;
 
-public class IGTable extends JTable {
+public class IGTable extends Table {
 
     public IGTable(ListWrappingTableModel tableModel) {
         super(tableModel);

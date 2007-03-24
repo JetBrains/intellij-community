@@ -15,32 +15,30 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiThrowStatement;
 import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ui.AddAction;
+import com.siyeh.ig.ui.IGTable;
+import com.siyeh.ig.ui.ListWrappingTableModel;
+import com.siyeh.ig.ui.RemoveAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellEditor;
-import java.awt.Component;
-import java.awt.EventQueue;
-import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.util.*;
 
 public class BadExceptionThrownInspection extends BaseInspection {
 
     /**@noinspection PublicField*/
-    public String exceptionCheckString =
+    public String exceptionsString =
       "java.lang.Throwable" + ',' +
       "java.lang.Exception" + ',' +
       "java.lang.Error" + ',' +
@@ -49,47 +47,40 @@ public class BadExceptionThrownInspection extends BaseInspection {
       "java.lang.ClassCastException" + ',' +
       "java.lang.ArrayIndexOutOfBoundsException";
 
-    final List<String> exceptionsList = new ArrayList<String>(32);
-    final Object lock = new Object();
+    final List<String> exceptionList = new ArrayList<String>(32);
 
     public BadExceptionThrownInspection(){
-        parseCallCheckString();
+        parseExceptionsString();
     }
 
     public void readSettings(Element element) throws InvalidDataException{
         super.readSettings(element);
-        parseCallCheckString();
+        parseExceptionsString();
     }
 
-    private void parseCallCheckString(){
-        final String[] strings = exceptionCheckString.split(",");
-        synchronized(lock){
-            exceptionsList.clear();
-            for(String string : strings){
-                exceptionsList.add(string);
-            }
-        }
+    private void parseExceptionsString(){
+        final String[] strings = exceptionsString.split(",");
+        exceptionList.clear();
+        exceptionList.addAll(Arrays.asList(strings));
     }
 
     public void writeSettings(Element element) throws WriteExternalException{
-        formatCallCheckString();
+        formatExceptionsString();
         super.writeSettings(element);
     }
 
-    private void formatCallCheckString(){
+    private void formatExceptionsString(){
         final StringBuilder buffer = new StringBuilder();
-        synchronized(lock){
-            boolean first=true;
-            for(String exceptionName : exceptionsList){
-                if(first){
-                    first = false;
-                } else{
-                    buffer.append(',');
-                }
-                buffer.append(exceptionName);
+        boolean first=true;
+        for(String exceptionName : exceptionList){
+            if(first){
+                first = false;
+            } else{
+                buffer.append(',');
             }
+            buffer.append(exceptionName);
         }
-        exceptionCheckString = buffer.toString();
+        exceptionsString = buffer.toString();
     }
 
     @NotNull
@@ -121,6 +112,8 @@ public class BadExceptionThrownInspection extends BaseInspection {
 
     private class BadExceptionThrownVisitor extends BaseInspectionVisitor{
 
+        private final Set<String> exceptionSet = new HashSet(exceptionList);
+
         public void visitThrowStatement(PsiThrowStatement statement){
             super.visitThrowStatement(statement);
             final PsiExpression exception = statement.getException();
@@ -132,11 +125,7 @@ public class BadExceptionThrownInspection extends BaseInspection {
                 return;
             }
             final String text = type.getCanonicalText();
-            final Set<String> exceptionListCopy;
-            synchronized(lock){
-                exceptionListCopy = new HashSet<String>(exceptionsList);
-            }
-            if(exceptionListCopy.contains(text)){
+            if(exceptionSet.contains(text)){
                 registerStatementError(statement, type);
             }
         }
@@ -146,111 +135,23 @@ public class BadExceptionThrownInspection extends BaseInspection {
         
         JPanel contentPanel;
         JButton addButton;
-        JButton deleteButton;
-        JTable table;
+        JButton removeButton;
+        IGTable table;
 
         Form(){
             super();
-            table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-            table.setRowSelectionAllowed(true);
-            table.setSelectionMode(
-                    ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-            final ReturnCheckSpecificationTableModel model =
-                    new ReturnCheckSpecificationTableModel();
-            table.setModel(model);
-            addButton.addActionListener(new ActionListener(){
+            addButton.setAction(new AddAction(table));
+            removeButton.setAction(new RemoveAction(table));
+        }
 
-                public void actionPerformed(ActionEvent e){
-                    final int listSize;
-                    synchronized(lock){
-                        listSize = exceptionsList.size();
-                        exceptionsList.add("");
-                    }
-                    model.fireTableStructureChanged();
-                    EventQueue.invokeLater(new Runnable() {
-
-                        public void run() {
-                            final Rectangle rect = table.getCellRect(listSize,
-                                    0, true);
-                            table.scrollRectToVisible(rect);
-                            table.editCellAt(listSize, 0);
-                            final TableCellEditor editor = table.getCellEditor();
-                            final Component component =
-                                    editor.getTableCellEditorComponent(table,
-                                            null, true, listSize, 0);
-                            component.requestFocus();
-                        }
-                    });
-                }
-            });
-            deleteButton.addActionListener(new ActionListener(){
-
-                public void actionPerformed(ActionEvent e){
-                    final int[] selectedRows = table.getSelectedRows();
-                    if (selectedRows.length == 0) {
-                        return;
-                    }
-                    final int row = selectedRows[selectedRows.length - 1] - 1;
-                    Arrays.sort(selectedRows);
-                    synchronized(lock){
-                        for(int i = selectedRows.length - 1; i >= 0; i--){
-                            exceptionsList.remove(selectedRows[i]);
-                        }
-                    }
-                    model.fireTableStructureChanged();
-                    final int count = table.getRowCount();
-                    if (count <= row) {
-                        table.setRowSelectionInterval(count - 1, count - 1);
-                    } else if (row < 0) {
-                        if (count > 0) {
-                            table.setRowSelectionInterval(0, 0);
-                        }
-                    } else {
-                        table.setRowSelectionInterval(row, row);
-                    }
-                }
-            });
+        private void createUIComponents() {
+            table = new IGTable(new ListWrappingTableModel(exceptionList,
+                    InspectionGadgetsBundle.message(
+                            "exception.class.column.name")));
         }
 
         public JComponent getContentPanel(){
             return contentPanel;
-        }
-    }
-
-    private class ReturnCheckSpecificationTableModel extends AbstractTableModel{
-        public int getRowCount(){
-            synchronized(lock){
-                return exceptionsList.size();
-            }
-        }
-
-        public int getColumnCount(){
-            return 1;
-        }
-
-        public String getColumnName(int columnIndex){
-            return InspectionGadgetsBundle.message(
-                    "exception.class.column.name");
-        }
-
-        public Class<?> getColumnClass(int columnIndex){
-            return String.class;
-        }
-
-        public boolean isCellEditable(int rowIndex, int columnIndex){
-            return true;
-        }
-
-        public Object getValueAt(int rowIndex, int columnIndex){
-            synchronized(lock){
-                return exceptionsList.get(rowIndex);
-            }
-        }
-
-        public void setValueAt(Object aValue, int rowIndex, int columnIndex){
-            synchronized(lock){
-                exceptionsList.set(rowIndex, (String) aValue);
-            }
         }
     }
 }

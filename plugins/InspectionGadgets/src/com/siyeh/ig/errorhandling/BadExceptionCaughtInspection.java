@@ -34,19 +34,17 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class BadExceptionCaughtInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
-    public String exceptionCheckString =
+    public String exceptionsString =
             "java.lang.NullPointerException" + ',' +
             "java.lang.IllegalMonitorStateException" + ',' +
             "java.lang.ArrayIndexOutOfBoundsException";
 
-    final List<String> exceptionsList = new ArrayList<String>(32);
+    final List<String> exceptionList = new ArrayList<String>(32);
 
     public BadExceptionCaughtInspection() {
         parseExceptionsString();
@@ -79,9 +77,9 @@ public class BadExceptionCaughtInspection extends BaseInspection {
     }
 
     private void parseExceptionsString() {
-        final String[] strings = exceptionCheckString.split(",");
-        exceptionsList.clear();
-        exceptionsList.addAll(Arrays.asList(strings));
+        final String[] strings = exceptionsString.split(",");
+        exceptionList.clear();
+        exceptionList.addAll(Arrays.asList(strings));
     }
 
     public void writeSettings(Element element) throws WriteExternalException {
@@ -91,15 +89,15 @@ public class BadExceptionCaughtInspection extends BaseInspection {
 
     private void formatExceptionsString() {
         final StringBuilder buffer = new StringBuilder();
-        final int size = exceptionsList.size();
+        final int size = exceptionList.size();
         if (size > 0) {
-            buffer.append(exceptionsList.get(0));
+            buffer.append(exceptionList.get(0));
             for (int i = 1; i < size; i++) {
                 buffer.append(',');
-                buffer.append(exceptionsList.get(i));
+                buffer.append(exceptionList.get(i));
             }
         }
-        exceptionCheckString = buffer.toString();
+        exceptionsString = buffer.toString();
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -108,8 +106,9 @@ public class BadExceptionCaughtInspection extends BaseInspection {
 
     private class BadExceptionCaughtVisitor extends BaseInspectionVisitor {
 
+        private final Set<String> exceptionSet = new HashSet(exceptionList);
+
         public void visitTryStatement(@NotNull PsiTryStatement statement) {
-            System.out.println("statement: " + statement);
             super.visitTryStatement(statement);
             final PsiParameter[] catchBlockParameters =
                     statement.getCatchBlockParameters();
@@ -122,7 +121,7 @@ public class BadExceptionCaughtInspection extends BaseInspection {
                 if (text == null) {
                     continue;
                 }
-                if (exceptionsList.contains(text)) {
+                if (exceptionSet.contains(text)) {
                     final PsiTypeElement typeElement =
                             parameter.getTypeElement();
                     registerError(typeElement);
@@ -132,6 +131,7 @@ public class BadExceptionCaughtInspection extends BaseInspection {
     }
 
     private class Form {
+        
         JPanel contentPanel;
         JButton addButton;
         JButton removeButton;
@@ -143,14 +143,14 @@ public class BadExceptionCaughtInspection extends BaseInspection {
             addButton.setAction(new AddAction(table));
         }
 
-        public JComponent getContentPanel() {
-            return contentPanel;
-        }
-
         private void createUIComponents() {
-            table = new IGTable(new ListWrappingTableModel(exceptionsList,
+            table = new IGTable(new ListWrappingTableModel(exceptionList,
                     InspectionGadgetsBundle.message(
                             "exception.class.column.name")));
+        }
+
+        public JComponent getContentPanel() {
+            return contentPanel;
         }
     }
 }
