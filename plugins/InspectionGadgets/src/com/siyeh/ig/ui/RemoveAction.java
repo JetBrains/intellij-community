@@ -40,7 +40,7 @@ public class RemoveAction extends AbstractAction {
             return;
         }
         final ListWrappingTableModel tableModel = table.getModel();
-        for (int i = minIndex; i < maxIndex; i++) {
+        for (int i = minIndex; i <= maxIndex; i++) {
             if (selectionModel.isSelectedIndex(i)) {
                 tableModel.removeRow(i);
             }

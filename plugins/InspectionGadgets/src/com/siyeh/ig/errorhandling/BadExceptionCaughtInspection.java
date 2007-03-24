@@ -35,6 +35,7 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class BadExceptionCaughtInspection extends BaseInspection {
@@ -80,9 +81,7 @@ public class BadExceptionCaughtInspection extends BaseInspection {
     private void parseExceptionsString() {
         final String[] strings = exceptionCheckString.split(",");
         exceptionsList.clear();
-        for (String string : strings) {
-            exceptionsList.add(string);
-        }
+        exceptionsList.addAll(Arrays.asList(strings));
     }
 
     public void writeSettings(Element element) throws WriteExternalException {

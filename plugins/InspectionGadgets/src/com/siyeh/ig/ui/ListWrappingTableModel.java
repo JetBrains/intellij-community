@@ -25,7 +25,8 @@ public class ListWrappingTableModel extends AbstractTableModel {
     private final List<List<String>> list;
     private final List<String> columnNames = new ArrayList();
 
-    public ListWrappingTableModel(List<List<String>> list, String... columnNames) {
+    public ListWrappingTableModel(List<List<String>> list,
+                                  String... columnNames) {
         if (list == null) {
             throw new NullPointerException("list");
         }
@@ -33,9 +34,7 @@ public class ListWrappingTableModel extends AbstractTableModel {
             throw new NullPointerException("columnNames");
         }
         this.list = list;
-        for (String name : columnNames) {
-            this.columnNames.add(name);
-        }
+        this.columnNames.addAll(Arrays.asList(columnNames));
     }
 
     /**
@@ -50,7 +49,8 @@ public class ListWrappingTableModel extends AbstractTableModel {
         if (columnName == null) {
             throw new NullPointerException("columnName");
         }
-        this.list = new ArrayList(list);
+        this.list = new ArrayList();
+        this.list.add(list);
         columnNames.add(columnName);
     }
 
@@ -76,15 +76,22 @@ public class ListWrappingTableModel extends AbstractTableModel {
     }
 
     public int getRowCount() {
-        return list.get(0).size();
+        final List<String> column0 = list.get(0);
+        if (column0 == null) {
+            return 0;
+        }
+        return column0.size();
     }
 
     public int getColumnCount() {
-        return list.size();
+        return columnNames.size();
     }
 
     public String getColumnName(int columnIndex) {
-        return columnNames.get(columnIndex);
+        if (columnIndex < columnNames.size()) {
+            return columnNames.get(columnIndex);
+        }
+        return null;
     }
 
     public Class<String> getColumnClass(int columnIndex) {

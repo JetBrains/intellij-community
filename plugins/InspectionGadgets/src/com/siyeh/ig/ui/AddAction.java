@@ -19,6 +19,7 @@ import com.siyeh.InspectionGadgetsBundle;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.TableCellEditor;
 import java.awt.Component;
 import java.awt.EventQueue;
@@ -40,16 +41,18 @@ public class AddAction extends AbstractAction {
         tableModel.addRow();
         EventQueue.invokeLater(new Runnable() {
             public void run() {
-                final int size = tableModel.getRowCount();
+                final int lastRowIndex = tableModel.getRowCount() - 1;
                 final Rectangle rect =
-                        table.getCellRect(size, 0, true);
+                        table.getCellRect(lastRowIndex, 0, true);
                 table.scrollRectToVisible(rect);
-                table.editCellAt(size, 0);
-                final TableCellEditor editor =
-                        table.getCellEditor();
+                table.editCellAt(lastRowIndex, 0);
+                final ListSelectionModel selectionModel =
+                        table.getSelectionModel();
+                selectionModel.setSelectionInterval(lastRowIndex, lastRowIndex);
+                final TableCellEditor editor = table.getCellEditor();
                 final Component component =
                         editor.getTableCellEditorComponent(table,
-                                null, true, size, 0);
+                                null, true, lastRowIndex, 0);
                 component.requestFocus();
             }
         });

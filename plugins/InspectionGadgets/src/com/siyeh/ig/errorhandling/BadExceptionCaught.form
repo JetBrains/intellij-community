@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.siyeh.ig.errorhandling.BadExceptionCaughtInspection.Form">
-  <grid id="33211" binding="contentPanel" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="4" vgap="0">
+  <grid id="33211" binding="contentPanel" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="4" vgap="2">
     <margin top="4" left="4" bottom="4" right="4"/>
     <constraints>
       <xy x="96" y="37" width="285" height="154"/>
@@ -26,7 +26,6 @@
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <inheritsPopupMenu value="true"/>
           <margin top="3" left="8" bottom="3" right="8"/>
         </properties>
       </component>

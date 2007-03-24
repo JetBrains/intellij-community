@@ -33,7 +33,7 @@ public class IGTable extends JTable {
     }
 
     public void setModel(TableModel dataModel) {
-        if (dataModel instanceof ListWrappingTableModel) {
+        if (!(dataModel instanceof ListWrappingTableModel)) {
             throw new IllegalArgumentException(
                     "dataModel should be of type ListWrappingTableModel");
         }
