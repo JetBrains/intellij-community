@@ -15,6 +15,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ import java.util.regex.Pattern;
       file="$WORKSPACE_FILE$"
     )}
 )
-
+@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class LogConsolePreferences extends LogFilterRegistrar {
   private SortedMap<LogFilter, Boolean> myRegisteredLogFilters = new TreeMap<LogFilter, Boolean>(new Comparator<LogFilter>() {
     public int compare(final LogFilter o1, final LogFilter o2) {
@@ -59,6 +60,9 @@ public class LogConsolePreferences extends LogFilterRegistrar {
   public final static Pattern WARNING_PATTERN = Pattern.compile(".*" + WARNING + ".*");
   public final static Pattern WARN_PATTERN = Pattern.compile(".*" + WARN + ".*");
   public final static Pattern INFO_PATTERN = Pattern.compile(".*" + INFO + ".*");
+
+  private static Pattern ourCustomPattern = null;
+
   @NonNls public final static Pattern EXCEPTION_PATTERN = Pattern.compile(".*at .*");
 
   private List<FilterListener> myListeners = new ArrayList<FilterListener>();
@@ -70,12 +74,36 @@ public class LogConsolePreferences extends LogFilterRegistrar {
 
   public void updateCustomFilter(String customFilter) {
     CUSTOM_FILTER = customFilter;
+    ourCustomPattern = null;
     fireStateChanged();
+  }
+
+  @Nullable
+  private Pattern getCustomPattern() {
+    if (ourCustomPattern == null && CUSTOM_FILTER != null) {
+      final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+      try {
+        for (int i = 0; i < CUSTOM_FILTER.length(); i++) {
+          final char c = CUSTOM_FILTER.charAt(i);
+          if (Character.isLetterOrDigit(c)) {
+            buf.append(Character.toUpperCase(c));
+          } else {
+            buf.append("\\").append(c);
+          }
+        }
+        ourCustomPattern = Pattern.compile(".*" + buf + ".*");
+      }
+      finally {
+        StringBuilderSpinAllocator.dispose(buf);
+      }
+    }
+    return ourCustomPattern;
   }
 
   public boolean isApplicable(@NotNull String text, String prevType){
     if (CUSTOM_FILTER != null) {
-      if (!Pattern.compile(".*" + CUSTOM_FILTER.toUpperCase() + ".*").matcher(text.toUpperCase()).matches()) return false;
+      final Pattern pattern = getCustomPattern();
+      if (pattern != null && !pattern.matcher(text.toUpperCase()).matches()) return false;
     }
     final String type = getType(text);
     boolean selfTyped = false;
