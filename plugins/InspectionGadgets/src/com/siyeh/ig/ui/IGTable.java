@@ -17,16 +17,19 @@ package com.siyeh.ig.ui;
 
 import com.intellij.util.ui.Table;
 
-import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
+import java.awt.Component;
 
 public class IGTable extends Table {
 
     public IGTable(ListWrappingTableModel tableModel) {
         super(tableModel);
-        setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        setAutoResizeMode(AUTO_RESIZE_ALL_COLUMNS);
         setRowSelectionAllowed(true);
+        setDragEnabled(false);
+        getTableHeader().setReorderingAllowed(false);
         setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     }
 
@@ -40,5 +43,15 @@ public class IGTable extends Table {
                     "dataModel should be of type ListWrappingTableModel");
         }
         super.setModel(dataModel);
+    }
+
+    public Component prepareRenderer(TableCellRenderer renderer, int row,
+                                     int column) {
+        final Component component =
+                super.prepareRenderer(renderer, row, column);
+        // to properly display the table in disabled state. See also
+        // sun java bugs #4841903 and #4795987
+        component.setEnabled(isEnabled());
+        return component;
     }
 }
