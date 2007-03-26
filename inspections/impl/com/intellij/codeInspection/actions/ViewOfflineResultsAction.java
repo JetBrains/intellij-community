@@ -14,6 +14,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvider;
@@ -60,7 +61,7 @@ public class ViewOfflineResultsAction extends AnAction {
     LOG.assertTrue(project != null);
 
     final VirtualFile[] virtualFiles = FileChooser.chooseFiles(project, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
-    if (virtualFiles == null || virtualFiles.length == 0) return;
+    if (virtualFiles.length == 0) return;
     if (!virtualFiles[0].isDirectory()) return;
 
     final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap =
@@ -124,7 +125,6 @@ public class ViewOfflineResultsAction extends AnAction {
                                                       final String profileName,
                                                       final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
                                                       final String title) {
-    final InspectionProfile inspectionProfile;
     Profile profile;
     if (profileName != null) {
       profile = InspectionProjectProfileManager.getInstance(project).getProfile(profileName);
@@ -135,6 +135,7 @@ public class ViewOfflineResultsAction extends AnAction {
     else {
       profile = null;
     }
+    final InspectionProfile inspectionProfile;
     if (profile != null) {
       inspectionProfile = (InspectionProfile)profile;
     }
@@ -161,7 +162,7 @@ public class ViewOfflineResultsAction extends AnAction {
                                                       final InspectionProfile inspectionProfile,
                                                       final String title) {
     final AnalysisScope scope = new AnalysisScope(project);
-    final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));
+    final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
     inspectionContext.setExternalProfile(inspectionProfile);
     inspectionContext.setCurrentScope(scope);
@@ -169,11 +170,16 @@ public class ViewOfflineResultsAction extends AnAction {
     final InspectionResultsView view = new InspectionResultsView(project, inspectionProfile, scope, inspectionContext,
                                                                  new OfflineInspectionRVContentProvider(resMap, project));
     ((RefManagerImpl)inspectionContext.getRefManager()).inspectionReadActionStarted();
-    view.update();
-    TreeUtil.selectFirstNode(view.getTree());
-    if (inspectionContext.getContentManager() != null) { //test
-      inspectionContext.addView(view, title);
+    try {
+      view.update();
+      TreeUtil.selectFirstNode(view.getTree());
+      if (inspectionContext.getContentManager() != null) { //test
+        inspectionContext.addView(view, title);
+      }
+      return view;
     }
-    return view;
+    finally {
+      ((RefManagerImpl)inspectionContext.getRefManager()).inspectionReadActionFinished();
+    }
   }
 }

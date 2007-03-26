@@ -15,7 +15,6 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.ide.util.projectWizard.JdkChooserPanel;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,6 +30,7 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -542,7 +542,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }, progress);
   }
 
-  public static boolean isToCheckMember(PsiDocCommentOwner owner, @NonNls String inspectionToolID) {
+  private static boolean isToCheckMember(PsiDocCommentOwner owner, @NonNls String inspectionToolID) {
     return getElementMemberSuppressedIn(owner, inspectionToolID) == null;
   }
 
@@ -690,10 +690,6 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     return myUIOptions.myAutoScrollToSourceHandler.createToggleAction();
   }
 
-  public void installAutoscrollHandler(JTree tree) {
-    myUIOptions.myAutoScrollToSourceHandler.install(tree);
-  }
-
   private static class ProgressWrapper extends ProgressIndicatorBase {
     private ProgressIndicator myOriginal;
 
@@ -814,44 +810,33 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   private void performInspectionsWithProgress(final AnalysisScope scope, final InspectionManager manager) {
+    final PsiManager psiManager = PsiManager.getInstance(myProject);
+    myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    //init manager in read action
+    RefManagerImpl refManager = (RefManagerImpl)ApplicationManager.getApplication().runReadAction(new Computable<RefManager>() {
+      public RefManager compute() {
+        return getRefManager();
+      }
+    });
     try {
-      myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
-      final PsiManager psiManager = PsiManager.getInstance(myProject);
-      final Application application = ApplicationManager.getApplication();
-      try {
-        application.runReadAction(new Runnable(){
-          public void run() {
-            psiManager.startBatchFilesProcessingMode();
-            ((RefManagerImpl)getRefManager()).inspectionReadActionStarted(); //init manager in read action
-          }
-        });
-        try {
-          getRefManager().getEntryPointsManager().resolveEntryPoints(getRefManager());
-          BUILD_GRAPH.setTotalAmount(scope.getFileCount());
-          LOCAL_ANALYSIS.setTotalAmount(scope.getFileCount());
-          List<InspectionTool> needRepeatSearchRequest = new ArrayList<InspectionTool>();
-          runTools(needRepeatSearchRequest, scope, manager);
-        }
-        catch (ProcessCanceledException e) {
-          cleanup((InspectionManagerEx)manager);
-          throw e;
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-      }
-      finally {
-        application.runReadAction(new Runnable(){
-          public void run() {
-            psiManager.finishBatchFilesProcessingMode();
-          }
-        });
-      }
+      psiManager.startBatchFilesProcessingMode();
+      refManager.inspectionReadActionStarted();
+      refManager.getEntryPointsManager().resolveEntryPoints(refManager);
+      BUILD_GRAPH.setTotalAmount(scope.getFileCount());
+      LOCAL_ANALYSIS.setTotalAmount(scope.getFileCount());
+      List<InspectionTool> needRepeatSearchRequest = new ArrayList<InspectionTool>();
+      runTools(needRepeatSearchRequest, scope, manager);
+    }
+    catch (ProcessCanceledException e) {
+      cleanup((InspectionManagerEx)manager);
+      throw e;
+    }
+    catch (Exception e) {
+      LOG.error(e);
     }
     finally {
-      if (myRefManager != null) {
-        ((RefManagerImpl)getRefManager()).inspectionReadActionFinished();
-      }
+      refManager.inspectionReadActionFinished();
+      psiManager.finishBatchFilesProcessingMode();
     }
   }
 
@@ -930,7 +915,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           if (document == null) return; //do not inspect binary files
           final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, 0, file.getTextLength());
           try {
-            pass.doInspectInBatch(((InspectionManagerEx)manager), tools.toArray(new InspectionTool[tools.size()]), myProgressIndicator);
+            pass.doInspectInBatch((InspectionManagerEx)manager, tools.toArray(new InspectionTool[tools.size()]), myProgressIndicator);
           }
           catch (ProcessCanceledException e) {
             throw e;
