@@ -2,13 +2,12 @@ package com.intellij.localvcs;
 
 import java.io.*;
 
-// todo remove all null-saves and replace with wrapper for tests!!!!
 public class Stream {
   private DataInputStream myIs;
   private DataOutputStream myOs;
-  private LocalVcsStorage myStorage;
+  private Storage myStorage;
 
-  public Stream(InputStream is, LocalVcsStorage s) {
+  public Stream(InputStream is, Storage s) {
     myStorage = s;
     myIs = new DataInputStream(is);
   }
@@ -17,7 +16,7 @@ public class Stream {
     myOs = new DataOutputStream(os);
   }
 
-  public LocalVcsStorage getStorage() {
+  public Storage getStorage() {
     return myStorage;
   }
 
@@ -30,21 +29,17 @@ public class Stream {
   }
 
   public Content readContent() throws IOException {
-    if (!myIs.readBoolean()) return null;
     switch (myIs.readInt()) {
       case 0:
         return new Content(this);
       case 1:
         return new UnavailableContent(this);
     }
-    return null;
+    throw new IOException();
   }
 
   public void writeContent(Content content) throws IOException {
-    myOs.writeBoolean(content != null);
-    if (content == null) return;
-
-    Integer id = null;
+    int id = -1;
 
     Class c = content.getClass();
     if (c.equals(Content.class)) id = 0;
@@ -63,11 +58,11 @@ public class Stream {
       case 2:
         return new RootEntry(this);
     }
-    return null;
+    throw new IOException();
   }
 
   public void writeEntry(Entry e) throws IOException {
-    Integer id = null;
+    int id = -1;
 
     Class c = e.getClass();
     if (c.equals(FileEntry.class)) id = 0;
@@ -79,7 +74,6 @@ public class Stream {
   }
 
   public Change readChange() throws IOException {
-    // todo use map and reflection
     switch (myIs.readInt()) {
       case 0:
         return new CreateFileChange(this);
@@ -94,11 +88,11 @@ public class Stream {
       case 5:
         return new DeleteChange(this);
     }
-    return null;
+    throw new IOException();
   }
 
   public void writeChange(Change change) throws IOException {
-    Integer id = null;
+    int id = -1;
 
     Class c = change.getClass();
     if (c.equals(CreateFileChange.class)) id = 0;
@@ -129,35 +123,37 @@ public class Stream {
   }
 
   public String readString() throws IOException {
-    // todo remove null-saving after refactoring RootEntry 
-    if (!myIs.readBoolean()) return null;
     return myIs.readUTF();
   }
 
   public void writeString(String s) throws IOException {
-    // todo make it not-nullable
     // todo writeUTF is very time consuming
-    myOs.writeBoolean(s != null);
-    if (s != null) myOs.writeUTF(s);
+    myOs.writeUTF(s);
   }
 
-  public Integer readInteger() throws IOException {
+  public String readStringOrNull() throws IOException {
     if (!myIs.readBoolean()) return null;
+    return readString();
+  }
+
+  public void writeStringOrNull(String s) throws IOException {
+    myOs.writeBoolean(s != null);
+    if (s != null) writeString(s);
+  }
+
+  public int readInteger() throws IOException {
     return myIs.readInt();
   }
 
-  public void writeInteger(Integer i) throws IOException {
-    myOs.writeBoolean(i != null);
-    if (i != null) myOs.writeInt(i);
+  public void writeInteger(int i) throws IOException {
+    myOs.writeInt(i);
   }
 
-  public Long readLong() throws IOException {
-    if (!myIs.readBoolean()) return null;
+  public long readLong() throws IOException {
     return myIs.readLong();
   }
 
-  public void writeLong(Long l) throws IOException {
-    myOs.writeBoolean(l != null);
-    if (l != null) myOs.writeLong(l);
+  public void writeLong(long l) throws IOException {
+    myOs.writeLong(l);
   }
 }

@@ -1,10 +1,10 @@
 package com.intellij.localvcs;
 
 public class Clock {
-  private static Long myTimestamp;
+  private static long myTimestamp = -1;
 
   public static long getCurrentTimestamp() {
-    if (myTimestamp != null) return myTimestamp;
+    if (myTimestamp != -1) return myTimestamp;
     return System.currentTimeMillis();
   }
 
@@ -13,6 +13,6 @@ public class Clock {
   }
 
   public static void useRealClock() {
-    myTimestamp = null;
+    myTimestamp = -1;
   }
 }

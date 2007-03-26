@@ -7,12 +7,12 @@ import org.junit.Test;
 
 public class LocalVcsStoringTest extends TempDirTestCase {
   private LocalVcs vcs;
-  private LocalVcsStorage s;
+  private Storage s;
 
   @Before
   public void initVcs() {
     closeStorage();
-    s = new LocalVcsStorage(tempDir);
+    s = new Storage(tempDir);
     vcs = new LocalVcs(s);
   }
 
@@ -36,8 +36,8 @@ public class LocalVcsStoringTest extends TempDirTestCase {
 
   @Test
   public void testStoringChangeList() {
-    vcs.createFile("file", b("content"), null);
-    vcs.changeFileContent("file", b("new content"), null);
+    vcs.createFile("file", b("content"), -1);
+    vcs.changeFileContent("file", b("new content"), -1);
 
     vcs.save();
     initVcs();
@@ -47,16 +47,16 @@ public class LocalVcsStoringTest extends TempDirTestCase {
 
   @Test
   public void testStoringObjectsCounter() {
-    vcs.createFile("file1", b("content1"), null);
-    vcs.createFile("file2", b("content2"), null);
+    vcs.createFile("file1", b("content1"), -1);
+    vcs.createFile("file2", b("content2"), -1);
 
     vcs.save();
     initVcs();
 
-    vcs.createFile("file3", b("content3"), null);
+    vcs.createFile("file3", b("content3"), -1);
 
-    Integer id2 = vcs.getEntry("file2").getId();
-    Integer id3 = vcs.getEntry("file3").getId();
+    int id2 = vcs.getEntry("file2").getId();
+    int id3 = vcs.getEntry("file3").getId();
 
     assertTrue(id2 < id3);
   }
@@ -76,7 +76,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   @Test
   public void testPospondingSaveUntilChangeSetFinished() {
     vcs.beginChangeSet();
-    vcs.createFile("file", null, null);
+    vcs.createFile("file", b(""), -1);
 
     vcs.save();
     assertFalse(hasSavedEntry("file"));
@@ -88,14 +88,14 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   @Test
   public void testDoesNotSaveAfterNextChangeSetIfSaveWasPospondedDuringPriorOne() {
     vcs.beginChangeSet();
-    vcs.createFile("one", null, null);
+    vcs.createFile("one", b(""), -1);
     vcs.save();
     vcs.endChangeSet(null);
 
     assertTrue(hasSavedEntry("one"));
 
     vcs.beginChangeSet();
-    vcs.createFile("two", null, null);
+    vcs.createFile("two", b(""), -1);
     vcs.endChangeSet(null);
 
     assertTrue(hasSavedEntry("one"));
@@ -103,7 +103,7 @@ public class LocalVcsStoringTest extends TempDirTestCase {
   }
 
   private boolean hasSavedEntry(String path) {
-    LocalVcsStorage s = new LocalVcsStorage(tempDir);
+    Storage s = new Storage(tempDir);
     LocalVcs vcs = new LocalVcs(s);
     boolean result = vcs.hasEntry(path);
     s.close();

@@ -14,8 +14,8 @@ public class DirectoryHistoryDialogModelTest {
 
   @Test
   public void testTitle() {
-    TestVirtualFile parent = new TestVirtualFile("parent", null, null);
-    TestVirtualFile file = new TestVirtualFile("file", null, null);
+    TestVirtualFile parent = new TestVirtualFile("parent", null, -1);
+    TestVirtualFile file = new TestVirtualFile("file", null, -1);
     parent.addChild(file);
 
     m = new DirectoryHistoryDialogModel(file, vcs);
@@ -25,7 +25,7 @@ public class DirectoryHistoryDialogModelTest {
 
   @Test
   public void testNoDifference() {
-    vcs.createDirectory("dir", null);
+    vcs.createDirectory("dir");
     initModelFor("dir");
 
     assertEquals(1, this.m.getLabels().size());
@@ -39,8 +39,8 @@ public class DirectoryHistoryDialogModelTest {
 
   @Test
   public void testDifference() {
-    vcs.createDirectory("dir", null);
-    vcs.createFile("dir/file", null, null);
+    vcs.createDirectory("dir");
+    vcs.createFile("dir/file", null, -1);
 
     initModelFor("dir");
 
@@ -55,6 +55,6 @@ public class DirectoryHistoryDialogModelTest {
   }
 
   private void initModelFor(String path) {
-    m = new DirectoryHistoryDialogModel(new TestVirtualFile(path, null), vcs);
+    m = new DirectoryHistoryDialogModel(new TestVirtualFile(path), vcs);
   }
 }

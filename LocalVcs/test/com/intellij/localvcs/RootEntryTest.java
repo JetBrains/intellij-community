@@ -10,7 +10,7 @@ public class RootEntryTest extends LocalVcsTestCase {
   @Before
   public void setUp() {
     root = new RootEntry();
-    child = new DirectoryEntry(1, "child", null);
+    child = new DirectoryEntry(1, "child");
     root.addChild(child);
   }
 

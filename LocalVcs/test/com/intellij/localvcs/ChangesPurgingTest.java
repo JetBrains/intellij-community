@@ -9,9 +9,9 @@ public class ChangesPurgingTest extends LocalVcsTestCase {
 
   @Test
   public void testChangeFileContentChange() {
-    root.createFile(1, "f", c("old"), null);
+    root.createFile(1, "f", c("old"), -1);
 
-    Change c = new ChangeFileContentChange("f", c("new"), null);
+    Change c = new ChangeFileContentChange("f", c("new"), -1);
     c.applyTo(root);
 
     List<Content> cc = c.getContentsToPurge();
@@ -22,7 +22,7 @@ public class ChangesPurgingTest extends LocalVcsTestCase {
 
   @Test
   public void testDeleteFileChange() {
-    root.createFile(1, "f", c("content"), null);
+    root.createFile(1, "f", c("content"), -1);
 
     Change c = new DeleteChange("f");
     c.applyTo(root);
@@ -35,11 +35,11 @@ public class ChangesPurgingTest extends LocalVcsTestCase {
 
   @Test
   public void testDeleteDirectoryWithFilesChange() {
-    root.createDirectory(1, "dir", null);
-    root.createDirectory(2, "dir/subDir", null);
-    root.createFile(3, "dir/file", c("one"), null);
-    root.createFile(4, "dir/subDir/file1", c("two"), null);
-    root.createFile(5, "dir/subDir/file2", c("three"), null);
+    root.createDirectory(1, "dir");
+    root.createDirectory(2, "dir/subDir");
+    root.createFile(3, "dir/file", c("one"), -1);
+    root.createFile(4, "dir/subDir/file1", c("two"), -1);
+    root.createFile(5, "dir/subDir/file2", c("three"), -1);
 
     Change c = new DeleteChange("dir");
     c.applyTo(root);
@@ -54,8 +54,8 @@ public class ChangesPurgingTest extends LocalVcsTestCase {
 
   @Test
   public void testOtherChanges() {
-    Change c1 = new CreateFileChange(1, "file", c("content"), null);
-    Change c2 = new CreateDirectoryChange(2, "dir", null);
+    Change c1 = new CreateFileChange(1, "file", c("content"), -1);
+    Change c2 = new CreateDirectoryChange(2, "dir");
     Change c3 = new MoveChange("file", "dir");
     Change c4 = new RenameChange("dir/file", "newFile");
 

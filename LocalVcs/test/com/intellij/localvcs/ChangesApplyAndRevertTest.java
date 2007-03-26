@@ -22,11 +22,10 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
   @Test
   public void testCreatingDirectory() {
-    Change c = new CreateDirectoryChange(2, "dir", 777L);
+    Change c = new CreateDirectoryChange(2, "dir");
     c.applyTo(root);
 
     assertTrue(root.hasEntry("dir"));
-    assertEquals(777L, root.getEntry("dir").getTimestamp());
 
     c.revertOn(root);
     assertFalse(root.hasEntry("dir"));
@@ -34,9 +33,9 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
   @Test
   public void testCreatingFileUnderDirectory() {
-    root.createDirectory(1, "dir", null);
+    root.createDirectory(1, "dir");
 
-    Change c = new CreateFileChange(2, "dir/file", null, null);
+    Change c = new CreateFileChange(2, "dir/file", null, -1);
     c.applyTo(root);
 
     assertTrue(root.hasEntry("dir/file"));
@@ -66,7 +65,7 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
   @Test
   public void testRenamingFile() {
-    root.createFile(1, "file", null, null);
+    root.createFile(1, "file", null, -1);
 
     Change c = new RenameChange("file", "new file");
     c.applyTo(root);
@@ -82,9 +81,9 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
   @Test
   public void testRenamingDirectoryWithContent() {
-    root.createDirectory(1, "dir1", null);
-    root.createDirectory(2, "dir1/dir2", null);
-    root.createFile(3, "dir1/dir2/file", null, null);
+    root.createDirectory(1, "dir1");
+    root.createDirectory(2, "dir1/dir2");
+    root.createFile(3, "dir1/dir2/file", null, -1);
 
     Change c = new RenameChange("dir1/dir2", "new dir");
     c.applyTo(root);
@@ -104,7 +103,7 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
   @Test
   public void testRenamingRoot() {
-    root.createDirectory(1, "c:/dir/root", null);
+    root.createDirectory(1, "c:/dir/root");
 
     Change c = new RenameChange("c:/dir/root", "newRoot");
     c.applyTo(root);
@@ -120,9 +119,9 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
   @Test
   public void testMovingFileFromOneDirectoryToAnother() {
-    root.createDirectory(1, "dir1", null);
-    root.createDirectory(2, "dir2", null);
-    root.createFile(3, "dir1/file", null, null);
+    root.createDirectory(1, "dir1");
+    root.createDirectory(2, "dir2");
+    root.createFile(3, "dir1/file", null, -1);
 
     Change c = new MoveChange("dir1/file", "dir2");
     c.applyTo(root);
@@ -138,10 +137,10 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
   @Test
   public void testMovingDirectory() {
-    root.createDirectory(1, "root1", null);
-    root.createDirectory(2, "root2", null);
-    root.createDirectory(3, "root1/dir", null);
-    root.createFile(4, "root1/dir/file", null, null);
+    root.createDirectory(1, "root1");
+    root.createDirectory(2, "root2");
+    root.createDirectory(3, "root1/dir");
+    root.createFile(4, "root1/dir/file", null, -1);
 
     Change c = new MoveChange("root1/dir", "root2");
     c.applyTo(root);
@@ -177,7 +176,7 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
   @Test
   public void testDeletingDirectory() {
-    root.createDirectory(1, "dir", 111L);
+    root.createDirectory(1, "dir");
 
     Change c = new DeleteChange("dir");
     c.applyTo(root);
@@ -187,17 +186,15 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
     c.revertOn(root);
 
     Entry e = root.findEntry("dir");
-
     assertNotNull(e);
-    assertEquals(111L, e.getTimestamp());
   }
 
   @Test
   public void testDeletingDirectoryWithContent() {
     // todo i dont trust to deletion reverting yet... i need some more tests
-    root.createDirectory(1, "dir1", null);
-    root.createDirectory(2, "dir1/dir2", null);
-    root.createFile(3, "dir1/dir2/file", c("content"), null);
+    root.createDirectory(1, "dir1");
+    root.createDirectory(2, "dir1/dir2");
+    root.createFile(3, "dir1/dir2/file", c("content"), -1);
 
     Change c = new DeleteChange("dir1");
     c.applyTo(root);
@@ -216,11 +213,11 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
   @Test
   public void testDeletionOfDirectoryWithSeveralSubdirectoriesWithContent() {
-    root.createDirectory(1, "dir", null);
-    root.createDirectory(2, "dir/sub1", null);
-    root.createDirectory(3, "dir/sub2", null);
-    root.createFile(4, "dir/sub1/file", c(""), null);
-    root.createFile(5, "dir/sub2/file", c(""), null);
+    root.createDirectory(1, "dir");
+    root.createDirectory(2, "dir/sub1");
+    root.createDirectory(3, "dir/sub2");
+    root.createFile(4, "dir/sub1/file", c(""), -1);
+    root.createFile(5, "dir/sub2/file", c(""), -1);
 
     Change c = new DeleteChange("dir");
     c.applyTo(root);
@@ -235,8 +232,8 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
   @Test
   public void testDeletionOfRoots() {
-    root.createDirectory(1, "root/dir", null);
-    root.createFile(2, "root/dir/file", null, null);
+    root.createDirectory(1, "root/dir");
+    root.createFile(2, "root/dir/file", null, -1);
 
     Change c = new DeleteChange("root/dir");
     c.applyTo(root);
@@ -253,9 +250,9 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
   @Test
   public void testKeepingIdOnChangingFileContent() {
-    root.createFile(14, "file", null, null);
+    root.createFile(14, "file", null, -1);
 
-    Change c = new ChangeFileContentChange("file", null, null);
+    Change c = new ChangeFileContentChange("file", null, -1);
     c.applyTo(root);
     c.revertOn(root);
 
@@ -264,7 +261,7 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
   @Test
   public void testKeepingIdOnRenaming() {
-    root.createFile(13, "file", null, null);
+    root.createFile(13, "file", null, -1);
 
     Change c = new RenameChange("file", "new name");
     c.applyTo(root);
@@ -275,9 +272,9 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
   @Test
   public void testKeepingIdOnMoving() {
-    root.createDirectory(1, "dir1", null);
-    root.createDirectory(2, "dir2", null);
-    root.createFile(3, "dir1/file", null, null);
+    root.createDirectory(1, "dir1");
+    root.createDirectory(2, "dir2");
+    root.createFile(3, "dir1/file", null, -1);
 
     Change c = new MoveChange("dir1/file", "dir2");
     c.applyTo(root);
@@ -288,7 +285,7 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
   @Test
   public void testKeepingIdOnRestoringDeletedFile() {
-    root.createFile(1, "file", null, null);
+    root.createFile(1, "file", null, -1);
 
     Change c = new DeleteChange("file");
     c.applyTo(root);
@@ -299,8 +296,8 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
   @Test
   public void testKeepingIdOnOnRestoringDeletedDirectoryWithContent() {
-    root.createDirectory(1, "dir", null);
-    root.createFile(2, "dir/file", null, null);
+    root.createDirectory(1, "dir");
+    root.createFile(2, "dir/file", null, -1);
 
     Change c = new DeleteChange("dir");
     c.applyTo(root);

@@ -10,8 +10,8 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 public class FileFilterTest {
-  private TestVirtualFile f1 = new TestVirtualFile(null, null, null);
-  private TestVirtualFile f2 = new TestVirtualFile(null, null, null);
+  private TestVirtualFile f1 = new TestVirtualFile(null, null, -1);
+  private TestVirtualFile f2 = new TestVirtualFile(null, null, -1);
 
   private FileType binary = createFileType(true);
   private FileType nonBinary = createFileType(false);
@@ -75,8 +75,8 @@ public class FileFilterTest {
 
   @Test
   public void testFilteringIgnoredFiles() {
-    f1 = new TestVirtualFile("allowed", null, null);
-    f2 = new TestVirtualFile("filtered", null, null);
+    f1 = new TestVirtualFile("allowed", null, -1);
+    f2 = new TestVirtualFile("filtered", null, -1);
 
     expect(tm.isFileIgnored("allowed")).andReturn(false);
     expect(tm.isFileIgnored("filtered")).andReturn(true);
@@ -91,8 +91,8 @@ public class FileFilterTest {
 
   @Test
   public void testFilteringIgnoredDirectories() {
-    f1 = new TestVirtualFile("allowed", null);
-    f2 = new TestVirtualFile("filtered", null);
+    f1 = new TestVirtualFile("allowed");
+    f2 = new TestVirtualFile("filtered");
 
     expect(tm.isFileIgnored("allowed")).andReturn(false);
     expect(tm.isFileIgnored("filtered")).andReturn(true);
@@ -106,7 +106,7 @@ public class FileFilterTest {
 
   @Test
   public void testDoesNotCheckFileTypeForDirectories() {
-    f1 = new TestVirtualFile("dir", null);
+    f1 = new TestVirtualFile("dir");
 
     expect(tm.isFileIgnored("dir")).andReturn(false);
     replay(tm);

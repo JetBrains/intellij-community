@@ -18,7 +18,7 @@ public class UpdaterCacheUpdaterIntergrationTest extends LocalVcsTestCase {
 
   @Before
   public void setUp() {
-    root = new TestVirtualFile("root", null);
+    root = new TestVirtualFile("root");
     file = new TestVirtualFile("file", "new content", 1L);
     root.addChild(file);
 
@@ -39,7 +39,7 @@ public class UpdaterCacheUpdaterIntergrationTest extends LocalVcsTestCase {
 
   @Test
   public void testUpdaingOutdatedFiles() {
-    vcs.createDirectory("root", null);
+    vcs.createDirectory("root");
     vcs.createFile("root/file", b("old content"), file.getTimeStamp() - 1);
 
     VirtualFile[] files = updater.queryNeededFiles();
@@ -63,7 +63,7 @@ public class UpdaterCacheUpdaterIntergrationTest extends LocalVcsTestCase {
 
   @Test
   public void testUpdaingOutdatedFilesOnlyOnProcessingFile() {
-    vcs.createDirectory("root", null);
+    vcs.createDirectory("root");
     vcs.createFile("root/file", b("old content"), file.getTimeStamp() - 1);
 
     updater.queryNeededFiles();

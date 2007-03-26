@@ -6,20 +6,18 @@ import java.util.List;
 // todo try to crean up Entry hierarchy
 // todo replace all String.length() == 0 with String.isEmpty()
 // todo maybe get rid of create/delete/remove methods
-
-// TODO make entries to be modifiable objects
 // todo rename this class... to something other then RootEntry
+
 public class RootEntry extends DirectoryEntry {
-  // todo try to remove different null-checks
   public RootEntry() {
-    super(null, null, null);
+    super(-1, "");
   }
 
   public RootEntry(Stream s) throws IOException {
     super(s);
   }
 
-  protected IdPath getIdPathAppendedWith(Integer id) {
+  protected IdPath getIdPathAppendedWith(int id) {
     return new IdPath(id);
   }
 
@@ -41,18 +39,19 @@ public class RootEntry extends DirectoryEntry {
     return searchInChildren(path);
   }
 
-  public void createFile(Integer id, String path, Content content, Long timestamp) {
+  public Entry createFile(int id, String path, Content content, long timestamp) {
     FileEntry e = new FileEntry(id, Paths.getNameOf(path), content, timestamp);
     addEntry(Paths.getParentOf(path), e);
+    return e;
   }
 
-  public void createFile(Integer id, IdPath parentPath, String name, Content content, Long timestamp) {
+  public void createFile(int id, IdPath parentPath, String name, Content content, long timestamp) {
     FileEntry e = new FileEntry(id, name, content, timestamp);
     addEntry(parentPath, e);
   }
 
-  public void createDirectory(Integer id, String path, Long timestamp) {
-    // todo messsssss!!!! should we introduce createRoot method instead?
+  public Entry createDirectory(int id, String path) {
+    // todo messsssss!!!! should introduce createRoot method instead?
     // todo and simplify addEntry method too? 
     String name = Paths.getNameOf(path);
     String parentPath = Paths.getParentOf(path);
@@ -62,21 +61,24 @@ public class RootEntry extends DirectoryEntry {
       name = path;
     }
 
-    DirectoryEntry e = new DirectoryEntry(id, name, timestamp);
+    DirectoryEntry e = new DirectoryEntry(id, name);
+    addEntry(parentPath, e);
+
+    return e;
+  }
+
+  public void createDirectory(int id, IdPath parentPath, String name) {
+    DirectoryEntry e = new DirectoryEntry(id, name);
     addEntry(parentPath, e);
   }
 
-  public void createDirectory(Integer id, IdPath parentPath, String name, Long timestamp) {
-    DirectoryEntry e = new DirectoryEntry(id, name, timestamp);
-    addEntry(parentPath, e);
-  }
-
-  public void changeFileContent(String path, Content newContent, Long newTimestamp) {
+  // todo OBSOLETE METHOD!!!
+  public void changeFileContent(String path, Content newContent, long newTimestamp) {
     Entry e = getEntry(path);
     e.changeContent(newContent, newTimestamp);
   }
 
-  public void changeFileContent(IdPath path, Content newContent, Long newTimestamp) {
+  public void changeFileContent(IdPath path, Content newContent, long newTimestamp) {
     Entry e = getEntry(path);
     e.changeContent(newContent, newTimestamp);
   }

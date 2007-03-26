@@ -28,17 +28,19 @@ public class ChangeSetTest extends LocalVcsTestCase {
   }
 
   private class LoggingChange extends CreateFileChange {
-    private Integer myId;
+    private int myId;
 
-    public LoggingChange(Integer id) {
-      super(null, null, null, null);
+    public LoggingChange(int id) {
+      super(-1, null, null, -1);
       myId = id;
     }
 
-    public void applyTo(RootEntry root) {
+    @Override
+    protected void doApplyTo(RootEntry root) {
       log.add(myId);
     }
 
+    @Override
     public void revertOn(RootEntry root) {
       log.add(myId);
     }

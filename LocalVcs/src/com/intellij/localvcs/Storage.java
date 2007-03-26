@@ -5,8 +5,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.io.*;
 import java.util.List;
 
-public class LocalVcsStorage {
-  private static final int VERSION = 8;
+public class Storage {
+  private static final int VERSION = 11;
   private static final String BROKEN_MARK_FILE = ".broken";
   private static final String VERSION_FILE = "version";
   private static final String STORAGE_FILE = "storage";
@@ -17,7 +17,7 @@ public class LocalVcsStorage {
 
   private boolean isBroken = false;
 
-  public LocalVcsStorage(File dir) {
+  public Storage(File dir) {
     myDir = dir;
     initStorage();
   }

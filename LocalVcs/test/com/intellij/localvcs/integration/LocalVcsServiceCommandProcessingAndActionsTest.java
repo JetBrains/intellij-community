@@ -9,7 +9,7 @@ public class LocalVcsServiceCommandProcessingAndActionsTest extends LocalVcsServ
   @Test
   public void testActions() {
     LocalVcsAction a = service.startAction("label");
-    fileManager.fireFileCreated(new TestVirtualFile("f", null, null));
+    fileManager.fireFileCreated(new TestVirtualFile("f", null, -1));
     a.finish();
 
     assertTrue(vcs.hasEntry("f"));
@@ -20,8 +20,8 @@ public class LocalVcsServiceCommandProcessingAndActionsTest extends LocalVcsServ
   public void testProcessingCommand() {
     commandProcessor.executeCommand(new Runnable() {
       public void run() {
-        fileManager.fireFileCreated(new TestVirtualFile("file", "abc", null));
-        fileManager.fireContentChanged(new TestVirtualFile("file", "def", null));
+        fileManager.fireFileCreated(new TestVirtualFile("file", "abc", -1));
+        fileManager.fireContentChanged(new TestVirtualFile("file", "def", -1));
       }
     }, "command", null);
 

@@ -12,17 +12,17 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testAddingRoots() {
-    updateWith(new TestVirtualFile("root", null));
+    updateWith(new TestVirtualFile("root"));
     assertTrue(vcs.hasEntry("root"));
   }
 
   @Test
   public void testAddingSortedRoots() {
-    TestVirtualFile root1 = new TestVirtualFile("root1", null);
-    TestVirtualFile dir1 = new TestVirtualFile("dir1", null);
-    TestVirtualFile root2 = new TestVirtualFile("root2", null);
-    TestVirtualFile dir2 = new TestVirtualFile("dir2", null);
-    TestVirtualFile root3 = new TestVirtualFile("root3", null);
+    TestVirtualFile root1 = new TestVirtualFile("root1");
+    TestVirtualFile dir1 = new TestVirtualFile("dir1");
+    TestVirtualFile root2 = new TestVirtualFile("root2");
+    TestVirtualFile dir2 = new TestVirtualFile("dir2");
+    TestVirtualFile root3 = new TestVirtualFile("root3");
 
     root1.addChild(dir1);
     dir1.addChild(root2);
@@ -42,16 +42,16 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testDoesNotAddExistentRoots() {
-    vcs.createDirectory("root", null);
+    vcs.createDirectory("root");
 
-    updateWith(new TestVirtualFile("root", null));
+    updateWith(new TestVirtualFile("root"));
     assertEquals(1, vcs.getRoots().size());
   }
 
   @Test
   public void testDoesNotAddNestedRoots() {
-    TestVirtualFile f1 = new TestVirtualFile("root", null);
-    TestVirtualFile f2 = new TestVirtualFile("nested", null);
+    TestVirtualFile f1 = new TestVirtualFile("root");
+    TestVirtualFile f2 = new TestVirtualFile("nested");
     f1.addChild(f2);
     updateWith(f1, f2);
 
@@ -62,9 +62,9 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testAddingNestedRootsUnderExcludedDirectories() {
-    TestVirtualFile root1 = new TestVirtualFile("root", null);
-    TestVirtualFile dir = new TestVirtualFile("excluded", null);
-    TestVirtualFile root2 = new TestVirtualFile("nested", null);
+    TestVirtualFile root1 = new TestVirtualFile("root");
+    TestVirtualFile dir = new TestVirtualFile("excluded");
+    TestVirtualFile root2 = new TestVirtualFile("nested");
     root1.addChild(dir);
     dir.addChild(root2);
 
@@ -80,13 +80,13 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testExcludingInnerRootParentWhenRootsAreInReverseOrder() {
-    vcs.createDirectory("outer", null);
-    vcs.createDirectory("outer/dir", null);
-    vcs.createDirectory("outer/dir/inner", null);
+    vcs.createDirectory("outer");
+    vcs.createDirectory("outer/dir");
+    vcs.createDirectory("outer/dir/inner");
 
-    TestVirtualFile outer = new TestVirtualFile("outer", null);
-    TestVirtualFile dir = new TestVirtualFile("dir", null);
-    TestVirtualFile inner = new TestVirtualFile("inner", null);
+    TestVirtualFile outer = new TestVirtualFile("outer");
+    TestVirtualFile dir = new TestVirtualFile("dir");
+    TestVirtualFile inner = new TestVirtualFile("inner");
 
     outer.addChild(dir);
     dir.addChild(inner);
@@ -103,7 +103,7 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testDeletingObsoleteRoots() {
-    vcs.createDirectory("root", null);
+    vcs.createDirectory("root");
 
     updateWith();
     assertFalse(vcs.hasEntry("root"));
@@ -111,11 +111,11 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testDeletingOuterObsoleteRootsButLeavingInnerWithContent() {
-    vcs.createDirectory("outer", null);
-    vcs.createDirectory("outer/inner", null);
+    vcs.createDirectory("outer");
+    vcs.createDirectory("outer/inner");
 
-    TestVirtualFile inner = new TestVirtualFile("outer/inner", null);
-    inner.addChild(new TestVirtualFile("file", null, null));
+    TestVirtualFile inner = new TestVirtualFile("outer/inner");
+    inner.addChild(new TestVirtualFile("file", null, -1));
     updateWith(inner);
 
     assertFalse(vcs.hasEntry("outer"));
@@ -125,10 +125,10 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testUpdatingRootsCaseSensitively() {
-    vcs.createDirectory("root", null);
+    vcs.createDirectory("root");
 
     Paths.setCaseSensitive(true);
-    updateWith(new TestVirtualFile("ROOT", null));
+    updateWith(new TestVirtualFile("ROOT"));
 
     assertEquals(1, vcs.getRoots().size());
     assertEquals("ROOT", vcs.getRoots().get(0).getPath());
@@ -136,10 +136,10 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testUpdatingRootsCaseInsensitively() {
-    vcs.createDirectory("root", null);
+    vcs.createDirectory("root");
 
     Paths.setCaseSensitive(false);
-    updateWith(new TestVirtualFile("ROOT", null));
+    updateWith(new TestVirtualFile("ROOT"));
 
     assertEquals(1, vcs.getRoots().size());
     assertEquals("root", vcs.getRoots().get(0).getPath());
@@ -147,7 +147,7 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testAddingNewFilesWithPhysicalContentAndTimestamp() {
-    TestVirtualFile root = new TestVirtualFile("root", null);
+    TestVirtualFile root = new TestVirtualFile("root");
     TestVirtualFile file = new TestVirtualFile("file", "virtual content", 123L);
     root.addChild(file);
 
@@ -162,9 +162,9 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testAddingNewFilesRecursively() {
-    TestVirtualFile root = new TestVirtualFile("root", null);
-    TestVirtualFile dir = new TestVirtualFile("dir", null);
-    TestVirtualFile file = new TestVirtualFile("file", null, null);
+    TestVirtualFile root = new TestVirtualFile("root");
+    TestVirtualFile dir = new TestVirtualFile("dir");
+    TestVirtualFile file = new TestVirtualFile("file", null, -1);
 
     root.addChild(dir);
     dir.addChild(file);
@@ -178,8 +178,8 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testAddingNewFilesWhenSomeOfThemAlreadyExist() {
-    TestVirtualFile root = new TestVirtualFile("root", null);
-    TestVirtualFile dir = new TestVirtualFile("dir", null);
+    TestVirtualFile root = new TestVirtualFile("root");
+    TestVirtualFile dir = new TestVirtualFile("dir");
     TestVirtualFile file1 = new TestVirtualFile("file1", null, -1L);
     TestVirtualFile file2 = new TestVirtualFile("file2", null, -1L);
 
@@ -187,8 +187,8 @@ public class UpdaterTest extends LocalVcsTestCase {
     dir.addChild(file1);
     dir.addChild(file2);
 
-    vcs.createDirectory("root", null);
-    vcs.createDirectory("root/dir", null);
+    vcs.createDirectory("root");
+    vcs.createDirectory("root/dir");
     vcs.createFile("root/dir/file1", null, -1L);
 
     updateWith(root);
@@ -201,10 +201,10 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testDoesNotAddFilteredFilesAndDirectories() {
-    TestVirtualFile root = new TestVirtualFile("root", null);
-    TestVirtualFile f1 = new TestVirtualFile("goodFile", null, null);
-    TestVirtualFile f2 = new TestVirtualFile("badFile", null, null);
-    TestVirtualFile f3 = new TestVirtualFile("badDir", null);
+    TestVirtualFile root = new TestVirtualFile("root");
+    TestVirtualFile f1 = new TestVirtualFile("goodFile", null, -1);
+    TestVirtualFile f2 = new TestVirtualFile("badFile", null, -1);
+    TestVirtualFile f3 = new TestVirtualFile("badDir");
     root.addChild(f1);
     root.addChild(f2);
     root.addChild(f2);
@@ -219,9 +219,9 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testDoesNotAddFilesFromFilteredDirectories() {
-    TestVirtualFile root = new TestVirtualFile("root", null);
-    TestVirtualFile dir = new TestVirtualFile("dir", null);
-    TestVirtualFile file = new TestVirtualFile("file", null, null);
+    TestVirtualFile root = new TestVirtualFile("root");
+    TestVirtualFile dir = new TestVirtualFile("dir");
+    TestVirtualFile file = new TestVirtualFile("file", null, -1);
     root.addChild(dir);
     dir.addChild(file);
 
@@ -234,8 +234,8 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testDoesNotVisitFilteredDirectoriesOnAddition() {
-    TestVirtualFile root = new TestVirtualFile("root", null);
-    TestVirtualFile dir = new TestVirtualFile("dir", null) {
+    TestVirtualFile root = new TestVirtualFile("root");
+    TestVirtualFile dir = new TestVirtualFile("dir") {
       @Override
       public VirtualFile[] getChildren() {
         fail();
@@ -252,15 +252,15 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testDeletingObsoleteFilesRecursively() {
-    TestVirtualFile root = new TestVirtualFile("root", null);
-    TestVirtualFile dir = new TestVirtualFile("dir", null);
+    TestVirtualFile root = new TestVirtualFile("root");
+    TestVirtualFile dir = new TestVirtualFile("dir");
     TestVirtualFile file = new TestVirtualFile("fileToLeave", null, -1L);
 
     root.addChild(dir);
     dir.addChild(file);
 
-    vcs.createDirectory("root", null);
-    vcs.createDirectory("root/dir", null);
+    vcs.createDirectory("root");
+    vcs.createDirectory("root/dir");
     vcs.createFile("root/dir/fileToLeave", null, -1L);
     vcs.createFile("root/dir/fileToDelete", null, -1L);
     vcs.createFile("root/dir/subdirToDelete", null, -1L);
@@ -276,13 +276,13 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testDeletingFileAndCreatingDirectoryWithSameName() {
-    TestVirtualFile root = new TestVirtualFile("root", null);
-    root.addChild(new TestVirtualFile("name1", null));
-    root.addChild(new TestVirtualFile("name2", null, null));
+    TestVirtualFile root = new TestVirtualFile("root");
+    root.addChild(new TestVirtualFile("name1"));
+    root.addChild(new TestVirtualFile("name2", null, -1));
 
-    vcs.createDirectory("root", null);
-    vcs.createFile("root/name1", null, null);
-    vcs.createDirectory("root/name2", null);
+    vcs.createDirectory("root");
+    vcs.createFile("root/name1", null, -1);
+    vcs.createDirectory("root/name2");
 
     updateWith(root);
 
@@ -297,13 +297,13 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testDeletingFileAndCreatingDirectoryWithContentWithSameName() {
-    TestVirtualFile root = new TestVirtualFile("root", null);
-    TestVirtualFile dir = new TestVirtualFile("name", null);
+    TestVirtualFile root = new TestVirtualFile("root");
+    TestVirtualFile dir = new TestVirtualFile("name");
     root.addChild(dir);
-    dir.addChild(new TestVirtualFile("file", null, null));
+    dir.addChild(new TestVirtualFile("file", null, -1));
 
-    vcs.createDirectory("root", null);
-    vcs.createDirectory("root/name", null);
+    vcs.createDirectory("root");
+    vcs.createDirectory("root/name");
 
     updateWith(root);
 
@@ -313,17 +313,17 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testDeletingFilteredFilesAndDirectories() {
-    TestVirtualFile root = new TestVirtualFile("root", null);
-    TestVirtualFile file = new TestVirtualFile("file", null, null);
-    TestVirtualFile dir = new TestVirtualFile("dir", null);
-    TestVirtualFile dirFile = new TestVirtualFile("dirFile", null);
+    TestVirtualFile root = new TestVirtualFile("root");
+    TestVirtualFile file = new TestVirtualFile("file", null, -1);
+    TestVirtualFile dir = new TestVirtualFile("dir");
+    TestVirtualFile dirFile = new TestVirtualFile("dirFile");
     root.addChild(dir);
     root.addChild(file);
     dir.addChild(dirFile);
 
-    vcs.createDirectory("root", null);
+    vcs.createDirectory("root");
     vcs.createFile("root/file", null, 111L);
-    vcs.createDirectory("root/dir", null);
+    vcs.createDirectory("root/dir");
     vcs.createFile("root/dir/dirFile", null, 222L);
 
     filter.setFilesNotUnderContentRoot(file, dir);
@@ -336,8 +336,8 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testDoesNotVisitFilteredDirectoriesOnUpdate() {
-    TestVirtualFile root = new TestVirtualFile("root", null);
-    TestVirtualFile dir = new TestVirtualFile("dir", null) {
+    TestVirtualFile root = new TestVirtualFile("root");
+    TestVirtualFile dir = new TestVirtualFile("dir") {
       @Override
       public VirtualFile[] getChildren() {
         fail();
@@ -346,8 +346,8 @@ public class UpdaterTest extends LocalVcsTestCase {
     };
     root.addChild(dir);
 
-    vcs.createDirectory("root", null);
-    vcs.createDirectory("root/dir", null);
+    vcs.createDirectory("root");
+    vcs.createDirectory("root/dir");
 
     filter.setFilesNotUnderContentRoot(dir);
 
@@ -357,12 +357,12 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testUpdatingOutdatedFilesWithPhysicalContent() {
-    TestVirtualFile root = new TestVirtualFile("root", null);
+    TestVirtualFile root = new TestVirtualFile("root");
     TestVirtualFile file = new TestVirtualFile("file", "virtual content", 666L);
 
     root.addChild(file);
 
-    vcs.createDirectory("root", null);
+    vcs.createDirectory("root");
     vcs.createFile("root/file", null, 111L);
 
     configureToReturnPhysicalContent("physical content");
@@ -376,15 +376,15 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testUpdatingOutdatedFilesRecursively() {
-    TestVirtualFile root = new TestVirtualFile("root", null);
-    TestVirtualFile dir = new TestVirtualFile("dir", null);
+    TestVirtualFile root = new TestVirtualFile("root");
+    TestVirtualFile dir = new TestVirtualFile("dir");
     TestVirtualFile file = new TestVirtualFile("file", "new content", 333L);
 
     root.addChild(dir);
     dir.addChild(file);
 
-    vcs.createDirectory("root", null);
-    vcs.createDirectory("root/dir", null);
+    vcs.createDirectory("root");
+    vcs.createDirectory("root/dir");
     vcs.createFile("root/dir/file", b("old content"), 111L);
 
     updateWith(root);
@@ -396,12 +396,12 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testDoesNotUpdateOutOfDateFiles() {
-    TestVirtualFile root = new TestVirtualFile("root", null);
+    TestVirtualFile root = new TestVirtualFile("root");
     TestVirtualFile file = new TestVirtualFile("file", "new content", 111L);
 
     root.addChild(file);
 
-    vcs.createDirectory("root", null);
+    vcs.createDirectory("root");
     vcs.createFile("root/file", b("old content"), 111L);
 
     updateWith(root);
@@ -415,10 +415,10 @@ public class UpdaterTest extends LocalVcsTestCase {
   public void testUpdatingCaseInsensitive() {
     Paths.setCaseSensitive(false);
 
-    TestVirtualFile root = new TestVirtualFile("root", null);
+    TestVirtualFile root = new TestVirtualFile("root");
     root.addChild(new TestVirtualFile("FILE", null, 2L));
 
-    vcs.createDirectory("root", null);
+    vcs.createDirectory("root");
     vcs.createFile("root/file", null, 1L);
 
     updateWith(root);
@@ -432,10 +432,10 @@ public class UpdaterTest extends LocalVcsTestCase {
   public void testUpdatingFileNameWhenCaseInsensitiveAndUpToDate() {
     Paths.setCaseSensitive(false);
 
-    TestVirtualFile root = new TestVirtualFile("root", null);
+    TestVirtualFile root = new TestVirtualFile("root");
     root.addChild(new TestVirtualFile("FILE", null, 1L));
 
-    vcs.createDirectory("root", null);
+    vcs.createDirectory("root");
     vcs.createFile("root/file", null, 1L);
 
     updateWith(root);
@@ -447,10 +447,10 @@ public class UpdaterTest extends LocalVcsTestCase {
   public void testUpdatingCaseSensitive() {
     Paths.setCaseSensitive(true);
 
-    TestVirtualFile root = new TestVirtualFile("root", null);
+    TestVirtualFile root = new TestVirtualFile("root");
     root.addChild(new TestVirtualFile("FILE", null, 2L));
 
-    vcs.createDirectory("root", null);
+    vcs.createDirectory("root");
     vcs.createFile("root/file", null, 1L);
 
     updateWith(root);
@@ -463,14 +463,14 @@ public class UpdaterTest extends LocalVcsTestCase {
 
   @Test
   public void testTreatingChangesDuringUpdateAsOne() {
-    TestVirtualFile root = new TestVirtualFile("root", null);
-    TestVirtualFile dir1 = new TestVirtualFile("dir1", null);
-    TestVirtualFile dir2 = new TestVirtualFile("dir2", null);
+    TestVirtualFile root = new TestVirtualFile("root");
+    TestVirtualFile dir1 = new TestVirtualFile("dir1");
+    TestVirtualFile dir2 = new TestVirtualFile("dir2");
 
     root.addChild(dir1);
     root.addChild(dir2);
-    dir1.addChild(new TestVirtualFile("file1", null, null));
-    dir2.addChild(new TestVirtualFile("file2", null, null));
+    dir1.addChild(new TestVirtualFile("file1", null, -1));
+    dir2.addChild(new TestVirtualFile("file2", null, -1));
 
     updateWith(root);
     assertEquals(1, vcs.getLabelsFor("root").size());

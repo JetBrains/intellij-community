@@ -9,7 +9,7 @@ public class RootEntryRootsTest extends LocalVcsTestCase {
 
   @Test
   public void testCreatingRoots() {
-    root.createDirectory(null, "c:/dir/root", null);
+    root.createDirectory(-1, "c:/dir/root");
 
     assertTrue(root.hasEntry("c:/dir/root"));
     assertFalse(root.hasEntry("c:/dir"));
@@ -17,18 +17,18 @@ public class RootEntryRootsTest extends LocalVcsTestCase {
 
   @Test
   public void testCreatingEntriesUnderRoot() {
-    root.createDirectory(null, "c:/root", null);
-    root.createFile(null, "c:/root/entry", null, null);
+    root.createDirectory(-1, "c:/root");
+    root.createFile(-1, "c:/root/entry", null, -1);
 
     assertTrue(root.hasEntry("c:/root/entry"));
   }
 
   @Test
   public void testMovingEntriesBetweenRoots() {
-    root.createDirectory(null, "c:/root1", null);
-    root.createDirectory(null, "c:/root2", null);
+    root.createDirectory(-1, "c:/root1");
+    root.createDirectory(-1, "c:/root2");
 
-    root.createFile(null, "c:/root1/file", null, null);
+    root.createFile(-1, "c:/root1/file", null, -1);
     root.move("c:/root1/file", "c:/root2");
 
     assertFalse(root.hasEntry("c:/root1/file"));
@@ -38,7 +38,7 @@ public class RootEntryRootsTest extends LocalVcsTestCase {
   @Test
   public void testCanNotCreateEntryNotUnderExistingRoots() {
     try {
-      root.createFile(null, "c:/non-existing-root/file", null, null);
+      root.createFile(-1, "c:/non-existing-root/file", null, -1);
       fail();
     }
     catch (RuntimeException e) {
@@ -47,7 +47,7 @@ public class RootEntryRootsTest extends LocalVcsTestCase {
 
   @Test
   public void testRenamingRoots() {
-    root.createDirectory(null, "c:/dir/root", null);
+    root.createDirectory(-1, "c:/dir/root");
     root.rename("c:/dir/root", "newName");
 
     assertTrue(root.hasEntry("c:/dir/newName"));
@@ -56,7 +56,7 @@ public class RootEntryRootsTest extends LocalVcsTestCase {
 
   @Test
   public void testDeletingRoots() {
-    root.createDirectory(null, "c:/dir/root", null);
+    root.createDirectory(-1, "c:/dir/root");
 
     root.delete("c:/dir/root");
     assertFalse(root.hasEntry("c:/dir/root"));
@@ -64,9 +64,9 @@ public class RootEntryRootsTest extends LocalVcsTestCase {
 
   @Test
   public void testGettingRoots() {
-    root.createDirectory(null, "c:/root1", null);
-    root.createDirectory(null, "c:/root2", null);
-    root.createDirectory(null, "c:/root2/dir", null);
+    root.createDirectory(-1, "c:/root1");
+    root.createDirectory(-1, "c:/root2");
+    root.createDirectory(-1, "c:/root2/dir");
 
     List<Entry> roots = root.getRoots();
     assertEquals(2, roots.size());

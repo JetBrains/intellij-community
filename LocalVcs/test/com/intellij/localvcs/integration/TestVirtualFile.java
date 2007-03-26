@@ -16,28 +16,31 @@ import java.util.List;
 public class TestVirtualFile extends VirtualFile {
   private String myName;
   private String myContent;
-  private Long myTimestamp;
-  private Long myLength;
+  private long myTimestamp;
+  //private Long myLength;
 
   private boolean myIsDirectory;
   private VirtualFile myParent;
   private List<TestVirtualFile> myChildren = new ArrayList<TestVirtualFile>();
 
-  public TestVirtualFile(String name, String content, Long timestamp) {
-    this(name, content, timestamp, null);
-  }
-
-  public TestVirtualFile(String name, String content, Long timestamp, Long length) {
+  public TestVirtualFile(String name, String content, long timestamp) {
     myName = name;
     myContent = content;
     myTimestamp = timestamp;
     myIsDirectory = false;
-    myLength = length;
+    //myLength = length;
   }
 
-  public TestVirtualFile(String name, Long timestamp) {
+  //public TestVirtualFile(String name, String content, Long timestamp, Long length) {
+  //  myName = name;
+  //  myContent = content;
+  //  myTimestamp = timestamp;
+  //  myIsDirectory = false;
+  //  myLength = length;
+  //}
+
+  public TestVirtualFile(String name) {
     myName = name;
-    myTimestamp = timestamp;
     myIsDirectory = true;
   }
 
@@ -60,12 +63,13 @@ public class TestVirtualFile extends VirtualFile {
   }
 
   public long getTimeStamp() {
-    return myTimestamp == null ? 0 : myTimestamp;
+    return myTimestamp;
   }
 
   public long getLength() {
-    if (isDirectory()) throw new RuntimeException("getting length from directory!");
-    return myLength == null ? 0 : myLength;
+    //if (isDirectory()) throw new RuntimeException("getting length from directory!");
+    //return myLength == null ? 0 : myLength;
+    throw new UnsupportedOperationException();
   }
 
   public VirtualFile[] getChildren() {

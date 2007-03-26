@@ -17,7 +17,7 @@ public class ChangeSet {
   }
 
   public ChangeSet(Stream s) throws IOException {
-    myLabel = s.readString();
+    myLabel = s.readStringOrNull();
     myTimestamp = s.readLong();
 
     int count = s.readInteger();
@@ -34,7 +34,7 @@ public class ChangeSet {
   }
 
   public void write(Stream s) throws IOException {
-    s.writeString(myLabel);
+    s.writeStringOrNull(myLabel);
     s.writeLong(myTimestamp);
 
     s.writeInteger(myChanges.size());

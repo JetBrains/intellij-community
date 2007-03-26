@@ -13,10 +13,10 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
   @Before
   public void setUp() {
     setCurrentTimestamp(10);
-    vcs.createFile("file", b("content"), null);
+    vcs.createFile("file", b("content"), -1);
 
     setCurrentTimestamp(20);
-    vcs.changeFileContent("file", b("new content"), null);
+    vcs.changeFileContent("file", b("new content"), -1);
   }
 
   @Test
@@ -43,8 +43,8 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
     vcs = new TestLocalVcs(new PurgeLoggingStorage());
     setCurrentTimestamp(20);
 
-    vcs.createFile("file", new byte[IContentStorage.MAX_CONTENT_LENGTH + 1], null);
-    vcs.changeFileContent("file", b("new content"), null);
+    vcs.createFile("file", new byte[IContentStorage.MAX_CONTENT_LENGTH + 1], -1);
+    vcs.changeFileContent("file", b("new content"), -1);
 
     vcs.purgeUpTo(20);
 
@@ -61,7 +61,7 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
 
   @Test
   public void testDefaultPurgingInterval() {
-    LocalVcs vcs = new LocalVcs(new TestLocalVcsStorage());
+    LocalVcs vcs = new LocalVcs(new TestStorage());
     assertEquals(5 * 24 * 60 * 60 * 1000L, vcs.getPurgingInterval());
   }
 
@@ -71,7 +71,7 @@ public class LocalVcsPurgingTest extends LocalVcsTestCase {
     assertEquals(count, vcs.getLabelsFor("file").size());
   }
 
-  class PurgeLoggingStorage extends TestLocalVcsStorage {
+  class PurgeLoggingStorage extends TestStorage {
     @Override
     public void purgeContent(Content c) {
       purgedContent.add(c);

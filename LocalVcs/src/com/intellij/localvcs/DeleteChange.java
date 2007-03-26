@@ -27,7 +27,7 @@ public class DeleteChange extends Change {
   }
 
   @Override
-  public void applyTo(RootEntry root) {
+  protected void doApplyTo(RootEntry root) {
     myAffectedEntry = root.getEntry(myPath);
     setAffectedIdPath(myAffectedEntry.getIdPath());
 
@@ -42,7 +42,7 @@ public class DeleteChange extends Change {
   private void restoreEntryRecursively(RootEntry root, Entry e, IdPath parentPath) {
     // todo try to cleanup this mess
     if (e.isDirectory()) {
-      root.createDirectory(e.getId(), parentPath, e.getName(), e.getTimestamp());
+      root.createDirectory(e.getId(), parentPath, e.getName());
       // todo could parentPath be null????
       parentPath = parentPath == null ? e.getIdPath() : parentPath.appendedWith(e.getId());
 

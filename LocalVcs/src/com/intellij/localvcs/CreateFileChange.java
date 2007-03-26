@@ -3,11 +3,11 @@ package com.intellij.localvcs;
 import java.io.IOException;
 
 public class CreateFileChange extends Change {
-  private Integer myId;
+  private int myId;
   private Content myContent;
-  private Long myTimestamp;
+  private long myTimestamp;
 
-  public CreateFileChange(Integer id, String path, Content content, Long timestamp) {
+  public CreateFileChange(int id, String path, Content content, long timestamp) {
     super(path);
     myId = id;
     myContent = content;
@@ -29,7 +29,7 @@ public class CreateFileChange extends Change {
     s.writeLong(myTimestamp);
   }
 
-  public Integer getId() {
+  public int getId() {
     return myId;
   }
 
@@ -37,14 +37,14 @@ public class CreateFileChange extends Change {
     return myContent;
   }
 
-  public Long getTimestamp() {
+  public long getTimestamp() {
     return myTimestamp;
   }
 
   @Override
-  public void applyTo(RootEntry root) {
-    root.createFile(myId, myPath, myContent, myTimestamp);
-    setAffectedIdPath(root.getEntry(myPath).getIdPath());
+  protected void doApplyTo(RootEntry root) {
+    Entry e = root.createFile(myId, myPath, myContent, myTimestamp);
+    setAffectedIdPath(e.getIdPath());
   }
 
   @Override

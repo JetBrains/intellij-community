@@ -18,7 +18,7 @@ public class ScopedServiceStateTest extends LocalVcsTestCase {
     vcs.createFile("file", b("old"), 123L);
 
     Clock.setCurrentTimestamp(456);
-    gw.addUnsavedDocument("file", "new", null);
+    gw.addUnsavedDocument("file", "new", -1);
 
     initState();
 
@@ -32,13 +32,13 @@ public class ScopedServiceStateTest extends LocalVcsTestCase {
   @Ignore
   public void testRegisteringUnsavedDocumentsAsOneChangeSetBeforeEntering() {
     vcs.beginChangeSet();
-    vcs.createDirectory("dir", null);
-    vcs.createFile("dir/one", null, null);
-    vcs.createFile("dir/two", null, null);
+    vcs.createDirectory("dir");
+    vcs.createFile("dir/one", null, -1);
+    vcs.createFile("dir/two", null, -1);
     vcs.endChangeSet(null);
 
-    gw.addUnsavedDocument("dir/one", "one", null);
-    gw.addUnsavedDocument("dir/two", "two", null);
+    gw.addUnsavedDocument("dir/one", "one", -1);
+    gw.addUnsavedDocument("dir/two", "two", -1);
     initState();
 
     assertEquals(2, vcs.getLabelsFor("dir").size());
@@ -47,11 +47,11 @@ public class ScopedServiceStateTest extends LocalVcsTestCase {
   @Test
   @Ignore
   public void testRegisteringUnsavedDocumentsBeforeEnteringSeparately() {
-    vcs.createFile("f", b("one"), null);
+    vcs.createFile("f", b("one"), -1);
 
-    gw.addUnsavedDocument("f", "two", null);
+    gw.addUnsavedDocument("f", "two", -1);
     initState();
-    vcs.changeFileContent("f", b("three"), null);
+    vcs.changeFileContent("f", b("three"), -1);
     s.goToState(null);
 
     assertEquals(3, vcs.getLabelsFor("f").size());
@@ -64,7 +64,7 @@ public class ScopedServiceStateTest extends LocalVcsTestCase {
     initState();
 
     Clock.setCurrentTimestamp(789);
-    gw.addUnsavedDocument("file", "new", null);
+    gw.addUnsavedDocument("file", "new", -1);
 
     s.goToState(null);
 
@@ -78,16 +78,16 @@ public class ScopedServiceStateTest extends LocalVcsTestCase {
   @Ignore
   public void testRegisteringUnsavedDocumentsBeforeExitingStateWithinInnerChangeset() {
     vcs.beginChangeSet();
-    vcs.createDirectory("dir", null);
-    vcs.createFile("dir/one", null, null);
-    vcs.createFile("dir/two", null, null);
+    vcs.createDirectory("dir");
+    vcs.createFile("dir/one", null, -1);
+    vcs.createFile("dir/two", null, -1);
     vcs.endChangeSet(null);
 
     initState();
-    vcs.createFile("dir/three", null, null);
+    vcs.createFile("dir/three", null, -1);
 
-    gw.addUnsavedDocument("dir/one", "one", null);
-    gw.addUnsavedDocument("dir/two", "two", null);
+    gw.addUnsavedDocument("dir/one", "one", -1);
+    gw.addUnsavedDocument("dir/two", "two", -1);
     s.goToState(null);
 
     assertEquals(2, vcs.getLabelsFor("dir").size());
@@ -99,9 +99,9 @@ public class ScopedServiceStateTest extends LocalVcsTestCase {
     TestFileFilter ff = new TestFileFilter();
     gw.setFileFilter(ff);
 
-    vcs.createFile("f", b("old"), null);
+    vcs.createFile("f", b("old"), -1);
 
-    TestVirtualFile f = new TestVirtualFile("f", "new", null);
+    TestVirtualFile f = new TestVirtualFile("f", "new", -1);
     ff.setFilesNotUnderContentRoot(f);
 
     initState();

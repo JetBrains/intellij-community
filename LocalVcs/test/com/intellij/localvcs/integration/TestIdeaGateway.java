@@ -66,7 +66,7 @@ public class TestIdeaGateway extends IdeaGateway {
     return myUnsavedDocuments.toArray(new Document[0]);
   }
 
-  public void addUnsavedDocument(String name, String content, Long timestamp) {
+  public void addUnsavedDocument(String name, String content, long timestamp) {
     myUnsavedDocuments.add(new MyDocument(name, content, timestamp));
   }
 
@@ -78,9 +78,9 @@ public class TestIdeaGateway extends IdeaGateway {
   private class MyDocument extends MockDocument {
     private String myName;
     private String myContent;
-    private Long myTimestamp;
+    private long myTimestamp;
 
-    public MyDocument(String name, String content, Long timestamp) {
+    public MyDocument(String name, String content, long timestamp) {
       myName = name;
       myContent = content;
       myTimestamp = timestamp;

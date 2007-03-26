@@ -7,30 +7,26 @@ import java.util.List;
 
 public abstract class Entry {
   // todo make them basic type (quite possible)
-  protected Integer myId;
+  protected int myId;
   protected String myName;
-  protected Long myTimestamp;
   protected DirectoryEntry myParent;
 
-  public Entry(Integer id, String name, Long timestamp) {
+  public Entry(int id, String name) {
     myId = id;
     myName = name;
-    myTimestamp = timestamp;
   }
 
   public Entry(Stream s) throws IOException {
     myId = s.readInteger();
     myName = s.readString();
-    myTimestamp = s.readLong();
   }
 
   public void write(Stream s) throws IOException {
     s.writeInteger(myId);
     s.writeString(myName);
-    s.writeLong(myTimestamp);
   }
 
-  public Integer getId() {
+  public int getId() {
     return myId;
   }
 
@@ -56,12 +52,12 @@ public abstract class Entry {
     return Paths.equals(getPath(), path);
   }
 
-  public Long getTimestamp() {
-    return myTimestamp;
+  public long getTimestamp() {
+    throw new UnsupportedOperationException();
   }
 
-  public boolean isOutdated(Long timestamp) {
-    return !myTimestamp.equals(timestamp);
+  public boolean isOutdated(long timestamp) {
+    return getTimestamp() != timestamp;
   }
 
   public Content getContent() {
@@ -131,7 +127,7 @@ public abstract class Entry {
   // todo generalize findEntry(*) methods
   public Entry findEntry(IdPath p) {
     if (!p.rootEquals(myId)) return null;
-    if (p.getName().equals(myId)) return this;
+    if (p.getName() == myId) return this;
     return searchInChildren(p.withoutRoot());
   }
 
@@ -151,7 +147,7 @@ public abstract class Entry {
     return result;
   }
 
-  public Entry getEntry(Integer id) {
+  public Entry getEntry(int id) {
     // todo it's very slow
     // todo get rid of this method
     Entry result = findEntry(id);
@@ -161,8 +157,8 @@ public abstract class Entry {
     return result;
   }
 
-  private Entry findEntry(Integer id) {
-    if (id.equals(myId)) return this;
+  private Entry findEntry(int id) {
+    if (id == myId) return this;
 
     for (Entry child : getChildren()) {
       Entry result = child.findEntry(id);
@@ -179,7 +175,7 @@ public abstract class Entry {
     myName = newName;
   }
 
-  public void changeContent(Content newContent, Long timestamp) {
+  public void changeContent(Content newContent, long timestamp) {
     throw new UnsupportedOperationException();
   }
 

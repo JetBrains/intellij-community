@@ -163,7 +163,7 @@ public class Updater implements CacheUpdater {
     if (notAllowed(fileOrDir)) return;
 
     if (fileOrDir.isDirectory()) {
-      myVcs.createDirectory(fileOrDir.getPath(), null);
+      myVcs.createDirectory(fileOrDir.getPath());
       for (VirtualFile f : fileOrDir.getChildren()) {
         createRecursively(f);
       }

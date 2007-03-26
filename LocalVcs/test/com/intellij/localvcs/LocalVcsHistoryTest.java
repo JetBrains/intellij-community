@@ -12,9 +12,9 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
   @Test
   public void testTreatingSeveralChangesDuringChangeSetAsOne() {
     vcs.beginChangeSet();
-    vcs.createDirectory("dir", null);
-    vcs.createFile("dir/one", null, null);
-    vcs.createFile("dir/two", null, null);
+    vcs.createDirectory("dir");
+    vcs.createFile("dir/one", null, -1);
+    vcs.createFile("dir/two", null, -1);
     vcs.endChangeSet(null);
 
     assertEquals(1, vcs.getLabelsFor("dir").size());
@@ -22,15 +22,15 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
   @Test
   public void testTreatingSeveralChangesOutsideOfChangeSetAsSeparate() {
-    vcs.createDirectory("dir", null);
-    vcs.createFile("dir/one", null, null);
-    vcs.createFile("dir/two", null, null);
+    vcs.createDirectory("dir");
+    vcs.createFile("dir/one", null, -1);
+    vcs.createFile("dir/two", null, -1);
 
     vcs.beginChangeSet();
     vcs.endChangeSet(null);
 
-    vcs.createFile("dir/three", null, null);
-    vcs.createFile("dir/four", null, null);
+    vcs.createFile("dir/three", null, -1);
+    vcs.createFile("dir/four", null, -1);
 
     assertEquals(5, vcs.getLabelsFor("dir").size());
   }
@@ -38,11 +38,11 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
   @Test
   public void testIgnoringInnerChangeSets() {
     vcs.beginChangeSet();
-    vcs.createDirectory("dir", null);
+    vcs.createDirectory("dir");
     vcs.beginChangeSet();
-    vcs.createFile("dir/one", null, null);
+    vcs.createFile("dir/one", null, -1);
     vcs.endChangeSet("inner");
-    vcs.createFile("dir/two", null, null);
+    vcs.createFile("dir/two", null, -1);
     vcs.endChangeSet("outer");
 
     List<Label> ll = vcs.getLabelsFor("dir");
@@ -53,10 +53,10 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
   @Test
   public void testNamedAndUnnamedLables() {
     vcs.beginChangeSet();
-    vcs.createFile("file", null, null);
+    vcs.createFile("file", null, -1);
     vcs.endChangeSet("label");
 
-    vcs.changeFileContent("file", null, null);
+    vcs.changeFileContent("file", null, -1);
 
     List<Label> ll = vcs.getLabelsFor("file");
     assertEquals(2, ll.size());
@@ -68,7 +68,7 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
   @Test
   public void testIncludingCurrentVersionAfterPurge() {
     setCurrentTimestamp(10);
-    vcs.createFile("file", null, null);
+    vcs.createFile("file", null, -1);
     vcs.purgeUpTo(20);
 
     List<Label> ll = vcs.getLabelsFor("file");
@@ -80,7 +80,7 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
   @Test
   public void testTakingTimestampForCurrentLabelAtMomentOfGettingLabels() {
     setCurrentTimestamp(10);
-    vcs.createFile("file", null, null);
+    vcs.createFile("file", null, -1);
     vcs.purgeUpTo(20);
 
     setCurrentTimestamp(20);
@@ -93,10 +93,10 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
   @Test
   public void testLabelsTimestamp() {
     setCurrentTimestamp(10);
-    vcs.createFile("file", null, null);
+    vcs.createFile("file", null, -1);
 
     setCurrentTimestamp(20);
-    vcs.changeFileContent("file", null, null);
+    vcs.changeFileContent("file", null, -1);
 
     List<Label> labels = vcs.getLabelsFor("file");
     assertEquals(20L, labels.get(0).getTimestamp());
@@ -106,11 +106,11 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
   @Test
   public void testDoesNotIncludeLabelsForAnotherEntries() {
     vcs.beginChangeSet();
-    vcs.createFile("file1", null, null);
+    vcs.createFile("file1", null, -1);
     vcs.endChangeSet("1");
 
     vcs.beginChangeSet();
-    vcs.createFile("file2", null, null);
+    vcs.createFile("file2", null, -1);
     vcs.endChangeSet("2");
 
     List<Label> labels = vcs.getLabelsFor("file2");
@@ -120,9 +120,9 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
   @Test
   public void testHistoryForFileCreatedWithSameNameAsDeletedOne() {
-    vcs.createFile("file", b("old"), null);
+    vcs.createFile("file", b("old"), -1);
     vcs.delete("file");
-    vcs.createFile("file", b("new"), null);
+    vcs.createFile("file", b("new"), -1);
 
     List<Label> labels = vcs.getLabelsFor("file");
     assertEquals(1, labels.size());
@@ -134,9 +134,9 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
   @Test
   public void testHistoryForFileCreatenInPlaceOfRenamedOne() {
-    vcs.createFile("file1", b("content1"), null);
+    vcs.createFile("file1", b("content1"), -1);
     vcs.rename("file1", "file2");
-    vcs.createFile("file1", b("content2"), null);
+    vcs.createFile("file1", b("content2"), -1);
 
     List<Label> labels = vcs.getLabelsFor("file1");
     assertEquals(1, labels.size());
@@ -177,10 +177,10 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
   @Test
   public void testGettingEntryFromLabelInRenamedDir() {
-    vcs.createDirectory("dir", null);
-    vcs.createFile("dir/file", null, null);
+    vcs.createDirectory("dir");
+    vcs.createFile("dir/file", null, -1);
     vcs.rename("dir", "newDir");
-    vcs.changeFileContent("newDir/file", null, null);
+    vcs.changeFileContent("newDir/file", null, -1);
 
     List<Label> labels = vcs.getLabelsFor("newDir/file");
     assertEquals(2, labels.size());
@@ -191,8 +191,8 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
   @Test
   public void testGettingEntryFromLabelDoesNotChangeRootEntry() {
-    vcs.createFile("file", b("content"), null);
-    vcs.changeFileContent("file", b("new content"), null);
+    vcs.createFile("file", b("content"), -1);
+    vcs.changeFileContent("file", b("new content"), -1);
 
     List<Label> labels = vcs.getLabelsFor("file");
 
@@ -202,8 +202,8 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
   @Test
   public void testGettingDifferenceBetweenLablels() {
-    vcs.createFile("file", b("content"), null);
-    vcs.changeFileContent("file", b("new content"), null);
+    vcs.createFile("file", b("content"), -1);
+    vcs.changeFileContent("file", b("new content"), -1);
 
     List<Label> labels = vcs.getLabelsFor("file");
 
@@ -218,7 +218,7 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
   @Test
   public void testNoDifferenceBetweenLabels() {
-    vcs.createFile("file", b("content"), null);
+    vcs.createFile("file", b("content"), -1);
 
     List<Label> labels = vcs.getLabelsFor("file");
 
@@ -231,8 +231,8 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceForDirectory() {
-    vcs.createDirectory("dir", null);
-    vcs.createFile("dir/file", null, null);
+    vcs.createDirectory("dir");
+    vcs.createFile("dir/file", null, -1);
 
     List<Label> labels = vcs.getLabelsFor("dir");
     assertEquals(2, labels.size());
@@ -252,8 +252,8 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
 
   @Test
   public void testNoDifferenceForDirectoryWithEqualContents() {
-    vcs.createDirectory("dir", null);
-    vcs.createFile("dir/file", null, null);
+    vcs.createDirectory("dir");
+    vcs.createFile("dir/file", null, -1);
     vcs.delete("dir/file");
 
     List<Label> labels = vcs.getLabelsFor("dir");
@@ -265,13 +265,13 @@ public class LocalVcsHistoryTest extends LocalVcsTestCase {
   @Test
   public void testDoesNotIncludeNotModifiedDifferences() {
     vcs.beginChangeSet();
-    vcs.createDirectory("dir1", null);
-    vcs.createDirectory("dir1/dir2", null);
-    vcs.createDirectory("dir1/dir3", null);
-    vcs.createFile("dir1/dir2/file", b(""), null);
+    vcs.createDirectory("dir1");
+    vcs.createDirectory("dir1/dir2");
+    vcs.createDirectory("dir1/dir3");
+    vcs.createFile("dir1/dir2/file", b(""), -1);
     vcs.endChangeSet(null);
 
-    vcs.createFile("dir1/dir3/file", null, null);
+    vcs.createFile("dir1/dir3/file", null, -1);
 
     List<Label> labels = vcs.getLabelsFor("dir1");
     Label recent = labels.get(0);

@@ -5,11 +5,11 @@ import org.junit.Test;
 public class FileListenerRefreshingTest extends FileListenerTestCase {
   @Test
   public void testTreatingAllEventsDuringRefreshAsOne() {
-    vcs.createDirectory("root", null);
+    vcs.createDirectory("root");
 
     l.beforeRefreshStart(false);
-    fireCreated(new TestVirtualFile("root/one", null, null));
-    fireCreated(new TestVirtualFile("root/two", null, null));
+    fireCreated(new TestVirtualFile("root/one", null, -1));
+    fireCreated(new TestVirtualFile("root/two", null, -1));
     l.afterRefreshFinish(false);
 
     assertEquals(2, vcs.getLabelsFor("root").size());
@@ -17,12 +17,12 @@ public class FileListenerRefreshingTest extends FileListenerTestCase {
 
   @Test
   public void testTreatingAllEventsAfterRefreshAsSeparate() {
-    vcs.createDirectory("root", null);
+    vcs.createDirectory("root");
 
     l.beforeRefreshStart(false);
     l.afterRefreshFinish(false);
-    fireCreated(new TestVirtualFile("root/one", null, null));
-    fireCreated(new TestVirtualFile("root/two", null, null));
+    fireCreated(new TestVirtualFile("root/one", null, -1));
+    fireCreated(new TestVirtualFile("root/two", null, -1));
 
     assertEquals(3, vcs.getLabelsFor("root").size());
   }

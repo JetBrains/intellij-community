@@ -23,7 +23,7 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
   public void testDoesNotListenBeforeStartup() {
     initWithoutStartup(createLocalVcs());
 
-    VirtualFile f = new TestVirtualFile("file", null);
+    VirtualFile f = new TestVirtualFile("file");
     fileManager.fireFileCreated(f);
 
     assertFalse(vcs.hasEntry("file"));
@@ -40,7 +40,7 @@ public class LocalVcsServiceFileListeningTest extends LocalVcsServiceTestCase {
   public void testUnsubscribingFromFileManagerOnShutdown() {
     service.shutdown();
 
-    VirtualFile f = new TestVirtualFile("file", null, null);
+    VirtualFile f = new TestVirtualFile("file", null, -1);
     fileManager.fireFileCreated(f);
 
     assertFalse(vcs.hasEntry("file"));

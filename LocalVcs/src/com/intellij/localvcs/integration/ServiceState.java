@@ -46,7 +46,7 @@ public abstract class ServiceState {
 
   private void createRecursively(VirtualFile f) {
     if (f.isDirectory()) {
-      myVcs.createDirectory(f.getPath(), f.getTimeStamp());
+      myVcs.createDirectory(f.getPath());
       for (VirtualFile child : f.getChildren()) createRecursively(child);
     }
     else {

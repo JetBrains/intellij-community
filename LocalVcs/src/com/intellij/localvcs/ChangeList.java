@@ -11,7 +11,7 @@ public class ChangeList {
   }
 
   public ChangeList(Stream s) throws IOException {
-    Integer count = s.readInteger();
+    int count = s.readInteger();
     while (count-- > 0) {
       myChangeSets.add(s.readChangeSet());
     }

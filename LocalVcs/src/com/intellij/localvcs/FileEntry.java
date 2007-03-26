@@ -5,22 +5,31 @@ import static com.intellij.localvcs.Difference.Kind.*;
 import java.io.IOException;
 
 public class FileEntry extends Entry {
+  private long myTimestamp;
   private Content myContent;
 
-  public FileEntry(Integer id, String name, Content content, Long timestamp) {
-    super(id, name, timestamp);
+  public FileEntry(int id, String name, Content content, long timestamp) {
+    super(id, name);
+    myTimestamp = timestamp;
     myContent = content;
   }
 
   public FileEntry(Stream s) throws IOException {
     super(s);
+    myTimestamp = s.readLong();
     myContent = s.readContent();
   }
 
   @Override
   public void write(Stream s) throws IOException {
     super.write(s);
+    s.writeLong(myTimestamp);
     s.writeContent(myContent);
+  }
+
+  @Override
+  public long getTimestamp() {
+    return myTimestamp;
   }
 
   @Override
@@ -34,7 +43,7 @@ public class FileEntry extends Entry {
   }
 
   @Override
-  public void changeContent(Content newContent, Long newTimestamp) {
+  public void changeContent(Content newContent, long newTimestamp) {
     myContent = newContent;
     myTimestamp = newTimestamp;
   }

@@ -23,7 +23,7 @@ public class MoveChange extends Change {
   }
 
   @Override
-  public void applyTo(RootEntry root) {
+  protected void doApplyTo(RootEntry root) {
     setFirstAffectedIdPath(root.getEntry(myPath).getIdPath());
     root.move(myPath, myNewParentPath);
     setSecondAffectedIdPath(root.getEntry(getNewPath()).getIdPath());

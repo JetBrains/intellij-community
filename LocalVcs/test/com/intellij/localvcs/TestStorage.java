@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestLocalVcsStorage extends LocalVcsStorage {
+public class TestStorage extends Storage {
   private Map<Integer, byte[]> myContents = new HashMap<Integer, byte[]>();
 
-  public TestLocalVcsStorage() {
+  public TestStorage() {
     super(null);
   }
 
@@ -26,6 +26,12 @@ public class TestLocalVcsStorage extends LocalVcsStorage {
 
   @Override
   public void store(LocalVcs.Memento m) {
+  }
+
+  @Override
+  public Content storeContent(byte[] bytes) {
+    if (bytes == null) return null;
+    return super.storeContent(bytes);
   }
 
   @Override

@@ -33,7 +33,7 @@ public class RenameChange extends Change {
   }
 
   @Override
-  public void applyTo(RootEntry root) {
+  protected void doApplyTo(RootEntry root) {
     Entry e = root.getEntry(myPath);
 
     // todo one more hack to support roots...

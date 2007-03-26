@@ -19,14 +19,14 @@ public class ContentTest extends LocalVcsTestCase {
 
   @Test
   public void testUnavailableIfExceptionOccurs() {
-    LocalVcsStorage goodStorage = new TestLocalVcsStorage() {
+    Storage goodStorage = new TestStorage() {
       @Override
       protected byte[] loadContentData(final int id) throws IOException {
         return new byte[0];
       }
     };
 
-    LocalVcsStorage brokenStorage = new TestLocalVcsStorage() {
+    Storage brokenStorage = new TestStorage() {
       @Override
       protected byte[] loadContentData(int id) throws IOException {
         throw new IOException();

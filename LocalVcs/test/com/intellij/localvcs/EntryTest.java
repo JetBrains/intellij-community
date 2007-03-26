@@ -4,17 +4,8 @@ import org.junit.Test;
 
 public class EntryTest extends LocalVcsTestCase {
   @Test
-  public void testOutdated() {
-    Entry e = new MyEntry(2L);
-    assertTrue(e.isOutdated(1L));
-    assertTrue(e.isOutdated(3L));
-
-    assertFalse(e.isOutdated(2L));
-  }
-
-  @Test
   public void testPathEquality() {
-    Entry e = new MyEntry(null) {
+    Entry e = new MyEntry() {
       @Override
       public String getPath() {
         return "path";
@@ -31,8 +22,8 @@ public class EntryTest extends LocalVcsTestCase {
   }
 
   private class MyEntry extends Entry {
-    public MyEntry(Long timestamp) {
-      super(null, null, timestamp);
+    public MyEntry() {
+      super(-1, null);
     }
 
     public Entry copy() {

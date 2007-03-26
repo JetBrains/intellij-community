@@ -78,7 +78,7 @@ public class FileHistoryDialogModel extends HistoryDialogModel {
       // todo review content stuff
       // todo it seems ugly
       final Entry e = getVcsEntry();
-      return new FileEntry(null, e.getName(), getCurrentContent(), myTimestamp) {
+      return new FileEntry(-1, e.getName(), getCurrentContent(), myTimestamp) {
         @Override
         public String getPath() {
           return e.getPath();

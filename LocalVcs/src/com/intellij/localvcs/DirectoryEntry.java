@@ -6,12 +6,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-// todo get rid of timestamp for this entry
 public class DirectoryEntry extends Entry {
   private List<Entry> myChildren;
 
-  public DirectoryEntry(Integer id, String name, Long timestamp) {
-    super(id, name, timestamp);
+  public DirectoryEntry(int id, String name) {
+    super(id, name);
     myChildren = new ArrayList<Entry>(3);
   }
 
@@ -33,7 +32,7 @@ public class DirectoryEntry extends Entry {
     }
   }
 
-  protected IdPath getIdPathAppendedWith(Integer id) {
+  protected IdPath getIdPathAppendedWith(int id) {
     return getIdPath().appendedWith(id);
   }
 
@@ -86,7 +85,7 @@ public class DirectoryEntry extends Entry {
   }
 
   protected DirectoryEntry copyEntry() {
-    return new DirectoryEntry(myId, myName, myTimestamp);
+    return new DirectoryEntry(myId, myName);
   }
 
   @Override
@@ -129,9 +128,9 @@ public class DirectoryEntry extends Entry {
     }
   }
 
-  protected Entry findDirectChild(Integer id) {
+  protected Entry findDirectChild(int id) {
     for (Entry child : getChildren()) {
-      if (child.getId().equals(id)) return child;
+      if (child.getId() == id) return child;
     }
     return null;
   }

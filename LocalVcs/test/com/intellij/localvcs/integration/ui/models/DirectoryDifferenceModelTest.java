@@ -27,8 +27,8 @@ public class DirectoryDifferenceModelTest extends LocalVcsTestCase {
 
   @Test
   public void testNames() {
-    Entry left = new DirectoryEntry(null, "left", null);
-    Entry right = new DirectoryEntry(null, "right", null);
+    Entry left = new DirectoryEntry(-1, "left");
+    Entry right = new DirectoryEntry(-1, "right");
 
     Difference d = new Difference(false, null, left, right);
     DirectoryDifferenceModel m = new DirectoryDifferenceModel(d);
@@ -48,8 +48,8 @@ public class DirectoryDifferenceModelTest extends LocalVcsTestCase {
 
   @Test
   public void testFileDifferenceModel() {
-    Entry left = new DirectoryEntry(null, "left", 123L);
-    Entry right = new DirectoryEntry(null, "right", 123L);
+    Entry left = new FileEntry(-1, "left", null, 123L);
+    Entry right = new FileEntry(-1, "right", null, 123L);
 
     Difference d = new Difference(false, null, left, right);
     DirectoryDifferenceModel nm = new DirectoryDifferenceModel(d);
@@ -61,8 +61,8 @@ public class DirectoryDifferenceModelTest extends LocalVcsTestCase {
 
   @Test
   public void testCanShowFileDifference() {
-    Entry left = new FileEntry(null, "left", null, null);
-    Entry right = new FileEntry(null, "right", null, null);
+    Entry left = new FileEntry(-1, "left", null, -1);
+    Entry right = new FileEntry(-1, "right", null, -1);
 
     Difference d1 = new Difference(true, null, left, right);
     Difference d2 = new Difference(true, null, null, right);
@@ -75,8 +75,8 @@ public class DirectoryDifferenceModelTest extends LocalVcsTestCase {
 
   @Test
   public void testCanNotShowFileDifferenceForDirectories() {
-    Entry left = new DirectoryEntry(null, "left", null);
-    Entry right = new DirectoryEntry(null, "right", null);
+    Entry left = new DirectoryEntry(-1, "left");
+    Entry right = new DirectoryEntry(-1, "right");
 
     Difference d = new Difference(false, null, left, right);
     assertFalse(new DirectoryDifferenceModel(d).canShowFileDifference());
@@ -84,7 +84,7 @@ public class DirectoryDifferenceModelTest extends LocalVcsTestCase {
 
   @Test
   public void testIconsForFile() {
-    Entry e = new FileEntry(null, "file", null, null);
+    Entry e = new FileEntry(-1, "file", null, -1);
     Difference d = new Difference(true, null, e, e);
     DirectoryDifferenceModel m = new DirectoryDifferenceModel(d);
 
@@ -96,8 +96,8 @@ public class DirectoryDifferenceModelTest extends LocalVcsTestCase {
 
   @Test
   public void testIconsForDifferentFiles() {
-    Entry e1 = new FileEntry(null, "one", null, null);
-    Entry e2 = new FileEntry(null, "two", null, null);
+    Entry e1 = new FileEntry(-1, "one", null, -1);
+    Entry e2 = new FileEntry(-1, "two", null, -1);
 
     Difference d = new Difference(true, null, e1, e2);
     DirectoryDifferenceModel m = new DirectoryDifferenceModel(d);
@@ -111,8 +111,8 @@ public class DirectoryDifferenceModelTest extends LocalVcsTestCase {
 
   @Test
   public void testIconsForFileWhenOneEntryIsNull() {
-    Entry e1 = new FileEntry(null, "file1", null, null);
-    Entry e2 = new FileEntry(null, "file2", null, null);
+    Entry e1 = new FileEntry(-1, "file1", null, -1);
+    Entry e2 = new FileEntry(-1, "file2", null, -1);
 
     Difference d1 = new Difference(true, null, e1, null);
     Difference d2 = new Difference(true, null, null, e2);
@@ -130,7 +130,7 @@ public class DirectoryDifferenceModelTest extends LocalVcsTestCase {
 
   @Test
   public void testIconsForDirectory() {
-    Entry e = new DirectoryEntry(null, null, null);
+    Entry e = new DirectoryEntry(-1, null);
     Difference d = new Difference(false, null, e, e);
     DirectoryDifferenceModel m = new DirectoryDifferenceModel(d);
 
@@ -142,7 +142,7 @@ public class DirectoryDifferenceModelTest extends LocalVcsTestCase {
 
   @Test
   public void testIconsForDirectoryWhenOneEntryIsNull() {
-    Entry e = new DirectoryEntry(null, null, null);
+    Entry e = new DirectoryEntry(-1, null);
     Difference d = new Difference(false, null, e, null);
     DirectoryDifferenceModel m = new DirectoryDifferenceModel(d);
 

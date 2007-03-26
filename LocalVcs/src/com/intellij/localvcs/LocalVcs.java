@@ -3,11 +3,11 @@ package com.intellij.localvcs;
 import java.util.*;
 
 public class LocalVcs implements ILocalVcs {
-  private LocalVcsStorage myStorage;
+  private Storage myStorage;
 
   private ChangeList myChangeList;
   private RootEntry myRoot;
-  private Integer myEntryCounter;
+  private int myEntryCounter;
 
   private int myInnerChangeSetCounter = 0;
   private boolean wasSaveRequestedDuringChangeSet = false;
@@ -15,7 +15,7 @@ public class LocalVcs implements ILocalVcs {
   // todo change type to something else (for example to LinkedList)
   private List<Change> myPendingChanges = new ArrayList<Change>();
 
-  public LocalVcs(LocalVcsStorage s) {
+  public LocalVcs(Storage s) {
     // todo try to get rid of need to pass the parameter
     myStorage = s;
     load();
@@ -30,6 +30,7 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public void save() {
+    // todo a bit of hack... move it to service state
     if (shouldPostpondSave()) return;
 
     purgeUpTo(getCurrentTimestamp() - getPurgingInterval());
@@ -44,7 +45,6 @@ public class LocalVcs implements ILocalVcs {
   }
 
   private boolean shouldPostpondSave() {
-    // todo a bit of hack... move it to service states
     if (!isInChangeSet()) return false;
 
     wasSaveRequestedDuringChangeSet = true;
@@ -88,31 +88,24 @@ public class LocalVcs implements ILocalVcs {
     return myInnerChangeSetCounter > 0;
   }
 
-  public void createFile(String path, byte[] content, Long timestamp) {
+  public void createFile(String path, byte[] content, long timestamp) {
     Content c = contentFromString(content);
     applyChange(new CreateFileChange(getNextId(), path, c, timestamp));
   }
 
   private Content contentFromString(byte[] data) {
-    try {
-      // todo review: this is only for tests
-      if (data == null) return null;
-      return myStorage.storeContent(data);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    return myStorage.storeContent(data);
   }
 
-  public void createDirectory(String path, Long timestamp) {
-    applyChange(new CreateDirectoryChange(getNextId(), path, timestamp));
+  public void createDirectory(String path) {
+    applyChange(new CreateDirectoryChange(getNextId(), path));
   }
 
-  private Integer getNextId() {
+  private int getNextId() {
     return myEntryCounter++;
   }
 
-  public void changeFileContent(String path, byte[] content, Long timestamp) {
+  public void changeFileContent(String path, byte[] content, long timestamp) {
     Content c = contentFromString(content);
     applyChange(new ChangeFileContentChange(path, c, timestamp));
   }
@@ -138,6 +131,8 @@ public class LocalVcs implements ILocalVcs {
   }
 
   private void registerChangeSet(String label) {
+    //if(myPendingChanges.isEmpty()) return;
+
     ChangeSet cs = new ChangeSet(getCurrentTimestamp(), label, myPendingChanges);
     myChangeList.addChangeSet(cs);
     clearPendingChanges();
@@ -186,7 +181,7 @@ public class LocalVcs implements ILocalVcs {
 
   public static class Memento {
     public RootEntry myRoot = new RootEntry();
-    public Integer myEntryCounter = 0;
+    public int myEntryCounter = 0;
     public ChangeList myChangeList = new ChangeList();
   }
 }

@@ -8,8 +8,8 @@ public class LocalVcsServiceRootsOnUpdateTest extends LocalVcsServiceTestCase {
 
   @Test
   public void testAddingRootsWithFiles() {
-    root = new TestVirtualFile("root", null);
-    root.addChild(new TestVirtualFile("file", "", null));
+    root = new TestVirtualFile("root");
+    root.addChild(new TestVirtualFile("file", "", -1));
     roots.add(root);
 
     fireUpdateRoots();
@@ -20,8 +20,8 @@ public class LocalVcsServiceRootsOnUpdateTest extends LocalVcsServiceTestCase {
 
   @Test
   public void testAddingRootsWithFiltering() {
-    TestVirtualFile f = new TestVirtualFile("file", "", null);
-    root = new TestVirtualFile("root", null);
+    TestVirtualFile f = new TestVirtualFile("file", "", -1);
+    root = new TestVirtualFile("root");
     root.addChild(f);
     roots.add(root);
 
@@ -34,7 +34,7 @@ public class LocalVcsServiceRootsOnUpdateTest extends LocalVcsServiceTestCase {
 
   @Test
   public void testRemovingRoots() {
-    vcs.createDirectory("root", null);
+    vcs.createDirectory("root");
 
     roots.clear();
     fireUpdateRoots();
@@ -44,11 +44,11 @@ public class LocalVcsServiceRootsOnUpdateTest extends LocalVcsServiceTestCase {
 
   @Test
   public void testRenamingContentRoot() {
-    vcs.createDirectory("c:/dir/root", null);
-    vcs.createFile("c:/dir/root/file", null, null);
+    vcs.createDirectory("c:/dir/root");
+    vcs.createFile("c:/dir/root/file", null, -1);
 
-    TestVirtualFile dir = new TestVirtualFile("c:/dir", null);
-    root = new TestVirtualFile("newName", null);
+    TestVirtualFile dir = new TestVirtualFile("c:/dir");
+    root = new TestVirtualFile("newName");
     dir.addChild(root);
 
     fileManager.firePropertyChanged(root, VirtualFile.PROP_NAME, "root");
@@ -60,9 +60,9 @@ public class LocalVcsServiceRootsOnUpdateTest extends LocalVcsServiceTestCase {
 
   @Test
   public void testDeletingContentRootExternally() {
-    vcs.createDirectory("root", null);
+    vcs.createDirectory("root");
 
-    root = new TestVirtualFile("root", null);
+    root = new TestVirtualFile("root");
 
     fileManager.fireFileDeletion(root);
     assertFalse(vcs.hasEntry("root"));

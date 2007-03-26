@@ -18,8 +18,8 @@ public class FileEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testDoesNotCopyParent() {
-    DirectoryEntry parent = new DirectoryEntry(null, null, null);
-    FileEntry file = new FileEntry(null, null, null, null);
+    DirectoryEntry parent = new DirectoryEntry(-1, null);
+    FileEntry file = new FileEntry(-1, null, null, -1);
 
     parent.addChild(file);
 
@@ -29,15 +29,26 @@ public class FileEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testRenaming() {
-    Entry e = new FileEntry(null, "name", null, null);
+    Entry e = new FileEntry(-1, "name", null, -1);
     e.changeName("new name");
     assertEquals("new name", e.getName());
   }
 
   @Test
+  public void testOutdated() {
+    Entry e = new FileEntry(-1, "name", null, 2L);
+
+    assertTrue(e.isOutdated(1L));
+    assertTrue(e.isOutdated(3L));
+
+    assertFalse(e.isOutdated(2L));
+  }
+
+
+  @Test
   public void testNoDifference() {
-    FileEntry e1 = new FileEntry(null, "name", c("content"), null);
-    FileEntry e2 = new FileEntry(null, "name", c("content"), null);
+    FileEntry e1 = new FileEntry(-1, "name", c("content"), -1);
+    FileEntry e2 = new FileEntry(-1, "name", c("content"), -1);
 
     Difference d = e1.getDifferenceWith(e2);
     assertEquals(NOT_MODIFIED, d.getKind());
@@ -47,8 +58,8 @@ public class FileEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceInName() {
-    Entry e1 = new FileEntry(null, "name", c("content"), null);
-    Entry e2 = new FileEntry(null, "another name", c("content"), null);
+    Entry e1 = new FileEntry(-1, "name", c("content"), -1);
+    Entry e2 = new FileEntry(-1, "another name", c("content"), -1);
 
     Difference d = e1.getDifferenceWith(e2);
     assertEquals(MODIFIED, d.getKind());
@@ -58,8 +69,8 @@ public class FileEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceInNameIsAlwaysCaseSensitive() {
-    Entry e1 = new FileEntry(null, "name", c(""), null);
-    Entry e2 = new FileEntry(null, "NAME", c(""), null);
+    Entry e1 = new FileEntry(-1, "name", c(""), -1);
+    Entry e2 = new FileEntry(-1, "NAME", c(""), -1);
 
     Paths.setCaseSensitive(false);
     assertEquals(MODIFIED, e1.getDifferenceWith(e2).getKind());
@@ -70,8 +81,8 @@ public class FileEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceInContent() {
-    FileEntry e1 = new FileEntry(null, "name", c("content"), null);
-    FileEntry e2 = new FileEntry(null, "name", c("another content"), null);
+    FileEntry e1 = new FileEntry(-1, "name", c("content"), -1);
+    FileEntry e2 = new FileEntry(-1, "name", c("another content"), -1);
 
     Difference d = e1.getDifferenceWith(e2);
     assertEquals(MODIFIED, d.getKind());
@@ -81,7 +92,7 @@ public class FileEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testAsCreatedDifference() {
-    FileEntry e = new FileEntry(null, null, null, null);
+    FileEntry e = new FileEntry(-1, null, null, -1);
 
     Difference d = e.asCreatedDifference();
 
@@ -93,7 +104,7 @@ public class FileEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testAsDeletedDifference() {
-    FileEntry e = new FileEntry(null, null, null, null);
+    FileEntry e = new FileEntry(-1, null, null, -1);
 
     Difference d = e.asDeletedDifference();
 

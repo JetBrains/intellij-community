@@ -4,10 +4,10 @@ public class TestLocalVcs extends LocalVcs {
   private long myPurgingInterval;
 
   public TestLocalVcs() {
-    this(new TestLocalVcsStorage());
+    this(new TestStorage());
   }
 
-  public TestLocalVcs(LocalVcsStorage s) {
+  public TestLocalVcs(Storage s) {
     super(s);
   }
 

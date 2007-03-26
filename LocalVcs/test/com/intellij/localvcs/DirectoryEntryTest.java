@@ -8,8 +8,8 @@ import java.util.List;
 public class DirectoryEntryTest extends LocalVcsTestCase {
   @Test
   public void testAddingChildren() {
-    Entry dir = new DirectoryEntry(null, null, null);
-    Entry file = new FileEntry(null, null, null, null);
+    Entry dir = new DirectoryEntry(-1, null);
+    Entry file = new FileEntry(-1, null, null, -1);
 
     dir.addChild(file);
 
@@ -21,20 +21,20 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testAddingExistentChildThrowsException() {
-    Entry dir = new DirectoryEntry(null, "dir", null);
-    dir.addChild(new FileEntry(null, "child", null, null));
+    Entry dir = new DirectoryEntry(-1, "dir");
+    dir.addChild(new FileEntry(-1, "child", null, -1));
 
     Paths.setCaseSensitive(true);
 
     try {
-      dir.addChild(new FileEntry(null, "CHILD", null, null));
+      dir.addChild(new FileEntry(-1, "CHILD", null, -1));
     }
     catch (RuntimeException e) {
       fail();
     }
 
     try {
-      dir.addChild(new FileEntry(null, "child", null, null));
+      dir.addChild(new FileEntry(-1, "child", null, -1));
       fail();
     }
     catch (RuntimeException e) {
@@ -44,7 +44,7 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
     Paths.setCaseSensitive(false);
 
     try {
-      dir.addChild(new FileEntry(null, "CHILD", null, null));
+      dir.addChild(new FileEntry(-1, "CHILD", null, -1));
       fail();
     }
     catch (RuntimeException e) {
@@ -53,8 +53,8 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testRemovingChildren() {
-    Entry dir = new DirectoryEntry(null, null, null);
-    Entry file = new FileEntry(null, null, null, null);
+    Entry dir = new DirectoryEntry(-1, null);
+    Entry file = new FileEntry(-1, null, null, -1);
 
     dir.addChild(file);
     assertFalse(dir.getChildren().isEmpty());
@@ -66,9 +66,9 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testFindChild() {
-    Entry dir = new DirectoryEntry(null, null, null);
-    Entry one = new FileEntry(null, "one", null, null);
-    Entry two = new FileEntry(null, "two", null, null);
+    Entry dir = new DirectoryEntry(-1, null);
+    Entry one = new FileEntry(-1, "one", null, -1);
+    Entry two = new FileEntry(-1, "two", null, -1);
 
     dir.addChild(one);
     dir.addChild(two);
@@ -87,9 +87,9 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testChildById() {
-    DirectoryEntry dir = new DirectoryEntry(null, null, null);
-    Entry file1 = new FileEntry(1, "file1", null, null);
-    Entry file2 = new FileEntry(2, "file2", null, null);
+    DirectoryEntry dir = new DirectoryEntry(-1, null);
+    Entry file1 = new FileEntry(1, "file1", null, -1);
+    Entry file2 = new FileEntry(2, "file2", null, -1);
 
     dir.addChild(file1);
     dir.addChild(file2);
@@ -102,8 +102,8 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testIdPath() {
-    Entry dir = new DirectoryEntry(1, null, null);
-    Entry file = new FileEntry(2, null, null, null);
+    Entry dir = new DirectoryEntry(1, null);
+    Entry file = new FileEntry(2, null, null, -1);
 
     dir.addChild(file);
 
@@ -112,8 +112,8 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testPath() {
-    Entry dir = new DirectoryEntry(null, "dir", null);
-    Entry file = new FileEntry(null, "file", null, null);
+    Entry dir = new DirectoryEntry(-1, "dir");
+    Entry file = new FileEntry(-1, "file", null, -1);
 
     dir.addChild(file);
 
@@ -122,24 +122,23 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testPathWithoutParent() {
-    assertEquals("dir", new DirectoryEntry(null, "dir", null).getPath());
-    assertEquals("file", new FileEntry(null, "file", null, null).getPath());
+    assertEquals("dir", new DirectoryEntry(-1, "dir").getPath());
+    assertEquals("file", new FileEntry(-1, "file", null, -1).getPath());
   }
 
   @Test
   public void testCopyingWithContent() {
-    Entry dir = new DirectoryEntry(42, "name", 123L);
+    Entry dir = new DirectoryEntry(42, "name");
     Entry copy = dir.copy();
 
     assertEquals(42, copy.getId());
     assertEquals("name", copy.getPath());
-    assertEquals(123L, copy.getTimestamp());
   }
 
   @Test
   public void testDoesNotCopyParent() {
-    Entry parent = new DirectoryEntry(null, null, null);
-    Entry dir = new DirectoryEntry(null, null, null);
+    Entry parent = new DirectoryEntry(-1, null);
+    Entry dir = new DirectoryEntry(-1, null);
 
     parent.addChild(dir);
 
@@ -148,10 +147,10 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testCopyingContentRecursively() {
-    Entry dir = new DirectoryEntry(null, null, null);
-    Entry child1 = new FileEntry(1, "child1", null, null);
-    Entry child2 = new DirectoryEntry(2, "child2", null);
-    Entry child3 = new FileEntry(3, "child3", null, null);
+    Entry dir = new DirectoryEntry(-1, null);
+    Entry child1 = new FileEntry(1, "child1", null, -1);
+    Entry child2 = new DirectoryEntry(2, "child2");
+    Entry child3 = new FileEntry(3, "child3", null, -1);
 
     dir.addChild(child1);
     dir.addChild(child2);
@@ -178,10 +177,10 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testCopyingContentDoesNotChangeOriginalStructure() {
-    Entry dir = new DirectoryEntry(null, null, null);
-    Entry child1 = new FileEntry(1, "child1", null, null);
-    Entry child2 = new DirectoryEntry(2, "child2", null);
-    Entry child3 = new FileEntry(3, "child3", null, null);
+    Entry dir = new DirectoryEntry(-1, null);
+    Entry child1 = new FileEntry(1, "child1", null, -1);
+    Entry child2 = new DirectoryEntry(2, "child2");
+    Entry child3 = new FileEntry(3, "child3", null, -1);
 
     dir.addChild(child1);
     dir.addChild(child2);
@@ -196,15 +195,15 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testRenaming() {
-    Entry e = new DirectoryEntry(null, "name", null);
+    Entry e = new DirectoryEntry(-1, "name");
     e.changeName("new name");
     assertEquals("new name", e.getName());
   }
 
   @Test
   public void testNoDifference() {
-    DirectoryEntry e1 = new DirectoryEntry(null, "name", null);
-    DirectoryEntry e2 = new DirectoryEntry(null, "name", null);
+    DirectoryEntry e1 = new DirectoryEntry(-1, "name");
+    DirectoryEntry e2 = new DirectoryEntry(-1, "name");
 
     Difference d = e1.getDifferenceWith(e2);
     assertEquals(NOT_MODIFIED, d.getKind());
@@ -214,8 +213,8 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceInName() {
-    DirectoryEntry e1 = new DirectoryEntry(null, "name", null);
-    DirectoryEntry e2 = new DirectoryEntry(null, "another name", null);
+    DirectoryEntry e1 = new DirectoryEntry(-1, "name");
+    DirectoryEntry e2 = new DirectoryEntry(-1, "another name");
 
     Difference d = e1.getDifferenceWith(e2);
 
@@ -227,8 +226,8 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceInNameIsAlwaysCaseSensitive() {
-    DirectoryEntry e1 = new DirectoryEntry(null, "name", null);
-    DirectoryEntry e2 = new DirectoryEntry(null, "NAME", null);
+    DirectoryEntry e1 = new DirectoryEntry(-1, "name");
+    DirectoryEntry e2 = new DirectoryEntry(-1, "NAME");
 
     Paths.setCaseSensitive(false);
     assertEquals(MODIFIED, e1.getDifferenceWith(e2).getKind());
@@ -239,10 +238,10 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceWithCreatedChild() {
-    Entry e1 = new DirectoryEntry(null, "name", null);
-    Entry e2 = new DirectoryEntry(null, "name", null);
+    Entry e1 = new DirectoryEntry(-1, "name");
+    Entry e2 = new DirectoryEntry(-1, "name");
 
-    Entry child = new FileEntry(1, "name", c("content"), null);
+    Entry child = new FileEntry(1, "name", c("content"), -1);
     e2.addChild(child);
 
     Difference d = e1.getDifferenceWith(e2);
@@ -260,11 +259,11 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceWithCreatedChildWithSubChildren() {
-    Entry dir1 = new DirectoryEntry(null, "name", null);
-    Entry dir2 = new DirectoryEntry(null, "name", null);
+    Entry dir1 = new DirectoryEntry(-1, "name");
+    Entry dir2 = new DirectoryEntry(-1, "name");
 
-    Entry subDir = new DirectoryEntry(null, "subDir", null);
-    Entry subSubFile = new FileEntry(null, "subSubFile", null, null);
+    Entry subDir = new DirectoryEntry(-1, "subDir");
+    Entry subSubFile = new FileEntry(-1, "subSubFile", null, -1);
 
     dir2.addChild(subDir);
     subDir.addChild(subSubFile);
@@ -290,11 +289,11 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceWithDeletedChild() {
-    Entry dir1 = new DirectoryEntry(null, "name", null);
-    Entry dir2 = new DirectoryEntry(null, "name", null);
+    Entry dir1 = new DirectoryEntry(-1, "name");
+    Entry dir2 = new DirectoryEntry(-1, "name");
 
-    Entry subDir = new DirectoryEntry(1, "subDir", null);
-    Entry subSubFile = new FileEntry(2, "subSubFile", null, null);
+    Entry subDir = new DirectoryEntry(1, "subDir");
+    Entry subSubFile = new FileEntry(2, "subSubFile", null, -1);
 
     dir1.addChild(subDir);
     subDir.addChild(subSubFile);
@@ -325,11 +324,11 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceWithModifiedChild() {
-    Entry e1 = new DirectoryEntry(null, "name", null);
-    Entry e2 = new DirectoryEntry(null, "name", null);
+    Entry e1 = new DirectoryEntry(-1, "name");
+    Entry e2 = new DirectoryEntry(-1, "name");
 
-    Entry child1 = new FileEntry(1, "name1", c("content"), null);
-    Entry child2 = new FileEntry(1, "name2", c("content"), null);
+    Entry child1 = new FileEntry(1, "name1", c("content"), -1);
+    Entry child2 = new FileEntry(1, "name2", c("content"), -1);
 
     e1.addChild(child1);
     e2.addChild(child2);
@@ -349,13 +348,13 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testNoesNotIncludeNonModifiedChildDifferences() {
-    Entry e1 = new DirectoryEntry(null, "name", null);
-    Entry e2 = new DirectoryEntry(null, "name", null);
+    Entry e1 = new DirectoryEntry(-1, "name");
+    Entry e2 = new DirectoryEntry(-1, "name");
 
-    e1.addChild(new FileEntry(1, "name", c("content"), null));
-    e2.addChild(new FileEntry(1, "name", c("content"), null));
+    e1.addChild(new FileEntry(1, "name", c("content"), -1));
+    e2.addChild(new FileEntry(1, "name", c("content"), -1));
 
-    e1.addChild(new FileEntry(2, "another name", c("content"), null));
+    e1.addChild(new FileEntry(2, "another name", c("content"), -1));
 
     Difference d = e1.getDifferenceWith(e2);
     assertEquals(1, d.getChildren().size());
@@ -365,11 +364,11 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceWithNotModifiedChildWithDifferentIdentity() {
-    Entry e1 = new DirectoryEntry(null, "name", null);
-    Entry e2 = new DirectoryEntry(null, "name", null);
+    Entry e1 = new DirectoryEntry(-1, "name");
+    Entry e2 = new DirectoryEntry(-1, "name");
 
-    e1.addChild(new FileEntry(1, "name", c("content"), null));
-    e2.addChild(new FileEntry(1, "name", c("content"), null));
+    e1.addChild(new FileEntry(1, "name", c("content"), -1));
+    e2.addChild(new FileEntry(1, "name", c("content"), -1));
 
     Difference d = e1.getDifferenceWith(e2);
     assertEquals(NOT_MODIFIED, d.getKind());
@@ -381,11 +380,11 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceWithModifiedBothSubjectAndChild() {
-    Entry e1 = new DirectoryEntry(null, "name1", null);
-    Entry e2 = new DirectoryEntry(null, "name2", null);
+    Entry e1 = new DirectoryEntry(-1, "name1");
+    Entry e2 = new DirectoryEntry(-1, "name2");
 
-    Entry child1 = new FileEntry(1, "name1", c("content"), null);
-    Entry child2 = new FileEntry(1, "name2", c("content"), null);
+    Entry child1 = new FileEntry(1, "name1", c("content"), -1);
+    Entry child2 = new FileEntry(1, "name2", c("content"), -1);
 
     e1.addChild(child1);
     e2.addChild(child2);

@@ -19,12 +19,13 @@ public class IdPath {
 
   public void write(Stream s) throws IOException {
     s.writeInteger(myParts.length);
-    for (Integer id : myParts) {
+    // todo try to change with writeArray method
+    for (int id : myParts) {
       s.writeInteger(id);
     }
   }
 
-  public Integer getName() {
+  public int getName() {
     return myParts[myParts.length - 1];
   }
 
@@ -35,7 +36,7 @@ public class IdPath {
     return new IdPath(newPath);
   }
 
-  public IdPath appendedWith(Integer id) {
+  public IdPath appendedWith(int id) {
     // todo use Arrays.copyOf after going to 1.6 
     int[] newPath = new int[myParts.length + 1];
     System.arraycopy(myParts, 0, newPath, 0, myParts.length);
@@ -43,9 +44,9 @@ public class IdPath {
     return new IdPath(newPath);
   }
 
-  public boolean contains(Integer id) {
-    for (Integer part : myParts) {
-      if (part.equals(id)) return true;
+  public boolean contains(int id) {
+    for (int part : myParts) {
+      if (part == id) return true;
     }
     return false;
   }

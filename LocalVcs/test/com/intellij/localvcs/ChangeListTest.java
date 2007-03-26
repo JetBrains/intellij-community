@@ -10,8 +10,8 @@ public class ChangeListTest extends LocalVcsTestCase {
 
   @Test
   public void testRevertion() {
-    applyAndAddChangeSet(cs("1", new CreateFileChange(1, "file1", null, null)));
-    applyAndAddChangeSet(cs("2", new CreateFileChange(2, "file2", null, null)));
+    applyAndAddChangeSet(cs("1", new CreateFileChange(1, "file1", null, -1)));
+    applyAndAddChangeSet(cs("2", new CreateFileChange(2, "file2", null, -1)));
 
     RootEntry copy = r.copy();
     cl.revertUpToChangeSet(copy, cl.getChangeSets().get(1));
@@ -26,8 +26,8 @@ public class ChangeListTest extends LocalVcsTestCase {
 
   @Test
   public void tesChangesForFile() {
-    applyAndAddChangeSet(cs("1", new CreateFileChange(1, "file", null, null)));
-    applyAndAddChangeSet(cs("2", new ChangeFileContentChange("file", null, null)));
+    applyAndAddChangeSet(cs("1", new CreateFileChange(1, "file", null, -1)));
+    applyAndAddChangeSet(cs("2", new ChangeFileContentChange("file", null, -1)));
 
     List<ChangeSet> result = getChangeSetsFor("file");
 
@@ -39,23 +39,23 @@ public class ChangeListTest extends LocalVcsTestCase {
 
   @Test
   public void testSeveralChangesForSameFileInOneChangeSet() {
-    applyAndAddChangeSet(cs(new CreateFileChange(1, "file", null, null), new ChangeFileContentChange("file", null, null)));
+    applyAndAddChangeSet(cs(new CreateFileChange(1, "file", null, -1), new ChangeFileContentChange("file", null, -1)));
 
     assertEquals(1, getChangeSetsFor("file").size());
   }
 
   @Test
   public void testChangeSetsWithChangesForAnotherFile() {
-    applyAndAddChangeSet(cs(new CreateFileChange(1, "file1", null, null), new CreateFileChange(2, "file2", null, null)));
+    applyAndAddChangeSet(cs(new CreateFileChange(1, "file1", null, -1), new CreateFileChange(2, "file2", null, -1)));
 
     assertEquals(1, getChangeSetsFor("file1").size());
   }
 
   @Test
   public void testDoesNotIncludeNonrelativeChangeSet() {
-    applyAndAddChangeSet(cs("1", new CreateFileChange(1, "file1", null, null)));
-    applyAndAddChangeSet(cs("2", new CreateFileChange(2, "file2", null, null)));
-    applyAndAddChangeSet(cs("3", new ChangeFileContentChange("file1", null, null)));
+    applyAndAddChangeSet(cs("1", new CreateFileChange(1, "file1", null, -1)));
+    applyAndAddChangeSet(cs("2", new CreateFileChange(2, "file2", null, -1)));
+    applyAndAddChangeSet(cs("3", new ChangeFileContentChange("file1", null, -1)));
 
     List<ChangeSet> result = getChangeSetsFor("file1");
     assertEquals(2, result.size());
@@ -66,16 +66,16 @@ public class ChangeListTest extends LocalVcsTestCase {
 
   @Test
   public void testChangeSetsForDirectories() {
-    applyAndAddChangeSet(cs(new CreateDirectoryChange(1, "dir", null)));
-    applyAndAddChangeSet(cs(new CreateFileChange(2, "dir/file", null, null)));
+    applyAndAddChangeSet(cs(new CreateDirectoryChange(1, "dir")));
+    applyAndAddChangeSet(cs(new CreateFileChange(2, "dir/file", null, -1)));
 
     assertEquals(2, getChangeSetsFor("dir").size());
   }
 
   @Test
   public void testChangeSetsForDirectoriesWithFilesMovedAround() {
-    applyAndAddChangeSet(cs("1", new CreateDirectoryChange(1, "dir1", null), new CreateDirectoryChange(2, "dir2", null)));
-    applyAndAddChangeSet(cs("2", new CreateFileChange(3, "dir1/file", null, null)));
+    applyAndAddChangeSet(cs("1", new CreateDirectoryChange(1, "dir1"), new CreateDirectoryChange(2, "dir2")));
+    applyAndAddChangeSet(cs("2", new CreateFileChange(3, "dir1/file", null, -1)));
     applyAndAddChangeSet(cs("3", new MoveChange("dir1/file", "dir2")));
 
     List<ChangeSet> cs1 = getChangeSetsFor("dir1");
@@ -93,9 +93,9 @@ public class ChangeListTest extends LocalVcsTestCase {
 
   @Test
   public void testChangeSetsForMovedFiles() {
-    applyAndAddChangeSet(cs(new CreateDirectoryChange(1, "dir1", null), new CreateDirectoryChange(2, "dir2", null)));
+    applyAndAddChangeSet(cs(new CreateDirectoryChange(1, "dir1"), new CreateDirectoryChange(2, "dir2")));
 
-    applyAndAddChangeSet(cs(new CreateFileChange(3, "dir1/file", null, null)));
+    applyAndAddChangeSet(cs(new CreateFileChange(3, "dir1/file", null, -1)));
     applyAndAddChangeSet(cs(new MoveChange("dir1/file", "dir2")));
 
     assertEquals(2, getChangeSetsFor("dir2/file").size());
@@ -103,8 +103,8 @@ public class ChangeListTest extends LocalVcsTestCase {
 
   @Test
   public void testChangingParentDoesNotChangesItsChildren() {
-    applyAndAddChangeSet(cs(new CreateDirectoryChange(1, "d1", null), new CreateDirectoryChange(2, "d2", null),
-                            new CreateFileChange(3, "d1/file", null, null)));
+    applyAndAddChangeSet(
+      cs(new CreateDirectoryChange(1, "d1"), new CreateDirectoryChange(2, "d2"), new CreateFileChange(3, "d1/file", null, -1)));
 
     assertEquals(1, getChangeSetsFor("d1/file").size());
 
@@ -115,9 +115,9 @@ public class ChangeListTest extends LocalVcsTestCase {
 
   @Test
   public void testChangeSetsForComplexMovingCase() {
-    applyAndAddChangeSet(cs(new CreateDirectoryChange(1, "d1", null), new CreateFileChange(2, "d1/file", null, null),
-                            new CreateDirectoryChange(3, "d1/d11", null), new CreateDirectoryChange(4, "d1/d12", null),
-                            new CreateDirectoryChange(5, "d2", null)));
+    applyAndAddChangeSet(cs(new CreateDirectoryChange(1, "d1"), new CreateFileChange(2, "d1/file", null, -1),
+                            new CreateDirectoryChange(3, "d1/d11"), new CreateDirectoryChange(4, "d1/d12"),
+                            new CreateDirectoryChange(5, "d2")));
 
     applyAndAddChangeSet(cs(new MoveChange("d1/file", "d1/d11")));
     applyAndAddChangeSet(cs(new MoveChange("d1/d11/file", "d1/d12")));
@@ -138,8 +138,8 @@ public class ChangeListTest extends LocalVcsTestCase {
 
   @Test
   public void testChangeSetForFileMovedIntoCreatedDir() {
-    ChangeSet cs1 = cs(new CreateFileChange(1, "file", null, null));
-    ChangeSet cs2 = cs(new CreateDirectoryChange(2, "dir", null));
+    ChangeSet cs1 = cs(new CreateFileChange(1, "file", null, -1));
+    ChangeSet cs2 = cs(new CreateDirectoryChange(2, "dir"));
     ChangeSet cs3 = cs(new MoveChange("file", "dir"));
     applyAndAddChangeSet(cs1);
     applyAndAddChangeSet(cs2);

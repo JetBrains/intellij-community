@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ContentStorageTest extends PerformanceTest {
+public class ContentStorageTest extends PerformanceTestCase {
   int ITERATIONS_COUNT = 1000;
   int MAX_RECORD_SIZE = 20 * 1024;
 
@@ -83,7 +83,7 @@ public class ContentStorageTest extends PerformanceTest {
   @Test
   public void testStorageSizeOfterManyModifications() throws IOException {
     modifyStorageManyTimes();
-    assertEquals(15, sf.length() / (1024 * 1024));
+    assertEquals(15, (int)sf.length() / (1024 * 1024));
   }
 
   private List<Integer> createContentsOfDifferentSize() throws IOException {

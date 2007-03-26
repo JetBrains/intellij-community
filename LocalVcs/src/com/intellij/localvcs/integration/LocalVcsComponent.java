@@ -3,7 +3,7 @@ package com.intellij.localvcs.integration;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.localvcs.ILocalVcs;
 import com.intellij.localvcs.LocalVcs;
-import com.intellij.localvcs.LocalVcsStorage;
+import com.intellij.localvcs.Storage;
 import com.intellij.localvcs.ThreadSafeLocalVcs;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -26,7 +26,7 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   private ProjectRootManagerEx myRootManager;
   private VirtualFileManagerEx myFileManager;
   private CommandProcessor myCommandProcessor;
-  private LocalVcsStorage myStorage;
+  private Storage myStorage;
   private ILocalVcs myVcs;
   private LocalVcsService myService;
 
@@ -63,7 +63,7 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   }
 
   protected void initVcs() {
-    myStorage = new LocalVcsStorage(getStorageDir());
+    myStorage = new Storage(getStorageDir());
     myVcs = new ThreadSafeLocalVcs(new LocalVcs(myStorage));
   }
 

@@ -35,7 +35,7 @@ public class FileListenerListeningTest extends FileListenerTestCase {
   public void testTakingPhysicalFileContentOnCreation() {
     configureToReturnPhysicalContent("physical");
 
-    VirtualFile f = new TestVirtualFile("f", "memory", null);
+    VirtualFile f = new TestVirtualFile("f", "memory", -1);
     fireCreated(f);
 
     assertEquals(c("physical"), vcs.getEntry("f").getContent());
@@ -43,21 +43,19 @@ public class FileListenerListeningTest extends FileListenerTestCase {
 
   @Test
   public void testCreatingDirectories() {
-    VirtualFile f = new TestVirtualFile("dir", 345L);
+    VirtualFile f = new TestVirtualFile("dir");
     fireCreated(f);
 
     Entry e = vcs.findEntry("dir");
     assertNotNull(e);
-
     assertTrue(e.isDirectory());
-    assertEquals(345L, e.getTimestamp());
   }
 
   @Test
   public void testCreatingDirectoriesWithChildren() {
-    TestVirtualFile dir1 = new TestVirtualFile("dir1", null);
-    TestVirtualFile dir2 = new TestVirtualFile("dir2", null);
-    TestVirtualFile file = new TestVirtualFile("file", "", null);
+    TestVirtualFile dir1 = new TestVirtualFile("dir1");
+    TestVirtualFile dir2 = new TestVirtualFile("dir2");
+    TestVirtualFile file = new TestVirtualFile("file", "", -1);
 
     dir1.addChild(dir2);
     dir2.addChild(file);
@@ -70,9 +68,9 @@ public class FileListenerListeningTest extends FileListenerTestCase {
 
   @Test
   public void testCreationOfDirectoryWithChildrenIsThreatedAsOneChange() {
-    TestVirtualFile dir = new TestVirtualFile("dir", null);
-    dir.addChild(new TestVirtualFile("one", null, null));
-    dir.addChild(new TestVirtualFile("two", null, null));
+    TestVirtualFile dir = new TestVirtualFile("dir");
+    dir.addChild(new TestVirtualFile("one", null, -1));
+    dir.addChild(new TestVirtualFile("two", null, -1));
     fireCreated(dir);
 
     assertTrue(vcs.hasEntry("dir"));
@@ -84,7 +82,7 @@ public class FileListenerListeningTest extends FileListenerTestCase {
 
   @Test
   public void testChangingFileContent() {
-    vcs.createFile("file", b("old content"), null);
+    vcs.createFile("file", b("old content"), -1);
 
     VirtualFile f = new TestVirtualFile("file", "new content", 505L);
     fireContentChanged(f);
@@ -98,9 +96,9 @@ public class FileListenerListeningTest extends FileListenerTestCase {
   public void testTakingPhysicalFileContentOnContentChange() {
     configureToReturnPhysicalContent("physical");
 
-    vcs.createFile("f", b("content"), null);
+    vcs.createFile("f", b("content"), -1);
 
-    VirtualFile f = new TestVirtualFile("f", "memory", null);
+    VirtualFile f = new TestVirtualFile("f", "memory", -1);
     fireContentChanged(f);
 
     assertEquals(c("physical"), vcs.getEntry("f").getContent());
@@ -108,9 +106,9 @@ public class FileListenerListeningTest extends FileListenerTestCase {
 
   @Test
   public void testRenaming() {
-    vcs.createFile("old name", b("old content"), null);
+    vcs.createFile("old name", b("old content"), -1);
 
-    VirtualFile f = new TestVirtualFile("new name", null, null);
+    VirtualFile f = new TestVirtualFile("new name", null, -1);
     fireRenamed(f, "old name");
 
     Entry e = vcs.findEntry("new name");
@@ -123,19 +121,19 @@ public class FileListenerListeningTest extends FileListenerTestCase {
   @Test
   public void testDoNothingOnAnotherPropertyChanges() throws Exception {
     // we just shouldn't throw any exception here to meake test pass
-    VirtualFile f = new TestVirtualFile(null, null, null);
+    VirtualFile f = new TestVirtualFile(null, null, -1);
     firePropertyChanged(f, "another property", null);
   }
 
   @Test
   public void testMoving() {
-    vcs.createDirectory("dir1", null);
-    vcs.createDirectory("dir2", null);
-    vcs.createFile("dir1/file", b("content"), null);
+    vcs.createDirectory("dir1");
+    vcs.createDirectory("dir2");
+    vcs.createFile("dir1/file", b("content"), -1);
 
-    TestVirtualFile oldParent = new TestVirtualFile("dir1", null);
-    TestVirtualFile newParent = new TestVirtualFile("dir2", null);
-    TestVirtualFile f = new TestVirtualFile("file", null, null);
+    TestVirtualFile oldParent = new TestVirtualFile("dir1");
+    TestVirtualFile newParent = new TestVirtualFile("dir2");
+    TestVirtualFile f = new TestVirtualFile("file", null, -1);
     newParent.addChild(f);
     fireMoved(f, oldParent, newParent);
 
@@ -149,12 +147,12 @@ public class FileListenerListeningTest extends FileListenerTestCase {
 
   @Test
   public void testMovingFilteredFile() {
-    vcs.createDirectory("dir1", null);
-    vcs.createDirectory("dir2", null);
+    vcs.createDirectory("dir1");
+    vcs.createDirectory("dir2");
 
-    TestVirtualFile oldParent = new TestVirtualFile("dir1", null);
-    TestVirtualFile newParent = new TestVirtualFile("dir2", null);
-    TestVirtualFile f = new TestVirtualFile("file", null, null);
+    TestVirtualFile oldParent = new TestVirtualFile("dir1");
+    TestVirtualFile newParent = new TestVirtualFile("dir2");
+    TestVirtualFile f = new TestVirtualFile("file", null, -1);
     newParent.addChild(f);
 
     filter.setNotAllowedFiles(f);
@@ -165,11 +163,11 @@ public class FileListenerListeningTest extends FileListenerTestCase {
 
   @Test
   public void testMovingFromOutsideOfTheContentRoots() {
-    vcs.createDirectory("myRoot", null);
+    vcs.createDirectory("myRoot");
 
-    TestVirtualFile f = new TestVirtualFile("file", "content", null);
-    TestVirtualFile oldParent = new TestVirtualFile("anotherRoot", null);
-    TestVirtualFile newParent = new TestVirtualFile("myRoot", null);
+    TestVirtualFile f = new TestVirtualFile("file", "content", -1);
+    TestVirtualFile oldParent = new TestVirtualFile("anotherRoot");
+    TestVirtualFile newParent = new TestVirtualFile("myRoot");
     newParent.addChild(f);
 
     filter.setFilesNotUnderContentRoot(oldParent);
@@ -183,11 +181,11 @@ public class FileListenerListeningTest extends FileListenerTestCase {
 
   @Test
   public void testMovingFilteredFileFromOutsideOfTheContentRoots() {
-    vcs.createDirectory("myRoot", null);
+    vcs.createDirectory("myRoot");
 
-    TestVirtualFile f = new TestVirtualFile("file", "content", null);
-    TestVirtualFile oldParent = new TestVirtualFile("anotherRoot", null);
-    TestVirtualFile newParent = new TestVirtualFile("myRoot", null);
+    TestVirtualFile f = new TestVirtualFile("file", "content", -1);
+    TestVirtualFile oldParent = new TestVirtualFile("anotherRoot");
+    TestVirtualFile newParent = new TestVirtualFile("myRoot");
     newParent.addChild(f);
 
     filter.setFilesNotUnderContentRoot(oldParent);
@@ -200,12 +198,12 @@ public class FileListenerListeningTest extends FileListenerTestCase {
 
   @Test
   public void testMovingToOutsideOfTheContentRoots() {
-    vcs.createDirectory("myRoot", null);
-    vcs.createFile("myRoot/file", null, null);
+    vcs.createDirectory("myRoot");
+    vcs.createFile("myRoot/file", null, -1);
 
-    TestVirtualFile f = new TestVirtualFile("file", "content", null);
-    TestVirtualFile oldParent = new TestVirtualFile("myRoot", null);
-    TestVirtualFile newParent = new TestVirtualFile("anotherRoot", null);
+    TestVirtualFile f = new TestVirtualFile("file", "content", -1);
+    TestVirtualFile oldParent = new TestVirtualFile("myRoot");
+    TestVirtualFile newParent = new TestVirtualFile("anotherRoot");
     newParent.addChild(f);
 
     filter.setFilesNotUnderContentRoot(newParent);
@@ -218,11 +216,11 @@ public class FileListenerListeningTest extends FileListenerTestCase {
 
   @Test
   public void testMovingFilteredFileToOutsideOfTheContentRoots() {
-    vcs.createDirectory("myRoot", null);
+    vcs.createDirectory("myRoot");
 
-    TestVirtualFile f = new TestVirtualFile("file", "content", null);
-    TestVirtualFile oldParent = new TestVirtualFile("myRoot", null);
-    TestVirtualFile newParent = new TestVirtualFile("anotherRoot", null);
+    TestVirtualFile f = new TestVirtualFile("file", "content", -1);
+    TestVirtualFile oldParent = new TestVirtualFile("myRoot");
+    TestVirtualFile newParent = new TestVirtualFile("anotherRoot");
     newParent.addChild(f);
 
     filter.setFilesNotUnderContentRoot(newParent);
@@ -234,9 +232,9 @@ public class FileListenerListeningTest extends FileListenerTestCase {
 
   @Test
   public void testMovingAroundOutsideContentRoots() {
-    TestVirtualFile f = new TestVirtualFile("file", "content", null);
-    TestVirtualFile oldParent = new TestVirtualFile("root1", null);
-    TestVirtualFile newParent = new TestVirtualFile("root2", null);
+    TestVirtualFile f = new TestVirtualFile("file", "content", -1);
+    TestVirtualFile oldParent = new TestVirtualFile("root1");
+    TestVirtualFile newParent = new TestVirtualFile("root2");
     newParent.addChild(f);
 
     filter.setFilesNotUnderContentRoot(oldParent, newParent);
@@ -249,11 +247,11 @@ public class FileListenerListeningTest extends FileListenerTestCase {
 
   @Test
   public void testDeletionFromDirectory() {
-    vcs.createDirectory("dir", null);
-    vcs.createFile("file", null, null);
+    vcs.createDirectory("dir");
+    vcs.createFile("file", null, -1);
 
-    VirtualFile dir = new TestVirtualFile("dir", null, null);
-    VirtualFile f = new TestVirtualFile("file", null, null);
+    VirtualFile dir = new TestVirtualFile("dir", null, -1);
+    VirtualFile f = new TestVirtualFile("file", null, -1);
     fireDeleted(f, dir);
 
     assertTrue(vcs.hasEntry("dir"));
@@ -262,9 +260,9 @@ public class FileListenerListeningTest extends FileListenerTestCase {
 
   @Test
   public void testDeletionWithoutParent() {
-    vcs.createFile("file", null, null);
+    vcs.createFile("file", null, -1);
 
-    VirtualFile f = new TestVirtualFile("file", null, null);
+    VirtualFile f = new TestVirtualFile("file", null, -1);
     fireDeleted(f, null);
 
     assertFalse(vcs.hasEntry("file"));
@@ -272,7 +270,7 @@ public class FileListenerListeningTest extends FileListenerTestCase {
 
   @Test
   public void testDeletionOfFileThanIsNotUnderVcsDoesNotThrowException() {
-    VirtualFile f = new TestVirtualFile("non-existent", null, null);
+    VirtualFile f = new TestVirtualFile("non-existent", null, -1);
     fireDeleted(f, null); // should'n throw
   }
 
@@ -283,7 +281,7 @@ public class FileListenerListeningTest extends FileListenerTestCase {
 
     setUp();
 
-    VirtualFile f = new TestVirtualFile("file", null, null);
+    VirtualFile f = new TestVirtualFile("file", null, -1);
     filter.setFilesNotUnderContentRoot(f);
 
     fireCreated(f);

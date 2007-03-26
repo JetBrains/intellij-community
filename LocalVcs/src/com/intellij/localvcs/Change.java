@@ -20,9 +20,14 @@ public abstract class Change {
     s.writeIdPath(myAffectedIdPath);
   }
 
-  public abstract void applyTo(RootEntry root);
+  public void applyTo(RootEntry r) {
+    doApplyTo(r);
+    myPath = null;
+  }
 
-  public abstract void revertOn(RootEntry root);
+  protected abstract void doApplyTo(RootEntry r);
+
+  public abstract void revertOn(RootEntry r);
 
   public boolean affects(Entry e) {
     return myAffectedIdPath.contains(e.getId());

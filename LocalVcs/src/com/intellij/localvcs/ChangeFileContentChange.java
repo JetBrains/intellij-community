@@ -7,10 +7,10 @@ import java.util.List;
 public class ChangeFileContentChange extends Change {
   private Content myNewContent;
   private Content myOldContent;
-  private Long myNewTimestamp;
-  private Long myOldTimestamp;
+  private long myNewTimestamp;
+  private long myOldTimestamp;
 
-  public ChangeFileContentChange(String path, Content newContent, Long timestamp) {
+  public ChangeFileContentChange(String path, Content newContent, long timestamp) {
     super(path);
     myNewContent = newContent;
     myNewTimestamp = timestamp;
@@ -41,16 +41,16 @@ public class ChangeFileContentChange extends Change {
     return myOldContent;
   }
 
-  public Long getNewTimestamp() {
+  public long getNewTimestamp() {
     return myNewTimestamp;
   }
 
-  public Long getOldTimestamp() {
+  public long getOldTimestamp() {
     return myOldTimestamp;
   }
 
   @Override
-  public void applyTo(RootEntry root) {
+  protected void doApplyTo(RootEntry root) {
     Entry affectedEntry = root.getEntry(myPath);
 
     myOldContent = affectedEntry.getContent();

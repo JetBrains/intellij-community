@@ -15,15 +15,15 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   @Before
   public void setUp() {
     vcs.beginChangeSet();
-    vcs.createFile("f", null, null);
+    vcs.createFile("f", null, -1);
     vcs.endChangeSet("1");
 
     vcs.beginChangeSet();
-    vcs.changeFileContent("f", null, null);
+    vcs.changeFileContent("f", null, -1);
     vcs.endChangeSet("2");
 
     vcs.beginChangeSet();
-    vcs.changeFileContent("f", null, null);
+    vcs.changeFileContent("f", null, -1);
     vcs.endChangeSet("3");
 
     initModelFor("f");
@@ -43,7 +43,7 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   public void testDoesNotRecomputeLabelsEachTime() {
     assertEquals(3, m.getLabels().size());
 
-    vcs.changeFileContent("f", null, null);
+    vcs.changeFileContent("f", null, -1);
 
     assertEquals(3, m.getLabels().size());
   }
@@ -84,7 +84,7 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   }
 
   private void initModelFor(String name) {
-    VirtualFile f = new TestVirtualFile(name, null, null);
+    VirtualFile f = new TestVirtualFile(name, null, -1);
     m = new MyHistoryDialogModel(f, vcs);
   }
 

@@ -9,8 +9,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 
-public class LocalVcsStorageTest extends TempDirTestCase {
-  LocalVcsStorage s;
+public class StorageTest extends TempDirTestCase {
+  Storage s;
   LocalVcs.Memento m = new LocalVcs.Memento();
 
   @Before
@@ -34,7 +34,7 @@ public class LocalVcsStorageTest extends TempDirTestCase {
 
   @Test
   public void testSaving() {
-    ChangeSet cs = cs(new CreateDirectoryChange(1, "dir", null));
+    ChangeSet cs = cs(new CreateDirectoryChange(1, "dir"));
     cs.applyTo(m.myRoot);
     m.myChangeList.addChangeSet(cs);
     m.myEntryCounter = 11;
@@ -196,9 +196,6 @@ public class LocalVcsStorageTest extends TempDirTestCase {
       File f = new File(tempDir, name);
       assertTrue(f.exists());
 
-      f.delete();
-      f.createNewFile();
-
       FileWriter w = new FileWriter(f);
       w.write("bla-bla-bla");
       w.close();
@@ -214,12 +211,12 @@ public class LocalVcsStorageTest extends TempDirTestCase {
 
   private void initStorage(File dir) {
     if (s != null) s.close();
-    s = new LocalVcsStorage(dir);
+    s = new Storage(dir);
   }
 
   private void initStorage(final int version) {
     if (s != null) s.close();
-    s = new LocalVcsStorage(tempDir) {
+    s = new Storage(tempDir) {
       @Override
       protected int getVersion() {
         return version;
