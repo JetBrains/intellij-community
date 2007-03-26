@@ -178,6 +178,9 @@ public final class ResizeProcessor extends EventProcessor {
           modified = true;
         }
       }
+      else {
+        modified = true;
+      }
       myEditor.getActiveDecorationLayer().removeFeedback();
       myComponent.setDragging(false);
       if (modified) {
