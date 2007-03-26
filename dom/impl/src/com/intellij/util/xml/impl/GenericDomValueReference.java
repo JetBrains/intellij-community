@@ -106,7 +106,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     return myGenericValue.getStringValue();
   }
 
-  private Converter<T> getConverter() {
+  protected Converter<T> getConverter() {
     return myGenericValue.getConverter();
   }
 

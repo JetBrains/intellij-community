@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.ElementManipulator;
 import com.intellij.util.xml.*;
 import com.intellij.xml.util.XmlTagTextUtil;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +74,10 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
     final String unquotedValue = unquote(originalValue, getQuoteSigns());
     int startOffset = originalValue == unquotedValue? 0 : XmlTagTextUtil.escapeString(originalValue.substring(0, 1), false).length();
     int endOffset = originalValue == unquotedValue || quotationIsNotClosed(originalValue)? 0 : startOffset;
-    return new PsiReference[]{createPsiReference(element, startOffset+1, element.getTextLength() - 1 - endOffset, true, context, genericDomValue, startOffset != endOffset)};
+    final ElementManipulator<PsiElement> manipulator = context.getPsiManager().getElementManipulatorsRegistry().getManipulator(element);
+    assert manipulator != null : "manipulator not found";
+    final TextRange range = manipulator.getRangeInElement(element);
+    return new PsiReference[]{createPsiReference(element, range.getStartOffset()+startOffset, range.getEndOffset() - endOffset, true, context, genericDomValue, startOffset != endOffset)};
   }
 
   @Nullable
