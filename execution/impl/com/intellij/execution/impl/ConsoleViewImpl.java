@@ -115,9 +115,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
   private final Runnable myFlushDeferredRunnable = new Runnable() {
     public void run() {
-      if (!myProject.isDisposed()) {
-        flushDeferredText();
-      }
+      flushDeferredText();
     }
   };
 
@@ -289,11 +287,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
   private void requestFlushImmediately() {
     if (myEditor != null) {
-      myFlushAlarm.addRequest(new Runnable() {
-        public void run() {
-          flushDeferredText();
-        }
-      }, 0, ModalityState.stateForComponent(myEditor.getComponent()));
+      myFlushAlarm.addRequest(myFlushDeferredRunnable, 0, ModalityState.stateForComponent(myEditor.getComponent()));
     }
   }
 
@@ -305,6 +299,9 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
   private void flushDeferredText() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myProject.isDisposed()) {
+      return;
+    }
 
     final String text;
     synchronized (LOCK) {
