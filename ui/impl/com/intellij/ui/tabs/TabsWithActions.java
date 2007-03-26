@@ -9,6 +9,8 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.ui.CaptionPanel;
 
 import javax.swing.*;
+import javax.swing.event.PopupMenuListener;
+import javax.swing.event.PopupMenuEvent;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.beans.PropertyChangeListener;
@@ -44,6 +46,9 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
   private TabInfo myPopupInfo;
   private DefaultActionGroup myOwnGroup;
 
+  private PopupMenuListener myPopupListener;
+  private JPopupMenu myActivePopup;
+
   public TabsWithActions(ActionManager actionManager, Disposable parent) {
     myActionManager = actionManager;
 
@@ -63,6 +68,19 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
         }
       }
     }, FocusEvent.FOCUS_EVENT_MASK, parent);
+
+    myPopupListener = new PopupMenuListener() {
+      public void popupMenuWillBecomeVisible(final PopupMenuEvent e) {
+      }
+
+      public void popupMenuWillBecomeInvisible(final PopupMenuEvent e) {
+        disposePopupListener();
+      }
+
+      public void popupMenuCanceled(final PopupMenuEvent e) {
+        disposePopupListener();
+      }
+    };
 
   }
 
@@ -261,7 +279,8 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
     final Color from;
     final Color to;
     final int alpha ;
-    if (myFocused) {
+    final boolean paintFocused = myFocused || myActivePopup != null;
+    if (paintFocused) {
       alpha = 100;
       from = toAlpha(UIUtil.getListSelectionBackground(), alpha);
       to = toAlpha(UIUtil.getListSelectionBackground(), alpha);
@@ -273,7 +292,7 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
 
     g2d.setPaint(new GradientPaint(mySelectedBounds.x, topY, from, mySelectedBounds.x, bottomY, to));
     g2d.fill(path);
-    if (myFocused) {
+    if (paintFocused) {
       g2d.setColor(UIUtil.getListSelectionBackground().darker().darker());      
     } else {
       g2d.setColor(CaptionPanel.CNT_ACTIVE_COLOR.darker());
@@ -462,7 +481,10 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
             }
             toShow.addAll(myOwnGroup);
 
-            myActionManager.createActionPopupMenu(place, toShow).getComponent().show(e.getComponent(), e.getX(), e.getY());
+            myActivePopup = myActionManager.createActionPopupMenu(place, toShow).getComponent();
+            myActivePopup.addPopupMenuListener(myPopupListener);
+
+            myActivePopup.show(e.getComponent(), e.getX(), e.getY());
             onPopup(myPopupInfo);
           }
         }
@@ -547,6 +569,13 @@ public class TabsWithActions extends JComponent implements PropertyChangeListene
 
     protected void _actionPerformed(final AnActionEvent e, final int selectedIndex) {
       setSelected(myInfos.get(selectedIndex - 1), true);
+    }
+  }
+
+  private void disposePopupListener() {
+    if (myActivePopup != null) {
+      myActivePopup.removePopupMenuListener(myPopupListener);
+      myActivePopup = null;
     }
   }
 
