@@ -66,6 +66,11 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
     }
   }
 
+  @Override public void resetValue(RadComponent component) throws Exception {
+    super.resetValue(component);
+    component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), null);
+  }
+  
   public static String descriptorToString(final FontDescriptor value) {
     if (value == null) {
       return "";
