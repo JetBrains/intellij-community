@@ -11,7 +11,7 @@ Groovy script
     Command arguments
       Compound Gstring
         PsiElement(Gstring begin)('"""Pre$')
-        Closable block
+        Open block
           PsiElement({)('{')
           PsiWhiteSpace(' ')
           Property selection

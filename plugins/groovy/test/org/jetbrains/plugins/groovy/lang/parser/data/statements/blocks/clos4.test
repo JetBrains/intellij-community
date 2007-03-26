@@ -3,7 +3,7 @@
 Groovy script
   Compound Gstring
     PsiElement(Gstring begin)('"Pre $')
-    Closable block
+    Open block
       PsiElement({)('{')
       PsiWhiteSpace(' ')
       Assignment expression
