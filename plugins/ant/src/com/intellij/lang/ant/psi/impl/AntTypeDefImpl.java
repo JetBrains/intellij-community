@@ -425,7 +425,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     ClassLoader loader = null;
     final AntFile file = getAntFile();
     if (file != null) {
-      loader = file.getClassLoader().getClassloader();
+      loader = file.getClassLoader();
       if (urls.length > 0) {
         loader = new UrlClassLoader(urls, loader);
       }

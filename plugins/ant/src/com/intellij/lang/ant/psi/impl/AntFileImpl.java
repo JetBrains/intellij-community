@@ -6,7 +6,6 @@ import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
-import com.intellij.lang.ant.config.impl.AntClassLoader;
 import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.misc.AntStringInterner;
 import com.intellij.lang.ant.psi.AntElement;
@@ -70,7 +69,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   private volatile AntElement myPrologElement;
   private volatile AntElement myEpilogueElement;
   private volatile PsiElement[] myChildren;
-  private volatile AntClassLoader myClassLoader;
+  private volatile ClassLoader myClassLoader;
   private volatile Hashtable myProjectProperties;
   /**
    * Map of propeties set outside.
@@ -218,7 +217,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   @NotNull
-  public AntClassLoader getClassLoader() {
+  public ClassLoader getClassLoader() {
     if (myClassLoader == null) {
       final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(XmlFile.ANT_BUILD_FILE);
       if (buildFile != null) {
@@ -231,7 +230,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
           myClassLoader = antInstallation.getClassLoader();
         }
         else {
-          myClassLoader = new AntClassLoader();
+          myClassLoader = null;
         }
       }
     }
@@ -508,8 +507,8 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     @NonNls private static final String GET_PROPERTIES_METHOD_NAME = "getProperties";
 
 
-    private static final List<SoftReference<Pair<ReflectedProject, AntClassLoader>>> ourProjects =
-      new ArrayList<SoftReference<Pair<ReflectedProject, AntClassLoader>>>();
+    private static final List<SoftReference<Pair<ReflectedProject, ClassLoader>>> ourProjects =
+      new ArrayList<SoftReference<Pair<ReflectedProject, ClassLoader>>>();
     private static Alarm ourAlarm = new Alarm();
 
     private Object myProject;
@@ -517,20 +516,20 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     private Hashtable myDataTypeDefinitions;
     private Hashtable myProperties;
 
-    private static ReflectedProject geProject(final AntClassLoader classLoader) {
+    private static ReflectedProject geProject(final ClassLoader classLoader) {
       try {
         synchronized (ourProjects) {
-          for (final SoftReference<Pair<ReflectedProject, AntClassLoader>> ref : ourProjects) {
-            final Pair<ReflectedProject, AntClassLoader> pair = ref.get();
+          for (final SoftReference<Pair<ReflectedProject, ClassLoader>> ref : ourProjects) {
+            final Pair<ReflectedProject, ClassLoader> pair = ref.get();
             if (pair != null && pair.second == classLoader) {
               return pair.first;
             }
           }
           ReflectedProject project = new ReflectedProject(classLoader);
-          final SoftReference<Pair<ReflectedProject, AntClassLoader>> ref =
-            new SoftReference<Pair<ReflectedProject, AntClassLoader>>(new Pair<ReflectedProject, AntClassLoader>(project, classLoader));
+          final SoftReference<Pair<ReflectedProject, ClassLoader>> ref =
+            new SoftReference<Pair<ReflectedProject, ClassLoader>>(new Pair<ReflectedProject, ClassLoader>(project, classLoader));
           for (int i = 0; i < ourProjects.size(); ++i) {
-            final Pair<ReflectedProject, AntClassLoader> pair = ourProjects.get(i).get();
+            final Pair<ReflectedProject, ClassLoader> pair = ourProjects.get(i).get();
             if (pair == null) {
               ourProjects.set(i, ref);
               return project;
@@ -552,7 +551,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       }
     }
 
-    private ReflectedProject(final AntClassLoader classLoader) {
+    private ReflectedProject(final ClassLoader classLoader) {
       myProject = null;
       try {
         final Class projectClass = classLoader.loadClass("org.apache.tools.ant.Project");

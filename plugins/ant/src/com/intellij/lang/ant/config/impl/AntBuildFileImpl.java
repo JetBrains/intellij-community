@@ -123,33 +123,12 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     }
   };
 
-  private static final ListProperty<AntClasspathEntry> ALL_CLASS_PATH_ENTRIES =
-    new ListProperty<AntClasspathEntry>("$allClasspathEntries") {
-      public ArrayList<AntClasspathEntry> getModifiableList(AbstractPropertyContainer container) {
-        LOG.error("shouldNotCall");
-        return new ArrayList<AntClasspathEntry>();
-      }
-
-      public List<AntClasspathEntry> getDefault(AbstractPropertyContainer container) {
-        return get(container);
-      }
-
-      public List<AntClasspathEntry> get(AbstractProperty.AbstractPropertyContainer container) {
-        ArrayList<AntClasspathEntry> entries = new ArrayList<AntClasspathEntry>();
-        AntInstallation antInstallation = RUN_WITH_ANT.get(container);
-        if (antInstallation == null) return Collections.emptyList();
-        entries.addAll(AntInstallation.CLASS_PATH.get(antInstallation.getProperties()));
-        entries.addAll(ADDITIONAL_CLASSPATH.get(container));
-        return entries;
-      }
-    };
-
   private final AntFile myFile;
   private final AntConfigurationBase myAntConfiguration;
   private final ExternalizablePropertyContainer myWorkspaceOptions;
   private final ExternalizablePropertyContainer myProjectOptions;
   private final AbstractProperty.AbstractPropertyContainer myAllOptions;
-  private final AntClassLoaderHolder myClassloaderHolder;
+  private final ClassLoaderHolder myClassloaderHolder;
   private boolean myExpandFirstTime = true;
 
   public AntBuildFileImpl(final AntFile antFile, final AntConfigurationBase configuration) {
@@ -165,7 +144,6 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     myWorkspaceOptions.registerProperty((StringProperty)ANT_COMMAND_LINE_PARAMETERS);
 
     myWorkspaceOptions.rememberKey(RUN_WITH_ANT);
-    myWorkspaceOptions.rememberKey(ALL_CLASS_PATH_ENTRIES);
 
     myProjectOptions = new ExternalizablePropertyContainer();
     myProjectOptions.registerProperty(MAX_HEAP_SIZE);
@@ -177,7 +155,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     myAllOptions = new CompositePropertyContainer(new AbstractProperty.AbstractPropertyContainer[]{myWorkspaceOptions, myProjectOptions,
       GlobalAntConfiguration.getInstance().getProperties(getProject())});
 
-    myClassloaderHolder = new AntClassLoaderHolder(myAllOptions, ALL_CLASS_PATH_ENTRIES);
+    myClassloaderHolder = new AntBuildFileClassLoaderHolder(myAllOptions);
   }
 
   @Nullable
@@ -360,7 +338,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   @NotNull
-  public AntClassLoader getClassLoader() {
+  public ClassLoader getClassLoader() {
     return myClassloaderHolder.getClassloader();
   }
 }

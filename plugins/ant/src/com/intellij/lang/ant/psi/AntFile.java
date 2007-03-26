@@ -1,6 +1,5 @@
 package com.intellij.lang.ant.psi;
 
-import com.intellij.lang.ant.config.impl.AntClassLoader;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,7 +15,7 @@ public interface AntFile extends PsiFile, AntElement, ModificationTracker {
   @NotNull
   XmlFile getSourceElement();
 
-  AntClassLoader getClassLoader();
+  ClassLoader getClassLoader();
 
   @NotNull
   AntTypeDefinition[] getBaseTypeDefinitions();

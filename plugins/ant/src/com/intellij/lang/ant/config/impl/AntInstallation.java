@@ -38,7 +38,7 @@ public class AntInstallation {
     new StringProperty("version", AntBundle.message("ant.unknown.version.string.presentation"));
   @NonNls private static final String PROPERTY_VERSION = "VERSION";
 
-  private final AntClassLoaderHolder myClassLoader;
+  private final ClassLoaderHolder myClassLoaderHolder;
   @NonNls public static final String PATH_TO_ANT_JAR = "lib/ant.jar";
   @NonNls public static final String LIB_DIR = "lib";
   @NonNls public static final String ANT_JAR_FILE = "ant.jar";
@@ -87,7 +87,7 @@ public class AntInstallation {
 
   private AntInstallation(final ExternalizablePropertyContainer properties) {
     myProperties = properties;
-    myClassLoader = new AntClassLoaderHolder(myProperties, CLASS_PATH);
+    myClassLoaderHolder = new AntInstallationClassLoaderHolder(myProperties);
   }
 
   public String getName() {
@@ -102,8 +102,8 @@ public class AntInstallation {
     return myProperties;
   }
 
-  public AntClassLoader getClassLoader() {
-    return myClassLoader.getClassloader();
+  public ClassLoader getClassLoader() {
+    return myClassLoaderHolder.getClassloader();
   }
 
   public static AntInstallation fromHome(String homePath) throws ConfigurationException {
