@@ -115,7 +115,7 @@ public class LocalVcsComponent implements ProjectComponent, ILocalVcsComponent {
   }
 
   public boolean isEnabled() {
-    return System.getProperty("newlocalvcs.disabled") == null;
+    return System.getProperty("newlocalvcs.enabled") != null;
   }
 
   protected boolean isUnitTestMode() {

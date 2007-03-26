@@ -28,7 +28,7 @@ public class ShowHistoryAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     if (!LocalVcsComponent.getInstance(getProject(e)).isEnabled()) {
-      e.getPresentation().setEnabled(false);
+      e.getPresentation().setVisible(false);
       return;
     }
 
