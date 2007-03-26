@@ -10,10 +10,14 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.reference.SoftReference;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.ProjectTopics;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,10 +30,20 @@ import java.util.Map;
  */
 public class StringDescriptorManager {
   private Module myModule;
-  private Map<Pair<Locale, String>, SoftReference<PropertiesFile>> myPropertiesFileCache = new HashMap<Pair<Locale, String>, SoftReference<PropertiesFile>>();
+  private final Map<Pair<Locale, String>, SoftReference<PropertiesFile>> myPropertiesFileCache = new HashMap<Pair<Locale, String>, SoftReference<PropertiesFile>>();
 
-  public StringDescriptorManager(final Module module) {
+  public StringDescriptorManager(final Module module, MessageBus bus) {
     myModule = module;
+    bus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      public void beforeRootsChange(final ModuleRootEvent event) {
+      }
+
+      public void rootsChanged(final ModuleRootEvent event) {
+        synchronized(myPropertiesFileCache) {
+          myPropertiesFileCache.clear();
+        }
+      }
+    });
   }
 
   public static StringDescriptorManager getInstance(Module module) {
@@ -65,11 +79,16 @@ public class StringDescriptorManager {
   public Property resolveToProperty(@NotNull StringDescriptor descriptor, @Nullable Locale locale) {
     String propFileName = descriptor.getDottedBundleName();
     Pair<Locale, String> cacheKey = new Pair<Locale, String>(locale, propFileName);
-    SoftReference<PropertiesFile> propertiesFileRef = myPropertiesFileCache.get(cacheKey);
+    SoftReference<PropertiesFile> propertiesFileRef;
+    synchronized (myPropertiesFileCache) {
+      propertiesFileRef = myPropertiesFileCache.get(cacheKey);
+    }
     PropertiesFile propertiesFile = (propertiesFileRef == null) ? null : propertiesFileRef.get();
     if (propertiesFile == null || !propertiesFile.isValid()) {
       propertiesFile = PropertiesUtil.getPropertiesFile(propFileName, myModule, locale);
-      myPropertiesFileCache.put(cacheKey, new SoftReference<PropertiesFile>(propertiesFile));
+      synchronized (myPropertiesFileCache) {
+        myPropertiesFileCache.put(cacheKey, new SoftReference<PropertiesFile>(propertiesFile));
+      }
     }
 
     if (propertiesFile != null) {
