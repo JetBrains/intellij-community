@@ -3,8 +3,10 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks;
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterDeclarationList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.Statement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -80,8 +82,14 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
 
 
   private static GroovyElementType closableBlockParamsOpt(PsiBuilder builder) {
-    // TODO implement me!
-    ParserUtils.getToken(builder, mNLS);
+/*
+    GroovyElementType result = ParameterDeclarationList.parse(builder);
+    if (!WRONGWAY.equals(result)) {
+      ParserUtils.getToken(builder, mNLS);
+      ParserUtils.getToken(builder, mCLOSABLE_BLOCK_OP, GroovyBundle.message("closure.op.expected"));
+      return PARAMETERS_LIST;
+    }
+*/
     return WRONGWAY;
   }
 
