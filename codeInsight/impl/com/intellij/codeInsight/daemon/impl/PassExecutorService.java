@@ -289,7 +289,7 @@ public abstract class PassExecutorService {
             submit(successor);
           }
         }
-        applyInformationToEditors(this);
+        applyInformationToEditors();
       }
 
       //mySubmittedPasses.remove(this);
@@ -297,7 +297,7 @@ public abstract class PassExecutorService {
       // check that it is not remnant from the previous attempt, canceled long ago
       if (!myUpdateProgress.isCanceled()) {
         int toexec = myThreadsToStartCountdown.decrementAndGet();
-        LOG.assertTrue(toexec >= 0);
+        LOG.assertTrue(toexec >= 0, String.valueOf(toexec));
         if (toexec == 0) {
           log(myUpdateProgress, myPass, "Stopping ");
           myUpdateProgress.stopIfRunning();
@@ -308,11 +308,11 @@ public abstract class PassExecutorService {
       }
       log(myUpdateProgress, myPass, "Finished ");
     }
-  }
 
-  private void applyInformationToEditors(final ScheduledPass pass) {
-    for (FileEditor fileEditor : pass.myFileEditor) {
-      applyInformationToEditor(pass.myPass, fileEditor, pass.myUpdateProgress);
+    private void applyInformationToEditors() {
+      for (FileEditor fileEditor : myFileEditor) {
+        applyInformationToEditor(myPass, fileEditor, myUpdateProgress);
+      }
     }
   }
 
