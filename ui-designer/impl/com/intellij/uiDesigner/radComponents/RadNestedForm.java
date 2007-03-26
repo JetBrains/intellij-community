@@ -34,7 +34,10 @@ public class RadNestedForm extends RadComponent {
     super(module, JPanel.class, id);
     myFormFileName = formFileName;
     LOG.debug("Loading nested form " + formFileName);
-    VirtualFile formFile = ModuleUtil.findResourceFile(formFileName, module);
+    VirtualFile formFile = ModuleUtil.findResourceFileInDependents(module, formFileName);
+    if (formFile == null) {
+      throw new IllegalArgumentException("Couldn't find virtual file for nested form " + formFileName);
+    }
     Document doc = FileDocumentManager.getInstance().getDocument(formFile);
     final ClassLoader classLoader = LoaderFactory.getInstance(module.getProject()).getLoader(formFile);
     final LwRootContainer rootContainer = Utils.getRootContainer(doc.getText(), new CompiledClassPropertiesProvider(classLoader));
