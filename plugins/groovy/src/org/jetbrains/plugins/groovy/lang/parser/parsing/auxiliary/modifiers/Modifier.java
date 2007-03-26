@@ -30,7 +30,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 public class Modifier implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
     if (ParserUtils.validateToken(builder, TokenSets.MODIFIERS)) {
-//      ParserUtils.eatElement(builder, MODIFIER);
       builder.advanceLexer();
       return MODIFIER;
     } else {

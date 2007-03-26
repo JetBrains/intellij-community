@@ -1,0 +1,53 @@
+class b {
+ a (def a, final b) {
+  interface a {}  
+ }
+}
+-----
+Groovy script
+  class definition
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('b')
+    PsiWhiteSpace(' ')
+    class body
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace(' ')
+      method
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        parameter list
+          parameter
+            parameter modifiers
+              PsiElement(def)('def')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('a')
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          parameter
+            parameter modifiers
+              PsiElement(final)('final')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('b')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        method body
+          PsiElement({)('{')
+          PsiElement(new line)('\n')
+          PsiWhiteSpace('  ')
+          interface definition
+            PsiElement(interface)('interface')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('a')
+            PsiWhiteSpace(' ')
+            interface block
+              PsiElement({)('{')
+              PsiElement(})('}')
+          PsiWhiteSpace('  ')
+          PsiElement(new line)('\n')
+          PsiWhiteSpace(' ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

@@ -80,50 +80,55 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType ARRAY_TYPE = new GroovyElementType("Array type");
   GroovyElementType BUILT_IN_TYPE = new GroovyElementType("Built in type");
 
-
   // GStrings
   GroovyElementType GSTRING = new GroovyElementType("GString");
 
-  GroovyElementType DECLARATION = new GroovyElementType("declaration"); //node
+  GroovyElementType DECLARATION = new GroovyElementType("declaration");
 
-  GroovyElementType CLASS_DEFINITION = new GroovyElementType("class definition"); //node
-  GroovyElementType INTERFACE_DEFINITION = new GroovyElementType("interface definition"); //node
-  GroovyElementType ENUM_DEFINITION = new GroovyElementType("enumeration definition"); //node
-  GroovyElementType ANNOTATION_DEFINITION = new GroovyElementType("annotation definition"); //node
+  GroovyElementType CLASS_DEFINITION = new GroovyElementType("class definition");
+  GroovyElementType INTERFACE_DEFINITION = new GroovyElementType("interface definition");
+  GroovyElementType ENUM_DEFINITION = new GroovyElementType("enumeration definition");
+  GroovyElementType ANNOTATION_DEFINITION = new GroovyElementType("annotation definition");
 
-  GroovyElementType CLASS_INTERFACE_TYPE = new GroovyElementType("class or interface type"); //node
-  GroovyElementType IMPLEMENTS_CLAUSE = new GroovyElementType("implements clause"); //node
-  GroovyElementType INTERFACE_EXTENDS_CLAUSE = new GroovyElementType("interface extends clause"); //node
-  GroovyElementType SUPER_CLASS_CLAUSE = new GroovyElementType("super class clause"); //node
+  GroovyElementType CLASS_INTERFACE_TYPE = new GroovyElementType("class or interface type");
+  GroovyElementType IMPLEMENTS_CLAUSE = new GroovyElementType("implements clause");
+  GroovyElementType INTERFACE_EXTENDS_CLAUSE = new GroovyElementType("interface extends clause");
+  GroovyElementType SUPER_CLASS_CLAUSE = new GroovyElementType("super class clause");
 
-  GroovyElementType CLASS_FIELD = new GroovyElementType("class field"); //node
-  GroovyElementType INTERFACE_FIELD = new GroovyElementType("interface field"); //node
-  GroovyElementType ANNOTATION_FIELD = new GroovyElementType("annotation field"); //node
-  GroovyElementType ENUM_FIELD = new GroovyElementType("enumeration field"); //node
+  GroovyElementType CLASS_FIELD = new GroovyElementType("class field");
+  GroovyElementType INTERFACE_FIELD = new GroovyElementType("interface field");
+  GroovyElementType ANNOTATION_FIELD = new GroovyElementType("annotation field");
+  GroovyElementType ENUM_FIELD = new GroovyElementType("enumeration field");
 
-  GroovyElementType TYPE_DEFINITION_FIELD = new GroovyElementType("type definition field"); //node
+  GroovyElementType TYPE_DEFINITION_FIELD = new GroovyElementType("type definition field");
 
-  GroovyElementType CONSTRUCTOR_DEFINITION = new GroovyElementType("constructor definition"); //node
+  GroovyElementType METHOD_DEFINITION = new GroovyElementType("method definition");
+  GroovyElementType METHOD_BODY = new GroovyElementType("method body");
+  GroovyElementType CONSTRUCTOR_DEFINITION = new GroovyElementType("constructor definition");
+  GroovyElementType CONSTRUCTOR_BODY = new GroovyElementType("constructor body");
 
-
+  GroovyElementType PARAMETERS_LIST = new GroovyElementType("parameters list");
+  GroovyElementType PARAMETER = new GroovyElementType("parameter");
+  GroovyElementType PARAMETER_MODIFIERS = new GroovyElementType("parameter modifiers");
 
   //blocks
-  GroovyElementType CLASS_BLOCK = new GroovyElementType("class block"); //node
-  GroovyElementType INTERFACE_BLOCK = new GroovyElementType("interface block"); //node
-  GroovyElementType ENUM_BLOCK = new GroovyElementType("enumeration block"); //node
-  GroovyElementType ANNOTATION_BLOCK = new GroovyElementType("annotation block"); //node
+  GroovyElementType CLASS_BLOCK = new GroovyElementType("class block");
+  GroovyElementType INTERFACE_BLOCK = new GroovyElementType("interface block");
+  GroovyElementType ENUM_BLOCK = new GroovyElementType("enumeration block");
+  GroovyElementType ANNOTATION_BLOCK = new GroovyElementType("annotation block");
 
   //statements
-  GroovyElementType IF_STATEMENT = new GroovyElementType("if statement"); //node
-  GroovyElementType FOR_STATEMENT = new GroovyElementType("for statement"); //node
-  GroovyElementType WHILE_STATEMENT = new GroovyElementType("while statement"); //node
-  GroovyElementType WITH_STATEMENT = new GroovyElementType("with statement"); //node
-  GroovyElementType SWITCH_STATEMENT = new GroovyElementType("switch statement"); //node
+  GroovyElementType IF_STATEMENT = new GroovyElementType("if statement");
+  GroovyElementType FOR_STATEMENT = new GroovyElementType("for statement");
+  GroovyElementType WHILE_STATEMENT = new GroovyElementType("while statement");
+  GroovyElementType WITH_STATEMENT = new GroovyElementType("with statement");
+  GroovyElementType SWITCH_STATEMENT = new GroovyElementType("switch statement");
   //todo: rename star expression
-  GroovyElementType STAR_STATEMENT = new GroovyElementType("star statement"); //node
-  GroovyElementType TRY_BLOCK_STATEMENT = new GroovyElementType("try block statement"); //node
-  GroovyElementType SYNCHRONIZED_BLOCK_STATEMENT = new GroovyElementType("synchronized block statement"); //node
-  GroovyElementType COMPOUND_STATEMENT = new GroovyElementType("compound statement"); //node
+  GroovyElementType STAR_STATEMENT = new GroovyElementType("star statement");
+  GroovyElementType TRY_BLOCK_STATEMENT = new GroovyElementType("try block statement");
+  GroovyElementType SYNCHRONIZED_BLOCK_STATEMENT = new GroovyElementType("synchronized block statement");
+  GroovyElementType STATIC_COMPOUND_STATEMENT = new GroovyElementType("static compound statement");
+  GroovyElementType COMPOUND_STATEMENT = new GroovyElementType("compound statement");
 
   //modifiers
   GroovyElementType MODIFIER = new GroovyElementType("modifier"); //node

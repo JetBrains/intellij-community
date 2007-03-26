@@ -1,14 +1,12 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks;
 
+import com.intellij.lang.PsiBuilder;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.auxilary.BalancedBrackets;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.Statement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
-import org.jetbrains.plugins.groovy.GroovyBundle;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.PsiBuilder;
 
 /**
  * @author Ilya.Sergey
@@ -37,7 +35,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     return WRONGWAY;
   }
 
-  private static GroovyElementType parseBlockBody(PsiBuilder builder) {
+  public static GroovyElementType parseBlockBody(PsiBuilder builder) {
     if (mSEMI.equals(builder.getTokenType()) || mNLS.equals(builder.getTokenType())) {
       Separators.parse(builder);
     }

@@ -2,17 +2,17 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefiniti
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.ModifiersOptional;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenBlock;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.constructor.ConstructorStart;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.DeclarationStart;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ConstructorStart;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinitionInternal;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenBlock;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifier;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.ModifiersOptional;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeDeclarationStart;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -20,25 +20,26 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
  */
 public class ClassMember implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
-    PsiBuilder.Marker cmMarker = builder.mark();
+//    PsiBuilder.Marker cmMarker = builder.mark();
     //constructor
     PsiBuilder.Marker constructorStartMarker = builder.mark();
     if (ConstructorStart.parse(builder)) {
       constructorStartMarker.rollbackTo();
 
-      if (tWRONG_SET.contains(Modifier.parse(builder))) {
-        cmMarker.rollbackTo();
+      if (tWRONG_SET.contains(ModifiersOptional.parse(builder))) {
+//        cmMarker.rollbackTo();
         return WRONGWAY;
       }
 
-      if (tWRONG_SET.contains(ConstructorDefinition.parse(builder))) {
-        cmMarker.rollbackTo();
+      if (tWRONG_SET.contains(MethodDefinition.parse(builder))) {
+//        cmMarker.rollbackTo();
         return WRONGWAY;
       }
 
-      cmMarker.done(CONSTRUCTOR_DEFINITION);
+//      cmMarker.done(METHOD_DEFINITION);
+      return METHOD_DEFINITION;
     }
-    constructorStartMarker.rollbackTo();
+    constructorStartMarker.drop();
 
     //declaration
     PsiBuilder.Marker declMarker = builder.mark();
@@ -46,39 +47,49 @@ public class ClassMember implements GroovyElementTypes {
       declMarker.rollbackTo();
       return Declaration.parse(builder);
     }
-    declMarker.rollbackTo();
+    declMarker.drop();
 
     //type definition
     PsiBuilder.Marker typeDeclStartMarker = builder.mark();
     if (TypeDeclarationStart.parse(builder)) {
       typeDeclStartMarker.rollbackTo();
 
-      if (tWRONG_SET.contains(ModifiersOptional.parse(builder))) {
-        cmMarker.rollbackTo();
-        return WRONGWAY;
-      }
-
-      IElementType typeDef = TypeDefinitionInternal.parse(builder);
+//      if (tWRONG_SET.contains(ModifiersOptional.parse(builder))) {
+//        cmMarker.rollbackTo();
+//        return WRONGWAY;
+//      }
+//
+      IElementType typeDef = TypeDefinition.parse(builder);
+//      if (tWRONG_SET.contains(typeDef)) {
+//        cmMarker.rollbackTo();
       if (tWRONG_SET.contains(typeDef)) {
-        cmMarker.rollbackTo();
         return WRONGWAY;
       }
 
-      cmMarker.done(typeDef);
+//      cmMarker.done(typeDef);
       return typeDef;
     }
-    typeDeclStartMarker.rollbackTo();
+    typeDeclStartMarker.drop();
 
     //static compound statement
-    ParserUtils.getToken(builder, kSTATIC);
-
-    GroovyElementType openBlock = OpenBlock.parse(builder);
-    if (tWRONG_SET.contains(openBlock)) {
-      cmMarker.rollbackTo();
-      return WRONGWAY;
+    if (ParserUtils.getToken(builder, kSTATIC)) {
+      if (!tWRONG_SET.contains(OpenBlock.parse(builder))) {
+//        cmMarker.done(COMPOUND_STATEMENT);
+        return STATIC_COMPOUND_STATEMENT;
+      } else {
+//        cmMarker.rollbackTo();
+        builder.error(GroovyBundle.message("compound.statemenet.expected"));
+        return WRONGWAY;
+      }
     }
 
-    cmMarker.done(COMPOUND_STATEMENT);
-    return COMPOUND_STATEMENT;
+    if (!tWRONG_SET.contains(OpenBlock.parse(builder))) {
+//      cmMarker.done(COMPOUND_STATEMENT);
+      return COMPOUND_STATEMENT;
+    }
+
+//    cmMarker.rollbackTo();
+    return WRONGWAY;
+
   }
 }

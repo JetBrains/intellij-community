@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
+package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
