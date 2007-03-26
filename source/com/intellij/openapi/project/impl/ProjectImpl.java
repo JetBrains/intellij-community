@@ -126,6 +126,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   }
 
+  @NotNull
   public IProjectStore getStateStore() {
     return (IProjectStore)super.getStateStore();
   }

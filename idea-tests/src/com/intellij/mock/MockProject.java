@@ -39,6 +39,7 @@ public class MockProject extends MockComponentManager implements ProjectEx {
     return false;
   }
 
+  @NotNull
   public IProjectStore getStateStore() {
     return new MockProjectStore();
   }

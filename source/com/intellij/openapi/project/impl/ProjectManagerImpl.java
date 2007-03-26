@@ -283,7 +283,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private void askToReloadProjectIfConfigFilesChangedExternally() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (myChangedProjectFiles.size() > 0 && myReloadBlockCount == 0) {
+        if (!myChangedProjectFiles.isEmpty() && myReloadBlockCount == 0) {
           Set<Project> projects = myChangedProjectFiles.keySet();
           List<Project> projectsToReload = new ArrayList<Project>();
 
@@ -301,7 +301,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
                 message = ProjectBundle.message("project.reload.external.change.single", causes.get(0).getPresentableUrl());
               }
               else {
-                StringBuffer filesBuilder = new StringBuffer();
+                StringBuilder filesBuilder = new StringBuilder();
                 boolean first = true;
                 for (VirtualFile cause : liveCauses) {
                   if (!first) filesBuilder.append("\n");
@@ -477,12 +477,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return true;
   }
 
-  protected void fireProjectClosing(Project project) {
+  private void fireProjectClosing(Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: fireProjectClosing()");
     }
     synchronized (myListeners) {
-      if (myListeners.size() > 0) {
+      if (!myListeners.isEmpty()) {
         ProjectManagerListener[] listeners = myListeners.toArray(new ProjectManagerListener[myListeners.size()]);
         for (ProjectManagerListener listener : listeners) {
           listener.projectClosing(project);
@@ -529,7 +529,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       LOG.debug("projectOpened");
     }
     synchronized (myListeners) {
-      if (myListeners.size() > 0) {
+      if (!myListeners.isEmpty()) {
         ProjectManagerListener[] listeners = myListeners.toArray(new ProjectManagerListener[myListeners.size()]);
         for (ProjectManagerListener listener : listeners) {
           listener.projectOpened(project);
@@ -543,7 +543,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       LOG.debug("projectClosed");
     }
     synchronized (myListeners) {
-      if (myListeners.size() > 0) {
+      if (!myListeners.isEmpty()) {
         ProjectManagerListener[] listeners = myListeners.toArray(new ProjectManagerListener[myListeners.size()]);
         for (ProjectManagerListener listener : listeners) {
           listener.projectClosed(project);
@@ -557,7 +557,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       LOG.debug("enter: canClose()");
     }
     synchronized (myListeners) {
-      if (myListeners.size() > 0) {
+      if (!myListeners.isEmpty()) {
         ProjectManagerListener[] listeners = myListeners.toArray(new ProjectManagerListener[myListeners.size()]);
         for (ProjectManagerListener listener : listeners) {
           if (!listener.canCloseProject(project)) return false;

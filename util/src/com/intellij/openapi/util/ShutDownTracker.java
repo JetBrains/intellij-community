@@ -69,13 +69,7 @@ public class ShutDownTracker implements Runnable {
   }
 
   private synchronized boolean isRegistered(Thread thread) {
-    for (final Thread myThread : myThreads) {
-      Thread t = (Thread)myThread;
-      if (t.equals(thread)) {
-        return true;
-      }
-    }
-    return false;
+    return myThreads.contains(thread);
   }
 
   private synchronized Thread[] getStopperThreads() {

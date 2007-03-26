@@ -5,6 +5,7 @@ import com.intellij.Patches;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.HackyRepaintManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.*;
@@ -301,13 +302,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       commandProcessor.executeCommand(project, new Runnable() {
         public void run() {
           FileDocumentManager.getInstance().saveAllDocuments();
-          if (!ProjectManagerEx.getInstanceEx().closeProject(project)) {
-            canClose[0] = false;
-          }
+          canClose[0] = ProjectUtil.closeProject(project);
         }
       }, ApplicationBundle.message("command.exit"), null);
       if (!canClose[0]) break;
-      Disposer.dispose(project);
     }
 
     if (canClose[0]) {

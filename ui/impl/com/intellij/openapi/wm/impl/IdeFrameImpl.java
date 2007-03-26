@@ -89,8 +89,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     super.setMaximizedBounds(null);
   }
 
-// Made protected for Fabrique
-  protected void setupCloseAction() {
+  private void setupCloseAction() {
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     addWindowListener(
       new WindowAdapter() {
@@ -131,7 +130,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     updateTitle();
   }
 
-  protected void setFrameTitle(final String text) {
+  private void setFrameTitle(final String text) {
     super.setTitle(text);
   }
 
@@ -141,7 +140,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   }
 
   private void updateTitle() {
-    final StringBuffer sb = new StringBuffer();
+    final StringBuilder sb = new StringBuilder();
     if (myTitle != null && myTitle.length() > 0) {
       sb.append(myTitle);
       sb.append(" - ");
@@ -187,7 +186,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
   public void dispose() {
     if (myRootPane != null) {
-      final StatusBarImpl statusBar = ((StatusBarImpl)myRootPane.getStatusBar());
+      final StatusBarImpl statusBar = (StatusBarImpl)myRootPane.getStatusBar();
       if (statusBar != null) {
         statusBar.disposeListeners();
       }
