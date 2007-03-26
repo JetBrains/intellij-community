@@ -26,21 +26,18 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.ig.ui.AddAction;
+import com.siyeh.ig.ui.IGTable;
+import com.siyeh.ig.ui.ListWrappingTableModel;
+import com.siyeh.ig.ui.RemoveAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellEditor;
-import java.awt.Component;
-import java.awt.EventQueue;
-import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.util.*;
 
 public class QuestionableNameInspection extends BaseInspection {
 
@@ -48,47 +45,9 @@ public class QuestionableNameInspection extends BaseInspection {
     @NonNls public String nameCheckString = "foo,bar,baz";
 
     private List<String> nameList = new ArrayList<String>(32);
-    private final Object lock = new Object();
 
     public QuestionableNameInspection(){
         parseNameString();
-    }
-
-    public void readSettings(Element element) throws InvalidDataException{
-        super.readSettings(element);
-        parseNameString();
-    }
-
-    private void parseNameString(){
-        final String[] strings = nameCheckString.split(",");
-        synchronized(lock) {
-            nameList.clear();
-            for(String string : strings){
-                nameList.add(string);
-            }
-        }
-    }
-
-    public void writeSettings(Element element) throws WriteExternalException{
-        formatNameCheckString();
-        super.writeSettings(element);
-    }
-
-    private void formatNameCheckString(){
-        final StringBuilder buffer = new StringBuilder();
-        synchronized(lock) {
-            boolean first = true;
-            for(Object aNameList : nameList){
-                if(first){
-                    first = false;
-                } else{
-                    buffer.append(',');
-                }
-                final String exceptionName = (String) aNameList;
-                buffer.append(exceptionName);
-            }
-        }
-        nameCheckString = buffer.toString();
     }
 
     @NotNull
@@ -101,6 +60,35 @@ public class QuestionableNameInspection extends BaseInspection {
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "questionable.name.problem.descriptor");
+    }
+
+    public void readSettings(Element element) throws InvalidDataException{
+        super.readSettings(element);
+        parseNameString();
+    }
+
+    private void parseNameString(){
+        final String[] strings = nameCheckString.split(",");
+        nameList.clear();
+        nameList.addAll(Arrays.asList(strings));
+    }
+
+    public void writeSettings(Element element) throws WriteExternalException{
+        formatNameString();
+        super.writeSettings(element);
+    }
+
+    private void formatNameString(){
+        final StringBuilder buffer = new StringBuilder();
+        final int size = nameList.size();
+        if (size > 0) {
+            buffer.append(nameList.get(0));
+            for (int i = 1; i < size; i++) {
+                buffer.append(',');
+                buffer.append(nameList.get(i));
+            }
+        }
+        nameCheckString = buffer.toString();
     }
 
     public JComponent createOptionsPanel(){
@@ -122,30 +110,26 @@ public class QuestionableNameInspection extends BaseInspection {
 
     private class QuestionableNameVisitor extends BaseInspectionVisitor{
 
+        private final Set<String> nameSet = new HashSet(nameList);
+
         public void visitVariable(@NotNull PsiVariable variable){
             final String name = variable.getName();
-            synchronized(lock) {
-                if(nameList.contains(name)){
-                    registerVariableError(variable);
-                }
+            if(nameSet.contains(name)){
+                registerVariableError(variable);
             }
         }
 
         public void visitMethod(@NotNull PsiMethod method){
             final String name = method.getName();
-            synchronized(lock) {
-                if(nameList.contains(name)){
-                    registerMethodError(method);
-                }
+            if(nameSet.contains(name)){
+                registerMethodError(method);
             }
         }
 
         public void visitClass(@NotNull PsiClass aClass){
             final String name = aClass.getName();
-            synchronized(lock) {
-                if(nameList.contains(name)){
-                    registerClassError(aClass);
-                }
+            if(nameSet.contains(name)){
+                registerClassError(aClass);
             }
         }
     }
@@ -154,110 +138,23 @@ public class QuestionableNameInspection extends BaseInspection {
 
         JPanel contentPanel;
         JButton addButton;
-        JButton deleteButton;
-        JTable table;
+        JButton removeButton;
+        IGTable table;
 
         Form(){
             super();
-            table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-            table.setRowSelectionAllowed(true);
-            table.setSelectionMode(
-                    ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-            final QuestionableNameTableModel model =
-            new QuestionableNameTableModel();
-            table.setModel(model);
-            addButton.addActionListener(new ActionListener(){
+            addButton.setAction(new AddAction(table));
+            removeButton.setAction(new RemoveAction(table));
+        }
 
-                public void actionPerformed(ActionEvent e){
-                    final int listSize;
-                    synchronized(lock){
-                        listSize = nameList.size();
-                        nameList.add("");
-                    }
-                    model.fireTableStructureChanged();
-                    EventQueue.invokeLater(new Runnable() {
-
-                        public void run() {
-                            final Rectangle rect = table.getCellRect(listSize,
-                                    0, true);
-                            table.scrollRectToVisible(rect);
-                            table.editCellAt(listSize, 0);
-                            final TableCellEditor editor =
-                                    table.getCellEditor();
-                            final Component component =
-                                    editor.getTableCellEditorComponent(table,
-                                            null, true, listSize, 0);
-                            component.requestFocus();
-                        }
-                    });
-                }
-            });
-            deleteButton.addActionListener(new ActionListener(){
-
-                public void actionPerformed(ActionEvent e){
-                    final int[] selectedRows = table.getSelectedRows();
-                    if (selectedRows.length == 0) {
-                        return;
-                    }
-                    final int row = selectedRows[selectedRows.length - 1] - 1;
-                    Arrays.sort(selectedRows);
-                    synchronized(lock){
-                        for(int i = selectedRows.length - 1; i >= 0; i--){
-                            nameList.remove(selectedRows[i]);
-                        }
-                    }
-                    model.fireTableStructureChanged();
-                    final int count = table.getRowCount();
-                    if (count <= row) {
-                        table.setRowSelectionInterval(count - 1, count - 1);
-                    } else {
-                        table.setRowSelectionInterval(row, row);
-                    }
-                }
-            });
+        private void createUIComponents() {
+            table = new IGTable(new ListWrappingTableModel(
+                    nameList, InspectionGadgetsBundle.message(
+                    "questionable.name.column.title")));
         }
 
         public JComponent getContentPanel(){
             return contentPanel;
-        }
-
-    }
-
-    private class QuestionableNameTableModel extends AbstractTableModel{
-
-        public int getRowCount(){
-            synchronized(lock) {
-                return nameList.size();
-            }
-        }
-
-        public int getColumnCount(){
-            return 1;
-        }
-
-        public String getColumnName(int columnIndex){
-            return InspectionGadgetsBundle.message(
-                    "questionable.name.column.title");
-        }
-
-        public Class<?> getColumnClass(int columnIndex){
-            return String.class;
-        }
-
-        public boolean isCellEditable(int rowIndex, int columnIndex){
-            return true;
-        }
-
-        public Object getValueAt(int rowIndex, int columnIndex){
-            synchronized(lock) {
-                return nameList.get(rowIndex);
-            }
-        }
-
-        public void setValueAt(Object aValue, int rowIndex, int columnIndex){
-            synchronized(lock) {
-                nameList.set(rowIndex, aValue.toString());
-            }
         }
     }
 }
