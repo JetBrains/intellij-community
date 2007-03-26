@@ -213,6 +213,9 @@ public class PaletteWindow extends JPanel implements DataProvider {
 
   void setLastFocusedGroup(final PaletteGroupHeader focusedGroup) {
     myLastFocusedGroup = focusedGroup;
+    for(PaletteGroupHeader group: myGroupHeaders) {
+      group.getComponentList().clearSelection();
+    }
   }
 
   private class MyListSelectionListener implements ListSelectionListener {
