@@ -15,6 +15,6 @@ public class GrEnumTypeDefinitionImpl extends GroovyPsiElementImpl implements Gr
   }
 
   public String toString() {
-    return "enumeration definition";
+    return "Enumeration definition";
   }
 }

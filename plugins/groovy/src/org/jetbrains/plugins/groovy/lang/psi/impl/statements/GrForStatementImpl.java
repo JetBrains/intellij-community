@@ -13,4 +13,8 @@ public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForSta
   public GrForStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
+
+  public String toString() {
+    return "For statement";
+  }
 }

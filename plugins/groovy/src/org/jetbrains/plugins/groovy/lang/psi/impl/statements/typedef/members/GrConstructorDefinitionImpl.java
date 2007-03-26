@@ -15,6 +15,6 @@ public class GrConstructorDefinitionImpl extends GroovyPsiElementImpl implements
   }
 
   public String toString (){
-    return "constructor";
+    return "Constructor";
   }
 }

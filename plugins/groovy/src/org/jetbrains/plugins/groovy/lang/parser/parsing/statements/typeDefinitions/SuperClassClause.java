@@ -29,7 +29,7 @@ public class SuperClassClause implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    sccMarker.done(SUPER_CLASS_CLAUSE);
-    return SUPER_CLASS_CLAUSE;
+    sccMarker.done(EXTENDS_CLAUSE);
+    return EXTENDS_CLAUSE;
   }
 }

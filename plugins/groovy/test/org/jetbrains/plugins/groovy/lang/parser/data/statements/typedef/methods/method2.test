@@ -1,0 +1,26 @@
+class a {
+  static def a ()
+}
+-----
+Groovy script
+  Class definition
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Class body
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiWhiteSpace('  ')
+      PsiElement(static)('static')
+      PsiWhiteSpace(' ')
+      Modifier
+        PsiElement(def)('def')
+      PsiWhiteSpace(' ')
+      PsiErrorElement:'}' expected
+        PsiElement(identifier)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(()('(')
+        PsiElement())(')')
+        PsiElement(new line)('\n')
+      PsiElement(})('}')

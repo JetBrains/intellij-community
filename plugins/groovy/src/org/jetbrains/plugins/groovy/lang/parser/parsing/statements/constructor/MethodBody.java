@@ -4,6 +4,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.PsiBuilder;
 
@@ -16,6 +17,7 @@ public class MethodBody implements GroovyElementTypes {
     PsiBuilder.Marker cbMarker = builder.mark();
 
     if (!ParserUtils.getToken(builder, mLCURLY)) {
+      builder.error(GroovyBundle.message("lcurly.expected"));
       cbMarker.rollbackTo();
       return WRONGWAY;
     }
@@ -24,6 +26,7 @@ public class MethodBody implements GroovyElementTypes {
 
     if (!tWRONG_SET.contains(ExplicitConstructorStatement.parse(builder))) {
 
+      builder.error(GroovyBundle.message("constructor.expected"));
       //explicit constructor invocation
       if (!tWRONG_SET.contains(Separators.parse(builder))) {
         if (tWRONG_SET.contains(OpenOrClosableBlock.parseBlockBody(builder))) {
@@ -43,12 +46,14 @@ public class MethodBody implements GroovyElementTypes {
       }
     }
 
+    ParserUtils.waitNextRCurly(builder);
+
     if (!ParserUtils.getToken(builder, mRCURLY)) {
-      cbMarker.rollbackTo();
-      return WRONGWAY;
+      builder.error(GroovyBundle.message("rcurly.expected"));
     }
 
     cbMarker.done(METHOD_BODY);
     return METHOD_BODY;
   }
 }
+

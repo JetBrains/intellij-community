@@ -1,11 +1,11 @@
-class a {}
+interface a {}
 -----
 Groovy script
-  class definition
-    PsiElement(class)('class')
+  Interface definition
+    PsiElement(interface)('interface')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')
     PsiWhiteSpace(' ')
-    class body
+    Interface block
       PsiElement({)('{')
       PsiElement(})('}')

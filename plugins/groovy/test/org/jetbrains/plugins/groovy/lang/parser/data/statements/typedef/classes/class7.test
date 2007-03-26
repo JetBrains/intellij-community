@@ -1,0 +1,19 @@
+class a implements b {
+}
+-----
+Groovy script
+  Class definition
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Implements clause
+      PsiElement(implements)('implements')
+      PsiWhiteSpace(' ')
+      Class type
+        PsiElement(identifier)('b')
+    PsiWhiteSpace(' ')
+    Class body
+      PsiElement({)('{')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

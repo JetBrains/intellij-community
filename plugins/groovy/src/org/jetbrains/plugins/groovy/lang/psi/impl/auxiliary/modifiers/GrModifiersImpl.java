@@ -15,6 +15,6 @@ public class GrModifiersImpl extends GroovyPsiElementImpl implements GrModifiers
   }
 
   public String toString() {
-    return "modifiers";
+    return "Modifiers";
   }
 }

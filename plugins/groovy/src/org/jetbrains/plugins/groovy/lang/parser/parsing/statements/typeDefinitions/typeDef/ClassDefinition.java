@@ -6,6 +6,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitio
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.SuperClassClause;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ImplementsClause;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.PsiBuilder;
 
@@ -17,20 +18,15 @@ import com.intellij.lang.PsiBuilder;
 /*
  * ClassDefinition ::= classdef IDENT nls [TypeParameters] superClassClause implementsClause classBlock
  */
-  
+
 public class ClassDefinition implements GroovyElementTypes {
-  private static boolean showErrors = false;
-
   public static IElementType parse(PsiBuilder builder) {
-//    PsiBuilder.Marker classDefMarker = builder.mark();
-
     if (!ParserUtils.getToken(builder, kCLASS)) {
-//      classDefMarker.rollbackTo();
       return WRONGWAY;
     }
 
     if (!ParserUtils.getToken(builder, mIDENT)) {
-//      classDefMarker.rollbackTo();
+      builder.error(GroovyBundle.message("identifier.expected"));
       return WRONGWAY;
     }
 
@@ -38,22 +34,24 @@ public class ClassDefinition implements GroovyElementTypes {
 
     TypeParameters.parse(builder);
 
-    if (tWRONG_SET.contains(SuperClassClause.parse(builder))) {
-//      classDefMarker.rollbackTo();
-      return WRONGWAY;
+    if (kEXTENDS.equals(builder.getTokenType()))
+      if (tWRONG_SET.contains(SuperClassClause.parse(builder))) {
+//      return WRONGWAY;
+      }
+
+    if (kIMPLEMENTS.equals(builder.getTokenType()))
+      if (tWRONG_SET.contains(ImplementsClause.parse(builder))) {
+//      return WRONGWAY;
+      }
+
+    if (mLCURLY.equals(builder.getTokenType())) {
+      if (tWRONG_SET.contains(ClassBlock.parse(builder))) {
+        return WRONGWAY;
+      }
+    } else {
+      builder.error(GroovyBundle.message("lcurly.expected"));
     }
 
-    if (tWRONG_SET.contains(ImplementsClause.parse(builder))) {
-//      classDefMarker.rollbackTo();
-      return WRONGWAY;
-    }
-
-    if (tWRONG_SET.contains(ClassBlock.parse(builder))) {
-//      classDefMarker.rollbackTo();
-      return WRONGWAY;
-    }
-
-//    classDefMarker.done(CLASS_DEFINITION);
     return CLASS_DEFINITION;
   }
 }

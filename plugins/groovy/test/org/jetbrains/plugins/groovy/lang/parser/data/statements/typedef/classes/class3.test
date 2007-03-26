@@ -1,26 +1,24 @@
-interface a {
-  def interface b {}
+class a {
+  a () {}
 }
 -----
 Groovy script
-  interface definition
-    PsiElement(interface)('interface')
+  Class definition
+    PsiElement(class)('class')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')
     PsiWhiteSpace(' ')
-    interface block
+    Class body
       PsiElement({)('{')
       PsiElement(new line)('\n')
       PsiWhiteSpace('  ')
-      interface definition
-        modifier
-          PsiElement(def)('def')
+      Method
+        PsiElement(identifier)('a')
         PsiWhiteSpace(' ')
-        PsiElement(interface)('interface')
+        PsiElement(()('(')
+        PsiElement())(')')
         PsiWhiteSpace(' ')
-        PsiElement(identifier)('b')
-        PsiWhiteSpace(' ')
-        interface block
+        Method body
           PsiElement({)('{')
           PsiElement(})('}')
       PsiElement(new line)('\n')

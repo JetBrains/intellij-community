@@ -15,6 +15,6 @@ public class GrParameterListImpl extends GroovyPsiElementImpl implements GrParam
   }
 
   public String toString() {
-    return "parameter list";
+    return "Parameter list";
   }
 }

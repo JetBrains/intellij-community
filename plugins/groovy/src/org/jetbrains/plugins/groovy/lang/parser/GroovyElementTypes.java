@@ -95,7 +95,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType CLASS_INTERFACE_TYPE = new GroovyElementType("class or interface type");
   GroovyElementType IMPLEMENTS_CLAUSE = new GroovyElementType("implements clause");
   GroovyElementType INTERFACE_EXTENDS_CLAUSE = new GroovyElementType("interface extends clause");
-  GroovyElementType SUPER_CLASS_CLAUSE = new GroovyElementType("super class clause");
+  GroovyElementType EXTENDS_CLAUSE = new GroovyElementType("super class clause");
 
   GroovyElementType CLASS_FIELD = new GroovyElementType("class field");
   GroovyElementType INTERFACE_FIELD = new GroovyElementType("interface field");

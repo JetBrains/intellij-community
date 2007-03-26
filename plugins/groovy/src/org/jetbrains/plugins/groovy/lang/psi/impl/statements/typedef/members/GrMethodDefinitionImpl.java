@@ -15,6 +15,6 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
   }
 
   public String toString (){
-    return "method";
+    return "Method";
   }
 }

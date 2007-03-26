@@ -13,4 +13,8 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
   public GrIfStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
+
+   public String toString() {
+    return "If statement";
+  }
 }

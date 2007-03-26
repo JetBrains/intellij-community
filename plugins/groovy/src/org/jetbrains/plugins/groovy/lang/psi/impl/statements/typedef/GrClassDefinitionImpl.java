@@ -15,6 +15,6 @@ public class GrClassDefinitionImpl extends GroovyPsiElementImpl implements GrCla
   }
 
   public String toString() {
-    return "class definition";
+    return "Class definition";
   }
 }

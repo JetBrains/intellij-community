@@ -15,6 +15,6 @@ public class GrAnnotationTypeDefinitionImpl extends GroovyPsiElementImpl impleme
   }
 
   public String toString() {
-    return "annotation definition";
+    return "Annotation definition";
   }
 }

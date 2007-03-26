@@ -4,6 +4,8 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
  * Utility classdef, that contains various useful methods for
@@ -165,4 +167,19 @@ public abstract class ParserUtils {
     marker.done(elem);
     return elem;
   }
+
+  public static void waitNextRCurly(PsiBuilder builder) {
+    int i = 0;
+    PsiBuilder.Marker em = builder.mark();
+    while (!builder.eof() && !GroovyElementTypes.mRCURLY.equals(builder.getTokenType())) {
+      builder.advanceLexer();
+      i++;
+    }
+    if (i > 0) {
+      em.error(GroovyBundle.message("rcurly.expected"));
+    } else {
+      em.drop();
+    }
+  }
+
 }

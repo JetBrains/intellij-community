@@ -5,44 +5,44 @@ class b {
 }
 -----
 Groovy script
-  class definition
+  Class definition
     PsiElement(class)('class')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('b')
     PsiWhiteSpace(' ')
-    class body
+    Class body
       PsiElement({)('{')
       PsiElement(new line)('\n')
       PsiWhiteSpace(' ')
-      method
+      Method
         PsiElement(identifier)('a')
         PsiWhiteSpace(' ')
         PsiElement(()('(')
-        parameter list
-          parameter
-            parameter modifiers
+        Parameter list
+          Parameter
+            Parameter modifiers
               PsiElement(def)('def')
             PsiWhiteSpace(' ')
             PsiElement(identifier)('a')
           PsiElement(,)(',')
           PsiWhiteSpace(' ')
-          parameter
-            parameter modifiers
+          Parameter
+            Parameter modifiers
               PsiElement(final)('final')
             PsiWhiteSpace(' ')
             PsiElement(identifier)('b')
         PsiElement())(')')
         PsiWhiteSpace(' ')
-        method body
+        Method body
           PsiElement({)('{')
           PsiElement(new line)('\n')
           PsiWhiteSpace('  ')
-          interface definition
+          Interface definition
             PsiElement(interface)('interface')
             PsiWhiteSpace(' ')
             PsiElement(identifier)('a')
             PsiWhiteSpace(' ')
-            interface block
+            Interface block
               PsiElement({)('{')
               PsiElement(})('}')
           PsiWhiteSpace('  ')

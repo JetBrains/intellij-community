@@ -9,7 +9,6 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenBl
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.constructor.ConstructorStart;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.DeclarationStart;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinitionInternal;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeDeclarationStart;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -20,23 +19,19 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class ClassMember implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
-//    PsiBuilder.Marker cmMarker = builder.mark();
     //constructor
     PsiBuilder.Marker constructorStartMarker = builder.mark();
     if (ConstructorStart.parse(builder)) {
       constructorStartMarker.rollbackTo();
 
       if (tWRONG_SET.contains(ModifiersOptional.parse(builder))) {
-//        cmMarker.rollbackTo();
         return WRONGWAY;
       }
 
       if (tWRONG_SET.contains(MethodDefinition.parse(builder))) {
-//        cmMarker.rollbackTo();
         return WRONGWAY;
       }
 
-//      cmMarker.done(METHOD_DEFINITION);
       return METHOD_DEFINITION;
     }
     constructorStartMarker.drop();
@@ -54,19 +49,10 @@ public class ClassMember implements GroovyElementTypes {
     if (TypeDeclarationStart.parse(builder)) {
       typeDeclStartMarker.rollbackTo();
 
-//      if (tWRONG_SET.contains(ModifiersOptional.parse(builder))) {
-//        cmMarker.rollbackTo();
-//        return WRONGWAY;
-//      }
-//
       IElementType typeDef = TypeDefinition.parse(builder);
-//      if (tWRONG_SET.contains(typeDef)) {
-//        cmMarker.rollbackTo();
       if (tWRONG_SET.contains(typeDef)) {
         return WRONGWAY;
       }
-
-//      cmMarker.done(typeDef);
       return typeDef;
     }
     typeDeclStartMarker.drop();
@@ -74,21 +60,17 @@ public class ClassMember implements GroovyElementTypes {
     //static compound statement
     if (ParserUtils.getToken(builder, kSTATIC)) {
       if (!tWRONG_SET.contains(OpenBlock.parse(builder))) {
-//        cmMarker.done(COMPOUND_STATEMENT);
         return STATIC_COMPOUND_STATEMENT;
       } else {
-//        cmMarker.rollbackTo();
         builder.error(GroovyBundle.message("compound.statemenet.expected"));
         return WRONGWAY;
       }
     }
 
     if (!tWRONG_SET.contains(OpenBlock.parse(builder))) {
-//      cmMarker.done(COMPOUND_STATEMENT);
       return COMPOUND_STATEMENT;
     }
 
-//    cmMarker.rollbackTo();
     return WRONGWAY;
 
   }

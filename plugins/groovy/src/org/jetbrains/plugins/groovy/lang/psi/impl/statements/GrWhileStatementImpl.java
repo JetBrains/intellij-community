@@ -13,4 +13,8 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
   public GrWhileStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
+
+   public String toString() {
+    return "While statement";
+  }
 }

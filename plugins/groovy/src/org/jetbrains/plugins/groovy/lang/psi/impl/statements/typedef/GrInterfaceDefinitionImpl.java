@@ -15,6 +15,6 @@ public class GrInterfaceDefinitionImpl extends GroovyPsiElementImpl implements G
   }
 
   public String toString() {
-    return "interface definition";
+    return "Interface definition";
   }
 }

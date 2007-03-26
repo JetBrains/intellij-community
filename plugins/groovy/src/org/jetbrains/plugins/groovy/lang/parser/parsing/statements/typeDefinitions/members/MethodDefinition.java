@@ -20,13 +20,13 @@ public class MethodDefinition implements GroovyElementTypes {
 
     if (!ParserUtils.getToken(builder, mIDENT)) {
       constrMarker.rollbackTo();
+      builder.error(GroovyBundle.message("identifier.expected"));
       return WRONGWAY;
     }
 
     if (!ParserUtils.getToken(builder, mLPAREN)) {
       constrMarker.rollbackTo();
       builder.error(GroovyBundle.message("lparen.expected"));
-      return WRONGWAY;
     }
 
     if (ParserUtils.lookAhead(builder, kFINAL) || ParserUtils.lookAhead(builder, kDEF) || ParserUtils.lookAhead(builder, mAT)) {
@@ -34,9 +34,9 @@ public class MethodDefinition implements GroovyElementTypes {
     }
 
     if (!ParserUtils.getToken(builder, mRPAREN)) {
-      constrMarker.rollbackTo();
+      ParserUtils.waitNextRCurly(builder);
+
       builder.error(GroovyBundle.message("rparen.expected"));
-      return WRONGWAY;
     }
 
     ThrowClause.parse(builder);
