@@ -4,20 +4,24 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.actions.*;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.ui.popup.PopupOwner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.AWTEvent;
-import java.awt.Point;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class GlassLayer extends JComponent implements DataProvider{
+public final class GlassLayer extends JComponent implements DataProvider, PopupOwner {
   private final GuiEditor myEditor;
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GlassLayer");
   private Point myLastMousePosition;
@@ -119,5 +123,19 @@ public final class GlassLayer extends JComponent implements DataProvider{
     else{
       return null;
     }
+  }
+
+  @Nullable
+  public Point getBestPopupPosition() {
+    final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(myEditor);
+    if (selection.size() > 0) {
+      final RadComponent component = selection.get(0);
+      final Rectangle bounds = component.getBounds();
+      int bottom = bounds.height > 4 ? bounds.y+bounds.height-4 : bounds.y;
+      int left = bounds.width > 4 ? bounds.x+4 : bounds.x;
+      Point pnt = new Point(left, bottom);  // the location needs to be within the component
+      return SwingUtilities.convertPoint(component.getParent().getDelegee(), pnt, this);
+    }
+    return null;
   }
 }

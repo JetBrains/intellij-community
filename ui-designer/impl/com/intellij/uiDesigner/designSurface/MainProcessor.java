@@ -80,6 +80,21 @@ public final class MainProcessor extends EventProcessor{
 
     // Here is a good place to handle right and wheel mouse clicking. All mouse
     // motion events should go further
+    if (e.isPopupTrigger()) {
+      RadComponent component = FormEditingUtil.getRadComponentAt(myEditor.getRootContainer(), e.getX(), e.getY());
+      if (component != null && !component.isSelected()) {
+        FormEditingUtil.selectSingleComponent(myEditor, component);
+      }
+
+      final ActionManager actionManager = ActionManager.getInstance();
+      final ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(
+        ActionPlaces.GUI_DESIGNER_EDITOR_POPUP,
+        (ActionGroup)actionManager.getAction(IdeActions.GROUP_GUI_DESIGNER_EDITOR_POPUP)
+      );
+      popupMenu.getComponent().show(e.getComponent(), e.getX(), e.getY());
+      return;
+    }
+
     final int id = e.getID();
     if(
       (MouseEvent.BUTTON2 == e.getButton() || MouseEvent.BUTTON3 == e.getButton()) &&
@@ -89,19 +104,6 @@ public final class MainProcessor extends EventProcessor{
         MouseEvent.MOUSE_CLICKED == id
       )
     ){
-      if (e.isPopupTrigger()) {
-        RadComponent component = FormEditingUtil.getRadComponentAt(myEditor.getRootContainer(), e.getX(), e.getY());
-        if (component != null && !component.isSelected()) {
-          FormEditingUtil.selectSingleComponent(myEditor, component);
-        }
-
-        final ActionManager actionManager = ActionManager.getInstance();
-        final ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(
-          ActionPlaces.GUI_DESIGNER_EDITOR_POPUP,
-          (ActionGroup)actionManager.getAction(IdeActions.GROUP_GUI_DESIGNER_EDITOR_POPUP)
-        );
-        popupMenu.getComponent().show(e.getComponent(), e.getX(), e.getY());
-      }
       return;
     }
 
